@@ -11,19 +11,38 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Database, CheckCircle2, XCircle, AlertTriangle, Sparkles } from 'lucide-react';
+import { Loader2, Database, CheckCircle2, XCircle, AlertTriangle, Sparkles, Eye, ChevronDown, ChevronRight, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface BrandTarget {
   brand: string;
   is_professional: boolean;
 }
 
+/** Brand product pages for Firecrawl verification */
+const BRAND_VERIFY_URLS: Record<string, string> = {
+  'Arctic Fox': 'https://arcticfoxhaircolor.com/collections/hair-color',
+  'Manic Panic': 'https://www.manicpanic.com/collections/semi-permanent-hair-color',
+  'Good Dye Young': 'https://www.gooddyeyoung.com/collections/semi-permanent-color',
+  'Crazy Color': 'https://www.crazycolor.co.uk/shop/',
+  'Lime Crime Unicorn Hair': 'https://www.limecrime.com/collections/unicorn-hair',
+  'oVertone': 'https://overtone.co/collections/all',
+  'Punky Colour': 'https://www.punky.com/collections/all',
+  'Lunar Tides': 'https://lunartideshaircolor.com/collections/all',
+  'Adore': 'https://www.creativeimagesinc.com/adore-semi-permanent-hair-color/',
+  'Splat': 'https://www.splathaircolor.com/shop',
+  'Pulp Riot': 'https://www.pulpriothair.com/collections/all',
+  'Pravana': 'https://www.pravana.com/products/color',
+  'Aveda': 'https://www.aveda.com/hair-color',
+  'Davines': 'https://us.davines.com/collections/color',
+  'Kenra Professional': 'https://kenraprofessional.com/collections/color',
+};
+
 const PROFESSIONAL_BRANDS: BrandTarget[] = [
-  // New professional brands not commonly in libraries
   { brand: 'Aveda', is_professional: true },
   { brand: 'Davines', is_professional: true },
   { brand: 'Guy Tang #mydentity', is_professional: true },
@@ -85,14 +104,31 @@ const CONSUMER_BRANDS: BrandTarget[] = [
 
 const ALL_BRANDS = [...PROFESSIONAL_BRANDS, ...CONSUMER_BRANDS];
 
+interface ProductEntry {
+  name: string;
+  category: string;
+  product_line: string;
+  swatch_hex?: string;
+}
+
+interface VerificationResult {
+  verified: boolean;
+  warnings: string[];
+  confidence: 'high' | 'medium' | 'low';
+}
+
 interface BrandResult {
   brand: string;
   status: 'pending' | 'running' | 'success' | 'error' | 'skipped';
   products_generated?: number;
   products_inserted?: number;
   products_skipped?: number;
+  products?: ProductEntry[];
+  verification?: VerificationResult | null;
   error?: string;
 }
+
+type Phase = 'select' | 'review' | 'importing' | 'done';
 
 interface BulkCatalogImportProps {
   existingBrands: string[];
@@ -102,15 +138,16 @@ interface BulkCatalogImportProps {
 
 export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCatalogImportProps) {
   const queryClient = useQueryClient();
+  const [phase, setPhase] = useState<Phase>('select');
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<BrandResult[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [showPro, setShowPro] = useState(true);
   const [showConsumer, setShowConsumer] = useState(true);
+  const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
 
   const existingSet = useMemo(() => new Set(existingBrands.map(b => b.toLowerCase())), [existingBrands]);
 
-  // Filter out brands that already exist in the library
   const availableBrands = useMemo(() => {
     return ALL_BRANDS.filter(b => !existingSet.has(b.brand.toLowerCase()));
   }, [existingSet]);
@@ -131,18 +168,30 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     });
   };
 
-  const selectAll = () => {
-    setSelectedBrands(new Set(filteredBrands.map(b => b.brand)));
-  };
+  const selectAll = () => setSelectedBrands(new Set(filteredBrands.map(b => b.brand)));
+  const deselectAll = () => setSelectedBrands(new Set());
 
-  const deselectAll = () => {
-    setSelectedBrands(new Set());
+  const toggleExpand = (brand: string) => {
+    setExpandedBrands(prev => {
+      const next = new Set(prev);
+      if (next.has(brand)) next.delete(brand); else next.add(brand);
+      return next;
+    });
   };
 
   const completedCount = results.filter(r => r.status !== 'pending' && r.status !== 'running').length;
   const progress = results.length > 0 ? (completedCount / results.length) * 100 : 0;
+  const totalInserted = results.reduce((s, r) => s + (r.products_inserted || 0), 0);
+  const totalGenerated = results.reduce((s, r) => s + (r.products_generated || 0), 0);
 
-  const handleRun = async () => {
+  const handleReset = () => {
+    setPhase('select');
+    setResults([]);
+    setExpandedBrands(new Set());
+  };
+
+  // Phase 1: Generate (dry run)
+  const handleGenerate = async () => {
     const brandsToProcess = filteredBrands.filter(b => selectedBrands.has(b.brand));
     if (brandsToProcess.length === 0) {
       toast.error('Select at least one brand');
@@ -150,25 +199,26 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     }
 
     setIsRunning(true);
-    const initialResults: BrandResult[] = brandsToProcess.map(b => ({
-      brand: b.brand,
-      status: 'pending',
-    }));
+    setPhase('review');
+    const initialResults: BrandResult[] = brandsToProcess.map(b => ({ brand: b.brand, status: 'pending' }));
     setResults(initialResults);
 
-    // Process in batches of 5 to avoid timeouts
     const BATCH_SIZE = 5;
     for (let i = 0; i < brandsToProcess.length; i += BATCH_SIZE) {
       const batch = brandsToProcess.slice(i, i + BATCH_SIZE);
 
-      // Mark batch as running
       setResults(prev => prev.map(r =>
         batch.some(b => b.brand === r.brand) ? { ...r, status: 'running' as const } : r
       ));
 
       try {
+        const brandsPayload = batch.map(b => ({
+          ...b,
+          verify_url: BRAND_VERIFY_URLS[b.brand] || undefined,
+        }));
+
         const { data, error } = await supabase.functions.invoke('bulk-catalog-import', {
-          body: { brands: batch },
+          body: { brands: brandsPayload, dry_run: true },
         });
 
         if (error) throw error;
@@ -183,6 +233,8 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                 products_generated: match.products_generated,
                 products_inserted: match.products_inserted,
                 products_skipped: match.products_skipped,
+                products: match.products,
+                verification: match.verification,
                 error: match.error,
               };
             }
@@ -190,7 +242,70 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
           }));
         }
       } catch (err: any) {
-        // Mark entire batch as error
+        setResults(prev => prev.map(r =>
+          batch.some(b => b.brand === r.brand) && r.status === 'running'
+            ? { ...r, status: 'error' as const, error: err.message }
+            : r
+        ));
+      }
+    }
+    setIsRunning(false);
+  };
+
+  // Phase 2: Confirm & Import
+  const handleConfirmImport = async () => {
+    const brandsToImport = results
+      .filter(r => r.status === 'success' && (r.products_generated || 0) > 0)
+      .map(r => {
+        const target = ALL_BRANDS.find(b => b.brand === r.brand);
+        return {
+          brand: r.brand,
+          is_professional: target?.is_professional ?? true,
+          verify_url: undefined, // No need to re-verify
+        };
+      });
+
+    if (brandsToImport.length === 0) {
+      toast.error('No brands with generated products to import');
+      return;
+    }
+
+    setIsRunning(true);
+    setPhase('importing');
+
+    // Mark all as running
+    setResults(prev => prev.map(r =>
+      brandsToImport.some(b => b.brand === r.brand)
+        ? { ...r, status: 'running' as const, products_inserted: 0 }
+        : r
+    ));
+
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < brandsToImport.length; i += BATCH_SIZE) {
+      const batch = brandsToImport.slice(i, i + BATCH_SIZE);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('bulk-catalog-import', {
+          body: { brands: batch, dry_run: false },
+        });
+
+        if (error) throw error;
+
+        if (data?.results) {
+          setResults(prev => prev.map(r => {
+            const match = data.results.find((dr: any) => dr.brand === r.brand);
+            if (match) {
+              return {
+                ...r,
+                status: match.status as BrandResult['status'],
+                products_inserted: match.products_inserted,
+                products_skipped: match.products_skipped,
+              };
+            }
+            return r;
+          }));
+        }
+      } catch (err: any) {
         setResults(prev => prev.map(r =>
           batch.some(b => b.brand === r.brand) && r.status === 'running'
             ? { ...r, status: 'error' as const, error: err.message }
@@ -200,13 +315,32 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     }
 
     setIsRunning(false);
+    setPhase('done');
     queryClient.invalidateQueries({ queryKey: ['supply-library-brand-summaries'] });
     queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
     queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
     toast.success('Bulk catalog import complete');
   };
 
-  const totalInserted = results.reduce((s, r) => s + (r.products_inserted || 0), 0);
+  const renderVerificationBadge = (v: VerificationResult | null | undefined) => {
+    if (!v) return null;
+    return (
+      <div className="flex items-center gap-1">
+        {v.verified ? (
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+        ) : (
+          <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+        )}
+        <span className={cn(
+          'font-sans text-xs',
+          v.confidence === 'high' ? 'text-emerald-400' :
+          v.confidence === 'medium' ? 'text-amber-400' : 'text-red-400'
+        )}>
+          {v.confidence}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -214,125 +348,239 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
-            Build Full Color Catalog
+            {phase === 'select' && 'Build Full Color Catalog'}
+            {phase === 'review' && (isRunning ? 'Generating Preview...' : 'Review Generated Products')}
+            {phase === 'importing' && 'Importing to Library...'}
+            {phase === 'done' && 'Import Complete'}
           </DialogTitle>
           <DialogDescription>
-            AI-powered catalog generation for {availableBrands.length} brands not yet in your library.
+            {phase === 'select' && `AI-powered catalog generation for ${availableBrands.length} brands not yet in your library.`}
+            {phase === 'review' && !isRunning && 'Review the AI-generated products below before committing to the database.'}
+            {phase === 'review' && isRunning && 'Generating product catalogs with AI verification...'}
+            {phase === 'importing' && 'Writing products to the library...'}
+            {phase === 'done' && `Successfully added ${totalInserted} products across ${results.filter(r => r.products_inserted && r.products_inserted > 0).length} brands.`}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <PlatformButton
-            size="sm"
-            variant={showPro ? 'default' : 'outline'}
-            onClick={() => setShowPro(!showPro)}
-          >
-            Professional ({availableBrands.filter(b => b.is_professional).length})
-          </PlatformButton>
-          <PlatformButton
-            size="sm"
-            variant={showConsumer ? 'default' : 'outline'}
-            onClick={() => setShowConsumer(!showConsumer)}
-          >
-            Consumer ({availableBrands.filter(b => !b.is_professional).length})
-          </PlatformButton>
-          <div className="ml-auto flex gap-2">
-            <PlatformButton size="sm" variant="ghost" onClick={selectAll} disabled={isRunning}>
-              Select All
-            </PlatformButton>
-            <PlatformButton size="sm" variant="ghost" onClick={deselectAll} disabled={isRunning}>
-              Clear
-            </PlatformButton>
-          </div>
-        </div>
+        {/* Phase: Select */}
+        {phase === 'select' && (
+          <>
+            <div className="flex items-center gap-2 flex-wrap">
+              <PlatformButton
+                size="sm"
+                variant={showPro ? 'default' : 'outline'}
+                onClick={() => setShowPro(!showPro)}
+              >
+                Professional ({availableBrands.filter(b => b.is_professional).length})
+              </PlatformButton>
+              <PlatformButton
+                size="sm"
+                variant={showConsumer ? 'default' : 'outline'}
+                onClick={() => setShowConsumer(!showConsumer)}
+              >
+                Consumer ({availableBrands.filter(b => !b.is_professional).length})
+              </PlatformButton>
+              <div className="ml-auto flex gap-2">
+                <PlatformButton size="sm" variant="ghost" onClick={selectAll}>Select All</PlatformButton>
+                <PlatformButton size="sm" variant="ghost" onClick={deselectAll}>Clear</PlatformButton>
+              </div>
+            </div>
 
-        {/* Brand list */}
-        <ScrollArea className="flex-1 min-h-0 max-h-[400px]">
-          <div className="space-y-1 pr-4">
-            {filteredBrands.map(b => {
-              const result = results.find(r => r.brand === b.brand);
-              return (
-                <div
-                  key={b.brand}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors',
-                    selectedBrands.has(b.brand)
-                      ? 'bg-violet-500/10 border border-violet-500/30'
-                      : 'hover:bg-[hsl(var(--platform-muted)/0.5)] border border-transparent',
-                    isRunning && 'cursor-default'
-                  )}
-                  onClick={() => !isRunning && toggleBrand(b.brand)}
-                >
-                  <div className={cn(
-                    'w-4 h-4 rounded border flex items-center justify-center shrink-0',
-                    selectedBrands.has(b.brand)
-                      ? 'bg-violet-500 border-violet-500'
-                      : 'border-[hsl(var(--platform-border))]'
-                  )}>
-                    {selectedBrands.has(b.brand) && (
-                      <CheckCircle2 className="w-3 h-3 text-white" />
+            <ScrollArea className="flex-1 min-h-0 max-h-[400px]">
+              <div className="space-y-1 pr-4">
+                {filteredBrands.map(b => (
+                  <div
+                    key={b.brand}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors',
+                      selectedBrands.has(b.brand)
+                        ? 'bg-violet-500/10 border border-violet-500/30'
+                        : 'hover:bg-[hsl(var(--platform-muted)/0.5)] border border-transparent',
+                    )}
+                    onClick={() => toggleBrand(b.brand)}
+                  >
+                    <div className={cn(
+                      'w-4 h-4 rounded border flex items-center justify-center shrink-0',
+                      selectedBrands.has(b.brand)
+                        ? 'bg-violet-500 border-violet-500'
+                        : 'border-[hsl(var(--platform-border))]'
+                    )}>
+                      {selectedBrands.has(b.brand) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className="font-sans text-sm text-[hsl(var(--platform-foreground))] flex-1">{b.brand}</span>
+                    {!b.is_professional && <PlatformBadge variant="default" size="sm">Consumer</PlatformBadge>}
+                    {BRAND_VERIFY_URLS[b.brand] && (
+                      <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" title="Web verification available" />
                     )}
                   </div>
+                ))}
+              </div>
+            </ScrollArea>
 
-                  <span className="font-sans text-sm text-[hsl(var(--platform-foreground))] flex-1">
-                    {b.brand}
-                  </span>
-
-                  {!b.is_professional && (
-                    <PlatformBadge variant="default" size="sm">Consumer</PlatformBadge>
-                  )}
-
-                  {/* Status indicator */}
-                  {result?.status === 'running' && <Loader2 className="w-4 h-4 animate-spin text-violet-400" />}
-                  {result?.status === 'success' && (
-                    <span className="font-sans text-xs text-emerald-400">
-                      +{result.products_inserted} products
-                    </span>
-                  )}
-                  {result?.status === 'skipped' && (
-                    <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                      Already complete
-                    </span>
-                  )}
-                  {result?.status === 'error' && (
-                    <span className="font-sans text-xs text-red-400" title={result.error}>
-                      Error
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
-
-        {/* Progress bar */}
-        {results.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
-              <span>{completedCount} / {results.length} brands processed</span>
-              <span>{totalInserted} products added</span>
+            <div className="flex items-center justify-between pt-2">
+              <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+                {selectedBrands.size} brand{selectedBrands.size !== 1 ? 's' : ''} selected
+              </span>
+              <PlatformButton onClick={handleGenerate} disabled={selectedBrands.size === 0}>
+                <Eye className="w-4 h-4 mr-1" /> Generate & Review
+              </PlatformButton>
             </div>
-            <Progress value={progress} className="h-2" />
-          </div>
+          </>
         )}
 
-        {/* Action */}
-        <div className="flex items-center justify-between pt-2">
-          <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-            {selectedBrands.size} brand{selectedBrands.size !== 1 ? 's' : ''} selected
-          </span>
-          <PlatformButton
-            onClick={handleRun}
-            disabled={isRunning || selectedBrands.size === 0}
-          >
-            {isRunning ? (
-              <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Generating...</>
-            ) : (
-              <><Database className="w-4 h-4 mr-1" /> Generate Catalog</>
+        {/* Phase: Review (dry-run results) */}
+        {(phase === 'review' || phase === 'importing' || phase === 'done') && (
+          <>
+            {results.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
+                  <span>{completedCount} / {results.length} brands processed</span>
+                  <span>{totalGenerated} products generated</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
             )}
-          </PlatformButton>
-        </div>
+
+            <ScrollArea className="flex-1 min-h-0 max-h-[400px]">
+              <div className="space-y-1 pr-4">
+                {results.map(r => (
+                  <Collapsible key={r.brand} open={expandedBrands.has(r.brand)} onOpenChange={() => toggleExpand(r.brand)}>
+                    <div className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                      r.status === 'error' ? 'bg-red-500/5 border border-red-500/20' :
+                      r.status === 'success' && phase === 'done' ? 'bg-emerald-500/5 border border-emerald-500/20' :
+                      'border border-transparent'
+                    )}>
+                      {r.status === 'running' && <Loader2 className="w-4 h-4 animate-spin text-violet-400 shrink-0" />}
+                      {r.status === 'pending' && <div className="w-4 h-4 rounded-full border border-[hsl(var(--platform-border))] shrink-0" />}
+                      {r.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                      {r.status === 'error' && <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                      {r.status === 'skipped' && <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
+
+                      <span className="font-sans text-sm text-[hsl(var(--platform-foreground))] flex-1">{r.brand}</span>
+
+                      {renderVerificationBadge(r.verification)}
+
+                      {r.products_generated != null && (
+                        <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+                          {r.products_generated} products
+                        </span>
+                      )}
+
+                      {r.products_inserted != null && r.products_inserted > 0 && phase === 'done' && (
+                        <span className="font-sans text-xs text-emerald-400">+{r.products_inserted} added</span>
+                      )}
+
+                      {r.status === 'error' && (
+                        <span className="font-sans text-xs text-red-400 max-w-[120px] truncate" title={r.error}>
+                          {r.error}
+                        </span>
+                      )}
+
+                      {r.products && r.products.length > 0 && (
+                        <CollapsibleTrigger asChild>
+                          <button className="p-1 hover:bg-[hsl(var(--platform-bg-hover))] rounded">
+                            {expandedBrands.has(r.brand) ? (
+                              <ChevronDown className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+                            )}
+                          </button>
+                        </CollapsibleTrigger>
+                      )}
+                    </div>
+
+                    {r.products && r.products.length > 0 && (
+                      <CollapsibleContent>
+                        <div className="ml-7 pl-4 border-l border-[hsl(var(--platform-border)/0.3)] space-y-0.5 py-1 mb-2">
+                          {/* Verification warnings */}
+                          {r.verification?.warnings && r.verification.warnings.length > 0 && (
+                            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 mb-2">
+                              <p className="font-sans text-xs font-medium text-amber-400 mb-1">Verification Warnings</p>
+                              {r.verification.warnings.map((w, i) => (
+                                <p key={i} className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">• {w}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Category summary */}
+                          {(() => {
+                            const cats = r.products!.reduce((acc, p) => {
+                              acc[p.category] = (acc[p.category] || 0) + 1;
+                              return acc;
+                            }, {} as Record<string, number>);
+                            return (
+                              <div className="flex flex-wrap gap-1 mb-1">
+                                {Object.entries(cats).map(([cat, count]) => (
+                                  <PlatformBadge key={cat} variant="outline" size="sm">
+                                    {cat}: {count}
+                                  </PlatformBadge>
+                                ))}
+                              </div>
+                            );
+                          })()}
+
+                          {/* Sample product names (first 10) */}
+                          {r.products!.slice(0, 10).map((p, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              {p.swatch_hex && (
+                                <div
+                                  className="w-3 h-3 rounded-full border border-[hsl(var(--platform-border)/0.5)] shrink-0"
+                                  style={{ backgroundColor: p.swatch_hex }}
+                                />
+                              )}
+                              <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+                                {p.name}
+                              </span>
+                            </div>
+                          ))}
+                          {r.products!.length > 10 && (
+                            <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))/0.6] italic">
+                              ... and {r.products!.length - 10} more
+                            </span>
+                          )}
+                        </div>
+                      </CollapsibleContent>
+                    )}
+                  </Collapsible>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <div className="flex items-center justify-between pt-2">
+              {phase === 'review' && !isRunning && (
+                <>
+                  <PlatformButton variant="ghost" onClick={handleReset}>
+                    Discard
+                  </PlatformButton>
+                  <PlatformButton onClick={handleConfirmImport} disabled={results.filter(r => r.status === 'success').length === 0}>
+                    <Database className="w-4 h-4 mr-1" /> Confirm & Import ({results.filter(r => r.status === 'success').length} brands)
+                  </PlatformButton>
+                </>
+              )}
+              {phase === 'review' && isRunning && (
+                <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] ml-auto flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...
+                </span>
+              )}
+              {phase === 'importing' && (
+                <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] ml-auto flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Writing to database...
+                </span>
+              )}
+              {phase === 'done' && (
+                <>
+                  <span className="font-sans text-xs text-emerald-400">
+                    {totalInserted} products added successfully
+                  </span>
+                  <PlatformButton variant="outline" onClick={() => onOpenChange(false)}>
+                    Done
+                  </PlatformButton>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
