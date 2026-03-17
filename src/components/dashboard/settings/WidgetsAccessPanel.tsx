@@ -10,6 +10,7 @@ import {
   Loader2,
   LayoutGrid,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { 
   useDashboardVisibility, 

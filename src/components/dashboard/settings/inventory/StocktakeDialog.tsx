@@ -11,6 +11,7 @@ import { useProductLookup } from '@/hooks/useProductLookup';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Search, ClipboardCheck, Loader2, AlertTriangle, ScanBarcode, List, Check } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 

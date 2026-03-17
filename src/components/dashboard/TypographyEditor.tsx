@@ -15,6 +15,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   AlertDialog,
   AlertDialogAction,
