@@ -1359,6 +1359,25 @@ function ColumnBrowser({
 
   return (
     <div className="space-y-3">
+      {/* Health legend — shared above browser */}
+      {categoryItems.some((i) => i.health) && (
+        <div className="flex items-center gap-4 px-1">
+          <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))]">Data health:</span>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-subtle))]">Complete</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-subtle))]">Some missing</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-subtle))]">Most missing</span>
+          </div>
+        </div>
+      )}
+
       {/* Three-column browser */}
       <div className="rounded-xl border border-[hsl(var(--platform-border)/0.4)] overflow-hidden flex min-h-[400px] max-h-[600px]">
         {/* Column 1: Categories */}
