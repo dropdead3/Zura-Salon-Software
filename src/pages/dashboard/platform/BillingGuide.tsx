@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical } from 'lucide-react';
+import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles } from 'lucide-react';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useSubscriptionPlans, type OrganizationBilling, type SubscriptionPlan } from '@/hooks/useOrganizationBilling';
@@ -118,57 +119,133 @@ export default function BillingGuide() {
 
       <div className="space-y-6 mt-6">
         {/* Plans Overview */}
-        <PlatformCard variant="glass" id="plans">
-          <PlatformCardHeader>
-            <div className="flex items-center gap-3">
-              <div className={tokens.card.iconBox}>
-                <BookOpen className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <PlatformCardTitle className={tokens.card.title}>Subscription Plans</PlatformCardTitle>
-                <PlatformCardDescription>Live from the database. Monthly billing only — no cycle discounts.</PlatformCardDescription>
-              </div>
+        <div id="plans" className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className={tokens.card.iconBox}>
+              <BookOpen className="w-5 h-5 text-primary" />
             </div>
-          </PlatformCardHeader>
-          <PlatformCardContent>
-            <PlatformTable>
-              <PlatformTableHeader>
-                <PlatformTableRow>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Plan</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Tier</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Rate</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Included Users</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Max Locations</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Description</PlatformTableHead>
-                </PlatformTableRow>
-              </PlatformTableHeader>
-              <PlatformTableBody>
-                {plans?.map((plan) => (
-                  <PlatformTableRow key={plan.id}>
-                    <PlatformTableCell className="font-medium">{plan.name}</PlatformTableCell>
-                    <PlatformTableCell className="capitalize">{plan.tier}</PlatformTableCell>
-                    <PlatformTableCell>
-                      {plan.tier === 'enterprise'
-                        ? 'Custom'
-                        : plan.tier === 'operator'
-                        ? `${fmtCurrency(plan.price_monthly)}/mo flat`
-                        : `${fmtCurrency(plan.price_monthly)}/loc/mo`}
-                    </PlatformTableCell>
-                    <PlatformTableCell>
-                      {plan.tier === 'enterprise'
-                        ? 'Custom'
-                        : plan.tier === 'operator'
-                        ? '1 (up to 4 total)'
-                        : '10 per location'}
-                    </PlatformTableCell>
-                    <PlatformTableCell>{plan.max_locations === -1 ? 'Unlimited' : plan.max_locations}</PlatformTableCell>
-                    <PlatformTableCell className="text-[hsl(var(--platform-foreground-muted))] max-w-xs truncate">{plan.description || '—'}</PlatformTableCell>
-                  </PlatformTableRow>
-                ))}
-              </PlatformTableBody>
-            </PlatformTable>
-          </PlatformCardContent>
-        </PlatformCard>
+            <div>
+              <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]">Subscription Plans</h2>
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Monthly billing only — per-location pricing for scaling brands.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Operator */}
+            <PlatformCard variant="glass" className="relative border-l-4 border-l-primary/30 flex flex-col">
+              <PlatformCardContent className="p-5 flex flex-col flex-1">
+                <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Operator</p>
+                <div className="mt-3 mb-4">
+                  <span className="font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]">{fmtCurrency(99)}</span>
+                  <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">/mo flat</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <MapPin className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>1 location</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <Users className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>1 included, up to 4 total</span>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 mt-auto text-xs text-[hsl(var(--platform-foreground-muted))]">
+                  {['Core scheduling & booking', 'Personal KPI dashboard', 'Client management'].map((f) => (
+                    <li key={f} className="flex items-start gap-2"><Check className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
+                  ))}
+                </ul>
+              </PlatformCardContent>
+            </PlatformCard>
+
+            {/* Growth */}
+            <PlatformCard variant="glass" className="relative border-l-4 border-l-primary/60 flex flex-col ring-1 ring-primary/20">
+              <PlatformCardContent className="p-5 flex flex-col flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Growth</p>
+                  <PlatformBadge variant="primary" size="sm">Most Popular</PlatformBadge>
+                </div>
+                <div className="mt-3 mb-4">
+                  <span className="font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]">{fmtCurrency(200)}</span>
+                  <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">/loc/mo</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <MapPin className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>2–5 locations</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <Users className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>10 per location included</span>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 mt-auto text-xs text-[hsl(var(--platform-foreground-muted))]">
+                  {['Everything in Operator', 'Multi-location benchmarking', 'Team performance analytics', 'Operational drift alerts'].map((f) => (
+                    <li key={f} className="flex items-start gap-2"><Check className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
+                  ))}
+                </ul>
+              </PlatformCardContent>
+            </PlatformCard>
+
+            {/* Infrastructure */}
+            <PlatformCard variant="glass" className="relative border-l-4 border-l-primary/80 flex flex-col">
+              <PlatformCardContent className="p-5 flex flex-col flex-1">
+                <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Infrastructure</p>
+                <div className="mt-3 mb-4">
+                  <span className="font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]">{fmtCurrency(200)}</span>
+                  <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">/loc/mo</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <MapPin className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>5+ locations</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <Users className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>10 per location included</span>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 mt-auto text-xs text-[hsl(var(--platform-foreground-muted))]">
+                  {['Everything in Growth', 'Deep operational features', 'Regional brand management', 'Advanced margin analytics'].map((f) => (
+                    <li key={f} className="flex items-start gap-2"><Check className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
+                  ))}
+                </ul>
+              </PlatformCardContent>
+            </PlatformCard>
+
+            {/* Enterprise */}
+            <PlatformCard variant="glass" className="relative border-l-4 border-l-primary flex flex-col">
+              <PlatformCardContent className="p-5 flex flex-col flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Enterprise</p>
+                  <PlatformBadge variant="glow" size="sm">Custom</PlatformBadge>
+                </div>
+                <div className="mt-3 mb-4">
+                  <span className="font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]">Custom</span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <MapPin className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>Unlimited locations</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    <Users className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
+                    <span>Custom user allocation</span>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 mt-auto text-xs text-[hsl(var(--platform-foreground-muted))]">
+                  {['Everything in Infrastructure', 'PE-backed brand support', 'Negotiable pricing', 'Dedicated onboarding'].map((f) => (
+                    <li key={f} className="flex items-start gap-2"><Sparkles className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
+                  ))}
+                </ul>
+              </PlatformCardContent>
+            </PlatformCard>
+          </div>
+
+          {/* Extra users callout */}
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] text-center mt-2">
+            Additional users beyond included allocation: <span className="text-[hsl(var(--platform-foreground))]">+$25/user/mo</span> across all tiers.
+          </p>
+        </div>
 
         {/* How Billing Works */}
         <PlatformCard variant="glass" id="how-it-works">
