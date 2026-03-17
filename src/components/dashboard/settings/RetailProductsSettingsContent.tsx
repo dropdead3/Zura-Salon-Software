@@ -1116,7 +1116,7 @@ function CategoriesTab() {
     });
   }, [categories, allCategoryNames]);
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (isLoading) return <DashboardLoader className="py-12" />;
 
   return (
     <div className="space-y-3">
