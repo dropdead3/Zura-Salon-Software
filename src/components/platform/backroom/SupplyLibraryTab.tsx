@@ -282,7 +282,9 @@ export function SupplyLibraryTab() {
               <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
               <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
               <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
-              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Wholesale</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Markup</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Retail</TableHead>
               <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
               <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
             </TableRow>
@@ -525,6 +527,22 @@ export function SupplyLibraryTab() {
               )}
             </Tooltip>
           </TooltipProvider>
+        )}
+      </TableCell>
+      {/* Markup % column */}
+      <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+        {p.default_markup_pct != null && p.default_markup_pct > 0
+          ? `${p.default_markup_pct}%`
+          : '—'}
+      </TableCell>
+      {/* Computed Retail column */}
+      <TableCell className="font-sans text-xs">
+        {p.wholesale_price != null && p.default_markup_pct != null && p.default_markup_pct > 0 ? (
+          <span className="text-[hsl(var(--platform-foreground))]">
+            {formatCurrency(p.wholesale_price * (1 + p.default_markup_pct / 100), { currency: p.currency || 'USD' })}
+          </span>
+        ) : (
+          <span className="text-[hsl(var(--platform-foreground-muted))]">—</span>
         )}
       </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
@@ -1053,7 +1071,7 @@ function AddEditDialog({
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
   const [wholesalePrice, setWholesalePrice] = useState(product?.wholesale_price != null ? String(product.wholesale_price) : '');
-  const [recommendedRetail, setRecommendedRetail] = useState(product?.recommended_retail != null ? String(product.recommended_retail) : '');
+  const [markupPct, setMarkupPct] = useState(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
 
   const resetForm = () => {
     setBrand(product?.brand || '');
@@ -1063,7 +1081,7 @@ function AddEditDialog({
     setUnit(product?.default_unit || 'g');
     setSizes(product?.size_options?.join(', ') || '');
     setWholesalePrice(product?.wholesale_price != null ? String(product.wholesale_price) : '');
-    setRecommendedRetail(product?.recommended_retail != null ? String(product.recommended_retail) : '');
+    setMarkupPct(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
   };
 
   const handleSave = async () => {
@@ -1072,7 +1090,8 @@ function AddEditDialog({
     try {
       const sizeArr = sizes.split(',').map((s) => s.trim()).filter(Boolean);
       const wpVal = wholesalePrice.trim() ? parseFloat(wholesalePrice) : null;
-      const rrVal = recommendedRetail.trim() ? parseFloat(recommendedRetail) : null;
+      const mpVal = markupPct.trim() ? parseFloat(markupPct) : null;
+      const rrVal = wpVal != null && mpVal != null ? Math.round(wpVal * (1 + mpVal / 100) * 100) / 100 : null;
       const payload: any = {
         brand: brand.trim(),
         name: name.trim(),
@@ -1081,6 +1100,7 @@ function AddEditDialog({
         default_unit: unit,
         size_options: sizeArr,
         wholesale_price: wpVal,
+        default_markup_pct: mpVal,
         recommended_retail: rrVal,
         ...(wpVal != null ? { price_updated_at: new Date().toISOString() } : {}),
       };
@@ -1171,8 +1191,8 @@ function AddEditDialog({
               <Input type="number" autoCapitalize="off" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0.00" className="font-sans" />
             </div>
             <div className="space-y-1.5">
-              <Label className="font-sans text-xs">Recommended Retail</Label>
-              <Input type="number" autoCapitalize="off" value={recommendedRetail} onChange={(e) => setRecommendedRetail(e.target.value)} placeholder="0.00" className="font-sans" />
+              <Label className="font-sans text-xs">Markup %</Label>
+              <Input type="number" autoCapitalize="off" value={markupPct} onChange={(e) => setMarkupPct(e.target.value)} placeholder="0" className="font-sans" />
             </div>
           </div>
         </div>
