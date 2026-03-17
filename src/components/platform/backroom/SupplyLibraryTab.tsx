@@ -51,6 +51,7 @@ export function SupplyLibraryTab() {
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [pricingFilter, setPricingFilter] = useState<'all' | 'missing' | 'priced'>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<SupplyLibraryProduct | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
@@ -116,7 +117,9 @@ export function SupplyLibraryTab() {
 
   // Group brand products by category for detail view
   const categoryGroups = useMemo(() => {
-    const filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
+    let filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
+    if (pricingFilter === 'missing') filtered = filtered.filter((p) => p.wholesale_price == null);
+    else if (pricingFilter === 'priced') filtered = filtered.filter((p) => p.wholesale_price != null);
     const groups = new Map<string, SupplyLibraryProduct[]>();
     filtered.forEach((p) => {
       if (!groups.has(p.category)) groups.set(p.category, []);
@@ -131,7 +134,7 @@ export function SupplyLibraryTab() {
       if (bi !== -1) return 1;
       return a[0].localeCompare(b[0]);
     });
-  }, [brandProducts, categoryFilter]);
+  }, [brandProducts, categoryFilter, pricingFilter]);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {
@@ -395,7 +398,7 @@ export function SupplyLibraryTab() {
                 <PlatformButton
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); }}
+                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); }}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </PlatformButton>
@@ -409,7 +412,7 @@ export function SupplyLibraryTab() {
                   <>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); }}
+                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); }}
                         className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
                       >
                         Supply Library
@@ -559,6 +562,16 @@ export function SupplyLibraryTab() {
                         </SelectItem>
                       );
                     })}
+                  </SelectContent>
+                 </Select>
+                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
+                  <SelectTrigger className="w-[160px] font-sans">
+                    <SelectValue placeholder="All Pricing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pricing</SelectItem>
+                    <SelectItem value="missing">Missing Price</SelectItem>
+                    <SelectItem value="priced">Priced</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
