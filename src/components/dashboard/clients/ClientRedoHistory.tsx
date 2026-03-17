@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, Loader2 } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface ClientRedoHistoryProps {
   clientId: string;
