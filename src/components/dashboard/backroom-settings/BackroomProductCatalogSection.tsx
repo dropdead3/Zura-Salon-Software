@@ -953,7 +953,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             <Switch checked={product.is_billable_to_client} onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })} className="scale-[0.6]" />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Overage</span>
+            <span className="text-[10px] text-muted-foreground">Overage</span>
             <Switch checked={product.is_overage_eligible} onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })} className="scale-[0.6]" />
           </div>
         </div>
