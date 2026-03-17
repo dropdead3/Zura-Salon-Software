@@ -8,6 +8,7 @@ import {
   Loader2,
   ChevronRight,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   useTodaysHuddle,
   useMyHuddleAcknowledgment,
