@@ -93,7 +93,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean }) {
         };
       });
     },
-    enabled: !!orgId,
+    enabled: !!orgId && (options?.enabled !== false),
     staleTime: 30_000,
   });
 }

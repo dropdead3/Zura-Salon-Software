@@ -118,8 +118,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   // Data — deferred fetching for performance
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: libraryItems = [] } = useSupplyLibraryItemsByBrand(selectedBrand);
-  const inventoryQuery = useBackroomInventoryTable();
-  const inventoryRows = catalogView === 'inventory' ? inventoryQuery.data : undefined;
+  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory' });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
