@@ -43,6 +43,7 @@ import {
   Users,
   Link2,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation, useSalesByPhorestStaff } from '@/hooks/useSalesData';
