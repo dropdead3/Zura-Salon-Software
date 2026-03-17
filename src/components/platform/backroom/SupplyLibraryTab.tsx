@@ -657,7 +657,7 @@ export function SupplyLibraryTab() {
                       variant="interactive"
                       size="md"
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
-                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
+                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); localStorage.removeItem('supply-library-categories'); localStorage.removeItem('supply-library-sublines'); }}
                     >
                       <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
