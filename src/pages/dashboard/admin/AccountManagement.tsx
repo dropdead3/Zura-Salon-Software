@@ -748,9 +748,7 @@ export default function AccountManagement() {
 
               <TabsContent value="pending" className="space-y-3 mt-4">
                 {loadingPendingInvitations ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-12" />
                 ) : pendingInvitations?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">
