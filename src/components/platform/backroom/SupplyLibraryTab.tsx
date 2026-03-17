@@ -16,7 +16,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown, Clock, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,6 +25,7 @@ import {
   useSupplyLibraryBrands,
   useSupplyLibraryInitStatus,
   useSeedSupplyLibrary,
+  useSyncSupplyLibrary,
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
@@ -54,6 +55,7 @@ export function SupplyLibraryTab() {
   const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [pricingFilter, setPricingFilter] = useState<'all' | 'missing' | 'priced'>('all');
+  const [recencyFilter, setRecencyFilter] = useState<'all' | 'recent'>('all');
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<SupplyLibraryProduct | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
@@ -84,6 +86,7 @@ export function SupplyLibraryTab() {
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
+  const syncMutation = useSyncSupplyLibrary();
 
   // Fetch all products (no brand filter) for building brand cards
   const { data: allProducts = [], isLoading: allLoading } = useSupplyLibraryProducts();
@@ -144,6 +147,10 @@ export function SupplyLibraryTab() {
     let filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
     if (pricingFilter === 'missing') filtered = filtered.filter((p) => p.wholesale_price == null);
     else if (pricingFilter === 'priced') filtered = filtered.filter((p) => p.wholesale_price != null);
+    if (recencyFilter === 'recent') {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      filtered = filtered.filter((p) => p.created_at >= sevenDaysAgo);
+    }
     const groups = new Map<string, SupplyLibraryProduct[]>();
     filtered.forEach((p) => {
       if (!groups.has(p.category)) groups.set(p.category, []);
@@ -158,7 +165,7 @@ export function SupplyLibraryTab() {
       if (bi !== -1) return 1;
       return a[0].localeCompare(b[0]);
     });
-  }, [brandProducts, categoryFilter, pricingFilter]);
+  }, [brandProducts, categoryFilter, pricingFilter, recencyFilter]);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {
@@ -578,6 +585,11 @@ export function SupplyLibraryTab() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {initStatus?.isInitialized && (
+                <PlatformButton variant="outline" size="sm" onClick={() => syncMutation.mutate()} loading={syncMutation.isPending}>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> Sync Library
+                </PlatformButton>
+              )}
               <PlatformButton variant="outline" size="sm" onClick={handleExportCSV}>
                 <Download className="w-3.5 h-3.5 mr-1" /> Export
               </PlatformButton>
@@ -754,6 +766,16 @@ export function SupplyLibraryTab() {
                     const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length;
                     return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
                   })()}
+                </PlatformButton>
+                {/* Recently Added filter */}
+                <PlatformButton
+                  variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all')}
+                  className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : ''}
+                >
+                  <Clock className="w-3.5 h-3.5 mr-1" />
+                  Recently Added
                 </PlatformButton>
               </div>
 

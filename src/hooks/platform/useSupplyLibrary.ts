@@ -137,6 +137,81 @@ export function useSeedSupplyLibrary() {
   });
 }
 
+/** Sync the supply library DB with the static data file (insert missing + backfill product_line) */
+export function useSyncSupplyLibrary() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      // 1. Fetch existing (brand, name) pairs from DB
+      const { data: existing, error: fetchErr } = await supabase
+        .from('supply_library_products')
+        .select('id, brand, name, product_line')
+        .eq('is_active', true);
+
+      if (fetchErr) throw fetchErr;
+
+      const existingSet = new Set(
+        (existing || []).map((p: any) => `${p.brand}::${p.name}`)
+      );
+
+      // 2. Diff against static library — find missing products
+      const missing = SUPPLY_LIBRARY.filter(
+        (item) => !existingSet.has(`${item.brand}::${item.name}`)
+      );
+
+      // 3. Insert missing in batches
+      let inserted = 0;
+      const BATCH_SIZE = 200;
+      for (let i = 0; i < missing.length; i += BATCH_SIZE) {
+        const batch = missing.slice(i, i + BATCH_SIZE).map((item) => ({
+          brand: item.brand,
+          name: item.name,
+          category: item.category,
+          default_depletion: item.defaultDepletion,
+          default_unit: item.defaultUnit,
+          size_options: item.sizeOptions || [],
+          product_line: extractProductLine(item.name),
+          is_active: true,
+        }));
+        const { error } = await supabase
+          .from('supply_library_products')
+          .insert(batch);
+        if (error) throw error;
+        inserted += batch.length;
+      }
+
+      // 4. Backfill product_line on existing rows where it's NULL
+      const needsBackfill = (existing || []).filter((p: any) => p.product_line == null);
+      let backfilled = 0;
+      for (const row of needsBackfill) {
+        const pl = extractProductLine(row.name);
+        const { error } = await supabase
+          .from('supply_library_products')
+          .update({ product_line: pl } as any)
+          .eq('id', row.id);
+        if (error) throw error;
+        backfilled++;
+      }
+
+      return { inserted, backfilled };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-init-status'] });
+      const parts: string[] = [];
+      if (result.inserted > 0) parts.push(`${result.inserted} new products added`);
+      if (result.backfilled > 0) parts.push(`${result.backfilled} product lines backfilled`);
+      if (parts.length === 0) parts.push('Library is already up to date');
+      toast.success(parts.join(', '));
+    },
+    onError: (error) => {
+      toast.error('Sync failed: ' + error.message);
+    },
+  });
+}
+
 /**
  * For consumers that need the SupplyLibraryItem interface (e.g. SupplyLibraryDialog).
  * Reads from DB if initialized, otherwise falls back to static data.
