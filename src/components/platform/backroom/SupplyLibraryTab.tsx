@@ -1029,6 +1029,46 @@ export function SupplyLibraryTab() {
         />
       )}
 
+      {/* Delete Brand Confirmation */}
+      {selectedBrand && (
+        <AlertDialog open={deleteBrandOpen} onOpenChange={setDeleteBrandOpen}>
+          <PlatformAlertDialogContent>
+            <AlertDialogHeader>
+              <PlatformAlertDialogTitle>Delete {selectedBrand}?</PlatformAlertDialogTitle>
+              <PlatformAlertDialogDescription>
+                This will remove <span className="font-medium text-[hsl(var(--platform-foreground))]">{selectedBrand}</span> and all{' '}
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">
+                  {brandCards.find((b) => b.brand === selectedBrand)?.productCount ?? 0}
+                </span>{' '}
+                products from the supply library. This cannot be undone.
+              </PlatformAlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <PlatformAlertDialogCancel disabled={deleteBrand.isPending}>Cancel</PlatformAlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteBrand.isPending}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const meta = brandsMeta.find((b) => b.name === selectedBrand);
+                  deleteBrand.mutate(
+                    { brandName: selectedBrand, brandId: meta?.id ?? null },
+                    {
+                      onSuccess: () => {
+                        setDeleteBrandOpen(false);
+                        setSelectedBrand(null);
+                      },
+                    },
+                  );
+                }}
+              >
+                {deleteBrand.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Delete Brand
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </PlatformAlertDialogContent>
+        </AlertDialog>
+      )}
       {/* Add/Edit Dialog */}
       <AddEditDialog
         open={addOpen}
