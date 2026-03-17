@@ -416,9 +416,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </button>
                 </div>
               )}
-              <PlatformBadge variant="outline">{trackedCount} tracked</PlatformBadge>
+              <Badge variant="outline">{trackedCount} tracked</Badge>
               {selectedBrand && (
-                <PlatformBadge variant="outline">{brandProducts.length} products</PlatformBadge>
+                <Badge variant="outline">{brandProducts.length} products</Badge>
               )}
               <PlatformButton
                 variant="outline"
