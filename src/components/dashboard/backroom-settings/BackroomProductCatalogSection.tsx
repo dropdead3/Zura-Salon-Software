@@ -691,14 +691,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                     </TableCell>
                                     {showSwatch && (
                                       <TableCell className="w-[40px] pr-0">
-                                        {(p as any).swatch_color ? (
-                                          <div
-                                            className="w-5 h-5 rounded-full border border-border/40"
-                                            style={{ backgroundColor: (p as any).swatch_color }}
-                                          />
-                                        ) : (
-                                          <div className="w-5 h-5 rounded-full border border-dashed border-border/40" />
-                                        )}
+                                        <SwatchCell
+                                          color={p.swatch_color ?? null}
+                                          onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
+                                        />
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
@@ -714,14 +710,20 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       {p.unit_of_measure || '—'}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
-                                      {p.cost_price != null ? (
-                                        <span className="text-foreground">${p.cost_price.toFixed(2)}</span>
-                                      ) : (
-                                        <span className="text-muted-foreground">—</span>
-                                      )}
+                                      <InlineEditCell
+                                        value={p.cost_price}
+                                        prefix="$"
+                                        placeholder="—"
+                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { cost_price: v } })}
+                                      />
                                     </TableCell>
-                                    <TableCell className="hidden md:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.markup_pct != null && p.markup_pct > 0 ? `${p.markup_pct}%` : '—'}
+                                    <TableCell className="hidden md:table-cell font-sans text-xs">
+                                      <InlineEditCell
+                                        value={p.markup_pct}
+                                        suffix="%"
+                                        placeholder="—"
+                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { markup_pct: v } })}
+                                      />
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
                                       {retail != null ? (
