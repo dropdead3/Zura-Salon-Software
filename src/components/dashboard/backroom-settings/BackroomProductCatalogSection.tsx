@@ -601,13 +601,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         {/* Status row */}
                         <div className="flex items-center gap-2 mt-auto">
                           {tracked > 0 ? (
-                            <PlatformBadge variant="secondary" size="sm" className="text-[10px]">
+                            <Badge variant="secondary" className="text-[10px]">
                               {tracked}/{brandProds.length} tracked
-                            </PlatformBadge>
+                            </Badge>
                           ) : (
-                            <PlatformBadge variant="outline" size="sm" className="text-[10px] opacity-60">
+                            <Badge variant="outline" className="text-[10px] opacity-60">
                               Not tracked
-                            </PlatformBadge>
+                            </Badge>
                           )}
                         </div>
 
