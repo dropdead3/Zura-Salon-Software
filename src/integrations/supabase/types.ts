@@ -23065,6 +23065,8 @@ export type Database = {
           brand: string
           category: string
           cnt: number
+          missing_price: number
+          missing_swatch: number
         }[]
       }
       get_user_accessible_organizations: {
