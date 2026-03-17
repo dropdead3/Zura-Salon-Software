@@ -70,7 +70,8 @@ interface Props {
 
 /** Build a selection key — includes size when present */
 function sizedKey(brand: string, name: string, size?: string) {
-  return size ? `${brand}::${name}::${size}` : `${brand}::${name}`;
+  const b = brand.toLowerCase(), n = name.toLowerCase();
+  return size ? `${b}::${n}::${size.toLowerCase()}` : `${b}::${n}`;
 }
 
 /** Build the product name with optional size suffix */
