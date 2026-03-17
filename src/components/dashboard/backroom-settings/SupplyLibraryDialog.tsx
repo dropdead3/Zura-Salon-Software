@@ -226,7 +226,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       .filter((k) => !k.startsWith(currentPrefix) && !k.startsWith(currentPrefixLine))
       .forEach((k) => localStorage.removeItem(k));
   }, [orgId]);
-
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   // --- Data: brand summaries (server-side aggregation, no row-limit) ---
   const { data: brandSummaries = [] } = useSupplyLibraryBrandSummaries();
