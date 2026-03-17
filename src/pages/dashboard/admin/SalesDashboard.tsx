@@ -681,9 +681,7 @@ export default function SalesDashboard() {
               </CardHeader>
               <CardContent>
                 {locationLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="h-[300px]" />
                 ) : (
                   <>
                     <div className="h-[250px] md:h-[300px] mb-6">
