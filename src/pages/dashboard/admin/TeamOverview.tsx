@@ -39,6 +39,7 @@ import {
   BookOpen,
   FileText
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
