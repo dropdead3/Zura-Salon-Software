@@ -871,8 +871,8 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
     <div className={cn(
       'rounded-lg border p-3 transition-all',
       product.is_backroom_tracked
-        ? 'border-[hsl(var(--platform-border)/0.6)] bg-[hsl(var(--platform-bg-card)/0.5)]'
-        : 'border-[hsl(var(--platform-border)/0.3)] bg-transparent opacity-70'
+        ? 'border bg-card/50'
+        : 'border-border/30 bg-transparent opacity-70'
     )}>
       {/* Row 1: Toggle + name + depletion */}
       <div className="flex items-center gap-2">
