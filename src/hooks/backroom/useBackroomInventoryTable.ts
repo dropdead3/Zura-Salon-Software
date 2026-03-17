@@ -51,7 +51,7 @@ export const STOCK_STATUS_CONFIG: Record<StockStatus, { label: string; className
   not_stocked: { label: 'Not Stocked', className: 'bg-muted text-muted-foreground border-border/40' },
 };
 
-export function useBackroomInventoryTable() {
+export function useBackroomInventoryTable(options?: { enabled?: boolean }) {
   const orgId = useBackroomOrgId();
 
   return useQuery({
@@ -93,7 +93,7 @@ export function useBackroomInventoryTable() {
         };
       });
     },
-    enabled: !!orgId,
+    enabled: !!orgId && (options?.enabled !== false),
     staleTime: 30_000,
   });
 }

@@ -43,7 +43,7 @@ import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
-import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
+import { useSupplyLibraryItemsByBrand } from '@/hooks/platform/useSupplyLibrary';
 
 /* ====== Constants ====== */
 const DEPLETION_METHODS = [
@@ -115,10 +115,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [stockFilter, setStockFilter] = useState<'all' | 'reorder' | 'in_stock'>('all');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Data
+  // Data — deferred fetching for performance
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
-  const { data: libraryItems = [] } = useSupplyLibraryItems();
-  const { data: inventoryRows } = useBackroomInventoryTable();
+  const { data: libraryItems = [] } = useSupplyLibraryItemsByBrand(selectedBrand);
+  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory' });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
