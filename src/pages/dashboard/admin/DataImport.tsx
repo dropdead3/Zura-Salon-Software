@@ -17,6 +17,7 @@ import {
   History,
   Loader2
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { DataImportWizard } from '@/components/admin/DataImportWizard';
 import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
 import { useImportJobs } from '@/hooks/useImportJobs';
