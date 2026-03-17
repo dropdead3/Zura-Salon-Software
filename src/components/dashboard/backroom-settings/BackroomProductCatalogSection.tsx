@@ -1040,28 +1040,28 @@ function InventoryView({
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <PlatformSelectTrigger className="w-full sm:w-[180px] font-sans">
+          <SelectTrigger className="w-full sm:w-[180px] font-sans">
             <SelectValue placeholder="Category" />
-          </PlatformSelectTrigger>
-          <PlatformSelectContent>
-            <PlatformSelectItem value="all">All Categories</PlatformSelectItem>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
             {CATEGORIES.map((c) => (
-              <PlatformSelectItem key={c} value={c} className="capitalize">{c}</PlatformSelectItem>
+              <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
             ))}
-          </PlatformSelectContent>
+          </SelectContent>
         </Select>
         {bulkProductIds.length > 0 && orgId && (
-          <PlatformButton variant="outline" size="sm" onClick={onOpenPricing} className="font-sans gap-1.5">
+          <Button variant="outline" size="sm" onClick={onOpenPricing} className="font-sans gap-1.5">
             <DollarSign className="w-3.5 h-3.5" />
             Set Pricing
-          </PlatformButton>
+          </Button>
         )}
         {reorderItems.length > 0 && orgId && (
-          <PlatformButton variant="outline" size="sm" onClick={onOpenReorder} className="font-sans gap-1.5">
+          <Button variant="outline" size="sm" onClick={onOpenReorder} className="font-sans gap-1.5">
             <ShoppingCart className="w-3.5 h-3.5" />
             Reorder All
-            <PlatformBadge variant="secondary" size="sm" className="ml-1">{reorderItems.length}</PlatformBadge>
-          </PlatformButton>
+            <Badge variant="secondary" className="ml-1">{reorderItems.length}</Badge>
+          </Button>
         )}
       </div>
 
