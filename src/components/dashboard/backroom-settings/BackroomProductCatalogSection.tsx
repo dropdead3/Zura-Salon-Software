@@ -352,8 +352,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         icon={<Package className="h-4 w-4 text-primary" />}
       />
 
-      <PlatformCard>
-        <PlatformCardHeader>
+      <Card>
+        <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               {selectedBrand ? (
