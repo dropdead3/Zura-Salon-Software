@@ -1421,14 +1421,19 @@ function ColumnBrowser({
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory) && displayProducts.some((p) => !(p as any).swatch_color) && (
-                    <PlatformButton
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 px-2 text-[10px]"
-                      onClick={() => onAutoAssignSwatches(displayProducts, selectedCategory)}
-                    >
-                      Auto-assign swatches
-                    </PlatformButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PlatformButton
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[10px]"
+                          onClick={() => onAutoAssignSwatches(displayProducts, selectedCategory)}
+                        >
+                          Auto-assign swatches
+                        </PlatformButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Automatically assigns swatch colors to products based on their shade name and level.</TooltipContent>
+                    </Tooltip>
                   )}
                   {selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory) && (
                     <PlatformButton
