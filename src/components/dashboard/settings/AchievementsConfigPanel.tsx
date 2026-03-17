@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Loader2, Pencil, Trophy, Award, Target, Flame, Star, Zap, Crown, Medal } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 

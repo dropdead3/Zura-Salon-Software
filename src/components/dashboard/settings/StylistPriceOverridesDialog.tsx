@@ -5,6 +5,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, UserPlus, Trash2, Search } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';

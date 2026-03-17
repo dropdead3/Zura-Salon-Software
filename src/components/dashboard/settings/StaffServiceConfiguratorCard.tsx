@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Users, UserCheck, MapPin, RotateCcw, DollarSign, Clock } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useUndoToast } from '@/hooks/useUndoToast';

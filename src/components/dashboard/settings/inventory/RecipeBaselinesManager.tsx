@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Trash2, FlaskConical } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {

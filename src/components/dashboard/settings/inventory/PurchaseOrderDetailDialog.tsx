@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Download, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
