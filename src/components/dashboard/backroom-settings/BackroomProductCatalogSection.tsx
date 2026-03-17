@@ -324,10 +324,14 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       }
       return { updated, skipped, total };
     },
-    onSuccess: (count) => {
+    onSuccess: ({ updated, skipped, total }) => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      toast.success(`Synced ${count} products from library`);
+      if (updated > 0) {
+        toast.success(`Synced ${updated} of ${total} products from Zura Library. ${skipped} already up to date.`);
+      } else {
+        toast.success(`All ${total} products already up to date — nothing to sync.`);
+      }
     },
     onError: (error) => toast.error('Sync failed: ' + error.message),
   });
