@@ -135,8 +135,16 @@ export function SupplyLibraryTab() {
     search: productSearch || undefined,
   });
   const { data: brands = [] } = useSupplyLibraryBrands();
+  const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: supplyRequests = [] } = useSupplyLibraryRequests();
   const resolveRequest = useResolveSupplyRequest();
+
+  // Build a logo lookup from brand metadata
+  const brandLogoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    brandsMeta.forEach((b) => { if (b.logo_url) map.set(b.name, b.logo_url); });
+    return map;
+  }, [brandsMeta]);
 
   // Build brand card data from allProducts
   const brandCards = useMemo<BrandCardData[]>(() => {
