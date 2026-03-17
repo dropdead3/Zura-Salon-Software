@@ -23,6 +23,7 @@ import {
   Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useRoles } from '@/hooks/useRoles';
 import { useDashboardVisibility, useBulkUpdateVisibility } from '@/hooks/useDashboardVisibility';
 import { getIconByName } from '@/lib/iconResolver';
@@ -97,8 +98,8 @@ export function RoleAccessTab({ canManage }: RoleAccessTabProps) {
   if (rolesLoading || visibilityLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="py-12">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );

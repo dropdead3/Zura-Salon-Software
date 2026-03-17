@@ -37,6 +37,7 @@ import {
   MapPin,
   ArrowLeft,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useActiveLocations } from '@/hooks/useLocations';
@@ -392,9 +393,7 @@ export default function Announcements() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="lg" className="py-20" />
         ) : announcements?.length === 0 ? (
           <Card className="p-12 text-center">
             <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />

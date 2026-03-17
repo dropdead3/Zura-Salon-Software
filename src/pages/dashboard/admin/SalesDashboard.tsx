@@ -43,6 +43,7 @@ import {
   Users,
   Link2,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation, useSalesByPhorestStaff } from '@/hooks/useSalesData';
@@ -526,9 +527,7 @@ export default function SalesDashboard() {
                 <CardContent>
                   <div className="h-[250px] md:h-[300px]">
                     {trendLoading ? (
-                      <div className="h-full flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                      </div>
+                      <DashboardLoader size="md" className="h-full" />
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData}>
@@ -576,9 +575,7 @@ export default function SalesDashboard() {
                 <CardContent>
                   <div className="h-[200px] md:h-[250px]">
                     {metricsLoading ? (
-                      <div className="h-full flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                      </div>
+                      <DashboardLoader size="md" className="h-full" />
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -684,9 +681,7 @@ export default function SalesDashboard() {
               </CardHeader>
               <CardContent>
                 {locationLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="h-[300px]" />
                 ) : (
                   <>
                     <div className="h-[250px] md:h-[300px] mb-6">

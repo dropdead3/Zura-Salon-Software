@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Loader2, GitMerge, Phone, Mail, User, ArrowRight, Calendar, DollarSign, UserX, Users, Home } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
@@ -51,11 +52,7 @@ export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons
   });
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-4">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="sm" className="py-4" />;
   }
 
   if (!canonical) {

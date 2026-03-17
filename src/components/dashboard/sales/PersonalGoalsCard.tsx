@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Target, Edit2, Save, X, Loader2, ShoppingBag } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useStylistPersonalGoals } from '@/hooks/useStylistPersonalGoals';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -68,8 +69,8 @@ export function PersonalGoalsCard({
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="p-6">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );

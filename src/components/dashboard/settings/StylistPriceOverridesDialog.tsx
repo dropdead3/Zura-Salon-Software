@@ -5,6 +5,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, UserPlus, Trash2, Search } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
@@ -136,9 +137,7 @@ export function StylistPriceOverridesDialog({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-8" />
         ) : (
           <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
             {/* Existing overrides */}

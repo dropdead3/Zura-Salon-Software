@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, Clock, Send, Loader2, CheckCircle, XCircle, AlertCircle, MapPin, ChevronDown } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { 
@@ -355,9 +356,7 @@ export function WorkScheduleWidget() {
 
         {/* Current schedule display */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-4" />
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">

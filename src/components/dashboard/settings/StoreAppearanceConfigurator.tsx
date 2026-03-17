@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Monitor, Smartphone, RefreshCw, Save, Loader2, Palette, Check } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useToast } from '@/hooks/use-toast';
 import {
   useWebsiteRetailThemeSettings,
@@ -142,8 +143,8 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="py-12">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );

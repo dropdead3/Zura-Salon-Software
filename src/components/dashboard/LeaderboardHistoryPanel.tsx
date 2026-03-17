@@ -5,6 +5,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { History, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Save, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useLeaderboardHistory, LeaderboardHistoryEntry } from '@/hooks/useLeaderboardHistory';
 import { toast } from 'sonner';
 
@@ -124,9 +125,7 @@ export function LeaderboardHistoryPanel({
 
       {/* History list */}
       {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="sm" className="py-8" />
       ) : weekHistory.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground text-sm font-sans">
           No history for this week

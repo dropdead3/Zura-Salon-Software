@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { FileText, Loader2, Download, BookOpen, CheckCircle2, Circle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
 
@@ -169,9 +170,7 @@ export default function MyHandbooks() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="lg" className="py-20" />
         ) : handbooks.length === 0 ? (
           <Card className="p-12 text-center">
             <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

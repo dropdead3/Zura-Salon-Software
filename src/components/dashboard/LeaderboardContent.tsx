@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History, BadgeCheck, RefreshCw, Settings } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLeaderboardHistory } from '@/hooks/useLeaderboardHistory';
@@ -616,9 +617,7 @@ export function LeaderboardContent() {
 
           {/* Leaderboard */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="lg" className="py-20" />
           ) : sortedEntries.length === 0 ? (
             <Card className="p-12 text-center">
               <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

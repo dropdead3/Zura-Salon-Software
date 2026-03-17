@@ -6,17 +6,13 @@ import { BackroomCostSummaryCard } from './BackroomCostSummaryCard';
 import { BillingAlertsBanner } from './BillingAlertsBanner';
 import { BillingAccessBanner, BillingOwnerToggleCard, BillingAccessDenied } from './BillingAccessGate';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
-import { Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 export function AccountBillingContent() {
   const { canViewBilling, isLoading } = useBillingAccess();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="h-64" />;
   }
 
   if (!canViewBilling) {

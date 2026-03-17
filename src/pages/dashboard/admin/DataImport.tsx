@@ -17,6 +17,7 @@ import {
   History,
   Loader2
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { DataImportWizard } from '@/components/admin/DataImportWizard';
 import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
 import { useImportJobs } from '@/hooks/useImportJobs';
@@ -236,9 +237,7 @@ export default function DataImport() {
               </CardHeader>
               <CardContent>
                 {loadingJobs ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="lg" className="py-12" />
                 ) : importJobs.length === 0 ? (
                   <div className="text-center py-12">
                     <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

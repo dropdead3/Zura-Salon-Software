@@ -71,6 +71,7 @@ import {
   Maximize2,
   ArrowLeft,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import BrandLogo from '@/assets/brand-logo-secondary.svg';
@@ -747,9 +748,7 @@ export default function AccountManagement() {
 
               <TabsContent value="pending" className="space-y-3 mt-4">
                 {loadingPendingInvitations ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-12" />
                 ) : pendingInvitations?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">
@@ -765,9 +764,7 @@ export default function AccountManagement() {
 
               <TabsContent value="all" className="space-y-3 mt-4">
                 {loadingInvitations ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-12" />
                 ) : filteredInvitations?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">
@@ -812,9 +809,7 @@ export default function AccountManagement() {
 
               <TabsContent value="all" className="space-y-3 mt-4">
                 {loadingAccounts ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-12" />
                 ) : filteredAccounts?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">No accounts found matching your search</CardContent>
@@ -826,9 +821,7 @@ export default function AccountManagement() {
 
               <TabsContent value="pending" className="space-y-3 mt-4">
                 {loadingPendingAccounts ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-12" />
                 ) : pendingAccounts?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">

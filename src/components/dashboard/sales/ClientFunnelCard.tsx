@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
+import { Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -31,8 +32,8 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
   if (isLoading) {
     return (
        <Card className={tokens.card.wrapper}>
-        <CardContent className="p-6 flex items-center justify-center h-[350px]">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="p-6 h-[350px]">
+          <DashboardLoader size="md" className="h-full" />
         </CardContent>
       </Card>
     );

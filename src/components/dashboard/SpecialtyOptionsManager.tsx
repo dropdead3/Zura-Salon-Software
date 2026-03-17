@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { GripVertical, Plus, Trash2, Loader2, Sparkles, Edit2, Check, X } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   useAllSpecialtyOptions,
   useAddSpecialtyOption,
@@ -301,9 +302,7 @@ export function SpecialtyOptionsManager() {
 
         {/* Specialty List */}
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="md" className="py-8" />
         ) : options.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground">
             No specialty options yet. Add one above.

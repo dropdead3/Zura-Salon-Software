@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Loader2, MapPin } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, MapPin } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
@@ -152,8 +153,8 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6 flex items-center justify-center min-h-[200px]">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="p-6 min-h-[200px]">
+          <DashboardLoader size="md" className="min-h-[200px]" />
         </CardContent>
       </Card>
     );

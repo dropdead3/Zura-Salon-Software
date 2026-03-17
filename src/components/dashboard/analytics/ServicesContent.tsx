@@ -40,6 +40,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useAnalyticsCardOrder } from '@/hooks/useAnalyticsCardOrder';
 import { AnalyticsCardReorderDrawer, type CardDefinition } from '@/components/dashboard/analytics/AnalyticsCardReorderDrawer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface ServicesContentProps {
   dateFrom: string;
@@ -391,7 +392,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="h-64 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+            <div className="h-64 flex items-center justify-center"><DashboardLoader size="lg" /></div>
           ) : categoryMix.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No service data for this period</p>
           ) : (
@@ -513,7 +514,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
         </CardHeader>
         <CardContent>
           {clientLoading ? (
-            <div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+            <div className="h-48 flex items-center justify-center"><DashboardLoader size="md" /></div>
           ) : clientSorted.length === 0 ? (
             <EmptyState icon={CalendarRange} title="Not enough data" description="Fewer than 3 services found. Try widening your date range (e.g. Last 30 Days) for more meaningful insights." />
           ) : (

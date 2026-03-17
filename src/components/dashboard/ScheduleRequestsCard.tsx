@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, Check, X, Loader2, ArrowRight, Clock } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { usePendingScheduleChangeRequests, useReviewScheduleChangeRequest } from '@/hooks/useLocationSchedules';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
@@ -49,8 +50,8 @@ export function ScheduleRequestsCard() {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <CardContent className="py-8">
+          <DashboardLoader size="sm" />
         </CardContent>
       </Card>
     );

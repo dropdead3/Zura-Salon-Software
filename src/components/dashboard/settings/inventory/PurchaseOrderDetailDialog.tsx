@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Download, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -148,9 +149,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
 
         {/* Line Items */}
         {linesLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-8" />
         ) : (
           <div className="overflow-x-auto border rounded-lg">
             <Table>

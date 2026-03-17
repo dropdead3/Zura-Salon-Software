@@ -21,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loader2, Search, TrendingUp, Users, Video, CheckCircle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface TeamMember {
   user_id: string;
@@ -175,11 +176,7 @@ export function TeamProgressDashboard() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="lg" className="py-20" />;
   }
 
   return (

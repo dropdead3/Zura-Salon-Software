@@ -11,6 +11,7 @@ import { useProductLookup } from '@/hooks/useProductLookup';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Search, ClipboardCheck, Loader2, AlertTriangle, ScanBarcode, List, Check } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -396,9 +397,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
 
             <div className="flex-1 overflow-auto px-6">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
+                <DashboardLoader size="md" className="py-12" />
               ) : (
                 <Table>
                   <TableHeader>

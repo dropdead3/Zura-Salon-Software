@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Trash2, FlaskConical } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -149,9 +150,7 @@ export function RecipeBaselinesManager() {
           <>
             {/* Existing baselines */}
             {loadingBaselines ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="sm" className="py-4" />
             ) : baselines.length === 0 ? (
               <div className="py-4 text-center text-xs text-muted-foreground">
                 No baselines defined for this service yet

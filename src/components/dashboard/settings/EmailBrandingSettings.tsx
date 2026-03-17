@@ -17,6 +17,7 @@ import { useEmailTemplates } from '@/hooks/useEmailTemplates';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Loader2, Save, Send, Monitor, Smartphone, Info, Instagram, Globe, Facebook } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useColorTheme, ColorTheme } from '@/hooks/useColorTheme';
 
@@ -261,11 +262,7 @@ export function EmailBrandingSettings() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   // Social icons for preview

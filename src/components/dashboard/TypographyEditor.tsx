@@ -15,6 +15,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -280,11 +281,7 @@ export function TypographyEditor({ isEditMode, onToggleEditMode }: TypographyEdi
   ];
   
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-8" />;
   }
   
   return (

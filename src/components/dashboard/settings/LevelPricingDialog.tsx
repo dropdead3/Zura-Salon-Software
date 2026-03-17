@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Layers } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
@@ -78,9 +79,7 @@ export function LevelPricingDialog({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-8" />
         ) : (
           <div className="space-y-3 max-h-[50vh] overflow-y-auto p-1">
             {activeLevels.map(level => (

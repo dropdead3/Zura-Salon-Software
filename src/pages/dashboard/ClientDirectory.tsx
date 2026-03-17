@@ -33,6 +33,7 @@ import {
   GitMerge,
   Home
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
 import { DuplicatePairCard } from '@/components/dashboard/clients/DuplicatePairCard';
@@ -998,9 +999,7 @@ export default function ClientDirectory() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="lg" className="py-12" />
             ) : filteredClients.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

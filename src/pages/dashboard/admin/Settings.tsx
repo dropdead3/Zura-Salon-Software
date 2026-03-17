@@ -68,6 +68,7 @@ import {
   ArrowLeft,
   Wallet,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { AccountBillingContent } from '@/components/dashboard/settings/AccountBillingContent';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -1087,9 +1088,7 @@ export default function Settings() {
                 )}
                 
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-8" />
                 ) : users.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     No active users found.
