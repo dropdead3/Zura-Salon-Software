@@ -1004,8 +1004,8 @@ function InventoryView({
           type="button"
           onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
           className={cn(
-            'rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4 text-left transition-all cursor-pointer',
-            stockFilter === 'in_stock' ? 'border-[hsl(var(--platform-primary)/0.4)] bg-[hsl(var(--platform-primary)/0.05)]' : 'hover:border-[hsl(var(--platform-border)/0.8)] hover:shadow-sm'
+            'rounded-xl border bg-card p-4 text-left transition-all cursor-pointer',
+            stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/80 hover:shadow-sm'
           )}
         >
           <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Current Stock</span>
