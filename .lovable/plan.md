@@ -1,24 +1,45 @@
 
 
-# Fix Danger Jones Lighteners: Add Missing Product + Update Pricing/Sizes
+# Fix Danger Jones Semi-Permanent: Add Missing Shade + Data Corrections
 
-## Current State
-Database has 2 lighteners: "Cream Lightener with Bonding Complex" and "Epilogue Lightener" — both missing pricing and using incorrect sizes (450g/900g).
+## 1. Add Missing Shade
 
-Screenshot from Vish shows 2 lighteners with validated data:
+| Shade | Swatch Hex |
+|-------|-----------|
+| Vertigo | #3ABFAD (teal-green from screenshot) |
 
-| Product | Wholesale | Markup | Retail | Size |
-|---------|-----------|--------|--------|------|
-| Cream Lightener with Bonding Complex | $17.00 | 200% | $51.00 | 227g |
-| Powder Lightener with Bonding | $29.00 | 200% | $87.00 | 500g |
+Insert as `Semi-Permanent Vertigo` with `$9.22` wholesale, `100%` markup, `113g` size.
 
-## Changes
+## 2. Update All Existing Semi-Permanent Products
 
-1. **Update "Cream Lightener with Bonding Complex"**: Set `wholesale_price = 17.00`, `default_markup_pct = 200`, `size_options = ['227g']`, `swatch_color = '#7EC8D8'` (light blue from screenshot).
+Bulk UPDATE across all 27 active rows:
+- **Container size**: `118ml` → `113g`
+- **Wholesale price**: `null` → `$9.22`
+- **Markup**: `0` → `100`
 
-2. **Add "Powder Lightener with Bonding"**: New row — `wholesale_price = 29.00`, `default_markup_pct = 200`, `size_options = ['500g']`, category `lightener`.
+Also fix missing/incorrect swatch colors to match the screenshot dots:
+- Dopamine → `#333333` (dark charcoal/black)
+- Empire → `#2D8B2D` (green)
+- Hysteria → `#6B2D6B` (berry purple)
+- Pavement → `#8A8A80` (grey)
+- Poolside → `#8ED8E8` (light blue)
+- Simpatico → `#E8907A` (coral/peach from screenshot, current is too light)
+- Ransom → `#3DAD8E` (teal-green, brighter than current)
 
-3. **Deactivate "Epilogue Lightener"**: Not present in Vish — likely not a real lightener product (Epilogue is the permanent color line). Set `is_active = false`.
+## 3. Deactivate "Liquid Semi-Permanent"
 
-All data-only changes via the insert tool.
+Not in Vish inventory — set `is_active = false`.
+
+## Summary
+
+| Action | Scope |
+|--------|-------|
+| Insert missing shade (Vertigo) | 1 new row |
+| Fix container size 118ml → 113g | 27 existing rows |
+| Set wholesale price $9.22 | 27 existing rows |
+| Set markup 100% | 27 existing rows |
+| Fix missing swatch colors | 7 rows |
+| Deactivate generic entry | 1 row |
+
+All data-only changes — no code modifications needed.
 
