@@ -968,6 +968,9 @@ export function SupplyLibraryTab() {
       {/* CSV Import Dialog */}
       <CSVImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
 
+      {/* Add Brand Wizard */}
+      <AddBrandWizard open={addBrandOpen} onOpenChange={setAddBrandOpen} />
+
       {/* Add/Edit Dialog */}
       <AddEditDialog
         open={addOpen}
