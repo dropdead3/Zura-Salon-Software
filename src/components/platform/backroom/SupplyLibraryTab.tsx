@@ -79,6 +79,7 @@ export function SupplyLibraryTab() {
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
   const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
 
