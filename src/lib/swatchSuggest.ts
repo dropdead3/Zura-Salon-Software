@@ -7,7 +7,7 @@
 import { extractShadeLevel } from './shadeSort';
 import { HAIR_COLOR_SWATCHES } from '@/components/platform/backroom/SwatchPicker';
 
-type ToneFamily = 'natural' | 'ash' | 'gold' | 'red' | 'copper' | 'violet' | 'blue' | 'pastel' | 'vivid';
+type ToneFamily = 'natural' | 'ash' | 'gold' | 'red' | 'copper' | 'violet' | 'blue' | 'pastel' | 'vivid' | 'red_violet' | 'warm_brown';
 
 /** Map of tone code letters → tone family */
 const TONE_CODE_MAP: Record<string, ToneFamily> = {
@@ -63,6 +63,20 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bteal\b/i, 'blue'],
   // Rose gold is copper family
   [/\brose\s*gold\b/i, 'copper'],
+  // Red violet combos (before red and violet)
+  [/\bred\s*violet\b/i, 'red_violet'],
+  [/\bviolet\s*red\b/i, 'red_violet'],
+  [/\bcranberry\b/i, 'red_violet'],
+  [/\bmerlot\b/i, 'red_violet'],
+  [/\braspberry\b/i, 'red_violet'],
+  [/\brose\s*violet\b/i, 'red_violet'],
+  // Warm brown / mocha
+  [/\bmocha\b/i, 'warm_brown'],
+  [/\bespresso\b/i, 'warm_brown'],
+  [/\bcaf[eé]\b/i, 'warm_brown'],
+  [/\bcinnamon\b/i, 'warm_brown'],
+  [/\bmushroom\s*brown\b/i, 'warm_brown'],
+  [/\bsand\b/i, 'warm_brown'],
   // Standard tones
   [/\bplatinum\b/i, 'ash'],
   [/\bash\b/i, 'ash'],
@@ -71,29 +85,37 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bpewter\b/i, 'ash'],
   [/\bicy\b/i, 'ash'],
   [/\bcool\b/i, 'ash'],
+  [/\bgreige\b/i, 'ash'],
+  [/\bmushroom\b/i, 'ash'],
+  [/\bsteel\s*beige\b/i, 'ash'],
   [/\bgold\b/i, 'gold'],
   [/\bbeige\b/i, 'gold'],
   [/\bhoney\b/i, 'gold'],
   [/\bchampagne\b/i, 'gold'],
   [/\bbutter\b/i, 'gold'],
   [/\bwarm\b/i, 'gold'],
+  [/\btoffee\b/i, 'gold'],
+  [/\bbutterscotch\b/i, 'gold'],
   [/\bcopper\b/i, 'copper'],
   [/\bauburn\b/i, 'copper'],
   [/\bginger\b/i, 'copper'],
   [/\btitian\b/i, 'copper'],
   [/\brusset\b/i, 'copper'],
+  [/\bburnt\s*sienna\b/i, 'copper'],
   [/\bmahogany\b/i, 'red'],
   [/\bred\b/i, 'red'],
   [/\bburgundy\b/i, 'red'],
   [/\bwine\b/i, 'red'],
   [/\bcherry\b/i, 'red'],
   [/\bstrawberry\b/i, 'red'],
+  [/\baubergine\b/i, 'violet'],
   [/\bviolet\b/i, 'violet'],
   [/\bpurple\b/i, 'violet'],
   [/\bplum\b/i, 'violet'],
   [/\bmauve\b/i, 'violet'],
   [/\blavender\b/i, 'violet'],
   [/\borchid\b/i, 'violet'],
+  [/\biridescent\b/i, 'violet'],
   [/\bblue\b/i, 'blue'],
   [/\bnavy\b/i, 'blue'],
   [/\bdenim\b/i, 'blue'],
@@ -214,6 +236,26 @@ const TONE_LEVEL_MAP: Record<ToneFamily, Record<string, string>> = {
     '9': '#5A7A90',
     '10+': '#5A7A90',
   },
+  red_violet: {
+    '1-3': '#3C1228',
+    '4': '#4B2C3D',
+    '5': '#6B1845',
+    '6': '#8B2A4E',
+    '7': '#BC2B6E',
+    '8': '#A0406A',
+    '9': '#C4608A',
+    '10+': '#D880A0',
+  },
+  warm_brown: {
+    '1-3': '#3E2418',
+    '4': '#4A2E1C',
+    '5': '#6B4A30',
+    '6': '#7A5638',
+    '7': '#A08060',
+    '8': '#9A8872',
+    '9': '#C4AB82',
+    '10+': '#B09070',
+  },
   pastel: {
     default_pink: '#F4C2C2',
     default_lavender: '#D4B8E0',
@@ -292,37 +334,72 @@ function guessColorFromName(name: string): string | null {
     [/\bsilver\s*smoke\b/, '#A8A898'],       // ash 8
     [/\bhot\s*pink\b/, '#FF1493'],           // vivid pink
     [/\belectric\s*blue\b/, '#0050FF'],      // vivid blue
-    [/\bmagenta\b/, '#FF1493'],              // vivid pink
-    [/\bfuchsia\b/, '#FF1493'],              // vivid pink
-    [/\bteal\b/, '#2A6060'],                 // palette Teal
-    [/\bpurple\b/, '#8B00FF'],               // vivid purple
-    [/\borange\b/, '#FF6600'],               // vivid orange
-    [/\byellow\b/, '#FFD700'],               // vivid yellow
-    [/\bpink\b/, '#FF1493'],                 // vivid pink
-    [/\bred\b/, '#EE0000'],                  // vivid red
-    [/\bviolet\b/, '#8B00FF'],               // vivid purple
-    [/\blavender\b/, '#D4B8E0'],             // pastel lavender
-    [/\bmint\b/, '#A8E0C8'],                 // pastel mint
-    [/\bpeach\b/, '#FADADD'],                // pastel peach
-    [/\bcoral\b/, '#FF6600'],                // vivid orange
-    [/\bplum\b/, '#6B3A6B'],                 // violet 6
-    [/\bnavy\b/, '#1E3450'],                 // blue 4
-    [/\bburgundy\b/, '#5B1414'],             // red 4
-    [/\bcherry\b/, '#8B2020'],               // red 7
-    [/\bauburn\b/, '#8B3A0F'],               // copper 5
-    [/\bcopper\b/, '#B5541A'],               // copper 7
-    [/\bginger\b/, '#9A4414'],               // copper 6
-    [/\bchocolate\b/, '#3B2314'],            // natural 4
-    [/\bcaramel\b/, '#8B6239'],              // natural 6
-    [/\bchampagne\b/, '#D9C48E'],            // palette Champagne
-    [/\bhoney\b/, '#C4981E'],                // gold 8
-    [/\bplatinum\b/, '#D5CFC0'],             // ash 10
-    [/\bsilver\b/, '#C5C5BB'],               // ash 9
-    [/\bmauve\b/, '#7E4E7E'],                // palette Mauve
-    [/\borchid\b/, '#926092'],               // palette Orchid
-    [/\bslate\b/, '#4A6070'],                // blue 8
-    [/\bsteel\b/, '#5A7A90'],                // blue 9
-    [/\bsmoke\b/, '#C5C5BB'],                // palette Smoke
+    // Red violet family
+    [/\bred\s*violet\b/, '#8B2A4E'],
+    [/\bcranberry\b/, '#8E1B3D'],
+    [/\bmerlot\b/, '#6D2040'],
+    [/\braspberry\b/, '#A02050'],
+    [/\brose\s*violet\b/, '#A0406A'],
+    // Warm brown / mocha
+    [/\bmocha\b/, '#6B4A30'],
+    [/\bespresso\b/, '#4A2E1C'],
+    [/\bcinnamon\b/, '#8B5E3C'],
+    [/\bcaf[eé]\s*au\s*lait\b/, '#B09070'],
+    [/\bmushroom\s*brown\b/, '#8A7760'],
+    [/\bsand\b/, '#C4AB82'],
+    // Ash / cool expanded
+    [/\bcool\s*sand\b/, '#C4BAA2'],
+    [/\bcool\s*tan\b/, '#B0A68E'],
+    [/\bgreige\b/, '#A89F8B'],
+    [/\bmushroom\b/, '#9C8E7A'],
+    [/\bsteel\s*beige\b/, '#BEB8AA'],
+    // Copper expanded
+    [/\bcopper[\s-]*red\b/, '#A03818'],
+    [/\bcopper[\s-]*violet\b/, '#8B3A50'],
+    [/\bburnt\s*sienna\b/, '#964B22'],
+    // Gold expanded
+    [/\btoffee\b/, '#A07028'],
+    [/\bbutterscotch\b/, '#D4982C'],
+    [/\bcaramel\s*gold\b/, '#C08A30'],
+    // Red expanded
+    [/\bred[\s-]*mahogany\b/, '#6B2828'],
+    // Violet expanded
+    [/\baubergine\b/, '#3D1C38'],
+    [/\bwarm\s*plum\b/, '#5E2848'],
+    [/\bpurple[\s-]*brown\b/, '#4A2A3A'],
+    [/\biridescent\s*violet\b/, '#7858A0'],
+    // Original entries
+    [/\bmagenta\b/, '#FF1493'],
+    [/\bfuchsia\b/, '#FF1493'],
+    [/\bteal\b/, '#2A6060'],
+    [/\bpurple\b/, '#8B00FF'],
+    [/\borange\b/, '#FF6600'],
+    [/\byellow\b/, '#FFD700'],
+    [/\bpink\b/, '#FF1493'],
+    [/\bred\b/, '#EE0000'],
+    [/\bviolet\b/, '#8B00FF'],
+    [/\blavender\b/, '#D4B8E0'],
+    [/\bmint\b/, '#A8E0C8'],
+    [/\bpeach\b/, '#FADADD'],
+    [/\bcoral\b/, '#FF6600'],
+    [/\bplum\b/, '#6B3A6B'],
+    [/\bnavy\b/, '#1E3450'],
+    [/\bburgundy\b/, '#5B1414'],
+    [/\bcherry\b/, '#8B2020'],
+    [/\bauburn\b/, '#8B3A0F'],
+    [/\bcopper\b/, '#B5541A'],
+    [/\bginger\b/, '#9A4414'],
+    [/\bchocolate\b/, '#3B2314'],
+    [/\bcaramel\b/, '#8B6239'],
+    [/\bchampagne\b/, '#D9C48E'],
+    [/\bhoney\b/, '#C4981E'],
+    [/\bplatinum\b/, '#D5CFC0'],
+    [/\bsilver\b/, '#C5C5BB'],
+    [/\bmauve\b/, '#7E4E7E'],
+    [/\borchid\b/, '#926092'],
+    [/\bslate\b/, '#4A6070'],
+    [/\bsteel\b/, '#5A7A90'],
+    [/\bsmoke\b/, '#C5C5BB'],
   ];
 
   for (const [regex, hex] of directColorMap) {
@@ -342,6 +419,8 @@ function getMidLevelHex(tone: ToneFamily): string {
     copper: '#B5541A',   // level 7
     violet: '#6B3A6B',   // level 6
     blue: '#2A4A6B',     // level 6
+    red_violet: '#8B2A4E', // level 6
+    warm_brown: '#7A5638',  // level 6
     pastel: '#D4B8E0',   // default
     vivid: '#8B00FF',    // default
   };
