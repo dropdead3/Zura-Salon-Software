@@ -50,6 +50,7 @@ interface BrandCardData {
 
 export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
+  const orgId = useBackroomOrgId() ?? '_';
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [brandSearch, setBrandSearch] = useState('');
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
@@ -67,15 +68,27 @@ export function SupplyLibraryTab() {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
 
-  // Persist collapse state to brand-scoped localStorage keys
+  // Helper to build org+brand scoped localStorage key
+  const collapseKey = useCallback((type: 'categories' | 'sublines', brand: string) =>
+    `supply-library-${type}::${orgId}::${brand}`, [orgId]);
+
+  // One-time migration: remove legacy global keys
+  useEffect(() => {
+    if (localStorage.getItem('supply-library-migrated')) return;
+    localStorage.removeItem('supply-library-categories');
+    localStorage.removeItem('supply-library-sublines');
+    localStorage.setItem('supply-library-migrated', '1');
+  }, []);
+
+  // Persist collapse state to org+brand-scoped localStorage keys
   useEffect(() => {
     if (!selectedBrand) return;
-    localStorage.setItem(`supply-library-categories::${selectedBrand}`, JSON.stringify([...collapsedCategories]));
-  }, [collapsedCategories, selectedBrand]);
+    localStorage.setItem(collapseKey('categories', selectedBrand), JSON.stringify([...collapsedCategories]));
+  }, [collapsedCategories, selectedBrand, collapseKey]);
   useEffect(() => {
     if (!selectedBrand) return;
-    localStorage.setItem(`supply-library-sublines::${selectedBrand}`, JSON.stringify([...collapsedSubLines]));
-  }, [collapsedSubLines, selectedBrand]);
+    localStorage.setItem(collapseKey('sublines', selectedBrand), JSON.stringify([...collapsedSubLines]));
+  }, [collapsedSubLines, selectedBrand, collapseKey]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
