@@ -191,7 +191,42 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const [showSuggest, setShowSuggest] = useState(false);
   const [suggestBrand, setSuggestBrand] = useState('');
   const [suggestDetails, setSuggestDetails] = useState('');
-  const [isSuggesting, setIsSuggesting] = useState(false);
+
+  // --- localStorage persistence for column selections ---
+  const columnKey = useCallback(
+    (col: 'cat' | 'line', brand: string) =>
+      `supply-dialog-${col}::${orgId}::${brand}`,
+    [orgId],
+  );
+
+  // Persist selectedCategory
+  useEffect(() => {
+    if (!selectedBrand) return;
+    const key = columnKey('cat', selectedBrand);
+    if (selectedCategory) localStorage.setItem(key, selectedCategory);
+    else localStorage.removeItem(key);
+  }, [selectedCategory, selectedBrand, columnKey]);
+
+  // Persist selectedLine
+  useEffect(() => {
+    if (!selectedBrand) return;
+    const key = columnKey('line', selectedBrand);
+    if (selectedLine) localStorage.setItem(key, selectedLine);
+    else localStorage.removeItem(key);
+  }, [selectedLine, selectedBrand, columnKey]);
+
+  // Prune old keys (keep max 500)
+  useEffect(() => {
+    const PREFIX = 'supply-dialog-';
+    const allKeys = Object.keys(localStorage).filter((k) => k.startsWith(PREFIX));
+    if (allKeys.length <= 500) return;
+    const currentPrefix = `${PREFIX}cat::${orgId}::`;
+    const currentPrefixLine = `${PREFIX}line::${orgId}::`;
+    allKeys
+      .filter((k) => !k.startsWith(currentPrefix) && !k.startsWith(currentPrefixLine))
+      .forEach((k) => localStorage.removeItem(k));
+  }, [orgId]);
+
 
   // --- Data: brand summaries (server-side aggregation, no row-limit) ---
   const { data: brandSummaries = [] } = useSupplyLibraryBrandSummaries();
