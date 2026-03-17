@@ -1071,7 +1071,7 @@ function AddEditDialog({
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
   const [wholesalePrice, setWholesalePrice] = useState(product?.wholesale_price != null ? String(product.wholesale_price) : '');
-  const [markupPct, setMarkupPct] = useState(product?.default_markup_pct != null ? String((product as any).default_markup_pct) : '');
+  const [markupPct, setMarkupPct] = useState(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
 
   const resetForm = () => {
     setBrand(product?.brand || '');
