@@ -63,6 +63,7 @@ export default function BillingGuide() {
   const [searchParams] = useSearchParams();
   const scrolledRef = useRef(false);
   const [billingOpen, setBillingOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   // Scroll to section on mount
   useEffect(() => {
