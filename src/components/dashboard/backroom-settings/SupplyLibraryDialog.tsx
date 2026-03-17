@@ -199,17 +199,17 @@ function BrandCardGrid({
             })}
           </div>
         </div>
+      </div>
 
-        {/* Missing brand CTA */}
-        <div className="px-6 pb-6 pt-2">
-          <button
-            onClick={onShowSuggest}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/60 text-xs font-sans text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/30 transition-colors"
-          >
-            <MessageSquarePlus className="w-4 h-4 shrink-0" />
-            <span>Missing a brand? Suggest one</span>
-          </button>
-        </div>
+      {/* Missing brand CTA - fixed at bottom */}
+      <div className="px-6 pb-4 pt-2 shrink-0 border-t border-border/30">
+        <button
+          onClick={onShowSuggest}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/60 text-xs font-sans text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/30 transition-colors"
+        >
+          <MessageSquarePlus className="w-4 h-4 shrink-0" />
+          <span>Missing a brand? Suggest one</span>
+        </button>
       </div>
     </div>
   );
