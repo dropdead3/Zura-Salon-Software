@@ -85,11 +85,12 @@ export function SupplyLibraryTab() {
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
   const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
 
-  // ─── Column Browser State ───
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProductLine, setSelectedProductLine] = useState<string | null>(null);
   const [focusedColumn, setFocusedColumn] = useState<0 | 1 | 2>(0);
   const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
+  const [bulkPricingProductIds, setBulkPricingProductIds] = useState<string[]>([]);
+  const [bulkPricingScopeLabel, setBulkPricingScopeLabel] = useState('');
 
   // Count how many brands have saved collapse state
   const savedBrandCount = useMemo(() => {
