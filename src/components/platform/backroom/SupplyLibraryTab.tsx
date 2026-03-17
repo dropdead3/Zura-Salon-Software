@@ -934,17 +934,23 @@ export function SupplyLibraryTab() {
                       <AlertDialogAction
                         onClick={async () => {
                           if (!reanalyzeConfirm) return;
-                          let saved = 0;
-                          for (const u of reanalyzeConfirm.updates) {
-                            const { error } = await supabase
-                              .from('supply_library_products')
-                              .update({ swatch_color: u.hex } as any)
-                              .eq('id', u.id);
-                            if (!error) saved++;
-                          }
-                          queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                          toast.success(`Re-analyzed ${saved} swatches`);
+                          const categoryName = reanalyzeConfirm.category;
+                          setReanalyzingCategory(categoryName);
                           setReanalyzeConfirm(null);
+                          let saved = 0;
+                          try {
+                            for (const u of reanalyzeConfirm.updates) {
+                              const { error } = await supabase
+                                .from('supply_library_products')
+                                .update({ swatch_color: u.hex } as any)
+                                .eq('id', u.id);
+                              if (!error) saved++;
+                            }
+                            queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                            toast.success(`Re-analyzed ${saved} swatches`);
+                          } finally {
+                            setReanalyzingCategory(null);
+                          }
                         }}
                       >
                         Continue
