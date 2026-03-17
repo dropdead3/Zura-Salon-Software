@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 
 interface PlatformCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'elevated' | 'interactive';
+  size?: 'lg' | 'md' | 'sm';
   glow?: boolean;
 }
 
