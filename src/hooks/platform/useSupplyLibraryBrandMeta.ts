@@ -127,6 +127,55 @@ export function useCreateSupplyBrand() {
   });
 }
 
+/** Update an existing brand's name and/or logo */
+export function useUpdateSupplyBrand() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      id: string;
+      name?: string;
+      logo_url?: string | null;
+      originalName?: string;
+    }) => {
+      const updates: Record<string, unknown> = {};
+      if (params.name !== undefined) updates.name = params.name.trim();
+      if (params.logo_url !== undefined) updates.logo_url = params.logo_url;
+
+      const { data, error } = await supabase
+        .from('supply_library_brands')
+        .update(updates as any)
+        .eq('id', params.id)
+        .select()
+        .single();
+      if (error) throw error;
+
+      // If name changed, cascade update to products
+      if (params.name && params.originalName && params.name.trim() !== params.originalName) {
+        await supabase
+          .from('supply_library_products')
+          .update({ brand: params.name.trim() } as any)
+          .eq('brand_id', params.id);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supply-library-brands-meta'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+      toast.success('Brand updated');
+    },
+    onError: (err: any) => {
+      if (err.message?.includes('supply_library_brands_name_unique')) {
+        toast.error('A brand with this name already exists');
+      } else {
+        toast.error('Failed to update brand: ' + err.message);
+      }
+    },
+  });
+}
+
 /** Upload a brand logo to storage */
 export async function uploadBrandLogo(file: File, brandName: string): Promise<string | null> {
   const ext = file.name.split('.').pop() || 'png';

@@ -32,6 +32,7 @@ import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-su
 import { CSVImportDialog } from './CSVImportDialog';
 import { AddBrandWizard } from './AddBrandWizard';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { EditBrandDialog } from './EditBrandDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -70,6 +71,7 @@ export function SupplyLibraryTab() {
   // localStorage-backed collapse state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
+  const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Count how many brands have saved collapse state
@@ -616,6 +618,13 @@ export function SupplyLibraryTab() {
                       </button>
                       <span className="text-[hsl(var(--platform-foreground-muted))]">/</span>
                       <PlatformCardTitle>{selectedBrand}</PlatformCardTitle>
+                      <button
+                        onClick={() => setEditBrandOpen(true)}
+                        className="ml-1 p-1 rounded-md text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
+                        title="Edit brand"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     <PlatformCardDescription>
                       {brandProducts.length} products
@@ -972,6 +981,22 @@ export function SupplyLibraryTab() {
 
       {/* Add Brand Wizard */}
       <AddBrandWizard open={addBrandOpen} onOpenChange={setAddBrandOpen} />
+
+      {/* Edit Brand Dialog */}
+      {selectedBrand && (() => {
+        const meta = brandsMeta.find((b) => b.name === selectedBrand);
+        if (!meta) return null;
+        return (
+          <EditBrandDialog
+            open={editBrandOpen}
+            onOpenChange={setEditBrandOpen}
+            brandId={meta.id}
+            brandName={meta.name}
+            brandLogoUrl={meta.logo_url}
+            onBrandRenamed={(newName) => setSelectedBrand(newName)}
+          />
+        );
+      })()}
 
       {/* Add/Edit Dialog */}
       <AddEditDialog
