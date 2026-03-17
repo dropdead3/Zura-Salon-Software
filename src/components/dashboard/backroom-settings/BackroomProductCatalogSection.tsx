@@ -631,7 +631,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         )}
 
                         {/* Hover arrow */}
-                        <ArrowRight className="absolute top-4 right-4 w-4 h-4 text-[hsl(var(--platform-foreground-muted))] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight className="absolute top-4 right-4 w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     );
                   })}
