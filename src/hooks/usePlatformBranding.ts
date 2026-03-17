@@ -89,6 +89,8 @@ export function usePlatformBranding() {
         icon_light_url: branding.icon_light_url,
         theme_colors: branding.theme_colors,
         typography: branding.typography,
+        loader_style: branding.loader_style,
+        use_skeleton_loaders: branding.use_skeleton_loaders,
       };
       
       const { error } = await supabase
