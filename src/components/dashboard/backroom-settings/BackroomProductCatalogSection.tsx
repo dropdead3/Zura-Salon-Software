@@ -372,7 +372,11 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   /* ====== Derived data ====== */
   const allProducts = products || [];
-  const trackedCount = allProducts.filter((p) => p.is_backroom_tracked).length;
+  // Helper: is a product tracked at the current location?
+  const isTrackedAtLocation = useCallback((productId: string) => {
+    return locationSettings.get(productId)?.is_tracked ?? false;
+  }, [locationSettings]);
+  const trackedCount = allProducts.filter((p) => isTrackedAtLocation(p.id)).length;
 
   // Brand grouping for card grid
   const brandGroups = useMemo(() => {
