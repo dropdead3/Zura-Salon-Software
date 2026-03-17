@@ -208,6 +208,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
   const [bulkReorderOpen, setBulkReorderOpen] = useState(false);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [syncScope, setSyncScope] = useState<'brand' | 'all'>('brand');
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
