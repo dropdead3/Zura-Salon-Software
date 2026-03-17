@@ -372,8 +372,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               <div>
                 {selectedBrand ? (
                   <>
-                    <div className="flex items-center gap-1.5 text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
-                      <button type="button" onClick={goBack} className="hover:text-[hsl(var(--platform-foreground))] transition-colors">My Catalog</button>
+                    <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
+                      <button type="button" onClick={goBack} className="hover:text-foreground transition-colors">My Catalog</button>
                       <span>/</span>
                     </div>
                     <PlatformCardTitle>{selectedBrand}</PlatformCardTitle>
