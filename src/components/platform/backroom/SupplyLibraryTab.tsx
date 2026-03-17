@@ -1436,16 +1436,21 @@ function ColumnBrowser({
                     </Tooltip>
                   )}
                   {selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory) && (
-                    <PlatformButton
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 px-2 text-[10px] text-amber-400 hover:text-amber-300"
-                      disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory)}
-                      onClick={() => onReanalyzeSwatches(displayProducts, selectedCategory)}
-                    >
-                      <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin')} />
-                      Re-analyze
-                    </PlatformButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PlatformButton
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[10px] text-amber-400 hover:text-amber-300"
+                          disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory)}
+                          onClick={() => onReanalyzeSwatches(displayProducts, selectedCategory)}
+                        >
+                          <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin')} />
+                          Re-analyze
+                        </PlatformButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Re-runs the swatch color analysis for all products in this category. Overwrites existing assignments.</TooltipContent>
+                    </Tooltip>
                   )}
                   <PlatformButton
                     size="sm"
