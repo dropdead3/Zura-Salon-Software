@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Loader2, Navigation, RefreshCw, AlertTriangle, Layers } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

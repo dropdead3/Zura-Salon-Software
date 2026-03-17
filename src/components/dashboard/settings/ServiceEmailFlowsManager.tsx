@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';

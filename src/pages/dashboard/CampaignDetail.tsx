@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
