@@ -12,6 +12,7 @@ import {
   Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
 import {
   useServiceCategoryColors,

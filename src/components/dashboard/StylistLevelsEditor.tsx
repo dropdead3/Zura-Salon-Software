@@ -35,6 +35,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useStylistLevels, useSaveStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
 import { Link } from 'react-router-dom';
 

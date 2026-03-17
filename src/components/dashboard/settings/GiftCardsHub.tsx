@@ -14,6 +14,7 @@ import {
   CreditCard, Package, Settings, Palette, Ban, CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';

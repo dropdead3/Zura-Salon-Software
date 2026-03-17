@@ -19,6 +19,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
 import {
   useWebsiteBookingSettings,
