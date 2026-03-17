@@ -541,8 +541,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* Brand cards */}
               {!hasProducts ? (
                 <div className={cn(tokens.empty.container, 'py-14')}>
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-[hsl(var(--platform-border)/0.6)] bg-[hsl(var(--platform-bg-hover)/0.4)]">
-                    <Library className="h-7 w-7 text-[hsl(var(--platform-foreground-muted))]" />
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted/40">
+                    <Library className="h-7 w-7 text-muted-foreground" />
                   </div>
                   <h3 className={tokens.empty.heading}>Build Your Supply Catalog</h3>
                   <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2')}>
