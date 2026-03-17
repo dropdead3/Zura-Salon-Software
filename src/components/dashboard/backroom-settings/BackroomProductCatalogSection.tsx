@@ -928,7 +928,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
             />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">Markup</span>
+            <span className="text-[10px] text-muted-foreground">Markup</span>
             <input
               type="number"
               step="1"
