@@ -360,7 +360,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 <button
                   type="button"
                   onClick={goBack}
-                  className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center shrink-0 hover:bg-[hsl(var(--platform-bg-hover)/0.8)] transition-colors"
+                  className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 hover:bg-muted/80 transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
                 </button>
