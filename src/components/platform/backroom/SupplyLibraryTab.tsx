@@ -799,6 +799,25 @@ export function SupplyLibraryTab() {
                       <PlatformButton
                         variant="ghost"
                         size="icon-sm"
+                        onClick={() => setResetConfirmOpen(true)}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </PlatformButton>
+                    </TooltipTrigger>
+                    <TooltipContent>Reset all collapse state</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+                  <PlatformAlertDialogContent>
+                    <AlertDialogHeader>
+                      <PlatformAlertDialogTitle>Reset collapse state?</PlatformAlertDialogTitle>
+                      <PlatformAlertDialogDescription>
+                        This will clear saved collapse/expand preferences for all brands. This action cannot be undone.
+                      </PlatformAlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
+                      <AlertDialogAction
                         onClick={() => {
                           const keysToRemove: string[] = [];
                           for (let i = 0; i < localStorage.length; i++) {
@@ -813,12 +832,11 @@ export function SupplyLibraryTab() {
                           toast.success('Collapse state reset for all brands');
                         }}
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                      </PlatformButton>
-                    </TooltipTrigger>
-                    <TooltipContent>Reset all collapse state</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                        Reset
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </PlatformAlertDialogContent>
+                </AlertDialog>
                 {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
