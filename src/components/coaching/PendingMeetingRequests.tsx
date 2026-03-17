@@ -12,6 +12,7 @@ import {
   MessageSquare,
   ArrowRight,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useMeetingRequests, useUpdateMeetingRequestStatus, type MeetingRequest } from '@/hooks/useMeetingRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseISO, isPast } from 'date-fns';
