@@ -19856,9 +19856,52 @@ export type Database = {
         }
         Relationships: []
       }
+      supply_library_brands: {
+        Row: {
+          country_of_origin: string | null
+          created_at: string
+          created_by: string | null
+          default_category: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          country_of_origin?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_category?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          country_of_origin?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_category?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       supply_library_products: {
         Row: {
           brand: string
+          brand_id: string | null
           category: string
           created_at: string
           currency: string
@@ -19877,6 +19920,7 @@ export type Database = {
         }
         Insert: {
           brand: string
+          brand_id?: string | null
           category?: string
           created_at?: string
           currency?: string
@@ -19895,6 +19939,7 @@ export type Database = {
         }
         Update: {
           brand?: string
+          brand_id?: string | null
           category?: string
           created_at?: string
           currency?: string
@@ -19912,6 +19957,13 @@ export type Database = {
           wholesale_price?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "supply_library_products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "supply_library_brands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supply_library_products_price_source_id_fkey"
             columns: ["price_source_id"]
