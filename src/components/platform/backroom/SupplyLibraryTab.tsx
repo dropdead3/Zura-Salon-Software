@@ -35,7 +35,7 @@ import {
 import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
 import { AddBrandWizard } from './AddBrandWizard';
-import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { useSupplyBrandsMeta, useDeleteSupplyBrand, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { EditBrandDialog } from './EditBrandDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
@@ -81,6 +81,7 @@ export function SupplyLibraryTab() {
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [deleteBrandOpen, setDeleteBrandOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
   const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
@@ -158,6 +159,7 @@ export function SupplyLibraryTab() {
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: supplyRequests = [] } = useSupplyLibraryRequests();
   const resolveRequest = useResolveSupplyRequest();
+  const deleteBrand = useDeleteSupplyBrand();
 
   // Build a logo lookup from brand metadata
   const brandLogoMap = useMemo(() => {
@@ -693,6 +695,13 @@ export function SupplyLibraryTab() {
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
+                      <button
+                        onClick={() => setDeleteBrandOpen(true)}
+                        className="p-1 rounded-md text-[hsl(var(--platform-foreground-muted))] hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Delete brand & catalog"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   
                   </>
@@ -1020,6 +1029,46 @@ export function SupplyLibraryTab() {
         />
       )}
 
+      {/* Delete Brand Confirmation */}
+      {selectedBrand && (
+        <AlertDialog open={deleteBrandOpen} onOpenChange={setDeleteBrandOpen}>
+          <PlatformAlertDialogContent>
+            <AlertDialogHeader>
+              <PlatformAlertDialogTitle>Delete {selectedBrand}?</PlatformAlertDialogTitle>
+              <PlatformAlertDialogDescription>
+                This will remove <span className="font-medium text-[hsl(var(--platform-foreground))]">{selectedBrand}</span> and all{' '}
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">
+                  {brandCards.find((b) => b.brand === selectedBrand)?.productCount ?? 0}
+                </span>{' '}
+                products from the supply library. This cannot be undone.
+              </PlatformAlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <PlatformAlertDialogCancel disabled={deleteBrand.isPending}>Cancel</PlatformAlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteBrand.isPending}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const meta = brandsMeta.find((b) => b.name === selectedBrand);
+                  deleteBrand.mutate(
+                    { brandName: selectedBrand, brandId: meta?.id ?? null },
+                    {
+                      onSuccess: () => {
+                        setDeleteBrandOpen(false);
+                        setSelectedBrand(null);
+                      },
+                    },
+                  );
+                }}
+              >
+                {deleteBrand.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Delete Brand
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </PlatformAlertDialogContent>
+        </AlertDialog>
+      )}
       {/* Add/Edit Dialog */}
       <AddEditDialog
         open={addOpen}

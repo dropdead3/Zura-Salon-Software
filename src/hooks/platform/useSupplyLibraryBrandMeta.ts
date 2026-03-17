@@ -176,6 +176,52 @@ export function useUpdateSupplyBrand() {
   });
 }
 
+/** Soft-delete a brand and all its products */
+export function useDeleteSupplyBrand() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { brandName: string; brandId: string | null }) => {
+      // Count active products first
+      const { count } = await supabase
+        .from('supply_library_products')
+        .select('*', { count: 'exact', head: true })
+        .eq('brand', params.brandName)
+        .eq('is_active', true);
+
+      // Soft-delete all products for this brand
+      const { error: prodErr } = await supabase
+        .from('supply_library_products')
+        .update({ is_active: false } as any)
+        .eq('brand', params.brandName)
+        .eq('is_active', true);
+      if (prodErr) throw prodErr;
+
+      // Soft-delete the brand meta row if it exists
+      if (params.brandId) {
+        const { error: brandErr } = await supabase
+          .from('supply_library_brands')
+          .update({ is_active: false } as any)
+          .eq('id', params.brandId);
+        if (brandErr) throw brandErr;
+      }
+
+      return { productCount: count ?? 0 };
+    },
+    onSuccess: (result, params) => {
+      queryClient.invalidateQueries({ queryKey: ['supply-library-brands-meta'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+      queryClient.invalidateQueries({ queryKey: ['supply-library-init-status'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      toast.success(`${params.brandName} and ${result.productCount} products removed`);
+    },
+    onError: (err: any) => {
+      toast.error('Failed to delete brand: ' + err.message);
+    },
+  });
+}
+
 /** Upload a brand logo to storage */
 export async function uploadBrandLogo(file: File, brandName: string): Promise<string | null> {
   const ext = file.name.split('.').pop() || 'png';
