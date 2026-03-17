@@ -63,26 +63,18 @@ export function SupplyLibraryTab() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
   // localStorage-backed collapse state
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('supply-library-categories');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
-  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('supply-library-sublines');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
 
-  // Persist collapse state to localStorage
+  // Persist collapse state to brand-scoped localStorage keys
   useEffect(() => {
-    localStorage.setItem('supply-library-categories', JSON.stringify([...collapsedCategories]));
-  }, [collapsedCategories]);
+    if (!selectedBrand) return;
+    localStorage.setItem(`supply-library-categories::${selectedBrand}`, JSON.stringify([...collapsedCategories]));
+  }, [collapsedCategories, selectedBrand]);
   useEffect(() => {
-    localStorage.setItem('supply-library-sublines', JSON.stringify([...collapsedSubLines]));
-  }, [collapsedSubLines]);
+    if (!selectedBrand) return;
+    localStorage.setItem(`supply-library-sublines::${selectedBrand}`, JSON.stringify([...collapsedSubLines]));
+  }, [collapsedSubLines, selectedBrand]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
@@ -548,7 +540,7 @@ export function SupplyLibraryTab() {
                 <PlatformButton
                   variant="ghost"
                   size="icon-sm"
-                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); }}
+                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </PlatformButton>
@@ -562,7 +554,7 @@ export function SupplyLibraryTab() {
                   <>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); }}
+                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
                         className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
                       >
                         Supply Library
@@ -669,7 +661,7 @@ export function SupplyLibraryTab() {
                       variant="interactive"
                       size="md"
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
-                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); localStorage.removeItem('supply-library-categories'); localStorage.removeItem('supply-library-sublines'); }}
+                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(`supply-library-categories::${b.brand}`); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(`supply-library-sublines::${b.brand}`); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
                       <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
