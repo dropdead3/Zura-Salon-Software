@@ -121,81 +121,81 @@ function BrandCardGrid({
       </div>
 
       {/* Brand cards */}
-      <ScrollArea className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-6 pt-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {filtered.map((b) => {
-                  const allAdded = b.addedCount >= b.totalProducts && b.totalProducts > 0;
-                  return (
-                    <button
-                      key={b.brand}
-                      onClick={() => onSelectBrand(b.brand)}
-                      className={cn(
-                        'group relative flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all',
-                        allAdded
-                          ? 'border-primary/20 bg-primary/5'
-                          : 'border-border/40 bg-card/50 hover:border-border hover:shadow-sm hover:bg-muted/30',
-                      )}
-                    >
-                      {/* Logo or initial */}
-                      <div className="h-10 flex items-center justify-center">
-                        {b.logoUrl ? (
-                          <ColoredLogo logoUrl={b.logoUrl} size={36} alt={b.brand} />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-muted/60 flex items-center justify-center text-sm font-display text-muted-foreground">
-                            {b.brand[0]}
-                          </div>
-                        )}
+              const allAdded = b.addedCount >= b.totalProducts && b.totalProducts > 0;
+              return (
+                <button
+                  key={b.brand}
+                  onClick={() => onSelectBrand(b.brand)}
+                  className={cn(
+                    'group relative flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all',
+                    allAdded
+                      ? 'border-primary/20 bg-primary/5'
+                      : 'border-border/40 bg-card/50 hover:border-border hover:shadow-sm hover:bg-muted/30',
+                  )}
+                >
+                  {/* Logo or initial */}
+                  <div className="h-10 flex items-center justify-center">
+                    {b.logoUrl ? (
+                      <ColoredLogo logoUrl={b.logoUrl} size={36} alt={b.brand} />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-muted/60 flex items-center justify-center text-sm font-display text-muted-foreground">
+                        {b.brand[0]}
                       </div>
+                    )}
+                  </div>
 
-                      {/* Brand name */}
-                      <span className="text-sm font-display font-medium text-foreground leading-tight line-clamp-2 tracking-wide">
-                        {b.brand}
+                  {/* Brand name */}
+                  <span className="text-sm font-display font-medium text-foreground leading-tight line-clamp-2 tracking-wide">
+                    {b.brand}
+                  </span>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-1.5">
+                    {b.addedCount > 0 ? (
+                      <Badge
+                        variant={allAdded ? 'default' : 'secondary'}
+                        className={cn(
+                          'text-[10px] h-5 px-1.5',
+                          allAdded && 'bg-primary/15 text-primary border-primary/20',
+                        )}
+                      >
+                        {allAdded ? (
+                          <><Check className="w-3 h-3 mr-0.5" /> All added</>
+                        ) : (
+                          `${b.addedCount}/${b.totalProducts} added`
+                        )}
+                      </Badge>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">
+                        {b.totalProducts} products
                       </span>
+                    )}
+                  </div>
 
-                      {/* Stats */}
-                      <div className="flex items-center gap-1.5">
-                        {b.addedCount > 0 ? (
-                          <Badge
-                            variant={allAdded ? 'default' : 'secondary'}
-                            className={cn(
-                              'text-[10px] h-5 px-1.5',
-                              allAdded && 'bg-primary/15 text-primary border-primary/20',
-                            )}
-                          >
-                            {allAdded ? (
-                              <><Check className="w-3 h-3 mr-0.5" /> All added</>
-                            ) : (
-                              `${b.addedCount}/${b.totalProducts} added`
-                            )}
-                          </Badge>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">
-                            {b.totalProducts} products
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Category pills */}
-                      {b.categories.length > 0 && (
-                        <div className="flex flex-wrap gap-1 justify-center">
-                          {b.categories.slice(0, 3).map((cat) => (
-                            <span
-                              key={cat}
-                              className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground capitalize"
-                            >
-                              {SUPPLY_CATEGORY_LABELS[cat] || cat}
-                            </span>
-                          ))}
-                          {b.categories.length > 3 && (
-                            <span className="text-[9px] text-muted-foreground">
-                              +{b.categories.length - 3}
-                            </span>
-                          )}
-                        </div>
+                  {/* Category pills */}
+                  {b.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1 justify-center">
+                      {b.categories.slice(0, 3).map((cat) => (
+                        <span
+                          key={cat}
+                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground capitalize"
+                        >
+                          {SUPPLY_CATEGORY_LABELS[cat] || cat}
+                        </span>
+                      ))}
+                      {b.categories.length > 3 && (
+                        <span className="text-[9px] text-muted-foreground">
+                          +{b.categories.length - 3}
+                        </span>
                       )}
-                    </button>
-                  );
+                    </div>
+                  )}
+                </button>
+              );
             })}
           </div>
         </div>
@@ -210,7 +210,7 @@ function BrandCardGrid({
             <span>Missing a brand? Suggest one</span>
           </button>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
