@@ -109,6 +109,10 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bgreige\b/i, 'ash'],
   [/\bmushroom\b/i, 'ash'],
   [/\bsteel\s*beige\b/i, 'ash'],
+  [/\bpearl\b/i, 'ash'],
+  [/\bmatte\b/i, 'ash'],
+  [/\btitanium\b/i, 'ash'],
+  [/\bdriftwood\b/i, 'ash'],
   [/\bgold\b/i, 'gold'],
   [/\bbeige\b/i, 'gold'],
   [/\bhoney\b/i, 'gold'],
@@ -123,12 +127,16 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\btitian\b/i, 'copper'],
   [/\brusset\b/i, 'copper'],
   [/\bburnt\s*sienna\b/i, 'copper'],
+  [/\bflamme\b/i, 'copper'],
+  [/\bpaprika\b/i, 'copper'],
   [/\bmahogany\b/i, 'red'],
   [/\bred\b/i, 'red'],
   [/\bburgundy\b/i, 'red'],
   [/\bwine\b/i, 'red'],
   [/\bcherry\b/i, 'red'],
   [/\bstrawberry\b/i, 'red'],
+  [/\bbonfire\b/i, 'red'],
+  [/\bcayenne\b/i, 'red'],
   [/\baubergine\b/i, 'violet'],
   [/\bviolet\b/i, 'violet'],
   [/\bpurple\b/i, 'violet'],
@@ -149,6 +157,15 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bcaramel\b/i, 'natural'],
   [/\bchocolate\b/i, 'natural'],
   [/\bchestnut\b/i, 'natural'],
+  // Redken-specific warm brown keywords
+  [/\bchicory\b/i, 'warm_brown'],
+  [/\bmaple\b/i, 'warm_brown'],
+  [/\bmocha\s*java\b/i, 'warm_brown'],
+  [/\bcardamom\b/i, 'warm_brown'],
+  [/\bcedar\b/i, 'warm_brown'],
+  [/\bsandal\b/i, 'warm_brown'],
+  // Rose (standalone, not "rose gold") → red_violet
+  [/\brose\b/i, 'red_violet'],
 ];
 
 /**
