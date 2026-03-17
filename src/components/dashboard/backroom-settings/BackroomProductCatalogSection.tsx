@@ -755,7 +755,7 @@ function BrandFinder({
             <ScrollArea className="flex-1">
               <div className="p-1.5 space-y-0.5">
                 {productLines.length === 0 ? (
-                  <p className="px-3 py-4 font-sans text-xs text-[hsl(var(--platform-foreground-muted))] text-center">No product lines</p>
+                  <p className="px-3 py-4 font-sans text-xs text-muted-foreground text-center">No product lines</p>
                 ) : (
                   productLines.map((item) => {
                     const isActive = item.key === selectedLine;
