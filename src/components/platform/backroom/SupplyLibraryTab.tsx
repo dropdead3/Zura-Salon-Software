@@ -954,6 +954,33 @@ export function SupplyLibraryTab() {
                                 {SUPPLY_CATEGORY_LABELS[category] || category}
                               </span>
                               <PlatformBadge variant="default" size="sm">{products.length}</PlatformBadge>
+                              {SHADE_SORTED_CATEGORIES.has(category) && products.some((p) => !(p as any).swatch_color) && (
+                                <PlatformButton
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-[10px] font-sans text-violet-400 hover:text-violet-300"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const unassigned = products.filter((p) => !(p as any).swatch_color);
+                                    const updates = unassigned
+                                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
+                                      .filter((u) => u.hex !== null);
+                                    if (!updates.length) { toast.info('No suggestions available'); return; }
+                                    let saved = 0;
+                                    for (const u of updates) {
+                                      const { error } = await supabase
+                                        .from('supply_library_products')
+                                        .update({ swatch_color: u.hex } as any)
+                                        .eq('id', u.id);
+                                      if (!error) saved++;
+                                    }
+                                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                                    toast.success(`Auto-assigned ${saved} swatches`);
+                                  }}
+                                >
+                                  Auto-assign swatches
+                                </PlatformButton>
+                              )}
                             </div>
                             <ChevronDown className={cn(
                               'w-4 h-4 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
