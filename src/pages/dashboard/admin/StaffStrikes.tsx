@@ -52,6 +52,7 @@ import {
   Pencil,
   ArrowLeft,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   useStaffStrikes,
   useResolveStrike,
