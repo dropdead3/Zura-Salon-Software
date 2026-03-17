@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { GripVertical, Plus, Trash2, Loader2, Sparkles, Edit2, Check, X } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   useAllSpecialtyOptions,
   useAddSpecialtyOption,
