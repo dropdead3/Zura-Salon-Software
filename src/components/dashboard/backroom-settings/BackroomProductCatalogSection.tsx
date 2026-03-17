@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/backroom/useBackroomInventoryTable';
+import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings } from '@/hooks/backroom/useLocationProductSettings';
+import { useLocations } from '@/hooks/useLocations';
 import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -41,7 +43,7 @@ import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/compon
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
-import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw, MapPin } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
@@ -165,6 +167,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const orgId = useBackroomOrgId();
   const queryClient = useQueryClient();
 
+  // Location state — defaults to first location
+  const { data: locations = [] } = useLocations();
+  const activeLocations = useMemo(() => locations.filter((l) => l.is_active), [locations]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | undefined>(undefined);
+  // Auto-select first location when locations load
+  const effectiveLocationId = selectedLocationId || activeLocations[0]?.id;
+
+  // Per-location product settings
+  const { settingsMap: locationSettings } = useLocationProductSettingsMap(effectiveLocationId);
+  const upsertSetting = useUpsertLocationProductSetting();
+  const bulkUpsertSettings = useBulkUpsertLocationProductSettings();
+
   // UI state
   const [search, setSearch] = useState('');
   const [catalogView, setCatalogView] = useState<CatalogView>('brands');
@@ -193,7 +207,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   // Data — deferred fetching for performance
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: libraryItems = [] } = useSupplyLibraryItemsByBrand(selectedBrand);
-  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory' });
+  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory', locationId: effectiveLocationId });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
@@ -230,17 +244,24 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   const bulkTrackMutation = useMutation({
     mutationFn: async ({ ids, tracked }: { ids: string[]; tracked: boolean }) => {
-      if (ids.length === 0) return;
+      if (ids.length === 0 || !effectiveLocationId) return;
+      // Use location_product_settings
+      const rows = ids.map((productId) => ({
+        organization_id: orgId!,
+        location_id: effectiveLocationId,
+        product_id: productId,
+        is_tracked: tracked,
+      }));
       const { error } = await supabase
-        .from('products')
-        .update({ is_backroom_tracked: tracked, updated_at: new Date().toISOString() })
-        .in('id', ids);
+        .from('location_product_settings')
+        .upsert(rows as any[], { onConflict: 'location_id,product_id' });
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
       toast.success(`${vars.tracked ? 'Enabled' : 'Disabled'} tracking for ${vars.ids.length} products`);
     },
     onError: (error) => toast.error('Bulk update failed: ' + error.message),
@@ -351,7 +372,11 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   /* ====== Derived data ====== */
   const allProducts = products || [];
-  const trackedCount = allProducts.filter((p) => p.is_backroom_tracked).length;
+  // Helper: is a product tracked at the current location?
+  const isTrackedAtLocation = useCallback((productId: string) => {
+    return locationSettings.get(productId)?.is_tracked ?? false;
+  }, [locationSettings]);
+  const trackedCount = allProducts.filter((p) => isTrackedAtLocation(p.id)).length;
 
   // Brand grouping for card grid
   const brandGroups = useMemo(() => {
@@ -435,7 +460,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       const cat = p.category || 'uncategorized';
       const cur = catMap.get(cat) || { total: 0, tracked: 0, missingPrice: 0 };
       cur.total++;
-      if (p.is_backroom_tracked) cur.tracked++;
+      if (isTrackedAtLocation(p.id)) cur.tracked++;
       if (p.cost_price == null) cur.missingPrice++;
       catMap.set(cat, cur);
     });
@@ -450,7 +475,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           health: ratio === 0 ? 'green' as const : ratio < 0.5 ? 'amber' as const : 'red' as const,
         };
       });
-  }, [brandProducts]);
+  }, [brandProducts, isTrackedAtLocation]);
 
   // Product lines for selected category
   const categoryProducts = useMemo(() => {
@@ -539,8 +564,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       : 'All';
 
   // Category + line tracking states
-  const categoryAllTracked = categoryProducts.length > 0 && categoryProducts.every((p) => p.is_backroom_tracked);
-  const lineAllTracked = lineProducts.length > 0 && lineProducts.every((p) => p.is_backroom_tracked);
+  const categoryAllTracked = categoryProducts.length > 0 && categoryProducts.every((p) => isTrackedAtLocation(p.id));
+  const lineAllTracked = lineProducts.length > 0 && lineProducts.every((p) => isTrackedAtLocation(p.id));
 
   // Inventory table
   const filteredInventory = useMemo(() => {
@@ -567,8 +592,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   }, [inventoryRows]);
 
   const bulkProductIds = useMemo(() => {
-    return allProducts.filter((p) => p.is_backroom_tracked).map((p) => p.id);
-  }, [allProducts]);
+    return allProducts.filter((p) => isTrackedAtLocation(p.id)).map((p) => p.id);
+  }, [allProducts, isTrackedAtLocation]);
 
   /* ====== Navigation ====== */
   const goBack = () => {
@@ -639,6 +664,25 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
+              {/* Location picker */}
+              {activeLocations.length > 0 && !selectedBrand && (
+                <Select
+                  value={effectiveLocationId || ''}
+                  onValueChange={(v) => setSelectedLocationId(v)}
+                >
+                  <SelectTrigger className="w-[180px] font-sans h-8 text-xs">
+                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeLocations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id} className="text-xs">
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {/* View toggle */}
               {hasProducts && !selectedBrand && (
                 <div className="flex items-center rounded-lg border overflow-hidden">
@@ -904,11 +948,15 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                   : null;
                                 const isGhostRetail = isGhostCost || isGhostMarkup;
                                 return (
-                                  <TableRow key={p.id} className={cn(!p.is_backroom_tracked && 'opacity-50')}>
+                                  <TableRow key={p.id} className={cn(!isTrackedAtLocation(p.id) && 'opacity-50')}>
                                     <TableCell className="w-8 pr-0">
                                       <Switch
-                                        checked={p.is_backroom_tracked}
-                                        onCheckedChange={(checked) => updateMutation.mutate({ id: p.id, updates: { is_backroom_tracked: checked } })}
+                                        checked={isTrackedAtLocation(p.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (effectiveLocationId) {
+                                            upsertSetting.mutate({ locationId: effectiveLocationId, productId: p.id, is_tracked: checked });
+                                          }
+                                        }}
                                         className="scale-[0.6]"
                                       />
                                     </TableCell>
@@ -997,7 +1045,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
 
               {/* Next step */}
-              {onNavigate && brandProductsAll.filter((p) => p.is_backroom_tracked).length > 0 && (
+              {onNavigate && brandProductsAll.filter((p) => isTrackedAtLocation(p.id)).length > 0 && (
                 <div className="flex justify-end pt-2 border-t">
                   <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
                     Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
@@ -1114,7 +1162,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {filteredBrands.map((brandName) => {
                     const brandProds = brandGroups.get(brandName) || [];
-                    const tracked = brandProds.filter((p) => p.is_backroom_tracked).length;
+                    const tracked = brandProds.filter((p) => isTrackedAtLocation(p.id)).length;
                     const meta = brandMetaMap.get(brandName.toLowerCase());
                     const missingPrice = brandProds.filter((p) => p.cost_price == null).length;
                     const isComplete = missingPrice === 0;
