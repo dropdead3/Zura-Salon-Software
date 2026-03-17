@@ -29,16 +29,35 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
   const queryClient = useQueryClient();
   const [wholesalePrice, setWholesalePrice] = useState('');
   const [markupPct, setMarkupPct] = useState('');
+  const [retailPrice, setRetailPrice] = useState('');
   const [containerSize, setContainerSize] = useState('');
 
-  const retailPreview = useMemo(() => {
-    const wp = parseFloat(wholesalePrice);
-    const mp = parseFloat(markupPct);
-    if (!isNaN(wp) && wp > 0 && !isNaN(mp) && mp >= 0) {
-      return (wp * (1 + mp / 100)).toFixed(2);
+  const handleWholesaleChange = (val: string) => {
+    setWholesalePrice(val);
+    const wp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0) {
+      const mp = parseFloat(markupPct);
+      if (!isNaN(mp)) setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
     }
-    return null;
-  }, [wholesalePrice, markupPct]);
+  };
+
+  const handleMarkupChange = (val: string) => {
+    setMarkupPct(val);
+    const wp = parseFloat(wholesalePrice);
+    const mp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(mp)) {
+      setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
+    }
+  };
+
+  const handleRetailChange = (val: string) => {
+    setRetailPrice(val);
+    const wp = parseFloat(wholesalePrice);
+    const rp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(rp) && rp >= 0) {
+      setMarkupPct(String(Math.round(((rp / wp) - 1) * 10000) / 100));
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
