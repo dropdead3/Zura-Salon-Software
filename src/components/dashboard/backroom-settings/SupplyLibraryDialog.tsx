@@ -60,7 +60,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     const s = new Set<string>();
     existingProducts.forEach((p) => {
       if (p.brand && p.name) {
-        s.add(`${p.brand}::${p.name}`);
+        s.add(`${p.brand.toLowerCase()}::${p.name.toLowerCase()}`);
       }
     });
     return s;
