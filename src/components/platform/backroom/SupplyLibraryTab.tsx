@@ -385,8 +385,43 @@ export function SupplyLibraryTab() {
                   icon={<Search className="w-4 h-4" />}
                   placeholder="Search brands..."
                   value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
+                  onChange={(e) => { setBrandSearch(e.target.value); setActiveLetter(null); }}
                 />
+              </div>
+
+              {/* ─── A-Z Alphabet Selector ─── */}
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setActiveLetter(null)}
+                  className={cn(
+                    'h-8 px-2.5 rounded-lg font-sans text-xs transition-colors',
+                    !activeLetter
+                      ? 'bg-violet-600 text-white'
+                      : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]'
+                  )}
+                >
+                  All
+                </button>
+                {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => {
+                  const hasBrands = availableLetters.has(letter);
+                  const isActive = activeLetter === letter;
+                  return (
+                    <button
+                      key={letter}
+                      onClick={() => hasBrands && setActiveLetter(isActive ? null : letter)}
+                      className={cn(
+                        'h-8 w-8 rounded-lg font-sans text-xs transition-colors',
+                        isActive
+                          ? 'bg-violet-600 text-white'
+                          : hasBrands
+                            ? 'text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]'
+                            : 'text-[hsl(var(--platform-foreground-muted))] opacity-40 cursor-default'
+                      )}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
               </div>
 
               {allLoading ? (
