@@ -364,35 +364,45 @@ export default function BillingGuide() {
 
         {/* Changelog */}
         <PlatformCard variant="glass" id="changelog">
-          <PlatformCardHeader>
-            <div className="flex items-center gap-3">
-              <div className={tokens.card.iconBox}>
-                <Clock className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <PlatformCardTitle className={tokens.card.title}>Changelog</PlatformCardTitle>
-                <PlatformCardDescription>History of billing logic and pricing changes.</PlatformCardDescription>
-              </div>
-            </div>
-          </PlatformCardHeader>
-          <PlatformCardContent>
-            <div className="space-y-0">
-              {BILLING_CHANGELOG.map((entry, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'flex gap-4 py-3 text-sm',
-                    i < BILLING_CHANGELOG.length - 1 && 'border-b border-[hsl(var(--platform-border)/0.3)]'
-                  )}
-                >
-                  <span className="flex-shrink-0 font-display text-xs tracking-wide text-[hsl(var(--platform-foreground-muted))] w-24">
-                    {entry.date}
-                  </span>
-                  <span className="text-[hsl(var(--platform-foreground)/0.85)]">{entry.description}</span>
+          <button
+            onClick={() => setChangelogOpen(!changelogOpen)}
+            className="w-full text-left"
+          >
+            <PlatformCardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={tokens.card.iconBox}>
+                    <Clock className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <PlatformCardTitle className={tokens.card.title}>Changelog</PlatformCardTitle>
+                    <PlatformCardDescription>History of billing logic and pricing changes.</PlatformCardDescription>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </PlatformCardContent>
+                <ChevronDown className={`w-5 h-5 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200 ${changelogOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </PlatformCardHeader>
+          </button>
+          {changelogOpen && (
+            <PlatformCardContent>
+              <div className="space-y-0">
+                {BILLING_CHANGELOG.map((entry, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex gap-4 py-3 text-sm',
+                      i < BILLING_CHANGELOG.length - 1 && 'border-b border-[hsl(var(--platform-border)/0.3)]'
+                    )}
+                  >
+                    <span className="flex-shrink-0 font-display text-xs tracking-wide text-[hsl(var(--platform-foreground-muted))] w-24">
+                      {entry.date}
+                    </span>
+                    <span className="text-[hsl(var(--platform-foreground)/0.85)]">{entry.description}</span>
+                  </div>
+                ))}
+              </div>
+            </PlatformCardContent>
+          )}
         </PlatformCard>
       </div>
     </PlatformPageContainer>
