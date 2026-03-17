@@ -30,7 +30,7 @@ interface ZuraLoaderProps {
   platformColors?: boolean;
 }
 
-export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
+export function ZuraLoader({ size = 'md', className, platformColors = false }: ZuraLoaderProps) {
   const [mounted, setMounted] = useState(false);
   const { cell, gap } = SIZES[size];
 
