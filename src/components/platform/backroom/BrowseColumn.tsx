@@ -84,26 +84,26 @@ export function BrowseColumn({
   return (
     <div
       className={cn(
-        'flex flex-col border-r border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-card)/0.3)]',
+        'flex flex-col border-r border-border/30 bg-card/30',
         className,
       )}
     >
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-[hsl(var(--platform-bg-card)/0.6)] backdrop-blur-sm border-b border-[hsl(var(--platform-border)/0.2)]">
-        <span className="font-display text-[10px] tracking-wider text-[hsl(var(--platform-foreground-muted))] uppercase">
+      <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20">
+        <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
           {title} ({filtered.length})
         </span>
 
 
         {items.length >= searchThreshold && (
           <div className="relative mt-1.5">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[hsl(var(--platform-foreground-subtle))]" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/50" />
             <input
               type="text"
               placeholder="Filter…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full h-7 pl-7 pr-2 rounded-lg border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-input))] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))] font-sans text-xs focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]"
+              className="w-full h-7 pl-7 pr-2 rounded-lg border border-border/40 bg-background text-foreground placeholder:text-muted-foreground/50 font-sans text-xs focus:outline-none focus:border-primary/50"
             />
           </div>
         )}
