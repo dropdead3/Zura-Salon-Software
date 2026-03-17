@@ -27,7 +27,7 @@ import {
   useSeedSupplyLibrary,
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
-import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
+import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
@@ -645,6 +645,12 @@ export function SupplyLibraryTab() {
                       </span>
                       <PlatformBadge variant="primary" size="sm">
                         {b.productCount} products
+                      </PlatformBadge>
+                      <PlatformBadge
+                        variant={getBrandCoverage(b.brand) === 'complete' ? 'success' : 'warning'}
+                        size="sm"
+                      >
+                        {getBrandCoverage(b.brand) === 'complete' ? 'Complete' : 'Partial'}
                       </PlatformBadge>
                       <p className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight">
                         {b.categorySummary.slice(0, 3).map((cs) =>
