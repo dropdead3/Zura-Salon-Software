@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, Clock, Send, Loader2, CheckCircle, XCircle, AlertCircle, MapPin, ChevronDown } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { 
