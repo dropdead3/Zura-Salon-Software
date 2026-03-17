@@ -86,7 +86,7 @@ function BrandCardGrid({
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* A-Z bar */}
       <div className="px-6 pt-2 pb-1 flex flex-wrap gap-0.5 justify-center">
         {ALPHABET.map((letter) => {
@@ -572,7 +572,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         </DialogHeader>
 
         {/* Content area — Level 0 (brand grid) or Level 1 (product selection) */}
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {!selectedBrand ? (
             <BrandCardGrid
               brands={brandCardData}
