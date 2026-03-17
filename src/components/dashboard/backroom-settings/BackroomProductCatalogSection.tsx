@@ -776,7 +776,7 @@ function BrandFinder({
                           )} />
                         )}
                         <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
-                        <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground-subtle))]')}>
+                        <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
                           {item.count}
                         </span>
                       </button>
