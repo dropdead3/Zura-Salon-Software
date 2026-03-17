@@ -1072,6 +1072,42 @@ function AddEditDialog({
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
   const [wholesalePrice, setWholesalePrice] = useState(product?.wholesale_price != null ? String(product.wholesale_price) : '');
   const [markupPct, setMarkupPct] = useState(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
+  const [retailPrice, setRetailPrice] = useState(() => {
+    const wp = product?.wholesale_price;
+    const mp = product?.default_markup_pct;
+    if (wp != null && mp != null) return String(Math.round(wp * (1 + mp / 100) * 100) / 100);
+    return '';
+  });
+  const [lastEdited, setLastEdited] = useState<'markup' | 'retail' | null>(null);
+
+  const handleWholesaleChange = (val: string) => {
+    setWholesalePrice(val);
+    const wp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0) {
+      const mp = parseFloat(markupPct);
+      if (!isNaN(mp)) setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
+    }
+  };
+
+  const handleMarkupChange = (val: string) => {
+    setMarkupPct(val);
+    setLastEdited('markup');
+    const wp = parseFloat(wholesalePrice);
+    const mp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(mp)) {
+      setRetailPrice(String(Math.round(wp * (1 + mp / 100) * 100) / 100));
+    }
+  };
+
+  const handleRetailChange = (val: string) => {
+    setRetailPrice(val);
+    setLastEdited('retail');
+    const wp = parseFloat(wholesalePrice);
+    const rp = parseFloat(val);
+    if (!isNaN(wp) && wp > 0 && !isNaN(rp) && rp >= 0) {
+      setMarkupPct(String(Math.round(((rp / wp) - 1) * 10000) / 100));
+    }
+  };
 
   const resetForm = () => {
     setBrand(product?.brand || '');
