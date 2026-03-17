@@ -630,9 +630,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 setSelectedBrand(brand);
                 const savedCat = localStorage.getItem(columnKey('cat', brand));
                 const savedLine = localStorage.getItem(columnKey('line', brand));
+                const savedSearch = localStorage.getItem(columnKey('search', brand));
                 setSelectedCategory(savedCat);
                 setSelectedLine(savedLine);
-                setSearch('');
+                setSearch(savedSearch ?? '');
               }}
               onShowSuggest={() => setShowSuggest(true)}
             />
