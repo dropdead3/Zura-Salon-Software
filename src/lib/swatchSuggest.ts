@@ -294,7 +294,7 @@ function guessColorFromName(name: string): string | null {
     [/\belectric\s*blue\b/, '#0050FF'],      // vivid blue
     [/\bmagenta\b/, '#FF1493'],              // vivid pink
     [/\bfuchsia\b/, '#FF1493'],              // vivid pink
-    [/\bteal\b/, '#2A4A6B'],                 // blue 6
+    [/\bteal\b/, '#2A6060'],                 // palette Teal
     [/\bpurple\b/, '#8B00FF'],               // vivid purple
     [/\borange\b/, '#FF6600'],               // vivid orange
     [/\byellow\b/, '#FFD700'],               // vivid yellow
