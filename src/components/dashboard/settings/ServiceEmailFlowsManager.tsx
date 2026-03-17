@@ -371,9 +371,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader className="py-8" size="md" />
           ) : !steps || steps.length === 0 ? (
             <div className="text-center py-8">
               <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
