@@ -294,6 +294,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
       ...rest,
       default_tax_rate: taxRateValue,
     });
+    setInitialFormData(formData);
     onOpenChange(false);
   };
 
