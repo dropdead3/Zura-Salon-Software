@@ -739,8 +739,8 @@ function BrandFinder({
         {selectedCategory ? (
           <div className="flex flex-col flex-1 min-w-0 border-r border-border/30">
             {/* Track All Category header */}
-            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-[hsl(var(--platform-bg-card)/0.6)] backdrop-blur-sm border-b border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
-              <span className="font-display text-[10px] tracking-wider text-[hsl(var(--platform-foreground-muted))] uppercase">
+            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20 flex items-center justify-between">
+              <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
                 Product Lines ({productLines.length})
               </span>
               <div className="flex items-center gap-1.5">
