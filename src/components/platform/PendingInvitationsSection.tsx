@@ -8,6 +8,7 @@ import { type PlatformRole } from '@/hooks/usePlatformRoles';
 import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import { toast } from '@/components/ui/use-toast';
 import { Mail, RefreshCw, X, Loader2, Shield, Headphones, Code, Clock } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformBadge } from './ui/PlatformBadge';
 import {
@@ -67,7 +68,7 @@ export function PendingInvitationsSection() {
     return (
       <PlatformCard variant="glass">
         <PlatformCardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+          <ZuraLoader size="xl" platformColors />
         </PlatformCardContent>
       </PlatformCard>
     );

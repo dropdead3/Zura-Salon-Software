@@ -12,6 +12,7 @@ import {
   PlatformTableCell as TableCell,
 } from '@/components/platform/ui/PlatformTable';
 import { Loader2, Globe, Search, CheckCircle2, AlertTriangle, RotateCcw, Sparkles, Filter } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { useBrandWebsiteScrape, type ScrapedProduct } from '@/hooks/platform/useBrandWebsiteScrape';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -165,7 +166,7 @@ export function BrandWebsiteScraper({
 
     return (
       <div className="flex flex-col items-center gap-6 py-8">
-        <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+        <ZuraLoader size="xl" platformColors />
         <div className="space-y-3 w-full max-w-xs">
           {steps.map((step, i) => (
             <div key={step.key} className="flex items-center gap-3">

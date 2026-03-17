@@ -11,6 +11,7 @@ const SIZES = {
   sm: { cell: 'h-2 w-2 rounded-[2px]', gap: 'gap-0.5' },
   md: { cell: 'h-2.5 w-2.5 rounded-[3px]', gap: 'gap-0.5' },
   lg: { cell: 'h-3.5 w-3.5 rounded-[4px]', gap: 'gap-1' },
+  xl: { cell: 'h-[13px] w-[13px] rounded-[3px]', gap: 'gap-0.5' },
 } as const;
 
 const Z_GRID = [
@@ -26,9 +27,10 @@ const Z_GRID = [
 interface ZuraLoaderProps {
   size?: keyof typeof SIZES;
   className?: string;
+  platformColors?: boolean;
 }
 
-export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
+export function ZuraLoader({ size = 'md', className, platformColors = false }: ZuraLoaderProps) {
   const [mounted, setMounted] = useState(false);
   const { cell, gap } = SIZES[size];
 
@@ -61,7 +63,9 @@ export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
                 cell,
                 'border',
                 isLit
-                  ? 'bg-foreground/80 border-foreground/20 zura-shimmer'
+                  ? platformColors
+                    ? 'bg-violet-400/80 border-violet-500/20 zura-shimmer'
+                    : 'bg-foreground/80 border-foreground/20 zura-shimmer'
                   : 'bg-transparent border-border/30',
               )}
               style={

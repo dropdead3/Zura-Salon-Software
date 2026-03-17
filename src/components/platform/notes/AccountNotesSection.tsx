@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, Loader2 } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -78,7 +79,7 @@ export function AccountNotesSection({ organizationId, organizationName }: Accoun
         <PlatformCardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
+              <ZuraLoader size="xl" platformColors />
             </div>
           ) : notes && notes.length > 0 ? (
             <div className="space-y-3">

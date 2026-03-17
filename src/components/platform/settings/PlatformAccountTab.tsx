@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
 import { Camera, Loader2, Save, User, Crown, Shield, Headphones, Code } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import type { PlatformRole } from '@/hooks/usePlatformRoles';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -78,7 +79,7 @@ export function PlatformAccountTab() {
     return (
       <PlatformCard variant="glass">
         <PlatformCardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--platform-primary))]" />
+          <ZuraLoader size="xl" platformColors />
         </PlatformCardContent>
       </PlatformCard>
     );

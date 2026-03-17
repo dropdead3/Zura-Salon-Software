@@ -36,10 +36,10 @@ import {
   MoreHorizontal, 
   Trash2,
   UserPlus,
-  Loader2,
   Filter,
   Circle
 } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
 import { PendingInvitationsSection } from './PendingInvitationsSection';
 import {
@@ -133,7 +133,7 @@ export function PlatformTeamManager() {
     return (
       <PlatformCard variant="glass">
         <PlatformCardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
+          <ZuraLoader size="xl" platformColors />
         </PlatformCardContent>
       </PlatformCard>
     );
