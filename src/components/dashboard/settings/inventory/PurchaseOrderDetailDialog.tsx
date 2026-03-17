@@ -148,9 +148,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
 
         {/* Line Items */}
         {linesLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-8" />
         ) : (
           <div className="overflow-x-auto border rounded-lg">
             <Table>

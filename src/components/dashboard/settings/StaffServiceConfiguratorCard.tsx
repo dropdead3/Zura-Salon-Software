@@ -263,9 +263,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
 
         {/* Loading qualifications */}
         {selectedUserId && qualsLoading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="sm" className="py-8" />
         )}
 
         {/* Category accordions */}

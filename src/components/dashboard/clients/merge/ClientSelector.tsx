@@ -186,9 +186,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
         {/* Results */}
         <div className="max-h-[400px] overflow-y-auto space-y-1">
           {isLoading && (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="sm" className="py-8" />
           )}
           {!isLoading && search && filteredResults.length === 0 && (
             <p className="text-center py-8 text-muted-foreground text-sm">No clients found</p>

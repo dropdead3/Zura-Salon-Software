@@ -23,6 +23,7 @@ import {
   Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useRoles } from '@/hooks/useRoles';
 import { useDashboardVisibility, useBulkUpdateVisibility } from '@/hooks/useDashboardVisibility';
 import { getIconByName } from '@/lib/iconResolver';

@@ -149,9 +149,7 @@ export function RecipeBaselinesManager() {
           <>
             {/* Existing baselines */}
             {loadingBaselines ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="sm" className="py-4" />
             ) : baselines.length === 0 ? (
               <div className="py-4 text-center text-xs text-muted-foreground">
                 No baselines defined for this service yet
