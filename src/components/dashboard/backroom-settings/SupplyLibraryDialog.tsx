@@ -16,7 +16,7 @@ import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
-import { useSupplyLibraryItems } from '@/hooks/platform/useSupplyLibrary';
+import { useSupplyLibraryItemsByBrand, useSupplyLibraryBrandSummaries, type BrandSummaryRow } from '@/hooks/platform/useSupplyLibrary';
 import { useSupplyBrandsMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { ColoredLogo } from '@/components/dashboard/ColoredLogo';
 import { supabase } from '@/integrations/supabase/client';
