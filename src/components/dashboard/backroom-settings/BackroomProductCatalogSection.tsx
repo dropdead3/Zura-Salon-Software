@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/backroom/useBackroomInventoryTable';
+import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings } from '@/hooks/backroom/useLocationProductSettings';
+import { useLocations } from '@/hooks/useLocations';
 import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -41,7 +43,7 @@ import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/compon
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
-import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw, MapPin } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
