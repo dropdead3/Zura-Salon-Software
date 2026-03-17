@@ -581,6 +581,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               onSelectBrand={(brand) => { setSelectedBrand(brand); setSearch(''); }}
               onShowSuggest={() => setShowSuggest(true)}
             />
+          ) : brandItemsLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
           ) : (
             <ScrollArea className="flex-1 min-h-0">
               <div className="p-6 space-y-6">
