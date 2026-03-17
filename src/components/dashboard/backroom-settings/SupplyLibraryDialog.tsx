@@ -8,10 +8,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Search, Package, Check, Library, Loader2, MessageSquarePlus, Send,
+  Search, Check, Library, Loader2, MessageSquarePlus, Send,
   PackagePlus, ChevronLeft, ArrowLeft,
 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
+import { groupByProductLine } from '@/lib/supply-line-parser';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
@@ -181,6 +183,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [addingBrand, setAddingBrand] = useState<string | null>(null);
@@ -266,16 +270,52 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return brandItems.filter((p) => p.name.toLowerCase().includes(q));
   }, [selectedBrand, search, brandItems]);
 
-  // Group products by category
-  const productsByCategory = useMemo(() => {
-    const map = new Map<string, SupplyLibraryItem[]>();
+  // Category column items
+  const categoryItems = useMemo<BrowseColumnItem[]>(() => {
+    const map = new Map<string, number>();
     brandProducts.forEach((p) => {
       const cat = SUPPLY_CATEGORY_LABELS[p.category] || p.category;
-      if (!map.has(cat)) map.set(cat, []);
-      map.get(cat)!.push(p);
+      map.set(cat, (map.get(cat) || 0) + 1);
     });
-    return map;
+    return [...map.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([cat, count]) => ({ key: cat, label: cat, count }));
   }, [brandProducts]);
+
+  // Products for selected category
+  const categoryProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    return brandProducts.filter(
+      (p) => (SUPPLY_CATEGORY_LABELS[p.category] || p.category) === selectedCategory,
+    );
+  }, [brandProducts, selectedCategory]);
+
+  // Product line column items (from selected category)
+  const productLineItems = useMemo<BrowseColumnItem[]>(() => {
+    if (categoryProducts.length === 0) return [];
+    const { groups } = groupByProductLine(
+      categoryProducts.map((p) => ({ name: p.name })),
+      0, // always group
+    );
+    return groups.map(([line, items]) => ({
+      key: line,
+      label: line,
+      count: items.length,
+    }));
+  }, [categoryProducts]);
+
+  // Display products for Column 3
+  const displayProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    let items = categoryProducts;
+    if (selectedLine) {
+      items = items.filter((p) => {
+        const { groups } = groupByProductLine([{ name: p.name }], 0);
+        return groups.length > 0 && groups[0][0] === selectedLine;
+      });
+    }
+    return items;
+  }, [categoryProducts, selectedLine]);
 
   const toggleSize = (item: SupplyLibraryItem, size?: string) => {
     const key = sizedKey(item.brand, item.name, size);
@@ -460,6 +500,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   const handleBack = () => {
     setSelectedBrand(null);
+    setSelectedCategory(null);
+    setSelectedLine(null);
     setSearch('');
   };
 
@@ -540,7 +582,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               brands={brandCardData}
               search={search}
               onSearch={setSearch}
-              onSelectBrand={(brand) => { setSelectedBrand(brand); setSearch(''); }}
+              onSelectBrand={(brand) => { setSelectedBrand(brand); setSelectedCategory(null); setSelectedLine(null); setSearch(''); }}
               onShowSuggest={() => setShowSuggest(true)}
             />
           ) : brandItemsLoading ? (
@@ -548,121 +590,154 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="p-6 space-y-6">
-                {/* Select all bar */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-sans text-muted-foreground">
-                    {brandProducts.length} products
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleAllBrand}
-                    className="text-xs font-sans h-7"
-                  >
-                    {(() => {
-                      const allKeys: string[] = [];
-                      brandProducts.forEach((p) => {
-                        getItemKeys(p).forEach(({ key, size }) => {
-                          if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
-                        });
-                      });
-                      return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
-                        ? 'Deselect All'
-                        : 'Select All';
-                    })()}
-                  </Button>
-                </div>
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              {/* Column 1: Categories */}
+              <BrowseColumn
+                title="Category"
+                items={categoryItems}
+                selectedKey={selectedCategory}
+                onSelect={(key) => {
+                  setSelectedCategory(key);
+                  setSelectedLine(null);
+                }}
+                searchThreshold={8}
+                className="w-[180px] shrink-0"
+              />
 
-                {/* Products grouped by category */}
-                {[...productsByCategory.entries()].map(([category, items]) => (
-                  <div key={category}>
-                    <h4 className="text-xs font-display uppercase tracking-wider text-muted-foreground mb-3">
-                      {category}
-                    </h4>
-                    <div className="space-y-2">
-                      {items.map((item) => {
-                        const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
-                        const itemKeys = getItemKeys(item);
-                        const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
-                        const anySelected = itemKeys.some(({ key }) => selected.has(key));
+              {/* Column 2: Product Lines */}
+              {selectedCategory && (
+                <BrowseColumn
+                  title="Product Line"
+                  items={productLineItems}
+                  selectedKey={selectedLine}
+                  onSelect={setSelectedLine}
+                  searchThreshold={8}
+                  className="w-[200px] shrink-0"
+                />
+              )}
 
-                        return (
-                          <div
-                            key={`${item.brand}::${item.name}`}
-                            className={cn(
-                              'rounded-lg border p-4 transition-colors',
-                              allExisting
-                                ? 'border-border/30 bg-muted/20 opacity-60'
-                                : anySelected
-                                ? 'border-primary/40 bg-primary/5'
-                                : 'border-border/40 hover:border-border hover:bg-muted/30',
-                            )}
-                          >
-                            <div className="flex items-start gap-3">
-                              {!hasSizes && (
-                                <Checkbox
-                                  checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
-                                  disabled={allExisting}
-                                  onCheckedChange={() => toggleSize(item)}
-                                  className="shrink-0 mt-0.5"
-                                />
+              {/* Column 3: Products */}
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {!selectedCategory ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-xs font-sans text-muted-foreground">Select a category to browse products</p>
+                  </div>
+                ) : displayProducts.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-xs font-sans text-muted-foreground">No products found</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Select all bar */}
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-border/30 shrink-0">
+                      <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">
+                        {displayProducts.length} products
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleAllBrand}
+                        className="text-[10px] font-sans h-6 px-2"
+                      >
+                        {(() => {
+                          const allKeys: string[] = [];
+                          displayProducts.forEach((p) => {
+                            getItemKeys(p).forEach(({ key, size }) => {
+                              if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                            });
+                          });
+                          return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
+                            ? 'Deselect All'
+                            : 'Select All';
+                        })()}
+                      </Button>
+                    </div>
+
+                    {/* Product rows */}
+                    <ScrollArea className="flex-1 min-h-0">
+                      <div className="p-1.5 space-y-0.5">
+                        {displayProducts.map((item) => {
+                          const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
+                          const itemKeys = getItemKeys(item);
+                          const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
+                          const anySelected = itemKeys.some(({ key }) => selected.has(key));
+
+                          return (
+                            <div
+                              key={`${item.brand}::${item.name}`}
+                              className={cn(
+                                'rounded-lg px-3 py-2.5 transition-colors',
+                                allExisting
+                                  ? 'opacity-50'
+                                  : anySelected
+                                  ? 'bg-primary/5 border border-primary/30'
+                                  : 'hover:bg-muted/40 border border-transparent',
                               )}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-sans text-foreground">{item.name}</span>
-                                  {allExisting && (
-                                    <Badge variant="secondary" className="text-[10px] shrink-0">
-                                      <Check className="w-3 h-3 mr-0.5" /> Added
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
+                            >
+                              <div className="flex items-center gap-2.5">
+                                {!hasSizes && (
+                                  <Checkbox
+                                    checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
+                                    disabled={allExisting}
+                                    onCheckedChange={() => toggleSize(item)}
+                                    className="shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-sans font-medium text-foreground truncate">
+                                      {item.name}
+                                    </span>
+                                    {allExisting && (
+                                      <Badge variant="secondary" className="text-[9px] shrink-0 px-1.5 py-0">
+                                        <Check className="w-2.5 h-2.5 mr-0.5" /> Added
+                                      </Badge>
+                                    )}
+                                  </div>
                                   <span className="text-[10px] text-muted-foreground capitalize">
                                     {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
                                   </span>
                                 </div>
-
-                                {hasSizes && (
-                                  <div className="flex flex-wrap gap-2 mt-2.5">
-                                    {item.sizeOptions!.map((size) => {
-                                      const key = sizedKey(item.brand, item.name, size);
-                                      const sizeExisting = isExisting(item.brand, item.name, size);
-                                      const sizeSelected = selected.has(key);
-
-                                      return (
-                                        <button
-                                          key={size}
-                                          type="button"
-                                          disabled={sizeExisting}
-                                          onClick={() => toggleSize(item, size)}
-                                          className={cn(
-                                            'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
-                                            sizeExisting
-                                              ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
-                                              : sizeSelected
-                                              ? 'border-primary bg-primary/10 text-primary'
-                                              : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground',
-                                          )}
-                                        >
-                                          {(sizeExisting || sizeSelected) && <Check className="w-3 h-3" />}
-                                          {size}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
                               </div>
+
+                              {hasSizes && (
+                                <div className="flex flex-wrap gap-1.5 mt-2 pl-0">
+                                  {item.sizeOptions!.map((size) => {
+                                    const key = sizedKey(item.brand, item.name, size);
+                                    const sizeExisting = isExisting(item.brand, item.name, size);
+                                    const sizeSelected = selected.has(key);
+
+                                    return (
+                                      <button
+                                        key={size}
+                                        type="button"
+                                        disabled={sizeExisting}
+                                        onClick={() => toggleSize(item, size)}
+                                        className={cn(
+                                          'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans transition-colors border',
+                                          sizeExisting
+                                            ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
+                                            : sizeSelected
+                                            ? 'border-primary bg-primary/10 text-primary'
+                                            : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground',
+                                        )}
+                                      >
+                                        {(sizeExisting || sizeSelected) && <Check className="w-2.5 h-2.5" />}
+                                        {size}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </>
+                )}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </div>
 
