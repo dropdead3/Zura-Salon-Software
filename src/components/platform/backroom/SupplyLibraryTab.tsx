@@ -228,15 +228,8 @@ export function SupplyLibraryTab() {
       if (!groups.has(p.category)) groups.set(p.category, []);
       groups.get(p.category)!.push(p);
     });
-    // Sort categories by CATEGORIES order, then alphabetically for unknown
-    return Array.from(groups.entries()).sort((a, b) => {
-      const ai = CATEGORIES.indexOf(a[0]);
-      const bi = CATEGORIES.indexOf(b[0]);
-      if (ai !== -1 && bi !== -1) return ai - bi;
-      if (ai !== -1) return -1;
-      if (bi !== -1) return 1;
-      return a[0].localeCompare(b[0]);
-    });
+    // Sort categories alphabetically
+    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [brandProducts, categoryFilter, pricingFilter, recencyFilter]);
 
   const toggleCategory = (cat: string) => {
