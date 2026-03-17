@@ -737,7 +737,7 @@ function BrandFinder({
 
         {/* Column 2: Product Lines */}
         {selectedCategory ? (
-          <div className="flex flex-col flex-1 min-w-0 border-r border-[hsl(var(--platform-border)/0.3)]">
+          <div className="flex flex-col flex-1 min-w-0 border-r border-border/30">
             {/* Track All Category header */}
             <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-[hsl(var(--platform-bg-card)/0.6)] backdrop-blur-sm border-b border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
               <span className="font-display text-[10px] tracking-wider text-[hsl(var(--platform-foreground-muted))] uppercase">
