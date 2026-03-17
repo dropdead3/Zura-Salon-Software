@@ -678,6 +678,8 @@ function AddEditDialog({
   const [depletion, setDepletion] = useState(product?.default_depletion || 'weighed');
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
+  const [wholesalePrice, setWholesalePrice] = useState(product?.wholesale_price != null ? String(product.wholesale_price) : '');
+  const [recommendedRetail, setRecommendedRetail] = useState(product?.recommended_retail != null ? String(product.recommended_retail) : '');
 
   const resetForm = () => {
     setBrand(product?.brand || '');
@@ -686,6 +688,8 @@ function AddEditDialog({
     setDepletion(product?.default_depletion || 'weighed');
     setUnit(product?.default_unit || 'g');
     setSizes(product?.size_options?.join(', ') || '');
+    setWholesalePrice(product?.wholesale_price != null ? String(product.wholesale_price) : '');
+    setRecommendedRetail(product?.recommended_retail != null ? String(product.recommended_retail) : '');
   };
 
   const handleSave = async () => {
