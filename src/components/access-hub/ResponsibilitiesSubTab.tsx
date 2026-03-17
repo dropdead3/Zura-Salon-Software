@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2, Plus } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { RoleIconPicker } from '@/components/dashboard/RoleIconPicker';
 import { RoleColorPicker } from '@/components/dashboard/RoleColorPicker';
 import { ResponsibilityCard } from './ResponsibilityCard';
