@@ -167,6 +167,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const orgId = useBackroomOrgId();
   const queryClient = useQueryClient();
 
+  // Location state — defaults to first location
+  const { data: locations = [] } = useLocations();
+  const activeLocations = useMemo(() => locations.filter((l) => l.is_active), [locations]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | undefined>(undefined);
+  // Auto-select first location when locations load
+  const effectiveLocationId = selectedLocationId || activeLocations[0]?.id;
+
+  // Per-location product settings
+  const { settingsMap: locationSettings } = useLocationProductSettingsMap(effectiveLocationId);
+  const upsertSetting = useUpsertLocationProductSetting();
+  const bulkUpsertSettings = useBulkUpsertLocationProductSettings();
+
   // UI state
   const [search, setSearch] = useState('');
   const [catalogView, setCatalogView] = useState<CatalogView>('brands');
@@ -195,7 +207,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   // Data — deferred fetching for performance
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: libraryItems = [] } = useSupplyLibraryItemsByBrand(selectedBrand);
-  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory' });
+  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory', locationId: effectiveLocationId });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
