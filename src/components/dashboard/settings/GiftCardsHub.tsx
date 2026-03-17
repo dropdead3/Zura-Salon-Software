@@ -156,7 +156,7 @@ function ActiveCardsTab() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8"><DashboardLoader size="md" className="py-4" /></TableCell></TableRow>
             ) : filteredCards.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
