@@ -905,7 +905,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
       {product.is_backroom_tracked && (
         <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/20">
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">$/g</span>
+            <span className="text-[10px] text-muted-foreground">$/g</span>
             <input
               type="number"
               step="0.0001"
