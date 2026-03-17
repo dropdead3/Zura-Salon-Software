@@ -383,6 +383,7 @@ export function SupplyLibraryTab() {
         <TableCell className="w-[40px] pr-0">
           <SwatchPicker
             value={(p as any).swatch_color ?? null}
+            suggestedValue={!(p as any).swatch_color ? suggestSwatchColor(p.name) : undefined}
             onChange={(hex) => handleSwatchSave(p.id, hex)}
           />
         </TableCell>
