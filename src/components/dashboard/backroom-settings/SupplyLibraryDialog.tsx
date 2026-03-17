@@ -270,16 +270,52 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     return brandItems.filter((p) => p.name.toLowerCase().includes(q));
   }, [selectedBrand, search, brandItems]);
 
-  // Group products by category
-  const productsByCategory = useMemo(() => {
-    const map = new Map<string, SupplyLibraryItem[]>();
+  // Category column items
+  const categoryItems = useMemo<BrowseColumnItem[]>(() => {
+    const map = new Map<string, number>();
     brandProducts.forEach((p) => {
       const cat = SUPPLY_CATEGORY_LABELS[p.category] || p.category;
-      if (!map.has(cat)) map.set(cat, []);
-      map.get(cat)!.push(p);
+      map.set(cat, (map.get(cat) || 0) + 1);
     });
-    return map;
+    return [...map.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([cat, count]) => ({ key: cat, label: cat, count }));
   }, [brandProducts]);
+
+  // Products for selected category
+  const categoryProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    return brandProducts.filter(
+      (p) => (SUPPLY_CATEGORY_LABELS[p.category] || p.category) === selectedCategory,
+    );
+  }, [brandProducts, selectedCategory]);
+
+  // Product line column items (from selected category)
+  const productLineItems = useMemo<BrowseColumnItem[]>(() => {
+    if (categoryProducts.length === 0) return [];
+    const { groups } = groupByProductLine(
+      categoryProducts.map((p) => ({ name: p.name })),
+      0, // always group
+    );
+    return groups.map(([line, items]) => ({
+      key: line,
+      label: line,
+      count: items.length,
+    }));
+  }, [categoryProducts]);
+
+  // Display products for Column 3
+  const displayProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    let items = categoryProducts;
+    if (selectedLine) {
+      items = items.filter((p) => {
+        const { groups } = groupByProductLine([{ name: p.name }], 0);
+        return groups.length > 0 && groups[0][0] === selectedLine;
+      });
+    }
+    return items;
+  }, [categoryProducts, selectedLine]);
 
   const toggleSize = (item: SupplyLibraryItem, size?: string) => {
     const key = sizedKey(item.brand, item.name, size);
