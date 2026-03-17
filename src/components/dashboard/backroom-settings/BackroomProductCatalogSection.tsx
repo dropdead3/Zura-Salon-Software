@@ -305,6 +305,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       if (orgErr) throw orgErr;
 
       let updated = 0;
+      let skipped = 0;
+      const total = (orgProducts || []).length;
       for (const op of orgProducts || []) {
         const match = libraryData.find((lp: any) =>
           op.name.toLowerCase().startsWith(lp.name.toLowerCase())
@@ -315,17 +317,21 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
         if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
         if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
-        if (Object.keys(updates).length === 0) continue;
+        if (Object.keys(updates).length === 0) { skipped++; continue; }
         updates.updated_at = new Date().toISOString();
         await supabase.from('products').update(updates).eq('id', op.id);
         updated++;
       }
-      return updated;
+      return { updated, skipped, total };
     },
-    onSuccess: (count) => {
+    onSuccess: ({ updated, skipped, total }) => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      toast.success(`Synced ${count} products from library`);
+      if (updated > 0) {
+        toast.success(`Synced ${updated} of ${total} products from Zura Library. ${skipped} already up to date.`);
+      } else {
+        toast.success(`All ${total} products already up to date — nothing to sync.`);
+      }
     },
     onError: (error) => toast.error('Sync failed: ' + error.message),
   });
@@ -348,6 +354,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       if (orgErr) throw orgErr;
 
       let updated = 0;
+      let skipped = 0;
+      const total = (orgProducts || []).length;
       for (const op of orgProducts || []) {
         const match = (libraryData || []).find((lp: any) =>
           lp.brand?.toLowerCase() === op.brand?.toLowerCase() &&
@@ -359,17 +367,21 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
         if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
         if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
-        if (Object.keys(updates).length === 0) continue;
+        if (Object.keys(updates).length === 0) { skipped++; continue; }
         updates.updated_at = new Date().toISOString();
         await supabase.from('products').update(updates).eq('id', op.id);
         updated++;
       }
-      return updated;
+      return { updated, skipped, total };
     },
-    onSuccess: (count) => {
+    onSuccess: ({ updated, skipped, total }) => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      toast.success(`Synced ${count} products across all brands`);
+      if (updated > 0) {
+        toast.success(`Synced ${updated} of ${total} products from Zura Library. ${skipped} already up to date.`);
+      } else {
+        toast.success(`All ${total} products already up to date — nothing to sync.`);
+      }
     },
     onError: (error) => toast.error('Sync failed: ' + error.message),
   });
