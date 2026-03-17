@@ -26,6 +26,7 @@ import {
   useSupplyLibraryInitStatus,
   useSeedSupplyLibrary,
   useSyncSupplyLibrary,
+  useSupplyLibraryBrandSummaries,
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
@@ -134,8 +135,8 @@ export function SupplyLibraryTab() {
   const seedMutation = useSeedSupplyLibrary();
   const syncMutation = useSyncSupplyLibrary();
 
-  // Fetch all products (no brand filter) for building brand cards
-  const { data: allProducts = [], isLoading: allLoading } = useSupplyLibraryProducts();
+  // Fetch brand summaries (aggregated server-side, no 1000-row limit)
+  const { data: brandSummaryRows = [], isLoading: allLoading } = useSupplyLibraryBrandSummaries();
   // Fetch brand-specific products when drilled in
   const { data: brandProducts = [], isLoading: brandLoading } = useSupplyLibraryProducts({
     brand: selectedBrand || undefined,
@@ -153,14 +154,14 @@ export function SupplyLibraryTab() {
     return map;
   }, [brandsMeta]);
 
-  // Build brand card data from allProducts
+  // Build brand card data from server-side summaries
   const brandCards = useMemo<BrandCardData[]>(() => {
     const map = new Map<string, { count: number; cats: Map<string, number> }>();
-    allProducts.forEach((p) => {
-      if (!map.has(p.brand)) map.set(p.brand, { count: 0, cats: new Map() });
-      const entry = map.get(p.brand)!;
-      entry.count++;
-      entry.cats.set(p.category, (entry.cats.get(p.category) || 0) + 1);
+    brandSummaryRows.forEach((row) => {
+      if (!map.has(row.brand)) map.set(row.brand, { count: 0, cats: new Map() });
+      const entry = map.get(row.brand)!;
+      entry.count += row.cnt;
+      entry.cats.set(row.category, (entry.cats.get(row.category) || 0) + row.cnt);
     });
     const cards: BrandCardData[] = [];
     map.forEach((val, brand) => {
@@ -173,7 +174,7 @@ export function SupplyLibraryTab() {
       });
     });
     return cards.sort((a, b) => a.brand.localeCompare(b.brand));
-  }, [allProducts]);
+  }, [brandSummaryRows]);
 
   // Filter brand cards by search + active letter
   const filteredBrands = useMemo(() => {
@@ -318,7 +319,7 @@ export function SupplyLibraryTab() {
   };
 
   const handleExportCSV = () => {
-    const products = selectedBrand ? brandProducts : allProducts;
+    const products = brandProducts;
     const headers = ['brand', 'name', 'category', 'default_depletion', 'default_unit', 'size_options'];
     const rows = products.map((p) => [
       p.brand, p.name, p.category, p.default_depletion, p.default_unit,

@@ -247,3 +247,22 @@ export function useSupplyLibraryItems() {
     staleTime: 120_000,
   });
 }
+
+/** Fetch brand + category counts via server-side aggregation (no row-limit issue) */
+export interface BrandSummaryRow {
+  brand: string;
+  category: string;
+  cnt: number;
+}
+
+export function useSupplyLibraryBrandSummaries() {
+  return useQuery({
+    queryKey: ['supply-library-brand-summaries'],
+    queryFn: async (): Promise<BrandSummaryRow[]> => {
+      const { data, error } = await supabase.rpc('get_supply_library_brand_summaries');
+      if (error) throw error;
+      return (data || []) as BrandSummaryRow[];
+    },
+    staleTime: 120_000,
+  });
+}
