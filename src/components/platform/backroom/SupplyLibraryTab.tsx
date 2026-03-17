@@ -731,24 +731,41 @@ export function SupplyLibraryTab() {
                           </button>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)] mt-1.5">
-                            <Table>
-                              <TableHeader>
-                                <TableRow className="border-[hsl(var(--platform-border)/0.3)]">
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Name</TableHead>
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
-                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {products.map(renderProductRow)}
-                              </TableBody>
-                            </Table>
-                          </div>
+                          {(() => {
+                            const { shouldGroup, groups } = groupByProductLine(products);
+                            if (!shouldGroup) {
+                              return <div className="mt-1.5">{renderProductTable(products)}</div>;
+                            }
+                            return (
+                              <div className="mt-1.5 space-y-1.5 pl-3">
+                                {groups.map(([lineName, lineProducts]) => {
+                                  const subKey = `${category}::${lineName}`;
+                                  const isSubOpen = !collapsedSubLines.has(subKey);
+                                  return (
+                                    <Collapsible key={subKey} open={isSubOpen} onOpenChange={() => toggleSubLine(subKey)}>
+                                      <CollapsibleTrigger asChild>
+                                        <button className="flex items-center justify-between w-full px-3 py-1.5 rounded-md bg-[hsl(var(--platform-bg-hover)/0.3)] hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors">
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-sans text-xs font-medium text-[hsl(var(--platform-foreground-muted))]">
+                                              {lineName}
+                                            </span>
+                                            <PlatformBadge variant="default" size="sm">{lineProducts.length}</PlatformBadge>
+                                          </div>
+                                          <ChevronDown className={cn(
+                                            'w-3 h-3 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
+                                            isSubOpen && 'rotate-180'
+                                          )} />
+                                        </button>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent>
+                                        <div className="mt-1">{renderProductTable(lineProducts)}</div>
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
                         </CollapsibleContent>
                       </Collapsible>
                     );
