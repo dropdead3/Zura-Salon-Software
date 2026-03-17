@@ -623,7 +623,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               </span>
                             ))}
                             {cats.length > 3 && (
-                              <span className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-[hsl(var(--platform-bg-hover)/0.5)] text-[hsl(var(--platform-foreground-muted))]">
+                              <span className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">
                                 +{cats.length - 3}
                               </span>
                             )}
