@@ -235,26 +235,46 @@ export function SupplyLibraryTab() {
   };
 
   /** Renders a product table with given rows */
-  const renderProductTable = (products: SupplyLibraryProduct[]) => (
-    <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)]">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-[hsl(var(--platform-border)/0.3)]">
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Name</TableHead>
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
-            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map(renderProductRow)}
-        </TableBody>
-      </Table>
-    </div>
-  );
+  const handleSwatchSave = async (productId: string, hex: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('supply_library_products')
+        .update({ swatch_color: hex } as any)
+        .eq('id', productId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+    } catch (err: any) {
+      toast.error('Swatch update failed: ' + err.message);
+    }
+  };
+
+  const renderProductTable = (products: SupplyLibraryProduct[], category?: string) => {
+    const sorted = category && SHADE_SORTED_CATEGORIES.has(category)
+      ? sortByShadeLevel(products)
+      : products;
+    const showSwatch = !!category && SHADE_SORTED_CATEGORIES.has(category);
+    return (
+      <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)]">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-[hsl(var(--platform-border)/0.3)]">
+              {showSwatch && <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[40px]" />}
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Name</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
+              <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((p) => renderProductRow(p, showSwatch))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
 
   // ─── Handlers (unchanged) ──────────────────────
   const handleDelete = async () => {
