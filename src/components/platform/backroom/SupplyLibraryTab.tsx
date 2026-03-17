@@ -820,9 +820,10 @@ export function SupplyLibraryTab() {
             </>
           )}
 
-          {/* ─── Level 2: Brand Detail — Products by Category ─── */}
+          {/* ─── Level 2: Brand Detail — Column Browser ─── */}
           {selectedBrand && (
             <>
+              {/* Filter bar */}
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex-1 max-w-sm">
                   <PlatformInput
@@ -832,23 +833,6 @@ export function SupplyLibraryTab() {
                     onChange={(e) => setProductSearch(e.target.value)}
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-[160px] font-sans">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map((c) => {
-                      const count = brandProducts.filter((p) => p.category === c).length;
-                      if (count === 0) return null;
-                      return (
-                        <SelectItem key={c} value={c}>
-                          {SUPPLY_CATEGORY_LABELS[c] || c} ({count})
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                 </Select>
                 <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
                   <SelectTrigger className="w-[160px] font-sans">
                     <SelectValue placeholder="All Pricing" />
@@ -859,128 +843,6 @@ export function SupplyLibraryTab() {
                     <SelectItem value="priced">Priced</SelectItem>
                   </SelectContent>
                 </Select>
-                {/* Collapse All / Expand All toggle */}
-                <PlatformButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const allCatKeys = categoryGroups.map(([cat]) => cat);
-                    const allSubKeys: string[] = [];
-                    categoryGroups.forEach(([cat, products]) => {
-                      const { shouldGroup, groups } = groupByProductLine(products);
-                      if (shouldGroup) {
-                        groups.forEach(([lineName]) => allSubKeys.push(`${cat}::${lineName}`));
-                      }
-                    });
-                    const totalSections = allCatKeys.length + allSubKeys.length;
-                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length + allSubKeys.filter(k => collapsedSubLines.has(k)).length;
-                    const shouldCollapse = collapsedCount < totalSections / 2;
-                    if (shouldCollapse) {
-                      setCollapsedCategories(new Set(allCatKeys));
-                      setCollapsedSubLines(new Set(allSubKeys));
-                    } else {
-                      setCollapsedCategories(new Set());
-                      setCollapsedSubLines(new Set());
-                    }
-                  }}
-                >
-                  <ChevronsUpDown className="w-3.5 h-3.5 mr-1" />
-                  {(() => {
-                    const allCatKeys = categoryGroups.map(([cat]) => cat);
-                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length;
-                    return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
-                  })()}
-                </PlatformButton>
-                {/* Reset All Collapse State */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                    <PlatformButton
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setResetConfirmOpen(true)}
-                        className="relative"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        {savedBrandCount > 0 && (
-                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-violet-500/80 text-[10px] font-sans text-white flex items-center justify-center">
-                            {savedBrandCount}
-                          </span>
-                        )}
-                      </PlatformButton>
-                    </TooltipTrigger>
-                    <TooltipContent>Reset all collapse state</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-                  <PlatformAlertDialogContent>
-                    <AlertDialogHeader>
-                      <PlatformAlertDialogTitle>Reset collapse state?</PlatformAlertDialogTitle>
-                      <PlatformAlertDialogDescription>
-                        This will clear saved collapse/expand preferences for all brands. This action cannot be undone.
-                      </PlatformAlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          const keysToRemove: string[] = [];
-                          for (let i = 0; i < localStorage.length; i++) {
-                            const k = localStorage.key(i);
-                            if (k && (k.startsWith('supply-library-categories::') || k.startsWith('supply-library-sublines::'))) {
-                              keysToRemove.push(k);
-                            }
-                          }
-                          keysToRemove.forEach((k) => localStorage.removeItem(k));
-                          localStorage.setItem('supply-library-last-reset', new Date().toISOString());
-                          setCollapsedCategories(new Set());
-                          setCollapsedSubLines(new Set());
-                          toast.success('Collapse state reset for all brands');
-                        }}
-                      >
-                        Reset
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </PlatformAlertDialogContent>
-                </AlertDialog>
-                <AlertDialog open={!!reanalyzeConfirm} onOpenChange={(open) => { if (!open) setReanalyzeConfirm(null); }}>
-                  <PlatformAlertDialogContent>
-                    <AlertDialogHeader>
-                      <PlatformAlertDialogTitle>Re-analyze Swatches</PlatformAlertDialogTitle>
-                      <PlatformAlertDialogDescription>
-                        Re-analyze {reanalyzeConfirm?.updates.length ?? 0} swatches in {reanalyzeConfirm?.category}? This overwrites existing assignments.
-                      </PlatformAlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={async () => {
-                          if (!reanalyzeConfirm) return;
-                          const categoryName = reanalyzeConfirm.category;
-                          setReanalyzingCategory(categoryName);
-                          setReanalyzeConfirm(null);
-                          let saved = 0;
-                          try {
-                            for (const u of reanalyzeConfirm.updates) {
-                              const { error } = await supabase
-                                .from('supply_library_products')
-                                .update({ swatch_color: u.hex } as any)
-                                .eq('id', u.id);
-                              if (!error) saved++;
-                            }
-                            queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                            toast.success(`Re-analyzed ${saved} swatches`);
-                          } finally {
-                            setReanalyzingCategory(null);
-                          }
-                        }}
-                      >
-                        Continue
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </PlatformAlertDialogContent>
-                </AlertDialog>
-                {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
                   size="sm"
@@ -1003,113 +865,102 @@ export function SupplyLibraryTab() {
                   <p className={tokens.empty.description}>Try adjusting your filters</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {categoryGroups.map(([category, products]) => {
-                    const isOpen = !collapsedCategories.has(category);
-                    return (
-                      <Collapsible key={category} open={isOpen} onOpenChange={() => toggleCategory(category)}>
-                        <CollapsibleTrigger asChild>
-                          <button className="flex items-center justify-between w-full px-4 py-2.5 rounded-lg bg-[hsl(var(--platform-bg-hover)/0.5)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors">
-                            <div className="flex items-center gap-2">
-                              <span className="font-display text-xs tracking-wide text-[hsl(var(--platform-foreground))]">
-                                {SUPPLY_CATEGORY_LABELS[category] || category}
-                              </span>
-                              <PlatformBadge variant="default" size="sm">{products.length}</PlatformBadge>
-                              {SHADE_SORTED_CATEGORIES.has(category) && products.some((p) => !(p as any).swatch_color) && (
-                                <PlatformButton
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-2 text-[10px] font-sans text-violet-400 hover:text-violet-300"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const unassigned = products.filter((p) => !(p as any).swatch_color);
-                                    const updates = unassigned
-                                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
-                                      .filter((u) => u.hex !== null);
-                                    if (!updates.length) { toast.info('No suggestions available'); return; }
-                                    let saved = 0;
-                                    for (const u of updates) {
-                                      const { error } = await supabase
-                                        .from('supply_library_products')
-                                        .update({ swatch_color: u.hex } as any)
-                                        .eq('id', u.id);
-                                      if (!error) saved++;
-                                    }
-                                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
-                                    toast.success(`Auto-assigned ${saved} swatches`);
-                                  }}
-                                >
-                                  Auto-assign swatches
-                                </PlatformButton>
-                              )}
-                              {SHADE_SORTED_CATEGORIES.has(category) && (
-                                <PlatformButton
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-2 text-[10px] font-sans text-amber-400 hover:text-amber-300"
-                                  disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const updates = products
-                                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
-                                      .filter((u): u is { id: string; hex: string } => u.hex !== null);
-                                    if (!updates.length) { toast.info('No suggestions available'); return; }
-                                    setReanalyzeConfirm({ category: SUPPLY_CATEGORY_LABELS[category] || category, updates });
-                                  }}
-                                >
-                                  <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category) && 'animate-spin')} />
-                                  {reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[category] || category) ? 'Analyzing...' : 'Re-analyze all'}
-                                </PlatformButton>
-                              )}
-                            </div>
-                            <ChevronDown className={cn(
-                              'w-4 h-4 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
-                              isOpen && 'rotate-180'
-                            )} />
-                          </button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          {(() => {
-                            const { shouldGroup, groups } = groupByProductLine(products);
-                            if (!shouldGroup) {
-                              return <div className="mt-1.5">{renderProductTable(products, category)}</div>;
-                            }
-                            return (
-                              <div className="mt-1.5 space-y-1.5 pl-3">
-                                {groups.map(([lineName, lineProducts]) => {
-                                  const subKey = `${category}::${lineName}`;
-                                  const isSubOpen = !collapsedSubLines.has(subKey);
-                                  return (
-                                    <Collapsible key={subKey} open={isSubOpen} onOpenChange={() => toggleSubLine(subKey)}>
-                                      <CollapsibleTrigger asChild>
-                                        <button className="flex items-center justify-between w-full px-3 py-1.5 rounded-md bg-[hsl(var(--platform-bg-hover)/0.3)] hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-sans text-xs font-medium text-[hsl(var(--platform-foreground-muted))]">
-                                              {lineName}
-                                            </span>
-                                            <PlatformBadge variant="default" size="sm">{lineProducts.length}</PlatformBadge>
-                                          </div>
-                                          <ChevronDown className={cn(
-                                            'w-3 h-3 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
-                                            isSubOpen && 'rotate-180'
-                                          )} />
-                                        </button>
-                                      </CollapsibleTrigger>
-                                      <CollapsibleContent>
-                                        <div className="mt-1">{renderProductTable(lineProducts, category)}</div>
-                                      </CollapsibleContent>
-                                    </Collapsible>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })()}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    );
-                  })}
-                </div>
+                <ColumnBrowser
+                  categoryGroups={categoryGroups}
+                  selectedCategory={selectedCategory}
+                  selectedProductLine={selectedProductLine}
+                  focusedColumn={focusedColumn}
+                  onSelectCategory={(cat) => {
+                    setSelectedCategory(cat);
+                    setSelectedProductLine(null);
+                    setFocusedColumn(1);
+                  }}
+                  onSelectProductLine={(line) => {
+                    setSelectedProductLine(line);
+                    setFocusedColumn(2);
+                  }}
+                  onFocusColumn={setFocusedColumn}
+                  onClearCategory={() => {
+                    setSelectedCategory(null);
+                    setSelectedProductLine(null);
+                    setFocusedColumn(0);
+                  }}
+                  onClearProductLine={() => {
+                    setSelectedProductLine(null);
+                    setFocusedColumn(1);
+                  }}
+                  onSetPricing={(ids, label) => {
+                    setBulkPricingProductIds(ids);
+                    setBulkPricingScopeLabel(label);
+                    setBulkPricingOpen(true);
+                  }}
+                  renderProductTable={renderProductTable}
+                  reanalyzingCategory={reanalyzingCategory}
+                  onAutoAssignSwatches={async (products, category) => {
+                    const unassigned = products.filter((p) => !(p as any).swatch_color);
+                    const updates = unassigned
+                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
+                      .filter((u) => u.hex !== null);
+                    if (!updates.length) { toast.info('No suggestions available'); return; }
+                    let saved = 0;
+                    for (const u of updates) {
+                      const { error } = await supabase
+                        .from('supply_library_products')
+                        .update({ swatch_color: u.hex } as any)
+                        .eq('id', u.id);
+                      if (!error) saved++;
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                    toast.success(`Auto-assigned ${saved} swatches`);
+                  }}
+                  onReanalyzeSwatches={(products, category) => {
+                    const updates = products
+                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
+                      .filter((u): u is { id: string; hex: string } => u.hex !== null);
+                    if (!updates.length) { toast.info('No suggestions available'); return; }
+                    setReanalyzeConfirm({ category: SUPPLY_CATEGORY_LABELS[category] || category, updates });
+                  }}
+                />
               )}
+
+              {/* Reanalyze confirmation dialog */}
+              <AlertDialog open={!!reanalyzeConfirm} onOpenChange={(open) => { if (!open) setReanalyzeConfirm(null); }}>
+                <PlatformAlertDialogContent>
+                  <AlertDialogHeader>
+                    <PlatformAlertDialogTitle>Re-analyze Swatches</PlatformAlertDialogTitle>
+                    <PlatformAlertDialogDescription>
+                      Re-analyze {reanalyzeConfirm?.updates.length ?? 0} swatches in {reanalyzeConfirm?.category}? This overwrites existing assignments.
+                    </PlatformAlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        if (!reanalyzeConfirm) return;
+                        const categoryName = reanalyzeConfirm.category;
+                        setReanalyzingCategory(categoryName);
+                        setReanalyzeConfirm(null);
+                        let saved = 0;
+                        try {
+                          for (const u of reanalyzeConfirm.updates) {
+                            const { error } = await supabase
+                              .from('supply_library_products')
+                              .update({ swatch_color: u.hex } as any)
+                              .eq('id', u.id);
+                            if (!error) saved++;
+                          }
+                          queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                          toast.success(`Re-analyzed ${saved} swatches`);
+                        } finally {
+                          setReanalyzingCategory(null);
+                        }
+                      }}
+                    >
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </PlatformAlertDialogContent>
+              </AlertDialog>
             </>
           )}
         </PlatformCardContent>
