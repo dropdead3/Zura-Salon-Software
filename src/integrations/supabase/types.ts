@@ -19909,6 +19909,7 @@ export type Database = {
           default_unit: string
           id: string
           is_active: boolean
+          is_professional: boolean
           name: string
           price_source_id: string | null
           price_updated_at: string | null
@@ -19929,6 +19930,7 @@ export type Database = {
           default_unit?: string
           id?: string
           is_active?: boolean
+          is_professional?: boolean
           name: string
           price_source_id?: string | null
           price_updated_at?: string | null
@@ -19949,6 +19951,7 @@ export type Database = {
           default_unit?: string
           id?: string
           is_active?: boolean
+          is_professional?: boolean
           name?: string
           price_source_id?: string | null
           price_updated_at?: string | null
@@ -23057,6 +23060,17 @@ export type Database = {
           is_available: boolean
           slot_end: string
           slot_start: string
+        }[]
+      }
+      get_supply_library_brand_summaries: {
+        Args: never
+        Returns: {
+          brand: string
+          category: string
+          cnt: number
+          is_professional: boolean
+          missing_price: number
+          missing_swatch: number
         }[]
       }
       get_user_accessible_organizations: {
