@@ -69,6 +69,17 @@ export function SupplyLibraryTab() {
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
+  // Count how many brands have saved collapse state
+  const savedBrandCount = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('supply-library-categories::')) count++;
+    }
+    return count;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collapsedCategories, resetConfirmOpen]);
+
   // Helper to build org+brand scoped localStorage key
   const collapseKey = useCallback((type: 'categories' | 'sublines', brand: string) =>
     `supply-library-${type}::${orgId}::${brand}`, [orgId]);
