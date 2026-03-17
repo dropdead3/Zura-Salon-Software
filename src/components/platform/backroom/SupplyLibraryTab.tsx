@@ -154,14 +154,14 @@ export function SupplyLibraryTab() {
     return map;
   }, [brandsMeta]);
 
-  // Build brand card data from allProducts
+  // Build brand card data from server-side summaries
   const brandCards = useMemo<BrandCardData[]>(() => {
     const map = new Map<string, { count: number; cats: Map<string, number> }>();
-    allProducts.forEach((p) => {
-      if (!map.has(p.brand)) map.set(p.brand, { count: 0, cats: new Map() });
-      const entry = map.get(p.brand)!;
-      entry.count++;
-      entry.cats.set(p.category, (entry.cats.get(p.category) || 0) + 1);
+    brandSummaryRows.forEach((row) => {
+      if (!map.has(row.brand)) map.set(row.brand, { count: 0, cats: new Map() });
+      const entry = map.get(row.brand)!;
+      entry.count += row.cnt;
+      entry.cats.set(row.category, (entry.cats.get(row.category) || 0) + row.cnt);
     });
     const cards: BrandCardData[] = [];
     map.forEach((val, brand) => {
@@ -174,7 +174,7 @@ export function SupplyLibraryTab() {
       });
     });
     return cards.sort((a, b) => a.brand.localeCompare(b.brand));
-  }, [allProducts]);
+  }, [brandSummaryRows]);
 
   // Filter brand cards by search + active letter
   const filteredBrands = useMemo(() => {
