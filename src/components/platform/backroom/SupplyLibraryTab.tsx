@@ -646,9 +646,11 @@ export function SupplyLibraryTab() {
               <PlatformButton size="sm" onClick={() => { setEditProduct(null); setAddOpen(true); }}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Product
               </PlatformButton>
-              <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
-                <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
-              </PlatformButton>
+              {!selectedBrand && (
+                <PlatformButton size="sm" variant="outline" onClick={() => setAddBrandOpen(true)}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Brand
+                </PlatformButton>
+              )}
             </div>
           </div>
         </PlatformCardHeader>
