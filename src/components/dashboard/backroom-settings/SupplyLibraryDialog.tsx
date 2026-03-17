@@ -437,11 +437,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     setAddingBrand(brand);
     try {
       const items = brandItems;
-      const itemsToInsert: Array<{
-        name: string; brand: string; category: string; product_type: string;
-        is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
-        organization_id: string; is_active: boolean;
-      }> = [];
+      const itemsToInsert: Array<Record<string, any>> = [];
 
       items.forEach((item) => {
         getItemKeys(item).forEach(({ size }) => {
@@ -456,6 +452,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
             unit_of_measure: item.defaultUnit,
             organization_id: orgId,
             is_active: true,
+            ...(item.wholesalePrice != null && { cost_price: item.wholesalePrice }),
+            ...(item.defaultMarkupPct != null && { markup_pct: item.defaultMarkupPct }),
+            ...(item.swatchColor && { swatch_color: item.swatchColor }),
+            ...(size ? { container_size: size } : item.containerSize ? { container_size: item.containerSize } : {}),
           });
         });
       });

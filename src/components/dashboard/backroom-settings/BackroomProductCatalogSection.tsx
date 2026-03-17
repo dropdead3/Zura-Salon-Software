@@ -125,7 +125,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, brand, sku, category, cost_price, is_backroom_tracked, depletion_method, is_billable_to_client, is_overage_eligible, is_forecast_eligible, cost_per_gram, unit_of_measure, markup_pct, container_size')
+        .select('id, name, brand, sku, category, cost_price, is_backroom_tracked, depletion_method, is_billable_to_client, is_overage_eligible, is_forecast_eligible, cost_per_gram, unit_of_measure, markup_pct, container_size, swatch_color')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
