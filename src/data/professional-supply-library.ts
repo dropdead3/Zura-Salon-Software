@@ -3033,8 +3033,7 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   c('Danger Jones', 'Epilogue Booster -33 Gold', 'color', ['60ml']),
   c('Danger Jones', 'Epilogue Booster -66 Red', 'color', ['60ml']),
 
-  // ── Epilogue Lightener ─────────────────────────────────────────
-  c('Danger Jones', 'Epilogue Lightener', 'lightener', ['450g', '900g']),
+
 
   // ── Cream Lightener with Bonding Complex ───────────────────────
   c('Danger Jones', 'Cream Lightener with Bonding Complex', 'lightener', ['450g', '900g']),
