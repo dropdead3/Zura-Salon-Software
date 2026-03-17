@@ -12,11 +12,7 @@ export function AccountBillingContent() {
   const { canViewBilling, isLoading } = useBillingAccess();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="h-64" />;
   }
 
   if (!canViewBilling) {

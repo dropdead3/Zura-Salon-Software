@@ -16,8 +16,8 @@ export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProp
   if (isLoading) {
     return (
       <Card className="md:col-span-2">
-        <CardContent className="p-6 flex items-center justify-center h-32">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <CardContent className="p-6 h-32">
+          <DashboardLoader size="sm" className="h-full" />
         </CardContent>
       </Card>
     );

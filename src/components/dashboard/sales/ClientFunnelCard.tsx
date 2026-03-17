@@ -32,8 +32,8 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
   if (isLoading) {
     return (
        <Card className={tokens.card.wrapper}>
-        <CardContent className="p-6 flex items-center justify-center h-[350px]">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <CardContent className="p-6 h-[350px]">
+          <DashboardLoader size="md" className="h-full" />
         </CardContent>
       </Card>
     );
