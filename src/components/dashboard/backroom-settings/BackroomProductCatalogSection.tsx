@@ -70,7 +70,8 @@ interface Props {
 
 /** Build a selection key — includes size when present */
 function sizedKey(brand: string, name: string, size?: string) {
-  return size ? `${brand}::${name}::${size}` : `${brand}::${name}`;
+  const b = brand.toLowerCase(), n = name.toLowerCase();
+  return size ? `${b}::${n}::${size.toLowerCase()}` : `${b}::${n}`;
 }
 
 /** Build the product name with optional size suffix */
@@ -155,7 +156,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     const s = new Set<string>();
     (products || []).forEach((p) => {
       if (p.brand && p.name) {
-        s.add(`${p.brand}::${p.name}`);
+        s.add(`${p.brand.toLowerCase()}::${p.name.toLowerCase()}`);
       }
     });
     return s;
@@ -163,7 +164,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   const isExisting = (brand: string, name: string, size?: string) => {
     return existingKeys.has(sizedKey(brand, name, size))
-      || existingKeys.has(`${brand}::${sizedName(name, size)}`);
+      || existingKeys.has(`${brand.toLowerCase()}::${sizedName(name, size).toLowerCase()}`);
   };
 
   // My Catalog filtering

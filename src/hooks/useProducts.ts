@@ -187,6 +187,22 @@ export function useCreateProduct() {
 
   return useMutation({
     mutationFn: async (product: Partial<Product>) => {
+      // Check for existing active product with same org + brand + name (case-insensitive)
+      if (product.organization_id && product.brand && product.name) {
+        const { data: existing } = await supabase
+          .from('products')
+          .select('id')
+          .eq('organization_id', product.organization_id)
+          .eq('is_active', true)
+          .ilike('brand', product.brand)
+          .ilike('name', product.name)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          throw new Error('A product with this name and brand already exists');
+        }
+      }
+
       const insertData = {
         name: product.name || 'Unnamed Product',
         sku: product.sku,
