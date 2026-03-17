@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarClock, Check, X, Loader2, ArrowRight, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { usePendingScheduleChangeRequests, useReviewScheduleChangeRequest } from '@/hooks/useLocationSchedules';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
