@@ -57,7 +57,7 @@ interface WizardState {
 const STEPS = [
   { label: 'Station', icon: Monitor },
   { label: 'Device', icon: Tablet },
-  { label: 'Scale', icon: Scale },
+  { label: 'Scale', icon: Weight },
   { label: 'Confirm', icon: Check },
 ];
 
