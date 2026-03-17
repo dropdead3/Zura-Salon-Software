@@ -76,7 +76,7 @@ export function SupplyLibraryTab() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [addBrandOpen, setAddBrandOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
-  // localStorage-backed collapse state
+  // localStorage-backed collapse state (kept for backward compat)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
   const [editBrandOpen, setEditBrandOpen] = useState(false);
@@ -84,6 +84,12 @@ export function SupplyLibraryTab() {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [reanalyzeConfirm, setReanalyzeConfirm] = useState<{ category: string; updates: { id: string; hex: string }[] } | null>(null);
   const [reanalyzingCategory, setReanalyzingCategory] = useState<string | null>(null);
+
+  // ─── Column Browser State ───
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedProductLine, setSelectedProductLine] = useState<string | null>(null);
+  const [focusedColumn, setFocusedColumn] = useState<0 | 1 | 2>(0);
+  const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
 
   // Count how many brands have saved collapse state
   const savedBrandCount = useMemo(() => {
