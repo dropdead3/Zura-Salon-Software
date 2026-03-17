@@ -785,9 +785,7 @@ function EmailQueueMonitor() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="py-8" size="md" />
       ) : !queueItems || queueItems.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
