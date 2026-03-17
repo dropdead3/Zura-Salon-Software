@@ -938,7 +938,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
               placeholder="0"
               className={cn(inputClass, 'w-12')}
             />
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">%</span>
+            <span className="text-[10px] text-muted-foreground">%</span>
           </div>
           {chargePerGram != null && (
             <PlatformBadge variant="secondary" size="sm" className="text-[10px] font-sans">
