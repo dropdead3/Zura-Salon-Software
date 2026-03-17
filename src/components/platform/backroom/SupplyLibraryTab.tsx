@@ -159,6 +159,7 @@ export function SupplyLibraryTab() {
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: supplyRequests = [] } = useSupplyLibraryRequests();
   const resolveRequest = useResolveSupplyRequest();
+  const deleteBrand = useDeleteSupplyBrand();
 
   // Build a logo lookup from brand metadata
   const brandLogoMap = useMemo(() => {
