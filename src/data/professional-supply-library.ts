@@ -3190,6 +3190,7 @@ export const SUPPLY_CATEGORY_LABELS: Record<string, string> = {
   lightener: 'Lightener / Bleach',
   developer: 'Developer',
   toner: 'Toner / Gloss',
+  'semi-permanent': 'Semi-Permanent',
   'bond builder': 'Bond Builder',
   treatment: 'Treatment',
   additive: 'Additive',
