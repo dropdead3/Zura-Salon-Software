@@ -28,6 +28,7 @@ import {
   FileText,
   Eye
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import ProgramWeeksEditor from '@/components/dashboard/ProgramWeeksEditor';
 import ProgramResourcesEditor from '@/components/dashboard/ProgramResourcesEditor';
 import { ProgramPreviewModal } from '@/components/dashboard/ProgramPreviewModal';
