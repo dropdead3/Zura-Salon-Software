@@ -199,17 +199,17 @@ function BrandCardGrid({
             })}
           </div>
         </div>
+      </div>
 
-        {/* Missing brand CTA */}
-        <div className="px-6 pb-6 pt-2">
-          <button
-            onClick={onShowSuggest}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/60 text-xs font-sans text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/30 transition-colors"
-          >
-            <MessageSquarePlus className="w-4 h-4 shrink-0" />
-            <span>Missing a brand? Suggest one</span>
-          </button>
-        </div>
+      {/* Missing brand CTA - fixed at bottom */}
+      <div className="px-6 pb-4 pt-2 shrink-0 border-t border-border/30">
+        <button
+          onClick={onShowSuggest}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/60 text-xs font-sans text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/30 transition-colors"
+        >
+          <MessageSquarePlus className="w-4 h-4 shrink-0" />
+          <span>Missing a brand? Suggest one</span>
+        </button>
       </div>
     </div>
   );
@@ -505,7 +505,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 gap-0 max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-5xl p-0 gap-0 h-[85vh] max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-3">
             {selectedBrand ? (
