@@ -229,41 +229,56 @@ export default function BillingGuide() {
           </p>
         </div>
 
-        {/* How Billing Works */}
-        <PlatformCard variant="glass" id="how-it-works">
-          <PlatformCardHeader>
-            <div className="flex items-center gap-3">
-              <div className={tokens.card.iconBox}>
-                <Receipt className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <PlatformCardTitle className={tokens.card.title}>How Billing Works</PlatformCardTitle>
-                <PlatformCardDescription>Step-by-step breakdown of how an invoice amount is calculated.</PlatformCardDescription>
-              </div>
-            </div>
-          </PlatformCardHeader>
-          <PlatformCardContent>
-            <ol className="space-y-4 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
-              {[
-                { title: 'Tier Detection', desc: '1 location → Operator ($99/mo flat). 2-5 locations → Growth ($200/loc/mo). 5+ locations → Infrastructure ($200/loc/mo). Enterprise → custom.' },
-                { title: 'Base Price', desc: 'Operator: $99/mo flat. Growth/Infrastructure: $200 × number of locations. Can be overridden with a Custom Price on the account billing config.' },
-                { title: 'User Capacity', desc: 'Operator includes 1 user (max 4 total at +$25/ea). Growth/Infrastructure includes 10 users per location, +$25/ea for additional users.' },
-                { title: 'Promotional Pricing', desc: 'If a promo is active (has a future expiry date), the promo price replaces the base price. Discounts do not stack on promos.' },
-                { title: 'Discounts (when no promo)', desc: 'A percentage or fixed-amount discount is applied to the effective monthly price. Only applies when no promotional pricing is active.' },
-                { title: 'Setup Fee', desc: 'A one-time $199 setup fee is added to the first invoice (waivable). Once marked as paid, it won\'t appear again.' },
-                { title: 'Trial Period', desc: '14-day free trial. While active, the first invoice amount is $0. After trial, normal monthly billing resumes.' },
-              ].map((step, i) => (
-                <li key={i} className="flex gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary font-display text-xs flex items-center justify-center">{i + 1}</span>
-                  <div>
-                    <p className="font-medium text-[hsl(var(--platform-foreground))]">{step.title}</p>
-                    <p>{step.desc}</p>
+        {/* How Billing Works - Collapsible */}
+        {(() => {
+          const [billingOpen, setBillingOpen] = useState(false);
+          return (
+            <PlatformCard variant="glass" id="how-it-works">
+              <button
+                onClick={() => setBillingOpen(!billingOpen)}
+                className="w-full text-left"
+              >
+                <PlatformCardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <Receipt className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <PlatformCardTitle className={tokens.card.title}>How Billing Works</PlatformCardTitle>
+                        <PlatformCardDescription>Step-by-step breakdown of how an invoice amount is calculated.</PlatformCardDescription>
+                      </div>
+                    </div>
+                    <ChevronDown className={`w-5 h-5 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200 ${billingOpen ? 'rotate-180' : ''}`} />
                   </div>
-                </li>
-              ))}
-            </ol>
-          </PlatformCardContent>
-        </PlatformCard>
+                </PlatformCardHeader>
+              </button>
+              {billingOpen && (
+                <PlatformCardContent>
+                  <ol className="space-y-4 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    {[
+                      { title: 'Tier Detection', desc: '1 location → Operator ($99/mo flat). 2-5 locations → Growth ($200/loc/mo). 5+ locations → Infrastructure ($200/loc/mo). Enterprise → custom.' },
+                      { title: 'Base Price', desc: 'Operator: $99/mo flat. Growth/Infrastructure: $200 × number of locations. Can be overridden with a Custom Price on the account billing config.' },
+                      { title: 'User Capacity', desc: 'Operator includes 1 user (max 4 total at +$25/ea). Growth/Infrastructure includes 10 users per location, +$25/ea for additional users.' },
+                      { title: 'Promotional Pricing', desc: 'If a promo is active (has a future expiry date), the promo price replaces the base price. Discounts do not stack on promos.' },
+                      { title: 'Discounts (when no promo)', desc: 'A percentage or fixed-amount discount is applied to the effective monthly price. Only applies when no promotional pricing is active.' },
+                      { title: 'Setup Fee', desc: 'A one-time $199 setup fee is added to the first invoice (waivable). Once marked as paid, it won\'t appear again.' },
+                      { title: 'Trial Period', desc: '14-day free trial. While active, the first invoice amount is $0. After trial, normal monthly billing resumes.' },
+                    ].map((step, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary font-display text-xs flex items-center justify-center">{i + 1}</span>
+                        <div>
+                          <p className="font-medium text-[hsl(var(--platform-foreground))]">{step.title}</p>
+                          <p>{step.desc}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </PlatformCardContent>
+              )}
+            </PlatformCard>
+          );
+        })()}
 
         {/* Interactive Billing Calculator */}
         <BillingCalculatorWidget plans={plans || []} />
