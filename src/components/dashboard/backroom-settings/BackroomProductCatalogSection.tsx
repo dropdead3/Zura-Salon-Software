@@ -1166,23 +1166,23 @@ function InventoryTableRow({
     if (val !== row.par_level) onUpdate({ par_level: val });
   };
 
-  const inlineInputClass = "h-6 w-14 rounded border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-1.5 text-xs font-sans text-[hsl(var(--platform-foreground))] focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]";
+  const inlineInputClass = "h-6 w-14 rounded border px-1.5 text-xs font-sans text-foreground bg-background focus:outline-none focus:border-primary/50";
 
   return (
-    <PlatformTableRow>
-      <PlatformTableCell>
+    <TableRow>
+      <TableCell>
         <div className="min-w-0">
-          <span className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate block">{row.name}</span>
-          {row.brand && <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">{row.brand}</span>}
+          <span className="text-sm font-sans font-medium text-foreground truncate block">{row.name}</span>
+          {row.brand && <span className="text-[11px] text-muted-foreground">{row.brand}</span>}
         </div>
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden sm:table-cell">
-        {row.category && <PlatformBadge variant="outline" size="sm" className="capitalize">{row.category}</PlatformBadge>}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden md:table-cell">
-        <span className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">{row.container_size || '—'}</span>
-      </PlatformTableCell>
-      <PlatformTableCell>
+      </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        {row.category && <Badge variant="outline" className="capitalize">{row.category}</Badge>}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <span className="text-xs font-sans text-muted-foreground">{row.container_size || '—'}</span>
+      </TableCell>
+      <TableCell>
         {editingStock ? (
           <input
             type="number"
@@ -1197,47 +1197,47 @@ function InventoryTableRow({
           <button
             type="button"
             onClick={() => { setEditingStock(true); setStockValue(row.quantity_on_hand.toString()); }}
-            className="text-xs font-sans text-[hsl(var(--platform-foreground))] hover:text-[hsl(var(--platform-primary))] transition-colors cursor-pointer tabular-nums"
+            className="text-xs font-sans text-foreground hover:text-primary transition-colors cursor-pointer tabular-nums"
           >
             {row.quantity_on_hand}
           </button>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden md:table-cell">
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
         {editingMin ? (
           <input type="number" value={minValue} onChange={(e) => setMinValue(e.target.value)} onBlur={handleMinSave} onKeyDown={(e) => e.key === 'Enter' && handleMinSave()} autoFocus className={inlineInputClass} />
         ) : (
-          <button type="button" onClick={() => { setEditingMin(true); setMinValue(row.reorder_level?.toString() || ''); }} className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors cursor-pointer tabular-nums">
+          <button type="button" onClick={() => { setEditingMin(true); setMinValue(row.reorder_level?.toString() || ''); }} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums">
             {row.reorder_level ?? '—'}
           </button>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden md:table-cell">
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
         {editingMax ? (
           <input type="number" value={maxValue} onChange={(e) => setMaxValue(e.target.value)} onBlur={handleMaxSave} onKeyDown={(e) => e.key === 'Enter' && handleMaxSave()} autoFocus className={inlineInputClass} />
         ) : (
-          <button type="button" onClick={() => { setEditingMax(true); setMaxValue(row.par_level?.toString() || ''); }} className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors cursor-pointer tabular-nums">
+          <button type="button" onClick={() => { setEditingMax(true); setMaxValue(row.par_level?.toString() || ''); }} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums">
             {row.par_level ?? '—'}
           </button>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden lg:table-cell">
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
         {row.order_qty > 0 ? (
           <span className="text-xs font-sans font-medium text-amber-400 tabular-nums">{row.order_qty}</span>
         ) : (
-          <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">—</span>
+          <span className="text-xs text-muted-foreground">—</span>
         )}
-      </PlatformTableCell>
-      <PlatformTableCell>
-        <PlatformBadge variant="outline" className={cn('text-[10px] border', statusConfig.className)}>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className={cn('text-[10px] border', statusConfig.className)}>
           {statusConfig.label}
-        </PlatformBadge>
-      </PlatformTableCell>
-      <PlatformTableCell className="hidden lg:table-cell">
-        <span className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] tabular-nums">
+        </Badge>
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
+        <span className="text-xs font-sans text-muted-foreground tabular-nums">
           {row.cost_per_gram != null ? `$${row.cost_per_gram.toFixed(4)}` : '—'}
         </span>
-      </PlatformTableCell>
-    </PlatformTableRow>
+      </TableCell>
+    </TableRow>
   );
 }
