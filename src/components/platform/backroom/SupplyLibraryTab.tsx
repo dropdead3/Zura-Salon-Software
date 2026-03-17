@@ -71,6 +71,7 @@ export function SupplyLibraryTab() {
   // localStorage-backed collapse state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
+  const [editBrandOpen, setEditBrandOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Count how many brands have saved collapse state
