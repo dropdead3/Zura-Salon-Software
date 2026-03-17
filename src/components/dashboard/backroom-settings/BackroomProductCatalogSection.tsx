@@ -852,9 +852,17 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               </TableRow>
                             ) : (
                               displayProducts.map((p) => {
-                                const retail = p.cost_price != null && p.markup_pct != null && p.markup_pct > 0
-                                  ? p.cost_price * (1 + p.markup_pct / 100)
+                                const ghost = p as any;
+                                const effectiveCost = p.cost_price ?? ghost._ghostCost ?? null;
+                                const effectiveMarkup = p.markup_pct ?? ghost._ghostMarkup ?? null;
+                                const effectiveSwatch = p.swatch_color ?? ghost._ghostSwatch ?? null;
+                                const isGhostCost = p.cost_price == null && ghost._ghostCost != null;
+                                const isGhostMarkup = p.markup_pct == null && ghost._ghostMarkup != null;
+                                const isGhostSwatch = p.swatch_color == null && ghost._ghostSwatch != null;
+                                const retail = effectiveCost != null && effectiveMarkup != null && effectiveMarkup > 0
+                                  ? effectiveCost * (1 + effectiveMarkup / 100)
                                   : null;
+                                const isGhostRetail = isGhostCost || isGhostMarkup;
                                 return (
                                   <TableRow key={p.id} className={cn(!p.is_backroom_tracked && 'opacity-50')}>
                                     <TableCell className="w-8 pr-0">
@@ -866,10 +874,19 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                     </TableCell>
                                     {showSwatch && (
                                       <TableCell className="w-[40px] pr-0">
-                                        <SwatchCell
-                                          color={p.swatch_color ?? null}
-                                          onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
-                                        />
+                                        {isGhostSwatch ? (
+                                          <div
+                                            className="w-5 h-5 rounded-full border border-dashed border-border/40 opacity-50"
+                                            style={{ backgroundColor: effectiveSwatch ?? undefined }}
+                                            title="From library — click to adopt"
+                                            onClick={() => updateMutation.mutate({ id: p.id, updates: { swatch_color: effectiveSwatch } as any })}
+                                          />
+                                        ) : (
+                                          <SwatchCell
+                                            color={p.swatch_color ?? null}
+                                            onSave={(color) => updateMutation.mutate({ id: p.id, updates: { swatch_color: color } as any })}
+                                          />
+                                        )}
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
@@ -885,24 +902,38 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       {p.unit_of_measure || '—'}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
-                                      <InlineEditCell
-                                        value={p.cost_price}
-                                        prefix="$"
-                                        placeholder="—"
-                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { cost_price: v } })}
-                                      />
+                                      {isGhostCost ? (
+                                        <span className="text-muted-foreground/50 italic" title="From library">
+                                          ${effectiveCost?.toFixed(2)}
+                                        </span>
+                                      ) : (
+                                        <InlineEditCell
+                                          value={p.cost_price}
+                                          prefix="$"
+                                          placeholder="—"
+                                          onSave={(v) => updateMutation.mutate({ id: p.id, updates: { cost_price: v } })}
+                                        />
+                                      )}
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
-                                      <InlineEditCell
-                                        value={p.markup_pct}
-                                        suffix="%"
-                                        placeholder="—"
-                                        onSave={(v) => updateMutation.mutate({ id: p.id, updates: { markup_pct: v } })}
-                                      />
+                                      {isGhostMarkup ? (
+                                        <span className="text-muted-foreground/50 italic" title="From library">
+                                          {effectiveMarkup}%
+                                        </span>
+                                      ) : (
+                                        <InlineEditCell
+                                          value={p.markup_pct}
+                                          suffix="%"
+                                          placeholder="—"
+                                          onSave={(v) => updateMutation.mutate({ id: p.id, updates: { markup_pct: v } })}
+                                        />
+                                      )}
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
                                       {retail != null ? (
-                                        <span className="text-foreground">${retail.toFixed(2)}</span>
+                                        <span className={cn('text-foreground', isGhostRetail && 'text-muted-foreground/50 italic')}>
+                                          ${retail.toFixed(2)}
+                                        </span>
                                       ) : (
                                         <span className="text-muted-foreground">—</span>
                                       )}
