@@ -384,6 +384,8 @@ function getMidLevelHex(tone: ToneFamily): string {
     copper: '#B5541A',   // level 7
     violet: '#6B3A6B',   // level 6
     blue: '#2A4A6B',     // level 6
+    red_violet: '#8B2A4E', // level 6
+    warm_brown: '#7A5638',  // level 6
     pastel: '#D4B8E0',   // default
     vivid: '#8B00FF',    // default
   };
