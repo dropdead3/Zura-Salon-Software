@@ -420,7 +420,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {selectedBrand && (
                 <Badge variant="outline">{brandProducts.length} products</Badge>
               )}
-              <PlatformButton
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setLibraryOpen(true)}
@@ -428,7 +428,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               >
                 <Library className="w-4 h-4" />
                 Supply Library
-              </PlatformButton>
+              </Button>
             </div>
           </div>
         </PlatformCardHeader>
