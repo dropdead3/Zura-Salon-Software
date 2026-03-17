@@ -52,9 +52,11 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
   const [uploadingLightIcon, setUploadingLightIcon] = useState(false);
   const [uploadingDarkIcon, setUploadingDarkIcon] = useState(false);
 
+  const [initialFormData, setInitialFormData] = useState<typeof formData | null>(null);
+
   useEffect(() => {
     if (settings) {
-      setFormData({
+      const snapshot = {
         business_name: settings.business_name || '',
         legal_name: settings.legal_name || '',
         logo_light_url: settings.logo_light_url || '',
@@ -70,9 +72,36 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         email: settings.email || '',
         website: settings.website || '',
         default_tax_rate: settings.default_tax_rate != null ? (settings.default_tax_rate * 100).toString() : '',
-      });
+      };
+      setFormData(snapshot);
+      setInitialFormData(snapshot);
     }
   }, [settings]);
+
+  const isDirty = useMemo(() => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
+
+  const forceClose = useCallback(() => {
+    setFormData(initialFormData || formData);
+    onOpenChange(false);
+  }, [initialFormData, formData, onOpenChange]);
+
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen && isDirty) {
+      toast.warning('You have unsaved changes', {
+        description: 'Your changes will be lost if you close without saving.',
+        action: {
+          label: 'Discard & Close',
+          onClick: forceClose,
+        },
+        duration: 5000,
+      });
+      return;
+    }
+    onOpenChange(nextOpen);
+  }, [isDirty, forceClose, onOpenChange]);
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
