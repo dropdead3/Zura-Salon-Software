@@ -30,6 +30,7 @@ import {
 import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
 import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
@@ -77,6 +78,7 @@ interface BackroomProduct {
   markup_pct: number | null;
   container_size: string | null;
   product_line?: string | null;
+  swatch_color?: string | null;
 }
 
 type CatalogView = 'brands' | 'inventory';
@@ -104,6 +106,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   // Finder columns (Level 1)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
+
+  // Brand detail filters
+  const [productSearch, setProductSearch] = useState('');
+  const [pricingFilter, setPricingFilter] = useState<'all' | 'missing' | 'priced'>('all');
 
   // Inventory view filters
   const [stockFilter, setStockFilter] = useState<'all' | 'reorder' | 'in_stock'>('all');
@@ -226,29 +232,46 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   // Brand detail data
   const brandProducts = useMemo(() => {
     if (!selectedBrand) return [];
+    let prods = brandGroups.get(selectedBrand) || [];
+    // Apply product search filter
+    if (productSearch.trim()) {
+      const q = productSearch.toLowerCase();
+      prods = prods.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    // Apply pricing filter
+    if (pricingFilter === 'missing') prods = prods.filter((p) => p.cost_price == null);
+    else if (pricingFilter === 'priced') prods = prods.filter((p) => p.cost_price != null);
+    return prods;
+  }, [selectedBrand, brandGroups, productSearch, pricingFilter]);
+
+  // Unfiltered brand products for counts
+  const brandProductsAll = useMemo(() => {
+    if (!selectedBrand) return [];
     return brandGroups.get(selectedBrand) || [];
   }, [selectedBrand, brandGroups]);
 
-  // Categories for selected brand
+  // Categories for selected brand (computed from filtered products)
   const brandCategories = useMemo<BrowseColumnItem[]>(() => {
-    const catMap = new Map<string, { total: number; tracked: number }>();
+    const catMap = new Map<string, { total: number; tracked: number; missingPrice: number }>();
     brandProducts.forEach((p) => {
       const cat = p.category || 'uncategorized';
-      const cur = catMap.get(cat) || { total: 0, tracked: 0 };
+      const cur = catMap.get(cat) || { total: 0, tracked: 0, missingPrice: 0 };
       cur.total++;
       if (p.is_backroom_tracked) cur.tracked++;
+      if (p.cost_price == null) cur.missingPrice++;
       catMap.set(cat, cur);
     });
     return [...catMap.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([cat, stats]) => ({
-        key: cat,
-        label: (SUPPLY_CATEGORY_LABELS as Record<string, string>)[cat] || cat.charAt(0).toUpperCase() + cat.slice(1),
-        count: stats.total,
-        health: stats.tracked === stats.total ? 'green' as const
-          : stats.tracked > 0 ? 'amber' as const
-          : 'red' as const,
-      }));
+      .map(([cat, stats]) => {
+        const ratio = stats.total > 0 ? stats.missingPrice / stats.total : 0;
+        return {
+          key: cat,
+          label: (SUPPLY_CATEGORY_LABELS as Record<string, string>)[cat] || cat.charAt(0).toUpperCase() + cat.slice(1),
+          count: stats.total,
+          health: ratio === 0 ? 'green' as const : ratio < 0.5 ? 'amber' as const : 'red' as const,
+        };
+      });
   }, [brandProducts]);
 
   // Product lines for selected category
@@ -257,35 +280,47 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     return brandProducts.filter((p) => (p.category || 'uncategorized') === selectedCategory);
   }, [brandProducts, selectedCategory]);
 
+  const { shouldGroup, groups: productLineGroupsRaw } = useMemo(
+    () => groupByProductLine(categoryProducts as any, 0),
+    [categoryProducts],
+  );
+
   const productLines = useMemo<BrowseColumnItem[]>(() => {
-    const lineMap = new Map<string, { total: number; tracked: number }>();
-    categoryProducts.forEach((p) => {
-      const line = p.product_line || extractProductLine(p.name);
-      const cur = lineMap.get(line) || { total: 0, tracked: 0 };
-      cur.total++;
-      if (p.is_backroom_tracked) cur.tracked++;
-      lineMap.set(line, cur);
-    });
-    return [...lineMap.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([line, stats]) => ({
+    if (!shouldGroup && categoryProducts.length > 0) {
+      return [{ key: '__all__', label: 'All Products', count: categoryProducts.length }];
+    }
+    return productLineGroupsRaw.map(([line, prods]: [string, any[]]) => {
+      const missingCount = prods.filter((p: any) => p.cost_price == null).length;
+      const ratio = prods.length > 0 ? missingCount / prods.length : 0;
+      return {
         key: line,
         label: line,
-        count: stats.total,
-        health: stats.tracked === stats.total ? 'green' as const
-          : stats.tracked > 0 ? 'amber' as const
-          : 'red' as const,
-      }));
-  }, [categoryProducts]);
+        count: prods.length,
+        health: ratio === 0 ? 'green' as const : ratio < 0.5 ? 'amber' as const : 'red' as const,
+      };
+    });
+  }, [shouldGroup, productLineGroupsRaw, categoryProducts]);
 
   // Products for selected line
   const lineProducts = useMemo(() => {
-    if (!selectedLine) return [];
+    if (!selectedLine) return categoryProducts;
+    if (selectedLine === '__all__') return categoryProducts;
     return categoryProducts.filter((p) => {
       const line = p.product_line || extractProductLine(p.name);
       return line === selectedLine;
     });
   }, [categoryProducts, selectedLine]);
+
+  // Display products for Col 3 — shade sorted when applicable
+  const displayProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    const prods = selectedLine ? lineProducts : [];
+    if (prods.length === 0) return prods;
+    if (SHADE_SORTED_CATEGORIES.has(selectedCategory)) {
+      return sortByShadeLevel(prods);
+    }
+    return prods;
+  }, [selectedCategory, selectedLine, lineProducts]);
 
   // Bulk toggle helpers
   const toggleCategoryTracking = useCallback((enabled: boolean) => {
@@ -297,6 +332,21 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     const ids = lineProducts.map((p) => p.id);
     bulkTrackMutation.mutate({ ids, tracked: enabled });
   }, [lineProducts, bulkTrackMutation]);
+
+  // Stats for column browser
+  const totalBrandProducts = brandProductsAll.length;
+  const scopeProducts = selectedCategory ? (selectedLine ? displayProducts : categoryProducts) : [];
+  const missingPriceCount = scopeProducts.filter((p) => p.cost_price == null).length;
+
+  const scopeLabel = selectedLine && selectedLine !== '__all__'
+    ? `${(SUPPLY_CATEGORY_LABELS as Record<string, string>)[selectedCategory!] || selectedCategory} › ${selectedLine}`
+    : selectedCategory
+      ? (SUPPLY_CATEGORY_LABELS as Record<string, string>)[selectedCategory] || selectedCategory
+      : 'All';
+
+  // Category + line tracking states
+  const categoryAllTracked = categoryProducts.length > 0 && categoryProducts.every((p) => p.is_backroom_tracked);
+  const lineAllTracked = lineProducts.length > 0 && lineProducts.every((p) => p.is_backroom_tracked);
 
   // Inventory table
   const filteredInventory = useMemo(() => {
@@ -331,6 +381,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     setSelectedBrand(null);
     setSelectedCategory(null);
     setSelectedLine(null);
+    setProductSearch('');
+    setPricingFilter('all');
   };
 
   /* ====== Render ====== */
@@ -343,6 +395,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   }
 
   const hasProducts = allProducts.length > 0;
+
+  // Compute swatch visibility for current category
+  const showSwatch = !!selectedCategory && SHADE_SORTED_CATEGORIES.has(selectedCategory);
 
   return (
     <div className="space-y-4">
@@ -419,7 +474,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               )}
               <Badge variant="outline">{trackedCount} tracked</Badge>
               {selectedBrand && (
-                <Badge variant="outline">{brandProducts.length} products</Badge>
+                <Badge variant="outline">{brandProductsAll.length} products</Badge>
               )}
               <Button
                 variant="outline"
@@ -437,22 +492,285 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         <CardContent className="space-y-4">
           {/* ====== BRAND DETAIL (FINDER) ====== */}
           {selectedBrand ? (
-            <BrandFinder
-              brandProducts={brandProducts}
-              brandCategories={brandCategories}
-              productLines={productLines}
-              lineProducts={lineProducts}
-              selectedCategory={selectedCategory}
-              selectedLine={selectedLine}
-              onSelectCategory={(cat) => { setSelectedCategory(cat); setSelectedLine(null); }}
-              onSelectLine={setSelectedLine}
-              categoryProducts={categoryProducts}
-              onToggleCategoryTracking={toggleCategoryTracking}
-              onToggleLineTracking={toggleLineTracking}
-              onUpdateProduct={(id, updates) => updateMutation.mutate({ id, updates })}
-              onNavigate={onNavigate}
-              trackedCount={brandProducts.filter((p) => p.is_backroom_tracked).length}
-            />
+            <div className="space-y-3">
+              {/* Filter bar */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex-1 max-w-sm relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={`Search ${selectedBrand} products...`}
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="font-sans pl-10"
+                  />
+                </div>
+                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
+                  <SelectTrigger className="w-[160px] font-sans">
+                    <SelectValue placeholder="All Pricing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pricing</SelectItem>
+                    <SelectItem value="missing">Missing Price</SelectItem>
+                    <SelectItem value="priced">Priced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Health legend */}
+              {brandCategories.some((i) => i.health) && (
+                <div className="flex items-center gap-4 px-1">
+                  <span className="font-sans text-[10px] text-muted-foreground">Data health:</span>
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="font-sans text-[10px] text-muted-foreground/60">Complete</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <span className="font-sans text-[10px] text-muted-foreground/60">Some missing</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <span className="font-sans text-[10px] text-muted-foreground/60">Most missing</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Three-column browser */}
+              <div className="rounded-xl border overflow-hidden flex min-h-[400px] max-h-[600px]">
+                {/* Column 1: Categories */}
+                <BrowseColumn
+                  title="Categories"
+                  items={brandCategories}
+                  selectedKey={selectedCategory}
+                  onSelect={(cat) => { setSelectedCategory(cat); setSelectedLine(null); }}
+                  className="w-[180px] shrink-0"
+                  searchThreshold={12}
+                />
+
+                {/* Column 2: Product Lines */}
+                {selectedCategory ? (
+                  <div className="flex flex-col w-[200px] shrink-0 border-r border-border/30 bg-card/30">
+                    {/* Track All Category header */}
+                    <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20">
+                      <div className="flex items-center justify-between">
+                        <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
+                          Product Lines ({productLines.length})
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
+                          <Switch
+                            checked={categoryAllTracked}
+                            onCheckedChange={(v) => toggleCategoryTracking(v)}
+                            className="scale-75"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <ScrollArea className="flex-1">
+                      <div className="p-1.5 space-y-0.5">
+                        {productLines.length === 0 ? (
+                          <p className="px-3 py-4 font-sans text-xs text-muted-foreground text-center">No product lines</p>
+                        ) : (
+                          productLines.map((item) => {
+                            const isActive = item.key === selectedLine;
+                            return (
+                              <button
+                                key={item.key}
+                                onClick={() => setSelectedLine(item.key)}
+                                className={cn(
+                                  'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors',
+                                  isActive
+                                    ? 'bg-primary/20 border-l-2 border-primary text-foreground'
+                                    : 'hover:bg-muted/50 text-muted-foreground border-l-2 border-transparent',
+                                )}
+                              >
+                                {item.health && (
+                                  <span className={cn('w-1.5 h-1.5 rounded-full shrink-0',
+                                    item.health === 'green' ? 'bg-emerald-500' : item.health === 'amber' ? 'bg-amber-500' : 'bg-red-500'
+                                  )} />
+                                )}
+                                <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
+                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
+                                  {item.count}
+                                </span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                ) : (
+                  <div className="w-[200px] shrink-0 flex items-center justify-center border-r border-border/30">
+                    <p className="font-sans text-xs text-muted-foreground">Select a category</p>
+                  </div>
+                )}
+
+                {/* Column 3: Product Table */}
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                  {!selectedCategory ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center space-y-2">
+                        <Package className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                        <p className="font-sans text-sm text-muted-foreground">
+                          Select a category to browse products
+                        </p>
+                      </div>
+                    </div>
+                  ) : !selectedLine ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <p className="font-sans text-sm text-muted-foreground">
+                        Select a product line
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Column 3 header */}
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 bg-card/30">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase truncate">
+                            {scopeLabel}
+                          </span>
+                          <Badge variant="outline" className="text-[10px]">{displayProducts.length}</Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
+                          <Switch
+                            checked={lineAllTracked}
+                            onCheckedChange={(v) => toggleLineTracking(v)}
+                            className="scale-75"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 px-2 text-[10px] font-sans ml-2"
+                            onClick={() => setBulkPricingOpen(true)}
+                          >
+                            <DollarSign className="w-3 h-3 mr-0.5" />
+                            Set Pricing
+                          </Button>
+                        </div>
+                      </div>
+                      {/* Product Table */}
+                      <div className="flex-1 overflow-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-8" />
+                              {showSwatch && <TableHead className="w-[40px] font-sans text-xs" />}
+                              <TableHead className="font-sans text-xs">Name</TableHead>
+                              <TableHead className="font-sans text-xs hidden md:table-cell">Category</TableHead>
+                              <TableHead className="font-sans text-xs hidden lg:table-cell">Depletion</TableHead>
+                              <TableHead className="font-sans text-xs hidden lg:table-cell">Unit</TableHead>
+                              <TableHead className="font-sans text-xs">Wholesale</TableHead>
+                              <TableHead className="font-sans text-xs hidden md:table-cell">Markup</TableHead>
+                              <TableHead className="font-sans text-xs hidden md:table-cell">Retail</TableHead>
+                              <TableHead className="font-sans text-xs hidden lg:table-cell">Sizes</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {displayProducts.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={showSwatch ? 10 : 9} className="text-center py-8">
+                                  <p className="font-sans text-xs text-muted-foreground">No products in this selection</p>
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              displayProducts.map((p) => {
+                                const retail = p.cost_price != null && p.markup_pct != null && p.markup_pct > 0
+                                  ? p.cost_price * (1 + p.markup_pct / 100)
+                                  : null;
+                                return (
+                                  <TableRow key={p.id} className={cn(!p.is_backroom_tracked && 'opacity-50')}>
+                                    <TableCell className="w-8 pr-0">
+                                      <Switch
+                                        checked={p.is_backroom_tracked}
+                                        onCheckedChange={(checked) => updateMutation.mutate({ id: p.id, updates: { is_backroom_tracked: checked } })}
+                                        className="scale-[0.6]"
+                                      />
+                                    </TableCell>
+                                    {showSwatch && (
+                                      <TableCell className="w-[40px] pr-0">
+                                        {(p as any).swatch_color ? (
+                                          <div
+                                            className="w-5 h-5 rounded-full border border-border/40"
+                                            style={{ backgroundColor: (p as any).swatch_color }}
+                                          />
+                                        ) : (
+                                          <div className="w-5 h-5 rounded-full border border-dashed border-border/40" />
+                                        )}
+                                      </TableCell>
+                                    )}
+                                    <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
+                                    <TableCell className="hidden md:table-cell">
+                                      <Badge variant="outline" className="text-[10px] capitalize">
+                                        {(SUPPLY_CATEGORY_LABELS as Record<string, string>)[p.category || ''] || p.category || '—'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
+                                      {p.depletion_method || '—'}
+                                    </TableCell>
+                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
+                                      {p.unit_of_measure || '—'}
+                                    </TableCell>
+                                    <TableCell className="font-sans text-xs">
+                                      {p.cost_price != null ? (
+                                        <span className="text-foreground">${p.cost_price.toFixed(2)}</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">—</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell font-sans text-xs text-muted-foreground">
+                                      {p.markup_pct != null && p.markup_pct > 0 ? `${p.markup_pct}%` : '—'}
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell font-sans text-xs">
+                                      {retail != null ? (
+                                        <span className="text-foreground">${retail.toFixed(2)}</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">—</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
+                                      {p.container_size || '—'}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Stats bar */}
+              <div className="flex items-center gap-4 px-1 font-sans text-xs text-muted-foreground">
+                <span>{totalBrandProducts} total products</span>
+                {selectedCategory && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>{scopeProducts.length} in scope</span>
+                    {missingPriceCount > 0 && (
+                      <>
+                        <span className="text-border">·</span>
+                        <span className="text-amber-400">{missingPriceCount} missing price</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Next step */}
+              {onNavigate && brandProductsAll.filter((p) => p.is_backroom_tracked).length > 0 && (
+                <div className="flex justify-end pt-2 border-t">
+                  <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
+                    Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </div>
           ) : catalogView === 'inventory' ? (
             /* ====== INVENTORY TABLE ====== */
             <InventoryView
@@ -564,7 +882,19 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     const brandProds = brandGroups.get(brandName) || [];
                     const tracked = brandProds.filter((p) => p.is_backroom_tracked).length;
                     const meta = brandMetaMap.get(brandName.toLowerCase());
-                    const cats = [...new Set(brandProds.map((p) => p.category).filter(Boolean))];
+                    const missingPrice = brandProds.filter((p) => p.cost_price == null).length;
+                    const isComplete = missingPrice === 0;
+                    const cats = [...new Set(brandProds.map((p) => p.category).filter(Boolean))] as string[];
+
+                    // Category summary
+                    const catCounts = new Map<string, number>();
+                    brandProds.forEach((p) => {
+                      const cat = p.category || 'uncategorized';
+                      catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
+                    });
+                    const categorySummary = [...catCounts.entries()]
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([cat, count]) => ({ cat, count }));
 
                     return (
                       <button
@@ -575,15 +905,29 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           setSelectedCategory(null);
                           setSelectedLine(null);
                           setSearch('');
+                          setProductSearch('');
+                          setPricingFilter('all');
                         }}
                         className={cn(
-                          'group relative flex flex-col rounded-xl border p-4 text-left transition-all duration-200',
+                          'group relative flex flex-col rounded-xl border p-4 text-left transition-all duration-200 min-h-[140px]',
                           'border bg-card/50',
                           'hover:border-border hover:bg-card hover:shadow-lg',
                         )}
                       >
-                        {/* Logo / Initial */}
-                        <div className="flex items-center gap-3 mb-3">
+                        {/* Top-left badge: product count */}
+                        <Badge variant="outline" className="absolute top-2 left-2 text-[10px]">
+                          {brandProds.length} products
+                        </Badge>
+
+                        {/* Top-right: missing data */}
+                        {!isComplete && (
+                          <Badge variant="secondary" className="absolute top-2 right-2 text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
+                            Missing Data
+                          </Badge>
+                        )}
+
+                        {/* Center: Logo + Name */}
+                        <div className="flex-1 flex flex-col items-center justify-center gap-2 pt-4">
                           {meta?.logo_url ? (
                             <img
                               src={meta.logo_url}
@@ -595,43 +939,23 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                               {brandName[0]}
                             </div>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-sans font-medium text-foreground truncate block">{brandName}</span>
-                            <span className="text-[11px] font-sans text-muted-foreground">{brandProds.length} products</span>
-                          </div>
+                          <span className="text-sm font-sans font-medium text-foreground text-center">{brandName}</span>
                         </div>
 
-                        {/* Status row */}
-                        <div className="flex items-center gap-2 mt-auto">
-                          {tracked > 0 ? (
-                            <Badge variant="secondary" className="text-[10px]">
-                              {tracked}/{brandProds.length} tracked
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] opacity-60">
-                              Not tracked
-                            </Badge>
+                        {/* Bottom: tracking + category summary */}
+                        <div className="mt-auto pt-2 text-center">
+                          {tracked > 0 && (
+                            <span className="text-[10px] font-sans text-muted-foreground">{tracked}/{brandProds.length} tracked</span>
+                          )}
+                          {categorySummary.length > 0 && (
+                            <p className="font-sans text-[9px] text-muted-foreground/60 leading-tight mt-0.5">
+                              {categorySummary.slice(0, 3).map((cs) =>
+                                `${cs.count} ${(SUPPLY_CATEGORY_LABELS as Record<string, string>)[cs.cat] || cs.cat}`
+                              ).join(' · ')}
+                              {categorySummary.length > 3 && ` +${categorySummary.length - 3}`}
+                            </p>
                           )}
                         </div>
-
-                        {/* Category chips */}
-                        {cats.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {cats.slice(0, 3).map((cat) => (
-                              <span
-                                key={cat}
-                                className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground capitalize"
-                              >
-                                {cat}
-                              </span>
-                            ))}
-                            {cats.length > 3 && (
-                              <span className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">
-                                +{cats.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
 
                         {/* Hover arrow */}
                         <ArrowRight className="absolute top-4 right-4 w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -668,8 +992,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           open={bulkPricingOpen}
           onOpenChange={setBulkPricingOpen}
           orgId={orgId}
-          productIds={catalogView === 'inventory' ? filteredInventory.map((r) => r.id) : bulkProductIds}
-          scopeLabel={filterCategory !== 'all' ? filterCategory : 'all tracked products'}
+          productIds={
+            selectedBrand
+              ? displayProducts.map((p) => p.id)
+              : catalogView === 'inventory'
+                ? filteredInventory.map((r) => r.id)
+                : bulkProductIds
+          }
+          scopeLabel={
+            selectedBrand
+              ? scopeLabel
+              : filterCategory !== 'all' ? filterCategory : 'all tracked products'
+          }
         />
       )}
       {orgId && (
@@ -679,285 +1013,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           orgId={orgId}
           reorderItems={reorderItems}
         />
-      )}
-    </div>
-  );
-}
-
-/* ==========================================================================
-   BRAND FINDER — Three-column category → product line → product browser
-   ========================================================================== */
-function BrandFinder({
-  brandProducts,
-  brandCategories,
-  productLines,
-  lineProducts,
-  selectedCategory,
-  selectedLine,
-  onSelectCategory,
-  onSelectLine,
-  categoryProducts,
-  onToggleCategoryTracking,
-  onToggleLineTracking,
-  onUpdateProduct,
-  onNavigate,
-  trackedCount,
-}: {
-  brandProducts: BackroomProduct[];
-  brandCategories: BrowseColumnItem[];
-  productLines: BrowseColumnItem[];
-  lineProducts: BackroomProduct[];
-  selectedCategory: string | null;
-  selectedLine: string | null;
-  onSelectCategory: (cat: string) => void;
-  onSelectLine: (line: string) => void;
-  categoryProducts: BackroomProduct[];
-  onToggleCategoryTracking: (enabled: boolean) => void;
-  onToggleLineTracking: (enabled: boolean) => void;
-  onUpdateProduct: (id: string, updates: Partial<BackroomProduct>) => void;
-  onNavigate?: (section: string) => void;
-  trackedCount: number;
-}) {
-  // Category tracking state
-  const categoryAllTracked = categoryProducts.length > 0 && categoryProducts.every((p) => p.is_backroom_tracked);
-  const lineAllTracked = lineProducts.length > 0 && lineProducts.every((p) => p.is_backroom_tracked);
-
-  return (
-    <div className="space-y-4">
-      {/* Finder browser */}
-      <div className="rounded-xl border overflow-hidden flex" style={{ minHeight: 420 }}>
-        {/* Column 1: Categories */}
-        <BrowseColumn
-          title="Categories"
-          items={brandCategories}
-          selectedKey={selectedCategory}
-          onSelect={onSelectCategory}
-          className="w-[180px] shrink-0"
-          searchThreshold={12}
-        />
-
-        {/* Column 2: Product Lines */}
-        {selectedCategory ? (
-          <div className="flex flex-col flex-1 min-w-0 border-r border-border/30">
-            {/* Track All Category header */}
-            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20 flex items-center justify-between">
-              <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
-                Product Lines ({productLines.length})
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
-                <Switch
-                  checked={categoryAllTracked}
-                  onCheckedChange={(v) => onToggleCategoryTracking(v)}
-                  className="scale-75"
-                />
-              </div>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="p-1.5 space-y-0.5">
-                {productLines.length === 0 ? (
-                  <p className="px-3 py-4 font-sans text-xs text-muted-foreground text-center">No product lines</p>
-                ) : (
-                  productLines.map((item) => {
-                    const isActive = item.key === selectedLine;
-                    return (
-                      <button
-                        key={item.key}
-                        onClick={() => onSelectLine(item.key)}
-                        className={cn(
-                          'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors',
-                          isActive
-                            ? 'bg-primary/20 border-l-2 border-primary text-foreground'
-                            : 'hover:bg-muted/50 text-muted-foreground border-l-2 border-transparent',
-                        )}
-                      >
-                        {item.health && (
-                          <span className={cn('w-1.5 h-1.5 rounded-full shrink-0',
-                            item.health === 'green' ? 'bg-emerald-500' : item.health === 'amber' ? 'bg-amber-500' : 'bg-red-500'
-                          )} />
-                        )}
-                        <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
-                        <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
-                          {item.count}
-                        </span>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="font-sans text-xs text-muted-foreground">Select a category</p>
-          </div>
-        )}
-
-        {/* Column 3: Products */}
-        {selectedLine ? (
-          <div className="flex flex-col flex-[1.5] min-w-0">
-            {/* Track All Line header */}
-            <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-card/60 backdrop-blur-sm border-b border-border/20 flex items-center justify-between">
-              <span className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
-                {selectedLine} ({lineProducts.length})
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-sans text-muted-foreground">Track All</span>
-                <Switch
-                  checked={lineAllTracked}
-                  onCheckedChange={(v) => onToggleLineTracking(v)}
-                  className="scale-75"
-                />
-              </div>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="p-2 space-y-1">
-                {lineProducts.map((product) => (
-                  <FinderProductRow
-                    key={product.id}
-                    product={product}
-                    onUpdate={(updates) => onUpdateProduct(product.id, updates)}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        ) : selectedCategory ? (
-          <div className="flex-[1.5] flex items-center justify-center">
-            <p className="font-sans text-xs text-muted-foreground">Select a product line</p>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Next step */}
-      {onNavigate && trackedCount > 0 && (
-        <div className="flex justify-end pt-2 border-t">
-          <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
-            Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ==========================================================================
-   FINDER PRODUCT ROW — Compact row inside the Finder's third column
-   ========================================================================== */
-function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onUpdate: (u: Partial<BackroomProduct>) => void }) {
-  const [localCostPerGram, setLocalCostPerGram] = useState(product.cost_per_gram?.toString() || '');
-  const [localMarkup, setLocalMarkup] = useState(product.markup_pct?.toString() || '');
-  const [localContainer, setLocalContainer] = useState(product.container_size || '');
-
-  const chargePerGram = computeChargePerGram(
-    localCostPerGram ? parseFloat(localCostPerGram) : null,
-    localMarkup ? parseFloat(localMarkup) : null
-  );
-
-  const handleBlurCost = () => {
-    const val = localCostPerGram ? parseFloat(localCostPerGram) : null;
-    if (val !== product.cost_per_gram) onUpdate({ cost_per_gram: val } as any);
-  };
-  const handleBlurMarkup = () => {
-    const val = localMarkup ? parseFloat(localMarkup) : null;
-    if (val !== product.markup_pct) onUpdate({ markup_pct: val } as any);
-  };
-  const handleBlurContainer = () => {
-    if (localContainer !== (product.container_size || '')) onUpdate({ container_size: localContainer || null } as any);
-  };
-
-  const inputClass = "h-6 w-16 rounded border px-1.5 text-[11px] font-sans text-foreground bg-background focus:outline-none focus:border-primary/50 transition-colors";
-
-  return (
-    <div className={cn(
-      'rounded-lg border p-3 transition-all',
-      product.is_backroom_tracked
-        ? 'border bg-card/50'
-        : 'border-border/30 bg-transparent opacity-70'
-    )}>
-      {/* Row 1: Toggle + name + depletion */}
-      <div className="flex items-center gap-2">
-        <Switch
-          checked={product.is_backroom_tracked}
-          onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
-          className="scale-75 shrink-0"
-        />
-        <span className="flex-1 text-xs font-sans font-medium text-foreground truncate min-w-0">
-          {product.name}
-        </span>
-        {product.is_backroom_tracked && (
-          <Select
-            value={product.depletion_method}
-            onValueChange={(v) => onUpdate({ depletion_method: v })}
-          >
-            <SelectTrigger className="w-[100px] h-6 text-[11px] font-sans">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DEPLETION_METHODS.map((m) => (
-                <SelectItem key={m.value} value={m.value} className="text-[11px]">{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      {/* Row 2: Pricing + switches (only when tracked) */}
-      {product.is_backroom_tracked && (
-        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/20">
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">$/g</span>
-            <input
-              type="number"
-              step="0.0001"
-              value={localCostPerGram}
-              onChange={(e) => setLocalCostPerGram(e.target.value)}
-              onBlur={handleBlurCost}
-              placeholder="0.00"
-              className={cn(inputClass, 'pl-1 w-14')}
-            />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">Size</span>
-            <input
-              type="text"
-              value={localContainer}
-              onChange={(e) => setLocalContainer(e.target.value)}
-              onBlur={handleBlurContainer}
-              placeholder="60g"
-              className={cn(inputClass, 'w-12')}
-            />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">Markup</span>
-            <input
-              type="number"
-              step="1"
-              value={localMarkup}
-              onChange={(e) => setLocalMarkup(e.target.value)}
-              onBlur={handleBlurMarkup}
-              placeholder="0"
-              className={cn(inputClass, 'w-12')}
-            />
-            <span className="text-[10px] text-muted-foreground">%</span>
-          </div>
-          {chargePerGram != null && (
-            <Badge variant="secondary" className="text-[10px] font-sans">
-              ${chargePerGram.toFixed(4)}/g
-            </Badge>
-          )}
-
-          <div className="w-px h-3 bg-border/30" />
-
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">Billable</span>
-            <Switch checked={product.is_billable_to_client} onCheckedChange={(v) => onUpdate({ is_billable_to_client: v })} className="scale-[0.6]" />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">Overage</span>
-            <Switch checked={product.is_overage_eligible} onCheckedChange={(v) => onUpdate({ is_overage_eligible: v })} className="scale-[0.6]" />
-          </div>
-        </div>
       )}
     </div>
   );
