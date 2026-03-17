@@ -56,6 +56,9 @@ export function useApprovePriceUpdate() {
       queueItemId: string;
       productId: string | null;
       wholesalePrice: number;
+      brand?: string;
+      productName?: string;
+      sourceId?: string | null;
     }) => {
       // Update the queue item status
       const { error: queueErr } = await supabase
@@ -80,6 +83,19 @@ export function useApprovePriceUpdate() {
           .eq('id', params.productId);
 
         if (prodErr) throw prodErr;
+      }
+
+      // Also update matching supply library product (by brand + name)
+      if (params.brand && params.productName) {
+        await supabase
+          .from('supply_library_products')
+          .update({
+            wholesale_price: params.wholesalePrice,
+            price_source_id: params.sourceId || null,
+            price_updated_at: new Date().toISOString(),
+          } as any)
+          .eq('brand', params.brand)
+          .eq('name', params.productName);
       }
     },
     onSuccess: () => {

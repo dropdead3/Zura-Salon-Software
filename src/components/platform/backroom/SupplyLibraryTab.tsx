@@ -16,7 +16,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,6 +30,9 @@ import {
 import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { formatCurrency } from '@/lib/format';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatRelativeTime } from '@/lib/format';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
@@ -214,6 +217,29 @@ export function SupplyLibraryTab() {
     );
   }
 
+  // ─── Inline price save ───
+  const handleInlinePriceSave = async (productId: string) => {
+    if (!inlineEditing || inlineEditing.field !== 'wholesale_price') return;
+    const numVal = parseFloat(inlineEditing.value);
+    if (isNaN(numVal) || numVal < 0) {
+      toast.error('Invalid price');
+      setInlineEditing(null);
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('supply_library_products')
+        .update({ wholesale_price: numVal, price_updated_at: new Date().toISOString() } as any)
+        .eq('id', productId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+      toast.success('Price updated');
+    } catch (err: any) {
+      toast.error('Price update failed: ' + err.message);
+    }
+    setInlineEditing(null);
+  };
+
   // ─── Product row renderer (shared between views) ───
   const renderProductRow = (p: SupplyLibraryProduct) => (
     <TableRow key={p.id} className="border-[hsl(var(--platform-border)/0.3)]">
@@ -293,6 +319,49 @@ export function SupplyLibraryTab() {
           >
             {p.default_unit}
           </span>
+        )}
+      </TableCell>
+      {/* Wholesale Price column */}
+      <TableCell className="font-sans text-xs">
+        {inlineEditing?.id === p.id && inlineEditing.field === 'wholesale_price' ? (
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            autoFocus
+            className="h-7 w-20 rounded-md border border-[hsl(var(--platform-border))] bg-transparent px-2 font-sans text-xs text-[hsl(var(--platform-foreground))] focus:outline-none focus:border-violet-500"
+            value={inlineEditing.value}
+            onChange={(e) => setInlineEditing({ ...inlineEditing, value: e.target.value })}
+            onBlur={() => handleInlinePriceSave(p.id)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleInlinePriceSave(p.id); if (e.key === 'Escape') setInlineEditing(null); }}
+          />
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className={cn(
+                    'cursor-pointer transition-colors',
+                    p.wholesale_price != null
+                      ? 'text-[hsl(var(--platform-foreground))] hover:text-violet-400'
+                      : 'text-[hsl(var(--platform-foreground-muted))] hover:text-violet-400'
+                  )}
+                  onDoubleClick={() => setInlineEditing({
+                    id: p.id,
+                    field: 'wholesale_price',
+                    value: p.wholesale_price != null ? String(p.wholesale_price) : '',
+                  })}
+                >
+                  {p.wholesale_price != null ? formatCurrency(p.wholesale_price, { currency: p.currency || 'USD' }) : '—'}
+                </span>
+              </TooltipTrigger>
+              {p.price_updated_at && (
+                <TooltipContent>
+                  <span className="font-sans text-xs">Updated {formatRelativeTime(p.price_updated_at)}</span>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
       </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
@@ -533,6 +602,7 @@ export function SupplyLibraryTab() {
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
                                 </TableRow>
@@ -608,6 +678,8 @@ function AddEditDialog({
   const [depletion, setDepletion] = useState(product?.default_depletion || 'weighed');
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
+  const [wholesalePrice, setWholesalePrice] = useState(product?.wholesale_price != null ? String(product.wholesale_price) : '');
+  const [recommendedRetail, setRecommendedRetail] = useState(product?.recommended_retail != null ? String(product.recommended_retail) : '');
 
   const resetForm = () => {
     setBrand(product?.brand || '');
@@ -616,6 +688,8 @@ function AddEditDialog({
     setDepletion(product?.default_depletion || 'weighed');
     setUnit(product?.default_unit || 'g');
     setSizes(product?.size_options?.join(', ') || '');
+    setWholesalePrice(product?.wholesale_price != null ? String(product.wholesale_price) : '');
+    setRecommendedRetail(product?.recommended_retail != null ? String(product.recommended_retail) : '');
   };
 
   const handleSave = async () => {
@@ -623,13 +697,18 @@ function AddEditDialog({
     setSaving(true);
     try {
       const sizeArr = sizes.split(',').map((s) => s.trim()).filter(Boolean);
-      const payload = {
+      const wpVal = wholesalePrice.trim() ? parseFloat(wholesalePrice) : null;
+      const rrVal = recommendedRetail.trim() ? parseFloat(recommendedRetail) : null;
+      const payload: any = {
         brand: brand.trim(),
         name: name.trim(),
         category,
         default_depletion: depletion,
         default_unit: unit,
         size_options: sizeArr,
+        wholesale_price: wpVal,
+        recommended_retail: rrVal,
+        ...(wpVal != null ? { price_updated_at: new Date().toISOString() } : {}),
       };
 
       if (isEdit && product) {
@@ -711,6 +790,16 @@ function AddEditDialog({
           <div className="space-y-1.5">
             <Label className="font-sans text-xs">Size Options (comma-separated)</Label>
             <Input value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="e.g. 60ml, 120ml" className="font-sans" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Wholesale Price</Label>
+              <Input type="number" autoCapitalize="off" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0.00" className="font-sans" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Recommended Retail</Label>
+              <Input type="number" autoCapitalize="off" value={recommendedRetail} onChange={(e) => setRecommendedRetail(e.target.value)} placeholder="0.00" className="font-sans" />
+            </div>
           </div>
         </div>
         <DialogFooter>
