@@ -77,6 +77,14 @@ function BrandCardGrid({
     if (activeLetter) {
       list = list.filter((b) => b.brand[0]?.toUpperCase() === activeLetter);
     }
+    // Pin "Generic" to the front when viewing all (no letter filter)
+    if (!activeLetter && !search) {
+      const genericIndex = list.findIndex((b) => b.brand.toLowerCase() === 'generic');
+      if (genericIndex > 0) {
+        const [generic] = list.splice(genericIndex, 1);
+        list = [generic, ...list];
+      }
+    }
     return list;
   }, [brands, search, activeLetter]);
 
