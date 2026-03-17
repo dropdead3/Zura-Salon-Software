@@ -540,7 +540,7 @@ export function SupplyLibraryTab() {
                 <PlatformButton
                   variant="ghost"
                   size="icon-sm"
-                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); }}
+                   onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </PlatformButton>
