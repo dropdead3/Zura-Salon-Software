@@ -391,7 +391,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
               {/* View toggle */}
               {hasProducts && !selectedBrand && (
-                <div className="flex items-center rounded-lg border border-[hsl(var(--platform-border)/0.6)] overflow-hidden">
+                <div className="flex items-center rounded-lg border overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setCatalogView('brands')}
