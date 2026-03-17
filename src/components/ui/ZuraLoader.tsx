@@ -11,6 +11,7 @@ const SIZES = {
   sm: { cell: 'h-2 w-2 rounded-[2px]', gap: 'gap-0.5' },
   md: { cell: 'h-2.5 w-2.5 rounded-[3px]', gap: 'gap-0.5' },
   lg: { cell: 'h-3.5 w-3.5 rounded-[4px]', gap: 'gap-1' },
+  xl: { cell: 'h-[13px] w-[13px] rounded-[3px]', gap: 'gap-0.5' },
 } as const;
 
 const Z_GRID = [
