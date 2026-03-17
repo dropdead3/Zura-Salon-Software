@@ -190,7 +190,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     setExpandedBrands(new Set());
   };
 
-  // Phase 1: Generate (dry run)
+  // Phase 1: Generate — call generate-color-catalog per brand individually (avoids edge-fn timeout)
   const handleGenerate = async () => {
     const brandsToProcess = filteredBrands.filter(b => selectedBrands.has(b.brand));
     if (brandsToProcess.length === 0) {
@@ -203,48 +203,46 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     const initialResults: BrandResult[] = brandsToProcess.map(b => ({ brand: b.brand, status: 'pending' }));
     setResults(initialResults);
 
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < brandsToProcess.length; i += BATCH_SIZE) {
-      const batch = brandsToProcess.slice(i, i + BATCH_SIZE);
-
+    // Process one brand at a time — each call is ~30-60s, well within edge-fn timeout
+    for (const brandTarget of brandsToProcess) {
       setResults(prev => prev.map(r =>
-        batch.some(b => b.brand === r.brand) ? { ...r, status: 'running' as const } : r
+        r.brand === brandTarget.brand ? { ...r, status: 'running' as const } : r
       ));
 
       try {
-        const brandsPayload = batch.map(b => ({
-          ...b,
-          verify_url: BRAND_VERIFY_URLS[b.brand] || undefined,
-        }));
-
-        const { data, error } = await supabase.functions.invoke('bulk-catalog-import', {
-          body: { brands: brandsPayload, dry_run: true },
+        const { data, error } = await supabase.functions.invoke('generate-color-catalog', {
+          body: {
+            brand: brandTarget.brand,
+            is_professional: brandTarget.is_professional,
+            verify_url: BRAND_VERIFY_URLS[brandTarget.brand] || undefined,
+          },
         });
 
         if (error) throw error;
 
-        if (data?.results) {
-          setResults(prev => prev.map(r => {
-            const match = data.results.find((dr: any) => dr.brand === r.brand);
-            if (match) {
-              return {
-                ...r,
-                status: match.status as BrandResult['status'],
-                products_generated: match.products_generated,
-                products_inserted: match.products_inserted,
-                products_skipped: match.products_skipped,
-                products: match.products,
-                verification: match.verification,
-                error: match.error,
-              };
-            }
-            return r;
-          }));
+        if (data?.success && data?.products) {
+          setResults(prev => prev.map(r =>
+            r.brand === brandTarget.brand
+              ? {
+                  ...r,
+                  status: 'success' as const,
+                  products_generated: data.product_count || data.products.length,
+                  products: data.products,
+                  verification: data.verification || null,
+                }
+              : r
+          ));
+        } else {
+          setResults(prev => prev.map(r =>
+            r.brand === brandTarget.brand
+              ? { ...r, status: 'error' as const, error: data?.error || 'No products returned' }
+              : r
+          ));
         }
       } catch (err: any) {
         setResults(prev => prev.map(r =>
-          batch.some(b => b.brand === r.brand) && r.status === 'running'
-            ? { ...r, status: 'error' as const, error: err.message }
+          r.brand === brandTarget.brand
+            ? { ...r, status: 'error' as const, error: err.message || 'Failed to fetch' }
             : r
         ));
       }
@@ -252,18 +250,9 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     setIsRunning(false);
   };
 
-  // Phase 2: Confirm & Import
+  // Phase 2: Confirm & Import — send pre-generated products to bulk-catalog-import (insert-only, fast)
   const handleConfirmImport = async () => {
-    const brandsToImport = results
-      .filter(r => r.status === 'success' && (r.products_generated || 0) > 0)
-      .map(r => {
-        const target = ALL_BRANDS.find(b => b.brand === r.brand);
-        return {
-          brand: r.brand,
-          is_professional: target?.is_professional ?? true,
-          verify_url: undefined, // No need to re-verify
-        };
-      });
+    const brandsToImport = results.filter(r => r.status === 'success' && r.products && r.products.length > 0);
 
     if (brandsToImport.length === 0) {
       toast.error('No brands with generated products to import');
@@ -273,45 +262,50 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
     setIsRunning(true);
     setPhase('importing');
 
-    // Mark all as running
+    // Mark importing brands as running
     setResults(prev => prev.map(r =>
       brandsToImport.some(b => b.brand === r.brand)
         ? { ...r, status: 'running' as const, products_inserted: 0 }
         : r
     ));
 
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < brandsToImport.length; i += BATCH_SIZE) {
-      const batch = brandsToImport.slice(i, i + BATCH_SIZE);
+    // Build the payload: pre-generated products grouped by brand
+    const payload = brandsToImport.map(r => {
+      const target = ALL_BRANDS.find(b => b.brand === r.brand);
+      return {
+        brand: r.brand,
+        is_professional: target?.is_professional ?? true,
+        products: r.products!,
+      };
+    });
 
-      try {
-        const { data, error } = await supabase.functions.invoke('bulk-catalog-import', {
-          body: { brands: batch, dry_run: false },
-        });
+    try {
+      const { data, error } = await supabase.functions.invoke('bulk-catalog-import', {
+        body: { brand_products: payload },
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data?.results) {
-          setResults(prev => prev.map(r => {
-            const match = data.results.find((dr: any) => dr.brand === r.brand);
-            if (match) {
-              return {
-                ...r,
-                status: match.status as BrandResult['status'],
-                products_inserted: match.products_inserted,
-                products_skipped: match.products_skipped,
-              };
-            }
-            return r;
-          }));
-        }
-      } catch (err: any) {
-        setResults(prev => prev.map(r =>
-          batch.some(b => b.brand === r.brand) && r.status === 'running'
-            ? { ...r, status: 'error' as const, error: err.message }
-            : r
-        ));
+      if (data?.results) {
+        setResults(prev => prev.map(r => {
+          const match = data.results.find((dr: any) => dr.brand === r.brand);
+          if (match) {
+            return {
+              ...r,
+              status: match.status as BrandResult['status'],
+              products_inserted: match.products_inserted,
+              products_skipped: match.products_skipped,
+            };
+          }
+          return r;
+        }));
       }
+    } catch (err: any) {
+      setResults(prev => prev.map(r =>
+        brandsToImport.some(b => b.brand === r.brand) && r.status === 'running'
+          ? { ...r, status: 'error' as const, error: err.message }
+          : r
+      ));
     }
 
     setIsRunning(false);
