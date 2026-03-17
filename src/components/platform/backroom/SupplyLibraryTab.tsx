@@ -45,6 +45,7 @@ export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [brandSearch, setBrandSearch] = useState('');
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [addOpen, setAddOpen] = useState(false);
