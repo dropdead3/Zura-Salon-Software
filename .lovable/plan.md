@@ -1,32 +1,31 @@
 
 
-# Fix Danger Jones Developers: Update Pricing and Sizes
+# Fix Danger Jones Semi-Permanent Data (Re-apply)
 
-## Current State
-6 developers in DB — all missing pricing, wrong sizes (900ml), no swatches.
+## Problem
+All 27 active semi-permanent products still have stale data despite earlier update attempts:
+- `wholesale_price`: null
+- `default_markup_pct`: 0
+- `size_options`: ['118ml']
 
-## Screenshot Data (Vish)
+## Fix
 
-| Product | Wholesale | Markup | Retail | Size |
-|---------|-----------|--------|--------|------|
-| 5 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
-| 10 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
-| 20 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
-| 30 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
-| 40 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
-| Gloss Toner 6 Volume 1.8% Developer | $7.80 | 100% | $15.60 | 907g |
+Single bulk UPDATE targeting all active Danger Jones semi-permanents:
 
-## Changes
+```sql
+UPDATE supply_library_products
+SET wholesale_price = 9.22,
+    default_markup_pct = 100,
+    size_options = ARRAY['113g'],
+    updated_at = now()
+WHERE brand = 'Danger Jones'
+  AND category = 'semi-permanent'
+  AND is_active = true;
+```
 
-Single UPDATE for the 5 Deluxe Cream Developers:
-- `wholesale_price` → `9.65`
-- `default_markup_pct` → `100`
-- `size_options` → `['863g']`
+Then fix the 7 swatch colors (Dopamine, Empire, Hysteria, Pavement, Poolside, Simpatico, Ransom) with individual UPDATEs.
 
-Separate UPDATE for the Gloss Toner Developer:
-- `wholesale_price` → `7.80`
-- `default_markup_pct` → `100`
-- `size_options` → `['907g']`
+Then deactivate "Liquid Semi-Permanent" if still active.
 
-All 6 products already exist — names match. No inserts or deactivations needed. Data-only changes.
+All data-only changes via the insert tool.
 
