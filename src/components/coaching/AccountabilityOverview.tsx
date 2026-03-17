@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useCoachAccountabilityItems, type AccountabilityItem } from '@/hooks/useAccountabilityItems';
 import { parseISO, isPast, isToday } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
