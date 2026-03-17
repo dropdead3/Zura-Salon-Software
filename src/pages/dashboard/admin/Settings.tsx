@@ -68,6 +68,7 @@ import {
   ArrowLeft,
   Wallet,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { AccountBillingContent } from '@/components/dashboard/settings/AccountBillingContent';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
