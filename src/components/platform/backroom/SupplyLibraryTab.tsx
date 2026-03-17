@@ -440,6 +440,7 @@ export function SupplyLibraryTab() {
                     <PlatformCard
                       key={b.brand}
                       variant="interactive"
+                      size="md"
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
                       onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); }}
                     >

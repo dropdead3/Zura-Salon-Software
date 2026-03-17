@@ -3,12 +3,12 @@ import { cn } from '@/lib/utils';
 
 interface PlatformCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'elevated' | 'interactive';
+  size?: 'lg' | 'md' | 'sm';
   glow?: boolean;
 }
 
 const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
-  ({ className, variant = 'default', glow = false, children, ...props }, ref) => {
-    // Variants now use CSS variables that adapt to platform-light/platform-dark
+  ({ className, variant = 'default', size = 'lg', glow = false, children, ...props }, ref) => {
     const variants = {
       default: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)]',
       glass: 'platform-glass',
@@ -16,11 +16,17 @@ const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
       interactive: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)] platform-card-hover transition-all duration-300',
     };
 
+    const radii = {
+      lg: 'rounded-2xl',
+      md: 'rounded-xl',
+      sm: 'rounded-lg',
+    };
+
     return (
       <div
         ref={ref}
         className={cn(
-          'rounded-2xl border backdrop-blur-xl',
+          radii[size], 'border backdrop-blur-xl',
           variants[variant],
           glow && 'platform-glow-sm',
           className
