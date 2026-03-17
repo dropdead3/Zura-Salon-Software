@@ -32,6 +32,7 @@ import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-su
 import { CSVImportDialog } from './CSVImportDialog';
 import { AddBrandWizard } from './AddBrandWizard';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { EditBrandDialog } from './EditBrandDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
