@@ -767,6 +767,16 @@ export function SupplyLibraryTab() {
                     return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
                   })()}
                 </PlatformButton>
+                {/* Recently Added filter */}
+                <PlatformButton
+                  variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all')}
+                  className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : ''}
+                >
+                  <Clock className="w-3.5 h-3.5 mr-1" />
+                  Recently Added
+                </PlatformButton>
               </div>
 
               {brandLoading ? (
