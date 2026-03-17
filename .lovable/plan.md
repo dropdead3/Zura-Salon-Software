@@ -1,54 +1,24 @@
 
 
-# Fix Danger Jones Gloss Toner: Add 21 Missing Shades + Data Corrections
+# Fix Danger Jones Lighteners: Add Missing Product + Update Pricing/Sizes
 
-## 1. Insert 21 Missing Gloss Toner Shades
+## Current State
+Database has 2 lighteners: "Cream Lightener with Bonding Complex" and "Epilogue Lightener" — both missing pricing and using incorrect sizes (450g/900g).
 
-All new rows follow existing naming convention (`Gloss Toner [shade] [tone name]`), category `toner`, size `57g`, wholesale $7.50, markup 100%.
+Screenshot from Vish shows 2 lighteners with validated data:
 
-| Shade | Swatch Color |
-|-------|-------------|
-| 1-1 Ash | #1A1A2E |
-| 3-2 Violet | #2E1A2E |
-| 3-8 Brown | #2B1810 |
-| 3-65 Red/Mahogany | #4A1020 |
-| 4-2 Violet | #3E2A3E |
-| 4-4 Copper | #6B3510 |
-| 4-66 Red/Red | #6B1020 |
-| 5-3 Gold | #7A6020 |
-| 5-52 Mahogany/Violet | #6B3050 |
-| 5-65 Red/Mahogany | #7A2030 |
-| 6-2 Violet | #6B5070 |
-| 6-7 Matte | #6B6B4A |
-| 6-34 Gold/Copper | #8B6030 |
-| 6-46 Copper/Red | #8B3020 |
-| 6-52 Mahogany/Violet | #7B3858 |
-| 6-66 Red/Red | #8B1525 |
-| 7-66 Red/Red | #A01828 |
-| 8-7 Matte | #A0A070 |
-| 8-34 Gold/Copper | #C09040 |
-| 8-46 Copper/Red | #C06030 |
-| 9-03 Natural/Gold | #D4C090 |
+| Product | Wholesale | Markup | Retail | Size |
+|---------|-----------|--------|--------|------|
+| Cream Lightener with Bonding Complex | $17.00 | 200% | $51.00 | 227g |
+| Powder Lightener with Bonding | $29.00 | 200% | $87.00 | 500g |
 
-**Method**: Single batch INSERT of 21 rows into `supply_library_products`.
+## Changes
 
-## 2. Update Existing Gloss Toner Data
+1. **Update "Cream Lightener with Bonding Complex"**: Set `wholesale_price = 17.00`, `default_markup_pct = 200`, `size_options = ['227g']`, `swatch_color = '#7EC8D8'` (light blue from screenshot).
 
-Two corrections across all 45 existing Gloss Toner rows:
-- **Container size**: `60ml` → `57g` (matches Vish data)
-- **Wholesale price**: `null` → `$7.50`
-- **Default markup**: Set to `100` (so retail auto-calculates to $15.00)
+2. **Add "Powder Lightener with Bonding"**: New row — `wholesale_price = 29.00`, `default_markup_pct = 200`, `size_options = ['500g']`, category `lightener`.
 
-**Method**: Single UPDATE statement filtering on `brand = 'Danger Jones' AND category = 'toner'`.
+3. **Deactivate "Epilogue Lightener"**: Not present in Vish — likely not a real lightener product (Epilogue is the permanent color line). Set `is_active = false`.
 
-## Summary
-
-| Action | Scope |
-|--------|-------|
-| Insert missing shades | 21 new rows |
-| Fix container size 60ml → 57g | 45 existing rows |
-| Set wholesale price $7.50 | 45 existing rows |
-| Set markup 100% | 45 existing rows |
-
-All data-only changes — no code modifications needed.
+All data-only changes via the insert tool.
 
