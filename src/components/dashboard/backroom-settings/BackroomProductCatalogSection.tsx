@@ -639,6 +639,17 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {selectedBrand && (
                 <Badge variant="outline">{brandProductsAll.length} products</Badge>
               )}
+              {selectedBrand && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncFromLibraryMutation.mutate(selectedBrand)}
+                  disabled={syncFromLibraryMutation.isPending}
+                  className="font-sans gap-1.5"
+                >
+                  <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
+                  Sync from Library
+                </Button>
               <Button
                 variant="outline"
                 size="sm"
