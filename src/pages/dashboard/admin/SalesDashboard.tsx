@@ -527,9 +527,7 @@ export default function SalesDashboard() {
                 <CardContent>
                   <div className="h-[250px] md:h-[300px]">
                     {trendLoading ? (
-                      <div className="h-full flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                      </div>
+                      <DashboardLoader size="md" className="h-full" />
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData}>
