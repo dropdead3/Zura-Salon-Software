@@ -31,6 +31,7 @@ import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backr
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
