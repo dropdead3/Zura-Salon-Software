@@ -810,7 +810,7 @@ export function SupplyLibraryTab() {
                     >
                       {!b.isComplete && (
                         <PlatformBadge variant="warning" size="sm" className="absolute top-2 right-2">
-                          Partial
+                          Missing Data
                         </PlatformBadge>
                       )}
                       {brandLogoMap.has(b.brand) ? (
