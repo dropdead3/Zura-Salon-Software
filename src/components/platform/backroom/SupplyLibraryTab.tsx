@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { BulkCatalogImport } from './BulkCatalogImport';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
