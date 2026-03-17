@@ -194,7 +194,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   // --- localStorage persistence for column selections ---
   const columnKey = useCallback(
-    (col: 'cat' | 'line', brand: string) =>
+    (col: 'cat' | 'line' | 'search', brand: string) =>
       `supply-dialog-${col}::${orgId}::${brand}`,
     [orgId],
   );
@@ -215,6 +215,14 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     else localStorage.removeItem(key);
   }, [selectedLine, selectedBrand, columnKey]);
 
+  // Persist search
+  useEffect(() => {
+    if (!selectedBrand) return;
+    const key = columnKey('search', selectedBrand);
+    if (search) localStorage.setItem(key, search);
+    else localStorage.removeItem(key);
+  }, [search, selectedBrand, columnKey]);
+
   // Prune old keys (keep max 500)
   useEffect(() => {
     const PREFIX = 'supply-dialog-';
@@ -222,8 +230,9 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
     if (allKeys.length <= 500) return;
     const currentPrefix = `${PREFIX}cat::${orgId}::`;
     const currentPrefixLine = `${PREFIX}line::${orgId}::`;
+    const currentPrefixSearch = `${PREFIX}search::${orgId}::`;
     allKeys
-      .filter((k) => !k.startsWith(currentPrefix) && !k.startsWith(currentPrefixLine))
+      .filter((k) => !k.startsWith(currentPrefix) && !k.startsWith(currentPrefixLine) && !k.startsWith(currentPrefixSearch))
       .forEach((k) => localStorage.removeItem(k));
   }, [orgId]);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -621,9 +630,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 setSelectedBrand(brand);
                 const savedCat = localStorage.getItem(columnKey('cat', brand));
                 const savedLine = localStorage.getItem(columnKey('line', brand));
+                const savedSearch = localStorage.getItem(columnKey('search', brand));
                 setSelectedCategory(savedCat);
                 setSelectedLine(savedLine);
-                setSearch('');
+                setSearch(savedSearch ?? '');
               }}
               onShowSuggest={() => setShowSuggest(true)}
             />
