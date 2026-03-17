@@ -17,6 +17,7 @@ import { useEmailTemplates } from '@/hooks/useEmailTemplates';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Loader2, Save, Send, Monitor, Smartphone, Info, Instagram, Globe, Facebook } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useColorTheme, ColorTheme } from '@/hooks/useColorTheme';
 
