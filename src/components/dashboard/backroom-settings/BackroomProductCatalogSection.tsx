@@ -337,7 +337,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className={tokens.loading.spinner} />
+        <DashboardLoader size="lg" />
       </div>
     );
   }
