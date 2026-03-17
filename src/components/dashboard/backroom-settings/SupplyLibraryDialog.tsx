@@ -194,7 +194,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
   // --- localStorage persistence for column selections ---
   const columnKey = useCallback(
-    (col: 'cat' | 'line', brand: string) =>
+    (col: 'cat' | 'line' | 'search', brand: string) =>
       `supply-dialog-${col}::${orgId}::${brand}`,
     [orgId],
   );
