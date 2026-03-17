@@ -696,125 +696,146 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
 
               {/* Column 3: Products */}
               <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-muted/5">
-                {!selectedCategory ? (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-2">
-                    <Package className="w-8 h-8 text-muted-foreground/30" />
-                    <p className="text-xs font-sans text-muted-foreground/60">Select a category to browse products</p>
-                  </div>
-                ) : displayProducts.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <p className="text-xs font-sans text-muted-foreground">No products found</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Select all bar */}
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-border/30 shrink-0">
-                      <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">
-                        {displayProducts.length} products
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleAllBrand}
-                        className="text-[10px] font-sans h-6 px-2"
-                      >
-                        {(() => {
-                          const allKeys: string[] = [];
-                          displayProducts.forEach((p) => {
-                            getItemKeys(p).forEach(({ key, size }) => {
-                              if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                <AnimatePresence mode="wait" initial={false}>
+                  {!selectedCategory ? (
+                    <motion.div
+                      key="empty"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="flex-1 flex flex-col items-center justify-center gap-2"
+                    >
+                      <Package className="w-8 h-8 text-muted-foreground/30" />
+                      <p className="text-xs font-sans text-muted-foreground/60">Select a category to browse products</p>
+                    </motion.div>
+                  ) : displayProducts.length === 0 ? (
+                    <motion.div
+                      key="no-results"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      <p className="text-xs font-sans text-muted-foreground">No products found</p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={`products-${selectedCategory}-${selectedLine ?? 'all'}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="flex-1 flex flex-col min-h-0"
+                    >
+                      {/* Select all bar */}
+                      <div className="flex items-center justify-between px-4 py-2 border-b border-border/30 shrink-0">
+                        <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">
+                          {displayProducts.length} products
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleAllBrand}
+                          className="text-[10px] font-sans h-6 px-2"
+                        >
+                          {(() => {
+                            const allKeys: string[] = [];
+                            displayProducts.forEach((p) => {
+                              getItemKeys(p).forEach(({ key, size }) => {
+                                if (!isExisting(p.brand, p.name, size)) allKeys.push(key);
+                              });
                             });
-                          });
-                          return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
-                            ? 'Deselect All'
-                            : 'Select All';
-                        })()}
-                      </Button>
-                    </div>
-
-                    {/* Product rows */}
-                    <ScrollArea className="flex-1 min-h-0">
-                      <div className="p-1.5 space-y-0.5">
-                        {displayProducts.map((item) => {
-                          const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
-                          const itemKeys = getItemKeys(item);
-                          const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
-                          const anySelected = itemKeys.some(({ key }) => selected.has(key));
-
-                          return (
-                            <div
-                              key={`${item.brand}::${item.name}`}
-                              className={cn(
-                                'rounded-lg px-3 py-2.5 transition-colors',
-                                allExisting
-                                  ? 'opacity-50'
-                                  : anySelected
-                                  ? 'bg-primary/5 border border-primary/30'
-                                  : 'hover:bg-muted/40 border border-transparent',
-                              )}
-                            >
-                              <div className="flex items-center gap-2.5">
-                                {!hasSizes && (
-                                  <Checkbox
-                                    checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
-                                    disabled={allExisting}
-                                    onCheckedChange={() => toggleSize(item)}
-                                    className="shrink-0"
-                                  />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-sans font-medium text-foreground truncate">
-                                      {item.name}
-                                    </span>
-                                    {allExisting && (
-                                      <Badge variant="secondary" className="text-[9px] shrink-0 px-1.5 py-0">
-                                        <Check className="w-2.5 h-2.5 mr-0.5" /> Added
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <span className="text-[10px] text-muted-foreground capitalize">
-                                    {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {hasSizes && (
-                                <div className="flex flex-wrap gap-1.5 mt-2 pl-0">
-                                  {item.sizeOptions!.map((size) => {
-                                    const key = sizedKey(item.brand, item.name, size);
-                                    const sizeExisting = isExisting(item.brand, item.name, size);
-                                    const sizeSelected = selected.has(key);
-
-                                    return (
-                                      <button
-                                        key={size}
-                                        type="button"
-                                        disabled={sizeExisting}
-                                        onClick={() => toggleSize(item, size)}
-                                        className={cn(
-                                          'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans transition-colors border',
-                                          sizeExisting
-                                            ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
-                                            : sizeSelected
-                                            ? 'border-primary bg-primary/10 text-primary'
-                                            : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground',
-                                        )}
-                                      >
-                                        {(sizeExisting || sizeSelected) && <Check className="w-2.5 h-2.5" />}
-                                        {size}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                            return allKeys.length > 0 && allKeys.every((k) => selected.has(k))
+                              ? 'Deselect All'
+                              : 'Select All';
+                          })()}
+                        </Button>
                       </div>
-                    </ScrollArea>
-                  </>
-                )}
+
+                      {/* Product rows */}
+                      <ScrollArea className="flex-1 min-h-0">
+                        <div className="p-1.5 space-y-0.5">
+                          {displayProducts.map((item) => {
+                            const hasSizes = item.sizeOptions && item.sizeOptions.length > 0;
+                            const itemKeys = getItemKeys(item);
+                            const allExisting = itemKeys.every(({ size }) => isExisting(item.brand, item.name, size));
+                            const anySelected = itemKeys.some(({ key }) => selected.has(key));
+
+                            return (
+                              <div
+                                key={`${item.brand}::${item.name}`}
+                                className={cn(
+                                  'rounded-lg px-3 py-2.5 transition-colors',
+                                  allExisting
+                                    ? 'opacity-50'
+                                    : anySelected
+                                    ? 'bg-primary/5 border border-primary/30'
+                                    : 'hover:bg-muted/40 border border-transparent',
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  {!hasSizes && (
+                                    <Checkbox
+                                      checked={allExisting || selected.has(sizedKey(item.brand, item.name))}
+                                      disabled={allExisting}
+                                      onCheckedChange={() => toggleSize(item)}
+                                      className="shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-sans font-medium text-foreground truncate">
+                                        {item.name}
+                                      </span>
+                                      {allExisting && (
+                                        <Badge variant="secondary" className="text-[9px] shrink-0 px-1.5 py-0">
+                                          <Check className="w-2.5 h-2.5 mr-0.5" /> Added
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground capitalize">
+                                      {item.defaultDepletion === 'per_pump' ? 'Per Pump' : item.defaultDepletion} · {item.defaultUnit}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Size chips */}
+                                {hasSizes && (
+                                  <div className="flex flex-wrap gap-1.5 mt-2 ml-0">
+                                    {item.sizeOptions!.map((size) => {
+                                      const sizeExisting = isExisting(item.brand, item.name, size);
+                                      const sizeSelected = selected.has(sizedKey(item.brand, item.name, size));
+                                      return (
+                                        <button
+                                          key={size}
+                                          disabled={sizeExisting}
+                                          onClick={() => toggleSize(item, size)}
+                                          className={cn(
+                                            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans transition-colors border',
+                                            sizeExisting
+                                              ? 'border-border/30 bg-muted/30 text-muted-foreground cursor-default'
+                                              : sizeSelected
+                                              ? 'border-primary bg-primary/10 text-primary'
+                                              : 'border-border/60 hover:border-border text-foreground/70 hover:text-foreground',
+                                          )}
+                                        >
+                                          {(sizeExisting || sizeSelected) && <Check className="w-2.5 h-2.5" />}
+                                          {size}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           )}
