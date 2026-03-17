@@ -45,6 +45,106 @@ import {
 } from '@/data/professional-supply-library';
 import { useSupplyLibraryItemsByBrand } from '@/hooks/platform/useSupplyLibrary';
 
+/* ====== Inline Edit Cell ====== */
+function InlineEditCell({
+  value,
+  prefix,
+  suffix,
+  placeholder = '—',
+  onSave,
+}: {
+  value: number | null;
+  prefix?: string;
+  suffix?: string;
+  placeholder?: string;
+  onSave: (v: number | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const startEdit = () => {
+    setDraft(value != null ? String(value) : '');
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const commit = () => {
+    setEditing(false);
+    const num = parseFloat(draft);
+    const newVal = isNaN(num) ? null : num;
+    if (newVal !== value) onSave(newVal);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        step="any"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+        autoFocus
+        className="w-16 h-6 px-1 text-xs font-sans bg-muted border border-border rounded text-foreground outline-none focus:border-primary/50"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={startEdit}
+      className="text-left hover:bg-muted/50 rounded px-1 -mx-1 transition-colors cursor-text"
+    >
+      {value != null ? (
+        <span className="text-foreground">{prefix}{typeof value === 'number' ? value.toFixed(suffix === '%' ? 0 : 2) : value}{suffix}</span>
+      ) : (
+        <span className="text-muted-foreground">{placeholder}</span>
+      )}
+    </button>
+  );
+}
+
+/* ====== Swatch Cell ====== */
+function SwatchCell({
+  color,
+  onSave,
+}: {
+  color: string | null;
+  onSave: (color: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.click(), 0); }}
+        className="block"
+      >
+        {color ? (
+          <div className="w-5 h-5 rounded-full border border-border/40" style={{ backgroundColor: color }} />
+        ) : (
+          <div className="w-5 h-5 rounded-full border border-dashed border-border/40 hover:border-primary/40 transition-colors" />
+        )}
+      </button>
+      {open && (
+        <input
+          ref={inputRef}
+          type="color"
+          value={color || '#888888'}
+          onChange={(e) => { onSave(e.target.value); setOpen(false); }}
+          onBlur={() => setOpen(false)}
+          className="absolute top-0 left-0 w-5 h-5 opacity-0 cursor-pointer"
+        />
+      )}
+    </div>
+  );
+}
+
 /* ====== Constants ====== */
 const DEPLETION_METHODS = [
   { value: 'weighed', label: 'Weighed' },
