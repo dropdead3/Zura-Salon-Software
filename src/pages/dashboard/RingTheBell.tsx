@@ -618,9 +618,7 @@ export default function RingTheBell() {
 
         {/* Feed with Tabs */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="lg" className="py-20" />
         ) : (
           <Tabs defaultValue="team" className="w-full">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">

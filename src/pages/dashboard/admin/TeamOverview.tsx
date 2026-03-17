@@ -369,9 +369,7 @@ export default function TeamOverview() {
 
         {/* Team List */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="lg" className="py-20" />
         ) : filteredMembers.length === 0 ? (
           <Card className="p-12 text-center">
             <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

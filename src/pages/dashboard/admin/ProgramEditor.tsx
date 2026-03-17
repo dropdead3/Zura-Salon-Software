@@ -615,9 +615,7 @@ export default function ProgramEditor() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="xl" className="min-h-[60vh] p-6 lg:p-8" />
       </DashboardLayout>
     );
   }
