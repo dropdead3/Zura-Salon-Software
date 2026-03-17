@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, PowerOff, Trash2, Loader2, Clock } from 'lucide-react';
+import { Plus, MoreHorizontal, PowerOff, Trash2, Clock } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { isPast, differenceInDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
