@@ -385,6 +385,20 @@ function guessColorFromName(name: string): string | null {
     [/\bcaf[eé]\s*au\s*lait\b/, '#B09070'],
     [/\bmushroom\s*brown\b/, '#8A7760'],
     [/\bsand\b/, '#C4AB82'],
+    // Redken-specific shade names
+    [/\bdriftwood\b/, '#8A8A7B'],            // ash level 7
+    [/\bmother\s*of\s*pearl\b/, '#D5CFC0'],  // ash level 10
+    [/\bstorm\s*cloud\b/, '#6B6B5E'],        // ash level 6
+    [/\bchicory\b/, '#6B4A30'],              // warm brown level 5
+    [/\bmaple\b/, '#7A5638'],                // warm brown level 6
+    [/\bmocha\s*java\b/, '#4A2E1C'],         // warm brown level 4
+    [/\bcardamom\b/, '#A08060'],             // warm brown level 7
+    [/\bcedar\b/, '#6B4A30'],                // warm brown level 5
+    [/\bsandal\b/, '#C4AB82'],               // warm brown level 9
+    [/\bflamme\b/, '#CC6C28'],               // copper level 8
+    [/\bpaprika\b/, '#9A4414'],              // copper level 6
+    [/\bbonfire\b/, '#8B2020'],              // red level 7
+    [/\bcayenne\b/, '#7A1E1E'],              // red level 6
     // Ash / cool expanded
     [/\bcool\s*sand\b/, '#C4BAA2'],
     [/\bcool\s*tan\b/, '#B0A68E'],
