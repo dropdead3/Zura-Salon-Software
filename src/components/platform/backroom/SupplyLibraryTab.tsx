@@ -697,13 +697,18 @@ function AddEditDialog({
     setSaving(true);
     try {
       const sizeArr = sizes.split(',').map((s) => s.trim()).filter(Boolean);
-      const payload = {
+      const wpVal = wholesalePrice.trim() ? parseFloat(wholesalePrice) : null;
+      const rrVal = recommendedRetail.trim() ? parseFloat(recommendedRetail) : null;
+      const payload: any = {
         brand: brand.trim(),
         name: name.trim(),
         category,
         default_depletion: depletion,
         default_unit: unit,
         size_options: sizeArr,
+        wholesale_price: wpVal,
+        recommended_retail: rrVal,
+        ...(wpVal != null ? { price_updated_at: new Date().toISOString() } : {}),
       };
 
       if (isEdit && product) {
