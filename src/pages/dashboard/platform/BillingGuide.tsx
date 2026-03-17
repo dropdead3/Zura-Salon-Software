@@ -130,7 +130,7 @@ export default function BillingGuide() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Operator */}
             <PlatformCard variant="glass" className="relative border-l-4 border-l-primary/30 flex flex-col">
               <PlatformCardContent className="p-5 flex flex-col flex-1">
@@ -157,11 +157,11 @@ export default function BillingGuide() {
               </PlatformCardContent>
             </PlatformCard>
 
-            {/* Growth */}
+            {/* Multi-Location */}
             <PlatformCard variant="glass" className="relative border-l-4 border-l-primary/60 flex flex-col ring-1 ring-primary/20">
               <PlatformCardContent className="p-5 flex flex-col flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Growth</p>
+                  <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Multi-Location</p>
                   <PlatformBadge variant="primary" size="sm">Most Popular</PlatformBadge>
                 </div>
                 <div className="mt-3 mb-4">
@@ -171,44 +171,26 @@ export default function BillingGuide() {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
                     <MapPin className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
-                    <span>2–5 locations</span>
+                    <span>2+ locations</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
                     <Users className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
                     <span>10 per location included</span>
                   </div>
                 </div>
-                <ul className="space-y-1.5 mt-auto text-xs text-[hsl(var(--platform-foreground-muted))]">
+                <ul className="space-y-1.5 text-xs text-[hsl(var(--platform-foreground-muted))]">
                   {['Everything in Operator', 'Multi-location benchmarking', 'Team performance analytics', 'Operational drift alerts'].map((f) => (
                     <li key={f} className="flex items-start gap-2"><Check className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
                   ))}
                 </ul>
-              </PlatformCardContent>
-            </PlatformCard>
-
-            {/* Infrastructure */}
-            <PlatformCard variant="glass" className="relative border-l-4 border-l-primary/80 flex flex-col">
-              <PlatformCardContent className="p-5 flex flex-col flex-1">
-                <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Infrastructure</p>
-                <div className="mt-3 mb-4">
-                  <span className="font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]">{fmtCurrency(200)}</span>
-                  <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">/loc/mo</span>
+                <div className="border-t border-[hsl(var(--platform-border)/0.3)] mt-4 pt-3">
+                  <p className="font-display text-[10px] tracking-wide uppercase text-primary/70 mb-1.5">5+ locations unlocks</p>
+                  <ul className="space-y-1.5 text-xs text-[hsl(var(--platform-foreground-muted))]">
+                    {['Regional brand management', 'Advanced margin analytics', 'Deep operational features'].map((f) => (
+                      <li key={f} className="flex items-start gap-2"><Sparkles className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
-                    <MapPin className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
-                    <span>5+ locations</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
-                    <Users className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
-                    <span>10 per location included</span>
-                  </div>
-                </div>
-                <ul className="space-y-1.5 mt-auto text-xs text-[hsl(var(--platform-foreground-muted))]">
-                  {['Everything in Growth', 'Deep operational features', 'Regional brand management', 'Advanced margin analytics'].map((f) => (
-                    <li key={f} className="flex items-start gap-2"><Check className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />{f}</li>
-                  ))}
-                </ul>
               </PlatformCardContent>
             </PlatformCard>
 
