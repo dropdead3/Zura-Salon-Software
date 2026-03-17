@@ -1008,8 +1008,8 @@ function InventoryView({
             stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/80 hover:shadow-sm'
           )}
         >
-          <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Current Stock</span>
-          <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{kpis.inStock}</span>
+          <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Current Stock</span>
+          <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.inStock}</span>
         </button>
         <button
           type="button"
