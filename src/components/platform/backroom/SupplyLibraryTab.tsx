@@ -135,8 +135,8 @@ export function SupplyLibraryTab() {
   const seedMutation = useSeedSupplyLibrary();
   const syncMutation = useSyncSupplyLibrary();
 
-  // Fetch all products (no brand filter) for building brand cards
-  const { data: allProducts = [], isLoading: allLoading } = useSupplyLibraryProducts();
+  // Fetch brand summaries (aggregated server-side, no 1000-row limit)
+  const { data: brandSummaryRows = [], isLoading: allLoading } = useSupplyLibraryBrandSummaries();
   // Fetch brand-specific products when drilled in
   const { data: brandProducts = [], isLoading: brandLoading } = useSupplyLibraryProducts({
     brand: selectedBrand || undefined,
