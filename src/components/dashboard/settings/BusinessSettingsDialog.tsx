@@ -495,16 +495,21 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
           )}>
             <div className={cn("w-full px-2 py-3 border-b flex flex-col items-center transition-colors duration-300", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
               <p className={cn("text-[8px] uppercase tracking-wider mb-2 transition-colors duration-300", previewDark ? "text-[hsl(0,0%,45%)]" : "text-muted-foreground")}>Mini</p>
-              <div className="h-8 w-8 flex items-center justify-center">
+              <div className="h-8 w-8 flex items-center justify-center relative group/icon">
                 {activeIcon ? (
                   <img src={activeIcon} alt="Icon" className="h-6 max-w-[32px] object-contain transition-opacity duration-300" />
                 ) : (
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-display transition-colors duration-300",
-                    previewDark ? "bg-[hsl(0,0%,12%)] text-[hsl(0,0%,70%)]" : "bg-muted text-muted-foreground"
-                  )}>
-                    {initials}
-                  </div>
+                  <>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-display transition-colors duration-300",
+                      previewDark ? "bg-[hsl(0,0%,12%)] text-[hsl(0,0%,70%)]" : "bg-muted text-muted-foreground"
+                    )}>
+                      {initials}
+                    </div>
+                    <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] text-muted-foreground bg-popover border border-border rounded px-1.5 py-0.5 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 pointer-events-none shadow-sm">
+                      Upload icon to replace
+                    </span>
+                  </>
                 )}
               </div>
             </div>
