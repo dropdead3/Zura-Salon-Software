@@ -329,9 +329,12 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
             <div className={cn("flex flex-col items-center gap-1 text-center", textClass)}>
               <Upload className="w-8 h-8 opacity-50" />
               <span className="text-sm opacity-70">Click to upload</span>
-              <span className="text-xs opacity-50">SVG or PNG only</span>
+              <span className="text-xs opacity-50">SVG or PNG · Horizontal/wordmark preferred</span>
               <span className="text-xs opacity-40 mt-1">
                 {isLight ? 'Use a dark/black logo' : 'Use a white/light logo'}
+              </span>
+              <span className="text-xs opacity-30 mt-0.5">
+                PNGs are auto-trimmed to remove excess padding
               </span>
             </div>
           )}
