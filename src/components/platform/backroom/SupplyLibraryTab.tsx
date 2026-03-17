@@ -117,7 +117,9 @@ export function SupplyLibraryTab() {
 
   // Group brand products by category for detail view
   const categoryGroups = useMemo(() => {
-    const filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
+    let filtered = categoryFilter === 'all' ? brandProducts : brandProducts.filter((p) => p.category === categoryFilter);
+    if (pricingFilter === 'missing') filtered = filtered.filter((p) => p.wholesale_price == null);
+    else if (pricingFilter === 'priced') filtered = filtered.filter((p) => p.wholesale_price != null);
     const groups = new Map<string, SupplyLibraryProduct[]>();
     filtered.forEach((p) => {
       if (!groups.has(p.category)) groups.set(p.category, []);
