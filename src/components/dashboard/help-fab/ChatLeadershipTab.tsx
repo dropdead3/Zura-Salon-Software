@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, MessageCircle, Crown, Shield } from 'lucide-react';
+import { MessageCircle, Crown, Shield } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLeadershipMembers, LeadershipMember } from '@/hooks/team-chat/useLeadershipMembers';
