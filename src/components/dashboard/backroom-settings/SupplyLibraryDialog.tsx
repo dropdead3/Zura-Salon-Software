@@ -416,7 +416,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       });
 
       if (itemsToInsert.length === 0) return;
-      const { error } = await supabase.from('products').insert(itemsToInsert);
+      const { error } = await supabase.from('products').insert(itemsToInsert as any);
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
