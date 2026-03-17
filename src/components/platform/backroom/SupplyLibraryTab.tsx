@@ -563,6 +563,16 @@ export function SupplyLibraryTab() {
                       );
                     })}
                   </SelectContent>
+                 </Select>
+                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
+                  <SelectTrigger className="w-[160px] font-sans">
+                    <SelectValue placeholder="All Pricing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pricing</SelectItem>
+                    <SelectItem value="missing">Missing Price</SelectItem>
+                    <SelectItem value="priced">Priced</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
 
