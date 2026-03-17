@@ -343,7 +343,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <img 
                       src={getIcon(true)} 
                       alt={businessSettings?.business_name || 'Salon'} 
-                      className="h-4 w-auto max-w-[32px] object-contain"
+                      className="h-6 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/10 text-foreground/80 dark:text-white flex items-center justify-center font-display text-xs">
@@ -357,7 +357,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               <img
                 src={getLogo()} 
                 alt={businessSettings?.business_name || 'Salon'} 
-                className="h-3.5 w-auto max-w-[140px] object-contain" 
+                className="h-7 w-auto max-w-[160px] object-contain" 
               />
             ) : (
               <span className="font-display text-sm uppercase tracking-wider text-foreground">
