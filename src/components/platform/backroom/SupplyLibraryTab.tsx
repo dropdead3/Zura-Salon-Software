@@ -728,7 +728,7 @@ export function SupplyLibraryTab() {
                       <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin')} /> Sync Library
                     </PlatformButton>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">Fetches the latest product data from Phorest and updates your library.</TooltipContent>
+                  <TooltipContent side="bottom">Syncs the library with the latest product catalog data, inserting any missing products and backfilling metadata.</TooltipContent>
                 </Tooltip>
               )}
               <PlatformButton variant="outline" size="sm" onClick={handleExportCSV}>
