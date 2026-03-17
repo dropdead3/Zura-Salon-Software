@@ -27,6 +27,7 @@ const Z_GRID = [
 interface ZuraLoaderProps {
   size?: keyof typeof SIZES;
   className?: string;
+  platformColors?: boolean;
 }
 
 export function ZuraLoader({ size = 'md', className }: ZuraLoaderProps) {
