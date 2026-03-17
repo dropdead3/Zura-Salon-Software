@@ -572,7 +572,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         </DialogHeader>
 
         {/* Content area — Level 0 (brand grid) or Level 1 (product selection) */}
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {!selectedBrand ? (
             <BrandCardGrid
               brands={brandCardData}
