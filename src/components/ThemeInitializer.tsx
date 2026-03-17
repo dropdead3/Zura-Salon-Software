@@ -24,12 +24,12 @@ function clearOrgThemeVars() {
  * Actively cleans up org theme vars when navigating away from org dashboard routes.
  */
 export function ThemeInitializer() {
-  const location = useLocation();
+  const zone = useRouteZone();
   const appliedVarsRef = useRef<string[]>([]);
 
   // Core loader — fetches user prefs and sets CSS vars
   const loadCustomTheme = async () => {
-    if (!isOrgDashboardRoute(window.location.pathname)) {
+    if (zone !== 'org-dashboard') {
       // If we're not on an org dashboard route, clear any lingering org vars
       if (appliedVarsRef.current.length > 0) {
         appliedVarsRef.current.forEach(key =>
