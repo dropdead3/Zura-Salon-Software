@@ -529,6 +529,22 @@ export function SupplyLibraryTab() {
           </TooltipProvider>
         )}
       </TableCell>
+      {/* Markup % column */}
+      <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+        {(p as any).default_markup_pct != null && (p as any).default_markup_pct > 0
+          ? `${(p as any).default_markup_pct}%`
+          : '—'}
+      </TableCell>
+      {/* Computed Retail column */}
+      <TableCell className="font-sans text-xs">
+        {p.wholesale_price != null && (p as any).default_markup_pct != null && (p as any).default_markup_pct > 0 ? (
+          <span className="text-[hsl(var(--platform-foreground))]">
+            {formatCurrency(p.wholesale_price * (1 + (p as any).default_markup_pct / 100), { currency: p.currency || 'USD' })}
+          </span>
+        ) : (
+          <span className="text-[hsl(var(--platform-foreground-muted))]">—</span>
+        )}
+      </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
         {p.size_options?.join(', ') || '—'}
       </TableCell>
