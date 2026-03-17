@@ -27,7 +27,7 @@ import {
   useSeedSupplyLibrary,
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
-import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
+import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
