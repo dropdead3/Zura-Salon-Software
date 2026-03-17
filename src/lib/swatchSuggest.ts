@@ -294,7 +294,7 @@ function guessColorFromName(name: string): string | null {
     [/\belectric\s*blue\b/, '#0050FF'],      // vivid blue
     [/\bmagenta\b/, '#FF1493'],              // vivid pink
     [/\bfuchsia\b/, '#FF1493'],              // vivid pink
-    [/\bteal\b/, '#2A4A6B'],                 // blue 6
+    [/\bteal\b/, '#2A6060'],                 // palette Teal
     [/\bpurple\b/, '#8B00FF'],               // vivid purple
     [/\borange\b/, '#FF6600'],               // vivid orange
     [/\byellow\b/, '#FFD700'],               // vivid yellow
@@ -314,15 +314,15 @@ function guessColorFromName(name: string): string | null {
     [/\bginger\b/, '#9A4414'],               // copper 6
     [/\bchocolate\b/, '#3B2314'],            // natural 4
     [/\bcaramel\b/, '#8B6239'],              // natural 6
-    [/\bchampagne\b/, '#D4A830'],            // gold 9
+    [/\bchampagne\b/, '#D9C48E'],            // palette Champagne
     [/\bhoney\b/, '#C4981E'],                // gold 8
     [/\bplatinum\b/, '#D5CFC0'],             // ash 10
     [/\bsilver\b/, '#C5C5BB'],               // ash 9
-    [/\bmauve\b/, '#926092'],                // violet 8
-    [/\borchid\b/, '#9E789E'],               // violet 9
+    [/\bmauve\b/, '#7E4E7E'],                // palette Mauve
+    [/\borchid\b/, '#926092'],               // palette Orchid
     [/\bslate\b/, '#4A6070'],                // blue 8
     [/\bsteel\b/, '#5A7A90'],                // blue 9
-    [/\bsmoke\b/, '#8A8A7B'],                // ash 7
+    [/\bsmoke\b/, '#C5C5BB'],                // palette Smoke
   ];
 
   for (const [regex, hex] of directColorMap) {
