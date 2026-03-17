@@ -533,7 +533,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-2xl h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -663,8 +663,11 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                         <span className="font-sans text-xs text-emerald-400">+{r.products_inserted} added</span>
                       )}
 
-                      {r.status === 'error' && (
-                        <span className="font-sans text-xs text-red-400 max-w-[120px] truncate" title={r.error}>
+                      {(r.status === 'error' || (r.status === 'skipped' && r.error)) && (
+                        <span className={cn(
+                          'font-sans text-xs max-w-[140px] truncate',
+                          r.status === 'error' ? 'text-red-400' : 'text-amber-400'
+                        )} title={r.error}>
                           {r.error}
                         </span>
                       )}
@@ -739,7 +742,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
               </div>
             </ScrollArea>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-2 gap-3">
               {phase === 'review' && !isRunning && (
                 <>
                   <PlatformButton variant="ghost" onClick={handleReset}>
@@ -751,9 +754,14 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                 </>
               )}
               {phase === 'review' && isRunning && (
-                <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] ml-auto flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...
-                </span>
+                <>
+                  <PlatformButton variant="destructive" size="sm" onClick={() => stopGeneration(false)} disabled={isCancelling}>
+                    {isCancelling ? 'Stopping...' : 'Stop generating'}
+                  </PlatformButton>
+                  <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] ml-auto flex items-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> {isCancelling ? 'Stopping run...' : 'Generating...'}
+                  </span>
+                </>
               )}
               {phase === 'importing' && (
                 <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] ml-auto flex items-center gap-2">
