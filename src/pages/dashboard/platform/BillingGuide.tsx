@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles } from 'lucide-react';
+import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles, ChevronDown } from 'lucide-react';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
