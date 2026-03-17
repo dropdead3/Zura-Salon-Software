@@ -634,6 +634,9 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 setSelectedCategory(savedCat);
                 setSelectedLine(savedLine);
                 setSearch(savedSearch ?? '');
+                if (savedCat || savedSearch) {
+                  toast.info('Resumed where you left off', { duration: 2000 });
+                }
               }}
               onShowSuggest={() => setShowSuggest(true)}
             />
