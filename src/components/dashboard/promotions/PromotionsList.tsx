@@ -112,9 +112,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="md" className="py-8" />
           ) : !promotions?.length ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No promotions yet</p>

@@ -327,7 +327,7 @@ function GiftCardSettingsTab() {
   const [newDenomination, setNewDenomination] = useState('');
   const { formatCurrency } = useFormatCurrency();
 
-  if (isLoading || !settings) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (isLoading || !settings) return <DashboardLoader size="md" className="py-12" />;
 
   const denominations = settings.suggested_amounts || [25, 50, 100, 150, 200];
 

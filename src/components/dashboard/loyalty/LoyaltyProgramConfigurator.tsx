@@ -69,11 +69,7 @@ export function LoyaltyProgramConfigurator({ organizationId }: LoyaltyProgramCon
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (

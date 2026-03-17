@@ -92,7 +92,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
           <DialogTitle className={tokens.heading.section}>Supplier for {productName}</DialogTitle>
         </DialogHeader>
         {isLoading ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+          <DashboardLoader size="sm" className="py-8" />
         ) : (
           <div className="space-y-4">
             <div className="space-y-1.5">
