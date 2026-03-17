@@ -982,6 +982,22 @@ export function SupplyLibraryTab() {
       {/* Add Brand Wizard */}
       <AddBrandWizard open={addBrandOpen} onOpenChange={setAddBrandOpen} />
 
+      {/* Edit Brand Dialog */}
+      {selectedBrand && (() => {
+        const meta = brandsMeta.find((b) => b.name === selectedBrand);
+        if (!meta) return null;
+        return (
+          <EditBrandDialog
+            open={editBrandOpen}
+            onOpenChange={setEditBrandOpen}
+            brandId={meta.id}
+            brandName={meta.name}
+            brandLogoUrl={meta.logo_url}
+            onBrandRenamed={(newName) => setSelectedBrand(newName)}
+          />
+        );
+      })()}
+
       {/* Add/Edit Dialog */}
       <AddEditDialog
         open={addOpen}
