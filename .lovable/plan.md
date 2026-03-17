@@ -1,41 +1,28 @@
 
 
-# Consolidate Semi-Permanent into Color Category
+# Move Color Remover to its Own Category
 
-## Current State
-- **Color category**: 87 products (86 Epilogue permanents + 1 Color Remover, all with `product_line = NULL`)
-- **Semi-Permanent category**: 27 products (5 with `product_line = 'Semi-Permanent'`, 22 with NULL)
+## Problem
+The single "Color Remover" product is currently under the **Color** category as a product line. It's not a color product and should be its own category.
 
-## Changes
+## Fix
+One database UPDATE — move the Color Remover product from `category = 'color'` to `category = 'color-remover'` and clear its product_line:
 
-### Database (2 UPDATEs)
-
-1. **Move all semi-permanents into color category and set product line**:
 ```sql
 UPDATE supply_library_products
-SET category = 'color',
-    product_line = 'Semi-Permanent',
-    updated_at = now()
-WHERE brand = 'Danger Jones'
-  AND category = 'semi-permanent'
-  AND is_active = true;
-```
-
-2. **Set product line on existing Epilogue permanents**:
-```sql
-UPDATE supply_library_products
-SET product_line = 'Epilogue Permanent',
+SET category = 'color-remover',
+    product_line = NULL,
     updated_at = now()
 WHERE brand = 'Danger Jones'
   AND category = 'color'
-  AND is_active = true
-  AND name ILIKE '%epilogue%'
-  AND product_line IS NULL;
+  AND product_line = 'Color Remover'
+  AND is_active = true;
 ```
 
-After this, the Color category will have 3 product lines: **Epilogue Permanent** (86), **Semi-Permanent** (27), and **Color Remover** (1).
+After this, Color will show 2 product lines (Epilogue Permanent: 86, Semi-Permanent: 27) and Color Remover will appear as a separate category with 1 product.
 
-### No Frontend Changes Needed
-- `semi-permanent` is already in `SHADE_SORTED_CATEGORIES`, but swatches are triggered by category. Since these products move to `color` (already swatch-enabled), swatches will continue to display.
-- The three-column Finder UI already groups by `product_line`, so the new lines will appear automatically.
+## Frontend
+Add `'color-remover'` label to `SUPPLY_CATEGORY_LABELS` in `src/data/professional-supply-library.ts` so it displays as "Color Remover" in the Finder UI.
+
+No other changes needed — the three-column browser dynamically renders categories from the data.
 
