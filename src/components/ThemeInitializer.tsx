@@ -9,8 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 export function ThemeInitializer() {
   useEffect(() => {
     const loadCustomTheme = async () => {
-      // Skip theme customization on public routes - only apply on dashboard
-      if (!window.location.pathname.startsWith('/dashboard')) {
+      // Skip theme customization on public routes and platform routes
+      // Platform manages its own theme via PlatformThemeContext + usePlatformBrandingEffect
+      if (!window.location.pathname.startsWith('/dashboard') 
+          || window.location.pathname.startsWith('/dashboard/platform')) {
         return;
       }
       
