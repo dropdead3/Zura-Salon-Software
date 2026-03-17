@@ -9,6 +9,7 @@ import { ProductFilters } from '@/components/shop/ProductFilters';
 import { ProductDetailModal } from '@/components/shop/ProductDetailModal';
 import { Layout } from '@/components/layout/Layout';
 import { Loader2, ShoppingBag, StoreIcon } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import type { Product } from '@/hooks/useProducts';
 import type { WebsiteRetailThemeSettings } from '@/hooks/useWebsiteSettings';
 
@@ -122,9 +123,7 @@ export default function Shop() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="lg" className="py-16" />
       )}
 
       {/* Store content */}

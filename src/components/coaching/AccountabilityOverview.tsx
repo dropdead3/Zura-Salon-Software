@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useCoachAccountabilityItems, type AccountabilityItem } from '@/hooks/useAccountabilityItems';
 import { parseISO, isPast, isToday } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -92,8 +93,8 @@ export function AccountabilityOverview() {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-8 text-center">
-          <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+        <CardContent className="p-8">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );

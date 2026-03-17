@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, X, Hash, MapPin, MessageSquare, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -131,9 +132,7 @@ export function ExpandableSearch({ isExpanded, onExpandedChange }: ExpandableSea
           <div className="absolute top-full right-0 mt-1 w-full min-w-80 sm:min-w-96 bg-popover border rounded-lg shadow-lg z-50 overflow-hidden">
             <ScrollArea className="max-h-80">
               {isLoading && debouncedQuery ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
+                <DashboardLoader size="sm" className="py-8" />
               ) : results.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
                   {debouncedQuery ? 'No messages found' : 'Type to search messages'}

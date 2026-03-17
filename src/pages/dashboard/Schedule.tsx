@@ -32,6 +32,7 @@ import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { useAppointmentAssistantNames } from '@/hooks/useAppointmentAssistantNames';
 import { Loader2, Sparkles, Users } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel } from '@/components/dashboard/schedule/meetings';
@@ -592,9 +593,7 @@ export default function Schedule() {
   const calendarContent = (
     <>
       {isLoading ? (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="lg" className="h-full" />
       ) : (
         <>
           {view === 'day' && selectedLocationData && (() => {

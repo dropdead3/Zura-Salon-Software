@@ -6,6 +6,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, TrendingUp, TrendingDown, AlertTriangle, Check, HelpCircle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useUsageVariance, type UsageVariance } from '@/hooks/inventory/useUsageVariance';
 
@@ -52,11 +53,7 @@ export function UsageVarianceSummary({ sessionId, serviceId }: UsageVarianceSumm
   if (!serviceId) return null;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="sm" className="py-4" />;
   }
 
   if (!variances?.length) return null;

@@ -81,6 +81,7 @@ import { tokens } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { formatRelativeTime } from '@/lib/format';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
@@ -1580,9 +1581,7 @@ export function AppointmentDetailSheet({
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Visit History</h4>
                       {historyLoading ? (
-                        <div className="flex items-center justify-center py-6">
-                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                        </div>
+                        <DashboardLoader size="sm" className="py-6" />
                       ) : visitHistory.length === 0 ? (
                         <p className="text-sm text-muted-foreground py-4 text-center">No visit history</p>
                       ) : (

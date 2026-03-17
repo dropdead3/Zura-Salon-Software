@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useAnnouncementBarSettings, useUpdateAnnouncementBarSettings, type AnnouncementBarSettings } from '@/hooks/useAnnouncementBar';
 import { toast } from 'sonner';
 import { Megaphone, ExternalLink, ArrowRight, Save, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 export default function AnnouncementBarManager() {
   const { data: settings, isLoading } = useAnnouncementBarSettings();
@@ -47,9 +48,7 @@ export default function AnnouncementBarManager() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="lg" className="h-64" />
       </DashboardLayout>
     );
   }

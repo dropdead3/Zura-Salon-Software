@@ -21,6 +21,7 @@ import {
   Check,
   Loader2
 } from "lucide-react";
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { 
   Dialog,
   DialogContent,
@@ -194,9 +195,7 @@ export default function DashboardBuild() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="lg" className="h-[50vh]" />
       </DashboardLayout>
     );
   }

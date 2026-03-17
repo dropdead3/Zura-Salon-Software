@@ -12,6 +12,7 @@ import {
   MessageSquare,
   ArrowRight,
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useMeetingRequests, useUpdateMeetingRequestStatus, type MeetingRequest } from '@/hooks/useMeetingRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseISO, isPast } from 'date-fns';
@@ -81,8 +82,8 @@ export function PendingMeetingRequests({ viewAs }: Props) {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-8 text-center">
-          <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+        <CardContent className="p-8">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );

@@ -20,6 +20,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, MessageSquare, Sparkles } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useEmailTemplates } from '@/hooks/useEmailTemplates';
 import { useSmsTemplates } from '@/hooks/useSmsTemplates';
@@ -161,9 +162,7 @@ export function ServiceCommunicationFlowEditor({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader size="md" className="py-12" />
         ) : !phorestService ? (
           <div className="py-8 text-center">
             <p className="text-muted-foreground">

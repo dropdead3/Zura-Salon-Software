@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gift, History, Loader2, Coins } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { RewardCard } from '@/components/points/RewardCard';
 import { PointsHistoryPanel } from '@/components/points/PointsHistoryPanel';
 import {
@@ -98,9 +99,7 @@ export default function RewardShop() {
           {/* Shop Tab */}
           <TabsContent value="shop" className="mt-6">
             {rewardsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="md" className="py-12" />
             ) : rewards.length === 0 ? (
               <Card className="p-12 text-center">
                 <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -128,9 +127,7 @@ export default function RewardShop() {
           {/* Redemptions Tab */}
           <TabsContent value="history" className="mt-6">
             {redemptionsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader size="md" className="py-12" />
             ) : redemptions.length === 0 ? (
               <Card className="p-12 text-center">
                 <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

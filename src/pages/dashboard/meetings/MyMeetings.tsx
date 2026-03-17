@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Clock, User, ExternalLink, XCircle, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOneOnOneMeetings, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
 import { format, parseISO } from 'date-fns';
@@ -63,8 +64,8 @@ export default function MyMeetings() {
           <div className="space-y-4">
             {isLoading ? (
               <Card>
-                <CardContent className="p-8 text-center">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                <CardContent className="p-8">
+                  <DashboardLoader size="md" />
                 </CardContent>
               </Card>
              ) : myMeetings.length === 0 ? (

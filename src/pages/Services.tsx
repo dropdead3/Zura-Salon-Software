@@ -4,6 +4,7 @@ import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star, CalendarX, Loader2 } from "lucide-react";
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState, useEffect } from "react";
 import { usePublicOrg } from "@/contexts/PublicOrgContext";
@@ -260,9 +261,7 @@ export default function Services() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="lg" className="min-h-screen" />
       </Layout>
     );
   }

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2, Plus } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { RoleIconPicker } from '@/components/dashboard/RoleIconPicker';
 import { RoleColorPicker } from '@/components/dashboard/RoleColorPicker';
 import { ResponsibilityCard } from './ResponsibilityCard';
@@ -68,11 +69,7 @@ export function ResponsibilitiesSubTab({ canManage }: ResponsibilitiesSubTabProp
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="lg" className="py-12" />;
   }
 
   return (

@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, Loader2 } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface ClientRedoHistoryProps {
   clientId: string;
@@ -68,11 +69,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader size="sm" className="py-8" />;
   }
 
   if (redos.length === 0) {

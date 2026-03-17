@@ -8,6 +8,7 @@ import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement'
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import {
@@ -176,9 +177,7 @@ export default function BackroomSettings() {
   if (entitlementLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="md" className="h-64" />
       </DashboardLayout>
     );
   }

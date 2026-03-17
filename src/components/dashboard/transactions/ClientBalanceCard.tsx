@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Gift, Plus, Loader2 } from 'lucide-react';
+import { CreditCard, Gift, Plus } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useClientBalance } from '@/hooks/useClientBalances';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -26,9 +27,7 @@ export function ClientBalanceCard({
   if (isLoading) {
     return (
       <Card className={cn(compact && "p-3")}>
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader size="sm" className="py-4" />
       </Card>
     );
   }
