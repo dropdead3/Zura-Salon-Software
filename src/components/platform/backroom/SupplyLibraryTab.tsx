@@ -16,7 +16,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown, Clock, RefreshCw } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown, Clock, RefreshCw, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,6 +36,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatRelativeTime } from '@/lib/format';
 import { useSupplyLibraryRequests, useResolveSupplyRequest } from '@/hooks/platform/useSupplyLibraryRequests';
 import { groupByProductLine, extractProductLine } from '@/lib/supply-line-parser';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
@@ -49,6 +50,7 @@ interface BrandCardData {
 
 export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
+  const orgId = useBackroomOrgId() ?? '_';
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [brandSearch, setBrandSearch] = useState('');
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
@@ -66,15 +68,27 @@ export function SupplyLibraryTab() {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
 
-  // Persist collapse state to brand-scoped localStorage keys
+  // Helper to build org+brand scoped localStorage key
+  const collapseKey = useCallback((type: 'categories' | 'sublines', brand: string) =>
+    `supply-library-${type}::${orgId}::${brand}`, [orgId]);
+
+  // One-time migration: remove legacy global keys
+  useEffect(() => {
+    if (localStorage.getItem('supply-library-migrated')) return;
+    localStorage.removeItem('supply-library-categories');
+    localStorage.removeItem('supply-library-sublines');
+    localStorage.setItem('supply-library-migrated', '1');
+  }, []);
+
+  // Persist collapse state to org+brand-scoped localStorage keys
   useEffect(() => {
     if (!selectedBrand) return;
-    localStorage.setItem(`supply-library-categories::${selectedBrand}`, JSON.stringify([...collapsedCategories]));
-  }, [collapsedCategories, selectedBrand]);
+    localStorage.setItem(collapseKey('categories', selectedBrand), JSON.stringify([...collapsedCategories]));
+  }, [collapsedCategories, selectedBrand, collapseKey]);
   useEffect(() => {
     if (!selectedBrand) return;
-    localStorage.setItem(`supply-library-sublines::${selectedBrand}`, JSON.stringify([...collapsedSubLines]));
-  }, [collapsedSubLines, selectedBrand]);
+    localStorage.setItem(collapseKey('sublines', selectedBrand), JSON.stringify([...collapsedSubLines]));
+  }, [collapsedSubLines, selectedBrand, collapseKey]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
@@ -661,7 +675,7 @@ export function SupplyLibraryTab() {
                       variant="interactive"
                       size="md"
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
-                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(`supply-library-categories::${b.brand}`); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(`supply-library-sublines::${b.brand}`); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
+                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(collapseKey('categories', b.brand)); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(collapseKey('sublines', b.brand)); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
                       <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
@@ -759,6 +773,33 @@ export function SupplyLibraryTab() {
                     return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
                   })()}
                 </PlatformButton>
+                {/* Reset All Collapse State */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <PlatformButton
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => {
+                          const keysToRemove: string[] = [];
+                          for (let i = 0; i < localStorage.length; i++) {
+                            const k = localStorage.key(i);
+                            if (k && (k.startsWith('supply-library-categories::') || k.startsWith('supply-library-sublines::'))) {
+                              keysToRemove.push(k);
+                            }
+                          }
+                          keysToRemove.forEach((k) => localStorage.removeItem(k));
+                          setCollapsedCategories(new Set());
+                          setCollapsedSubLines(new Set());
+                          toast.success('Collapse state reset for all brands');
+                        }}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </PlatformButton>
+                    </TooltipTrigger>
+                    <TooltipContent>Reset all collapse state</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
