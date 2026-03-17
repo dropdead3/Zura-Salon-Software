@@ -376,7 +376,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                       <button type="button" onClick={goBack} className="hover:text-foreground transition-colors">My Catalog</button>
                       <span>/</span>
                     </div>
-                    <PlatformCardTitle>{selectedBrand}</PlatformCardTitle>
+                    <CardTitle className={tokens.card.title}>{selectedBrand}</CardTitle>
                   </>
                 ) : (
                   <>
