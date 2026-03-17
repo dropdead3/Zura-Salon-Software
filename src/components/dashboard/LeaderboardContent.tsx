@@ -617,9 +617,7 @@ export function LeaderboardContent() {
 
           {/* Leaderboard */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="lg" className="py-20" />
           ) : sortedEntries.length === 0 ? (
             <Card className="p-12 text-center">
               <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
