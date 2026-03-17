@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { getRouteZone, type RouteZone } from '@/lib/route-utils';
+import { useRouteZone } from '@/lib/route-utils';
 
 type Theme = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -32,10 +32,9 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
 
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
 
-  // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setSystemTheme(e.matches ? 'dark' : 'light');
     };
@@ -51,35 +50,8 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     return theme;
   }, [theme, systemTheme]);
 
-  // Track route zone without useLocation (this provider is outside <BrowserRouter>)
-  const [zone, setZone] = useState<RouteZone>(() => getRouteZone(window.location.pathname));
+  const zone = useRouteZone();
 
-  useEffect(() => {
-    const sync = () => setZone(getRouteZone(window.location.pathname));
-
-    window.addEventListener('popstate', sync);
-
-    const origPush = history.pushState.bind(history);
-    const origReplace = history.replaceState.bind(history);
-
-    history.pushState = (...args: Parameters<typeof history.pushState>) => {
-      origPush(...args);
-      sync();
-    };
-    history.replaceState = (...args: Parameters<typeof history.replaceState>) => {
-      origReplace(...args);
-      sync();
-    };
-
-    return () => {
-      window.removeEventListener('popstate', sync);
-      history.pushState = origPush;
-      history.replaceState = origReplace;
-    };
-  }, []);
-
-  // Sync the 'dark' class on <html> so CSS variables in index.css activate.
-  // Skip on non-org-dashboard routes — platform manages its own theme independently.
   useEffect(() => {
     if (zone !== 'org-dashboard') {
       document.documentElement.classList.remove('dark');

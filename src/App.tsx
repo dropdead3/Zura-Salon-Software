@@ -207,20 +207,20 @@ const queryClient = new QueryClient();
 const App = () => (
   <HelmetProvider>
     <ThemeProvider attribute="data-public-theme" defaultTheme="light" enableSystem={false} disableTransitionOnChange storageKey="public-theme">
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ThemeInitializer />
-            <OrganizationProvider>
-              <I18nLocaleSync />
-              <DashboardThemeProvider>
-                <ViewAsProvider>
-                  <HideNumbersProvider>
-                    <SoundSettingsProvider>
-                      <TooltipProvider delayDuration={0}>
-                        <Toaster />
-                        <Sonner />
-                        <BrowserRouter>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ThemeInitializer />
+              <OrganizationProvider>
+                <I18nLocaleSync />
+                <DashboardThemeProvider>
+                  <ViewAsProvider>
+                    <HideNumbersProvider>
+                      <SoundSettingsProvider>
+                        <TooltipProvider delayDuration={0}>
+                          <Toaster />
+                          <Sonner />
                           <CustomCursor />
                           <ScrollToTop />
                           {import.meta.env.DEV && <DevContextBridge />}
@@ -426,7 +426,6 @@ const App = () => (
 
                         <Route path="*" element={<NotFound />} />
                         </Routes>
-                        </BrowserRouter>
                       </TooltipProvider>
                     </SoundSettingsProvider>
                   </HideNumbersProvider>
@@ -436,6 +435,7 @@ const App = () => (
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
+      </BrowserRouter>
     </ThemeProvider>
   </HelmetProvider>
 );
