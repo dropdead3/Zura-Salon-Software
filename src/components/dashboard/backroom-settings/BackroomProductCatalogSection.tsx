@@ -476,17 +476,17 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* KPI row */}
               {hasProducts && (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-                    <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Tracked</span>
-                    <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{trackedCount}</span>
+                  <div className="rounded-xl border bg-card p-4">
+                    <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Tracked</span>
+                    <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{trackedCount}</span>
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-                    <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">In Stock</span>
-                    <span className="block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1">{kpis.inStock}</span>
+                  <div className="rounded-xl border bg-card p-4">
+                    <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">In Stock</span>
+                    <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.inStock}</span>
                   </div>
-                  <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
-                    <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">To Reorder</span>
-                    <span className={cn('block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
+                  <div className="rounded-xl border bg-card p-4">
+                    <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
+                    <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
                   </div>
                 </div>
               )}
