@@ -37,6 +37,7 @@ import {
   Bell
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
