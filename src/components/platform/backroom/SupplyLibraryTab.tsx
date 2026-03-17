@@ -319,7 +319,7 @@ export function SupplyLibraryTab() {
   };
 
   const handleExportCSV = () => {
-    const products = selectedBrand ? brandProducts : allProducts;
+    const products = brandProducts;
     const headers = ['brand', 'name', 'category', 'default_depletion', 'default_unit', 'size_options'];
     const rows = products.map((p) => [
       p.brand, p.name, p.category, p.default_depletion, p.default_unit,
