@@ -1019,8 +1019,8 @@ function InventoryView({
             stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/80 hover:shadow-sm'
           )}
         >
-          <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">To Reorder</span>
-          <span className={cn('block text-2xl font-display tracking-tight text-[hsl(var(--platform-foreground))] mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
+          <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
+          <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
         </button>
         <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card))] p-4">
           <span className="text-[11px] font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]">Total Tracked</span>
