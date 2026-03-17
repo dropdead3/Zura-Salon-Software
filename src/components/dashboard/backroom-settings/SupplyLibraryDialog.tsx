@@ -142,21 +142,21 @@ function BrandCardGrid({
                   key={b.brand}
                   onClick={() => onSelectBrand(b.brand)}
                   className={cn(
-                    'group relative flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all min-h-[120px]',
+                    'group relative flex flex-col items-center justify-center gap-2 rounded-xl border pt-9 pb-8 px-4 text-center transition-all min-h-[160px]',
                     allAdded
                       ? 'border-primary/20 bg-primary/5'
                       : 'border-border/40 bg-card/50 hover:border-border hover:shadow-sm hover:bg-muted/30',
                   )}
                 >
                   {/* Brand name */}
-                  <span className="text-sm font-display font-medium text-foreground leading-tight line-clamp-2 tracking-wide">
+                  <span className="text-sm font-display tracking-wide text-foreground leading-tight line-clamp-2">
                     {b.brand}
                   </span>
 
                   {/* Product count */}
-                  <span className="text-[11px] text-muted-foreground">
+                  <Badge variant="outline" className="absolute top-2 left-2 text-[10px]">
                     {b.totalProducts} products
-                  </span>
+                  </Badge>
                 </button>
               );
             })}

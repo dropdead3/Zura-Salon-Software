@@ -1143,14 +1143,14 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           setPricingFilter('all');
                         }}
                         className={cn(
-                          'group relative flex flex-col rounded-xl border p-4 text-left transition-all duration-200 min-h-[140px]',
+                          'group relative flex flex-col items-center justify-center gap-2 rounded-xl border pt-9 pb-8 px-4 text-center transition-all duration-200 min-h-[160px]',
                           'border bg-card/50',
                           'hover:border-border hover:bg-muted/40 hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
                         {/* Top-left badge: product count */}
                         <Badge variant="outline" className="absolute top-2 left-2 text-[10px]">
-                          {brandProds.length} products
+                          {tracked} of {brandProds.length} products
                         </Badge>
 
                         {/* Top-right: missing data */}
@@ -1161,35 +1161,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         )}
 
                         {/* Center: Logo + Name */}
-                        <div className="flex-1 flex flex-col items-center justify-center gap-2 pt-4">
-                          {meta?.logo_url ? (
-                            <img
-                              src={meta.logo_url}
-                              alt={brandName}
-                              className="w-10 h-10 rounded-lg object-contain bg-white/10 p-1"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-base font-display text-muted-foreground">
-                              {brandName[0]}
-                            </div>
-                          )}
-                          <span className="text-sm font-sans font-medium text-foreground text-center">{brandName}</span>
-                        </div>
-
-                        {/* Bottom: tracking + category summary */}
-                        <div className="mt-auto pt-2 text-center">
-                          {tracked > 0 && (
-                            <span className="text-[10px] font-sans text-muted-foreground">{tracked}/{brandProds.length} tracked</span>
-                          )}
-                          {categorySummary.length > 0 && (
-                            <p className="font-sans text-[9px] text-muted-foreground/60 leading-tight mt-0.5">
-                              {categorySummary.slice(0, 3).map((cs) =>
-                                `${cs.count} ${(SUPPLY_CATEGORY_LABELS as Record<string, string>)[cs.cat] || cs.cat}`
-                              ).join(' · ')}
-                              {categorySummary.length > 3 && ` +${categorySummary.length - 3}`}
-                            </p>
-                          )}
-                        </div>
+                        {meta?.logo_url ? (
+                          <img
+                            src={meta.logo_url}
+                            alt={brandName}
+                            className="w-10 h-10 rounded-lg object-contain bg-white/10 p-1"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-base font-display text-muted-foreground">
+                            {brandName[0]}
+                          </div>
+                        )}
+                        <span className="text-sm font-display tracking-wide text-foreground text-center">{brandName}</span>
                       </button>
                     );
                   })}
