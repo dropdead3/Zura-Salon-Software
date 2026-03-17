@@ -82,8 +82,8 @@ export function PendingMeetingRequests({ viewAs }: Props) {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-8 text-center">
-          <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+        <CardContent className="p-8">
+          <DashboardLoader size="md" />
         </CardContent>
       </Card>
     );
