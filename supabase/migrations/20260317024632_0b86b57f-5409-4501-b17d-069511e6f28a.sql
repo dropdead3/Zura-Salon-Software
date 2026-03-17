@@ -1,0 +1,1 @@
+ALTER TABLE public.supply_library_products ADD COLUMN IF NOT EXISTS swatch_color text;
