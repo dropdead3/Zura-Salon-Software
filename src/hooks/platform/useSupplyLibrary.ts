@@ -22,6 +22,7 @@ export interface SupplyLibraryProduct {
   currency: string;
   price_source_id: string | null;
   price_updated_at: string | null;
+  product_line: string | null;
   created_at: string;
   updated_at: string;
 }
