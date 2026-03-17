@@ -661,7 +661,7 @@ export function SupplyLibraryTab() {
                       variant="interactive"
                       size="md"
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
-                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); localStorage.removeItem('supply-library-categories'); localStorage.removeItem('supply-library-sublines'); }}
+                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(`supply-library-categories::${b.brand}`); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(`supply-library-sublines::${b.brand}`); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
                       <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
