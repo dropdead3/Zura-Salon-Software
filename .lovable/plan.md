@@ -1,45 +1,32 @@
 
 
-# Fix Danger Jones Semi-Permanent: Add Missing Shade + Data Corrections
+# Fix Danger Jones Developers: Update Pricing and Sizes
 
-## 1. Add Missing Shade
+## Current State
+6 developers in DB — all missing pricing, wrong sizes (900ml), no swatches.
 
-| Shade | Swatch Hex |
-|-------|-----------|
-| Vertigo | #3ABFAD (teal-green from screenshot) |
+## Screenshot Data (Vish)
 
-Insert as `Semi-Permanent Vertigo` with `$9.22` wholesale, `100%` markup, `113g` size.
+| Product | Wholesale | Markup | Retail | Size |
+|---------|-----------|--------|--------|------|
+| 5 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
+| 10 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
+| 20 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
+| 30 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
+| 40 Volume Deluxe Cream Developer | $9.65 | 100% | $19.30 | 863g |
+| Gloss Toner 6 Volume 1.8% Developer | $7.80 | 100% | $15.60 | 907g |
 
-## 2. Update All Existing Semi-Permanent Products
+## Changes
 
-Bulk UPDATE across all 27 active rows:
-- **Container size**: `118ml` → `113g`
-- **Wholesale price**: `null` → `$9.22`
-- **Markup**: `0` → `100`
+Single UPDATE for the 5 Deluxe Cream Developers:
+- `wholesale_price` → `9.65`
+- `default_markup_pct` → `100`
+- `size_options` → `['863g']`
 
-Also fix missing/incorrect swatch colors to match the screenshot dots:
-- Dopamine → `#333333` (dark charcoal/black)
-- Empire → `#2D8B2D` (green)
-- Hysteria → `#6B2D6B` (berry purple)
-- Pavement → `#8A8A80` (grey)
-- Poolside → `#8ED8E8` (light blue)
-- Simpatico → `#E8907A` (coral/peach from screenshot, current is too light)
-- Ransom → `#3DAD8E` (teal-green, brighter than current)
+Separate UPDATE for the Gloss Toner Developer:
+- `wholesale_price` → `7.80`
+- `default_markup_pct` → `100`
+- `size_options` → `['907g']`
 
-## 3. Deactivate "Liquid Semi-Permanent"
-
-Not in Vish inventory — set `is_active = false`.
-
-## Summary
-
-| Action | Scope |
-|--------|-------|
-| Insert missing shade (Vertigo) | 1 new row |
-| Fix container size 118ml → 113g | 27 existing rows |
-| Set wholesale price $9.22 | 27 existing rows |
-| Set markup 100% | 27 existing rows |
-| Fix missing swatch colors | 7 rows |
-| Deactivate generic entry | 1 row |
-
-All data-only changes — no code modifications needed.
+All 6 products already exist — names match. No inserts or deactivations needed. Data-only changes.
 
