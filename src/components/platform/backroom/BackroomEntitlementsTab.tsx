@@ -774,7 +774,7 @@ function LocationEntitlementPanel({
                   <td className="px-4 py-2.5">
                     {isActive && ent ? (
                       <div className="flex items-center gap-1.5">
-                        <Scale className="w-3.5 h-3.5 text-slate-500" />
+                        <Weight className="w-3.5 h-3.5 text-slate-500" />
                         <Select
                           value={String(ent.scale_count)}
                           onValueChange={(val) =>

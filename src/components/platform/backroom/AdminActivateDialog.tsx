@@ -179,7 +179,7 @@ export function AdminActivateDialog({
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
-                          <Scale className="w-3 h-3 text-slate-500" />
+                          <Weight className="w-3 h-3 text-slate-500" />
                           <Select
                             value={String(cfg.scale_count)}
                             onValueChange={(val) => updateConfig(cfg.location_id, { scale_count: parseInt(val) })}
