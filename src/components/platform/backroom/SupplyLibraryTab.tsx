@@ -40,6 +40,8 @@ import { formatRelativeTime } from '@/lib/format';
 import { useSupplyLibraryRequests, useResolveSupplyRequest } from '@/hooks/platform/useSupplyLibraryRequests';
 import { groupByProductLine, extractProductLine } from '@/lib/supply-line-parser';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
+import { SwatchPicker } from './SwatchPicker';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
