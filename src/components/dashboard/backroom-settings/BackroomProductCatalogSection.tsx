@@ -318,6 +318,50 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     onError: (error) => toast.error('Sync failed: ' + error.message),
   });
 
+  /* Sync All Brands — batch sync for entire catalog */
+  const syncAllBrandsMutation = useMutation({
+    mutationFn: async () => {
+      const { data: libraryData, error: libErr } = await supabase
+        .from('supply_library_products')
+        .select('name, brand, wholesale_price, default_markup_pct, swatch_color, size_options')
+        .eq('is_active', true);
+      if (libErr) throw libErr;
+
+      const { data: orgProducts, error: orgErr } = await supabase
+        .from('products')
+        .select('id, name, brand, cost_price, markup_pct, swatch_color, container_size')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .eq('product_type', 'Supplies');
+      if (orgErr) throw orgErr;
+
+      let updated = 0;
+      for (const op of orgProducts || []) {
+        const match = (libraryData || []).find((lp: any) =>
+          lp.brand?.toLowerCase() === op.brand?.toLowerCase() &&
+          op.name.toLowerCase().startsWith(lp.name.toLowerCase())
+        );
+        if (!match) continue;
+        const updates: Record<string, any> = {};
+        if (op.cost_price == null && match.wholesale_price != null) updates.cost_price = match.wholesale_price;
+        if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
+        if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
+        if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
+        if (Object.keys(updates).length === 0) continue;
+        updates.updated_at = new Date().toISOString();
+        await supabase.from('products').update(updates).eq('id', op.id);
+        updated++;
+      }
+      return updated;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      toast.success(`Synced ${count} products across all brands`);
+    },
+    onError: (error) => toast.error('Sync failed: ' + error.message),
+  });
+
   /* ====== Derived data ====== */
   const allProducts = products || [];
   const trackedCount = allProducts.filter((p) => p.is_backroom_tracked).length;
