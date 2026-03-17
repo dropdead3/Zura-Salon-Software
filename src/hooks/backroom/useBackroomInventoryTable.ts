@@ -51,12 +51,67 @@ export const STOCK_STATUS_CONFIG: Record<StockStatus, { label: string; className
   not_stocked: { label: 'Not Stocked', className: 'bg-muted text-muted-foreground border-border/40' },
 };
 
-export function useBackroomInventoryTable(options?: { enabled?: boolean }) {
+export function useBackroomInventoryTable(options?: { enabled?: boolean; locationId?: string }) {
   const orgId = useBackroomOrgId();
+  const locationId = options?.locationId;
 
   return useQuery({
-    queryKey: ['backroom-inventory-table', orgId],
+    queryKey: ['backroom-inventory-table', orgId, locationId],
     queryFn: async (): Promise<BackroomInventoryRow[]> => {
+      // If a location is selected, join with location_product_settings for tracking
+      if (locationId) {
+        // Get products that are tracked at this location
+        const { data: settings, error: settingsErr } = await supabase
+          .from('location_product_settings')
+          .select('product_id, par_level, reorder_level')
+          .eq('organization_id', orgId!)
+          .eq('location_id', locationId)
+          .eq('is_tracked', true);
+        if (settingsErr) throw settingsErr;
+        if (!settings || settings.length === 0) return [];
+
+        const productIds = settings.map((s: any) => s.product_id);
+        const settingsMap = new Map(settings.map((s: any) => [s.product_id, s]));
+
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, brand, sku, category, container_size, quantity_on_hand, cost_per_gram, markup_pct, cost_price')
+          .eq('organization_id', orgId!)
+          .eq('is_active', true)
+          .in('id', productIds)
+          .order('name');
+        if (error) throw error;
+
+        return (data || []).map((p: any) => {
+          const locSetting = settingsMap.get(p.id);
+          const parLevel = locSetting?.par_level ?? null;
+          const reorderLevel = locSetting?.reorder_level ?? null;
+          const qty = p.quantity_on_hand ?? 0;
+          const status = getStockStatus(qty, reorderLevel, parLevel);
+          const orderQty = parLevel != null ? Math.max(0, parLevel - qty) : 0;
+          const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
+
+          return {
+            id: p.id,
+            name: p.name,
+            brand: p.brand,
+            sku: p.sku,
+            category: p.category,
+            container_size: p.container_size,
+            quantity_on_hand: qty,
+            reorder_level: reorderLevel,
+            par_level: parLevel,
+            cost_per_gram: p.cost_per_gram,
+            markup_pct: p.markup_pct,
+            cost_price: p.cost_price,
+            order_qty: orderQty,
+            status,
+            charge_per_gram: chargePerGram,
+          };
+        });
+      }
+
+      // Fallback: org-wide (legacy behavior)
       const { data, error } = await supabase
         .from('products')
         .select('id, name, brand, sku, category, container_size, quantity_on_hand, reorder_level, par_level, cost_per_gram, markup_pct, cost_price')
