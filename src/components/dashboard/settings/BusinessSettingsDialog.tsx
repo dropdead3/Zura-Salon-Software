@@ -312,7 +312,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               <img 
                 src={url} 
                 alt={`${type} mode logo`} 
-                className="max-h-[80px] max-w-full object-contain"
+                className="max-h-[100px] max-w-full object-contain"
               />
               <button
                 type="button"
