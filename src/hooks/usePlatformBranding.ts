@@ -72,6 +72,8 @@ export function usePlatformBranding() {
         icon_light_url: (value.icon_light_url as string | null) ?? null,
         theme_colors: (value.theme_colors as Record<string, string>) ?? {},
         typography: (value.typography as Record<string, string>) ?? {},
+        loader_style: (value.loader_style as LoaderStyleOption) ?? 'zura',
+        use_skeleton_loaders: (value.use_skeleton_loaders as boolean) ?? false,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
