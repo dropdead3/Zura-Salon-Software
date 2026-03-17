@@ -62,6 +62,7 @@ export default function BillingGuide() {
   const { formatCurrency: fmtCurrency } = useFormatCurrency();
   const [searchParams] = useSearchParams();
   const scrolledRef = useRef(false);
+  const [billingOpen, setBillingOpen] = useState(false);
 
   // Scroll to section on mount
   useEffect(() => {
