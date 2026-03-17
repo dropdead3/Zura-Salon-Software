@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
-import { Loader2, Target, RefreshCw } from 'lucide-react';
+import { Target, RefreshCw } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
 import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
