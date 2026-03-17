@@ -35,7 +35,7 @@ import {
 import { SUPPLY_CATEGORY_LABELS } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
 import { AddBrandWizard } from './AddBrandWizard';
-import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { useSupplyBrandsMeta, useDeleteSupplyBrand, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { EditBrandDialog } from './EditBrandDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
