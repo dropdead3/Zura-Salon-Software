@@ -1143,7 +1143,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {filteredBrands.map((brandName) => {
                     const brandProds = brandGroups.get(brandName) || [];
-                    const tracked = brandProds.filter((p) => p.is_backroom_tracked).length;
+                    const tracked = brandProds.filter((p) => isTrackedAtLocation(p.id)).length;
                     const meta = brandMetaMap.get(brandName.toLowerCase());
                     const missingPrice = brandProds.filter((p) => p.cost_price == null).length;
                     const isComplete = missingPrice === 0;
