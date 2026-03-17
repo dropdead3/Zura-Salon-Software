@@ -19869,6 +19869,7 @@ export type Database = {
           name: string
           price_source_id: string | null
           price_updated_at: string | null
+          product_line: string | null
           recommended_retail: number | null
           size_options: string[] | null
           updated_at: string
@@ -19886,6 +19887,7 @@ export type Database = {
           name: string
           price_source_id?: string | null
           price_updated_at?: string | null
+          product_line?: string | null
           recommended_retail?: number | null
           size_options?: string[] | null
           updated_at?: string
@@ -19903,6 +19905,7 @@ export type Database = {
           name?: string
           price_source_id?: string | null
           price_updated_at?: string | null
+          product_line?: string | null
           recommended_retail?: number | null
           size_options?: string[] | null
           updated_at?: string

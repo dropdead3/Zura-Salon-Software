@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPPLY_LIBRARY, getSupplyBrands, getProductsByBrand, type SupplyLibraryItem } from '@/data/professional-supply-library';
+import { extractProductLine } from '@/lib/supply-line-parser';
 import { toast } from 'sonner';
 
 export interface SupplyLibraryProduct {
@@ -22,6 +23,7 @@ export interface SupplyLibraryProduct {
   currency: string;
   price_source_id: string | null;
   price_updated_at: string | null;
+  product_line: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -102,13 +104,14 @@ export function useSeedSupplyLibrary() {
       let inserted = 0;
 
       for (let i = 0; i < SUPPLY_LIBRARY.length; i += BATCH_SIZE) {
-        const batch = SUPPLY_LIBRARY.slice(i, i + BATCH_SIZE).map((item) => ({
+      const batch = SUPPLY_LIBRARY.slice(i, i + BATCH_SIZE).map((item) => ({
           brand: item.brand,
           name: item.name,
           category: item.category,
           default_depletion: item.defaultDepletion,
           default_unit: item.defaultUnit,
           size_options: item.sizeOptions || [],
+          product_line: extractProductLine(item.name),
           is_active: true,
         }));
 

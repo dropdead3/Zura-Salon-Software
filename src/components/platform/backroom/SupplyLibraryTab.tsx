@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -16,7 +16,7 @@ import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTab
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare } from 'lucide-react';
+import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -34,7 +34,7 @@ import { formatCurrency } from '@/lib/format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatRelativeTime } from '@/lib/format';
 import { useSupplyLibraryRequests, useResolveSupplyRequest } from '@/hooks/platform/useSupplyLibraryRequests';
-import { groupByProductLine } from '@/lib/supply-line-parser';
+import { groupByProductLine, extractProductLine } from '@/lib/supply-line-parser';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
@@ -60,8 +60,27 @@ export function SupplyLibraryTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
+  // localStorage-backed collapse state
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('supply-library-categories');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+  const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('supply-library-sublines');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  // Persist collapse state to localStorage
+  useEffect(() => {
+    localStorage.setItem('supply-library-categories', JSON.stringify([...collapsedCategories]));
+  }, [collapsedCategories]);
+  useEffect(() => {
+    localStorage.setItem('supply-library-sublines', JSON.stringify([...collapsedSubLines]));
+  }, [collapsedSubLines]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
@@ -638,7 +657,7 @@ export function SupplyLibraryTab() {
                       variant="interactive"
                       size="md"
                       className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
-                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
+                      onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); localStorage.removeItem('supply-library-categories'); localStorage.removeItem('supply-library-sublines'); }}
                     >
                       <span className="font-display text-sm tracking-wide text-[hsl(var(--platform-foreground))]">
                         {b.brand}
@@ -704,6 +723,38 @@ export function SupplyLibraryTab() {
                     <SelectItem value="priced">Priced</SelectItem>
                   </SelectContent>
                 </Select>
+                {/* Collapse All / Expand All toggle */}
+                <PlatformButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const allCatKeys = categoryGroups.map(([cat]) => cat);
+                    const allSubKeys: string[] = [];
+                    categoryGroups.forEach(([cat, products]) => {
+                      const { shouldGroup, groups } = groupByProductLine(products);
+                      if (shouldGroup) {
+                        groups.forEach(([lineName]) => allSubKeys.push(`${cat}::${lineName}`));
+                      }
+                    });
+                    const totalSections = allCatKeys.length + allSubKeys.length;
+                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length + allSubKeys.filter(k => collapsedSubLines.has(k)).length;
+                    const shouldCollapse = collapsedCount < totalSections / 2;
+                    if (shouldCollapse) {
+                      setCollapsedCategories(new Set(allCatKeys));
+                      setCollapsedSubLines(new Set(allSubKeys));
+                    } else {
+                      setCollapsedCategories(new Set());
+                      setCollapsedSubLines(new Set());
+                    }
+                  }}
+                >
+                  <ChevronsUpDown className="w-3.5 h-3.5 mr-1" />
+                  {(() => {
+                    const allCatKeys = categoryGroups.map(([cat]) => cat);
+                    const collapsedCount = allCatKeys.filter(k => collapsedCategories.has(k)).length;
+                    return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
+                  })()}
+                </PlatformButton>
               </div>
 
               {brandLoading ? (

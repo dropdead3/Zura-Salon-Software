@@ -92,7 +92,7 @@ export function extractProductLine(name: string): string {
  * Returns entries sorted alphabetically by line name.
  * Only groups if the total item count exceeds the threshold.
  */
-export function groupByProductLine<T extends { name: string }>(
+export function groupByProductLine<T extends { name: string; product_line?: string | null }>(
   items: T[],
   threshold = SUB_LINE_THRESHOLD,
 ): { shouldGroup: boolean; groups: [string, T[]][] } {
@@ -102,7 +102,7 @@ export function groupByProductLine<T extends { name: string }>(
 
   const map = new Map<string, T[]>();
   for (const item of items) {
-    const line = extractProductLine(item.name);
+    const line = item.product_line || extractProductLine(item.name);
     if (!map.has(line)) map.set(line, []);
     map.get(line)!.push(item);
   }
