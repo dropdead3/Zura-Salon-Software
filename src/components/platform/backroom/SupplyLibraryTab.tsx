@@ -25,6 +25,7 @@ import {
   useSupplyLibraryBrands,
   useSupplyLibraryInitStatus,
   useSeedSupplyLibrary,
+  useSyncSupplyLibrary,
   type SupplyLibraryProduct,
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
