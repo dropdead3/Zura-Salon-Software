@@ -84,8 +84,9 @@ export function PlatformThemeEditor({ themeColors, onChange }: PlatformThemeEdit
     const { [key]: _, ...rest } = themeColors;
     onChange(rest);
     
-    // Remove custom property to revert to default
-    document.documentElement.style.removeProperty(`--${key}`);
+    // Remove custom property to revert to default — scoped to platform container
+    const target = (document.querySelector('.platform-theme') as HTMLElement) || document.documentElement;
+    target.style.removeProperty(`--${key}`);
   };
 
   const handleResetAll = () => {
