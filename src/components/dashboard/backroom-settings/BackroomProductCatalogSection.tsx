@@ -650,6 +650,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
                   Sync from Library
                 </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
