@@ -3194,4 +3194,5 @@ export const SUPPLY_CATEGORY_LABELS: Record<string, string> = {
   'bond builder': 'Bond Builder',
   treatment: 'Treatment',
   additive: 'Additive',
+  'color-remover': 'Color Remover',
 };
