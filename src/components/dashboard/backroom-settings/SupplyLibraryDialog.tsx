@@ -389,7 +389,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
   const handleAddEntireBrand = async (brand: string) => {
     setAddingBrand(brand);
     try {
-      const items = getProductsByBrand(brand);
+      const items = brandItems;
       const itemsToInsert: Array<{
         name: string; brand: string; category: string; product_type: string;
         is_backroom_tracked: boolean; depletion_method: string; unit_of_measure: string;
