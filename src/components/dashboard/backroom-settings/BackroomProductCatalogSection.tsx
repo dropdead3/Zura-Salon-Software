@@ -617,7 +617,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                             {cats.slice(0, 3).map((cat) => (
                               <span
                                 key={cat}
-                                className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-[hsl(var(--platform-bg-hover)/0.5)] text-[hsl(var(--platform-foreground-muted))] capitalize"
+                                className="text-[9px] font-sans px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground capitalize"
                               >
                                 {cat}
                               </span>
