@@ -764,9 +764,7 @@ export default function AccountManagement() {
 
               <TabsContent value="all" className="space-y-3 mt-4">
                 {loadingInvitations ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
+                  <DashboardLoader size="md" className="py-12" />
                 ) : filteredInvitations?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">
