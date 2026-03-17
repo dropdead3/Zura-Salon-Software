@@ -33,6 +33,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useToast } from '@/hooks/use-toast';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
