@@ -773,6 +773,33 @@ export function SupplyLibraryTab() {
                     return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
                   })()}
                 </PlatformButton>
+                {/* Reset All Collapse State */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <PlatformButton
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => {
+                          const keysToRemove: string[] = [];
+                          for (let i = 0; i < localStorage.length; i++) {
+                            const k = localStorage.key(i);
+                            if (k && (k.startsWith('supply-library-categories::') || k.startsWith('supply-library-sublines::'))) {
+                              keysToRemove.push(k);
+                            }
+                          }
+                          keysToRemove.forEach((k) => localStorage.removeItem(k));
+                          setCollapsedCategories(new Set());
+                          setCollapsedSubLines(new Set());
+                          toast.success('Collapse state reset for all brands');
+                        }}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </PlatformButton>
+                    </TooltipTrigger>
+                    <TooltipContent>Reset all collapse state</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
