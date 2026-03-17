@@ -56,6 +56,9 @@ export function useApprovePriceUpdate() {
       queueItemId: string;
       productId: string | null;
       wholesalePrice: number;
+      brand?: string;
+      productName?: string;
+      sourceId?: string | null;
     }) => {
       // Update the queue item status
       const { error: queueErr } = await supabase
