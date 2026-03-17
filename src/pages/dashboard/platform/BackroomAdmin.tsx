@@ -27,7 +27,7 @@ export default function BackroomAdmin() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)] p-1">
+        <TabsList className="!bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)] p-1 text-[hsl(var(--platform-foreground-muted))]">
           <TabsTrigger value="analytics" className={`${tabTriggerClass} flex items-center gap-1.5`}>
             <BarChart3 className="w-3.5 h-3.5" />
             Analytics
