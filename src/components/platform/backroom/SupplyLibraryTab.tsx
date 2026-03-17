@@ -755,14 +755,6 @@ export function SupplyLibraryTab() {
                     return collapsedCount >= allCatKeys.length / 2 ? 'Expand All' : 'Collapse All';
                   })()}
                 </PlatformButton>
-                    <SelectValue placeholder="All Pricing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Pricing</SelectItem>
-                    <SelectItem value="missing">Missing Price</SelectItem>
-                    <SelectItem value="priced">Priced</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               {brandLoading ? (
