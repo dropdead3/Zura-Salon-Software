@@ -4,8 +4,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { tokens } from '@/lib/design-tokens';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
@@ -65,7 +64,6 @@ interface SectionMeta {
   label: string;
   icon: typeof LayoutDashboard;
   tooltip: string;
-  /** Section IDs that must have data before this section is useful */
   requires?: BackroomSection[];
   requiresLabel?: string;
 }
@@ -87,7 +85,6 @@ const sections: SectionMeta[] = [
   { id: 'multi-location', label: 'Multi-Location', icon: Building2, tooltip: 'Compare and copy settings between locations.' },
 ];
 
-/** Map section IDs to health-check keys for completion status */
 function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof useBackroomSetupHealth>['data']): 'done' | 'warning' | 'none' {
   if (!health) return 'none';
   switch (sectionId) {
@@ -121,7 +118,6 @@ export default function BackroomSettings() {
     const checkoutStatus = searchParams.get('checkout');
     if (!checkoutStatus) return;
 
-    // Clean up URL immediately
     setSearchParams({}, { replace: true });
 
     if (checkoutStatus === 'cancelled') {
@@ -130,7 +126,6 @@ export default function BackroomSettings() {
     }
 
     if (checkoutStatus === 'success') {
-      // Prevent duplicate polling from React strict-mode double-mount
       if (pollingRef.current) return;
       pollingRef.current = true;
 
@@ -139,7 +134,6 @@ export default function BackroomSettings() {
         const DELAY_MS = 2000;
 
         for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-          // Direct DB check bypassing React Query cache
           if (orgId) {
             const { data } = await supabase
               .from('organization_feature_flags')
@@ -163,7 +157,6 @@ export default function BackroomSettings() {
           }
         }
 
-        // Webhook hasn't landed yet — still invalidate and show a soft message
         queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
@@ -183,7 +176,7 @@ export default function BackroomSettings() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
         </div>
       </DashboardLayout>
     );
@@ -199,15 +192,15 @@ export default function BackroomSettings() {
 
   return (
     <DashboardLayout>
-      <div className={tokens.layout.pageContainer}>
-        <DashboardPageHeader
+      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+        <PlatformPageHeader
           title="Backroom Settings"
           description="Configure products, services, allowances, and operational policies that power Zura Backroom."
           backTo="/dashboard/admin/team-hub"
         />
 
         <div className="flex gap-6">
-          {/* Sidebar nav */}
+          {/* Sidebar nav — platform styled */}
           <nav className="w-56 shrink-0 hidden lg:block">
             <TooltipProvider delayDuration={300}>
               <div className="space-y-0.5 sticky top-24">
@@ -225,27 +218,26 @@ export default function BackroomSettings() {
                           className={cn(
                             'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
                             isActive
-                              ? 'bg-muted text-foreground font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                              ? 'bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground))] font-medium'
+                              : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.5)]',
                             !prereqOk && !isActive && 'opacity-60'
                           )}
                         >
                           {!prereqOk ? (
-                            <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
+                            <Lock className="w-4 h-4 shrink-0 text-[hsl(var(--platform-foreground-subtle))]" />
                           ) : (
                             <Icon className="w-4 h-4 shrink-0" />
                           )}
                           <span className="flex-1 truncate">{s.label}</span>
-                          {/* Completion dot */}
                           {status === 'done' && (
-                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-[hsl(var(--platform-primary))] shrink-0" />
                           )}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[220px]">
+                      <TooltipContent side="right" className="max-w-[220px] bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))]">
                         <p className="text-xs font-sans">{s.tooltip}</p>
                         {!prereqOk && s.requiresLabel && (
-                          <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
+                          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-1">Requires {s.requiresLabel} first</p>
                         )}
                       </TooltipContent>
                     </Tooltip>
@@ -253,10 +245,10 @@ export default function BackroomSettings() {
                 })}
 
                 {/* Subscription link */}
-                <div className="mt-4 pt-4 border-t border-border/40">
+                <div className="mt-4 pt-4 border-t border-[hsl(var(--platform-border)/0.4)]">
                   <button
                     onClick={() => navigate('/dashboard/admin/backroom-subscription')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors text-left"
                   >
                     <CreditCard className="w-4 h-4 shrink-0" />
                     <span className="flex-1 truncate">Subscription</span>
@@ -266,12 +258,12 @@ export default function BackroomSettings() {
             </TooltipProvider>
           </nav>
 
-          {/* Mobile section selector */}
+          {/* Mobile section selector — platform styled */}
           <div className="lg:hidden w-full mb-4">
             <select
               value={activeSection}
               onChange={(e) => setActiveSection(e.target.value as BackroomSection)}
-              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans"
+              className="w-full rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2.5 text-sm font-sans text-[hsl(var(--platform-foreground))]"
             >
               {sections.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
