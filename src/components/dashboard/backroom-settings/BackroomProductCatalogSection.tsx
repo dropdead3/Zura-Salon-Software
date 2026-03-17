@@ -1148,11 +1148,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           'hover:border-border hover:bg-muted/40 hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
-                        {/* Top-left badge: product count */}
-                        <Badge variant="outline" className="absolute top-2 left-2 text-[10px]">
-                          {tracked} of {brandProds.length} products
-                        </Badge>
-
                         {/* Top-right: missing data */}
                         {!isComplete && (
                           <Badge variant="secondary" className="absolute top-2 right-2 text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
@@ -1173,6 +1168,11 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           </div>
                         )}
                         <span className="text-sm font-display tracking-wide text-foreground text-center">{brandName}</span>
+
+                        {/* Product count badge */}
+                        <Badge variant="outline" className="text-[10px]">
+                          {tracked} of {brandProds.length} products
+                        </Badge>
                       </button>
                     );
                   })}
