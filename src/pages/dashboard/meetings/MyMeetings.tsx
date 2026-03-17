@@ -64,8 +64,8 @@ export default function MyMeetings() {
           <div className="space-y-4">
             {isLoading ? (
               <Card>
-                <CardContent className="p-8 text-center">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
+                <CardContent className="p-8">
+                  <DashboardLoader size="md" />
                 </CardContent>
               </Card>
              ) : myMeetings.length === 0 ? (

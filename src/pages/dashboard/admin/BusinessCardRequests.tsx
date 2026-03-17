@@ -275,9 +275,7 @@ export default function BusinessCardRequests() {
         {/* Requests Table */}
         <Card>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="md" className="py-12" />
           ) : filteredRequests.length === 0 ? (
             <div className="text-center py-12">
               <CreditCard className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
