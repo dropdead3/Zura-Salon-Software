@@ -865,7 +865,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
     if (localContainer !== (product.container_size || '')) onUpdate({ container_size: localContainer || null } as any);
   };
 
-  const inputClass = "h-6 w-16 rounded border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-1.5 text-[11px] font-sans text-[hsl(var(--platform-foreground))] focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)] transition-colors";
+  const inputClass = "h-6 w-16 rounded border px-1.5 text-[11px] font-sans text-foreground bg-background focus:outline-none focus:border-primary/50 transition-colors";
 
   return (
     <div className={cn(
