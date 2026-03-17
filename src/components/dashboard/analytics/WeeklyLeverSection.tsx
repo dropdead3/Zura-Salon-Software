@@ -59,9 +59,7 @@ export function WeeklyLeverSection({ onClose }: WeeklyLeverSectionProps) {
       <CardContent>
         <EnforcementGateBanner gateKey="gate_kpi_architecture">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader size="md" className="py-12" />
           ) : recommendation ? (
             <WeeklyLeverBrief recommendation={recommendation} />
           ) : (
