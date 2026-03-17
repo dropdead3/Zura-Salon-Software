@@ -291,6 +291,10 @@ export function useSupplyLibraryItemsByBrand(brand: string | null) {
           defaultDepletion: p.default_depletion as SupplyLibraryItem['defaultDepletion'],
           defaultUnit: p.default_unit as SupplyLibraryItem['defaultUnit'],
           sizeOptions: p.size_options || [],
+          wholesalePrice: p.wholesale_price ?? null,
+          defaultMarkupPct: p.default_markup_pct ?? null,
+          swatchColor: p.swatch_color ?? null,
+          containerSize: p.size_options?.[0] ?? null,
         }));
       }
 
