@@ -1,153 +1,77 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Restyle Backroom Product Catalog — Brand-First Architecture
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Current Problem
+The org-level Backroom Product Catalog is a flat list of all salon products with an inline A-Z brand browser tacked on. It doesn't match the platform Supply Library's premium brand-card-first experience. Users currently toggle individual product rows on/off — there's no way to enable entire categories or product lines at once.
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+## New Architecture
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+### Level 0: Brand Card Grid (replaces current flat list)
+- Show brand cards for brands the salon has products from (query `products` table grouped by `brand` where `organization_id = orgId` and `product_type = 'Supplies'`)
+- Also show brands available in the supply library that the salon hasn't added yet (dimmed/outlined cards with "Add" action)
+- Reuse the same `PlatformCard variant="interactive" size="md"` layout from `SupplyLibraryTab` — logo, product count badge, category summary footer
+- Brand logos from `supply_library_brands` table (same `useSupplyBrandsMeta` hook)
+- A-Z alphabet selector + search bar above the grid (matching platform pattern)
+- KPI row (tracked count, in-stock, to-reorder) stays but moves above the brand grid
 
-## Auto-Reorder with Supplier Communication (Implemented)
+### Level 1: Brand Catalog (opens when card clicked)
+- Breadcrumb: `My Catalog / {Brand}`
+- Three-column Finder-style browser reusing `BrowseColumn` component from platform:
+  - Column 1: **Categories** (color, developer, toner, etc.) with product counts and health dots
+  - Column 2: **Product Lines** within selected category (grouped by `extractProductLine`)
+  - Column 3: **Products** table for selected product line
+- **Bulk toggle controls** at each level:
+  - Category header: "Track All in {Category}" switch — turns on `is_backroom_tracked` for all products in that category+brand
+  - Product Line header: "Track All in {Product Line}" switch — same but scoped to product line
+  - Individual product row: existing toggle switch
+- Products not yet in the salon's catalog but present in the supply library show as ghost rows with an "Add" button
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### Level 2: Product Row (within the Finder table)
+- Simplified from current: Name, tracking toggle, depletion method select, billable/overage switches
+- Pricing inputs (cost/g, container, markup) shown inline when tracked
+- Same `ProductRow` component logic, adapted to table layout
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+## Technical Plan
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### File Changes
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+**`BackroomProductCatalogSection.tsx`** — Major rewrite (~1360 lines):
+1. Replace the flat product list and inline A-Z brand browsing with a brand card grid as the default view
+2. Add `selectedBrand` state (already exists but underused) as the primary navigation driver
+3. When `selectedBrand` is set, render a three-column Finder using `BrowseColumn` from `@/components/platform/backroom/BrowseColumn`
+4. Add bulk tracking mutations:
+   - `toggleCategoryTracking(brand, category, enabled)` — updates all products matching brand+category
+   - `toggleProductLineTracking(brand, category, productLine, enabled)` — updates products matching brand+category+product line pattern
+5. Import `useSupplyBrandsMeta` for brand logos
+6. Import `groupByProductLine`, `extractProductLine` from `@/lib/supply-line-parser` for Finder column grouping
+7. Keep the table/inventory view toggle but move it to the brand detail level (not top-level)
+8. Retain all existing mutations, inventory table row logic, bulk pricing, and reorder dialogs
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+**No new files needed** — reuses existing `BrowseColumn`, platform UI components, and supply library hooks.
 
-## Product Movement Rating Badges (Implemented)
+**No database changes** — all data already exists in `products` and `supply_library_products` tables.
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### Data Flow
+```text
+products (org-scoped) ──→ group by brand ──→ Brand Cards
+                      ──→ filter by brand+category ──→ BrowseColumn (categories)
+                      ──→ groupByProductLine() ──→ BrowseColumn (product lines)
+                      ──→ filter by line ──→ Product Table
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+supply_library_products ──→ "available but not stocked" ghost items
+supply_library_brands ──→ brand logos for cards
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### Bulk Toggle Logic
+- "Track All" at category level: `UPDATE products SET is_backroom_tracked = true WHERE org_id = ? AND brand = ? AND category = ?`
+- "Track All" at product line level: filter products whose name matches the product line prefix, update `is_backroom_tracked`
+- Both use existing `updateMutation` pattern with batch updates
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+### What's Preserved
+- Inventory table view (KPI cards + stock table) — accessible from within a brand or as a global toggle
+- All pricing inline editing (cost/g, markup, container)
+- Bulk pricing dialog, bulk reorder dialog
+- Supply Library dialog for adding new products
+- Product row toggle, depletion method, billable/overage switches
+
