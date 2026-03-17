@@ -1081,7 +1081,7 @@ function AddEditDialog({
     setUnit(product?.default_unit || 'g');
     setSizes(product?.size_options?.join(', ') || '');
     setWholesalePrice(product?.wholesale_price != null ? String(product.wholesale_price) : '');
-    setMarkupPct(product?.default_markup_pct != null ? String((product as any).default_markup_pct) : '');
+    setMarkupPct(product?.default_markup_pct != null ? String(product.default_markup_pct) : '');
   };
 
   const handleSave = async () => {
