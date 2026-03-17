@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { isOrgDashboardRoute } from '@/lib/route-utils';
+import { useRouteZone } from '@/lib/route-utils';
 
 /**
  * Helper: strip all non-platform custom CSS vars from documentElement.
@@ -25,12 +24,12 @@ function clearOrgThemeVars() {
  * Actively cleans up org theme vars when navigating away from org dashboard routes.
  */
 export function ThemeInitializer() {
-  const location = useLocation();
+  const zone = useRouteZone();
   const appliedVarsRef = useRef<string[]>([]);
 
   // Core loader — fetches user prefs and sets CSS vars
   const loadCustomTheme = async () => {
-    if (!isOrgDashboardRoute(window.location.pathname)) {
+    if (zone !== 'org-dashboard') {
       // If we're not on an org dashboard route, clear any lingering org vars
       if (appliedVarsRef.current.length > 0) {
         appliedVarsRef.current.forEach(key =>
@@ -86,10 +85,10 @@ export function ThemeInitializer() {
     }
   };
 
-  // Re-run on every route change so vars are applied/cleaned on navigation
+  // Re-run on every route zone change so vars are applied/cleaned on navigation
   useEffect(() => {
     loadCustomTheme();
-  }, [location.pathname]);
+  }, [zone]);
 
   // Auth state listener
   useEffect(() => {
