@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { isOrgDashboardRoute } from '@/lib/route-utils';
+import { useRouteZone } from '@/lib/route-utils';
 
 /**
  * Helper: strip all non-platform custom CSS vars from documentElement.
