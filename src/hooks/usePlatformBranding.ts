@@ -91,32 +91,10 @@ export function usePlatformBranding() {
 
       if (error) throw error;
 
-      // Sync logo URLs to business_settings via SECURITY DEFINER function
-      const { error: syncError } = await supabase.rpc('sync_platform_logos_to_business_settings', {
-        _logo_dark_url: branding.primary_logo_url,
-        _logo_light_url: branding.secondary_logo_url,
-        _icon_dark_url: branding.icon_dark_url,
-        _icon_light_url: branding.icon_light_url,
-      });
-
-      if (syncError) throw syncError;
-
       return branding;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['platform-branding'], data);
-      queryClient.setQueryData(['business-settings'], (existing: unknown) => {
-        if (!existing || typeof existing !== 'object') return existing;
-
-        return {
-          ...(existing as Record<string, unknown>),
-          logo_dark_url: data.primary_logo_url,
-          logo_light_url: data.secondary_logo_url,
-          icon_dark_url: data.icon_dark_url,
-          icon_light_url: data.icon_light_url,
-        };
-      });
-      queryClient.invalidateQueries({ queryKey: ['business-settings'] });
       toast({
         title: 'Branding saved',
         description: 'Platform branding has been updated successfully.',

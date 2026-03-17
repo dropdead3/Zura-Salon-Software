@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.sync_platform_logos_to_business_settings(text, text, text, text);
