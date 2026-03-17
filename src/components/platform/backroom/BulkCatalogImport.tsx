@@ -543,7 +543,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
               </div>
             )}
 
-            <ScrollArea className="flex-1 min-h-0 max-h-[400px]">
+            <ScrollArea className="flex-1 min-h-0 max-h-[50vh]">
               <div className="space-y-1 pr-4">
                 {results.map(r => (
                   <Collapsible key={r.brand} open={expandedBrands.has(r.brand)} onOpenChange={() => toggleExpand(r.brand)}>
