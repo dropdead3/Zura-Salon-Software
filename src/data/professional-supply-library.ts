@@ -2195,36 +2195,164 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   // DANGER JONES
   // ════════════════════════════════════════════════════════════════
 
-  // Epilogue Permanent Color (single entry — 84 shades, full list not yet publicly available)
-  c('Danger Jones', 'Epilogue Permanent Color', 'color', ['60ml']),
-  // Epilogue Lightener
+  // ── Epilogue Permanent Color — 84 shades (60ml tubes) ──────────
+  // Level 1
+  c('Danger Jones', 'Epilogue 1-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 1-1 Ash', 'color', ['60ml']),
+  // Level 3
+  c('Danger Jones', 'Epilogue 3-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 3-2 Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 3-65 Red Mahogany', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 3-66 Red Red', 'color', ['60ml']),
+  // Level 4
+  c('Danger Jones', 'Epilogue 4-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-00 Double Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-3 Gold', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-46 Copper Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-52 Mahogany Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-65 Red Mahogany', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-66 Red Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-7 Matte', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 4-8 Brown', 'color', ['60ml']),
+  // Level 5
+  c('Danger Jones', 'Epilogue 5-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-00 Double Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-01 Natural Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-2 Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-3 Gold', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-34 Gold Copper', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-46 Copper Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-52 Mahogany Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-65 Red Mahogany', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-66 Red Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-7 Matte', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 5-8 Brown', 'color', ['60ml']),
+  // Level 6
+  c('Danger Jones', 'Epilogue 6-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-00 Double Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-01 Natural Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-2 Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-3 Gold', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-34 Gold Copper', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-4 Copper', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-46 Copper Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-52 Mahogany Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-65 Red Mahogany', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-66 Red Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-7 Matte', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 6-8 Brown', 'color', ['60ml']),
+  // Level 7
+  c('Danger Jones', 'Epilogue 7-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-00 Double Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-01 Natural Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-2 Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-3 Gold', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-34 Gold Copper', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-4 Copper', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-46 Copper Red', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-65 Red Mahogany', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-7 Matte', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 7-8 Brown', 'color', ['60ml']),
+  // Level 8
+  c('Danger Jones', 'Epilogue 8-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 8-00 Double Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 8-01 Natural Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 8-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 8-3 Gold', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 8-34 Gold Copper', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 8-4 Copper', 'color', ['60ml']),
+  // Level 9
+  c('Danger Jones', 'Epilogue 9-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 9-00 Double Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 9-01 Natural Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 9-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 9-3 Gold', 'color', ['60ml']),
+  // Level 10
+  c('Danger Jones', 'Epilogue 10-0 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 10-01 Natural Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 10-1 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue 10-2 Violet', 'color', ['60ml']),
+  // High Lift
+  c('Danger Jones', 'Epilogue HL-00 Natural', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue HL-12 Ash Violet', 'color', ['60ml']),
+  // Epilogue Boosters
+  c('Danger Jones', 'Epilogue Booster -11 Ash', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue Booster -22 Violet', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue Booster -33 Gold', 'color', ['60ml']),
+  c('Danger Jones', 'Epilogue Booster -66 Red', 'color', ['60ml']),
+
+  // ── Epilogue Lightener ─────────────────────────────────────────
   c('Danger Jones', 'Epilogue Lightener', 'lightener', ['450g', '900g']),
-  // Gloss Toners with Bonder (20 shades, 60ml)
+
+  // ── Cream Lightener with Bonding Complex ───────────────────────
+  c('Danger Jones', 'Cream Lightener with Bonding Complex', 'lightener', ['450g', '900g']),
+
+  // ── Gloss Toner with Bonder — 56 shades (60ml) ────────────────
   c('Danger Jones', 'Gloss Toner 0-0 Clear', 'toner', ['60ml']),
+  // Level 3
+  c('Danger Jones', 'Gloss Toner 3-0 Natural', 'toner', ['60ml']),
+  // Level 4
+  c('Danger Jones', 'Gloss Toner 4-0 Natural', 'toner', ['60ml']),
+  // Level 5
   c('Danger Jones', 'Gloss Toner 5-0 Natural', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 5-1 Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 5-8 Brown', 'toner', ['60ml']),
+  // Level 6
   c('Danger Jones', 'Gloss Toner 6-0 Natural', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 6-01 Natural Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 6-1 Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 6-4 Copper', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 6-8 Brown', 'toner', ['60ml']),
+  // Level 7
   c('Danger Jones', 'Gloss Toner 7-0 Natural', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 7-01 Natural Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 7-1 Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 7-3 Gold', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 7-4 Copper', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 7-8 Brown', 'toner', ['60ml']),
+  // Level 8
+  c('Danger Jones', 'Gloss Toner 8-0 Natural', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 8-01 Natural Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 8-1 Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 8-3 Gold', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 8-32 Gold Violet', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 8-4 Copper', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 8-8 Brown', 'toner', ['60ml']),
+  // Level 9
+  c('Danger Jones', 'Gloss Toner 9-0 Natural', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 9-01 Natural Ash', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 9-1 Ash', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 9-12 Ash Violet', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 9-2 Violet', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 9-3 Gold', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 9-32 Gold Violet', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 9-4 Copper', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 9-8 Brown', 'toner', ['60ml']),
+  // Level 10
   c('Danger Jones', 'Gloss Toner 10-0 Natural', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 10-01 Natural Ash', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 10-03 Natural Gold', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 10-1 Ash', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 10-12 Ash Violet', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 10-2 Violet', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner 10-3 Gold', 'toner', ['60ml']),
   c('Danger Jones', 'Gloss Toner 10-32 Gold Violet', 'toner', ['60ml']),
-  // Artistic Toners (3 shades, 90ml)
+  // Gloss Toner Boosters
+  c('Danger Jones', 'Gloss Toner Booster -11 Ash', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner Booster -22 Violet', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner Booster -44 Copper', 'toner', ['60ml']),
+  c('Danger Jones', 'Gloss Toner Booster -66 Red', 'toner', ['60ml']),
+
+  // ── Artistic Toners (3 shades, 90ml) ───────────────────────────
   c('Danger Jones', 'Artistic Toner Cool Blonde', 'toner', ['90ml']),
   c('Danger Jones', 'Artistic Toner Silver', 'toner', ['90ml']),
   c('Danger Jones', 'Artistic Toner Violet Blonde', 'toner', ['90ml']),
-  // Semi-Permanent Vivids (26 shades, 118ml)
+
+  // ── Semi-Permanent Vivids (26 shades, 118ml) ──────────────────
   c('Danger Jones', 'Semi-Permanent Dopamine (Black)', 'color', ['118ml']),
   c('Danger Jones', 'Semi-Permanent Hustler (Pink)', 'color', ['118ml']),
   c('Danger Jones', 'Semi-Permanent Lovesick (Neon Pink)', 'color', ['118ml']),
@@ -2251,15 +2379,23 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   c('Danger Jones', 'Semi-Permanent Burlesque (Mauve)', 'color', ['118ml']),
   c('Danger Jones', 'Semi-Permanent Pavement (Grey)', 'color', ['118ml']),
   c('Danger Jones', 'Semi-Permanent Clear', 'color', ['118ml']),
-  // Liquid Semi-Permanent
+
+  // ── Liquid Semi-Permanent ──────────────────────────────────────
   c('Danger Jones', 'Liquid Semi-Permanent', 'color', ['118ml'], 'weighed', 'ml'),
-  // Developers
+
+  // ── Developers ─────────────────────────────────────────────────
   c('Danger Jones', 'Deluxe Cream Developer 5 Vol (1.5%)', 'developer', ['900ml']),
   c('Danger Jones', 'Deluxe Cream Developer 10 Vol (3%)', 'developer', ['900ml']),
   c('Danger Jones', 'Deluxe Cream Developer 20 Vol (6%)', 'developer', ['900ml']),
   c('Danger Jones', 'Deluxe Cream Developer 30 Vol (9%)', 'developer', ['900ml']),
   c('Danger Jones', 'Deluxe Cream Developer 40 Vol (12%)', 'developer', ['900ml']),
   c('Danger Jones', 'Gloss Toner Developer 6 Vol (1.8%)', 'developer', ['900ml']),
+
+  // ── Accessories & Tools ────────────────────────────────────────
+  c('Danger Jones', 'Epilogue Permanent Color Book', 'treatment', []),
+  c('Danger Jones', 'Applicator Bottle', 'treatment', []),
+  c('Danger Jones', 'All-Purpose Apron', 'treatment', []),
+  c('Danger Jones', 'Color Cape', 'treatment', []),
 
   // ════════════════════════════════════════════════════════════════
   // GENERIC DEVELOPERS
