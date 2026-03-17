@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -660,20 +661,38 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               />
 
               {/* Column 2: Product Lines */}
-              {selectedCategory ? (
-                <BrowseColumn
-                  title="Product Line"
-                  items={productLineItems}
-                  selectedKey={selectedLine}
-                  onSelect={setSelectedLine}
-                  searchThreshold={8}
-                  className="w-[200px] shrink-0"
-                />
-              ) : (
-                <div className="w-[200px] shrink-0 border-r border-border/30 bg-muted/10 flex items-center justify-center">
-                  <p className="text-xs font-sans text-muted-foreground/60">Select a category</p>
-                </div>
-              )}
+              <AnimatePresence mode="wait" initial={false}>
+                {selectedCategory ? (
+                  <motion.div
+                    key="browse-col"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="w-[200px] shrink-0 flex flex-col"
+                  >
+                    <BrowseColumn
+                      title="Product Line"
+                      items={productLineItems}
+                      selectedKey={selectedLine}
+                      onSelect={setSelectedLine}
+                      searchThreshold={8}
+                      className="flex-1"
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="placeholder"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="w-[200px] shrink-0 border-r border-border/30 bg-muted/10 flex items-center justify-center"
+                  >
+                    <p className="text-xs font-sans text-muted-foreground/60">Select a category</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Column 3: Products */}
               <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-muted/5">
