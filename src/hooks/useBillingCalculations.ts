@@ -16,6 +16,7 @@ export interface BillingCalculation {
   isInTrial: boolean;
 }
 
+// Monthly-only billing — no cycle discounts
 export const CYCLE_MULTIPLIERS: Record<BillingCycle, number> = {
   monthly: 1,
   quarterly: 3,
@@ -25,9 +26,9 @@ export const CYCLE_MULTIPLIERS: Record<BillingCycle, number> = {
 
 export const CYCLE_DISCOUNTS: Record<BillingCycle, number> = {
   monthly: 0,
-  quarterly: 0.05,     // 5% discount
-  semi_annual: 0.10,   // 10% discount
-  annual: 0.20,        // 20% discount
+  quarterly: 0,
+  semi_annual: 0,
+  annual: 0,
 };
 
 export function calculateDaysUntil(dateStr: string | null): number | null {
@@ -67,10 +68,6 @@ export function useBillingCalculations(
         isInTrial: false,
       };
     }
-
-    const cycle = billing.billing_cycle;
-    const cycleMultiplier = CYCLE_MULTIPLIERS[cycle];
-    const cycleDiscount = CYCLE_DISCOUNTS[cycle];
 
     // Determine base monthly price
     let baseMonthly = billing.custom_price ?? billing.base_price ?? plan.price_monthly;
@@ -120,17 +117,10 @@ export function useBillingCalculations(
     const addOnLocationFees = purchasedLocations * (billing.per_location_fee || 0);
     const addOnUserFees = purchasedUsers * (billing.per_user_fee || 0);
     effectiveMonthly += addOnLocationFees + addOnUserFees;
-    // Calculate cycle amount with discount
-    const cycleAmountBeforeDiscount = effectiveMonthly * cycleMultiplier;
-    const cycleAmount = cycleAmountBeforeDiscount * (1 - cycleDiscount);
 
-    // Calculate savings from billing cycle
-    const fullPrice = effectiveMonthly * cycleMultiplier;
-    const savingsAmount = fullPrice - cycleAmount;
-    const savingsPercentage = cycleDiscount * 100;
-
-    // Annual projection
-    const annualAmount = (cycleAmount / cycleMultiplier) * 12;
+    // Monthly only — no cycle discounts
+    const cycleAmount = effectiveMonthly;
+    const annualAmount = effectiveMonthly * 12;
 
     // First invoice calculation
     let firstInvoiceAmount = cycleAmount;
@@ -149,8 +139,8 @@ export function useBillingCalculations(
       cycleAmount,
       annualAmount,
       firstInvoiceAmount,
-      savingsAmount,
-      savingsPercentage,
+      savingsAmount: 0,
+      savingsPercentage: 0,
       isInPromo,
       promoSavings,
       daysUntilPromoEnds,
@@ -170,13 +160,7 @@ export function formatCurrency(amount: number): string {
 }
 
 export function getBillingCycleLabel(cycle: BillingCycle): string {
-  const labels: Record<BillingCycle, string> = {
-    monthly: 'Monthly',
-    quarterly: 'Quarterly',
-    semi_annual: 'Semi-Annual',
-    annual: 'Annual',
-  };
-  return labels[cycle];
+  return 'Monthly';
 }
 
 export function getContractLengthLabel(months: number): string {

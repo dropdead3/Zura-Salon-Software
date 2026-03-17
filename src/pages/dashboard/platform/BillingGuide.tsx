@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, Hash, FlaskConical } from 'lucide-react';
+import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useSubscriptionPlans, type BillingCycle, type OrganizationBilling, type SubscriptionPlan } from '@/hooks/useOrganizationBilling';
-import { CYCLE_MULTIPLIERS, CYCLE_DISCOUNTS, useBillingCalculations, formatCurrency, getBillingCycleLabel } from '@/hooks/useBillingCalculations';
+import { useSubscriptionPlans, type OrganizationBilling, type SubscriptionPlan } from '@/hooks/useOrganizationBilling';
+import { useBillingCalculations, formatCurrency } from '@/hooks/useBillingCalculations';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import {
@@ -23,24 +23,23 @@ import {
   PlatformTableCell,
 } from '@/components/platform/ui/PlatformTable';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 // --- Changelog entries (add newest first) ---
 const BILLING_CHANGELOG = [
-  { date: '2026-03-16', description: 'Added Billing Guide page with live plan data, cycle discount reference, and billing logic walkthrough.' },
+  { date: '2026-03-17', description: 'Pricing restructure: monthly-only billing, per-location pricing ($99 Operator, $200/loc Growth/Infrastructure), removed cycle discounts.' },
+  { date: '2026-03-16', description: 'Added Billing Guide page with live plan data and billing logic walkthrough.' },
   { date: '2026-03-16', description: 'Added interactive billing calculator widget and section anchor navigation.' },
   { date: '2026-03-10', description: 'Setup fee moved to Contract & Billing Terms card in account billing.' },
   { date: '2026-03-05', description: 'Introduced per-user overage fees alongside per-location fees.' },
   { date: '2026-02-28', description: 'Added promotional pricing with time-limited promo_ends_at logic.' },
-  { date: '2026-02-20', description: 'Initial billing calculation engine: base price, cycle discounts, trial period.' },
+  { date: '2026-02-20', description: 'Initial billing calculation engine: base price, trial period.' },
 ];
 
 const SECTIONS = [
   { id: 'plans', label: 'Plans' },
-  { id: 'discounts', label: 'Discounts' },
   { id: 'how-it-works', label: 'How It Works' },
   { id: 'calculator', label: 'Calculator' },
   { id: 'backroom', label: 'Backroom' },
@@ -55,7 +54,7 @@ const BR_USAGE_FEE = 0.50;
 const BR_HARDWARE_COST = 199;
 const BR_LICENSE_FEE = 10;
 const BR_BASELINE_WASTE_RATE = 0.12;
-const BR_AVG_PRODUCT_COST = 12; // industry avg per color service
+const BR_AVG_PRODUCT_COST = 12;
 
 export default function BillingGuide() {
   const { data: plans, isLoading } = useSubscriptionPlans();
@@ -85,14 +84,6 @@ export default function BillingGuide() {
       </PlatformPageContainer>
     );
   }
-
-  const cycleEntries = Object.entries(CYCLE_DISCOUNTS) as [string, number][];
-  const cycleLabels: Record<string, string> = {
-    monthly: 'Monthly',
-    quarterly: 'Quarterly',
-    semi_annual: 'Semi-Annual',
-    annual: 'Annual',
-  };
 
   const lastUpdated = BILLING_CHANGELOG[0]?.date
     ? new Date(BILLING_CHANGELOG[0].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -135,7 +126,7 @@ export default function BillingGuide() {
               </div>
               <div>
                 <PlatformCardTitle className={tokens.card.title}>Subscription Plans</PlatformCardTitle>
-                <PlatformCardDescription>Live from the database. These are the plans available to organizations.</PlatformCardDescription>
+                <PlatformCardDescription>Live from the database. Monthly billing only — no cycle discounts.</PlatformCardDescription>
               </div>
             </div>
           </PlatformCardHeader>
@@ -144,10 +135,10 @@ export default function BillingGuide() {
               <PlatformTableHeader>
                 <PlatformTableRow>
                   <PlatformTableHead className={tokens.table.columnHeader}>Plan</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Monthly</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Annual Effective</PlatformTableHead>
+                  <PlatformTableHead className={tokens.table.columnHeader}>Tier</PlatformTableHead>
+                  <PlatformTableHead className={tokens.table.columnHeader}>Rate</PlatformTableHead>
+                  <PlatformTableHead className={tokens.table.columnHeader}>Included Users</PlatformTableHead>
                   <PlatformTableHead className={tokens.table.columnHeader}>Max Locations</PlatformTableHead>
-                  <PlatformTableHead className={tokens.table.columnHeader}>Max Users</PlatformTableHead>
                   <PlatformTableHead className={tokens.table.columnHeader}>Description</PlatformTableHead>
                 </PlatformTableRow>
               </PlatformTableHeader>
@@ -155,47 +146,27 @@ export default function BillingGuide() {
                 {plans?.map((plan) => (
                   <PlatformTableRow key={plan.id}>
                     <PlatformTableCell className="font-medium">{plan.name}</PlatformTableCell>
-                    <PlatformTableCell>{fmtCurrency(plan.price_monthly)}</PlatformTableCell>
-                    <PlatformTableCell>{fmtCurrency(plan.price_monthly * (1 - CYCLE_DISCOUNTS.annual) * 12)}/yr</PlatformTableCell>
+                    <PlatformTableCell className="capitalize">{plan.tier}</PlatformTableCell>
+                    <PlatformTableCell>
+                      {plan.tier === 'enterprise'
+                        ? 'Custom'
+                        : plan.tier === 'operator'
+                        ? `${fmtCurrency(plan.price_monthly)}/mo flat`
+                        : `${fmtCurrency(plan.price_monthly)}/loc/mo`}
+                    </PlatformTableCell>
+                    <PlatformTableCell>
+                      {plan.tier === 'enterprise'
+                        ? 'Custom'
+                        : plan.tier === 'operator'
+                        ? '1 (up to 4 total)'
+                        : '10 per location'}
+                    </PlatformTableCell>
                     <PlatformTableCell>{plan.max_locations === -1 ? 'Unlimited' : plan.max_locations}</PlatformTableCell>
-                    <PlatformTableCell>{plan.max_users === -1 ? 'Unlimited' : plan.max_users}</PlatformTableCell>
                     <PlatformTableCell className="text-[hsl(var(--platform-foreground-muted))] max-w-xs truncate">{plan.description || '—'}</PlatformTableCell>
                   </PlatformTableRow>
                 ))}
               </PlatformTableBody>
             </PlatformTable>
-          </PlatformCardContent>
-        </PlatformCard>
-
-        {/* Billing Cycle Discounts */}
-        <PlatformCard variant="glass" id="discounts">
-          <PlatformCardHeader>
-            <div className="flex items-center gap-3">
-              <div className={tokens.card.iconBox}>
-                <Hash className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <PlatformCardTitle className={tokens.card.title}>Billing Cycle Discounts</PlatformCardTitle>
-                <PlatformCardDescription>Discount applied when an org pays for multiple months upfront.</PlatformCardDescription>
-              </div>
-            </div>
-          </PlatformCardHeader>
-          <PlatformCardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {cycleEntries.map(([cycle, discount]) => (
-                <div key={cycle} className="rounded-xl border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 text-center">
-                  <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
-                    {cycleLabels[cycle]}
-                  </p>
-                  <p className="font-display text-2xl tracking-wide mt-1 text-[hsl(var(--platform-foreground))]">
-                    {discount === 0 ? 'No Discount' : `${(discount * 100).toFixed(0)}% Off`}
-                  </p>
-                  <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-1">
-                    {CYCLE_MULTIPLIERS[cycle as keyof typeof CYCLE_MULTIPLIERS]} months
-                  </p>
-                </div>
-              ))}
-            </div>
           </PlatformCardContent>
         </PlatformCard>
 
@@ -215,13 +186,13 @@ export default function BillingGuide() {
           <PlatformCardContent>
             <ol className="space-y-4 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
               {[
-                { title: 'Base Price', desc: 'Comes from the subscription plan\'s monthly price. Can be overridden with a Custom Price on the account\'s billing config.' },
-                { title: 'Promotional Pricing', desc: 'If a promo is active (has a future expiry date), the promo price replaces the base price for the promo period. Discounts do not stack on top of promos.' },
+                { title: 'Tier Detection', desc: '1 location → Operator ($99/mo flat). 2-5 locations → Growth ($200/loc/mo). 5+ locations → Infrastructure ($200/loc/mo). Enterprise → custom.' },
+                { title: 'Base Price', desc: 'Operator: $99/mo flat. Growth/Infrastructure: $200 × number of locations. Can be overridden with a Custom Price on the account billing config.' },
+                { title: 'User Capacity', desc: 'Operator includes 1 user (max 4 total at +$25/ea). Growth/Infrastructure includes 10 users per location, +$25/ea for additional users.' },
+                { title: 'Promotional Pricing', desc: 'If a promo is active (has a future expiry date), the promo price replaces the base price. Discounts do not stack on promos.' },
                 { title: 'Discounts (when no promo)', desc: 'A percentage or fixed-amount discount is applied to the effective monthly price. Only applies when no promotional pricing is active.' },
-                { title: 'Overage Fees', desc: 'If the org exceeds their plan\'s included locations or users, per-unit overage fees are added monthly. Purchased add-on capacity also adds per-unit fees.' },
-                { title: 'Cycle Discount', desc: 'The total monthly amount is multiplied by the cycle length (e.g. ×3 for quarterly), then the cycle discount is applied (see table above).' },
-                { title: 'Setup Fee', desc: 'A one-time setup fee is added to the first invoice only. Once marked as paid, it won\'t appear again.' },
-                { title: 'Trial Period', desc: 'If a trial is active (future expiry), the first invoice amount is $0 until the trial ends. After trial, normal billing resumes.' },
+                { title: 'Setup Fee', desc: 'A one-time $199 setup fee is added to the first invoice (waivable). Once marked as paid, it won\'t appear again.' },
+                { title: 'Trial Period', desc: '14-day free trial. While active, the first invoice amount is $0. After trial, normal monthly billing resumes.' },
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary font-display text-xs flex items-center justify-center">{i + 1}</span>
@@ -293,20 +264,24 @@ export default function BillingGuide() {
             <PlatformCardContent>
               <div className="space-y-4 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
                 <div>
-                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Contract Lengths</p>
-                  <p>Month-to-Month, 6 Months, 1 Year, 2 Years, or 3 Years. Configured per organization.</p>
+                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Billing</p>
+                  <p>Monthly billing only. No annual contracts or cycle discounts. Month-to-month commitment.</p>
                 </div>
                 <div className="border-t border-[hsl(var(--platform-border)/0.5)] pt-3">
-                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Auto-Renewal</p>
-                  <p>When enabled, the contract renews at the same terms when it expires. When disabled, the org moves to month-to-month after contract end.</p>
+                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Setup Fee</p>
+                  <p>$199 one-time setup fee added to first invoice. Can be waived per organization.</p>
+                </div>
+                <div className="border-t border-[hsl(var(--platform-border)/0.5)] pt-3">
+                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Trial</p>
+                  <p>14-day free trial. No charges until trial ends. Normal monthly billing starts automatically.</p>
                 </div>
                 <div className="border-t border-[hsl(var(--platform-border)/0.5)] pt-3">
                   <p className="font-medium text-[hsl(var(--platform-foreground))]">Promotional Pricing</p>
-                  <p>Set a reduced price for X months from contract start. Once the promo expires, billing reverts to the base (or custom) price. Promos and discounts never stack.</p>
+                  <p>Set a reduced price for X months. Once expired, billing reverts to base (or custom) price. Promos and discounts never stack.</p>
                 </div>
                 <div className="border-t border-[hsl(var(--platform-border)/0.5)] pt-3">
-                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Plan Changes</p>
-                  <p>Upgrades/downgrades are logged in billing history. Can take effect immediately or at next billing cycle.</p>
+                  <p className="font-medium text-[hsl(var(--platform-foreground))]">Scaling</p>
+                  <p>Adding a 2nd location auto-upgrades from Operator ($99) to Growth ($200/loc). The jump is $99 → $400/mo. No transition discount.</p>
                 </div>
               </div>
             </PlatformCardContent>
@@ -356,21 +331,27 @@ export default function BillingGuide() {
 // --- Billing Calculator Widget ---
 
 function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-  const [cycle, setCycle] = useState<BillingCycle>('monthly');
+  const [locationCount, setLocationCount] = useState<string>('1');
+  const [extraUsers, setExtraUsers] = useState<string>('0');
   const [customPrice, setCustomPrice] = useState<string>('');
   const [promoPrice, setPromoPrice] = useState<string>('');
   const [promoActive, setPromoActive] = useState(false);
-  const [setupFee, setSetupFee] = useState<string>('0');
+  const [setupFee, setSetupFee] = useState<string>('199');
   const [setupFeePaid, setSetupFeePaid] = useState(false);
-  const [addLocations, setAddLocations] = useState<string>('0');
-  const [addUsers, setAddUsers] = useState<string>('0');
-  const [perLocationFee, setPerLocationFee] = useState<string>('0');
-  const [perUserFee, setPerUserFee] = useState<string>('0');
-  const [locationCount, setLocationCount] = useState<string>('1');
-  const [userCount, setUserCount] = useState<string>('1');
 
-  const selectedPlan = plans.find(p => p.id === selectedPlanId) || null;
+  const locCount = Math.max(1, parseInt(locationCount) || 1);
+
+  // Auto-detect tier based on location count
+  const detectedTier = locCount === 1 ? 'operator' : locCount <= 5 ? 'growth' : 'infrastructure';
+  const selectedPlan = plans.find(p => p.tier === detectedTier) || null;
+
+  // Calculate base monthly from tier
+  const baseMonthly = detectedTier === 'operator' ? 99 : locCount * 200;
+  const includedUsers = detectedTier === 'operator' ? 1 : locCount * 10;
+  const maxUsers = detectedTier === 'operator' ? 4 : undefined;
+  const extraUserCount = Math.max(0, parseInt(extraUsers) || 0);
+  const cappedExtraUsers = maxUsers ? Math.min(extraUserCount, maxUsers - 1) : extraUserCount;
+  const userFees = cappedExtraUsers * 25;
 
   // Build synthetic billing object
   const syntheticBilling = useMemo<OrganizationBilling | null>(() => {
@@ -381,11 +362,11 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
       id: 'calc',
       organization_id: 'calc',
       plan_id: selectedPlan.id,
-      billing_cycle: cycle,
-      contract_length_months: CYCLE_MULTIPLIERS[cycle],
+      billing_cycle: 'monthly' as const,
+      contract_length_months: 1,
       contract_start_date: null,
       contract_end_date: null,
-      base_price: selectedPlan.price_monthly,
+      base_price: baseMonthly,
       custom_price: customPrice ? parseFloat(customPrice) : null,
       discount_type: null,
       discount_value: null,
@@ -398,12 +379,12 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
       billing_starts_at: null,
       setup_fee: parseFloat(setupFee) || 0,
       setup_fee_paid: setupFeePaid,
-      per_location_fee: parseFloat(perLocationFee) || 0,
-      per_user_fee: parseFloat(perUserFee) || 0,
-      additional_locations_purchased: parseInt(addLocations) || 0,
-      additional_users_purchased: parseInt(addUsers) || 0,
-      included_locations: selectedPlan.max_locations,
-      included_users: selectedPlan.max_users,
+      per_location_fee: 0,
+      per_user_fee: 25,
+      additional_locations_purchased: 0,
+      additional_users_purchased: cappedExtraUsers,
+      included_locations: detectedTier === 'operator' ? 1 : -1,
+      included_users: includedUsers,
       auto_renewal: true,
       non_renewal_requested_at: null,
       non_renewal_reason: null,
@@ -411,13 +392,13 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
       created_at: '',
       updated_at: '',
     };
-  }, [selectedPlan, cycle, customPrice, promoPrice, promoActive, setupFee, setupFeePaid, addLocations, addUsers, perLocationFee, perUserFee]);
+  }, [selectedPlan, baseMonthly, customPrice, promoPrice, promoActive, setupFee, setupFeePaid, cappedExtraUsers, includedUsers, detectedTier]);
 
   const calc = useBillingCalculations(
     syntheticBilling,
     selectedPlan,
-    parseInt(locationCount) || 1,
-    parseInt(userCount) || 0
+    locCount,
+    includedUsers + cappedExtraUsers
   );
 
   return (
@@ -429,7 +410,7 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
           </div>
           <div>
             <PlatformCardTitle className={tokens.card.title}>Billing Calculator</PlatformCardTitle>
-            <PlatformCardDescription>Punch in plan details to see computed invoice amounts. Uses the same engine as real billing.</PlatformCardDescription>
+            <PlatformCardDescription>Enter location count to auto-detect tier. Uses the same engine as real billing.</PlatformCardDescription>
           </div>
         </div>
       </PlatformCardHeader>
@@ -438,33 +419,21 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
           {/* Inputs */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Plan</Label>
-              <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
-                <SelectTrigger className="bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border)/0.5)] text-[hsl(var(--platform-foreground))]">
-                  <SelectValue placeholder="Select a plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name} — {formatCurrency(p.price_monthly)}/mo</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Number of Locations</Label>
+              <PlatformInput type="number" min="1" value={locationCount} onChange={e => setLocationCount(e.target.value)} />
+              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
+                Auto-detected tier: <span className="font-medium capitalize text-[hsl(var(--platform-foreground))]">{detectedTier}</span>
+                {detectedTier === 'operator' ? ' ($99/mo flat)' : ` ($200/loc × ${locCount} = ${formatCurrency(locCount * 200)}/mo)`}
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Billing Cycle</Label>
-              <Select value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
-                <SelectTrigger className="bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border)/0.5)] text-[hsl(var(--platform-foreground))]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(['monthly', 'quarterly', 'semi_annual', 'annual'] as BillingCycle[]).map(c => (
-                    <SelectItem key={c} value={c}>
-                      {getBillingCycleLabel(c)} {CYCLE_DISCOUNTS[c] > 0 && `(${(CYCLE_DISCOUNTS[c] * 100).toFixed(0)}% off)`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Extra Users (beyond {includedUsers} included)</Label>
+              <PlatformInput type="number" min="0" value={extraUsers} onChange={e => setExtraUsers(e.target.value)} />
+              <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
+                +$25/mo each{maxUsers ? ` (max ${maxUsers - 1} extra for Operator)` : ''}
+                {cappedExtraUsers > 0 && ` = ${formatCurrency(userFees)}/mo`}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -494,57 +463,28 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
                 <PlatformInput type="number" placeholder="e.g. 99" value={promoPrice} onChange={e => setPromoPrice(e.target.value)} />
               </div>
             )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Total Locations</Label>
-                <PlatformInput type="number" value={locationCount} onChange={e => setLocationCount(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Total Users</Label>
-                <PlatformInput type="number" value={userCount} onChange={e => setUserCount(e.target.value)} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Add-On Locations</Label>
-                <PlatformInput type="number" value={addLocations} onChange={e => setAddLocations(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Add-On Users</Label>
-                <PlatformInput type="number" value={addUsers} onChange={e => setAddUsers(e.target.value)} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Per-Location Fee</Label>
-                <PlatformInput type="number" value={perLocationFee} onChange={e => setPerLocationFee(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Per-User Fee</Label>
-                <PlatformInput type="number" value={perUserFee} onChange={e => setPerUserFee(e.target.value)} />
-              </div>
-            </div>
           </div>
 
           {/* Results */}
           <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))] mb-4">Invoice Preview</p>
             {!selectedPlan ? (
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Select a plan to see results.</p>
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">No plan found for detected tier.</p>
             ) : (
               <div className="space-y-3 text-sm">
-                <ResultRow label="Base Monthly" value={formatCurrency(calc.monthlyAmount)} />
-                <ResultRow label="Effective Monthly" value={formatCurrency(calc.effectiveMonthlyAmount)} highlight />
+                <ResultRow label="Tier" value={detectedTier.charAt(0).toUpperCase() + detectedTier.slice(1)} />
+                <ResultRow label={detectedTier === 'operator' ? 'Base (flat)' : `Base (${locCount} loc × $200)`} value={formatCurrency(baseMonthly)} />
+                {cappedExtraUsers > 0 && <ResultRow label={`Extra users (${cappedExtraUsers} × $25)`} value={formatCurrency(userFees)} />}
                 {calc.isInPromo && <ResultRow label="Promo Savings" value={`-${formatCurrency(calc.promoSavings)}/mo`} accent />}
                 <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
-                <ResultRow label={`Cycle Amount (${getBillingCycleLabel(cycle)})`} value={formatCurrency(calc.cycleAmount)} highlight />
-                {calc.savingsAmount > 0 && <ResultRow label="Cycle Savings" value={`-${formatCurrency(calc.savingsAmount)} (${calc.savingsPercentage}%)`} accent />}
+                <ResultRow label="Effective Monthly" value={formatCurrency(calc.effectiveMonthlyAmount)} highlight />
                 <ResultRow label="Annual Projection" value={formatCurrency(calc.annualAmount)} />
                 <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
                 <ResultRow label="First Invoice" value={formatCurrency(calc.firstInvoiceAmount)} highlight />
+                <p className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-2">
+                  Includes {includedUsers} user{includedUsers !== 1 ? 's' : ''} in plan
+                  {!setupFeePaid && parseFloat(setupFee) > 0 && ` + ${formatCurrency(parseFloat(setupFee))} setup fee`}
+                </p>
               </div>
             )}
           </div>
@@ -589,7 +529,6 @@ function BackroomCalculatorWidget() {
   const hardwareTotal = includeHardware ? sc * BR_HARDWARE_COST : 0;
   const annualTotal = monthlyTotal * 12;
 
-  // Waste savings estimate: services × avg product cost per service × 12% waste rate
   const monthlyWasteSavings = Math.round(svc * BR_AVG_PRODUCT_COST * BR_BASELINE_WASTE_RATE);
   const annualWasteSavings = monthlyWasteSavings * 12;
 

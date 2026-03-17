@@ -54,6 +54,12 @@ export function useOrganizationUsage(organizationId: string | undefined) {
   });
 }
 
+/**
+ * Tier-aware capacity calculation.
+ * - Operator (1 loc): hard cap of 4 users total (1 included + 3 extra)
+ * - Growth/Infrastructure: 10 users per location included
+ * - Enterprise/Internal: unlimited
+ */
 export function calculateCapacity(
   billing: OrganizationBilling | null,
   plan: SubscriptionPlan | null,
@@ -61,7 +67,6 @@ export function calculateCapacity(
   isInternal?: boolean
 ): OrganizationCapacity {
   // Internal organizations or those without a plan get unlimited capacity
-  // This provides a graceful fallback during onboarding or for platform-owned orgs
   if (isInternal || !plan) {
     return {
       locations: {
@@ -90,7 +95,9 @@ export function calculateCapacity(
     };
   }
 
-  // Locations calculation
+  const tier = plan.tier;
+
+  // --- Locations calculation ---
   const baseLocations = billing?.included_locations ?? plan.max_locations;
   const purchasedLocations = billing?.additional_locations_purchased ?? 0;
   const isUnlimitedLocations = baseLocations === -1 || baseLocations === null;
@@ -98,11 +105,37 @@ export function calculateCapacity(
   const usedLocations = usage.locationCount;
   const locationUtilization = isUnlimitedLocations ? 0 : (totalLocationCapacity > 0 ? usedLocations / totalLocationCapacity : 0);
 
-  // Users calculation
-  const baseUsers = billing?.included_users ?? plan.max_users;
+  // --- Users calculation (tier-aware) ---
+  let baseUsers: number;
+  let isUnlimitedUsers: boolean;
+
+  if (tier === 'operator') {
+    // Operator: hard cap of 4 users total (1 included in plan, up to 3 purchasable)
+    baseUsers = billing?.included_users ?? 1;
+    isUnlimitedUsers = false;
+  } else if (tier === 'growth' || tier === 'infrastructure') {
+    // Growth/Infrastructure: 10 users per location
+    const usersPerLocation = 10;
+    baseUsers = billing?.included_users ?? (usedLocations * usersPerLocation);
+    isUnlimitedUsers = false;
+  } else {
+    // Enterprise: unlimited
+    baseUsers = -1;
+    isUnlimitedUsers = true;
+  }
+
   const purchasedUsers = billing?.additional_users_purchased ?? 0;
-  const isUnlimitedUsers = baseUsers === -1 || baseUsers === null;
-  const totalUserCapacity = isUnlimitedUsers ? Infinity : baseUsers + purchasedUsers;
+
+  // For operator, hard cap total at 4 regardless of purchased
+  let totalUserCapacity: number;
+  if (tier === 'operator') {
+    totalUserCapacity = Math.min(baseUsers + purchasedUsers, 4);
+  } else if (isUnlimitedUsers) {
+    totalUserCapacity = Infinity;
+  } else {
+    totalUserCapacity = baseUsers + purchasedUsers;
+  }
+
   const usedUsers = usage.userCount;
   const userUtilization = isUnlimitedUsers ? 0 : (totalUserCapacity > 0 ? usedUsers / totalUserCapacity : 0);
 
