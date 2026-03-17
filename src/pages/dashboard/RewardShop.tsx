@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gift, History, Loader2, Coins } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { RewardCard } from '@/components/points/RewardCard';
 import { PointsHistoryPanel } from '@/components/points/PointsHistoryPanel';
 import {
