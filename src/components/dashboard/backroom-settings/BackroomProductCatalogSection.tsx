@@ -929,11 +929,15 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                   : null;
                                 const isGhostRetail = isGhostCost || isGhostMarkup;
                                 return (
-                                  <TableRow key={p.id} className={cn(!p.is_backroom_tracked && 'opacity-50')}>
+                                  <TableRow key={p.id} className={cn(!isTrackedAtLocation(p.id) && 'opacity-50')}>
                                     <TableCell className="w-8 pr-0">
                                       <Switch
-                                        checked={p.is_backroom_tracked}
-                                        onCheckedChange={(checked) => updateMutation.mutate({ id: p.id, updates: { is_backroom_tracked: checked } })}
+                                        checked={isTrackedAtLocation(p.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (effectiveLocationId) {
+                                            upsertSetting.mutate({ locationId: effectiveLocationId, productId: p.id, is_tracked: checked });
+                                          }
+                                        }}
                                         className="scale-[0.6]"
                                       />
                                     </TableCell>
