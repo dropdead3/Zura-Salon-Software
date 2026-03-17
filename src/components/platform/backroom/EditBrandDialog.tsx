@@ -12,12 +12,12 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
-import { useUpdateSupplyBrand, uploadBrandLogo } from '@/hooks/platform/useSupplyLibraryBrandMeta';
+import { useUpdateSupplyBrand, useCreateSupplyBrand, uploadBrandLogo } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 
 interface EditBrandDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  brandId: string;
+  brandId: string | null;
   brandName: string;
   brandLogoUrl: string | null;
   onBrandRenamed?: (newName: string) => void;
@@ -37,8 +37,8 @@ export function EditBrandDialog({
   const [isDragging, setIsDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const updateBrand = useUpdateSupplyBrand();
+  const createBrand = useCreateSupplyBrand();
 
-  // Reset state when dialog opens
   const handleOpenChange = (v: boolean) => {
     if (v) {
       setName(brandName);
@@ -49,8 +49,7 @@ export function EditBrandDialog({
 
   const handleFile = async (file: File) => {
     const valid = ['image/png', 'image/svg+xml', 'image/jpeg', 'image/webp'];
-    if (!valid.includes(file.type)) return;
-    if (file.size > 2 * 1024 * 1024) return;
+    if (!valid.includes(file.type) || file.size > 2 * 1024 * 1024) return;
     setUploading(true);
     const url = await uploadBrandLogo(file, name || brandName);
     if (url) setLogoUrl(url);
@@ -61,23 +60,41 @@ export function EditBrandDialog({
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    updateBrand.mutate(
-      {
-        id: brandId,
-        name: trimmed !== brandName ? trimmed : undefined,
-        logo_url: logoUrl !== brandLogoUrl ? logoUrl : undefined,
-        originalName: brandName,
-      },
-      {
-        onSuccess: () => {
-          if (trimmed !== brandName) onBrandRenamed?.(trimmed);
-          onOpenChange(false);
+    if (brandId) {
+      // Update existing meta row
+      updateBrand.mutate(
+        {
+          id: brandId,
+          name: trimmed !== brandName ? trimmed : undefined,
+          logo_url: logoUrl !== brandLogoUrl ? logoUrl : undefined,
+          originalName: brandName,
         },
-      },
-    );
+        {
+          onSuccess: () => {
+            if (trimmed !== brandName) onBrandRenamed?.(trimmed);
+            onOpenChange(false);
+          },
+        },
+      );
+    } else {
+      // No meta row exists — create one
+      createBrand.mutate(
+        {
+          name: trimmed,
+          logo_url: logoUrl || undefined,
+        },
+        {
+          onSuccess: () => {
+            if (trimmed !== brandName) onBrandRenamed?.(trimmed);
+            onOpenChange(false);
+          },
+        },
+      );
+    }
   };
 
   const hasChanges = name.trim() !== brandName || logoUrl !== brandLogoUrl;
+  const isPending = updateBrand.isPending || createBrand.isPending;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -112,7 +129,7 @@ export function EditBrandDialog({
                 <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
                 <button
                   onClick={() => setLogoUrl(null)}
-                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600 transition-colors"
+                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90 transition-colors"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -126,7 +143,7 @@ export function EditBrandDialog({
                 className={cn(
                   'cursor-pointer w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-all',
                   isDragging
-                    ? 'border-violet-500 bg-violet-500/10'
+                    ? 'border-[hsl(var(--platform-primary))] bg-[hsl(var(--platform-primary)/0.1)]'
                     : 'border-[hsl(var(--platform-border))] hover:border-[hsl(var(--platform-border)/0.8)] bg-[hsl(var(--platform-bg-card)/0.3)]',
                 )}
               >
@@ -147,7 +164,7 @@ export function EditBrandDialog({
           <PlatformButton
             size="sm"
             onClick={handleSave}
-            loading={updateBrand.isPending}
+            loading={isPending}
             disabled={!hasChanges || !name.trim()}
           >
             Save Changes
