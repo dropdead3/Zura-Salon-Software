@@ -823,7 +823,7 @@ function BrandFinder({
           </div>
         ) : selectedCategory ? (
           <div className="flex-[1.5] flex items-center justify-center">
-            <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Select a product line</p>
+            <p className="font-sans text-xs text-muted-foreground">Select a product line</p>
           </div>
         ) : null}
       </div>
