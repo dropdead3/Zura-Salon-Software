@@ -187,7 +187,9 @@ export default function BackroomSettings() {
   if (!isEntitled) {
     return (
       <DashboardLayout>
-        <BackroomPaywall />
+        <div className="platform-theme platform-dark">
+          <BackroomPaywall />
+        </div>
       </DashboardLayout>
     );
   }
