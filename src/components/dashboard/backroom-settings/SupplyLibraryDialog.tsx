@@ -196,10 +196,8 @@ function BrandCardGrid({
                       )}
                     </button>
                   );
-                })}
-              </div>
-            </div>
-          ))}
+            })}
+          </div>
         </div>
 
         {/* Missing brand CTA */}
