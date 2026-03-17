@@ -30,6 +30,8 @@ import {
 } from '@/hooks/platform/useSupplyLibrary';
 import { SUPPLY_CATEGORY_LABELS, getBrandCoverage } from '@/data/professional-supply-library';
 import { CSVImportDialog } from './CSVImportDialog';
+import { AddBrandWizard } from './AddBrandWizard';
+import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatCurrency } from '@/lib/format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
