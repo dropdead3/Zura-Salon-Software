@@ -3141,12 +3141,31 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   c('Danger Jones', 'Color Cape', 'treatment', []),
 
   // ════════════════════════════════════════════════════════════════
-  // GENERIC DEVELOPERS
+  // GENERIC / SALON SUPPLIES
   // ════════════════════════════════════════════════════════════════
-  c('Generic Developer', '10 Volume (3%) Developer', 'developer', ['500ml', '1000ml']),
-  c('Generic Developer', '20 Volume (6%) Developer', 'developer', ['500ml', '1000ml']),
-  c('Generic Developer', '30 Volume (9%) Developer', 'developer', ['500ml', '1000ml']),
-  c('Generic Developer', '40 Volume (12%) Developer', 'developer', ['500ml', '1000ml']),
+
+  // ── Generic Developers ──
+  c('Generic / Salon Supplies', '10 Volume (3%) Developer', 'developer', ['500ml', '1000ml']),
+  c('Generic / Salon Supplies', '20 Volume (6%) Developer', 'developer', ['500ml', '1000ml']),
+  c('Generic / Salon Supplies', '30 Volume (9%) Developer', 'developer', ['500ml', '1000ml']),
+  c('Generic / Salon Supplies', '40 Volume (12%) Developer', 'developer', ['500ml', '1000ml']),
+
+  // ── Processing Supplies ──
+  c('Generic / Salon Supplies', 'Pre-Cut Foil Sheets (5x12)', 'treatment', ['500ct', '1000ct'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Foil Roll (Standard)', 'treatment', ['250ft', '1000ft'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Mixing Bowl (Standard)', 'treatment', [], 'manual', 'oz'),
+  c('Generic / Salon Supplies', 'Mixing Bowl (Large)', 'treatment', [], 'manual', 'oz'),
+  c('Generic / Salon Supplies', 'Tint Brush (Standard)', 'treatment', [], 'manual', 'oz'),
+  c('Generic / Salon Supplies', 'Tint Brush (Wide)', 'treatment', [], 'manual', 'oz'),
+  c('Generic / Salon Supplies', 'Applicator Bottle', 'treatment', ['240ml'], 'manual', 'ml'),
+  c('Generic / Salon Supplies', 'Sectioning Clips (Box)', 'treatment', ['12pk', '25pk'], 'manual', 'oz'),
+  c('Generic / Salon Supplies', 'Butterfly Clips (Box)', 'treatment', ['12pk', '25pk'], 'manual', 'oz'),
+  c('Generic / Salon Supplies', 'Processing Caps (Box)', 'treatment', ['100ct'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Disposable Gloves - Small', 'treatment', ['100ct'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Disposable Gloves - Medium', 'treatment', ['100ct'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Disposable Gloves - Large', 'treatment', ['100ct'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Neck Strips (Roll)', 'treatment', ['100ct'], 'per_service', 'oz'),
+  c('Generic / Salon Supplies', 'Cotton Coil', 'treatment', ['100ft'], 'per_service', 'oz'),
 ];
 
 /**
