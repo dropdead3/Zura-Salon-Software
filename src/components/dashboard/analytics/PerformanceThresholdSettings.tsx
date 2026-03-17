@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { usePerformanceThreshold, useUpdatePerformanceThreshold, PerformanceThreshold } from '@/hooks/usePerformanceThreshold';
 import { Loader2, AlertTriangle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface PerformanceThresholdSettingsProps {
   open: boolean;
