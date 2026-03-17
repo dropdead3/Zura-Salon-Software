@@ -67,6 +67,8 @@ function BrandCardGrid({
   onShowSuggest: () => void;
 }) {
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
     let list = brands;
@@ -74,16 +76,44 @@ function BrandCardGrid({
       const q = search.toLowerCase();
       list = list.filter((b) => b.brand.toLowerCase().includes(q));
     }
-    if (activeLetter) {
-      list = list.filter((b) => b.brand[0]?.toUpperCase() === activeLetter);
-    }
     return list;
-  }, [brands, search, activeLetter]);
+  }, [brands, search]);
+
+  // Group filtered brands by first letter
+  const groupedByLetter = useMemo(() => {
+    const map = new Map<string, BrandCardData[]>();
+    filtered.forEach((b) => {
+      const letter = b.brand[0]?.toUpperCase() || '#';
+      if (!map.has(letter)) map.set(letter, []);
+      map.get(letter)!.push(b);
+    });
+    return map;
+  }, [filtered]);
 
   const availableLetters = useMemo(
     () => new Set(brands.map((b) => b.brand[0]?.toUpperCase())),
     [brands],
   );
+
+  const scrollToLetter = useCallback((letter: string) => {
+    setActiveLetter((prev) => {
+      const next = prev === letter ? null : letter;
+      if (next) {
+        requestAnimationFrame(() => {
+          const el = letterRefs.current.get(next);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      }
+      return next;
+    });
+  }, []);
+
+  const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => {
+    if (el) letterRefs.current.set(letter, el);
+    else letterRefs.current.delete(letter);
+  }, []);
 
   return (
     <div className="flex flex-col flex-1 h-0">
@@ -95,7 +125,7 @@ function BrandCardGrid({
           return (
             <button
               key={letter}
-              onClick={() => setActiveLetter(active ? null : letter)}
+              onClick={() => scrollToLetter(letter)}
               disabled={!available}
               className={cn(
                 'w-7 h-7 rounded-md text-[11px] font-display uppercase tracking-wider transition-colors',
@@ -121,81 +151,92 @@ function BrandCardGrid({
       </div>
 
       {/* Brand cards */}
-      <ScrollArea className="flex-1 h-0">
-        <div className="p-6 pt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filtered.map((b) => {
-            const allAdded = b.addedCount >= b.totalProducts && b.totalProducts > 0;
-            return (
-              <button
-                key={b.brand}
-                onClick={() => onSelectBrand(b.brand)}
-                className={cn(
-                  'group relative flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all',
-                  allAdded
-                    ? 'border-primary/20 bg-primary/5'
-                    : 'border-border/40 bg-card/50 hover:border-border hover:shadow-sm hover:bg-muted/30',
-                )}
-              >
-                {/* Logo or initial */}
-                <div className="h-10 flex items-center justify-center">
-                  {b.logoUrl ? (
-                    <ColoredLogo logoUrl={b.logoUrl} size={36} alt={b.brand} />
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg bg-muted/60 flex items-center justify-center text-sm font-display text-muted-foreground">
-                      {b.brand[0]}
-                    </div>
-                  )}
-                </div>
-
-                {/* Brand name */}
-                <span className="text-sm font-display font-medium text-foreground leading-tight line-clamp-2 tracking-wide">
-                  {b.brand}
+      <ScrollArea className="flex-1 h-0" ref={scrollRef}>
+        <div className="p-6 pt-3 space-y-4">
+          {[...groupedByLetter.entries()].map(([letter, letterBrands]) => (
+            <div key={letter} ref={(el) => setLetterRef(letter, el)}>
+              <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-1 mb-2">
+                <span className="text-[11px] font-display uppercase tracking-widest text-muted-foreground/60 px-1">
+                  {letter}
                 </span>
-
-                {/* Stats */}
-                <div className="flex items-center gap-1.5">
-                  {b.addedCount > 0 ? (
-                    <Badge
-                      variant={allAdded ? 'default' : 'secondary'}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {letterBrands.map((b) => {
+                  const allAdded = b.addedCount >= b.totalProducts && b.totalProducts > 0;
+                  return (
+                    <button
+                      key={b.brand}
+                      onClick={() => onSelectBrand(b.brand)}
                       className={cn(
-                        'text-[10px] h-5 px-1.5',
-                        allAdded && 'bg-primary/15 text-primary border-primary/20',
+                        'group relative flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all',
+                        allAdded
+                          ? 'border-primary/20 bg-primary/5'
+                          : 'border-border/40 bg-card/50 hover:border-border hover:shadow-sm hover:bg-muted/30',
                       )}
                     >
-                      {allAdded ? (
-                        <><Check className="w-3 h-3 mr-0.5" /> All added</>
-                      ) : (
-                        `${b.addedCount}/${b.totalProducts} added`
-                      )}
-                    </Badge>
-                  ) : (
-                    <span className="text-[10px] text-muted-foreground">
-                      {b.totalProducts} products
-                    </span>
-                  )}
-                </div>
+                      {/* Logo or initial */}
+                      <div className="h-10 flex items-center justify-center">
+                        {b.logoUrl ? (
+                          <ColoredLogo logoUrl={b.logoUrl} size={36} alt={b.brand} />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-muted/60 flex items-center justify-center text-sm font-display text-muted-foreground">
+                            {b.brand[0]}
+                          </div>
+                        )}
+                      </div>
 
-                {/* Category pills */}
-                {b.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 justify-center">
-                    {b.categories.slice(0, 3).map((cat) => (
-                      <span
-                        key={cat}
-                        className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground capitalize"
-                      >
-                        {SUPPLY_CATEGORY_LABELS[cat] || cat}
+                      {/* Brand name */}
+                      <span className="text-sm font-display font-medium text-foreground leading-tight line-clamp-2 tracking-wide">
+                        {b.brand}
                       </span>
-                    ))}
-                    {b.categories.length > 3 && (
-                      <span className="text-[9px] text-muted-foreground">
-                        +{b.categories.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </button>
-            );
-          })}
+
+                      {/* Stats */}
+                      <div className="flex items-center gap-1.5">
+                        {b.addedCount > 0 ? (
+                          <Badge
+                            variant={allAdded ? 'default' : 'secondary'}
+                            className={cn(
+                              'text-[10px] h-5 px-1.5',
+                              allAdded && 'bg-primary/15 text-primary border-primary/20',
+                            )}
+                          >
+                            {allAdded ? (
+                              <><Check className="w-3 h-3 mr-0.5" /> All added</>
+                            ) : (
+                              `${b.addedCount}/${b.totalProducts} added`
+                            )}
+                          </Badge>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">
+                            {b.totalProducts} products
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Category pills */}
+                      {b.categories.length > 0 && (
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {b.categories.slice(0, 3).map((cat) => (
+                            <span
+                              key={cat}
+                              className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground capitalize"
+                            >
+                              {SUPPLY_CATEGORY_LABELS[cat] || cat}
+                            </span>
+                          ))}
+                          {b.categories.length > 3 && (
+                            <span className="text-[9px] text-muted-foreground">
+                              +{b.categories.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Missing brand CTA */}
