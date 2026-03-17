@@ -156,7 +156,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     const s = new Set<string>();
     (products || []).forEach((p) => {
       if (p.brand && p.name) {
-        s.add(`${p.brand}::${p.name}`);
+        s.add(`${p.brand.toLowerCase()}::${p.name.toLowerCase()}`);
       }
     });
     return s;
