@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Search, X, Loader2, Phone as PhoneIcon, Mail as MailIcon, User as UserIcon } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { usePhorestClientSearch } from '@/hooks/useClientsData';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';

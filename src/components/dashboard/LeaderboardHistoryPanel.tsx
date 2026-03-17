@@ -5,6 +5,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { History, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Save, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useLeaderboardHistory, LeaderboardHistoryEntry } from '@/hooks/useLeaderboardHistory';
 import { toast } from 'sonner';
 
