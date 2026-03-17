@@ -3,13 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 
+export type LoaderStyleOption = 'zura' | 'spinner' | 'dots' | 'bar';
+
 export interface PlatformBranding {
-  primary_logo_url: string | null;      // Dark mode full logo (light/white)
-  secondary_logo_url: string | null;    // Light mode full logo (dark/colored)
-  icon_dark_url: string | null;         // Dark mode collapsed icon (light/white)
-  icon_light_url: string | null;        // Light mode collapsed icon (dark/colored)
+  primary_logo_url: string | null;
+  secondary_logo_url: string | null;
+  icon_dark_url: string | null;
+  icon_light_url: string | null;
   theme_colors: Record<string, string>;
   typography: Record<string, string>;
+  loader_style: LoaderStyleOption;
+  use_skeleton_loaders: boolean;
 }
 
 const DEFAULT_BRANDING: PlatformBranding = {
@@ -19,6 +23,8 @@ const DEFAULT_BRANDING: PlatformBranding = {
   icon_light_url: null,
   theme_colors: {},
   typography: {},
+  loader_style: 'zura',
+  use_skeleton_loaders: false,
 };
 
 // Platform theme color tokens with their defaults (HSL values for violet/slate theme)
@@ -66,6 +72,8 @@ export function usePlatformBranding() {
         icon_light_url: (value.icon_light_url as string | null) ?? null,
         theme_colors: (value.theme_colors as Record<string, string>) ?? {},
         typography: (value.typography as Record<string, string>) ?? {},
+        loader_style: (value.loader_style as LoaderStyleOption) ?? 'zura',
+        use_skeleton_loaders: (value.use_skeleton_loaders as boolean) ?? false,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -81,6 +89,8 @@ export function usePlatformBranding() {
         icon_light_url: branding.icon_light_url,
         theme_colors: branding.theme_colors,
         typography: branding.typography,
+        loader_style: branding.loader_style,
+        use_skeleton_loaders: branding.use_skeleton_loaders,
       };
       
       const { error } = await supabase
