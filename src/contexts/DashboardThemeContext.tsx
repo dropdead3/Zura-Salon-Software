@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { useRouteZone } from '@/lib/route-utils';
+import { getRouteZone, type RouteZone } from '@/lib/route-utils';
 
 type Theme = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -51,14 +51,37 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     return theme;
   }, [theme, systemTheme]);
 
-  // Sync the 'dark' class on <html> so CSS variables in index.css activate.
-  // Skip on platform routes — platform manages its own theme independently.
-  // useRouteZone re-evaluates on every client-side navigation.
-  const zone = useRouteZone();
+  // Track route zone without useLocation (this provider is outside <BrowserRouter>)
+  const [zone, setZone] = useState<RouteZone>(() => getRouteZone(window.location.pathname));
 
   useEffect(() => {
+    const sync = () => setZone(getRouteZone(window.location.pathname));
+
+    window.addEventListener('popstate', sync);
+
+    const origPush = history.pushState.bind(history);
+    const origReplace = history.replaceState.bind(history);
+
+    history.pushState = (...args: Parameters<typeof history.pushState>) => {
+      origPush(...args);
+      sync();
+    };
+    history.replaceState = (...args: Parameters<typeof history.replaceState>) => {
+      origReplace(...args);
+      sync();
+    };
+
+    return () => {
+      window.removeEventListener('popstate', sync);
+      history.pushState = origPush;
+      history.replaceState = origReplace;
+    };
+  }, []);
+
+  // Sync the 'dark' class on <html> so CSS variables in index.css activate.
+  // Skip on non-org-dashboard routes — platform manages its own theme independently.
+  useEffect(() => {
     if (zone !== 'org-dashboard') {
-      // Outside org dashboard, remove org-level dark class so it doesn't bleed
       document.documentElement.classList.remove('dark');
       return;
     }
