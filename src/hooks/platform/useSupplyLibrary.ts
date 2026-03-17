@@ -20,6 +20,7 @@ export interface SupplyLibraryProduct {
   is_active: boolean;
   wholesale_price: number | null;
   recommended_retail: number | null;
+  default_markup_pct: number | null;
   currency: string;
   price_source_id: string | null;
   price_updated_at: string | null;
