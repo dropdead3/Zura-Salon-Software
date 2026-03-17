@@ -426,7 +426,6 @@ const App = () => (
 
                         <Route path="*" element={<NotFound />} />
                         </Routes>
-                        </BrowserRouter>
                       </TooltipProvider>
                     </SoundSettingsProvider>
                   </HideNumbersProvider>
@@ -436,6 +435,7 @@ const App = () => (
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
+      </BrowserRouter>
     </ThemeProvider>
   </HelmetProvider>
 );
