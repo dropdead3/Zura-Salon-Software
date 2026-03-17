@@ -365,8 +365,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   <ArrowLeft className="w-5 h-5 text-muted-foreground" />
                 </button>
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center shrink-0">
-                  <Package className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Package className="w-5 h-5 text-primary" />
                 </div>
               )}
               <div>
