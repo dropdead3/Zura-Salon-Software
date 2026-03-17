@@ -253,6 +253,8 @@ export interface BrandSummaryRow {
   brand: string;
   category: string;
   cnt: number;
+  missing_price: number;
+  missing_swatch: number;
 }
 
 export function useSupplyLibraryBrandSummaries() {

@@ -771,9 +771,14 @@ export function SupplyLibraryTab() {
                       key={b.brand}
                       variant="interactive"
                       size="md"
-                      className="cursor-pointer p-4 flex flex-col items-center text-center gap-2"
+                      className="cursor-pointer p-4 flex flex-col items-center text-center gap-2 relative"
                       onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(collapseKey('categories', b.brand)); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(collapseKey('sublines', b.brand)); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
+                      {!b.isComplete && (
+                        <PlatformBadge variant="warning" size="sm" className="absolute top-2 right-2">
+                          Partial
+                        </PlatformBadge>
+                      )}
                       {brandLogoMap.has(b.brand) ? (
                         <img src={brandLogoMap.get(b.brand)!} alt={b.brand} className="w-10 h-10 rounded-lg object-contain bg-white/5 p-0.5" />
                       ) : (
@@ -786,12 +791,6 @@ export function SupplyLibraryTab() {
                       </span>
                       <PlatformBadge variant="primary" size="sm">
                         {b.productCount} products
-                      </PlatformBadge>
-                      <PlatformBadge
-                        variant={getBrandCoverage(b.brand) === 'complete' ? 'success' : 'warning'}
-                        size="sm"
-                      >
-                        {getBrandCoverage(b.brand) === 'complete' ? 'Complete' : 'Partial'}
                       </PlatformBadge>
                       <p className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight">
                         {b.categorySummary.slice(0, 3).map((cs) =>
