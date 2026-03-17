@@ -9,7 +9,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Search, Check, Library, Loader2, MessageSquarePlus, Send,
-  PackagePlus, ChevronLeft, ArrowLeft,
+  PackagePlus, ChevronLeft, ArrowLeft, Package,
 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
@@ -660,7 +660,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               />
 
               {/* Column 2: Product Lines */}
-              {selectedCategory && (
+              {selectedCategory ? (
                 <BrowseColumn
                   title="Product Line"
                   items={productLineItems}
@@ -669,13 +669,18 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                   searchThreshold={8}
                   className="w-[200px] shrink-0"
                 />
+              ) : (
+                <div className="w-[200px] shrink-0 border-r border-border/30 bg-muted/10 flex items-center justify-center">
+                  <p className="text-xs font-sans text-muted-foreground/60">Select a category</p>
+                </div>
               )}
 
               {/* Column 3: Products */}
-              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-muted/5">
                 {!selectedCategory ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <p className="text-xs font-sans text-muted-foreground">Select a category to browse products</p>
+                  <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                    <Package className="w-8 h-8 text-muted-foreground/30" />
+                    <p className="text-xs font-sans text-muted-foreground/60">Select a category to browse products</p>
                   </div>
                 ) : displayProducts.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center">
