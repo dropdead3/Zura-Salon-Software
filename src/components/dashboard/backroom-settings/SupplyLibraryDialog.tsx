@@ -148,7 +148,7 @@ function BrandCardGrid({
                 </div>
 
                 {/* Brand name */}
-                <span className="text-xs font-sans font-medium text-foreground leading-tight line-clamp-2">
+                <span className="text-sm font-display font-medium text-foreground leading-tight line-clamp-2 tracking-wide">
                   {b.brand}
                 </span>
 
