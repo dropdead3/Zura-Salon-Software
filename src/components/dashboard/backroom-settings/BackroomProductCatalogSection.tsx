@@ -475,7 +475,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           health: ratio === 0 ? 'green' as const : ratio < 0.5 ? 'amber' as const : 'red' as const,
         };
       });
-  }, [brandProducts]);
+  }, [brandProducts, isTrackedAtLocation]);
 
   // Product lines for selected category
   const categoryProducts = useMemo(() => {
