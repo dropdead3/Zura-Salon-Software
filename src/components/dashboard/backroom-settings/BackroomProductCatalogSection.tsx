@@ -593,8 +593,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate block">{brandName}</span>
-                            <span className="text-[11px] font-sans text-[hsl(var(--platform-foreground-muted))]">{brandProds.length} products</span>
+                            <span className="text-sm font-sans font-medium text-foreground truncate block">{brandName}</span>
+                            <span className="text-[11px] font-sans text-muted-foreground">{brandProds.length} products</span>
                           </div>
                         </div>
 
