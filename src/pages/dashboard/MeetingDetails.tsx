@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, Calendar, Clock, User, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useAuth } from '@/contexts/AuthContext';
