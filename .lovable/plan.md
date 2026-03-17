@@ -1,43 +1,25 @@
 
 
-# Supply Library Audit Results
+# Add A-Z Alphabet Selector to Supply Library Brand Grid
 
-After reviewing all 1,896 products across 26 brands, here are the findings:
+Add a horizontal letter selector bar between the search input and the brand card grid, matching the pattern already used in the Backroom Product Catalog.
 
-## Issues Found
+## Changes
 
-### 1. Incorrect Product Name (Error)
-**Wella — "WellaFlex Bond Maker"** should be **"WellaPlex Bond Maker"** (or "WellaPlex No.1 Bond Maker"). "WellaFlex" is Wella's consumer styling line (hairspray, mousse). The professional bond builder product is called **WellaPlex**. This is a naming error.
+**`src/components/platform/backroom/SupplyLibraryTab.tsx`**
 
-### 2. Vague Line-Level Entries (Minor)
-Two **Danger Jones** entries are product *line names* rather than individual products:
-- "Epilogue Permanent Color" — this is a line of 84+ shades. The entry is fine as a placeholder but lacks shade-level detail unlike how other brands list individual shades.
-- "Liquid Semi-Permanent" — same issue; this is the semi-permanent line name, but the individual shades (Checkmate, Hustler, etc.) are already listed separately.
+1. **Compute available letters** — derive a `Set<string>` of first-letters from `filteredBrands` (or `brandCards` for showing all letters with active/inactive styling).
 
-These two entries are redundant since the individual shades are already cataloged.
+2. **Add `activeLetter` state** (`string | null`, default `null` meaning "show all"). Selecting a letter filters `filteredBrands` to only brands starting with that letter. Clicking the active letter again deselects it (back to all).
 
-### 3. No Other Fake/Wrong-Brand Products Found
-All other products verified as legitimate:
-- **K18** (2 items) — real professional treatments
-- **Olaplex** (3 items) — correct No.0, No.1, No.2 professional products
-- **Uberliss** (2 items) — Bond Preconditioner and Bond Sustainer are real products
-- **Redken pH-Bonder** — real (though discontinued, still a valid catalog entry)
-- **Generic Developer** (4 items) — appropriate universal entries
-- All brand-specific color lines, developers, lighteners, and toners checked out
+3. **Render A-Z bar** — a `flex flex-wrap gap-1` row of small buttons (A through Z plus an "All" button). Each letter button:
+   - Active letter: `bg-violet-600 text-white`
+   - Has brands: `text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]`
+   - No brands for that letter: `text-[hsl(var(--platform-foreground-muted))] opacity-40 cursor-default`
 
-### 4. No Duplicates
-Zero duplicate entries found across the entire library.
+4. **Placement**: After the search input, before the brand grid. The search input and letter selector work together — search narrows brands, letters further filter by first character.
 
-## Recommended Fixes
+5. **Reset behavior**: When `brandSearch` changes, reset `activeLetter` to null. When navigating back from a brand detail view, `activeLetter` persists.
 
-| # | Action | Brand | Current Name | Correct Name |
-|---|--------|-------|-------------|--------------|
-| 1 | **Rename** | Wella | WellaFlex Bond Maker | WellaPlex No.1 Bond Maker |
-| 2 | **Delete** | Danger Jones | Epilogue Permanent Color | *(redundant — shades already listed individually)* |
-| 3 | **Delete** | Danger Jones | Liquid Semi-Permanent | *(redundant — shades already listed individually)* |
-
-## Implementation
-- One SQL update to rename the Wella product
-- Two SQL soft-deletes (set `is_active = false`) for the redundant Danger Jones line-level entries
-- No code changes needed
+Single file edit, no new components or hooks needed.
 
