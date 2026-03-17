@@ -28,11 +28,12 @@ export const HAIR_COLOR_SWATCHES = [
 
 interface SwatchPickerProps {
   value: string | null;
+  suggestedValue?: string | null;
   onChange: (hex: string | null) => void;
   disabled?: boolean;
 }
 
-export function SwatchPicker({ value, onChange, disabled }: SwatchPickerProps) {
+export function SwatchPicker({ value, suggestedValue, onChange, disabled }: SwatchPickerProps) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (hex: string) => {
@@ -45,6 +46,10 @@ export function SwatchPicker({ value, onChange, disabled }: SwatchPickerProps) {
     setOpen(false);
   };
 
+  // If no saved value but we have a suggestion, show it as the "suggested" display
+  const displayHex = value ?? suggestedValue ?? null;
+  const isSuggested = !value && !!suggestedValue;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -54,21 +59,40 @@ export function SwatchPicker({ value, onChange, disabled }: SwatchPickerProps) {
           className={cn(
             'w-5 h-5 rounded-full shrink-0 transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:ring-offset-1',
             disabled && 'opacity-50 cursor-not-allowed',
+            isSuggested && 'opacity-50',
           )}
           style={
-            value && value !== 'transparent'
-              ? { backgroundColor: value, border: '2px solid hsl(var(--platform-border))' }
+            displayHex && displayHex !== 'transparent'
+              ? {
+                  backgroundColor: displayHex,
+                  border: isSuggested
+                    ? '2px dashed hsl(var(--platform-foreground-muted) / 0.6)'
+                    : '2px solid hsl(var(--platform-border))',
+                }
               : undefined
           }
-          title={value ? 'Change swatch color' : 'Assign swatch color'}
+          title={
+            isSuggested
+              ? 'Suggested — click to confirm'
+              : value
+                ? 'Change swatch color'
+                : 'Assign swatch color'
+          }
         >
-          {/* Empty state: dashed circle */}
-          {!value && (
+          {/* Empty state: dashed circle (no value, no suggestion) */}
+          {!displayHex && (
             <span className="block w-full h-full rounded-full border-2 border-dashed border-[hsl(var(--platform-foreground-muted)/0.4)]" />
           )}
           {/* Clear/transparent state: diagonal stripe */}
-          {value === 'transparent' && (
-            <span className="block w-full h-full rounded-full border-2 border-[hsl(var(--platform-border))] bg-white/90 relative overflow-hidden">
+          {displayHex === 'transparent' && (
+            <span
+              className={cn(
+                'block w-full h-full rounded-full bg-white/90 relative overflow-hidden',
+                isSuggested
+                  ? 'border-2 border-dashed border-[hsl(var(--platform-foreground-muted)/0.6)]'
+                  : 'border-2 border-[hsl(var(--platform-border))]',
+              )}
+            >
               <span className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent,transparent_3px,hsl(var(--platform-foreground-muted)/0.3)_3px,hsl(var(--platform-foreground-muted)/0.3)_4px)]" />
             </span>
           )}
@@ -84,6 +108,21 @@ export function SwatchPicker({ value, onChange, disabled }: SwatchPickerProps) {
           <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">
             Tone Swatch
           </span>
+          {isSuggested && suggestedValue && (
+            <button
+              type="button"
+              onClick={() => handleSelect(suggestedValue)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[hsl(var(--platform-border)/0.3)] transition-colors"
+            >
+              <span
+                className="w-5 h-5 rounded-full border-2 border-dashed border-violet-400/60 shrink-0"
+                style={suggestedValue !== 'transparent' ? { backgroundColor: suggestedValue } : undefined}
+              />
+              <span className="font-sans text-[11px] text-violet-400">
+                Use suggestion
+              </span>
+            </button>
+          )}
           <div className="grid grid-cols-5 gap-1.5">
             {HAIR_COLOR_SWATCHES.map((swatch) => (
               <button
