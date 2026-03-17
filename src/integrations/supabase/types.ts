@@ -19861,39 +19861,62 @@ export type Database = {
           brand: string
           category: string
           created_at: string
+          currency: string
           default_depletion: string
           default_unit: string
           id: string
           is_active: boolean
           name: string
+          price_source_id: string | null
+          price_updated_at: string | null
+          recommended_retail: number | null
           size_options: string[] | null
           updated_at: string
+          wholesale_price: number | null
         }
         Insert: {
           brand: string
           category?: string
           created_at?: string
+          currency?: string
           default_depletion?: string
           default_unit?: string
           id?: string
           is_active?: boolean
           name: string
+          price_source_id?: string | null
+          price_updated_at?: string | null
+          recommended_retail?: number | null
           size_options?: string[] | null
           updated_at?: string
+          wholesale_price?: number | null
         }
         Update: {
           brand?: string
           category?: string
           created_at?: string
+          currency?: string
           default_depletion?: string
           default_unit?: string
           id?: string
           is_active?: boolean
           name?: string
+          price_source_id?: string | null
+          price_updated_at?: string | null
+          recommended_retail?: number | null
           size_options?: string[] | null
           updated_at?: string
+          wholesale_price?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "supply_library_products_price_source_id_fkey"
+            columns: ["price_source_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_price_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_tickets: {
         Row: {
