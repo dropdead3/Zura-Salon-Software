@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -14,19 +13,66 @@ interface Props {
   orgId: string;
   /** Product IDs to apply pricing to */
   productIds: string[];
-  scopeLabel: string; // e.g. "Redken Color" or "lightener"
+  scopeLabel: string;
+}
+
+function UnitInput({
+  label,
+  unit,
+  value,
+  onChange,
+  readOnly = false,
+  placeholder = '0.00',
+  step,
+}: {
+  label: string;
+  unit: string;
+  value: string;
+  onChange?: (v: string) => void;
+  readOnly?: boolean;
+  placeholder?: string;
+  step?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="font-sans text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        <input
+          type="number"
+          step={step ?? '0.01'}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          readOnly={readOnly}
+          className={
+            'flex h-10 w-full rounded-full border border-input bg-background px-4 pr-10 py-2 text-sm font-sans ' +
+            'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-foreground/30 transition-colors ' +
+            (readOnly ? 'bg-muted/40 text-muted-foreground cursor-default' : '')
+          }
+        />
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-sans text-muted-foreground select-none">
+          {unit}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function BackroomBulkPricingDialog({ open, onOpenChange, orgId, productIds, scopeLabel }: Props) {
   const queryClient = useQueryClient();
-  const [costPerGram, setCostPerGram] = useState('');
+  const [wholesalePrice, setWholesalePrice] = useState('');
   const [markupPct, setMarkupPct] = useState('');
   const [containerSize, setContainerSize] = useState('');
+
+  const retailPrice =
+    wholesalePrice && markupPct
+      ? (parseFloat(wholesalePrice) * (1 + parseFloat(markupPct) / 100)).toFixed(2)
+      : '';
 
   const mutation = useMutation({
     mutationFn: async () => {
       const updates: Record<string, any> = { updated_at: new Date().toISOString() };
-      if (costPerGram) updates.cost_per_gram = parseFloat(costPerGram);
+      if (wholesalePrice) updates.wholesale_price = parseFloat(wholesalePrice);
       if (markupPct) updates.markup_pct = parseFloat(markupPct);
       if (containerSize) updates.container_size = containerSize;
 
@@ -45,7 +91,7 @@ export function BackroomBulkPricingDialog({ open, onOpenChange, orgId, productId
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(`Pricing applied to ${productIds.length} products`);
       onOpenChange(false);
-      setCostPerGram('');
+      setWholesalePrice('');
       setMarkupPct('');
       setContainerSize('');
     },
@@ -54,78 +100,56 @@ export function BackroomBulkPricingDialog({ open, onOpenChange, orgId, productId
     },
   });
 
-  const chargePreview = costPerGram && markupPct
-    ? (parseFloat(costPerGram) * (1 + parseFloat(markupPct) / 100)).toFixed(4)
-    : null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="font-display text-base tracking-wide">Set Pricing</DialogTitle>
           <DialogDescription className="font-sans text-sm text-muted-foreground">
-            Apply to {productIds.length} product{productIds.length === 1 ? '' : 's'} in {scopeLabel}.
+            {productIds.length} product{productIds.length === 1 ? '' : 's'} in {scopeLabel}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label className="font-sans text-xs">Cost per Gram ($)</Label>
-            <Input
-              type="number"
-              step="0.0001"
-              placeholder="0.0000"
-              value={costPerGram}
-              onChange={(e) => setCostPerGram(e.target.value)}
-              autoCapitalize="off"
-              className="font-sans h-9"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="font-sans text-xs">Markup %</Label>
-            <Input
-              type="number"
-              step="1"
-              placeholder="0"
-              value={markupPct}
-              onChange={(e) => setMarkupPct(e.target.value)}
-              autoCapitalize="off"
-              className="font-sans h-9"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="font-sans text-xs">Container Size (optional)</Label>
-            <Input
-              placeholder="e.g. 60ml, 2oz"
-              value={containerSize}
-              onChange={(e) => setContainerSize(e.target.value)}
-              className="font-sans h-9"
-            />
-          </div>
-
-          {chargePreview && (
-            <div className="text-xs font-sans text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
-              Charge per gram: <span className="text-foreground font-medium">${chargePreview}</span>
-            </div>
-          )}
+          <UnitInput
+            label="Wholesale Price"
+            unit="$"
+            value={wholesalePrice}
+            onChange={setWholesalePrice}
+            step="0.01"
+          />
+          <UnitInput
+            label="Markup"
+            unit="%"
+            value={markupPct}
+            onChange={setMarkupPct}
+            step="1"
+            placeholder="0"
+          />
+          <UnitInput
+            label="Retail Price"
+            unit="$"
+            value={retailPrice}
+            readOnly
+          />
+          <UnitInput
+            label="Container Size"
+            unit="g"
+            value={containerSize}
+            onChange={setContainerSize}
+            step="1"
+            placeholder="0"
+          />
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="font-sans">
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || (!costPerGram && !markupPct && !containerSize)}
-            className="font-sans"
-          >
-            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-            Apply to {productIds.length} Products
-          </Button>
-        </DialogFooter>
+        <Button
+          className="w-full font-sans"
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending || (!wholesalePrice && !markupPct && !containerSize)}
+        >
+          {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+          Save
+        </Button>
       </DialogContent>
     </Dialog>
   );
