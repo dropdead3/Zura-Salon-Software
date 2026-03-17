@@ -86,7 +86,7 @@ function BrandCardGrid({
   );
 
   return (
-    <div className="flex flex-col flex-1 h-0">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* A-Z filter bar */}
       <div className="px-6 pt-2 pb-1 flex flex-wrap gap-0.5 justify-center">
         {ALPHABET.map((letter) => {
@@ -121,7 +121,7 @@ function BrandCardGrid({
       </div>
 
       {/* Brand cards */}
-      <ScrollArea className="flex-1 h-0">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-6 pt-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {filtered.map((b) => {
