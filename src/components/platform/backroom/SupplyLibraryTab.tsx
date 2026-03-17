@@ -694,6 +694,13 @@ export function SupplyLibraryTab() {
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
+                      <button
+                        onClick={() => setDeleteBrandOpen(true)}
+                        className="p-1 rounded-md text-[hsl(var(--platform-foreground-muted))] hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Delete brand & catalog"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   
                   </>
