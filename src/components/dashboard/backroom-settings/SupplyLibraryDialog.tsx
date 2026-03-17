@@ -9,7 +9,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Search, Check, Library, Loader2, MessageSquarePlus, Send,
-  PackagePlus, ChevronLeft, ArrowLeft,
+  PackagePlus, ChevronLeft, ArrowLeft, Package,
 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { BrowseColumn, type BrowseColumnItem } from '@/components/platform/backroom/BrowseColumn';
