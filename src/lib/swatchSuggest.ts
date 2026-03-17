@@ -322,7 +322,7 @@ function guessColorFromName(name: string): string | null {
     [/\borchid\b/, '#926092'],               // palette Orchid
     [/\bslate\b/, '#4A6070'],                // blue 8
     [/\bsteel\b/, '#5A7A90'],                // blue 9
-    [/\bsmoke\b/, '#8A8A7B'],                // ash 7
+    [/\bsmoke\b/, '#C5C5BB'],                // palette Smoke
   ];
 
   for (const [regex, hex] of directColorMap) {

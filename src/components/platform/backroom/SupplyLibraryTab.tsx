@@ -981,6 +981,34 @@ export function SupplyLibraryTab() {
                                   Auto-assign swatches
                                 </PlatformButton>
                               )}
+                              {SHADE_SORTED_CATEGORIES.has(category) && (
+                                <PlatformButton
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-[10px] font-sans text-amber-400 hover:text-amber-300"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const updates = products
+                                      .map((p) => ({ id: p.id, hex: suggestSwatchColor(p.name) }))
+                                      .filter((u) => u.hex !== null);
+                                    if (!updates.length) { toast.info('No suggestions available'); return; }
+                                    if (!confirm(`Re-analyze ${updates.length} swatches in ${SUPPLY_CATEGORY_LABELS[category] || category}? This overwrites existing assignments.`)) return;
+                                    let saved = 0;
+                                    for (const u of updates) {
+                                      const { error } = await supabase
+                                        .from('supply_library_products')
+                                        .update({ swatch_color: u.hex } as any)
+                                        .eq('id', u.id);
+                                      if (!error) saved++;
+                                    }
+                                    queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                                    toast.success(`Re-analyzed ${saved} swatches`);
+                                  }}
+                                >
+                                  <RefreshCw className="w-3 h-3 mr-0.5" />
+                                  Re-analyze all
+                                </PlatformButton>
+                              )}
                             </div>
                             <ChevronDown className={cn(
                               'w-4 h-4 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200',
