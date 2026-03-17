@@ -20,6 +20,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, MessageSquare, Sparkles } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useEmailTemplates } from '@/hooks/useEmailTemplates';
 import { useSmsTemplates } from '@/hooks/useSmsTemplates';
