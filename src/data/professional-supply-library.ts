@@ -3128,9 +3128,6 @@ export const SUPPLY_LIBRARY: SupplyLibraryItem[] = [
   c('Danger Jones', 'Semi-Permanent Pavement (Grey)', 'color', ['118ml']),
   c('Danger Jones', 'Semi-Permanent Clear', 'color', ['118ml']),
 
-  // ── Liquid Semi-Permanent ──────────────────────────────────────
-  c('Danger Jones', 'Liquid Semi-Permanent', 'color', ['118ml'], 'weighed', 'ml'),
-
   // ── Developers ─────────────────────────────────────────────────
   c('Danger Jones', 'Deluxe Cream Developer 5 Vol (1.5%)', 'developer', ['900ml']),
   c('Danger Jones', 'Deluxe Cream Developer 10 Vol (3%)', 'developer', ['900ml']),
