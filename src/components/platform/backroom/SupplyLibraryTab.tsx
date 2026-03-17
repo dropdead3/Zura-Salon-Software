@@ -602,6 +602,7 @@ export function SupplyLibraryTab() {
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
+                                  <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
                                   <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
                                 </TableRow>
