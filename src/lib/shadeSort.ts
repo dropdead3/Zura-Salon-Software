@@ -52,4 +52,4 @@ export function sortByShadeLevel<T extends { name: string }>(products: T[]): T[]
 }
 
 /** Categories that should use shade-level sorting */
-export const SHADE_SORTED_CATEGORIES = new Set(['color', 'toner']);
+export const SHADE_SORTED_CATEGORIES = new Set(['color', 'toner', 'semi-permanent']);

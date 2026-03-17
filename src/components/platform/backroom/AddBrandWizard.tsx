@@ -41,11 +41,11 @@ import type { ScrapedProduct } from '@/hooks/platform/useBrandWebsiteScrape';
 import { extractProductLine } from '@/lib/supply-line-parser';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'bond builder', 'treatment', 'additive'];
+const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'semi-permanent', 'bond builder', 'treatment', 'additive'];
 const CATEGORY_LABELS: Record<string, string> = {
   color: 'Color', lightener: 'Lightener', developer: 'Developer', toner: 'Toner',
-  'bond builder': 'Bond Builder', treatment: 'Treatment', additive: 'Additive',
-  styling: 'Styling', care: 'Care',
+  'semi-permanent': 'Semi-Permanent', 'bond builder': 'Bond Builder', treatment: 'Treatment',
+  additive: 'Additive', styling: 'Styling', care: 'Care',
 };
 
 interface AddBrandWizardProps {
