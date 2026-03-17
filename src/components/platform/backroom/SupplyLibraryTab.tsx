@@ -805,7 +805,7 @@ export function SupplyLibraryTab() {
                       key={b.brand}
                       variant="interactive"
                       size="md"
-                      className={cn("cursor-pointer p-4 flex flex-col items-center text-center gap-2 relative", !b.isComplete && "pt-9")}
+                      className="cursor-pointer pt-9 px-4 pb-4 flex flex-col items-center text-center gap-2 relative min-h-[160px]"
                       onClick={() => { setSelectedBrand(b.brand); setProductSearch(''); setCategoryFilter('all'); try { const cats = localStorage.getItem(collapseKey('categories', b.brand)); setCollapsedCategories(cats ? new Set(JSON.parse(cats)) : new Set()); const subs = localStorage.getItem(collapseKey('sublines', b.brand)); setCollapsedSubLines(subs ? new Set(JSON.parse(subs)) : new Set()); } catch { setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); } }}
                     >
                       {!b.isComplete && (
