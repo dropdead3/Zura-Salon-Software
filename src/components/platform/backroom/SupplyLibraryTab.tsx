@@ -81,15 +81,33 @@ export function SupplyLibraryTab() {
     localStorage.setItem('supply-library-migrated', '1');
   }, []);
 
+  // Prune localStorage collapse keys if they exceed budget
+  const pruneCollapseKeys = useCallback((maxKeys: number) => {
+    const allKeys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('supply-library-categories::') || k.startsWith('supply-library-sublines::'))) {
+        allKeys.push(k);
+      }
+    }
+    if (allKeys.length <= maxKeys) return;
+    const currentSuffix = `${orgId}::${selectedBrand}`;
+    allKeys
+      .filter((k) => !k.endsWith(currentSuffix))
+      .forEach((k) => localStorage.removeItem(k));
+  }, [orgId, selectedBrand]);
+
   // Persist collapse state to org+brand-scoped localStorage keys
   useEffect(() => {
     if (!selectedBrand) return;
+    pruneCollapseKeys(500);
     localStorage.setItem(collapseKey('categories', selectedBrand), JSON.stringify([...collapsedCategories]));
-  }, [collapsedCategories, selectedBrand, collapseKey]);
+  }, [collapsedCategories, selectedBrand, collapseKey, pruneCollapseKeys]);
   useEffect(() => {
     if (!selectedBrand) return;
+    pruneCollapseKeys(500);
     localStorage.setItem(collapseKey('sublines', selectedBrand), JSON.stringify([...collapsedSubLines]));
-  }, [collapsedSubLines, selectedBrand, collapseKey]);
+  }, [collapsedSubLines, selectedBrand, collapseKey, pruneCollapseKeys]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
