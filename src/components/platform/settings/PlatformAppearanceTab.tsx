@@ -326,6 +326,115 @@ export function PlatformAppearanceTab() {
         </PlatformCardContent>
       </PlatformCard>
 
+      {/* Loading States Configurator */}
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <PlatformCardTitle className="flex items-center gap-2">
+            <Loader className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
+            Loading States
+          </PlatformCardTitle>
+          <PlatformCardDescription>
+            Choose the loading animation style used across all organization dashboards
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-6">
+          {/* Loader Style Picker */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Loader Style</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {([
+                { id: 'zura' as LoaderStyleOption, label: 'Zura Grid', Component: ZuraLoader },
+                { id: 'spinner' as LoaderStyleOption, label: 'Spinner', Component: SpinnerLoader },
+                { id: 'dots' as LoaderStyleOption, label: 'Dots', Component: DotsLoader },
+                { id: 'bar' as LoaderStyleOption, label: 'Bar', Component: BarLoader },
+              ]).map(({ id, label: loaderLabel, Component }) => {
+                const isSelected = localBranding.loader_style === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setLocalBranding((prev) => ({ ...prev, loader_style: id }))}
+                    disabled={localBranding.use_skeleton_loaders}
+                    className={cn(
+                      'relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-200',
+                      localBranding.use_skeleton_loaders && 'opacity-40 cursor-not-allowed',
+                      isSelected && !localBranding.use_skeleton_loaders
+                        ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/20'
+                        : 'border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.3)] hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-bg-card)/0.5)]',
+                    )}
+                  >
+                    <div className="h-12 flex items-center justify-center">
+                      <Component size="md" />
+                    </div>
+                    <span className="text-xs text-[hsl(var(--platform-foreground)/0.85)]">{loaderLabel}</span>
+                    {isSelected && !localBranding.use_skeleton_loaders && (
+                      <div className="absolute top-2 right-2 p-0.5 rounded-full bg-violet-500">
+                        <Check className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Skeleton Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-lg border bg-[hsl(var(--platform-bg-card)/0.3)] border-[hsl(var(--platform-border)/0.5)]">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Use Skeleton Loaders</Label>
+              <p className="text-xs text-[hsl(var(--platform-muted))]">
+                Replace animated loaders with skeleton placeholders for section loading states
+              </p>
+            </div>
+            <Switch
+              checked={localBranding.use_skeleton_loaders}
+              onCheckedChange={(checked) =>
+                setLocalBranding((prev) => ({ ...prev, use_skeleton_loaders: checked }))
+              }
+            />
+          </div>
+
+          {/* Live Preview */}
+          <div className="space-y-2">
+            <Label className="text-xs text-[hsl(var(--platform-muted))]">Preview</Label>
+            <div className="flex items-center justify-center p-8 rounded-lg border border-dashed border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg)/0.3)]">
+              {localBranding.use_skeleton_loaders ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Skeleton className="h-4 w-48 rounded" />
+                  <Skeleton className="h-3 w-32 rounded" />
+                  <Skeleton className="h-3 w-40 rounded" />
+                </div>
+              ) : (
+                (() => {
+                  const PreviewMap: Record<LoaderStyleOption, React.ComponentType<{ size?: 'sm' | 'md' | 'lg' | 'xl' }>> = {
+                    zura: ZuraLoader,
+                    spinner: SpinnerLoader,
+                    dots: DotsLoader,
+                    bar: BarLoader,
+                  };
+                  const Preview = PreviewMap[localBranding.loader_style] || ZuraLoader;
+                  return (
+                    <div className="flex items-center gap-8">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <Preview size="sm" />
+                        <span className="text-[10px] text-[hsl(var(--platform-muted))]">SM</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <Preview size="md" />
+                        <span className="text-[10px] text-[hsl(var(--platform-muted))]">MD</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <Preview size="lg" />
+                        <span className="text-[10px] text-[hsl(var(--platform-muted))]">LG</span>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+            </div>
+          </div>
+        </PlatformCardContent>
+      </PlatformCard>
+
       {/* Theme Colors - Owner Only */}
       {isPlatformOwner && (
         <>
