@@ -244,17 +244,24 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
   const bulkTrackMutation = useMutation({
     mutationFn: async ({ ids, tracked }: { ids: string[]; tracked: boolean }) => {
-      if (ids.length === 0) return;
+      if (ids.length === 0 || !effectiveLocationId) return;
+      // Use location_product_settings
+      const rows = ids.map((productId) => ({
+        organization_id: orgId!,
+        location_id: effectiveLocationId,
+        product_id: productId,
+        is_tracked: tracked,
+      }));
       const { error } = await supabase
-        .from('products')
-        .update({ is_backroom_tracked: tracked, updated_at: new Date().toISOString() })
-        .in('id', ids);
+        .from('location_product_settings')
+        .upsert(rows as any[], { onConflict: 'location_id,product_id' });
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
       toast.success(`${vars.tracked ? 'Enabled' : 'Disabled'} tracking for ${vars.ids.length} products`);
     },
     onError: (error) => toast.error('Bulk update failed: ' + error.message),
