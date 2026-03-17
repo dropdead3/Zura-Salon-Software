@@ -182,13 +182,19 @@ export function useDeleteSupplyBrand() {
 
   return useMutation({
     mutationFn: async (params: { brandName: string; brandId: string | null }) => {
+      // Count active products first
+      const { count } = await supabase
+        .from('supply_library_products')
+        .select('*', { count: 'exact', head: true })
+        .eq('brand', params.brandName)
+        .eq('is_active', true);
+
       // Soft-delete all products for this brand
-      const { count, error: prodErr } = await supabase
+      const { error: prodErr } = await supabase
         .from('supply_library_products')
         .update({ is_active: false } as any)
         .eq('brand', params.brandName)
-        .eq('is_active', true)
-        .select('*', { count: 'exact', head: true });
+        .eq('is_active', true);
       if (prodErr) throw prodErr;
 
       // Soft-delete the brand meta row if it exists
