@@ -788,7 +788,7 @@ function BrandFinder({
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Select a category</p>
+            <p className="font-sans text-xs text-muted-foreground">Select a category</p>
           </div>
         )}
 
