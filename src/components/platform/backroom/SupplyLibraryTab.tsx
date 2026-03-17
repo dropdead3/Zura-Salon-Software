@@ -920,6 +920,37 @@ export function SupplyLibraryTab() {
                     </AlertDialogFooter>
                   </PlatformAlertDialogContent>
                 </AlertDialog>
+                <AlertDialog open={!!reanalyzeConfirm} onOpenChange={(open) => { if (!open) setReanalyzeConfirm(null); }}>
+                  <PlatformAlertDialogContent>
+                    <AlertDialogHeader>
+                      <PlatformAlertDialogTitle>Re-analyze Swatches</PlatformAlertDialogTitle>
+                      <PlatformAlertDialogDescription>
+                        Re-analyze {reanalyzeConfirm?.updates.length ?? 0} swatches in {reanalyzeConfirm?.category}? This overwrites existing assignments.
+                      </PlatformAlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          if (!reanalyzeConfirm) return;
+                          let saved = 0;
+                          for (const u of reanalyzeConfirm.updates) {
+                            const { error } = await supabase
+                              .from('supply_library_products')
+                              .update({ swatch_color: u.hex } as any)
+                              .eq('id', u.id);
+                            if (!error) saved++;
+                          }
+                          queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+                          toast.success(`Re-analyzed ${saved} swatches`);
+                          setReanalyzeConfirm(null);
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </PlatformAlertDialogContent>
+                </AlertDialog>
                 {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
