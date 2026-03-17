@@ -536,7 +536,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                 <>
                   <DialogTitle className={tokens.card.title}>Professional Supply Library</DialogTitle>
                   <DialogDescription className={tokens.body.muted}>
-                    Browse {brands.length}+ brands. Select which products your salon carries.
+                    Browse {brandCardData.length}+ brands. Select which products your salon carries.
                   </DialogDescription>
                 </>
               )}
