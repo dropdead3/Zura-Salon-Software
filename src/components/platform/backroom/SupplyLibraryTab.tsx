@@ -554,7 +554,7 @@ export function SupplyLibraryTab() {
                   <>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); }}
+                        onClick={() => { setSelectedBrand(null); setProductSearch(''); setCategoryFilter('all'); setPricingFilter('all'); setCollapsedCategories(new Set()); setCollapsedSubLines(new Set()); }}
                         className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
                       >
                         Supply Library
