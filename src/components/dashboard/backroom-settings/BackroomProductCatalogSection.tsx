@@ -903,7 +903,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
 
       {/* Row 2: Pricing + switches (only when tracked) */}
       {product.is_backroom_tracked && (
-        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.2)]">
+        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/20">
           <div className="flex items-center gap-1">
             <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">$/g</span>
             <input
