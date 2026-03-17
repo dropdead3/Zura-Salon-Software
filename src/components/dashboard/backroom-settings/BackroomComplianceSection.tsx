@@ -3,10 +3,10 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { PlatformTable, PlatformTableBody, PlatformTableCell, PlatformTableHead, PlatformTableHeader, PlatformTableRow } from '@/components/platform/ui/PlatformTable';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -38,9 +38,9 @@ function getDateRange(key: RangeKey): { from: string; to: string } {
 }
 
 function getComplianceBadge(rate: number) {
-  if (rate >= 90) return { variant: 'success' as const, icon: ShieldCheck, label: 'Strong' };
-  if (rate >= 70) return { variant: 'warning' as const, icon: ShieldAlert, label: 'Watch' };
-  return { variant: 'error' as const, icon: ShieldX, label: 'Needs Attention' };
+  if (rate >= 90) return { variant: 'default' as const, icon: ShieldCheck, label: 'Strong' };
+  if (rate >= 70) return { variant: 'secondary' as const, icon: ShieldAlert, label: 'Watch' };
+  return { variant: 'destructive' as const, icon: ShieldX, label: 'Needs Attention' };
 }
 
 export function BackroomComplianceSection() {
@@ -71,12 +71,12 @@ export function BackroomComplianceSection() {
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+          <div className={tokens.card.iconBox}>
+            <ShieldCheck className={tokens.card.icon} />
           </div>
           <div>
             <h2 className={tokens.card.title}>Backroom Compliance</h2>
-            <p className="font-sans text-sm text-[hsl(var(--platform-foreground-muted))]">Track which color appointments are being properly logged in Zura Backroom</p>
+            <p className="font-sans text-sm text-muted-foreground">Track which color appointments are being properly logged in Zura Backroom</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -84,10 +84,10 @@ export function BackroomComplianceSection() {
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>{RANGE_OPTIONS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
-          <PlatformButton variant="outline" size="sm" onClick={() => evaluate.mutate({ date: today })} disabled={evaluate.isPending}>
+          <Button variant="outline" size="sm" onClick={() => evaluate.mutate({ date: today })} disabled={evaluate.isPending}>
             {evaluate.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
             Evaluate Today
-          </PlatformButton>
+          </Button>
         </div>
       </div>
 
@@ -103,66 +103,66 @@ export function BackroomComplianceSection() {
         <>
           {/* Stat Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <PlatformCard variant="default">
-              <PlatformCardContent className="p-4">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" />
-                  <p className="text-[11px] text-[hsl(var(--platform-foreground-muted))] font-display tracking-wider uppercase">Compliance Rate</p>
+                  <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Compliance Rate</p>
                   <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
                 </div>
                 <div className="flex items-end gap-2">
-                  <span className="text-2xl font-display tabular-nums text-[hsl(var(--platform-foreground))]">{summary.complianceRate}%</span>
-                  {badge && <PlatformBadge variant={badge.variant} size="sm">{badge.label}</PlatformBadge>}
+                  <span className={tokens.kpi.value}>{summary.complianceRate}%</span>
+                  {badge && <Badge variant={badge.variant} className="text-xs">{badge.label}</Badge>}
                 </div>
-              </PlatformCardContent>
-            </PlatformCard>
+              </CardContent>
+            </Card>
 
-            <PlatformCard variant="default">
-              <PlatformCardContent className="p-4">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Beaker className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" />
-                  <p className="text-[11px] text-[hsl(var(--platform-foreground-muted))] font-display tracking-wider uppercase">Color Appointments</p>
+                  <Beaker className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Color Appointments</p>
                 </div>
-                <span className="text-2xl font-display tabular-nums text-[hsl(var(--platform-foreground))]">{summary.totalColorAppointments}</span>
-                <p className="text-[10px] text-[hsl(var(--platform-foreground-muted))] mt-1">{summary.compliant} tracked · {summary.missing} missing</p>
-              </PlatformCardContent>
-            </PlatformCard>
+                <span className={tokens.kpi.value}>{summary.totalColorAppointments}</span>
+                <p className="text-[10px] text-muted-foreground mt-1">{summary.compliant} tracked · {summary.missing} missing</p>
+              </CardContent>
+            </Card>
 
-            <PlatformCard variant="default">
-              <PlatformCardContent className="p-4">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" />
-                  <p className="text-[11px] text-[hsl(var(--platform-foreground-muted))] font-display tracking-wider uppercase">Reweigh Rate</p>
+                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Reweigh Rate</p>
                   <MetricInfoTooltip description="Of sessions that exist, how many had bowls reweighed after service." />
                 </div>
-                <span className="text-2xl font-display tabular-nums text-[hsl(var(--platform-foreground))]">{summary.reweighRate}%</span>
-              </PlatformCardContent>
-            </PlatformCard>
+                <span className={tokens.kpi.value}>{summary.reweighRate}%</span>
+              </CardContent>
+            </Card>
 
-            <PlatformCard variant="default">
-              <PlatformCardContent className="p-4">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" />
-                  <p className="text-[11px] text-[hsl(var(--platform-foreground-muted))] font-display tracking-wider uppercase">Repeat Offenders</p>
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Repeat Offenders</p>
                   <MetricInfoTooltip description="Staff with compliance rate below 70%." />
                 </div>
-                <span className="text-2xl font-display tabular-nums text-[hsl(var(--platform-foreground))]">
+                <span className={tokens.kpi.value}>
                   {data?.staffBreakdown.filter((s) => s.complianceRate < 70 && s.total >= 2).length ?? 0}
                 </span>
-              </PlatformCardContent>
-            </PlatformCard>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Trend Chart */}
           {(data?.trend.length ?? 0) >= 2 && (
-            <PlatformCard variant="default">
-              <PlatformCardHeader className="pb-2">
+            <Card>
+              <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <PlatformCardTitle>Compliance Trend</PlatformCardTitle>
+                  <CardTitle className={tokens.card.title}>Compliance Trend</CardTitle>
                   <MetricInfoTooltip description="Daily compliance rate over the selected period." />
                 </div>
-              </PlatformCardHeader>
-              <PlatformCardContent>
+              </CardHeader>
+              <CardContent>
                 <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data!.trend} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
@@ -172,93 +172,93 @@ export function BackroomComplianceSection() {
                           <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-[hsl(var(--platform-border)/0.3)]" />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
                       <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                      <Tooltip formatter={(v: number) => [`${v}%`, 'Compliance']} contentStyle={{ backgroundColor: 'hsl(var(--platform-bg-card))', border: '1px solid hsl(var(--platform-border))', borderRadius: '8px' }} />
+                      <Tooltip formatter={(v: number) => [`${v}%`, 'Compliance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                       <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#complianceGrad)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-              </PlatformCardContent>
-            </PlatformCard>
+              </CardContent>
+            </Card>
           )}
 
           {/* Two-column: Staff Leaderboard + Missing Sessions */}
           <div className="grid md:grid-cols-2 gap-4">
-            <PlatformCard variant="default">
-              <PlatformCardHeader className="pb-2">
+            <Card>
+              <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <PlatformCardTitle>Staff Compliance</PlatformCardTitle>
+                  <CardTitle className={tokens.card.title}>Staff Compliance</CardTitle>
                   <MetricInfoTooltip description="Per-stylist compliance rates, sorted worst to best." />
                 </div>
-              </PlatformCardHeader>
-              <PlatformCardContent>
+              </CardHeader>
+              <CardContent>
                 {(data?.staffBreakdown.length ?? 0) === 0 ? (
-                  <p className="text-sm text-[hsl(var(--platform-foreground-muted))] text-center py-4">No data</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No data</p>
                 ) : (
-                  <PlatformTable>
-                    <PlatformTableHeader>
-                      <PlatformTableRow>
-                        <PlatformTableHead>Stylist</PlatformTableHead>
-                        <PlatformTableHead className="text-right">Total</PlatformTableHead>
-                        <PlatformTableHead className="text-right">Missed</PlatformTableHead>
-                        <PlatformTableHead className="text-right">Rate</PlatformTableHead>
-                      </PlatformTableRow>
-                    </PlatformTableHeader>
-                    <PlatformTableBody>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Stylist</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">Missed</TableHead>
+                        <TableHead className="text-right">Rate</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data!.staffBreakdown.map((s) => {
                         const b = getComplianceBadge(s.complianceRate);
                         return (
-                          <PlatformTableRow
+                          <TableRow
                             key={s.staffUserId}
-                            className={cn('cursor-pointer', staffFilter === s.staffUserId && 'bg-[hsl(var(--platform-bg-hover)/0.5)]')}
+                            className={cn('cursor-pointer', staffFilter === s.staffUserId && 'bg-muted/50')}
                             onClick={() => setStaffFilter(staffFilter === s.staffUserId ? 'all' : s.staffUserId)}
                           >
-                            <PlatformTableCell className="font-medium">{s.staffName}</PlatformTableCell>
-                            <PlatformTableCell className="text-right tabular-nums">{s.total}</PlatformTableCell>
-                            <PlatformTableCell className="text-right tabular-nums">{s.missing}</PlatformTableCell>
-                            <PlatformTableCell className="text-right">
-                              <PlatformBadge variant={b.variant} size="sm">{s.complianceRate}%</PlatformBadge>
-                            </PlatformTableCell>
-                          </PlatformTableRow>
+                            <TableCell className="font-medium">{s.staffName}</TableCell>
+                            <TableCell className="text-right tabular-nums">{s.total}</TableCell>
+                            <TableCell className="text-right tabular-nums">{s.missing}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant={b.variant} className="text-xs">{s.complianceRate}%</Badge>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                    </PlatformTableBody>
-                  </PlatformTable>
+                    </TableBody>
+                  </Table>
                 )}
-              </PlatformCardContent>
-            </PlatformCard>
+              </CardContent>
+            </Card>
 
-            <PlatformCard variant="default">
-              <PlatformCardHeader className="pb-2">
+            <Card>
+              <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <PlatformCardTitle>Missing Sessions</PlatformCardTitle>
+                  <CardTitle className={tokens.card.title}>Missing Sessions</CardTitle>
                   <MetricInfoTooltip description="Color appointments with no mix session recorded." />
                 </div>
-              </PlatformCardHeader>
-              <PlatformCardContent>
+              </CardHeader>
+              <CardContent>
                 {(() => {
                   const missing = data?.items.filter((i) => i.complianceStatus === 'missing') ?? [];
                   if (missing.length === 0) {
-                    return <p className="text-sm text-[hsl(var(--platform-foreground-muted))] text-center py-4">All sessions tracked — great work!</p>;
+                    return <p className="text-sm text-muted-foreground text-center py-4">All sessions tracked — great work!</p>;
                   }
                   return (
                     <div className="space-y-2 max-h-[320px] overflow-y-auto">
                       {missing.slice(0, 20).map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)]">
+                        <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-card/50">
                           <div className="min-w-0">
-                            <p className="font-sans text-sm text-[hsl(var(--platform-foreground))] truncate">{item.serviceName ?? 'Color Service'}</p>
-                            <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] truncate">{item.staffName ?? 'Unknown'} · {item.appointmentDate}</p>
+                            <p className="font-sans text-sm text-foreground truncate">{item.serviceName ?? 'Color Service'}</p>
+                            <p className="font-sans text-xs text-muted-foreground truncate">{item.staffName ?? 'Unknown'} · {item.appointmentDate}</p>
                           </div>
-                          <PlatformBadge variant="error" size="sm">Missing</PlatformBadge>
+                          <Badge variant="destructive" className="text-xs">Missing</Badge>
                         </div>
                       ))}
                     </div>
                   );
                 })()}
-              </PlatformCardContent>
-            </PlatformCard>
+              </CardContent>
+            </Card>
           </div>
         </>
       )}

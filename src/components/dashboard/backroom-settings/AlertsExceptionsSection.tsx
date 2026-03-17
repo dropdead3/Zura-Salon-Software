@@ -3,10 +3,10 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useBackroomAlertRules, useUpsertAlertRule, useDeleteAlertRule, ALERT_RULE_TYPES, SEVERITY_OPTIONS, type BackroomAlertRule } from '@/hooks/backroom/useBackroomAlertRules';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformInput } from '@/components/platform/ui/PlatformInput';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Bell, Plus, Trash2, Zap } from 'lucide-react';
@@ -58,9 +58,9 @@ export function AlertsExceptionsSection() {
     toast.success(`${toCreate.length} recommended rules added.`);
   };
 
-  const severityVariant = (s: string): 'error' | 'warning' | 'outline' => {
-    if (s === 'critical') return 'error';
-    if (s === 'warning') return 'warning';
+  const severityVariant = (s: string): 'destructive' | 'default' | 'secondary' | 'outline' => {
+    if (s === 'critical') return 'destructive';
+    if (s === 'warning') return 'default';
     return 'outline';
   };
 
@@ -71,33 +71,33 @@ export function AlertsExceptionsSection() {
   return (
     <div className="space-y-6">
       <Infotainer id="backroom-alerts-guide" title="Alerts & Exceptions" description="Set up automatic alerts for operational issues — like a stylist skipping the reweigh step, using 50% more product than expected, or running low on stock." icon={<Bell className="h-4 w-4 text-primary" />} />
-      <PlatformCard variant="default">
-        <PlatformCardHeader className="flex flex-row items-center justify-between">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
-              <Bell className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
+            <div className={tokens.card.iconBox}>
+              <Bell className={tokens.card.icon} />
             </div>
             <div>
-              <PlatformCardTitle>Alerts & Exceptions</PlatformCardTitle>
-              <PlatformCardDescription>Define rules that trigger alerts and exception reports.</PlatformCardDescription>
+              <CardTitle className={tokens.card.title}>Alerts & Exceptions</CardTitle>
+              <CardDescription>Define rules that trigger alerts and exception reports.</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {(!rules || rules.length === 0) && (
-              <PlatformButton size="sm" onClick={handleApplyRecommended}>
+              <Button size="sm" onClick={handleApplyRecommended}>
                 <Zap className="w-4 h-4 mr-1.5" /> Use Recommended
-              </PlatformButton>
+              </Button>
             )}
             {!showForm && (
-              <PlatformButton variant="outline" size="sm" onClick={() => setShowForm(true)}>
+              <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
                 <Plus className="w-4 h-4 mr-1.5" /> Add Rule
-              </PlatformButton>
+              </Button>
             )}
           </div>
-        </PlatformCardHeader>
-        <PlatformCardContent className="space-y-3">
+        </CardHeader>
+        <CardContent className="space-y-3">
           {showForm && (
-            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 space-y-3">
+            <div className="rounded-lg border bg-card/50 p-4 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className={tokens.label.default}>Rule Type</label>
@@ -115,7 +115,7 @@ export function AlertsExceptionsSection() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1"><label className={tokens.label.default}>Threshold Value</label><MetricInfoTooltip description="The numeric trigger point. For 'Missing Reweigh' use count; for 'Excess Usage' use percentage." /></div>
-                  <PlatformInput type="number" value={form.threshold_value} onChange={e => setForm(f => ({ ...f, threshold_value: Number(e.target.value) }))} className="mt-1" />
+                  <Input type="number" value={form.threshold_value} onChange={e => setForm(f => ({ ...f, threshold_value: Number(e.target.value) }))} className="mt-1" />
                 </div>
                 <div>
                   <label className={tokens.label.default}>Threshold Unit</label>
@@ -132,17 +132,17 @@ export function AlertsExceptionsSection() {
                 </div>
               </div>
               <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm font-sans text-[hsl(var(--platform-foreground))]">
+                <label className="flex items-center gap-2 text-sm font-sans text-foreground">
                   <Switch checked={form.creates_exception} onCheckedChange={c => setForm(f => ({ ...f, creates_exception: c }))} />
                   Creates Exception
                   <MetricInfoTooltip description="Logs an exception report that managers can review in the Control Tower." />
                 </label>
-                <label className="flex items-center gap-2 text-sm font-sans text-[hsl(var(--platform-foreground))]">
+                <label className="flex items-center gap-2 text-sm font-sans text-foreground">
                   <Switch checked={form.creates_task} onCheckedChange={c => setForm(f => ({ ...f, creates_task: c }))} />
                   Creates Task
                   <MetricInfoTooltip description="Automatically creates an operational task assigned to the relevant manager." />
                 </label>
-                <label className="flex items-center gap-2 text-sm font-sans text-[hsl(var(--platform-foreground))]">
+                <label className="flex items-center gap-2 text-sm font-sans text-foreground">
                   <Switch checked={form.is_active} onCheckedChange={c => setForm(f => ({ ...f, is_active: c }))} />
                   Active
                 </label>
@@ -151,9 +151,9 @@ export function AlertsExceptionsSection() {
                 <label className={tokens.label.default}>Notify Roles</label>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   {NOTIFY_ROLE_OPTIONS.map(role => (
-                    <PlatformBadge
+                    <Badge
                       key={role}
-                      variant={form.notify_roles.includes(role) ? 'primary' : 'outline'}
+                      variant={form.notify_roles.includes(role) ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => {
                         const next = form.notify_roles.includes(role) ? form.notify_roles.filter(r => r !== role) : [...form.notify_roles, role];
@@ -161,13 +161,13 @@ export function AlertsExceptionsSection() {
                       }}
                     >
                       {role.replace('_', ' ')}
-                    </PlatformBadge>
+                    </Badge>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
-                <PlatformButton variant="ghost" size="sm" onClick={resetForm}>Cancel</PlatformButton>
-                <PlatformButton size="sm" onClick={handleSave} disabled={!form.rule_type}>Save Rule</PlatformButton>
+                <Button variant="ghost" size="sm" onClick={resetForm}>Cancel</Button>
+                <Button size="sm" onClick={handleSave} disabled={!form.rule_type}>Save Rule</Button>
               </div>
             </div>
           )}
@@ -177,23 +177,23 @@ export function AlertsExceptionsSection() {
               <Bell className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No alert rules configured</h3>
               <p className={tokens.empty.description}>Add rules to automatically detect operational issues, or use the recommended set to get started quickly.</p>
-              <PlatformButton variant="outline" size="sm" className="mt-2" onClick={handleApplyRecommended}>
+              <Button variant="outline" size="sm" className="mt-2" onClick={handleApplyRecommended}>
                 <Zap className="w-3.5 h-3.5 mr-1.5" /> Use Recommended Rules
-              </PlatformButton>
+              </Button>
             </div>
           ) : (
             rules?.map((rule) => {
               const ruleType = ALERT_RULE_TYPES.find(t => t.value === rule.rule_type);
               return (
-                <div key={rule.id} className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 flex items-center justify-between">
+                <div key={rule.id} className="rounded-lg border bg-card/50 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3 flex-1">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{ruleType?.label || rule.rule_type}</p>
-                        <PlatformBadge variant={severityVariant(rule.severity)}>{rule.severity}</PlatformBadge>
-                        {!rule.is_active && <PlatformBadge variant="outline">Disabled</PlatformBadge>}
+                        <p className={cn(tokens.body.emphasis, 'text-foreground')}>{ruleType?.label || rule.rule_type}</p>
+                        <Badge variant={severityVariant(rule.severity)}>{rule.severity}</Badge>
+                        {!rule.is_active && <Badge variant="outline">Disabled</Badge>}
                       </div>
-                      <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+                      <p className="text-sm text-muted-foreground">
                         Threshold: {rule.threshold_value}{rule.threshold_unit}
                         {rule.creates_exception && ' · Creates exception'}
                         {rule.creates_task && ' · Creates task'}
@@ -203,16 +203,16 @@ export function AlertsExceptionsSection() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={rule.is_active} onCheckedChange={(checked) => upsertRule.mutate({ ...rule, is_active: checked })} />
-                    <PlatformButton variant="ghost" size="icon-sm" onClick={() => deleteRule.mutate(rule.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => deleteRule.mutate(rule.id)} className="h-8 w-8">
                       <Trash2 className="w-4 h-4 text-destructive" />
-                    </PlatformButton>
+                    </Button>
                   </div>
                 </div>
               );
             })
           )}
-        </PlatformCardContent>
-      </PlatformCard>
+        </CardContent>
+      </Card>
     </div>
   );
 }
