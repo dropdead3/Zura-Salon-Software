@@ -13,7 +13,7 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Select, SelectValue, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger } from '@/components/platform/ui/PlatformSelect';
 import { PlatformTable as Table, PlatformTableHeader as TableHeader, PlatformTableBody as TableBody, PlatformTableHead as TableHead, PlatformTableRow as TableRow, PlatformTableCell as TableCell } from '@/components/platform/ui/PlatformTable';
-import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
+import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription, AlertDialog, PlatformAlertDialogContent, PlatformAlertDialogTitle, PlatformAlertDialogDescription, PlatformAlertDialogCancel, AlertDialogAction, AlertDialogFooter, AlertDialogHeader } from '@/components/platform/ui/PlatformDialog';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { Loader2, Search, Package, Plus, Database, Pencil, Trash2, AlertTriangle, Upload, Download, ChevronLeft, ChevronRight, ChevronDown, DollarSign, CheckCircle2, X, MessageSquare, ChevronsUpDown, Clock, RefreshCw, RotateCcw } from 'lucide-react';
@@ -67,6 +67,7 @@ export function SupplyLibraryTab() {
   // localStorage-backed collapse state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [collapsedSubLines, setCollapsedSubLines] = useState<Set<string>>(new Set());
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Helper to build org+brand scoped localStorage key
   const collapseKey = useCallback((type: 'categories' | 'sublines', brand: string) =>
@@ -80,15 +81,33 @@ export function SupplyLibraryTab() {
     localStorage.setItem('supply-library-migrated', '1');
   }, []);
 
+  // Prune localStorage collapse keys if they exceed budget
+  const pruneCollapseKeys = useCallback((maxKeys: number) => {
+    const allKeys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('supply-library-categories::') || k.startsWith('supply-library-sublines::'))) {
+        allKeys.push(k);
+      }
+    }
+    if (allKeys.length <= maxKeys) return;
+    const currentSuffix = `${orgId}::${selectedBrand}`;
+    allKeys
+      .filter((k) => !k.endsWith(currentSuffix))
+      .forEach((k) => localStorage.removeItem(k));
+  }, [orgId, selectedBrand]);
+
   // Persist collapse state to org+brand-scoped localStorage keys
   useEffect(() => {
     if (!selectedBrand) return;
+    pruneCollapseKeys(500);
     localStorage.setItem(collapseKey('categories', selectedBrand), JSON.stringify([...collapsedCategories]));
-  }, [collapsedCategories, selectedBrand, collapseKey]);
+  }, [collapsedCategories, selectedBrand, collapseKey, pruneCollapseKeys]);
   useEffect(() => {
     if (!selectedBrand) return;
+    pruneCollapseKeys(500);
     localStorage.setItem(collapseKey('sublines', selectedBrand), JSON.stringify([...collapsedSubLines]));
-  }, [collapsedSubLines, selectedBrand, collapseKey]);
+  }, [collapsedSubLines, selectedBrand, collapseKey, pruneCollapseKeys]);
 
   const { data: initStatus, isLoading: initLoading } = useSupplyLibraryInitStatus();
   const seedMutation = useSeedSupplyLibrary();
@@ -780,6 +799,25 @@ export function SupplyLibraryTab() {
                       <PlatformButton
                         variant="ghost"
                         size="icon-sm"
+                        onClick={() => setResetConfirmOpen(true)}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </PlatformButton>
+                    </TooltipTrigger>
+                    <TooltipContent>Reset all collapse state</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+                  <PlatformAlertDialogContent>
+                    <AlertDialogHeader>
+                      <PlatformAlertDialogTitle>Reset collapse state?</PlatformAlertDialogTitle>
+                      <PlatformAlertDialogDescription>
+                        This will clear saved collapse/expand preferences for all brands. This action cannot be undone.
+                      </PlatformAlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
+                      <AlertDialogAction
                         onClick={() => {
                           const keysToRemove: string[] = [];
                           for (let i = 0; i < localStorage.length; i++) {
@@ -794,12 +832,11 @@ export function SupplyLibraryTab() {
                           toast.success('Collapse state reset for all brands');
                         }}
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                      </PlatformButton>
-                    </TooltipTrigger>
-                    <TooltipContent>Reset all collapse state</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                        Reset
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </PlatformAlertDialogContent>
+                </AlertDialog>
                 {/* Recently Added filter */}
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
