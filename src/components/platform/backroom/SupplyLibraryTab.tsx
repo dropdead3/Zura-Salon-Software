@@ -1225,14 +1225,18 @@ function AddEditDialog({
             <Label className="font-sans text-xs">Size Options (comma-separated)</Label>
             <Input value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="e.g. 60ml, 120ml" className="font-sans" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="font-sans text-xs">Wholesale Price</Label>
-              <Input type="number" autoCapitalize="off" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0.00" className="font-sans" />
+              <Input type="number" step="0.01" autoCapitalize="off" value={wholesalePrice} onChange={(e) => handleWholesaleChange(e.target.value)} placeholder="0.00" className="font-sans" />
             </div>
             <div className="space-y-1.5">
               <Label className="font-sans text-xs">Markup %</Label>
-              <Input type="number" autoCapitalize="off" value={markupPct} onChange={(e) => setMarkupPct(e.target.value)} placeholder="0" className="font-sans" />
+              <Input type="number" step="1" autoCapitalize="off" value={markupPct} onChange={(e) => handleMarkupChange(e.target.value)} placeholder="0" className="font-sans" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Retail Price</Label>
+              <Input type="number" step="0.01" autoCapitalize="off" value={retailPrice} onChange={(e) => handleRetailChange(e.target.value)} placeholder="0.00" className="font-sans" />
             </div>
           </div>
         </div>
