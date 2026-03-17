@@ -7,9 +7,9 @@ import { useServiceAllowancePolicies } from '@/hooks/billing/useServiceAllowance
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -129,75 +129,75 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
       {/* Auto-detect CTA */}
       {suggestedServices.length > 0 && !showSuggested && (
-        <Card className={cn(tokens.card.wrapper, 'border-primary/30 bg-primary/5')}>
-          <CardContent className="py-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Zap className="w-5 h-5 text-primary" />
+        <PlatformCard variant="default" className="border-[hsl(var(--platform-primary)/0.3)]">
+          <PlatformCardContent className="py-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-primary)/0.15)] flex items-center justify-center shrink-0">
+              <Zap className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={tokens.body.emphasis}>Auto-detected {suggestedServices.length} color/chemical services</p>
-              <p className={tokens.body.muted}>Zura identified services that likely need backroom tracking based on their names.</p>
+              <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>Auto-detected {suggestedServices.length} color/chemical services</p>
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Zura identified services that likely need backroom tracking based on their names.</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="outline" size="sm" className="font-sans" onClick={() => setShowSuggested(true)}>
+              <PlatformButton variant="outline" size="sm" onClick={() => setShowSuggested(true)}>
                 Review
-              </Button>
-              <Button size="sm" className="font-sans" onClick={() => bulkTrackMutation.mutate(suggestedServices.map(s => s.id))}>
+              </PlatformButton>
+              <PlatformButton size="sm" onClick={() => bulkTrackMutation.mutate(suggestedServices.map(s => s.id))}>
                 Track All
-              </Button>
+              </PlatformButton>
             </div>
-          </CardContent>
-        </Card>
+          </PlatformCardContent>
+        </PlatformCard>
       )}
 
       {/* Suggested services detail */}
       {showSuggested && suggestedServices.length > 0 && (
-        <Card className={tokens.card.wrapper}>
-          <CardHeader>
+        <PlatformCard variant="default">
+          <PlatformCardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className={tokens.card.title}>Suggested Services</CardTitle>
+              <PlatformCardTitle>Suggested Services</PlatformCardTitle>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="font-sans" onClick={() => setShowSuggested(false)}>Dismiss</Button>
-                <Button size="sm" className="font-sans" onClick={() => bulkTrackMutation.mutate(suggestedServices.map(s => s.id))}>
+                <PlatformButton variant="ghost" size="sm" onClick={() => setShowSuggested(false)}>Dismiss</PlatformButton>
+                <PlatformButton size="sm" onClick={() => bulkTrackMutation.mutate(suggestedServices.map(s => s.id))}>
                   Track All {suggestedServices.length}
-                </Button>
+                </PlatformButton>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-1">
+          </PlatformCardHeader>
+          <PlatformCardContent className="space-y-1">
             {suggestedServices.map((service) => (
-              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-[hsl(var(--platform-primary)/0.2)] bg-[hsl(var(--platform-primary)/0.05)] p-3">
                 <Switch
                   checked={false}
                   onCheckedChange={() => toggleTracking.mutate({ id: service.id, tracked: true })}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-sans font-medium truncate">{service.name}</p>
-                  {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                  <p className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate">{service.name}</p>
+                  {service.category && <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{service.category}</span>}
                 </div>
-                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Suggested</Badge>
+                <PlatformBadge variant="primary" size="sm">Suggested</PlatformBadge>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </PlatformCardContent>
+        </PlatformCard>
       )}
 
       {/* Tracked services */}
-      <Card className={tokens.card.wrapper}>
-        <CardHeader>
+      <PlatformCard variant="default">
+        <PlatformCardHeader>
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Wrench className={tokens.card.icon} />
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+              <Wrench className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Tracked Services</CardTitle>
-              <CardDescription className={tokens.body.muted}>
+              <PlatformCardTitle>Tracked Services</PlatformCardTitle>
+              <PlatformCardDescription>
                 Services with backroom tracking enabled. Configure components and workflow options.
-              </CardDescription>
+              </PlatformCardDescription>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-2">
           {tracked.length === 0 ? (
             <div className={tokens.empty.container}>
               <Wrench className={tokens.empty.icon} />
@@ -206,32 +206,32 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
             </div>
           ) : (
             tracked.map((service) => (
-              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-border p-3">
+              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-3">
                 <Switch
                   checked
                   onCheckedChange={() => toggleTracking.mutate({ id: service.id, tracked: false })}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-sans font-medium truncate">{service.name}</p>
+                  <p className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate">{service.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                    {service.category && <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{service.category}</span>}
                     {(() => {
                       const policy = allowancePolicies?.find(p => p.service_id === service.id);
-                      if (!policy) return <span className="text-[10px] text-muted-foreground/60 italic">No allowance set</span>;
+                      if (!policy) return <span className="text-[10px] text-[hsl(var(--platform-foreground-subtle))] italic">No allowance set</span>;
                       if ((policy as any).billing_mode === 'parts_and_labor') {
-                        return <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Parts & Labor</Badge>;
+                        return <PlatformBadge variant="primary" size="sm">Parts & Labor</PlatformBadge>;
                       }
                       return (
-                        <Badge variant="secondary" className="text-[10px]">
+                        <PlatformBadge variant="secondary" size="sm">
                           {policy.included_allowance_qty}{policy.allowance_unit} included · ${policy.overage_rate}/{policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit}
-                        </Badge>
+                        </PlatformBadge>
                       );
                     })()}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="flex items-center gap-1">
-                    <label className="text-[10px] text-muted-foreground whitespace-nowrap">Asst. Prep</label>
+                    <label className="text-[10px] text-[hsl(var(--platform-foreground-muted))] whitespace-nowrap">Asst. Prep</label>
                     <MetricInfoTooltip description="Allows assistants to pre-mix bowls for this service before the stylist arrives." />
                     <Switch
                       checked={service.assistant_prep_allowed}
@@ -240,7 +240,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     />
                   </div>
                   <div className="flex items-center gap-1">
-                    <label className="text-[10px] text-muted-foreground whitespace-nowrap">Mix Assist</label>
+                    <label className="text-[10px] text-[hsl(var(--platform-foreground-muted))] whitespace-nowrap">Mix Assist</label>
                     <MetricInfoTooltip description="Enables AI-powered formula suggestions when mixing for this service." />
                     <Switch
                       checked={service.smart_mix_assist_enabled}
@@ -250,14 +250,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   </div>
                   <div className="flex items-center gap-0.5">
                     <MetricInfoTooltip description="Map which tracked products are consumed during this service." />
-                    <Button
+                    <PlatformButton
                       variant="outline"
                       size="sm"
                       onClick={() => setSelectedServiceId(service.id)}
-                      className="text-xs font-sans"
                     >
                       Components
-                    </Button>
+                    </PlatformButton>
                   </div>
                 </div>
               </div>
@@ -266,42 +265,42 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
           {/* Next step hint */}
           {onNavigate && tracked.length > 0 && (
-            <div className="flex justify-end pt-2 border-t border-border/40">
-              <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('recipes')}>
+            <div className="flex justify-end pt-2 border-t border-[hsl(var(--platform-border)/0.3)]">
+              <PlatformButton variant="ghost" size="sm" className="text-xs text-[hsl(var(--platform-foreground-muted))]" onClick={() => onNavigate('recipes')}>
                 Next: Recipe Baselines <ArrowRight className="w-3 h-3 ml-1" />
-              </Button>
+              </PlatformButton>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
 
       {/* Untracked services */}
       {untracked.length > 0 && (
-        <Card className={tokens.card.wrapper}>
-          <CardHeader>
-            <CardTitle className={tokens.card.title}>Available Services</CardTitle>
-            <CardDescription className={tokens.body.muted}>
+        <PlatformCard variant="default">
+          <PlatformCardHeader>
+            <PlatformCardTitle>Available Services</PlatformCardTitle>
+            <PlatformCardDescription>
               Enable backroom tracking for these services.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1">
+            </PlatformCardDescription>
+          </PlatformCardHeader>
+          <PlatformCardContent className="space-y-1">
             {untracked.map((service) => (
-              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-border/40 p-3 bg-muted/20">
+              <div key={service.id} className="flex items-center gap-4 rounded-lg border border-[hsl(var(--platform-border)/0.3)] p-3 bg-[hsl(var(--platform-bg-hover)/0.2)]">
                 <Switch
                   checked={false}
                   onCheckedChange={() => toggleTracking.mutate({ id: service.id, tracked: true })}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-sans text-muted-foreground truncate">{service.name}</p>
-                  {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                  <p className="text-sm font-sans text-[hsl(var(--platform-foreground-muted))] truncate">{service.name}</p>
+                  {service.category && <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{service.category}</span>}
                 </div>
                 {isColorOrChemicalService(service.name, service.category) && (
-                  <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Suggested</Badge>
+                  <PlatformBadge variant="primary" size="sm">Suggested</PlatformBadge>
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </PlatformCardContent>
+        </PlatformCard>
       )}
 
       {/* Component mapping dialog */}
@@ -364,15 +363,15 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
           ) : (
             <>
               {(components || []).map((comp) => (
-                <div key={comp.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
+                <div key={comp.id} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-sans font-medium truncate">
+                    <p className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate">
                       {backroomProducts?.find((p) => p.id === comp.product_id)?.name || comp.product_id}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge variant="outline" className="text-[10px]">{comp.component_role}</Badge>
+                      <PlatformBadge variant="outline" size="sm">{comp.component_role}</PlatformBadge>
                       {comp.estimated_quantity && (
-                        <span className="text-[10px] text-muted-foreground">{comp.estimated_quantity}{comp.unit}</span>
+                        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">{comp.estimated_quantity}{comp.unit}</span>
                       )}
                     </div>
                   </div>
@@ -397,14 +396,14 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button
+                  <PlatformButton
                     variant="ghost"
-                    size="sm"
+                    size="icon-sm"
                     onClick={() => deleteComponent.mutate(comp.id)}
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    className="text-[hsl(var(--platform-foreground-muted))] hover:text-destructive"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </PlatformButton>
                 </div>
               ))}
 
@@ -430,16 +429,16 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
                   </SelectContent>
                 </Select>
               ) : (
-                <Button
+                <PlatformButton
                   variant="outline"
                   size="sm"
                   onClick={() => setAddingProduct(true)}
-                  className="w-full font-sans"
+                  className="w-full"
                   disabled={availableProducts.length === 0}
                 >
                   <Plus className="w-3.5 h-3.5 mr-1.5" />
                   {availableProducts.length === 0 ? 'No available products' : 'Add Component'}
-                </Button>
+                </PlatformButton>
               )}
             </>
           )}

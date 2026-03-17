@@ -4,10 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceRecipeBaselines, useUpsertRecipeBaseline, useDeleteRecipeBaseline } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, BarChart3, Plus, Trash2, ArrowRight } from 'lucide-react';
@@ -61,33 +61,33 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
         description="Set the expected product quantities per service — e.g. 'A full highlight uses ~30g lightener + 60ml developer.' Powers Smart Mix Assist suggestions and flags when a stylist uses significantly more or less than expected."
         icon={<BarChart3 className="h-4 w-4 text-primary" />}
       />
-      <Card className={tokens.card.wrapper}>
-        <CardHeader>
+      <PlatformCard variant="default">
+        <PlatformCardHeader>
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <BarChart3 className={tokens.card.icon} />
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+                <PlatformCardTitle>Recipe Baselines</PlatformCardTitle>
                 <MetricInfoTooltip description="The expected amount of each product for a standard application. Zura flags deviations beyond the variance threshold." />
               </div>
-              <CardDescription className={tokens.body.muted}>
+              <PlatformCardDescription>
                 Define expected product usage per service. Powers Smart Mix Assist and variance detection.
-              </CardDescription>
+              </PlatformCardDescription>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-2">
           {(services || []).length === 0 ? (
             <div className={tokens.empty.container}>
               <BarChart3 className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No tracked services</h3>
               <p className={tokens.empty.description}>Products → Services → then Baselines. Enable backroom tracking on services first.</p>
               {onNavigate && (
-                <Button variant="outline" size="sm" className="font-sans mt-2" onClick={() => onNavigate('services')}>
+                <PlatformButton variant="outline" size="sm" className="mt-2" onClick={() => onNavigate('services')}>
                   Go to Service Tracking
-                </Button>
+                </PlatformButton>
               )}
             </div>
           ) : (
@@ -98,31 +98,31 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
                   <button
                     key={service.id}
                     onClick={() => setSelectedServiceId(service.id)}
-                    className="flex items-center gap-3 rounded-lg border border-border p-3 w-full text-left hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-3 rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-3 w-full text-left hover:bg-[hsl(var(--platform-bg-hover)/0.5)] transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-sans font-medium truncate">{service.name}</p>
-                      {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
+                      <p className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate">{service.name}</p>
+                      {service.category && <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{service.category}</span>}
                     </div>
-                    <Badge variant={count > 0 ? 'default' : 'outline'} className="text-xs shrink-0">
+                    <PlatformBadge variant={count > 0 ? 'primary' : 'outline'} className="text-xs shrink-0">
                       {count} baseline{count !== 1 ? 's' : ''}
-                    </Badge>
+                    </PlatformBadge>
                   </button>
                 );
               })}
 
               {/* Next step hint */}
               {onNavigate && (
-                <div className="flex justify-end pt-2 border-t border-border/40">
-                  <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('allowances')}>
+                <div className="flex justify-end pt-2 border-t border-[hsl(var(--platform-border)/0.3)]">
+                  <PlatformButton variant="ghost" size="sm" className="text-xs text-[hsl(var(--platform-foreground-muted))]" onClick={() => onNavigate('allowances')}>
                     Next: Allowances & Billing <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
+                  </PlatformButton>
                 </div>
               )}
             </>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
 
       {selectedServiceId && (
         <RecipeBaselineDialog
@@ -193,21 +193,21 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
           ) : (
             <>
               {(baselines || []).map((b) => (
-                <div key={b.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
+                <div key={b.id} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--platform-border)/0.5)] p-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-sans font-medium truncate">
+                    <p className="text-sm font-sans font-medium text-[hsl(var(--platform-foreground))] truncate">
                       {products?.find((p) => p.id === b.product_id)?.name || 'Unknown'}
                     </p>
-                    <span className="text-xs text-muted-foreground">{b.expected_quantity}{b.unit}</span>
+                    <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{b.expected_quantity}{b.unit}</span>
                   </div>
-                  <Button
+                  <PlatformButton
                     variant="ghost"
-                    size="sm"
+                    size="icon-sm"
                     onClick={() => deleteBaseline.mutate(b.id)}
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    className="text-[hsl(var(--platform-foreground-muted))] hover:text-destructive"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </PlatformButton>
                 </div>
               ))}
 
@@ -222,7 +222,7 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
+                <PlatformInput
                   type="number"
                   placeholder="Qty"
                   value={newQty}
@@ -239,9 +239,9 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button size="sm" onClick={handleAdd} disabled={!newProductId || !newQty}>
+                <PlatformButton size="sm" onClick={handleAdd} disabled={!newProductId || !newQty}>
                   <Plus className="w-3.5 h-3.5" />
-                </Button>
+                </PlatformButton>
               </div>
             </>
           )}
