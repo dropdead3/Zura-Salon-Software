@@ -351,7 +351,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
         organization_id: string; is_active: boolean;
       }> = [];
 
-      libraryItems.forEach((item) => {
+      brandItems.forEach((item) => {
         getItemKeys(item).forEach(({ key, size }) => {
           if (!selected.has(key)) return;
           itemsToInsert.push({
