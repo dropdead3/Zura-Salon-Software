@@ -26,6 +26,7 @@ import { useAchievements } from '@/hooks/useAchievements';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AchievementNotificationToast } from '@/components/achievements/AchievementNotificationToast';
 import { Bell, DollarSign, Loader2, Sparkles, Users, User, MapPin, X, Target } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   AlertDialog,
   AlertDialogAction,
