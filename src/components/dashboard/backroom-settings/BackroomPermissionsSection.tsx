@@ -3,9 +3,9 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
 import { Loader2, Shield, Save } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -57,7 +57,6 @@ const PERMISSIONS = [
   { key: 'configure_settings', label: 'Configure Settings', group: 'Operations' },
 ] as const;
 
-// Default permissions: owners get everything, managers get most
 const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   owner: PERMISSIONS.map(p => p.key),
   manager: PERMISSIONS.filter(p => p.key !== 'configure_settings').map(p => p.key),
@@ -78,68 +77,49 @@ export function BackroomPermissionsSection() {
   const savedPerms = (setting?.value || {}) as Record<string, string[]>;
   const [perms, setPerms] = useState<Record<string, string[]> | null>(null);
 
-  // Initialize from saved or defaults
   const matrix = useMemo(() => {
     if (perms) return perms;
     const merged: Record<string, string[]> = {};
-    for (const role of ROLES) {
-      merged[role.key] = savedPerms[role.key] || DEFAULT_PERMISSIONS[role.key] || [];
-    }
+    for (const role of ROLES) { merged[role.key] = savedPerms[role.key] || DEFAULT_PERMISSIONS[role.key] || []; }
     return merged;
   }, [perms, savedPerms]);
 
   const toggle = (role: string, permission: string) => {
     const current = matrix[role] || [];
-    const next = current.includes(permission)
-      ? current.filter(p => p !== permission)
-      : [...current, permission];
+    const next = current.includes(permission) ? current.filter(p => p !== permission) : [...current, permission];
     setPerms({ ...matrix, [role]: next });
   };
 
   const handleSave = () => {
     if (!orgId) return;
-    upsert.mutate({
-      organization_id: orgId,
-      setting_key: 'backroom_permissions',
-      setting_value: matrix as Record<string, unknown>,
-    }, { onSuccess: () => setPerms(null) });
+    upsert.mutate({ organization_id: orgId, setting_key: 'backroom_permissions', setting_value: matrix as Record<string, unknown> }, { onSuccess: () => setPerms(null) });
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className={tokens.loading.spinner} />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
 
   const groups = [...new Set(PERMISSIONS.map(p => p.group))];
 
   return (
     <div className="space-y-6">
-      <Infotainer
-        id="backroom-permissions-guide"
-        title="Backroom Permissions"
-        description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability."
-        icon={<Shield className="h-4 w-4 text-primary" />}
-      />
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Infotainer id="backroom-permissions-guide" title="Backroom Permissions" description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
+      <PlatformCard variant="default">
+        <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Shield className={tokens.card.icon} />
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+              <Shield className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Backroom Permissions</CardTitle>
-              <CardDescription className={tokens.body.muted}>Control which roles can access backroom features.</CardDescription>
+              <PlatformCardTitle>Backroom Permissions</PlatformCardTitle>
+              <PlatformCardDescription>Control which roles can access backroom features.</PlatformCardDescription>
             </div>
           </div>
-          <Button size={tokens.button.card} className={tokens.button.cardAction} onClick={handleSave} disabled={!perms || upsert.isPending}>
-            <Save className="w-4 h-4 mr-1.5" />
-            Save
-          </Button>
-        </CardHeader>
-        <CardContent>
+          <PlatformButton size="sm" onClick={handleSave} disabled={!perms || upsert.isPending}>
+            <Save className="w-4 h-4 mr-1.5" /> Save
+          </PlatformButton>
+        </PlatformCardHeader>
+        <PlatformCardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -159,7 +139,7 @@ export function BackroomPermissionsSection() {
                       </td>
                     </tr>
                     {PERMISSIONS.filter(p => p.group === group).map(perm => (
-                      <tr key={perm.key} className="border-b border-border/30">
+                      <tr key={perm.key} className="border-b border-[hsl(var(--platform-border)/0.3)]">
                         <td className={cn(tokens.body.default, 'py-2.5 pr-4')}>
                           <span className="flex items-center gap-1">
                             {perm.label}
@@ -168,11 +148,7 @@ export function BackroomPermissionsSection() {
                         </td>
                         {ROLES.map(role => (
                           <td key={role.key} className="text-center py-2.5">
-                            <Checkbox
-                              checked={(matrix[role.key] || []).includes(perm.key)}
-                              onCheckedChange={() => toggle(role.key, perm.key)}
-                              disabled={role.key === 'owner'}
-                            />
+                            <Checkbox checked={(matrix[role.key] || []).includes(perm.key)} onCheckedChange={() => toggle(role.key, perm.key)} disabled={role.key === 'owner'} />
                           </td>
                         ))}
                       </tr>
@@ -182,11 +158,11 @@ export function BackroomPermissionsSection() {
               </tbody>
             </table>
           </div>
-          <p className={cn(tokens.body.muted, 'mt-4')}>
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-4">
             Owner permissions cannot be modified. Changes apply to all backroom features across locations.
           </p>
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
     </div>
   );
 }

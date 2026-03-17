@@ -4,9 +4,9 @@ import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/u
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Package, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,129 +40,108 @@ export function InventoryReplenishmentSection() {
   const upsertAlerts = useUpsertInventoryAlertSettings();
 
   const [config, setConfig] = useState<InventoryConfig | null>(null);
-  const current: InventoryConfig = config ?? {
-    ...DEFAULT_CONFIG,
-    ...(setting?.value as Partial<InventoryConfig> || {}),
-  };
+  const current: InventoryConfig = config ?? { ...DEFAULT_CONFIG, ...(setting?.value as Partial<InventoryConfig> || {}) };
 
-  const update = (key: keyof InventoryConfig, value: any) => {
-    setConfig({ ...current, [key]: value });
-  };
+  const update = (key: keyof InventoryConfig, value: any) => { setConfig({ ...current, [key]: value }); };
 
   const handleSave = () => {
     if (!orgId) return;
-    upsert.mutate({
-      organization_id: orgId,
-      setting_key: 'inventory_config',
-      setting_value: current as unknown as Record<string, unknown>,
-    }, { onSuccess: () => setConfig(null) });
+    upsert.mutate({ organization_id: orgId, setting_key: 'inventory_config', setting_value: current as unknown as Record<string, unknown> }, { onSuccess: () => setConfig(null) });
   };
 
   if (isLoading || alertLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className={tokens.loading.spinner} />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
 
   return (
     <div className="space-y-6">
-      <Infotainer
-        id="backroom-inventory-guide"
-        title="Inventory & Replenishment"
-        description="Control how Zura monitors stock levels, triggers reorder alerts, and forecasts demand based on upcoming appointments."
-        icon={<Package className="h-4 w-4 text-primary" />}
-      />
-      {/* General Inventory Settings */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Infotainer id="backroom-inventory-guide" title="Inventory & Replenishment" description="Control how Zura monitors stock levels, triggers reorder alerts, and forecasts demand based on upcoming appointments." icon={<Package className="h-4 w-4 text-primary" />} />
+      <PlatformCard variant="default">
+        <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Package className={tokens.card.icon} />
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+              <Package className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Inventory & Replenishment</CardTitle>
-              <CardDescription className={tokens.body.muted}>Configure inventory tracking, reordering, and replenishment policies.</CardDescription>
+              <PlatformCardTitle>Inventory & Replenishment</PlatformCardTitle>
+              <PlatformCardDescription>Configure inventory tracking, reordering, and replenishment policies.</PlatformCardDescription>
             </div>
           </div>
-          <Button size={tokens.button.card} className={tokens.button.cardAction} onClick={handleSave} disabled={!config || upsert.isPending}>
-            <Save className="w-4 h-4 mr-1.5" />
-            Save
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
+          <PlatformButton size="sm" onClick={handleSave} disabled={!config || upsert.isPending}>
+            <Save className="w-4 h-4 mr-1.5" /> Save
+          </PlatformButton>
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-4">
+          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 flex items-center justify-between">
             <div>
-              <p className={tokens.body.emphasis}>Inventory Tracking</p>
-              <p className={tokens.body.muted}>Enable automatic inventory tracking from backroom sessions</p>
+              <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>Inventory Tracking</p>
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Enable automatic inventory tracking from backroom sessions</p>
             </div>
             <Switch checked={current.tracking_enabled} onCheckedChange={v => update('tracking_enabled', v)} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className={cn(tokens.card.inner, 'p-4')}>
+            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4">
               <div className="flex items-center gap-1"><label className={tokens.label.default}>Reorder Cycle (days)</label><MetricInfoTooltip description="How often Zura checks if any products need reordering." /></div>
-              <p className={cn(tokens.body.muted, 'mb-2')}>How often to evaluate inventory for reordering</p>
-              <Input type="number" value={current.reorder_cycle_days} onChange={e => update('reorder_cycle_days', Number(e.target.value))} />
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mb-2">How often to evaluate inventory for reordering</p>
+              <PlatformInput type="number" value={current.reorder_cycle_days} onChange={e => update('reorder_cycle_days', Number(e.target.value))} />
             </div>
-            <div className={cn(tokens.card.inner, 'p-4')}>
+            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4">
               <div className="flex items-center gap-1"><label className={tokens.label.default}>Default Lead Time (days)</label><MetricInfoTooltip description="Expected days between placing an order and receiving delivery." /></div>
-              <p className={cn(tokens.body.muted, 'mb-2')}>Expected delivery time from suppliers</p>
-              <Input type="number" value={current.default_lead_time_days} onChange={e => update('default_lead_time_days', Number(e.target.value))} />
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mb-2">Expected delivery time from suppliers</p>
+              <PlatformInput type="number" value={current.default_lead_time_days} onChange={e => update('default_lead_time_days', Number(e.target.value))} />
             </div>
-            <div className={cn(tokens.card.inner, 'p-4')}>
+            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4">
               <label className={tokens.label.default}>Low Stock Threshold (%)</label>
-              <p className={cn(tokens.body.muted, 'mb-2')}>Alert when stock falls below this percentage of par level</p>
-              <Input type="number" min={0} max={100} value={current.low_stock_threshold_pct} onChange={e => update('low_stock_threshold_pct', Number(e.target.value))} />
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mb-2">Alert when stock falls below this percentage of par level</p>
+              <PlatformInput type="number" min={0} max={100} value={current.low_stock_threshold_pct} onChange={e => update('low_stock_threshold_pct', Number(e.target.value))} />
             </div>
-            <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
+            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1"><p className={tokens.body.emphasis}>Forecast Participation</p><MetricInfoTooltip description="Uses upcoming appointment data to predict demand and adjust reorder quantities." /></div>
-                <p className={tokens.body.muted}>Include demand forecasting in reorder calculations</p>
+                <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>Forecast Participation</p><MetricInfoTooltip description="Uses upcoming appointment data to predict demand and adjust reorder quantities." /></div>
+                <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Include demand forecasting in reorder calculations</p>
               </div>
               <Switch checked={current.forecast_participation} onCheckedChange={v => update('forecast_participation', v)} />
             </div>
           </div>
 
-          <div className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
+          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 flex items-center justify-between">
             <div>
-              <p className={tokens.body.emphasis}>Stockout Alerts</p>
-              <p className={tokens.body.muted}>Receive alerts when products are completely out of stock</p>
+              <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>Stockout Alerts</p>
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Receive alerts when products are completely out of stock</p>
             </div>
             <Switch checked={current.stockout_alerts_enabled} onCheckedChange={v => update('stockout_alerts_enabled', v)} />
           </div>
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
 
-      {/* Alert Settings Summary */}
       {alertSettings && (
-        <Card>
-          <CardHeader>
-            <CardTitle className={tokens.card.title}>Inventory Alert Configuration</CardTitle>
-            <CardDescription className={tokens.body.muted}>Summary of current inventory alert settings.</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <PlatformCard variant="default">
+          <PlatformCardHeader>
+            <PlatformCardTitle>Inventory Alert Configuration</PlatformCardTitle>
+            <PlatformCardDescription>Summary of current inventory alert settings.</PlatformCardDescription>
+          </PlatformCardHeader>
+          <PlatformCardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className={tokens.label.tiny}>Alerts Enabled</p>
-                <p className={tokens.body.emphasis}>{alertSettings.enabled ? 'Yes' : 'No'}</p>
+                <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{alertSettings.enabled ? 'Yes' : 'No'}</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Default Threshold</p>
-                <p className={tokens.body.emphasis}>{alertSettings.default_threshold_pct}%</p>
+                <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{alertSettings.default_threshold_pct}%</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Auto-Create PO</p>
-                <p className={tokens.body.emphasis}>{alertSettings.auto_create_draft_po ? 'Yes' : 'No'}</p>
+                <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{alertSettings.auto_create_draft_po ? 'Yes' : 'No'}</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Auto-Reorder</p>
-                <p className={tokens.body.emphasis}>{alertSettings.auto_reorder_enabled ? alertSettings.auto_reorder_mode : 'Disabled'}</p>
+                <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{alertSettings.auto_reorder_enabled ? alertSettings.auto_reorder_mode : 'Disabled'}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </PlatformCardContent>
+        </PlatformCard>
       )}
     </div>
   );

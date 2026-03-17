@@ -11,12 +11,12 @@ import {
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PlatformCard, PlatformCardContent, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription } from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Infotainer } from '@/components/ui/Infotainer';
@@ -27,7 +27,7 @@ const HEALTH_DOT: Record<string, string> = {
   green: 'bg-emerald-500',
   yellow: 'bg-amber-400',
   red: 'bg-destructive',
-  gray: 'bg-muted-foreground/40',
+  gray: 'bg-[hsl(var(--platform-foreground-muted)/0.4)]',
 };
 
 interface Props {
@@ -57,117 +57,76 @@ export function StationsHardwareSection({ onNavigate }: Props) {
 
   const handleSave = () => {
     if (!orgId || !form.station_name || !form.location_id) return;
-
     if (editingId) {
-      updateStation.mutate({
-        id: editingId,
-        station_name: form.station_name,
-        assigned_device_id: form.assigned_device_id || null,
-        assigned_scale_id: form.assigned_scale_id || null,
-      }, { onSuccess: resetForm });
+      updateStation.mutate({ id: editingId, station_name: form.station_name, assigned_device_id: form.assigned_device_id || null, assigned_scale_id: form.assigned_scale_id || null }, { onSuccess: resetForm });
     } else {
-      createStation.mutate({
-        organization_id: orgId,
-        location_id: form.location_id,
-        station_name: form.station_name,
-      }, { onSuccess: resetForm });
+      createStation.mutate({ organization_id: orgId, location_id: form.location_id, station_name: form.station_name }, { onSuccess: resetForm });
     }
   };
 
-  const handleEdit = (station: BackroomStation) => {
-    setEditingStation(station);
-    setShowWizard(true);
-  };
-
-  const handleWizardClose = () => {
-    setShowWizard(false);
-    setEditingStation(null);
-  };
+  const handleEdit = (station: BackroomStation) => { setEditingStation(station); setShowWizard(true); };
+  const handleWizardClose = () => { setShowWizard(false); setEditingStation(null); };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className={tokens.loading.spinner} />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
 
   if (showWizard) {
-    return (
-      <div className="space-y-6">
-        <StationHardwareWizard
-          onClose={handleWizardClose}
-          initialStation={editingStation ?? undefined}
-        />
-      </div>
-    );
+    return <div className="space-y-6"><StationHardwareWizard onClose={handleWizardClose} initialStation={editingStation ?? undefined} /></div>;
   }
 
   return (
     <div className="space-y-6">
-      <Infotainer
-        id="backroom-stations-guide"
-        title="Stations & Hardware"
-        description="Register your physical mixing stations and optionally pair Bluetooth scales. Each station is tied to a location so Zura knows where mixing happens."
-        icon={<Monitor className="h-4 w-4 text-primary" />}
-      />
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Infotainer id="backroom-stations-guide" title="Stations & Hardware" description="Register your physical mixing stations and optionally pair Bluetooth scales. Each station is tied to a location so Zura knows where mixing happens." icon={<Monitor className="h-4 w-4 text-primary" />} />
+      <PlatformCard variant="default">
+        <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Monitor className={tokens.card.icon} />
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
+              <Monitor className="w-5 h-5 text-[hsl(var(--platform-primary))]" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Mixing Stations</CardTitle>
-              <CardDescription className={tokens.body.muted}>Manage backroom mixing stations and connected hardware.</CardDescription>
+              <PlatformCardTitle>Mixing Stations</PlatformCardTitle>
+              <PlatformCardDescription>Manage backroom mixing stations and connected hardware.</PlatformCardDescription>
             </div>
           </div>
           {!showForm && (
             <div className="flex items-center gap-2">
-              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="default" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
-                <Wand2 className="w-4 h-4 mr-1.5" />
-                Setup Station
-              </Button>
-              <Button size={tokens.button.card} className={tokens.button.cardAction} variant="outline" onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-1.5" />
-                Quick Add
-              </Button>
+              <PlatformButton variant="default" size="sm" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
+                <Wand2 className="w-4 h-4 mr-1.5" /> Setup Station
+              </PlatformButton>
+              <PlatformButton variant="outline" size="sm" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-1.5" /> Quick Add
+              </PlatformButton>
             </div>
           )}
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-4">
           {showForm && (
-            <div className={cn(tokens.card.inner, 'p-4 space-y-3')}>
+            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className={tokens.label.default}>Station Name</label>
-                  <Input value={form.station_name} onChange={(e) => setForm(f => ({ ...f, station_name: e.target.value }))} placeholder="e.g. Station 1" className="mt-1" />
+                  <PlatformInput value={form.station_name} onChange={(e) => setForm(f => ({ ...f, station_name: e.target.value }))} placeholder="e.g. Station 1" className="mt-1" />
                 </div>
                 <div>
                   <label className={tokens.label.default}>Location</label>
                   <Select value={form.location_id} onValueChange={(v) => setForm(f => ({ ...f, location_id: v }))} disabled={!!editingId}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select location" /></SelectTrigger>
-                    <SelectContent>
-                      {locations?.map(loc => (
-                        <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                      ))}
-                    </SelectContent>
+                    <SelectContent>{locations?.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
                   <div className="flex items-center gap-1"><label className={tokens.label.default}>Device ID (optional)</label><MetricInfoTooltip description="Identifier for the tablet or device at this station (e.g. 'tablet-001')." /></div>
-                  <Input value={form.assigned_device_id} onChange={(e) => setForm(f => ({ ...f, assigned_device_id: e.target.value }))} placeholder="e.g. tablet-001" className="mt-1" />
+                  <PlatformInput value={form.assigned_device_id} onChange={(e) => setForm(f => ({ ...f, assigned_device_id: e.target.value }))} placeholder="e.g. tablet-001" className="mt-1" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1"><label className={tokens.label.default}>Scale ID (optional)</label><MetricInfoTooltip description="Identifier for the Bluetooth scale paired to this station." /></div>
-                  <Input value={form.assigned_scale_id} onChange={(e) => setForm(f => ({ ...f, assigned_scale_id: e.target.value }))} placeholder="e.g. scale-001" className="mt-1" />
+                  <PlatformInput value={form.assigned_scale_id} onChange={(e) => setForm(f => ({ ...f, assigned_scale_id: e.target.value }))} placeholder="e.g. scale-001" className="mt-1" />
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="ghost" size={tokens.button.card} onClick={resetForm}>Cancel</Button>
-                <Button size={tokens.button.card} onClick={handleSave} disabled={!form.station_name || !form.location_id}>
-                  {editingId ? 'Update' : 'Create'}
-                </Button>
+                <PlatformButton variant="ghost" size="sm" onClick={resetForm}>Cancel</PlatformButton>
+                <PlatformButton size="sm" onClick={handleSave} disabled={!form.station_name || !form.location_id}>{editingId ? 'Update' : 'Create'}</PlatformButton>
               </div>
             </div>
           )}
@@ -185,53 +144,31 @@ export function StationsHardwareSection({ onNavigate }: Props) {
                 const healthColor = getHealthColor(station.last_seen_at);
                 const connType = station.connection_type ?? 'manual';
                 const showHealth = connType !== 'manual';
-
                 return (
-                  <div key={station.id} className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}>
+                  <div key={station.id} className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <Monitor className="w-4 h-4 text-muted-foreground" />
-                        {showHealth && (
-                          <span
-                            className={cn(
-                              'absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-card',
-                              HEALTH_DOT[healthColor]
-                            )}
-                            title={healthColor === 'green' ? 'Seen in last hour' : healthColor === 'yellow' ? 'Seen in last 24h' : 'Offline for 24h+'}
-                          />
-                        )}
+                        <Monitor className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+                        {showHealth && <span className={cn('absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-[hsl(var(--platform-bg-card))]', HEALTH_DOT[healthColor])} />}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className={tokens.body.emphasis}>{station.station_name}</p>
-                          {connType !== 'manual' && (
-                            <Badge variant="outline" className="text-[10px]">
-                              {connType === 'ble' ? 'BLE' : 'Direct'}
-                            </Badge>
-                          )}
+                          <p className={cn(tokens.body.emphasis, 'text-[hsl(var(--platform-foreground))]')}>{station.station_name}</p>
+                          {connType !== 'manual' && <PlatformBadge variant="outline" size="sm">{connType === 'ble' ? 'BLE' : 'Direct'}</PlatformBadge>}
                         </div>
-                        <p className={tokens.body.muted}>
+                        <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                           {loc?.name || 'Unknown location'}
                           {station.device_name && ` · ${station.device_name}`}
                           {station.scale_model && ` · ${station.scale_model}`}
-                          {showHealth && station.last_seen_at && (
-                            <> · Last seen {formatDistanceToNow(new Date(station.last_seen_at), { addSuffix: true })}</>
-                          )}
+                          {showHealth && station.last_seen_at && <> · Last seen {formatDistanceToNow(new Date(station.last_seen_at), { addSuffix: true })}</>}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant={station.is_active ? 'default' : 'secondary'}>{station.is_active ? 'Active' : 'Inactive'}</Badge>
-                      <Switch
-                        checked={station.is_active}
-                        onCheckedChange={(checked) => updateStation.mutate({ id: station.id, is_active: checked })}
-                      />
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(station)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteStation.mutate(station.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                      <PlatformBadge variant={station.is_active ? 'success' : 'default'}>{station.is_active ? 'Active' : 'Inactive'}</PlatformBadge>
+                      <Switch checked={station.is_active} onCheckedChange={(checked) => updateStation.mutate({ id: station.id, is_active: checked })} />
+                      <PlatformButton variant="ghost" size="icon-sm" onClick={() => handleEdit(station)}><Pencil className="w-4 h-4" /></PlatformButton>
+                      <PlatformButton variant="ghost" size="icon-sm" onClick={() => deleteStation.mutate(station.id)}><Trash2 className="w-4 h-4 text-destructive" /></PlatformButton>
                     </div>
                   </div>
                 );
@@ -239,16 +176,15 @@ export function StationsHardwareSection({ onNavigate }: Props) {
             </div>
           )}
 
-          {/* Next step hint */}
           {onNavigate && stations && stations.length > 0 && (
-            <div className="flex justify-end pt-2 border-t border-border/40">
-              <Button variant="ghost" size="sm" className="text-xs font-sans text-muted-foreground" onClick={() => onNavigate('alerts')}>
+            <div className="flex justify-end pt-2 border-t border-[hsl(var(--platform-border)/0.3)]">
+              <PlatformButton variant="ghost" size="sm" className="text-xs text-[hsl(var(--platform-foreground-muted))]" onClick={() => onNavigate('alerts')}>
                 Next: Alerts & Exceptions <ArrowRight className="w-3 h-3 ml-1" />
-              </Button>
+              </PlatformButton>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
     </div>
   );
 }
