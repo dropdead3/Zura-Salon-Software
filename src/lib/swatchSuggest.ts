@@ -45,8 +45,10 @@ const TONE_CODE_MAP: Record<string, ToneFamily> = {
 const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   // Pastel & Vivid first (more specific)
   [/\bpastel\b/i, 'pastel'],
+  [/\bdusty\b/i, 'pastel'],
   [/\bneon\b/i, 'vivid'],
   [/\bvivid\b/i, 'vivid'],
+  [/\bvibrant\b/i, 'vivid'],
   [/\bfashion\b/i, 'vivid'],
   [/\belectric\b/i, 'vivid'],
   [/\bhot pink\b/i, 'vivid'],
@@ -54,6 +56,13 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bfuchsia\b/i, 'vivid'],
   [/\bcyan\b/i, 'vivid'],
   [/\bfire\b/i, 'vivid'],
+  // Standalone color words → vivid family (fashion colors)
+  [/\borange\b/i, 'vivid'],
+  [/\byellow\b/i, 'vivid'],
+  [/\bpink\b/i, 'vivid'],
+  [/\bteal\b/i, 'blue'],
+  // Rose gold is copper family
+  [/\brose\s*gold\b/i, 'copper'],
   // Standard tones
   [/\bplatinum\b/i, 'ash'],
   [/\bash\b/i, 'ash'],
@@ -87,7 +96,6 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\borchid\b/i, 'violet'],
   [/\bblue\b/i, 'blue'],
   [/\bnavy\b/i, 'blue'],
-  [/\bteal\b/i, 'blue'],
   [/\bdenim\b/i, 'blue'],
   [/\bslate\b/i, 'blue'],
   [/\bsteel\b/i, 'blue'],
