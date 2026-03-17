@@ -881,7 +881,7 @@ function FinderProductRow({ product, onUpdate }: { product: BackroomProduct; onU
           onCheckedChange={(checked) => onUpdate({ is_backroom_tracked: checked })}
           className="scale-75 shrink-0"
         />
-        <span className="flex-1 text-xs font-sans font-medium text-[hsl(var(--platform-foreground))] truncate min-w-0">
+        <span className="flex-1 text-xs font-sans font-medium text-foreground truncate min-w-0">
           {product.name}
         </span>
         {product.is_backroom_tracked && (
