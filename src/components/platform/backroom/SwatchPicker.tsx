@@ -201,15 +201,13 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
           className={cn(
             'w-5 h-5 rounded-full shrink-0 transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:ring-offset-1',
             disabled && 'opacity-50 cursor-not-allowed',
-            isSuggested && 'opacity-50',
+            isSuggested && 'opacity-50 border-2 border-dashed border-[hsl(var(--platform-foreground-muted)/0.4)]',
           )}
           style={
             displayHex && displayHex !== 'transparent'
               ? {
                   backgroundColor: displayHex,
-                  border: isSuggested
-                    ? '2px dashed hsl(var(--platform-foreground-muted) / 0.6)'
-                    : '2px solid hsl(var(--platform-border))',
+                  ...(!isSuggested && { boxShadow: '0 0 0 1.5px rgba(255,255,255,0.15)' }),
                 }
               : undefined
           }
