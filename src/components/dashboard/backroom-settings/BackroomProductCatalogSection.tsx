@@ -115,10 +115,11 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [stockFilter, setStockFilter] = useState<'all' | 'reorder' | 'in_stock'>('all');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Data
+  // Data — deferred fetching for performance
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
-  const { data: libraryItems = [] } = useSupplyLibraryItems();
-  const { data: inventoryRows } = useBackroomInventoryTable();
+  const { data: libraryItems = [] } = useSupplyLibraryItemsByBrand(selectedBrand);
+  const inventoryQuery = useBackroomInventoryTable();
+  const inventoryRows = catalogView === 'inventory' ? inventoryQuery.data : undefined;
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
