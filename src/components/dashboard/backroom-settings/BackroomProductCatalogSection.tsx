@@ -1026,7 +1026,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
 
               {/* Next step */}
-              {onNavigate && brandProductsAll.filter((p) => p.is_backroom_tracked).length > 0 && (
+              {onNavigate && brandProductsAll.filter((p) => isTrackedAtLocation(p.id)).length > 0 && (
                 <div className="flex justify-end pt-2 border-t">
                   <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
                     Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
