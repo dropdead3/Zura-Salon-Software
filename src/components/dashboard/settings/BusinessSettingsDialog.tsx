@@ -454,29 +454,35 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         <div className="flex gap-4">
           {/* Expanded preview */}
           <div className={cn(
-            "flex-1 rounded-lg border overflow-hidden",
+            "flex-1 rounded-lg border overflow-hidden transition-colors duration-300",
             previewDark ? "bg-[hsl(0,0%,4%)] border-[hsl(0,0%,12%)]" : "bg-sidebar border-border"
           )}>
-            <div className={cn("px-4 py-3 border-b", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Expanded</p>
+            <div className={cn("px-4 py-3 border-b transition-colors duration-300", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
+              <p className={cn("text-[10px] uppercase tracking-wider mb-2 transition-colors duration-300", previewDark ? "text-[hsl(0,0%,45%)]" : "text-muted-foreground")}>Expanded</p>
               <div className="h-7 flex items-center">
                 {activeLogo ? (
-                  <img src={activeLogo} alt="Logo" className="h-7 max-w-[160px] object-contain" />
+                  <img src={activeLogo} alt="Logo" className="h-7 max-w-[160px] object-contain transition-opacity duration-300" />
                 ) : (
                   <span className={cn(
-                    "font-display text-sm uppercase tracking-wider",
+                    "font-display text-sm uppercase tracking-wider transition-colors duration-300",
                     previewDark ? "text-[hsl(0,0%,92%)]" : "text-foreground"
                   )}>
                     {businessName || 'Your Business'}
                   </span>
                 )}
               </div>
+              <p className={cn(
+                "text-[9px] mt-1 transition-colors duration-300",
+                previewDark ? "text-[hsl(0,0%,40%)]" : "text-muted-foreground"
+              )}>
+                Staff Dashboard
+              </p>
             </div>
             <div className="px-3 py-2 space-y-1">
               {navPlaceholders.map((label) => (
                 <div key={label} className="flex items-center gap-2 px-2 py-1.5 rounded-md">
-                  <div className={cn("w-3.5 h-3.5 rounded", previewDark ? "bg-[hsl(0,0%,15%)]" : "bg-muted")} />
-                  <span className={cn("text-[11px]", previewDark ? "text-[hsl(0,0%,55%)]" : "text-muted-foreground")}>{label}</span>
+                  <div className={cn("w-3.5 h-3.5 rounded transition-colors duration-300", previewDark ? "bg-[hsl(0,0%,15%)]" : "bg-muted")} />
+                  <span className={cn("text-[11px] transition-colors duration-300", previewDark ? "text-[hsl(0,0%,55%)]" : "text-muted-foreground")}>{label}</span>
                 </div>
               ))}
             </div>
@@ -484,17 +490,17 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
 
           {/* Collapsed preview */}
           <div className={cn(
-            "w-16 rounded-lg border overflow-hidden flex flex-col items-center",
+            "w-16 rounded-lg border overflow-hidden flex flex-col items-center transition-colors duration-300",
             previewDark ? "bg-[hsl(0,0%,4%)] border-[hsl(0,0%,12%)]" : "bg-sidebar border-border"
           )}>
-            <div className={cn("w-full px-2 py-3 border-b flex flex-col items-center", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
-              <p className="text-[8px] uppercase tracking-wider text-muted-foreground mb-2">Mini</p>
+            <div className={cn("w-full px-2 py-3 border-b flex flex-col items-center transition-colors duration-300", previewDark ? "border-[hsl(0,0%,12%)]" : "border-border")}>
+              <p className={cn("text-[8px] uppercase tracking-wider mb-2 transition-colors duration-300", previewDark ? "text-[hsl(0,0%,45%)]" : "text-muted-foreground")}>Mini</p>
               <div className="h-8 w-8 flex items-center justify-center">
                 {activeIcon ? (
-                  <img src={activeIcon} alt="Icon" className="h-6 max-w-[32px] object-contain" />
+                  <img src={activeIcon} alt="Icon" className="h-6 max-w-[32px] object-contain transition-opacity duration-300" />
                 ) : (
                   <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-display",
+                    "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-display transition-colors duration-300",
                     previewDark ? "bg-[hsl(0,0%,12%)] text-[hsl(0,0%,70%)]" : "bg-muted text-muted-foreground"
                   )}>
                     {initials}
@@ -504,7 +510,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
             </div>
             <div className="px-2 py-2 space-y-1.5 w-full flex flex-col items-center">
               {[1, 2, 3].map((i) => (
-                <div key={i} className={cn("w-6 h-6 rounded", previewDark ? "bg-[hsl(0,0%,10%)]" : "bg-muted/60")} />
+                <div key={i} className={cn("w-6 h-6 rounded transition-colors duration-300", previewDark ? "bg-[hsl(0,0%,10%)]" : "bg-muted/60")} />
               ))}
             </div>
           </div>
