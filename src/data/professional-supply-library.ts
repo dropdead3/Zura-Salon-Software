@@ -2966,3 +2966,43 @@ export const SUPPLY_CATEGORY_LABELS: Record<string, string> = {
   treatment: 'Treatment',
   additive: 'Additive',
 };
+
+/**
+ * Catalog coverage tracking — indicates whether a brand's full
+ * professional product line is represented in the supply library.
+ */
+export type CatalogCoverage = 'complete' | 'partial';
+
+export const BRAND_CATALOG_COVERAGE: Record<string, CatalogCoverage> = {
+  'Schwarzkopf': 'complete',
+  'Wella': 'complete',
+  'Redken': 'complete',
+  "L'Oréal Professionnel": 'complete',
+  'Matrix': 'complete',
+  'Goldwell': 'complete',
+  'Danger Jones': 'complete',
+  'Pravana': 'complete',
+  'Joico': 'complete',
+  'Paul Mitchell': 'complete',
+  'Kenra': 'complete',
+  'Pulp Riot': 'complete',
+  'TIGI': 'complete',
+  'CHI': 'complete',
+  'Clairol Professional': 'complete',
+  'Rusk': 'complete',
+  // Remaining partial brands:
+  'Framesi': 'partial',
+  'Lakme': 'partial',
+  'Keune': 'partial',
+  'Elgon': 'partial',
+  '#mydentity': 'partial',
+  'Oligo': 'partial',
+};
+
+/**
+ * Get the catalog coverage status for a brand.
+ * Returns 'partial' for unknown brands (conservative default).
+ */
+export function getBrandCoverage(brand: string): CatalogCoverage {
+  return BRAND_CATALOG_COVERAGE[brand] ?? 'partial';
+}
