@@ -217,6 +217,29 @@ export function SupplyLibraryTab() {
     );
   }
 
+  // ─── Inline price save ───
+  const handleInlinePriceSave = async (productId: string) => {
+    if (!inlineEditing || inlineEditing.field !== 'wholesale_price') return;
+    const numVal = parseFloat(inlineEditing.value);
+    if (isNaN(numVal) || numVal < 0) {
+      toast.error('Invalid price');
+      setInlineEditing(null);
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('supply_library_products')
+        .update({ wholesale_price: numVal, price_updated_at: new Date().toISOString() } as any)
+        .eq('id', productId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
+      toast.success('Price updated');
+    } catch (err: any) {
+      toast.error('Price update failed: ' + err.message);
+    }
+    setInlineEditing(null);
+  };
+
   // ─── Product row renderer (shared between views) ───
   const renderProductRow = (p: SupplyLibraryProduct) => (
     <TableRow key={p.id} className="border-[hsl(var(--platform-border)/0.3)]">
@@ -296,6 +319,49 @@ export function SupplyLibraryTab() {
           >
             {p.default_unit}
           </span>
+        )}
+      </TableCell>
+      {/* Wholesale Price column */}
+      <TableCell className="font-sans text-xs">
+        {inlineEditing?.id === p.id && inlineEditing.field === 'wholesale_price' ? (
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            autoFocus
+            className="h-7 w-20 rounded-md border border-[hsl(var(--platform-border))] bg-transparent px-2 font-sans text-xs text-[hsl(var(--platform-foreground))] focus:outline-none focus:border-violet-500"
+            value={inlineEditing.value}
+            onChange={(e) => setInlineEditing({ ...inlineEditing, value: e.target.value })}
+            onBlur={() => handleInlinePriceSave(p.id)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleInlinePriceSave(p.id); if (e.key === 'Escape') setInlineEditing(null); }}
+          />
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className={cn(
+                    'cursor-pointer transition-colors',
+                    p.wholesale_price != null
+                      ? 'text-[hsl(var(--platform-foreground))] hover:text-violet-400'
+                      : 'text-[hsl(var(--platform-foreground-muted))] hover:text-violet-400'
+                  )}
+                  onDoubleClick={() => setInlineEditing({
+                    id: p.id,
+                    field: 'wholesale_price',
+                    value: p.wholesale_price != null ? String(p.wholesale_price) : '',
+                  })}
+                >
+                  {p.wholesale_price != null ? formatCurrency(p.wholesale_price, { currency: p.currency || 'USD' }) : '—'}
+                </span>
+              </TooltipTrigger>
+              {p.price_updated_at && (
+                <TooltipContent>
+                  <span className="font-sans text-xs">Updated {formatRelativeTime(p.price_updated_at)}</span>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
       </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
