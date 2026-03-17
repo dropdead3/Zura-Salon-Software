@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
@@ -451,7 +452,7 @@ function ProductsTab() {
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+        <DashboardLoader className="py-12" />
       ) : (
         <div className="overflow-x-auto border rounded-lg">
           <Table>
@@ -1020,7 +1021,7 @@ function BrandsTab() {
     setRenamingBrand(null);
   };
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (isLoading) return <DashboardLoader className="py-12" />;
 
   return (
     <div className="overflow-x-auto border rounded-lg">
@@ -1116,7 +1117,7 @@ function CategoriesTab() {
     });
   }, [categories, allCategoryNames]);
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (isLoading) return <DashboardLoader className="py-12" />;
 
   return (
     <div className="space-y-3">
@@ -1317,7 +1318,7 @@ function InventoryByLocationTab() {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (isLoading) return <DashboardLoader className="py-12" />;
 
   if (!products || products.length === 0) {
     return (

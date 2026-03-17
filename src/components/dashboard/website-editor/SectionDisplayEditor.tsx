@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,11 +75,7 @@ export function SectionDisplayEditor<T extends object>({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader className="h-64" size="xl" />;
   }
 
   return (

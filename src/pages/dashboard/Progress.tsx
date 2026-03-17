@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -87,9 +88,7 @@ export default function Progress() {
         />
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardLoader className="py-20" />
         ) : !enrollment ? (
           <Card className="p-12 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

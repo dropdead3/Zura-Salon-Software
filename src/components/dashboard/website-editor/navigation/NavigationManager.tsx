@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Loader2, Navigation, RefreshCw, AlertTriangle, Layers } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -137,11 +138,7 @@ export function NavigationManager() {
 
   // Loading state
   if (menusLoading || seedMenus.isPending) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader className="h-64" />;
   }
 
   // Empty state — menus failed to seed or don't exist

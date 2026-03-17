@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -508,9 +509,7 @@ export default function HomepageStylists() {
 
           <TabsContent value="requests">
             {loadingPending ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader className="py-12" />
             ) : pendingRequests.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
@@ -532,9 +531,7 @@ export default function HomepageStylists() {
 
           <TabsContent value="visible">
             {loadingVisible ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader className="py-12" />
             ) : visibleStylists.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
@@ -561,9 +558,7 @@ export default function HomepageStylists() {
 
           <TabsContent value="all">
             {loadingAll ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardLoader className="py-12" />
             ) : allStylists.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -164,9 +165,7 @@ function ServiceFlowsList() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="py-12" />
       ) : !flows || flows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -373,9 +372,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
+            <DashboardLoader className="py-8" size="md" />
           ) : !steps || steps.length === 0 ? (
             <div className="text-center py-8">
               <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
@@ -789,9 +786,7 @@ function EmailQueueMonitor() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="py-8" size="md" />
       ) : !queueItems || queueItems.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -984,9 +979,7 @@ function AppointmentRemindersManager() {
       </p>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
+        <DashboardLoader className="py-8" size="md" />
       ) : (
         <div className="space-y-3">
           {reminderTypes.map(rt => (
