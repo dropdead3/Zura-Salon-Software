@@ -7,7 +7,7 @@
 import { extractShadeLevel } from './shadeSort';
 import { HAIR_COLOR_SWATCHES } from '@/components/platform/backroom/SwatchPicker';
 
-type ToneFamily = 'natural' | 'ash' | 'gold' | 'red' | 'copper' | 'violet' | 'blue' | 'pastel' | 'vivid';
+type ToneFamily = 'natural' | 'ash' | 'gold' | 'red' | 'copper' | 'violet' | 'blue' | 'pastel' | 'vivid' | 'red_violet' | 'warm_brown';
 
 /** Map of tone code letters → tone family */
 const TONE_CODE_MAP: Record<string, ToneFamily> = {

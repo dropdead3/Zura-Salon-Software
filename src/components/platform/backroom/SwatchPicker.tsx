@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
+import { Pipette } from 'lucide-react';
 
 export interface SwatchEntry {
   name: string;
@@ -49,6 +50,11 @@ export const HAIR_COLOR_SECTIONS: SwatchSection[] = [
       { name: 'Smoke', hex: '#C5C5BB' },
       { name: 'Cool Beige', hex: '#D5CFC0' },
       { name: 'Icy Blonde', hex: '#E8E4D8' },
+      { name: 'Cool Sand', hex: '#C4BAA2' },
+      { name: 'Cool Tan', hex: '#B0A68E' },
+      { name: 'Greige', hex: '#A89F8B' },
+      { name: 'Mushroom', hex: '#9C8E7A' },
+      { name: 'Steel Beige', hex: '#BEB8AA' },
     ],
   },
   {
@@ -64,6 +70,24 @@ export const HAIR_COLOR_SECTIONS: SwatchSection[] = [
       { name: 'Butter Blonde', hex: '#E0CC80' },
       { name: 'Light Gold', hex: '#E8D8A0' },
       { name: 'Warm Platinum', hex: '#EDE4C0' },
+      { name: 'Caramel Gold', hex: '#C08A30' },
+      { name: 'Toffee', hex: '#A07028' },
+      { name: 'Butterscotch', hex: '#D4982C' },
+    ],
+  },
+  {
+    label: 'Warm Brown / Mocha',
+    swatches: [
+      { name: 'Dark Mocha', hex: '#3E2418' },
+      { name: 'Espresso', hex: '#4A2E1C' },
+      { name: 'Mocha', hex: '#6B4A30' },
+      { name: 'Warm Brown', hex: '#7A5638' },
+      { name: 'Warm Tan', hex: '#A08060' },
+      { name: 'Cool Tan', hex: '#9A8872' },
+      { name: 'Sand', hex: '#C4AB82' },
+      { name: 'Mushroom Brown', hex: '#8A7760' },
+      { name: 'Café Au Lait', hex: '#B09070' },
+      { name: 'Cinnamon', hex: '#8B5E3C' },
     ],
   },
   {
@@ -80,6 +104,10 @@ export const HAIR_COLOR_SECTIONS: SwatchSection[] = [
       { name: 'Red-Brown', hex: '#8B4040' },
       { name: 'Strawberry', hex: '#C45050' },
       { name: 'Rose Red', hex: '#D06060' },
+      { name: 'Red-Mahogany', hex: '#6B2828' },
+      { name: 'Cranberry', hex: '#8E1B3D' },
+      { name: 'Merlot', hex: '#6D2040' },
+      { name: 'Raspberry', hex: '#A02050' },
     ],
   },
   {
@@ -95,6 +123,22 @@ export const HAIR_COLOR_SECTIONS: SwatchSection[] = [
       { name: 'Ginger', hex: '#D08030' },
       { name: 'Copper Blonde', hex: '#D89840' },
       { name: 'Light Copper', hex: '#E0A850' },
+      { name: 'Copper-Red', hex: '#A03818' },
+      { name: 'Copper-Violet', hex: '#8B3A50' },
+      { name: 'Burnt Sienna', hex: '#964B22' },
+    ],
+  },
+  {
+    label: 'Red Violet',
+    swatches: [
+      { name: 'Darkest Red Violet', hex: '#3C1228' },
+      { name: 'Dark Red Violet', hex: '#4B2C3D' },
+      { name: 'Deep Red Violet', hex: '#6B1845' },
+      { name: 'Red Violet', hex: '#8B2A4E' },
+      { name: 'Bright Red Violet', hex: '#BC2B6E' },
+      { name: 'Rose Violet', hex: '#A0406A' },
+      { name: 'Light Red Violet', hex: '#C4608A' },
+      { name: 'Soft Red Violet', hex: '#D880A0' },
     ],
   },
   {
@@ -109,6 +153,10 @@ export const HAIR_COLOR_SECTIONS: SwatchSection[] = [
       { name: 'Lavender', hex: '#9E789E' },
       { name: 'Light Violet', hex: '#B090B0' },
       { name: 'Rose Mauve', hex: '#C0A0B8' },
+      { name: 'Aubergine', hex: '#3D1C38' },
+      { name: 'Warm Plum', hex: '#5E2848' },
+      { name: 'Purple-Brown', hex: '#4A2A3A' },
+      { name: 'Iridescent Violet', hex: '#7858A0' },
     ],
   },
   {
@@ -178,6 +226,7 @@ interface SwatchPickerProps {
 
 export function SwatchPicker({ value, suggestedValue, onChange, disabled }: SwatchPickerProps) {
   const [open, setOpen] = useState(false);
+  const [customColor, setCustomColor] = useState(value && !HAIR_COLOR_SWATCHES.some(s => s.hex === value) ? value : '#8B2A4E');
 
   const handleSelect = (hex: string) => {
     onChange(hex === 'transparent' ? 'transparent' : hex);
@@ -187,6 +236,13 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
   const handleClear = () => {
     onChange(null);
     setOpen(false);
+  };
+
+  const handleCustomApply = () => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(customColor)) {
+      onChange(customColor);
+      setOpen(false);
+    }
   };
 
   const displayHex = value ?? suggestedValue ?? null;
@@ -261,7 +317,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
               </span>
             </button>
           )}
-          <ScrollArea className="h-[350px]">
+          <ScrollArea className="h-[380px]">
             <div className="space-y-2 pr-2">
               {HAIR_COLOR_SECTIONS.map((section) => (
                 <div key={section.label}>
@@ -295,6 +351,52 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
                   </div>
                 </div>
               ))}
+
+              {/* Custom Color Picker */}
+              <div className="pt-1 border-t border-[hsl(var(--platform-border)/0.3)]">
+                <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wider uppercase block mb-1.5">
+                  Custom Color
+                </span>
+                <div className="flex items-center gap-2">
+                  <label className="relative w-8 h-8 rounded-lg overflow-hidden cursor-pointer shrink-0 border border-[hsl(var(--platform-border)/0.5)]">
+                    <input
+                      type="color"
+                      value={customColor}
+                      onChange={(e) => setCustomColor(e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <span
+                      className="block w-full h-full"
+                      style={{ backgroundColor: customColor }}
+                    />
+                    <Pipette className="absolute inset-0 m-auto w-3.5 h-3.5 text-white drop-shadow-md pointer-events-none" />
+                  </label>
+                  <input
+                    type="text"
+                    value={customColor}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.length <= 7) setCustomColor(val.startsWith('#') ? val : `#${val}`);
+                    }}
+                    placeholder="#8B2A4E"
+                    className="flex-1 h-8 px-2 rounded-lg bg-[hsl(var(--platform-input))] border border-[hsl(var(--platform-border)/0.5)] text-[hsl(var(--platform-foreground))] font-mono text-xs focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]"
+                    maxLength={7}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCustomApply}
+                    disabled={!/^#[0-9A-Fa-f]{6}$/.test(customColor)}
+                    className={cn(
+                      'h-8 px-3 rounded-lg font-sans text-xs transition-colors',
+                      /^#[0-9A-Fa-f]{6}$/.test(customColor)
+                        ? 'bg-violet-600 text-white hover:bg-violet-500'
+                        : 'bg-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] cursor-not-allowed',
+                    )}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
             </div>
           </ScrollArea>
           {value && (
