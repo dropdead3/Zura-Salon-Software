@@ -117,43 +117,6 @@ function InlineEditCell({
   );
 }
 
-/* ====== Swatch Cell ====== */
-function SwatchCell({
-  color,
-  onSave,
-}: {
-  color: string | null;
-  onSave: (color: string | null) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.click(), 0); }}
-        className="block"
-      >
-        {color ? (
-          <div className="w-5 h-5 rounded-full border border-border/40" style={{ backgroundColor: color }} />
-        ) : (
-          <div className="w-5 h-5 rounded-full border border-dashed border-border/40 hover:border-primary/40 transition-colors" />
-        )}
-      </button>
-      {open && (
-        <input
-          ref={inputRef}
-          type="color"
-          value={color || '#888888'}
-          onChange={(e) => { onSave(e.target.value); setOpen(false); }}
-          onBlur={() => setOpen(false)}
-          className="absolute top-0 left-0 w-5 h-5 opacity-0 cursor-pointer"
-        />
-      )}
-    </div>
-  );
-}
 
 /* ====== Constants ====== */
 const DEPLETION_METHODS = [
