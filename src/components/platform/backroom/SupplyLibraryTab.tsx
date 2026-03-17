@@ -149,6 +149,36 @@ export function SupplyLibraryTab() {
     });
   };
 
+  const toggleSubLine = (key: string) => {
+    setCollapsedSubLines((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  /** Renders a product table with given rows */
+  const renderProductTable = (products: SupplyLibraryProduct[]) => (
+    <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)]">
+      <Table>
+        <TableHeader>
+          <TableRow className="border-[hsl(var(--platform-border)/0.3)]">
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Name</TableHead>
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Category</TableHead>
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Depletion</TableHead>
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Unit</TableHead>
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Price</TableHead>
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">Sizes</TableHead>
+            <TableHead className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] w-[80px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {products.map(renderProductRow)}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   // ─── Handlers (unchanged) ──────────────────────
   const handleDelete = async () => {
     if (!deleteTarget) return;
