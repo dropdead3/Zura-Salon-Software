@@ -8,6 +8,7 @@ import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement'
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import {
