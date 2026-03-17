@@ -17,7 +17,7 @@ import {
   PlatformSelectTrigger as SelectTrigger,
 } from '@/components/platform/ui/PlatformSelect';
 import { Switch } from '@/components/ui/switch';
-import { MapPin, CreditCard, Scale, AlertTriangle } from 'lucide-react';
+import { MapPin, CreditCard, Weight, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
