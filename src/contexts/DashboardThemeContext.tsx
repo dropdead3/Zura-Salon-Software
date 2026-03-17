@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 type Theme = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -50,10 +51,17 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     return theme;
   }, [theme, systemTheme]);
 
-  // Sync the 'dark' class on <html> so CSS variables in index.css activate
-  // Skip on platform routes — platform manages its own theme independently
+  // Sync the 'dark' class on <html> so CSS variables in index.css activate.
+  // Skip on platform routes — platform manages its own theme independently.
+  // useLocation ensures this re-evaluates on every client-side navigation.
+  const location = useLocation();
+
   useEffect(() => {
-    if (window.location.pathname.startsWith('/dashboard/platform')) return;
+    if (location.pathname.startsWith('/dashboard/platform')) {
+      // On platform routes, remove org-level dark class so it doesn't bleed
+      document.documentElement.classList.remove('dark');
+      return;
+    }
 
     const root = document.documentElement;
     if (resolvedTheme === 'dark') {
@@ -61,7 +69,7 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
-  }, [resolvedTheme]);
+  }, [resolvedTheme, location.pathname]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
