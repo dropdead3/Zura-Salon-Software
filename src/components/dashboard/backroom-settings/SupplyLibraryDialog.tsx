@@ -86,7 +86,7 @@ function BrandCardGrid({
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col flex-1 h-0">
       {/* A-Z bar */}
       <div className="px-6 pt-2 pb-1 flex flex-wrap gap-0.5 justify-center">
         {ALPHABET.map((letter) => {
