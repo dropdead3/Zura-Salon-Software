@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { FileText, Loader2, Download, BookOpen, CheckCircle2, Circle } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
 
