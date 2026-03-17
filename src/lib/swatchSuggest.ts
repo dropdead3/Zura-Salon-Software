@@ -45,8 +45,10 @@ const TONE_CODE_MAP: Record<string, ToneFamily> = {
 const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   // Pastel & Vivid first (more specific)
   [/\bpastel\b/i, 'pastel'],
+  [/\bdusty\b/i, 'pastel'],
   [/\bneon\b/i, 'vivid'],
   [/\bvivid\b/i, 'vivid'],
+  [/\bvibrant\b/i, 'vivid'],
   [/\bfashion\b/i, 'vivid'],
   [/\belectric\b/i, 'vivid'],
   [/\bhot pink\b/i, 'vivid'],
@@ -54,6 +56,13 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\bfuchsia\b/i, 'vivid'],
   [/\bcyan\b/i, 'vivid'],
   [/\bfire\b/i, 'vivid'],
+  // Standalone color words → vivid family (fashion colors)
+  [/\borange\b/i, 'vivid'],
+  [/\byellow\b/i, 'vivid'],
+  [/\bpink\b/i, 'vivid'],
+  [/\bteal\b/i, 'blue'],
+  // Rose gold is copper family
+  [/\brose\s*gold\b/i, 'copper'],
   // Standard tones
   [/\bplatinum\b/i, 'ash'],
   [/\bash\b/i, 'ash'],
@@ -87,7 +96,6 @@ const KEYWORD_TONE_MAP: [RegExp, ToneFamily][] = [
   [/\borchid\b/i, 'violet'],
   [/\bblue\b/i, 'blue'],
   [/\bnavy\b/i, 'blue'],
-  [/\bteal\b/i, 'blue'],
   [/\bdenim\b/i, 'blue'],
   [/\bslate\b/i, 'blue'],
   [/\bsteel\b/i, 'blue'],
@@ -255,10 +263,10 @@ function refinePastelVividHex(name: string, tone: ToneFamily): string | null {
   const subColorMap: [RegExp, string][] = [
     [/pink|rose/i, map.default_pink!],
     [/purple|violet|lilac|lavender/i, tone === 'pastel' ? map.default_lavender! : map.default_purple!],
-    [/blue|cyan/i, map.default_blue!],
+    [/blue|cyan|teal/i, map.default_blue!],
     [/green|mint/i, map.default_green ?? map.default_mint!],
     [/orange|coral|peach|apricot/i, tone === 'pastel' ? map.default_peach! : map.default_orange!],
-    [/red|fire/i, map.default_red ?? map.default_pink!],
+    [/red|fire|vibrant\s*red/i, map.default_red ?? map.default_pink!],
     [/yellow|gold/i, map.default_yellow!],
   ];
 
@@ -267,6 +275,77 @@ function refinePastelVividHex(name: string, tone: ToneFamily): string | null {
   }
 
   return map.default!;
+}
+
+/**
+ * Direct color name → hex for products with no numeric level.
+ * Returns a hex from the palette for standalone color names.
+ */
+function guessColorFromName(name: string): string | null {
+  const lower = name.toLowerCase();
+
+  const directColorMap: [RegExp, string][] = [
+    [/\bdusty\s*lavender\b/, '#D4B8E0'],   // pastel lavender
+    [/\bdusty\s*pink\b/, '#F4C2C2'],        // pastel pink
+    [/\bdusty\s*rose\b/, '#F4C2C2'],        // pastel pink
+    [/\brose\s*gold\b/, '#CC6C28'],          // copper 8
+    [/\bsilver\s*smoke\b/, '#A8A898'],       // ash 8
+    [/\bhot\s*pink\b/, '#FF1493'],           // vivid pink
+    [/\belectric\s*blue\b/, '#0050FF'],      // vivid blue
+    [/\bmagenta\b/, '#FF1493'],              // vivid pink
+    [/\bfuchsia\b/, '#FF1493'],              // vivid pink
+    [/\bteal\b/, '#2A4A6B'],                 // blue 6
+    [/\bpurple\b/, '#8B00FF'],               // vivid purple
+    [/\borange\b/, '#FF6600'],               // vivid orange
+    [/\byellow\b/, '#FFD700'],               // vivid yellow
+    [/\bpink\b/, '#FF1493'],                 // vivid pink
+    [/\bred\b/, '#EE0000'],                  // vivid red
+    [/\bviolet\b/, '#8B00FF'],               // vivid purple
+    [/\blavender\b/, '#D4B8E0'],             // pastel lavender
+    [/\bmint\b/, '#A8E0C8'],                 // pastel mint
+    [/\bpeach\b/, '#FADADD'],                // pastel peach
+    [/\bcoral\b/, '#FF6600'],                // vivid orange
+    [/\bplum\b/, '#6B3A6B'],                 // violet 6
+    [/\bnavy\b/, '#1E3450'],                 // blue 4
+    [/\bburgundy\b/, '#5B1414'],             // red 4
+    [/\bcherry\b/, '#8B2020'],               // red 7
+    [/\bauburn\b/, '#8B3A0F'],               // copper 5
+    [/\bcopper\b/, '#B5541A'],               // copper 7
+    [/\bginger\b/, '#9A4414'],               // copper 6
+    [/\bchocolate\b/, '#3B2314'],            // natural 4
+    [/\bcaramel\b/, '#8B6239'],              // natural 6
+    [/\bchampagne\b/, '#D4A830'],            // gold 9
+    [/\bhoney\b/, '#C4981E'],                // gold 8
+    [/\bplatinum\b/, '#D5CFC0'],             // ash 10
+    [/\bsilver\b/, '#C5C5BB'],               // ash 9
+    [/\bmauve\b/, '#926092'],                // violet 8
+    [/\borchid\b/, '#9E789E'],               // violet 9
+    [/\bslate\b/, '#4A6070'],                // blue 8
+    [/\bsteel\b/, '#5A7A90'],                // blue 9
+    [/\bsmoke\b/, '#8A8A7B'],                // ash 7
+  ];
+
+  for (const [regex, hex] of directColorMap) {
+    if (regex.test(lower)) return hex;
+  }
+
+  return null;
+}
+
+/** Pick a mid-level hex for a tone family (used when no numeric level found) */
+function getMidLevelHex(tone: ToneFamily): string {
+  const midLevelMap: Record<ToneFamily, string> = {
+    natural: '#8B6239',  // level 6
+    ash: '#8A8A7B',      // level 7
+    gold: '#B8860B',     // level 7
+    red: '#7A1E1E',      // level 6
+    copper: '#B5541A',   // level 7
+    violet: '#6B3A6B',   // level 6
+    blue: '#2A4A6B',     // level 6
+    pastel: '#D4B8E0',   // default
+    vivid: '#8B00FF',    // default
+  };
+  return midLevelMap[tone];
 }
 
 /**
@@ -292,8 +371,26 @@ export function suggestSwatchColor(productName: string): string | null {
 
   const level = extractShadeLevel(productName);
 
-  // No numeric level found and no clear — can't suggest
-  if (level === 999) return null;
+  // No numeric level found — try direct color name lookup or mid-level tone
+  if (level === 999) {
+    // First try direct color name matching
+    const directHex = guessColorFromName(productName);
+    if (directHex) {
+      const inPalette = HAIR_COLOR_SWATCHES.some((s) => s.hex === directHex);
+      return inPalette ? directHex : null;
+    }
+
+    // If tone was detected (not just default natural), use mid-level for that tone
+    if (tone !== 'natural') {
+      const midHex = getMidLevelHex(tone);
+      const inPalette = HAIR_COLOR_SWATCHES.some((s) => s.hex === midHex);
+      return inPalette ? midHex : null;
+    }
+
+    // No tone detected either — can't suggest
+    return null;
+  }
+
   if (level === Infinity) return 'transparent';
 
   const hex = lookupSwatchForLevel(level, tone);
