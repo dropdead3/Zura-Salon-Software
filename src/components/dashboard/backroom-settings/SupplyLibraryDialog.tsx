@@ -835,10 +835,10 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                                     })}
                                   </div>
                                 )}
-                              </div>
+                              </motion.div>
                             );
                           })}
-                        </div>
+                        </motion.div>
                       </ScrollArea>
                     </motion.div>
                   )}
