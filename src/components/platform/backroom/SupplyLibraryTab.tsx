@@ -65,6 +65,7 @@ export function SupplyLibraryTab() {
   const [deleteTarget, setDeleteTarget] = useState<SupplyLibraryProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [addBrandOpen, setAddBrandOpen] = useState(false);
   const [inlineEditing, setInlineEditing] = useState<{ id: string; field: string; value: string } | null>(null);
   // localStorage-backed collapse state
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
