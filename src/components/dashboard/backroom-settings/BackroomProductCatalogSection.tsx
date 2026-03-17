@@ -924,17 +924,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                         )}
                                       </TableCell>
                                     )}
-                                    <TableCell className="font-sans text-sm font-medium text-foreground">{p.name}</TableCell>
-                                    <TableCell className="hidden md:table-cell">
-                                      <Badge variant="outline" className="text-[10px] capitalize">
-                                        {(SUPPLY_CATEGORY_LABELS as Record<string, string>)[p.category || ''] || p.category || '—'}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.depletion_method || '—'}
-                                    </TableCell>
-                                    <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.unit_of_measure || '—'}
+                                    <TableCell className="font-sans text-sm font-medium text-foreground">
+                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, '')}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
                                       {isGhostCost ? (
