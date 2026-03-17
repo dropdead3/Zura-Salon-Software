@@ -90,11 +90,25 @@ export function SupplyLibraryTab() {
     return cards.sort((a, b) => a.brand.localeCompare(b.brand));
   }, [allProducts]);
 
-  // Filter brand cards by search
+  // Filter brand cards by search + active letter
   const filteredBrands = useMemo(() => {
-    if (!brandSearch.trim()) return brandCards;
-    const q = brandSearch.toLowerCase();
-    return brandCards.filter((b) => b.brand.toLowerCase().includes(q));
+    let result = brandCards;
+    if (brandSearch.trim()) {
+      const q = brandSearch.toLowerCase();
+      result = result.filter((b) => b.brand.toLowerCase().includes(q));
+    }
+    if (activeLetter) {
+      result = result.filter((b) => b.brand[0]?.toUpperCase() === activeLetter);
+    }
+    return result;
+  }, [brandCards, brandSearch, activeLetter]);
+
+  // Available first letters from all brand cards (unfiltered by letter)
+  const availableLetters = useMemo(() => {
+    const searchFiltered = brandSearch.trim()
+      ? brandCards.filter((b) => b.brand.toLowerCase().includes(brandSearch.toLowerCase()))
+      : brandCards;
+    return new Set(searchFiltered.map((b) => b.brand[0]?.toUpperCase()).filter(Boolean));
   }, [brandCards, brandSearch]);
 
   // Group brand products by category for detail view
