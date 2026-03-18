@@ -1,6 +1,6 @@
 /**
  * ReorderTab — Smart reorder queue grouped by supplier.
- * Supports multi-line PO creation per supplier and email PO actions.
+ * Supports multi-line PO creation per supplier, email PO actions, and bulk operations.
  */
 
 import { useMemo, useState, useCallback } from 'react';
@@ -10,12 +10,16 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus, Mail } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
 import { useReplenishmentRecommendations, useGenerateReplenishment } from '@/hooks/inventory/useReplenishment';
 import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
+import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { forecastStockout } from '@/lib/stockoutForecast';
@@ -38,11 +42,12 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   const { data: recommendations = [], isLoading: recLoading } = useReplenishmentRecommendations('pending');
   const generateRecs = useGenerateReplenishment();
   const createMultiLinePO = useCreateMultiLinePO();
+  const batchCreatePOs = useBatchCreatePurchaseOrders();
   const { formatCurrency } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [sendingEmail, setSendingEmail] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
   // Editable order quantity overrides (product id -> qty)
   const [qtyOverrides, setQtyOverrides] = useState<Record<string, number>>({});
 
@@ -124,6 +129,23 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       .reduce((sum, r) => sum + getOrderQty(r) * (r.cost_price ?? r.cost_per_gram ?? 0), 0);
   }, [reorderQueue, selectedIds, getOrderQty]);
 
+  // Build consolidated preview data for bulk email
+  const emailPreviewGroups = useMemo(() => {
+    return supplierGroups
+      .filter(g => g.supplierName !== 'Unassigned' && g.supplierEmail)
+      .map(g => ({
+        ...g,
+        products: g.products.filter(p => selectedIds.has(p.id)),
+      }))
+      .filter(g => g.products.length > 0);
+  }, [supplierGroups, selectedIds]);
+
+  const selectedWithoutEmail = useMemo(() => {
+    return reorderQueue.filter(r =>
+      selectedIds.has(r.id) && (!r.supplier_email || !r.supplier_name || r.supplier_name === 'Unassigned')
+    ).length;
+  }, [reorderQueue, selectedIds]);
+
   const handleCreatePOForSupplier = (group: SupplierGroup) => {
     if (!orgId) return;
     createMultiLinePO.mutate({
@@ -156,6 +178,33 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       });
     }
     setSelectedIds(new Set());
+  };
+
+  const handleCreateAndEmailPOs = () => {
+    if (!orgId) return;
+    const items = emailPreviewGroups.flatMap(g =>
+      g.products.map(p => ({
+        organization_id: orgId,
+        product_id: p.id,
+        supplier_name: g.supplierName,
+        supplier_email: g.supplierEmail ?? undefined,
+        quantity: getOrderQty(p),
+        unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
+      }))
+    );
+    if (items.length === 0) {
+      toast.error('No emailable items selected');
+      return;
+    }
+    batchCreatePOs.mutate(
+      { items, sendEmails: true },
+      {
+        onSuccess: () => {
+          setShowEmailPreview(false);
+          setSelectedIds(new Set());
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -304,16 +353,98 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
               )}
               <Button
                 size="sm"
+                variant="outline"
                 onClick={handleCreateAllPOs}
                 disabled={createMultiLinePO.isPending}
               >
                 {createMultiLinePO.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                 Create POs ({selectedIds.size})
               </Button>
+              {emailPreviewGroups.length > 0 && (
+                <Button
+                  size="sm"
+                  onClick={() => setShowEmailPreview(true)}
+                  disabled={batchCreatePOs.isPending}
+                >
+                  <Mail className="w-4 h-4" />
+                  Create & Email ({emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)})
+                </Button>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Bulk Email Preview Dialog */}
+      <Dialog open={showEmailPreview} onOpenChange={setShowEmailPreview}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle className={tokens.card.title}>Confirm PO Email Send</DialogTitle>
+            <DialogDescription>
+              Review the purchase orders that will be created and emailed to suppliers.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[400px] pr-2">
+            <div className="space-y-4 py-2">
+              {emailPreviewGroups.map(group => (
+                <div key={group.supplierName} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    <span className={tokens.body.emphasis}>{group.supplierName}</span>
+                    <span className="text-muted-foreground text-xs">→ {group.supplierEmail}</span>
+                  </div>
+                  <div className="pl-6 space-y-1">
+                    {group.products.map(p => (
+                      <div key={p.id} className="flex items-center justify-between text-sm">
+                        <span>{p.name}</span>
+                        <div className="flex items-center gap-3 text-muted-foreground tabular-nums">
+                          <span>×{getOrderQty(p)}</span>
+                          <span>{formatCurrency(getOrderQty(p) * (p.cost_price ?? p.cost_per_gram ?? 0))}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex justify-end pt-1 border-t border-border/40">
+                      <span className="text-sm text-muted-foreground">
+                        Subtotal: {formatCurrency(group.products.reduce((s, p) => s + getOrderQty(p) * (p.cost_price ?? p.cost_per_gram ?? 0), 0))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          {selectedWithoutEmail > 0 && (
+            <p className="text-xs text-warning flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {selectedWithoutEmail} selected item{selectedWithoutEmail !== 1 ? 's' : ''} skipped (no supplier email)
+            </p>
+          )}
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {emailPreviewGroups.length} supplier{emailPreviewGroups.length !== 1 ? 's' : ''} ·{' '}
+              {emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)} items ·{' '}
+              {formatCurrency(emailPreviewGroups.reduce((s, g) => s + g.products.reduce((ss, p) => ss + getOrderQty(p) * (p.cost_price ?? p.cost_per_gram ?? 0), 0), 0))}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowEmailPreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleCreateAndEmailPOs}
+                disabled={batchCreatePOs.isPending}
+              >
+                {batchCreatePOs.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Create & Send
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
