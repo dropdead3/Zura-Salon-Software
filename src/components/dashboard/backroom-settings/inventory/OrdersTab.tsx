@@ -34,9 +34,13 @@ const PO_STATUS_STYLES: Record<string, { label: string; className: string }> = {
 export function OrdersTab() {
   const [statusFilter, setStatusFilter] = useState<POStatusFilter>('all');
   const { data: orders = [], isLoading } = usePurchaseOrders({ status: statusFilter });
+  const { data: allOrders = [] } = usePurchaseOrders({ status: 'all' });
   const updatePO = useUpdatePurchaseOrder();
   const { formatCurrency } = useFormatCurrency();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sendAllOpen, setSendAllOpen] = useState(false);
+
+  const draftPOs = useMemo(() => allOrders.filter(po => po.status === 'draft'), [allOrders]);
 
   const handleSend = (po: PurchaseOrder) => {
     updatePO.mutate({ id: po.id, updates: { status: 'sent', sent_at: new Date().toISOString() } });
