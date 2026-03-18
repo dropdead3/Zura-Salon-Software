@@ -583,7 +583,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
         className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
         onClick={() => setOpen(!open)}
       >
-        <TableCell colSpan={10} className="py-2">
+        <TableCell colSpan={11} className="py-2">
           <div className="flex items-center gap-2">
             {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
