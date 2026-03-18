@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  ShieldCheck, ShieldAlert, ShieldX, RefreshCw, Loader2, Beaker, Users, TrendingUp,
+  ShieldCheck, ShieldAlert, ShieldX, RefreshCw, Loader2, Beaker, Users, TrendingUp, MapPin,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
