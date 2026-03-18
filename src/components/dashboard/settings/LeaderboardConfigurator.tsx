@@ -1,4 +1,4 @@
-import { Scale, Trophy } from 'lucide-react';
+import { SlidersHorizontal, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
@@ -10,7 +10,7 @@ export function LeaderboardConfigurator() {
       <Tabs defaultValue="scoring" className="space-y-6">
         <TabsList>
           <TabsTrigger value="scoring" className="gap-2">
-            <Scale className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" />
             Scoring Weights
           </TabsTrigger>
           <TabsTrigger value="achievements" className="gap-2">

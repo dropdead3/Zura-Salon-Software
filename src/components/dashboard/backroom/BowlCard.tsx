@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { Plus, Lock, Scale, Trash2 } from 'lucide-react';
+import { Plus, Lock, Trash2 } from 'lucide-react';
 import { BowlLineRow } from './BowlLineRow';
 import { ManualWeightInput } from './ManualWeightInput';
 import { AddProductToBowl } from './AddProductToBowl';
