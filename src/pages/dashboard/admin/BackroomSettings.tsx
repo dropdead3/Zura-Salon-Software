@@ -44,6 +44,7 @@ import { MultiLocationSection } from '@/components/dashboard/backroom-settings/M
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
+import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 
 type BackroomSection =
   | 'overview'
@@ -55,6 +56,7 @@ type BackroomSection =
   | 'allowances'
   | 'stations'
   | 'inventory'
+  | 'suppliers'
   | 'permissions'
   | 'alerts'
   | 'formula'
