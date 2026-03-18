@@ -8495,6 +8495,50 @@ export type Database = {
           },
         ]
       }
+      inventory_settings_audit: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          field_name: string
+          id: string
+          location_id: string | null
+          new_value: number | null
+          old_value: number | null
+          organization_id: string
+          product_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          field_name: string
+          id?: string
+          location_id?: string | null
+          new_value?: number | null
+          old_value?: number | null
+          organization_id: string
+          product_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          field_name?: string
+          id?: string
+          location_id?: string | null
+          new_value?: number | null
+          old_value?: number | null
+          organization_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_settings_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_application_notes: {
         Row: {
           application_id: string
