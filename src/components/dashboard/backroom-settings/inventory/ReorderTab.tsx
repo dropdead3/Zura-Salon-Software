@@ -1,6 +1,6 @@
 /**
  * ReorderTab — Smart reorder queue grouped by supplier.
- * Supports multi-line PO creation per supplier and email PO actions.
+ * Supports multi-line PO creation per supplier, email PO actions, and bulk operations.
  */
 
 import { useMemo, useState, useCallback } from 'react';
@@ -10,12 +10,16 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus, Mail } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
 import { useReplenishmentRecommendations, useGenerateReplenishment } from '@/hooks/inventory/useReplenishment';
 import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
+import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { forecastStockout } from '@/lib/stockoutForecast';
