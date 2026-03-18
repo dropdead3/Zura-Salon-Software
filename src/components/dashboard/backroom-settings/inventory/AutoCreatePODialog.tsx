@@ -4,7 +4,7 @@
  * and creates draft POs via useCreateMultiLinePO.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
 import type { BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import { SupplierAssignDialog } from './SupplierAssignDialog';
 
 interface SupplierGroup {
   supplierName: string;
@@ -50,8 +51,9 @@ export function AutoCreatePODialog({
   const createPO = useCreateMultiLinePO();
   const { formatCurrency } = useFormatCurrency();
   const [creating, setCreating] = useState(false);
+  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
 
-  const { supplierGroups, unassigned } = useMemo(() => {
+  const { supplierGroups, unassigned, unassignedByBrand } = useMemo(() => {
     const groupMap = new Map<string, SupplierGroup>();
     const unassigned: BackroomInventoryRow[] = [];
 
@@ -78,9 +80,18 @@ export function AutoCreatePODialog({
       g.estimatedCost += effectiveQty * (p.cost_price ?? p.cost_per_gram ?? 0);
     }
 
+    // Group unassigned by brand
+    const brandMap = new Map<string, BackroomInventoryRow[]>();
+    for (const p of unassigned) {
+      const brand = p.brand || 'Unknown';
+      if (!brandMap.has(brand)) brandMap.set(brand, []);
+      brandMap.get(brand)!.push(p);
+    }
+
     return {
       supplierGroups: Array.from(groupMap.values()).sort((a, b) => a.supplierName.localeCompare(b.supplierName)),
       unassigned,
+      unassignedByBrand: Array.from(brandMap.entries()).sort(([a], [b]) => a.localeCompare(b)),
     };
   }, [products]);
 
@@ -193,27 +204,35 @@ export function AutoCreatePODialog({
           ))}
 
           {unassigned.length > 0 && (
-            <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/30 bg-warning/5">
-              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-              <div>
-                <span className="font-sans text-sm font-medium text-warning">
-                  {unassigned.length} product{unassigned.length !== 1 ? 's' : ''} without supplier
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  These will be skipped. Assign a supplier via the brand header to include them.
-                </p>
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {unassigned.slice(0, 5).map(p => (
-                    <Badge key={p.id} variant="outline" className="text-[10px] font-medium">
-                      {p.name.replace(/\s*[—–-]\s*\d+(\.\d+)?\s*(g|oz|ml|L)\s*$/i, '').trim()}
-                    </Badge>
-                  ))}
-                  {unassigned.length > 5 && (
-                    <Badge variant="outline" className="text-[10px] font-medium">
-                      +{unassigned.length - 5} more
-                    </Badge>
-                  )}
+            <div className="p-3 rounded-lg border border-warning/30 bg-warning/5 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-sans text-sm font-medium text-warning">
+                    {unassigned.length} product{unassigned.length !== 1 ? 's' : ''} without supplier
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    These will be skipped. Assign a supplier below to include them.
+                  </p>
                 </div>
+              </div>
+              <div className="space-y-1.5 pl-6">
+                {unassignedByBrand.map(([brand, brandProducts]) => (
+                  <div key={brand} className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground truncate">
+                      {brand} ({brandProducts.length})
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs shrink-0"
+                      onClick={() => setSupplierDialog({ open: true, brand, products: brandProducts })}
+                    >
+                      Assign Supplier
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -242,6 +261,13 @@ export function AutoCreatePODialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <SupplierAssignDialog
+        open={supplierDialog.open}
+        onOpenChange={(isOpen) => setSupplierDialog(prev => ({ ...prev, open: isOpen }))}
+        brand={supplierDialog.brand}
+        products={supplierDialog.products}
+      />
     </Dialog>
   );
 }
