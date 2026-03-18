@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight } from 'lucide-react';
+import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -37,11 +37,17 @@ interface Props {
 export function StationsHardwareSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: stations, isLoading } = useBackroomStations();
   const { data: locations } = useActiveLocations();
+  const [filterLocationId, setFilterLocationId] = useState('all');
+  const { data: allStations, isLoading } = useBackroomStations();
   const createStation = useCreateBackroomStation();
   const updateStation = useUpdateBackroomStation();
   const deleteStation = useDeleteBackroomStation();
+
+  // Filter stations by selected location
+  const stations = allStations?.filter((s) =>
+    filterLocationId === 'all' ? true : s.location_id === filterLocationId
+  );
 
   const [showForm, setShowForm] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -89,16 +95,32 @@ export function StationsHardwareSection({ onNavigate }: Props) {
               <CardDescription>Manage backroom mixing stations and connected hardware.</CardDescription>
             </div>
           </div>
-          {!showForm && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
-                <Wand2 className="w-4 h-4 mr-1.5" /> Setup Station
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-1.5" /> Quick Add
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {locations && locations.length > 1 && (
+              <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+                <SelectTrigger className="w-fit gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!showForm && (
+              <>
+                <Button size="sm" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
+                  <Wand2 className="w-4 h-4 mr-1.5" /> Setup Station
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-1.5" /> Quick Add
+                </Button>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {showForm && (

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  ShieldCheck, ShieldAlert, ShieldX, RefreshCw, Loader2, Beaker, Users, TrendingUp,
+  ShieldCheck, ShieldAlert, ShieldX, RefreshCw, Loader2, Beaker, Users, TrendingUp, MapPin,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -21,6 +21,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { format, subDays } from 'date-fns';
 import { useBackroomComplianceTracker } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/backroom/useEvaluateComplianceLog';
+import { useActiveLocations } from '@/hooks/useLocations';
 
 type RangeKey = 'today' | '7d' | '14d' | '30d';
 
@@ -46,9 +47,12 @@ function getComplianceBadge(rate: number) {
 export function BackroomComplianceSection() {
   const [range, setRange] = useState<RangeKey>('7d');
   const [staffFilter, setStaffFilter] = useState<string>('all');
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
   const { from, to } = useMemo(() => getDateRange(range), [range]);
+  const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
 
-  const { data, isLoading } = useBackroomComplianceTracker(from, to, undefined, staffFilter !== 'all' ? staffFilter : undefined);
+  const { data, isLoading } = useBackroomComplianceTracker(from, to, effectiveLocationId, staffFilter !== 'all' ? staffFilter : undefined);
   const evaluate = useEvaluateComplianceLog();
 
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -80,6 +84,20 @@ export function BackroomComplianceSection() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {activeLocations.length > 1 && (
+            <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+              <SelectTrigger className="w-fit gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {activeLocations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>{RANGE_OPTIONS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>

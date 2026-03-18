@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useBackroomAlertRules, useUpsertAlertRule, useDeleteAlertRule, ALERT_RULE_TYPES, SEVERITY_OPTIONS, type BackroomAlertRule } from '@/hooks/backroom/useBackroomAlertRules';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Bell, Plus, Trash2, Zap } from 'lucide-react';
+import { Loader2, Bell, Plus, Trash2, Zap, MapPin } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { toast } from 'sonner';
@@ -26,9 +27,19 @@ const RECOMMENDED_RULES = [
 export function AlertsExceptionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: rules, isLoading } = useBackroomAlertRules();
+  const [filterLocationId, setFilterLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
+  const effectiveLocationId = filterLocationId === 'all' ? undefined : filterLocationId;
+  const { data: allRules, isLoading } = useBackroomAlertRules(filterLocationId === 'all' ? null : filterLocationId);
   const upsertRule = useUpsertAlertRule();
   const deleteRule = useDeleteAlertRule();
+
+  // When "All Locations", show all rules; when filtered, show org-wide + location-specific
+  const rules = useMemo(() => {
+    if (!allRules) return [];
+    if (filterLocationId === 'all') return allRules;
+    return allRules.filter((r) => !r.location_id || r.location_id === filterLocationId);
+  }, [allRules, filterLocationId]);
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -83,6 +94,20 @@ export function AlertsExceptionsSection() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {activeLocations.length > 1 && (
+              <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+                <SelectTrigger className="w-fit gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {activeLocations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {(!rules || rules.length === 0) && (
               <Button size="sm" onClick={handleApplyRecommended}>
                 <Zap className="w-4 h-4 mr-1.5" /> Use Recommended
