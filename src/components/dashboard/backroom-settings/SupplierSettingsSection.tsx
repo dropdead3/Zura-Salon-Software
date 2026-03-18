@@ -1,5 +1,6 @@
 /**
  * SupplierSettingsSection — Central supplier management: list, edit, link/unlink products.
+ * Enhanced with rename, delete, search, reorder fields, unlink confirmation, reassign, and stats.
  */
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,16 +13,26 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Truck, Plus, X, AlertTriangle, Package, Loader2, Search } from 'lucide-react';
+import { Truck, Plus, X, AlertTriangle, Package, Loader2, Search, Pencil, Trash2, FileText, ShoppingCart } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { format } from 'date-fns';
 import {
   useSupplierGroups,
   useUnlinkedProducts,
+  useAllProductsWithSupplier,
+  useSupplierStats,
   useUpdateSupplierContact,
   useLinkProducts,
   useUnlinkProduct,
+  useRenameSupplier,
+  useDeleteSupplier,
   type SupplierGroup,
 } from '@/hooks/backroom/useSupplierSettings';
 import { useProducts } from '@/hooks/useProducts';
@@ -34,6 +45,8 @@ interface ContactForm {
   account_number: string;
   lead_time_days: string;
   moq: string;
+  reorder_method: string;
+  reorder_notes: string;
 }
 
 export function SupplierSettingsSection() {
@@ -42,6 +55,8 @@ export function SupplierSettingsSection() {
   const updateContact = useUpdateSupplierContact();
   const linkProducts = useLinkProducts();
   const unlinkProduct = useUnlinkProduct();
+  const renameSupplier = useRenameSupplier();
+  const deleteSupplier = useDeleteSupplier();
   const orgId = useBackroomOrgId();
 
   const [selected, setSelected] = useState<string | null>(null);
@@ -49,11 +64,21 @@ export function SupplierSettingsSection() {
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
+  const [renameMode, setRenameMode] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
 
   const selectedGroup = useMemo(
     () => groups?.find(g => g.supplier_name === selected) ?? null,
     [groups, selected]
   );
+
+  // Filter supplier list by search
+  const filteredGroups = useMemo(() => {
+    if (!groups) return [];
+    if (!searchFilter.trim()) return groups;
+    const q = searchFilter.toLowerCase();
+    return groups.filter(g => g.supplier_name.toLowerCase().includes(q));
+  }, [groups, searchFilter]);
 
   // Auto-select first supplier
   useEffect(() => {
@@ -62,7 +87,7 @@ export function SupplierSettingsSection() {
     }
   }, [groups, selected]);
 
-  const { register, handleSubmit, reset } = useForm<ContactForm>();
+  const { register, handleSubmit, reset, setValue, watch } = useForm<ContactForm>();
 
   // Sync form when selection changes
   useEffect(() => {
@@ -74,7 +99,10 @@ export function SupplierSettingsSection() {
         account_number: selectedGroup.account_number || '',
         lead_time_days: selectedGroup.lead_time_days?.toString() || '',
         moq: selectedGroup.moq?.toString() || '1',
+        reorder_method: selectedGroup.reorder_method || '',
+        reorder_notes: selectedGroup.reorder_notes || '',
       });
+      setRenameMode(false);
     }
   }, [selectedGroup, reset]);
 
@@ -88,6 +116,8 @@ export function SupplierSettingsSection() {
       account_number: data.account_number || null,
       lead_time_days: data.lead_time_days ? parseInt(data.lead_time_days) : null,
       moq: data.moq ? parseInt(data.moq) : 1,
+      reorder_method: data.reorder_method || null,
+      reorder_notes: data.reorder_notes || null,
     });
   };
 
@@ -108,7 +138,24 @@ export function SupplierSettingsSection() {
     setSelected(newSupplierName.trim());
     setAddSupplierOpen(false);
     setNewSupplierName('');
-    // The supplier will be created when products are linked
+  };
+
+  const handleRename = () => {
+    if (!selected || !renameValue.trim() || renameValue.trim() === selected) {
+      setRenameMode(false);
+      return;
+    }
+    renameSupplier.mutate(
+      { old_name: selected, new_name: renameValue.trim() },
+      { onSuccess: () => { setSelected(renameValue.trim()); setRenameMode(false); } }
+    );
+  };
+
+  const handleDelete = () => {
+    if (!selected) return;
+    deleteSupplier.mutate(selected, {
+      onSuccess: () => setSelected(null),
+    });
   };
 
   // Unlinked products grouped by brand
@@ -145,7 +192,7 @@ export function SupplierSettingsSection() {
           <div className="flex min-h-[480px]">
             {/* Left: Supplier List */}
             <div className="w-64 shrink-0 border-r border-border/60">
-              <div className="p-4 border-b border-border/60">
+              <div className="p-4 space-y-2 border-b border-border/60">
                 <Button
                   variant="outline"
                   size="sm"
@@ -155,16 +202,28 @@ export function SupplierSettingsSection() {
                   <Plus className="w-4 h-4 mr-1.5" />
                   Add Supplier
                 </Button>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    value={searchFilter}
+                    onChange={e => setSearchFilter(e.target.value)}
+                    placeholder="Search suppliers..."
+                    className="pl-8 h-8 text-xs"
+                    autoCapitalize="off"
+                  />
+                </div>
               </div>
-              <ScrollArea className="h-[420px]">
+              <ScrollArea className="h-[400px]">
                 <div className="p-2 space-y-0.5">
-                  {groups?.length === 0 && (
+                  {filteredGroups.length === 0 && (
                     <div className={cn(tokens.empty.container, 'py-8')}>
                       <Truck className={tokens.empty.icon} />
-                      <p className={tokens.empty.description}>No suppliers yet</p>
+                      <p className={tokens.empty.description}>
+                        {searchFilter ? 'No matches' : 'No suppliers yet'}
+                      </p>
                     </div>
                   )}
-                  {groups?.map(g => (
+                  {filteredGroups.map(g => (
                     <button
                       key={g.supplier_name}
                       onClick={() => setSelected(g.supplier_name)}
@@ -186,9 +245,9 @@ export function SupplierSettingsSection() {
             </div>
 
             {/* Right: Detail Panel */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-y-auto">
               {!selectedGroup && selected && !groups?.find(g => g.supplier_name === selected) ? (
-                // New supplier — no rows yet, prompt to link products
+                // New supplier — no rows yet
                 <div className="p-6 space-y-4">
                   <div>
                     <h3 className={tokens.heading.card}>{selected}</h3>
@@ -201,13 +260,47 @@ export function SupplierSettingsSection() {
                 </div>
               ) : selectedGroup ? (
                 <div className="p-6 space-y-6">
-                  {/* Supplier name */}
-                  <div>
-                    <h3 className={tokens.heading.card}>{selectedGroup.supplier_name}</h3>
-                    <p className={tokens.body.muted}>
-                      {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : ''} linked
-                    </p>
+                  {/* Supplier name with rename */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      {renameMode ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={renameValue}
+                            onChange={e => setRenameValue(e.target.value)}
+                            className="h-8 text-sm max-w-xs"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleRename();
+                              if (e.key === 'Escape') setRenameMode(false);
+                            }}
+                          />
+                          <Button size="sm" variant="outline" onClick={handleRename} disabled={renameSupplier.isPending}>
+                            {renameSupplier.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save'}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setRenameMode(false)}>Cancel</Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <h3 className={tokens.heading.card}>{selectedGroup.supplier_name}</h3>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => { setRenameValue(selectedGroup.supplier_name); setRenameMode(true); }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                      <p className={tokens.body.muted}>
+                        {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : ''} linked
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Supplier Stats */}
+                  <SupplierStatsCard supplierName={selectedGroup.supplier_name} />
 
                   {/* Contact form */}
                   <form onSubmit={handleSubmit(onSaveContact)} className="space-y-4">
@@ -239,6 +332,38 @@ export function SupplierSettingsSection() {
                         <Input id="sm" type="number" {...register('moq')} placeholder="1" />
                       </div>
                     </div>
+
+                    {/* Reorder method + notes */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="srm" className={tokens.label.default}>Reorder Method</Label>
+                        <Select
+                          value={watch('reorder_method') || ''}
+                          onValueChange={val => setValue('reorder_method', val)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select method..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="phone">Phone</SelectItem>
+                            <SelectItem value="portal">Portal</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="srn" className={tokens.label.default}>Reorder Notes</Label>
+                        <Textarea
+                          id="srn"
+                          {...register('reorder_notes')}
+                          placeholder="Standing notes for reorders..."
+                          className="min-h-[36px] text-sm resize-none"
+                          rows={1}
+                        />
+                      </div>
+                    </div>
+
                     <Button type="submit" size="sm" disabled={updateContact.isPending}>
                       {updateContact.isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
                       Save Contact Info
@@ -267,20 +392,63 @@ export function SupplierSettingsSection() {
                                 <span className="text-muted-foreground text-xs ml-2">{prod.brand}</span>
                               )}
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 shrink-0"
-                              onClick={() => unlinkProduct.mutate(row.id)}
-                              disabled={unlinkProduct.isPending}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0"
+                                  disabled={unlinkProduct.isPending}
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Unlink Product</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Remove "{prod?.name || 'this product'}" from {selectedGroup.supplier_name}? This won't delete the product.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => unlinkProduct.mutate(row.id)}>
+                                    Unlink
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         );
                       })}
                     </div>
                   </div>
+
+                  <Separator />
+
+                  {/* Delete supplier */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                        Delete Supplier
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {selectedGroup.supplier_name}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will unlink all {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : ''} from this supplier. Products themselves won't be deleted.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete Supplier
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ) : (
                 <div className={cn(tokens.empty.container, 'h-full')}>
@@ -363,7 +531,7 @@ export function SupplierSettingsSection() {
         </Card>
       )}
 
-      {/* Link Products Dialog */}
+      {/* Link Products Dialog — now shows ALL products with supplier badges */}
       <LinkProductsDialog
         open={linkDialogOpen}
         onOpenChange={setLinkDialogOpen}
@@ -409,6 +577,39 @@ export function SupplierSettingsSection() {
   );
 }
 
+/** Compact supplier stats card */
+function SupplierStatsCard({ supplierName }: { supplierName: string }) {
+  const { data: stats, isLoading } = useSupplierStats(supplierName);
+
+  if (isLoading || !stats || stats.po_count === 0) return null;
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-muted/30 border border-border/40">
+      <ShoppingCart className="w-4 h-4 text-muted-foreground shrink-0" />
+      <div className="flex items-center gap-6 text-sm">
+        <div>
+          <span className="text-muted-foreground">POs: </span>
+          <span className={tokens.body.emphasis}>{stats.po_count}</span>
+        </div>
+        {stats.last_order_date && (
+          <div>
+            <span className="text-muted-foreground">Last order: </span>
+            <span className={tokens.body.emphasis}>
+              {format(new Date(stats.last_order_date), 'MMM d, yyyy')}
+            </span>
+          </div>
+        )}
+        {stats.total_spend > 0 && (
+          <div>
+            <span className="text-muted-foreground">Spend: </span>
+            <span className={tokens.body.emphasis}>${stats.total_spend.toLocaleString()}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Dropdown to assign all products in a brand to a supplier */
 function AssignBrandDropdown({
   brand,
@@ -439,7 +640,7 @@ function AssignBrandDropdown({
   );
 }
 
-/** Dialog for multi-selecting unlinked products to link to a supplier */
+/** Dialog for selecting products to link — shows ALL products with current supplier badges */
 function LinkProductsDialog({
   open,
   onOpenChange,
@@ -455,7 +656,7 @@ function LinkProductsDialog({
   onLink: (ids: string[]) => void;
   isPending: boolean;
 }) {
-  const { data: unlinked } = useUnlinkedProducts();
+  const { data: allProducts } = useAllProductsWithSupplier();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
 
@@ -468,12 +669,13 @@ function LinkProductsDialog({
   }, [open]);
 
   const filtered = useMemo(() => {
-    if (!unlinked) return [];
+    if (!allProducts) return [];
     const q = search.toLowerCase();
-    return unlinked
+    return allProducts
+      // Exclude products already linked to THIS supplier
       .filter(p => !alreadyLinked.includes(p.id))
       .filter(p => !q || p.name.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
-  }, [unlinked, search, alreadyLinked]);
+  }, [allProducts, search, alreadyLinked]);
 
   const toggle = (id: string) => {
     setSelectedIds(prev => {
@@ -489,7 +691,7 @@ function LinkProductsDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Link Products to {supplierName}</DialogTitle>
-          <DialogDescription>Select products to assign to this supplier.</DialogDescription>
+          <DialogDescription>Select products to assign. Products with another supplier will be reassigned.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="relative">
@@ -505,7 +707,7 @@ function LinkProductsDialog({
           <ScrollArea className="h-[300px] border border-border/60 rounded-lg">
             <div className="p-2 space-y-0.5">
               {filtered.length === 0 && (
-                <p className={cn(tokens.body.muted, 'text-center py-8')}>No unlinked products found</p>
+                <p className={cn(tokens.body.muted, 'text-center py-8')}>No products found</p>
               )}
               {filtered.map(p => (
                 <label
@@ -516,10 +718,15 @@ function LinkProductsDialog({
                     checked={selectedIds.has(p.id)}
                     onCheckedChange={() => toggle(p.id)}
                   />
-                  <div className="min-w-0">
-                    <span className={tokens.body.default}>{p.name}</span>
-                    {p.brand && <span className="text-muted-foreground text-xs ml-2">{p.brand}</span>}
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className={cn(tokens.body.default, 'truncate')}>{p.name}</span>
+                    {p.brand && <span className="text-muted-foreground text-xs shrink-0">{p.brand}</span>}
                   </div>
+                  {p.current_supplier && (
+                    <Badge variant="outline" className="text-xs shrink-0 ml-auto">
+                      {p.current_supplier}
+                    </Badge>
+                  )}
                 </label>
               ))}
             </div>
