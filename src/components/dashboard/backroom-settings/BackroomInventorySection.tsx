@@ -4,13 +4,16 @@
  * Stock | Reorder | Orders | Receive | Counts
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
+import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { NavBadge } from '../NavBadge';
 import { StockTab } from './inventory/StockTab';
 import { ReorderTab } from './inventory/ReorderTab';
 import { OrdersTab } from './inventory/OrdersTab';
@@ -22,6 +25,17 @@ export function BackroomInventorySection() {
   const { data: locations = [] } = useActiveLocations();
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
   const effectiveLocationId = locationId || locations[0]?.id;
+
+  // Badge counts
+  const { data: inventory = [] } = useBackroomInventoryTable({ locationId: effectiveLocationId });
+  const { data: allOrders = [] } = usePurchaseOrders({ status: 'all' });
+
+  const reorderCount = useMemo(() =>
+    inventory.filter(r => r.status === 'urgent_reorder' || r.status === 'out_of_stock' || r.status === 'replenish').length,
+    [inventory]
+  );
+  const draftOrderCount = useMemo(() => allOrders.filter(po => po.status === 'draft').length, [allOrders]);
+  const receivableCount = useMemo(() => allOrders.filter(po => po.status === 'sent' || po.status === 'partially_received').length, [allOrders]);
 
   return (
     <div className="space-y-5">
@@ -53,13 +67,13 @@ export function BackroomInventorySection() {
             <Package className="w-4 h-4" /> Stock
           </TabsTrigger>
           <TabsTrigger value="reorder" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <RefreshCcw className="w-4 h-4" /> Reorder
+            <RefreshCcw className="w-4 h-4" /> Reorder <NavBadge count={reorderCount} />
           </TabsTrigger>
           <TabsTrigger value="orders" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <FileText className="w-4 h-4" /> Orders
+            <FileText className="w-4 h-4" /> Orders <NavBadge count={draftOrderCount} />
           </TabsTrigger>
           <TabsTrigger value="receive" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <Truck className="w-4 h-4" /> Receive
+            <Truck className="w-4 h-4" /> Receive <NavBadge count={receivableCount} />
           </TabsTrigger>
           <TabsTrigger value="counts" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <ClipboardCheck className="w-4 h-4" /> Counts

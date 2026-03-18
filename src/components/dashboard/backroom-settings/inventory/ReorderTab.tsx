@@ -3,11 +3,12 @@
  * Supports multi-line PO creation per supplier and email PO actions.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
@@ -42,6 +43,16 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   const orgId = effectiveOrganization?.id;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sendingEmail, setSendingEmail] = useState(false);
+  // Editable order quantity overrides (product id -> qty)
+  const [qtyOverrides, setQtyOverrides] = useState<Record<string, number>>({});
+
+  const getOrderQty = useCallback((row: BackroomInventoryRow) => {
+    return qtyOverrides[row.id] ?? row.order_qty;
+  }, [qtyOverrides]);
+
+  const setOrderQty = useCallback((id: string, qty: number) => {
+    setQtyOverrides(prev => ({ ...prev, [id]: Math.max(0, qty) }));
+  }, []);
 
   // Products that need reordering
   const reorderQueue = useMemo(() => {
@@ -65,7 +76,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
         totalEstCost: 0,
       };
       group.products.push(row);
-      group.totalEstCost += row.order_qty * (row.cost_price ?? row.cost_per_gram ?? 0);
+      group.totalEstCost += getOrderQty(row) * (row.cost_price ?? row.cost_per_gram ?? 0);
       map.set(key, group);
     }
     // Sort: unassigned last
@@ -74,7 +85,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       if (b.supplierName === 'Unassigned') return -1;
       return a.supplierName.localeCompare(b.supplierName);
     });
-  }, [reorderQueue]);
+  }, [reorderQueue, getOrderQty]);
 
   const isLoading = invLoading || recLoading;
 
@@ -107,7 +118,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       supplier_email: group.supplierEmail ?? undefined,
       lines: group.products.map(p => ({
         product_id: p.id,
-        quantity_ordered: p.order_qty,
+        quantity_ordered: getOrderQty(p),
         unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
       })),
     });
@@ -125,7 +136,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
         supplier_email: group.supplierEmail ?? undefined,
         lines: groupProducts.map(p => ({
           product_id: p.id,
-          quantity_ordered: p.order_qty,
+          quantity_ordered: getOrderQty(p),
           unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
         })),
       });
@@ -249,6 +260,8 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
                         selected={selectedIds.has(row.id)}
                         onToggle={() => toggleSelect(row.id)}
                         formatCurrency={formatCurrency}
+                        orderQty={getOrderQty(row)}
+                        onOrderQtyChange={(qty) => setOrderQty(row.id, qty)}
                       />
                     ))}
                   </TableBody>
@@ -262,15 +275,17 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   );
 }
 
-function ReorderRow({ row, selected, onToggle, formatCurrency }: {
+function ReorderRow({ row, selected, onToggle, formatCurrency, orderQty, onOrderQtyChange }: {
   row: BackroomInventoryRow;
   selected: boolean;
   onToggle: () => void;
   formatCurrency: (n: number) => string;
+  orderQty: number;
+  onOrderQtyChange: (qty: number) => void;
 }) {
   const statusCfg = STOCK_STATUS_CONFIG[row.status];
   const forecast = forecastStockout(row.quantity_on_hand, 0.5);
-  const estCost = row.order_qty * (row.cost_price ?? row.cost_per_gram ?? 0);
+  const estCost = orderQty * (row.cost_price ?? row.cost_per_gram ?? 0);
 
   return (
     <TableRow className={cn(selected && 'bg-primary/5')}>
@@ -286,7 +301,15 @@ function ReorderRow({ row, selected, onToggle, formatCurrency }: {
       <TableCell className="text-right font-medium tabular-nums">{row.quantity_on_hand}</TableCell>
       <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.reorder_level ?? '—'}</TableCell>
       <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.par_level ?? '—'}</TableCell>
-      <TableCell className="text-right font-medium tabular-nums text-warning">{row.order_qty || '—'}</TableCell>
+      <TableCell className="text-right">
+        <Input
+          type="number"
+          min={0}
+          value={orderQty}
+          onChange={(e) => onOrderQtyChange(parseInt(e.target.value) || 0)}
+          className="w-16 h-7 text-right tabular-nums text-sm ml-auto"
+        />
+      </TableCell>
       <TableCell className="hidden lg:table-cell">
         {forecast.daysUntilStockout === 0 ? (
           <span className="text-destructive text-xs font-medium flex items-center gap-1">

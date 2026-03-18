@@ -8,6 +8,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Loader2, FileText, ChevronDown, ChevronRight, Send, XCircle, Mail } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -199,9 +203,27 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
               </Button>
             )}
             {(po.status === 'draft' || po.status === 'sent') && (
-              <Button variant="ghost" size="icon" onClick={onCancel} title="Cancel">
-                <XCircle className="w-4 h-4 text-destructive" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" title="Cancel PO">
+                    <XCircle className="w-4 h-4 text-destructive" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Purchase Order?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will mark PO #{po.id.slice(0, 8).toUpperCase()} as cancelled. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep PO</AlertDialogCancel>
+                    <AlertDialogAction onClick={onCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Cancel PO
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </TableCell>
