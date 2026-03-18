@@ -116,7 +116,7 @@ function InlineEditCell({
   return (
     <span
       className={cn(
-        'cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums',
+        'group/edit cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums inline-flex items-center gap-1',
         className,
       )}
       onClick={() => {
@@ -126,6 +126,7 @@ function InlineEditCell({
       title="Click to edit"
     >
       {value != null ? value : placeholder}
+      <Pencil className="w-2.5 h-2.5 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors shrink-0" />
     </span>
   );
 }
