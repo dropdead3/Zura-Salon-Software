@@ -558,7 +558,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder }: {
+function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
@@ -571,6 +571,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   onSetSupplier: () => void;
   onAudit: (productId: string, productName: string) => void;
   onQuickReorder: (row: BackroomInventoryRow) => void;
+  poHistoryMap?: Map<string, number[]>;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
