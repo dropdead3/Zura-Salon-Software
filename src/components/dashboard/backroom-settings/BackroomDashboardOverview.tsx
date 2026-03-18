@@ -99,17 +99,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
           <Card className="border-amber-500/40 bg-amber-500/5">
             <CardContent className="py-4" style={{ containerType: 'inline-size' }}>
-              {(() => {
-                const steps = [
-                  { label: 'Products', done: (setupHealth as any).trackedProducts > 0 },
-                  { label: 'Services', done: (setupHealth as any).trackedServices > 0 },
-                  { label: 'Recipes', done: (setupHealth as any).recipesConfigured > 0 },
-                  { label: 'Allowances', done: (setupHealth as any).allowancePolicies > 0 },
-                  { label: 'Stations', done: (setupHealth as any).stationsConfigured > 0 },
-                  { label: 'Alerts', done: (setupHealth as any).alertRulesConfigured > 0 },
-                ];
-                return null;
-              })()}
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
