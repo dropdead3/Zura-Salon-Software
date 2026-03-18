@@ -1,10 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { generatePurchaseOrderPdf } from '@/lib/generatePurchaseOrderPdf';
 
 interface BatchPOItem {
   organization_id: string;
   product_id: string;
+  product_name?: string;
+  product_sku?: string | null;
   supplier_name?: string;
   supplier_email?: string;
   quantity: number;
@@ -25,9 +28,13 @@ export function useBatchCreatePurchaseOrders() {
     mutationFn: async ({
       items,
       sendEmails,
+      orgName,
+      logoDataUrl,
     }: {
       items: BatchPOItem[];
       sendEmails: boolean;
+      orgName?: string;
+      logoDataUrl?: string | null;
     }): Promise<BatchReorderResult> => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const result: BatchReorderResult = { created: 0, sent: 0, errors: [] };
@@ -70,11 +77,46 @@ export function useBatchCreatePurchaseOrders() {
         }
       }
 
-      // Send consolidated emails per supplier
+      // Send consolidated emails per supplier with PDF attachments
       if (sendEmails) {
+        // Group items by supplier for PDF generation
+        const itemsBySupplier = new Map<string, BatchPOItem[]>();
+        for (const item of items) {
+          if (!item.supplier_email) continue;
+          const list = itemsBySupplier.get(item.supplier_email) || [];
+          list.push(item);
+          itemsBySupplier.set(item.supplier_email, list);
+        }
+
+        // Generate PDF attachments per supplier
+        const attachments: Record<string, { filename: string; content: string }[]> = {};
+        if (orgName) {
+          for (const [email, supplierItems] of itemsBySupplier) {
+            try {
+              const supplierName = supplierItems[0].supplier_name || 'Supplier';
+              const pdfResult = generatePurchaseOrderPdf({
+                orgName,
+                supplierName,
+                supplierEmail: email,
+                lines: supplierItems.map(item => ({
+                  productName: item.product_name || 'Product',
+                  sku: item.product_sku,
+                  quantity: item.quantity,
+                  unitCost: item.unit_cost,
+                  totalCost: item.unit_cost ? item.unit_cost * item.quantity : undefined,
+                })),
+                logoDataUrl,
+              });
+              attachments[email] = [{ filename: pdfResult.fileName, content: pdfResult.base64 }];
+            } catch (e) {
+              console.warn('Failed to generate PO PDF for', email, e);
+            }
+          }
+        }
+
         for (const [, poIds] of bySupplierEmail) {
           const { error: sendErr } = await supabase.functions.invoke('send-reorder-email', {
-            body: { purchase_order_ids: poIds },
+            body: { purchase_order_ids: poIds, attachments },
           });
           if (sendErr) {
             result.errors.push(`Email send failed: ${sendErr.message}`);
