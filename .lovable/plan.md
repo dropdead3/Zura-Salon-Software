@@ -1,153 +1,74 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# PO Numbering, Delivery Tracking, and Reorder Analytics
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## 1. Auto-Generated PO Numbers
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The `po_number` column already exists on `purchase_orders` (nullable TEXT). We need a database sequence + trigger to auto-populate it on INSERT.
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+**Database migration:**
+- Create a sequence `po_number_seq` per-org using a trigger approach
+- Create a trigger function `generate_po_number()` that sets `po_number = 'PO-' || EXTRACT(YEAR FROM now()) || '-' || LPAD(nextval(...)::text, 4, '0')` on INSERT when `po_number IS NULL`
+- Use a single global sequence for simplicity (org prefix not needed since POs are already org-scoped)
 
-## Auto-Reorder with Supplier Communication (Implemented)
+**UI changes:**
+- `OrdersTab.tsx`: Replace `po.id.slice(0, 8).toUpperCase()` with `po.po_number || po.id.slice(0,8)` in the PO # column
+- `ReceiveTab.tsx`: Already uses `getPoLabel()` which handles this
+- `generatePurchaseOrderPdf.ts`: Include `po_number` in the PDF header
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+---
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+## 2. Delivery Date Tracking with Supplier Confirmation
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+Columns `expected_delivery_date` and `supplier_confirmed_at` already exist on `purchase_orders`.
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+**Database migration:**
+- Add `supplier_confirmed_delivery_date TIMESTAMPTZ` column to `purchase_orders` (the supplier's confirmed date, distinct from the buyer's expected date)
+- Add `delivery_followup_sent_at TIMESTAMPTZ` column for tracking when reminders were sent
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+**UI changes in `OrdersTab.tsx`:**
+- Add an inline editable expected delivery date field in the expanded PO row
+- Show supplier-confirmed date when available
+- Add a "Follow Up" button on sent POs that are past their expected delivery date
 
-## Product Movement Rating Badges (Implemented)
+**Edge function:** `check-po-delivery-reminders` (cron, daily)
+- Query sent POs where `expected_delivery_date < now()` and `received_at IS NULL` and `delivery_followup_sent_at IS NULL` (or last sent > 3 days ago)
+- Send reminder email to supplier via existing email infrastructure
+- Update `delivery_followup_sent_at`
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+---
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+## 3. Reorder History Analytics Tab
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+Add a 7th tab "Analytics" to the inventory workspace showing ordering patterns and cost trends.
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+**New component:** `src/components/dashboard/backroom-settings/inventory/ReorderAnalyticsTab.tsx`
 
-## Inventory Intelligence Suite v2 (Implemented)
+**New hook:** `src/hooks/backroom/useReorderAnalytics.ts`
+- Queries `purchase_orders` + `purchase_order_lines` for the last 6 months
+- Aggregates: monthly spend by supplier, order frequency by product, avg cost per unit trends
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+**UI sections:**
+1. **KPI cards**: Total POs (period), Total Spend, Avg Order Value, Avg Lead Time
+2. **Monthly Spend by Supplier** chart (bar chart using existing charting patterns)
+3. **Top Reordered Products** table (product, order count, total units, total spend, avg unit cost trend)
+4. **Supplier Performance** table (supplier, PO count, avg lead time, on-time %)
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+**Integration:**
+- Add "Analytics" tab with `BarChart3` icon to `BackroomInventorySection.tsx`
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+---
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+## Files to create/modify
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+| File | Action |
+|------|--------|
+| Database migration | Create sequence + trigger for `po_number`, add delivery tracking columns |
+| `OrdersTab.tsx` | Show `po_number`, add delivery date editing, follow-up button |
+| `ReorderTab.tsx` | Pass `po_number` context where POs are created |
+| `generatePurchaseOrderPdf.ts` | Include `po_number` in PDF |
+| `BackroomInventorySection.tsx` | Add 7th "Analytics" tab |
+| `ReorderAnalyticsTab.tsx` (new) | Analytics dashboard component |
+| `useReorderAnalytics.ts` (new) | Data aggregation hook |
+| `check-po-delivery-reminders/index.ts` (new) | Daily cron edge function for follow-up emails |
 
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
