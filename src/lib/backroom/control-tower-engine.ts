@@ -178,7 +178,7 @@ function buildStaffAlerts(staff: StaffBackroomPerformance[]): ControlTowerAlert[
         entityType: 'staff',
         entityId: s.staff_id,
         suggestedAction: 'Review mix sessions and provide coaching',
-        actionRoute: '/dashboard/backroom/staff-performance',
+        actionRoute: '/dashboard/admin/backroom-settings?category=insights',
         createdAt: s.last_calculated_at,
       });
     }
