@@ -1,6 +1,7 @@
 /**
  * CountsTab — Physical count session management.
  * Start counts, record variances, view shrinkage history.
+ * Active sessions can be opened for product-by-product count entry.
  */
 
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown } from 'lucide-react';
+import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useCountSessions, useCreateCountSession, type CountSession } from '@/hooks/inventory/useCountSessions';
@@ -17,6 +18,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
+import { CountEntryForm } from './CountEntryForm';
 
 interface CountsTabProps {
   locationId?: string;
@@ -31,6 +33,7 @@ export function CountsTab({ locationId }: CountsTabProps) {
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const [tab, setTab] = useState<'sessions' | 'shrinkage'>('sessions');
+  const [activeSession, setActiveSession] = useState<CountSession | null>(null);
 
   const isLoading = sessionsLoading || shrinkageLoading;
   const totalShrinkageCost = shrinkage.reduce((s, r) => s + r.shrinkageCost, 0);
@@ -42,6 +45,17 @@ export function CountsTab({ locationId }: CountsTabProps) {
       location_id: locationId,
     });
   };
+
+  // If a session is active for counting, show the entry form
+  if (activeSession) {
+    return (
+      <CountEntryForm
+        session={activeSession}
+        locationId={locationId}
+        onClose={() => setActiveSession(null)}
+      />
+    );
+  }
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
@@ -109,13 +123,18 @@ export function CountsTab({ locationId }: CountsTabProps) {
                     <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Variance (units)</TableHead>
                     <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Variance (cost)</TableHead>
                     <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Notes</TableHead>
+                    <TableHead className={tokens.table.columnHeader}></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sessions.map((session) => {
                     const isActive = session.status === 'in_progress' || session.status === 'open';
                     return (
-                      <TableRow key={session.id}>
+                      <TableRow
+                        key={session.id}
+                        className={cn(isActive && 'cursor-pointer hover:bg-muted/40')}
+                        onClick={() => isActive && setActiveSession(session)}
+                      >
                         <TableCell className={tokens.body.emphasis}>
                           {format(new Date(session.created_at), 'MMM d, yyyy')}
                         </TableCell>
@@ -141,6 +160,11 @@ export function CountsTab({ locationId }: CountsTabProps) {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-muted-foreground text-sm truncate max-w-[200px]">
                           {session.notes || '—'}
+                        </TableCell>
+                        <TableCell className="w-10">
+                          {isActive && (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          )}
                         </TableCell>
                       </TableRow>
                     );
