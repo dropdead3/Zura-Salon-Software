@@ -305,6 +305,72 @@ export function useRenameSupplier() {
   });
 }
 
+export interface SupplierSpendSummary {
+  inventoryValueAtCost: number;
+  inventoryValueAtRetail: number;
+  impliedMarginPct: number | null;
+  productCount: number;
+  missingCostCount: number;
+}
+
+/** Compute inventory value, retail value, and implied margin for a supplier's linked products */
+export function useSupplierSpendSummary(supplierName: string | null) {
+  const orgId = useBackroomOrgId();
+
+  return useQuery({
+    queryKey: ['supplier-spend-summary', orgId, supplierName],
+    queryFn: async (): Promise<SupplierSpendSummary> => {
+      // Get product IDs linked to this supplier
+      const { data: links, error: lErr } = await supabase
+        .from('product_suppliers')
+        .select('product_id')
+        .eq('organization_id', orgId!)
+        .eq('supplier_name', supplierName!);
+
+      if (lErr) throw lErr;
+      const productIds = (links || []).map(l => l.product_id);
+      if (productIds.length === 0) {
+        return { inventoryValueAtCost: 0, inventoryValueAtRetail: 0, impliedMarginPct: null, productCount: 0, missingCostCount: 0 };
+      }
+
+      const { data: products, error: pErr } = await supabase
+        .from('products')
+        .select('id, cost_price, retail_price, quantity_on_hand')
+        .eq('organization_id', orgId!)
+        .in('id', productIds);
+
+      if (pErr) throw pErr;
+
+      let costTotal = 0;
+      let retailTotal = 0;
+      let missingCost = 0;
+
+      for (const p of products || []) {
+        const qty = p.quantity_on_hand ?? 0;
+        if (p.cost_price != null) {
+          costTotal += p.cost_price * qty;
+        } else {
+          missingCost++;
+        }
+        if (p.retail_price != null) {
+          retailTotal += p.retail_price * qty;
+        }
+      }
+
+      const margin = retailTotal > 0 ? ((retailTotal - costTotal) / retailTotal) * 100 : null;
+
+      return {
+        inventoryValueAtCost: costTotal,
+        inventoryValueAtRetail: retailTotal,
+        impliedMarginPct: margin,
+        productCount: (products || []).length,
+        missingCostCount: missingCost,
+      };
+    },
+    enabled: !!orgId && !!supplierName,
+  });
+}
+
 /** Delete all product_suppliers rows for a given supplier name */
 export function useDeleteSupplier() {
   const queryClient = useQueryClient();

@@ -14,7 +14,7 @@ import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight,
   FlaskConical, Trash2, Scale, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Sparkles, Users2, Package, ShieldAlert,
+  Sparkles, Users2, Package, ShieldAlert, Truck,
 } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { formatRelativeTime } from '@/lib/format';
@@ -335,6 +335,9 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
             <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">
               <Eye className="w-3.5 h-3.5" /> View Exceptions
             </Button>
+            <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers')} className="font-sans gap-1.5">
+              <Truck className="w-3.5 h-3.5" /> Manage Suppliers
+            </Button>
             <Button variant="outline" size="sm" onClick={() => onNavigate('insights')} className="font-sans gap-1.5">
               <Download className="w-3.5 h-3.5" /> Export Report
             </Button>
@@ -405,7 +408,7 @@ function AlertRow({ alert, onNavigate }: { alert: ControlTowerAlert; onNavigate:
     profitability: 'insights',
     waste: 'insights',
     staff: 'insights',
-    reorder: 'inventory',
+    reorder: 'suppliers',
   };
 
   return (
