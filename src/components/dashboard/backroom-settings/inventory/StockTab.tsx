@@ -420,17 +420,14 @@ export function StockTab({ locationId }: StockTabProps) {
           <span className="text-sm text-muted-foreground font-sans">
             {selectedIds.size} selected
           </span>
-          {selectedReorderProducts.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="font-sans h-7"
-              onClick={() => setAutoPoDialog(true)}
-            >
-              <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-              Reorder {selectedReorderProducts.length} items
-            </Button>
-          )}
+          <Button
+            size="sm"
+            className="font-sans h-7"
+            onClick={() => setAutoPoDialog(true)}
+          >
+            <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+            Create PO ({selectedIds.size} {selectedIds.size === 1 ? 'item' : 'items'})
+          </Button>
           <Button
             size="sm"
             variant="ghost"
