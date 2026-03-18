@@ -43,6 +43,16 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   const orgId = effectiveOrganization?.id;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sendingEmail, setSendingEmail] = useState(false);
+  // Editable order quantity overrides (product id -> qty)
+  const [qtyOverrides, setQtyOverrides] = useState<Record<string, number>>({});
+
+  const getOrderQty = useCallback((row: BackroomInventoryRow) => {
+    return qtyOverrides[row.id] ?? row.order_qty;
+  }, [qtyOverrides]);
+
+  const setOrderQty = useCallback((id: string, qty: number) => {
+    setQtyOverrides(prev => ({ ...prev, [id]: Math.max(0, qty) }));
+  }, []);
 
   // Products that need reordering
   const reorderQueue = useMemo(() => {
