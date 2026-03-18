@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/backroom/useBulkInventoryAuditTrail';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format } from 'date-fns';
+import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
 interface AuditLogTabProps {
   locationId?: string;
