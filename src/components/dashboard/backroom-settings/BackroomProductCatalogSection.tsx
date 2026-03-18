@@ -710,18 +710,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                    Sync from Zura Library
                  </Button>
                )}
-               {!selectedBrand && hasProducts && (
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => { setSyncScope('all'); setSyncConfirmOpen(true); }}
-                   disabled={syncAllBrandsMutation.isPending}
-                   className="font-sans gap-1.5"
-                 >
-                   <RefreshCw className={cn('w-3.5 h-3.5', syncAllBrandsMutation.isPending && 'animate-spin')} />
-                   Sync from Zura Library
-                 </Button>
-               )}
               <Button
                 variant="outline"
                 size="sm"
