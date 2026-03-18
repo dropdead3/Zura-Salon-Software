@@ -640,7 +640,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder }: {
+function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -653,6 +653,7 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
   onToggleSelect: (id: string) => void;
   onAudit: (productId: string, productName: string) => void;
   onQuickReorder: (row: BackroomInventoryRow) => void;
+  poHistoryMap?: Map<string, number[]>;
 }) {
   return (
     <>
