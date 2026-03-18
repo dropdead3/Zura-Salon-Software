@@ -246,7 +246,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 20% 92%;
 
-    --border: 0 0% 44%;
+    --border: 0 0% 20%;
     --input: 0 0% 14%;
     --ring: 40 20% 92%;
 
@@ -256,7 +256,7 @@ html, body, #root {
     --sidebar-primary-foreground: 0 0% 4%;
     --sidebar-accent: 0 0% 16%;
     --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 0 0% 44%;
+    --sidebar-border: 0 0% 20%;
     --sidebar-ring: 40 20% 92%;
 
     --card-inner: 0 0% 8%;
@@ -369,7 +369,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 10% 46%;
+    --border: 350 8% 22%;
     --input: 350 10% 16%;
     --ring: 350 55% 60%;
 
@@ -379,7 +379,7 @@ html, body, #root {
     --sidebar-primary-foreground: 350 15% 6%;
     --sidebar-accent: 350 10% 18%;
     --sidebar-accent-foreground: 350 20% 92%;
-    --sidebar-border: 350 10% 46%;
+    --sidebar-border: 350 8% 22%;
     --sidebar-ring: 350 55% 60%;
 
     --card-inner: 350 5% 8%;
@@ -492,7 +492,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 8% 46%;
+    --border: 145 6% 22%;
     --input: 145 8% 16%;
     --ring: 145 40% 50%;
 
@@ -502,7 +502,7 @@ html, body, #root {
     --sidebar-primary-foreground: 145 12% 6%;
     --sidebar-accent: 145 8% 18%;
     --sidebar-accent-foreground: 145 18% 92%;
-    --sidebar-border: 145 8% 46%;
+    --sidebar-border: 145 6% 22%;
     --sidebar-ring: 145 40% 50%;
 
     --card-inner: 145 4% 8%;
@@ -615,7 +615,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 10% 46%;
+    --border: 210 8% 22%;
     --input: 210 10% 16%;
     --ring: 210 55% 55%;
 
@@ -625,7 +625,7 @@ html, body, #root {
     --sidebar-primary-foreground: 210 15% 6%;
     --sidebar-accent: 210 10% 18%;
     --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 210 10% 46%;
+    --sidebar-border: 210 8% 22%;
     --sidebar-ring: 210 55% 55%;
 
     --card-inner: 210 5% 8%;

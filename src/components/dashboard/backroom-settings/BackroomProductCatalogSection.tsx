@@ -1068,15 +1068,15 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* KPI row */}
               {hasProducts && (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-xl border bg-card p-4">
+                  <div className="rounded-xl border-border/20 border bg-card-inner p-4">
                     <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Tracked</span>
                     <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{trackedCount}</span>
                   </div>
-                  <div className="rounded-xl border bg-card p-4">
+                  <div className="rounded-xl border-border/20 border bg-card-inner p-4">
                     <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">In Stock</span>
                     <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.inStock}</span>
                   </div>
-                  <div className="rounded-xl border bg-card p-4">
+                  <div className="rounded-xl border-border/20 border bg-card-inner p-4">
                     <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
                     <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
                   </div>
@@ -1183,7 +1183,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         }}
                         className={cn(
                           'group relative flex flex-col items-center justify-center gap-2 rounded-xl border pt-9 pb-8 px-4 text-center transition-all duration-200 min-h-[160px]',
-                          'border bg-card/50',
+                          'border-border/20 border bg-card-inner/50',
                           'hover:border-border hover:bg-muted/40 hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
@@ -1350,8 +1350,8 @@ function InventoryView({
           type="button"
           onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
           className={cn(
-            'rounded-xl border bg-card p-4 text-left transition-all cursor-pointer',
-            stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/80 hover:shadow-sm'
+            'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
+            stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/40 hover:shadow-sm'
           )}
         >
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Current Stock</span>
@@ -1361,14 +1361,14 @@ function InventoryView({
           type="button"
           onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
           className={cn(
-            'rounded-xl border bg-card p-4 text-left transition-all cursor-pointer',
-            stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/80 hover:shadow-sm'
+            'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
+            stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/40 hover:shadow-sm'
           )}
         >
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
           <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
         </button>
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-xl border-border/20 border bg-card-inner p-4">
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Total Tracked</span>
           <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.totalTracked}</span>
         </div>
