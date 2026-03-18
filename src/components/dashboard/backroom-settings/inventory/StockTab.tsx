@@ -469,6 +469,7 @@ export function StockTab({ locationId }: StockTabProps) {
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Min</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Max</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Reorder Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell w-[72px]')}>PO History</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
