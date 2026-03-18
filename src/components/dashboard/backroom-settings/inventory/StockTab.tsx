@@ -375,6 +375,12 @@ export function StockTab({ locationId }: StockTabProps) {
         brand={supplierDialog.brand}
         products={supplierDialog.products}
       />
+      <InventoryAuditDialog
+        open={auditDialog.open}
+        onOpenChange={(open) => setAuditDialog(prev => ({ ...prev, open }))}
+        productId={auditDialog.productId}
+        productName={auditDialog.productName}
+      />
     </div>
   );
 }
