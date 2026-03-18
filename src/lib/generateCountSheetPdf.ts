@@ -7,61 +7,13 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import QRCode from 'qrcode';
 import {
   addReportHeader,
   addReportFooter,
   getReportAutoTableBranding,
   type ReportHeaderOptions,
 } from '@/lib/reportPdfLayout';
-
-export interface CountSheetProduct {
-  name: string;
-  brand: string | null;
-  sku: string | null;
-  category: string | null;
-  quantity_on_hand: number;
-}
-
-export interface CountSheetFilters {
-  brands?: string[];
-  categories?: string[];
-}
-
-export interface GenerateCountSheetOptions {
-  products: CountSheetProduct[];
-  orgName: string;
-  locationName?: string;
-  logoDataUrl?: string | null;
-  filters?: CountSheetFilters;
-  /** Full URL to include as QR code on the sheet */
-  countEntryUrl?: string;
-}
-
-/**
- * Draw a simple QR code using the qr-code-styling-free approach:
- * We use a canvas-based QR from qrcode.react's toDataURL pattern.
- * Since jsPDF can embed images, we generate the QR as a data URL via canvas.
- */
-async function generateQRDataUrl(text: string, size: number = 200): Promise<string | null> {
-  try {
-    // Dynamic import to keep the PDF generator tree-shakeable
-    const QRCode = await import('qrcode.react');
-    // Use a hidden canvas approach
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    // Simple QR encoding using a temporary React render isn't possible in a non-React context.
-    // Instead, we'll use the canvas API with a basic QR library approach.
-    // For now, we'll use a lightweight text-to-QR approach via a data URL pattern.
-    // Let's create a simple text label instead if QR generation fails.
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 export function generateCountSheetPdf({
   products,
