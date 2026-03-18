@@ -1,4 +1,4 @@
-import { Scale, Trophy } from 'lucide-react';
+import { SlidersHorizontal, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
