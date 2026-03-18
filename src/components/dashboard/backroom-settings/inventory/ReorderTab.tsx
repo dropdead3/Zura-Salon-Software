@@ -148,8 +148,22 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
 
+  const selectAll = () => {
+    setSelectedIds(new Set(reorderQueue.map(r => r.id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const selectedTotalCost = useMemo(() => {
+    return reorderQueue
+      .filter(r => selectedIds.has(r.id))
+      .reduce((sum, r) => sum + getOrderQty(r) * (r.cost_price ?? r.cost_per_gram ?? 0), 0);
+  }, [reorderQueue, selectedIds, getOrderQty]);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20">
       {/* Action bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -167,17 +181,6 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
             {generateRecs.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             Generate Suggestions
           </Button>
-          {selectedIds.size > 0 && (
-            <Button
-              size="sm"
-              onClick={handleCreateAllPOs}
-              disabled={createMultiLinePO.isPending}
-              className={tokens.button.cardAction}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              Create POs ({selectedIds.size})
-            </Button>
-          )}
         </div>
       </div>
 
