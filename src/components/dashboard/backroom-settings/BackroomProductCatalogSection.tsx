@@ -664,25 +664,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
-              {/* Location picker */}
-              {activeLocations.length > 0 && !selectedBrand && (
-                <Select
-                  value={effectiveLocationId || ''}
-                  onValueChange={(v) => setSelectedLocationId(v)}
-                >
-                  <SelectTrigger className="w-[180px] font-sans h-8 text-xs">
-                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeLocations.map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id} className="text-xs">
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              
               {/* View toggle */}
               {hasProducts && !selectedBrand && (
                 <div className="flex items-center rounded-lg border overflow-hidden">
