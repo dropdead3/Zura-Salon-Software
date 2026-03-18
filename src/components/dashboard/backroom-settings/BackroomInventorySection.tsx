@@ -64,6 +64,9 @@ export function BackroomInventorySection() {
           <TabsTrigger value="counts" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <ClipboardCheck className="w-4 h-4" /> Counts
           </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <History className="w-4 h-4" /> Audit Log
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="mt-4">
