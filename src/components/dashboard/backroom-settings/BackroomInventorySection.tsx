@@ -26,6 +26,17 @@ export function BackroomInventorySection() {
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
   const effectiveLocationId = locationId || locations[0]?.id;
 
+  // Badge counts
+  const { data: inventory = [] } = useBackroomInventoryTable({ locationId: effectiveLocationId });
+  const { data: allOrders = [] } = usePurchaseOrders({ status: 'all' });
+
+  const reorderCount = useMemo(() =>
+    inventory.filter(r => r.status === 'urgent_reorder' || r.status === 'out_of_stock' || r.status === 'replenish').length,
+    [inventory]
+  );
+  const draftOrderCount = useMemo(() => allOrders.filter(po => po.status === 'draft').length, [allOrders]);
+  const receivableCount = useMemo(() => allOrders.filter(po => po.status === 'sent' || po.status === 'partially_received').length, [allOrders]);
+
   return (
     <div className="space-y-5">
       {/* Section header with location selector */}
