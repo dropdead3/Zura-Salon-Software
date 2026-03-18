@@ -217,8 +217,8 @@ export function BackroomInsightsSection() {
         </CardContent>
       </Card>
 
-      <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} />
-      <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} />
+      <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+      <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
     </div>
   );
 }
