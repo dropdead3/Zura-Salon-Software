@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck } from 'lucide-react';
+import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ import { ReorderTab } from './inventory/ReorderTab';
 import { OrdersTab } from './inventory/OrdersTab';
 import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
+import { AuditLogTab } from './inventory/AuditLogTab';
 
 export function BackroomInventorySection() {
   const { data: locations = [] } = useActiveLocations();
@@ -63,6 +64,9 @@ export function BackroomInventorySection() {
           <TabsTrigger value="counts" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <ClipboardCheck className="w-4 h-4" /> Counts
           </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <History className="w-4 h-4" /> Audit Log
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="mt-4">
@@ -79,6 +83,9 @@ export function BackroomInventorySection() {
         </TabsContent>
         <TabsContent value="counts" className="mt-4">
           <CountsTab locationId={effectiveLocationId} />
+        </TabsContent>
+        <TabsContent value="audit" className="mt-4">
+          <AuditLogTab locationId={effectiveLocationId} />
         </TabsContent>
       </Tabs>
     </div>

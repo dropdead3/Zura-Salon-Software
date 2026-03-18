@@ -1,6 +1,7 @@
 /**
  * useInventoryAuditTrail — Fetches unified audit trail for a product
  * combining stock_movements (stock changes) and inventory_settings_audit (min/max changes).
+ * Supports type and date range filters.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -24,29 +25,55 @@ export interface AuditEntry {
   notes: string | null;
 }
 
-export function useInventoryAuditTrail(productId: string | null, limit = 50) {
+export interface AuditFilters {
+  typeFilter?: 'stock' | 'setting' | 'all';
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export function useInventoryAuditTrail(productId: string | null, limit = 50, filters?: AuditFilters) {
   const orgId = useBackroomOrgId();
+  const typeFilter = filters?.typeFilter ?? 'all';
 
   return useQuery({
-    queryKey: ['inventory-audit-trail', orgId, productId, limit],
+    queryKey: ['inventory-audit-trail', orgId, productId, limit, typeFilter, filters?.dateFrom?.toISOString(), filters?.dateTo?.toISOString()],
     queryFn: async (): Promise<AuditEntry[]> => {
-      // Fetch stock movements and settings audit in parallel
-      const [movementsRes, settingsRes] = await Promise.all([
-        supabase
-          .from('stock_movements')
-          .select('id, created_at, created_by, quantity_change, quantity_after, event_type, reason, notes')
-          .eq('organization_id', orgId!)
-          .eq('product_id', productId!)
-          .order('created_at', { ascending: false })
-          .limit(limit),
-        supabase
-          .from('inventory_settings_audit' as any)
-          .select('id, created_at, changed_by, field_name, old_value, new_value')
-          .eq('organization_id', orgId!)
-          .eq('product_id', productId!)
-          .order('created_at', { ascending: false })
-          .limit(limit),
-      ]);
+      const fetchStock = typeFilter === 'all' || typeFilter === 'stock';
+      const fetchSettings = typeFilter === 'all' || typeFilter === 'setting';
+
+      const movementsPromise = fetchStock
+        ? (async () => {
+            let q = supabase
+              .from('stock_movements')
+              .select('id, created_at, created_by, quantity_change, quantity_after, event_type, reason, notes')
+              .eq('organization_id', orgId!)
+              .eq('product_id', productId!)
+              .order('created_at', { ascending: false })
+              .limit(limit);
+            if (filters?.dateFrom) q = q.gte('created_at', filters.dateFrom.toISOString());
+            if (filters?.dateTo) q = q.lte('created_at', filters.dateTo.toISOString());
+            return q;
+          })()
+        : Promise.resolve({ data: [] as any[], error: null });
+
+      const settingsPromise = fetchSettings
+        ? (async () => {
+            let q = supabase
+              .from('inventory_settings_audit' as any)
+              .select('id, created_at, changed_by, field_name, old_value, new_value')
+              .eq('organization_id', orgId!)
+              .eq('product_id', productId!)
+              .order('created_at', { ascending: false })
+              .limit(limit);
+            if (filters?.dateFrom) q = q.gte('created_at', filters.dateFrom.toISOString());
+            if (filters?.dateTo) q = q.lte('created_at', filters.dateTo.toISOString());
+            return q;
+          })()
+        : Promise.resolve({ data: [] as any[], error: null });
+
+      const [movementsRes, settingsRes] = await Promise.all([movementsPromise, settingsPromise]);
+
+      
 
       if (movementsRes.error) throw movementsRes.error;
       if (settingsRes.error) throw settingsRes.error;
@@ -93,7 +120,6 @@ export function useInventoryAuditTrail(productId: string | null, limit = 50) {
         notes: null,
       }));
 
-      // Merge and sort by created_at descending
       return [...stockEntries, ...settingEntries]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, limit);
