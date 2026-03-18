@@ -657,32 +657,16 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   <>
                     <CardTitle className={tokens.card.title}>Backroom Product Catalog</CardTitle>
                     <CardDescription>
-                      Select a brand to manage tracking, depletion methods, and pricing.
+                      {effectiveLocationId
+                        ? `Managing catalog for ${activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'selected location'}`
+                        : 'Select a location to manage tracking, depletion methods, and pricing.'}
                     </CardDescription>
                   </>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
-              {/* Location picker */}
-              {activeLocations.length > 0 && !selectedBrand && (
-                <Select
-                  value={effectiveLocationId || ''}
-                  onValueChange={(v) => setSelectedLocationId(v)}
-                >
-                  <SelectTrigger className="w-[180px] font-sans h-8 text-xs">
-                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeLocations.map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id} className="text-xs">
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+
               {/* View toggle */}
               {hasProducts && !selectedBrand && (
                 <div className="flex items-center rounded-lg border overflow-hidden">
@@ -750,6 +734,31 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             </div>
           </div>
         </CardHeader>
+
+        {/* Location toggle pills — always visible */}
+        {activeLocations.length > 1 && (
+          <div className="px-6 pb-2 flex items-center gap-2 flex-wrap">
+            {activeLocations.map((loc) => {
+              const isActive = loc.id === effectiveLocationId;
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => setSelectedLocationId(loc.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-sans font-medium transition-colors',
+                    isActive
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  {isActive && <MapPin className="w-3 h-3" />}
+                  {loc.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <CardContent className="space-y-4">
           {/* ====== BRAND DETAIL (FINDER) ====== */}
