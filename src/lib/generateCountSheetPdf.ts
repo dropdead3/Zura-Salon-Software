@@ -1,12 +1,13 @@
 /**
  * Generates a printable physical count sheet PDF.
  * Products grouped by brand, sorted alphabetically, with blank columns for actual counts.
- * Supports optional brand/category filtering and QR code linking back to digital entry.
+ * Supports optional brand/category filtering and scannable QR code linking back to digital entry.
  */
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import QRCode from 'qrcode';
 import {
   addReportHeader,
   addReportFooter,
@@ -33,44 +34,35 @@ export interface GenerateCountSheetOptions {
   locationName?: string;
   logoDataUrl?: string | null;
   filters?: CountSheetFilters;
-  /** Full URL to include as QR code on the sheet */
+  /** Full URL to include as scannable QR code on the sheet */
   countEntryUrl?: string;
 }
 
 /**
- * Draw a simple QR code using the qr-code-styling-free approach:
- * We use a canvas-based QR from qrcode.react's toDataURL pattern.
- * Since jsPDF can embed images, we generate the QR as a data URL via canvas.
+ * Generate a real scannable QR code as a data URL using the `qrcode` library.
  */
 async function generateQRDataUrl(text: string, size: number = 200): Promise<string | null> {
   try {
-    // Dynamic import to keep the PDF generator tree-shakeable
-    const QRCode = await import('qrcode.react');
-    // Use a hidden canvas approach
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    // Simple QR encoding using a temporary React render isn't possible in a non-React context.
-    // Instead, we'll use the canvas API with a basic QR library approach.
-    // For now, we'll use a lightweight text-to-QR approach via a data URL pattern.
-    // Let's create a simple text label instead if QR generation fails.
-    return null;
+    const dataUrl = await QRCode.toDataURL(text, {
+      width: size,
+      margin: 1,
+      color: { dark: '#282828', light: '#FFFFFF' },
+      errorCorrectionLevel: 'M',
+    });
+    return dataUrl;
   } catch {
     return null;
   }
 }
 
-export function generateCountSheetPdf({
+export async function generateCountSheetPdf({
   products,
   orgName,
   locationName,
   logoDataUrl,
   filters,
   countEntryUrl,
-}: GenerateCountSheetOptions): void {
+}: GenerateCountSheetOptions): Promise<void> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -121,42 +113,34 @@ export function generateCountSheetPdf({
     bodyStartY += 5;
   }
 
-  // QR code with link to digital entry
+  // Scannable QR code with link to digital entry
   if (countEntryUrl) {
     const pageWidth = (doc as any).internal.pageSize.getWidth();
-    const qrSize = 18;
+    const qrSize = 22;
     const qrX = pageWidth - 14 - qrSize;
-    const qrY = startY - 8;
-    // Draw a placeholder box with the URL text since we can't easily generate a QR in pure jsPDF
-    doc.setDrawColor(180);
-    doc.setFillColor(248, 248, 248);
-    doc.roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 10, 2, 2, 'FD');
-    doc.setFontSize(6);
-    doc.setTextColor(100, 100, 100);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Scan to enter', qrX + qrSize / 2 - 1, qrY + qrSize + 4, { align: 'center' });
-    doc.text('counts digitally', qrX + qrSize / 2 - 1, qrY + qrSize + 7, { align: 'center' });
-    // Add a clickable link annotation over the QR area
-    doc.link(qrX - 2, qrY - 2, qrSize + 4, qrSize + 10, { url: countEntryUrl });
-    // Draw a simple grid pattern to represent QR visually
-    doc.setFillColor(40, 40, 40);
-    const cellSize = qrSize / 7;
-    // Simple visual pattern (not a real QR, but indicates "scan here")
-    const pattern = [
-      [1,1,1,0,1,1,1],
-      [1,0,1,0,1,0,1],
-      [1,1,1,0,1,1,1],
-      [0,0,0,1,0,0,0],
-      [1,1,1,0,1,1,1],
-      [1,0,1,1,1,0,1],
-      [1,1,1,0,1,1,1],
-    ];
-    for (let r = 0; r < 7; r++) {
-      for (let c = 0; c < 7; c++) {
-        if (pattern[r][c]) {
-          doc.rect(qrX + c * cellSize, qrY + r * cellSize, cellSize, cellSize, 'F');
-        }
-      }
+    const qrY = startY - 10;
+
+    // Generate real scannable QR code
+    const qrDataUrl = await generateQRDataUrl(countEntryUrl, 300);
+
+    if (qrDataUrl) {
+      // Draw background container
+      doc.setDrawColor(200);
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 12, 2, 2, 'FD');
+
+      // Embed the real QR code image
+      doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+      // Label below QR
+      doc.setFontSize(6);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Scan to enter', qrX + qrSize / 2, qrY + qrSize + 4, { align: 'center' });
+      doc.text('counts digitally', qrX + qrSize / 2, qrY + qrSize + 7, { align: 'center' });
+
+      // Clickable link annotation over the QR area
+      doc.link(qrX - 2, qrY - 2, qrSize + 4, qrSize + 12, { url: countEntryUrl });
     }
   }
 

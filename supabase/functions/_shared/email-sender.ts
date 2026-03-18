@@ -29,6 +29,12 @@ export interface EmailResult {
   skipReason?: string;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  content: string; // base64-encoded content
+  type?: string; // MIME type, defaults to application/pdf
+}
+
 export interface OrgEmailPayload {
   to: string[];
   subject: string;
@@ -36,6 +42,7 @@ export interface OrgEmailPayload {
   replyTo?: string;
   clientId?: string;
   emailType?: string; // 'marketing' | 'feedback' | 'transactional'
+  attachments?: EmailAttachment[];
 }
 
 interface SocialLinks {
@@ -233,6 +240,15 @@ export async function sendOrgEmail(
     html: brandedHtml,
     reply_to: replyTo,
   };
+
+  // Attach files if provided
+  if (payload.attachments && payload.attachments.length > 0) {
+    resendBody.attachments = payload.attachments.map(att => ({
+      filename: att.filename,
+      content: att.content,
+      type: att.type || 'application/pdf',
+    }));
+  }
 
   // Add List-Unsubscribe headers for Gmail/Yahoo compliance
   if (unsubscribeUrl) {

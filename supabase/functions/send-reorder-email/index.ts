@@ -17,7 +17,10 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { purchase_order_id, purchase_order_ids } = body;
+    const { purchase_order_id, purchase_order_ids, attachments } = body;
+
+    // attachments: Record<supplierEmail, { filename, content (base64) }[]>
+    const pdfAttachments: Record<string, { filename: string; content: string }[]> = attachments || {};
 
     // Support single or batch mode
     const poIds: string[] = purchase_order_ids
@@ -140,10 +143,18 @@ Deno.serve(async (req) => {
         ? `${supplierPOs[0].quantity}x ${productMap.get(supplierPOs[0].product_id)?.name || "Product"}`
         : `${supplierPOs.length} products`;
 
+      // Include PDF attachments if provided for this supplier
+      const supplierAttachments = pdfAttachments[supplierEmail] || [];
+
       const emailResult = await sendOrgEmail(supabase, orgId, {
         to: [supplierEmail],
         subject: `Purchase Order: ${subjectProducts}`,
         html: emailHtml,
+        attachments: supplierAttachments.map(att => ({
+          filename: att.filename,
+          content: att.content,
+          type: 'application/pdf',
+        })),
       }, { emailType: "transactional" });
 
       if (!emailResult.success) {
