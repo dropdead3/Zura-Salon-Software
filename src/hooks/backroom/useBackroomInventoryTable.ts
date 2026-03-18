@@ -85,8 +85,9 @@ async function fetchOpenPoQuantities(orgId: string): Promise<Map<string, number>
 
 function computeReorderFields(qty: number, parLevel: number | null, reorderLevel: number | null, openPoQty: number) {
   const needsReorder = reorderLevel != null && qty <= reorderLevel;
-  const orderQty = parLevel != null && (needsReorder || qty <= 0) ? Math.max(0, parLevel - qty) : 0;
-  const recommendedOrderQty = parLevel != null ? Math.max(0, parLevel - qty - openPoQty) : 0;
+  const target = parLevel ?? reorderLevel;
+  const orderQty = target != null && (needsReorder || qty <= 0) ? Math.max(0, target - qty) : 0;
+  const recommendedOrderQty = target != null ? Math.max(0, target - qty - openPoQty) : 0;
   return { orderQty, recommendedOrderQty };
 }
 

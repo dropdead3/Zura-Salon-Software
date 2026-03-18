@@ -56,7 +56,8 @@ export function AutoCreatePODialog({
     const unassigned: BackroomInventoryRow[] = [];
 
     for (const p of products) {
-      if (p.recommended_order_qty <= 0) continue;
+      const effectiveQty = p.recommended_order_qty > 0 ? p.recommended_order_qty : 1;
+      const productWithQty = { ...p, recommended_order_qty: effectiveQty };
       if (!p.supplier_name) {
         unassigned.push(p);
         continue;
