@@ -1,6 +1,7 @@
 /**
  * useBackroomInventoryTable — Joins backroom products with inventory_projections
  * to provide stock levels, status badges, and computed order quantities.
+ * Factors in open PO quantities to prevent double-ordering.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -23,6 +24,8 @@ export interface BackroomInventoryRow {
   markup_pct: number | null;
   cost_price: number | null;
   order_qty: number;
+  open_po_qty: number;
+  recommended_order_qty: number;
   status: StockStatus;
   charge_per_gram: number | null;
   supplier_name: string | null;
@@ -53,6 +56,40 @@ export const STOCK_STATUS_CONFIG: Record<StockStatus, { label: string; className
   not_stocked: { label: 'Not Stocked', className: 'bg-muted text-muted-foreground border-border/40' },
 };
 
+/**
+ * Fetch open PO line quantities grouped by product_id.
+ * Only considers POs in draft, sent, or partially_received status.
+ */
+async function fetchOpenPoQuantities(orgId: string): Promise<Map<string, number>> {
+  const { data: openPOs } = await supabase
+    .from('purchase_orders')
+    .select('id')
+    .eq('organization_id', orgId)
+    .in('status', ['draft', 'sent', 'partially_received']);
+
+  if (!openPOs || openPOs.length === 0) return new Map();
+
+  const poIds = openPOs.map(po => po.id);
+  const { data: lines } = await supabase
+    .from('purchase_order_lines')
+    .select('product_id, quantity_ordered, quantity_received')
+    .in('purchase_order_id', poIds);
+
+  const map = new Map<string, number>();
+  for (const line of lines || []) {
+    const remaining = Math.max(0, (line.quantity_ordered ?? 0) - (line.quantity_received ?? 0));
+    map.set(line.product_id, (map.get(line.product_id) ?? 0) + remaining);
+  }
+  return map;
+}
+
+function computeReorderFields(qty: number, parLevel: number | null, reorderLevel: number | null, openPoQty: number) {
+  const needsReorder = reorderLevel != null && qty <= reorderLevel;
+  const orderQty = parLevel != null && (needsReorder || qty <= 0) ? Math.max(0, parLevel - qty) : 0;
+  const recommendedOrderQty = parLevel != null ? Math.max(0, parLevel - qty - openPoQty) : 0;
+  return { orderQty, recommendedOrderQty };
+}
+
 export function useBackroomInventoryTable(options?: { enabled?: boolean; locationId?: string }) {
   const orgId = useBackroomOrgId();
   const locationId = options?.locationId;
@@ -60,12 +97,46 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
   return useQuery({
     queryKey: ['backroom-inventory-table', orgId, locationId],
     queryFn: async (): Promise<BackroomInventoryRow[]> => {
-      // Fetch all supplier data for the org once
-      const { data: suppliersData } = await supabase
-        .from('product_suppliers')
-        .select('product_id, supplier_name, supplier_email')
-        .eq('organization_id', orgId!);
-      const supplierMap = new Map((suppliersData || []).map((s: any) => [s.product_id, s]));
+      // Fetch supplier data and open PO quantities in parallel
+      const [suppliersResult, openPoMap] = await Promise.all([
+        supabase
+          .from('product_suppliers')
+          .select('product_id, supplier_name, supplier_email')
+          .eq('organization_id', orgId!),
+        fetchOpenPoQuantities(orgId!),
+      ]);
+      const supplierMap = new Map((suppliersResult.data || []).map((s: any) => [s.product_id, s]));
+
+      function buildRow(p: any, parLevel: number | null, reorderLevel: number | null): BackroomInventoryRow {
+        const qty = p.quantity_on_hand ?? 0;
+        const status = getStockStatus(qty, reorderLevel, parLevel);
+        const openPoQty = openPoMap.get(p.id) ?? 0;
+        const { orderQty, recommendedOrderQty } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
+        const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
+        const sup = supplierMap.get(p.id);
+
+        return {
+          id: p.id,
+          name: p.name,
+          brand: p.brand,
+          sku: p.sku,
+          category: p.category,
+          container_size: p.container_size,
+          quantity_on_hand: qty,
+          reorder_level: reorderLevel,
+          par_level: parLevel,
+          cost_per_gram: p.cost_per_gram,
+          markup_pct: p.markup_pct,
+          cost_price: p.cost_price,
+          order_qty: orderQty,
+          open_po_qty: openPoQty,
+          recommended_order_qty: recommendedOrderQty,
+          status,
+          charge_per_gram: chargePerGram,
+          supplier_name: sup?.supplier_name ?? null,
+          supplier_email: sup?.supplier_email ?? null,
+        };
+      }
 
       // If a location is selected, join with location_product_settings for tracking
       if (locationId) {
@@ -92,33 +163,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
 
         return (data || []).map((p: any) => {
           const locSetting = settingsMap.get(p.id);
-          const parLevel = locSetting?.par_level ?? null;
-          const reorderLevel = locSetting?.reorder_level ?? null;
-          const qty = p.quantity_on_hand ?? 0;
-          const status = getStockStatus(qty, reorderLevel, parLevel);
-          const orderQty = parLevel != null ? Math.max(0, parLevel - qty) : 0;
-          const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
-          const sup = supplierMap.get(p.id);
-
-          return {
-            id: p.id,
-            name: p.name,
-            brand: p.brand,
-            sku: p.sku,
-            category: p.category,
-            container_size: p.container_size,
-            quantity_on_hand: qty,
-            reorder_level: reorderLevel,
-            par_level: parLevel,
-            cost_per_gram: p.cost_per_gram,
-            markup_pct: p.markup_pct,
-            cost_price: p.cost_price,
-            order_qty: orderQty,
-            status,
-            charge_per_gram: chargePerGram,
-            supplier_name: sup?.supplier_name ?? null,
-            supplier_email: sup?.supplier_email ?? null,
-          };
+          return buildRow(p, locSetting?.par_level ?? null, locSetting?.reorder_level ?? null);
         });
       }
 
@@ -134,33 +179,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
 
       if (error) throw error;
 
-      return (data || []).map((p: any) => {
-        const qty = p.quantity_on_hand ?? 0;
-        const status = getStockStatus(qty, p.reorder_level, p.par_level);
-        const orderQty = p.par_level != null ? Math.max(0, p.par_level - qty) : 0;
-        const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
-        const sup = supplierMap.get(p.id);
-
-        return {
-          id: p.id,
-          name: p.name,
-          brand: p.brand,
-          sku: p.sku,
-          category: p.category,
-          container_size: p.container_size,
-          quantity_on_hand: qty,
-          reorder_level: p.reorder_level,
-          par_level: p.par_level,
-          cost_per_gram: p.cost_per_gram,
-          markup_pct: p.markup_pct,
-          cost_price: p.cost_price,
-          order_qty: orderQty,
-          status,
-          charge_per_gram: chargePerGram,
-          supplier_name: sup?.supplier_name ?? null,
-          supplier_email: sup?.supplier_email ?? null,
-        };
-      });
+      return (data || []).map((p: any) => buildRow(p, p.par_level, p.reorder_level));
     },
     enabled: !!orgId && (options?.enabled !== false),
     staleTime: 30_000,
