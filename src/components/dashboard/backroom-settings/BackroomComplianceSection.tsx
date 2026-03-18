@@ -47,9 +47,12 @@ function getComplianceBadge(rate: number) {
 export function BackroomComplianceSection() {
   const [range, setRange] = useState<RangeKey>('7d');
   const [staffFilter, setStaffFilter] = useState<string>('all');
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
   const { from, to } = useMemo(() => getDateRange(range), [range]);
+  const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
 
-  const { data, isLoading } = useBackroomComplianceTracker(from, to, undefined, staffFilter !== 'all' ? staffFilter : undefined);
+  const { data, isLoading } = useBackroomComplianceTracker(from, to, effectiveLocationId, staffFilter !== 'all' ? staffFilter : undefined);
   const evaluate = useEvaluateComplianceLog();
 
   const today = format(new Date(), 'yyyy-MM-dd');

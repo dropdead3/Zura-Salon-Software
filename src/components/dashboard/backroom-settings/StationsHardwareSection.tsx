@@ -95,16 +95,32 @@ export function StationsHardwareSection({ onNavigate }: Props) {
               <CardDescription>Manage backroom mixing stations and connected hardware.</CardDescription>
             </div>
           </div>
-          {!showForm && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
-                <Wand2 className="w-4 h-4 mr-1.5" /> Setup Station
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-1.5" /> Quick Add
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {locations && locations.length > 1 && (
+              <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+                <SelectTrigger className="w-fit gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!showForm && (
+              <>
+                <Button size="sm" onClick={() => { setEditingStation(null); setShowWizard(true); }}>
+                  <Wand2 className="w-4 h-4 mr-1.5" /> Setup Station
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-1.5" /> Quick Add
+                </Button>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {showForm && (
