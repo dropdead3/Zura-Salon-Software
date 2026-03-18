@@ -80,9 +80,18 @@ export function AutoCreatePODialog({
       g.estimatedCost += effectiveQty * (p.cost_price ?? p.cost_per_gram ?? 0);
     }
 
+    // Group unassigned by brand
+    const brandMap = new Map<string, BackroomInventoryRow[]>();
+    for (const p of unassigned) {
+      const brand = p.brand || 'Unknown';
+      if (!brandMap.has(brand)) brandMap.set(brand, []);
+      brandMap.get(brand)!.push(p);
+    }
+
     return {
       supplierGroups: Array.from(groupMap.values()).sort((a, b) => a.supplierName.localeCompare(b.supplierName)),
       unassigned,
+      unassignedByBrand: Array.from(brandMap.entries()).sort(([a], [b]) => a.localeCompare(b)),
     };
   }, [products]);
 
