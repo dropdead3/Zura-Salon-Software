@@ -193,6 +193,7 @@ async function exportStockPdf(
 
 export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
+  const { data: poHistoryMap } = useProductPOHistory();
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
@@ -206,6 +207,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
   const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
   const [autoPoDialog, setAutoPoDialog] = useState(false);
+  const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   // Compute KPIs
