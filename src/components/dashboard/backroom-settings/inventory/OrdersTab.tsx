@@ -3,7 +3,7 @@
  * Lists POs with status filters, expandable line items, and email PO actions.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { SendAllDraftsDialog } from './SendAllDraftsDialog';
 
 const STATUS_FILTERS = ['all', 'draft', 'sent', 'received', 'cancelled'] as const;
 type POStatusFilter = typeof STATUS_FILTERS[number];
