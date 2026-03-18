@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History, ShoppingCart, Zap, SlidersHorizontal } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History, ShoppingCart, Zap, SlidersHorizontal, Pencil } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -115,7 +116,7 @@ function InlineEditCell({
   return (
     <span
       className={cn(
-        'cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums',
+        'group/edit cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums inline-flex items-center gap-1',
         className,
       )}
       onClick={() => {
@@ -125,6 +126,7 @@ function InlineEditCell({
       title="Click to edit"
     >
       {value != null ? value : placeholder}
+      <Pencil className="w-2.5 h-2.5 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors shrink-0" />
     </span>
   );
 }
@@ -170,7 +172,7 @@ async function exportStockPdf(
 
   autoTable(doc, {
     startY: 72,
-    head: [['Product', 'Brand', 'Category', 'Stock', 'Min', 'Max', 'Reorder Qty', 'Status', 'Cost']],
+    head: [['Product', 'Brand', 'Category', 'Stock', 'Reorder Pt', 'Par Level', 'Reorder Qty', 'Status', 'Cost']],
     body: tableData,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
@@ -327,13 +329,14 @@ export function StockTab({ locationId }: StockTabProps) {
     <div className="space-y-4">
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={<Package className="w-5 h-5 text-primary" />} label="Total On Hand" value={formatNumber(kpis.totalOnHand)} />
+        <KpiCard icon={<Package className="w-5 h-5 text-primary" />} label="Total On Hand" value={formatNumber(kpis.totalOnHand)} tooltip="Sum of all tracked product quantities across this location." />
         <KpiCard
           icon={<AlertTriangle className="w-5 h-5 text-warning" />}
           label="Low Stock"
           value={String(kpis.lowStock)}
           accent={kpis.lowStock > 0 ? 'warning' : undefined}
           onClick={() => setStatusFilter(statusFilter === 'replenish' ? 'all' : 'replenish')}
+          tooltip="Products at or below their Reorder Point. Click to filter."
         />
         <KpiCard
           icon={<XCircle className="w-5 h-5 text-destructive" />}
@@ -341,8 +344,9 @@ export function StockTab({ locationId }: StockTabProps) {
           value={String(kpis.outOfStock)}
           accent={kpis.outOfStock > 0 ? 'destructive' : undefined}
           onClick={() => setStatusFilter(statusFilter === 'out_of_stock' ? 'all' : 'out_of_stock')}
+          tooltip="Products with zero quantity on hand. Click to filter."
         />
-        <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} />
+        <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} tooltip="Total cost value of all stock on hand (quantity × unit cost)." />
       </div>
 
       {/* Filters + Actions */}
@@ -462,10 +466,30 @@ export function StockTab({ locationId }: StockTabProps) {
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Container</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Min</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Max</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Reorder Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                    <span className="inline-flex items-center gap-1">
+                      Stock
+                      <MetricInfoTooltip description="Current quantity on hand. Click the number to adjust." />
+                    </span>
+                  </TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Reorder Pt
+                      <MetricInfoTooltip description="When stock drops to this level, a reorder is triggered. Click to edit." />
+                    </span>
+                  </TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Par Level
+                      <MetricInfoTooltip description="Your target stock level — the ideal quantity to have on hand. Click to edit." />
+                    </span>
+                  </TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Reorder Qty
+                      <MetricInfoTooltip description="How many units to order to reach Par Level, minus any already on open POs." />
+                    </span>
+                  </TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell w-[72px]')}>PO History</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
@@ -528,12 +552,13 @@ export function StockTab({ locationId }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function KpiCard({ icon, label, value, accent, onClick }: {
+function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   accent?: 'warning' | 'destructive';
   onClick?: () => void;
+  tooltip?: string;
 }) {
   return (
     <div
@@ -546,6 +571,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
       )}
       onClick={onClick}
     >
+      {tooltip && <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />}
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <span className={tokens.kpi.label}>{label}</span>
