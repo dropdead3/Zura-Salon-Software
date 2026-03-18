@@ -83,6 +83,7 @@ const sections: SectionMeta[] = [
   { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services' },
   { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.' },
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.' },
+  { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.' },
   { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Backroom.' },
   { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell, tooltip: 'Automatic alerts for operational issues.' },
   { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.' },
