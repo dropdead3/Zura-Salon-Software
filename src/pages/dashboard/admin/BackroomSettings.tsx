@@ -26,6 +26,7 @@ import {
   Lock,
   Brain,
   CreditCard,
+  Truck,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ import { MultiLocationSection } from '@/components/dashboard/backroom-settings/M
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
+import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 
 type BackroomSection =
   | 'overview'
@@ -55,6 +57,7 @@ type BackroomSection =
   | 'allowances'
   | 'stations'
   | 'inventory'
+  | 'suppliers'
   | 'permissions'
   | 'alerts'
   | 'formula'
@@ -80,6 +83,7 @@ const sections: SectionMeta[] = [
   { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services' },
   { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.' },
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.' },
+  { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.' },
   { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Backroom.' },
   { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell, tooltip: 'Automatic alerts for operational issues.' },
   { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.' },
@@ -303,6 +307,7 @@ export default function BackroomSettings() {
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
             {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}
+            {activeSection === 'suppliers' && <SupplierSettingsSection />}
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
