@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/backroom/useBulkInventoryAuditTrail';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format } from 'date-fns';
+import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
 interface AuditLogTabProps {
   locationId?: string;
@@ -128,6 +129,8 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const { data, isLoading } = useBulkInventoryAuditTrail(filters);
   const entries = data?.entries ?? [];
   const hasMore = data?.hasMore ?? false;
+
+  const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
 
   return (
     <Card>
@@ -253,7 +256,7 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
                 </TableHeader>
                 <TableBody>
                   {entries.map((entry) => (
-                    <AuditTableRow key={entry.id} entry={entry} />
+                    <AuditTableRow key={entry.id} entry={entry} onClick={() => setSelectedEntry(entry)} />
                   ))}
                 </TableBody>
               </Table>
@@ -285,18 +288,24 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
             </div>
           </>
         )}
+
+        <AuditEntryDetailPanel
+          open={!!selectedEntry}
+          onOpenChange={(open) => !open && setSelectedEntry(null)}
+          entry={selectedEntry}
+        />
       </CardContent>
     </Card>
   );
 }
 
-function AuditTableRow({ entry }: { entry: BulkAuditEntry }) {
+function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () => void }) {
   const isStock = entry.type === 'stock';
   const isPositive = isStock && (entry.quantity_change ?? 0) > 0;
   const isNegative = isStock && (entry.quantity_change ?? 0) < 0;
 
   return (
-    <TableRow className="text-xs">
+    <TableRow className="text-xs cursor-pointer hover:bg-muted/40 transition-colors" onClick={onClick}>
       <TableCell className="tabular-nums whitespace-nowrap">
         {format(new Date(entry.created_at), 'MMM d, h:mm a')}
       </TableCell>

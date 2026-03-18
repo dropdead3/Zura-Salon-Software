@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { useInventoryAuditTrail, type AuditEntry, type AuditFilters } from '@/hooks/backroom/useInventoryAuditTrail';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { format, formatDistanceToNow } from 'date-fns';
+import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
 interface InventoryAuditDialogProps {
   open: boolean;
@@ -108,6 +109,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
   const [typeFilter, setTypeFilter] = useState<'all' | 'stock' | 'setting'>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
 
   const filters: AuditFilters = {
     typeFilter,
@@ -225,24 +227,41 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <div className="relative">
                 <div className="absolute left-[11px] top-3 bottom-3 w-px bg-border/60" />
                 {entries.map((entry, i) => (
-                  <AuditRow key={entry.id} entry={entry} isLast={i === entries.length - 1} />
+                  <AuditRow
+                    key={entry.id}
+                    entry={entry}
+                    isLast={i === entries.length - 1}
+                    onClick={() => setSelectedEntry({ ...entry, product_name: productName })}
+                  />
                 ))}
               </div>
             )}
           </div>
         </ScrollArea>
+
+        <AuditEntryDetailPanel
+          open={!!selectedEntry}
+          onOpenChange={(open) => !open && setSelectedEntry(null)}
+          entry={selectedEntry}
+        />
       </DialogContent>
     </Dialog>
   );
 }
 
-function AuditRow({ entry, isLast }: { entry: AuditEntry; isLast: boolean }) {
+function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boolean; onClick: () => void }) {
   const isStock = entry.type === 'stock';
   const isPositive = isStock && (entry.quantity_change ?? 0) > 0;
   const isNegative = isStock && (entry.quantity_change ?? 0) < 0;
 
   return (
-    <div className={cn('relative flex gap-3 pb-4', isLast && 'pb-0')}>
+    <div
+      className={cn('relative flex gap-3 pb-4 cursor-pointer rounded-lg px-1 -mx-1 hover:bg-muted/30 transition-colors', isLast && 'pb-0')}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+    >
       <div className={cn(
         'relative z-10 mt-1.5 w-[22px] h-[22px] rounded-full flex items-center justify-center shrink-0',
         isStock
