@@ -1368,7 +1368,7 @@ function InventoryView({
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
           <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
         </button>
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-xl border-border/20 border bg-card-inner p-4">
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Total Tracked</span>
           <span className="block text-2xl font-display tracking-tight text-foreground mt-1">{kpis.totalTracked}</span>
         </div>
