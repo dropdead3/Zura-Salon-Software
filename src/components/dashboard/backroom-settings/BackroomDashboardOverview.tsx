@@ -134,7 +134,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
       )}
 
       {/* ── Location & Time Filters ── */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {activeLocations.length > 1 && (
           <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
             <SelectTrigger className="w-fit gap-2">
