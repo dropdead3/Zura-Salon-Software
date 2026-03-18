@@ -172,7 +172,7 @@ async function exportStockPdf(
 
   autoTable(doc, {
     startY: 72,
-    head: [['Product', 'Brand', 'Category', 'Stock', 'Min', 'Max', 'Reorder Qty', 'Status', 'Cost']],
+    head: [['Product', 'Brand', 'Category', 'Stock', 'Reorder Pt', 'Par Level', 'Reorder Qty', 'Status', 'Cost']],
     body: tableData,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
