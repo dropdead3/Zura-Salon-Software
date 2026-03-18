@@ -114,7 +114,7 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
           status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral'}
         />
         <KpiTile
-          icon={Scale}
+          icon={ClipboardCheck}
           label="Reweigh Compliance"
           value={`${kpis.reweighCompliance.toFixed(0)}%`}
           status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
