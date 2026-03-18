@@ -1,153 +1,120 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+## Backroom Inventory Management System
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+### Current State
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+The "Inventory" section in the Backroom Hub is currently just a **configuration page** (`InventoryReplenishmentSection`) with toggles for tracking, reorder cycles, lead times, and alerts. There's also an "inventory view" toggle inside the Product Catalog that shows a basic stock table with inline editing. 
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+The backend infrastructure is already robust: `stock_movements` ledger, `inventory_projections`, `purchase_orders` + `purchase_order_lines`, `count_sessions`, `stock_counts`, `replenishment_recommendations`, `product_suppliers`, receive shipment flows, and stockout forecasting. But none of this is surfaced in a cohesive operational UI.
 
-## Auto-Reorder with Supplier Communication (Implemented)
+The Vish screenshot shows a flat, spreadsheet-like approach — no workflow structure, no receiving, no count sessions, no purchasing pipeline. We can do much better.
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+### Architecture
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+Replace the current `InventoryReplenishmentSection` with a full **Backroom Inventory Management** section built as a tabbed workspace with 5 sub-views:
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
-
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
-
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
-
-## Product Movement Rating Badges (Implemented)
-
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
-
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
-
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
-
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
-
-## Inventory Intelligence Suite v2 (Implemented)
-
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
+```text
+┌──────────────────────────────────────────────────────┐
+│  Inventory                          [Location ▾]     │
+│                                                      │
+│  ┌─────────┬──────────┬────────┬──────────┬────────┐ │
+│  │ Stock   │ Reorder  │ Orders │ Receive  │ Counts │ │
+│  └─────────┴──────────┴────────┴──────────┴────────┘ │
+│                                                      │
+│  [Tab Content Area]                                  │
+└──────────────────────────────────────────────────────┘
 ```
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### Tab 1: Stock Overview (default)
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+**KPI Row** (4 cards, clickable to filter):
+- Total On Hand (units) | Low Stock (count) | Out of Stock (count) | Inventory Value ($)
+
+**Stock Table** — The primary inventory grid, similar to the existing `InventoryView` but enhanced:
+- Columns: Product (name + brand), Category, Container, Stock, Min, Max, Order Qty, Status, Cost/g
+- Inline editable: Stock (posts ledger entry), Min, Max
+- Sortable columns, search bar, category filter
+- Status badges: In Stock, Replenish, Urgent Reorder, Out of Stock
+- Brand grouping headers (group rows by brand with sticky sub-headers)
+- Move current `InventoryView` component logic here
+
+### Tab 2: Reorder
+
+**Smart reorder queue** using existing `useReplenishmentRecommendations`:
+- Products below reorder point, sorted by urgency
+- Each row shows: Product, Current Stock, Reorder Point, Par Level, Recommended Qty (editable), Supplier, Est. Cost
+- Stockout forecast date (from `forecastStockout`) shown as "X days left" with urgency color
+- Bulk actions: "Create Draft POs" groups by supplier and creates purchase orders
+- AI reorder suggestion integration (existing `useReorderSuggestion`)
+- Settings sub-panel: reorder cycle, lead time, forecast participation (move config from current section here)
+
+### Tab 3: Purchase Orders
+
+**PO lifecycle management** using existing `usePurchaseOrders`:
+- Status filter tabs: All | Draft | Sent | Received | Cancelled
+- PO list with: PO #, Supplier, Items, Total Cost, Status, Created, Expected Delivery
+- Click to expand: line items, notes, tracking
+- Actions: Send to Supplier (email), Mark Received (opens Receive tab), Cancel
+- "New Purchase Order" button — manual PO creation form
+
+### Tab 4: Receive
+
+**Shipment receiving workflow** using existing `useReceiveShipment`:
+- List of POs with status "sent" or partially received
+- Click a PO to open receiving form: line-by-line quantity acceptance
+- Support partial receives (accept 8 of 10 units)
+- On complete: auto-posts ledger entries, updates stock, tracks supplier delivery time
+- Receiving history log
+
+### Tab 5: Counts
+
+**Physical count session management** using existing `useCountSessions` + `useStockCounts`:
+- "Start New Count" button — creates a count session, optionally scoped to location
+- Active count: checklist of tracked products with expected vs. counted fields
+- Variance summary after completion: total units off, cost of variance, shrinkage flagging
+- Count history table: date, who counted, products counted, total variance
+- Shrinkage summary using existing `useShrinkageSummary`
+
+### Implementation Plan
+
+**Phase 1 — New component file + Tab 1 (Stock)**
+- Create `BackroomInventorySection.tsx` with tab shell and location selector
+- Move and enhance `InventoryView` into Stock tab (add inventory value KPI, brand grouping)
+- Wire into `BackroomSettings.tsx` replacing `InventoryReplenishmentSection`
+
+**Phase 2 — Tab 2 (Reorder) + Tab 3 (Orders)**
+- Reorder tab: surface `useReplenishmentRecommendations`, stockout forecasts, bulk PO creation
+- Orders tab: PO list with status filters, expand/collapse line items, actions
+
+**Phase 3 — Tab 4 (Receive) + Tab 5 (Counts)**
+- Receive tab: PO-driven receiving workflow with partial receive support
+- Counts tab: count session lifecycle, variance display, shrinkage summary
+
+**Phase 4 — Settings migration**
+- Move inventory config (reorder cycle, lead time, thresholds) into a settings gear icon/dialog accessible from the section header, removing the standalone config card
+
+### Files
+
+| File | Action |
+|------|--------|
+| `src/components/dashboard/backroom-settings/BackroomInventorySection.tsx` | **Create** — New tabbed inventory management component |
+| `src/components/dashboard/backroom-settings/inventory/StockTab.tsx` | **Create** — Stock overview table |
+| `src/components/dashboard/backroom-settings/inventory/ReorderTab.tsx` | **Create** — Smart reorder queue |
+| `src/components/dashboard/backroom-settings/inventory/OrdersTab.tsx` | **Create** — Purchase order management |
+| `src/components/dashboard/backroom-settings/inventory/ReceiveTab.tsx` | **Create** — Shipment receiving |
+| `src/components/dashboard/backroom-settings/inventory/CountsTab.tsx` | **Create** — Physical count sessions |
+| `src/pages/dashboard/admin/BackroomSettings.tsx` | **Edit** — Swap `InventoryReplenishmentSection` for new component |
+
+### Enhancements Over Vish
+
+1. **Workflow-oriented** — Tabs follow the operational lifecycle (monitor → decide to reorder → create PO → receive → count) vs. a flat spreadsheet
+2. **Smart reorder queue** — AI-powered suggestions with stockout forecasting, not just a manual "Add to Cart"
+3. **Location-scoped** — Per-location stock visibility with the existing location selector pattern
+4. **Receiving workflow** — Line-by-line acceptance with partial receive support; Vish has none
+5. **Count sessions** — Structured physical counts with variance/shrinkage analysis; Vish just shows a number
+6. **Supplier intelligence** — Delivery time tracking, supplier performance built into PO flow
+7. **Inventory value** — Total dollar value at cost visible at a glance
+8. **Brand grouping** — Products grouped by brand in the stock table for faster scanning
+9. **Inline editing** — Click-to-edit stock, min, max without opening a dialog
+
