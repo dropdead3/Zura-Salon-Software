@@ -129,6 +129,23 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       .reduce((sum, r) => sum + getOrderQty(r) * (r.cost_price ?? r.cost_per_gram ?? 0), 0);
   }, [reorderQueue, selectedIds, getOrderQty]);
 
+  // Build consolidated preview data for bulk email
+  const emailPreviewGroups = useMemo(() => {
+    return supplierGroups
+      .filter(g => g.supplierName !== 'Unassigned' && g.supplierEmail)
+      .map(g => ({
+        ...g,
+        products: g.products.filter(p => selectedIds.has(p.id)),
+      }))
+      .filter(g => g.products.length > 0);
+  }, [supplierGroups, selectedIds]);
+
+  const selectedWithoutEmail = useMemo(() => {
+    return reorderQueue.filter(r =>
+      selectedIds.has(r.id) && (!r.supplier_email || !r.supplier_name || r.supplier_name === 'Unassigned')
+    ).length;
+  }, [reorderQueue, selectedIds]);
+
   const handleCreatePOForSupplier = (group: SupplierGroup) => {
     if (!orgId) return;
     createMultiLinePO.mutate({
@@ -161,6 +178,33 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       });
     }
     setSelectedIds(new Set());
+  };
+
+  const handleCreateAndEmailPOs = () => {
+    if (!orgId) return;
+    const items = emailPreviewGroups.flatMap(g =>
+      g.products.map(p => ({
+        organization_id: orgId,
+        product_id: p.id,
+        supplier_name: g.supplierName,
+        supplier_email: g.supplierEmail ?? undefined,
+        quantity: getOrderQty(p),
+        unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
+      }))
+    );
+    if (items.length === 0) {
+      toast.error('No emailable items selected');
+      return;
+    }
+    batchCreatePOs.mutate(
+      { items, sendEmails: true },
+      {
+        onSuccess: () => {
+          setShowEmailPreview(false);
+          setSelectedIds(new Set());
+        },
+      }
+    );
   };
 
   if (isLoading) {
