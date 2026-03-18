@@ -360,6 +360,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     adjustStock={adjustStock}
                     updateMinMax={updateMinMax}
                     onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
+                    onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                   />
                 ))}
               </TableBody>
