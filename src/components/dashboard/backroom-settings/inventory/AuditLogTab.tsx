@@ -305,7 +305,7 @@ function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () 
   const isNegative = isStock && (entry.quantity_change ?? 0) < 0;
 
   return (
-    <TableRow className="text-xs">
+    <TableRow className="text-xs cursor-pointer hover:bg-muted/40 transition-colors" onClick={onClick}>
       <TableCell className="tabular-nums whitespace-nowrap">
         {format(new Date(entry.created_at), 'MMM d, h:mm a')}
       </TableCell>
