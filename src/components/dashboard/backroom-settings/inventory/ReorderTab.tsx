@@ -3,11 +3,12 @@
  * Supports multi-line PO creation per supplier and email PO actions.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
