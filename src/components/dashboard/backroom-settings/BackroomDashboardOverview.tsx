@@ -17,6 +17,7 @@ import {
   Sparkles, Users2, Package, ShieldAlert,
 } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
+import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 
 interface Props {
