@@ -260,6 +260,8 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
                         selected={selectedIds.has(row.id)}
                         onToggle={() => toggleSelect(row.id)}
                         formatCurrency={formatCurrency}
+                        orderQty={getOrderQty(row)}
+                        onOrderQtyChange={(qty) => setOrderQty(row.id, qty)}
                       />
                     ))}
                   </TableBody>
