@@ -747,6 +747,15 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
                 </span>
               )}
             </TableCell>
+            <TableCell className="hidden xl:table-cell">
+              {(() => {
+                const history = poHistoryMap?.get(row.id);
+                if (!history || history.every(v => v === 0)) {
+                  return <span className="text-muted-foreground/40 text-xs">—</span>;
+                }
+                return <TrendSparkline data={history} variant="muted" width={64} height={20} />;
+              })()}
+            </TableCell>
             <TableCell>
               <Badge variant="outline" className={cn('text-[10px] font-medium border', statusCfg.className)}>
                 {statusCfg.label}
