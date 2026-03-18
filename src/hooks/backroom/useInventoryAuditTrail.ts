@@ -73,7 +73,7 @@ export function useInventoryAuditTrail(productId: string | null, limit = 50, fil
 
       const [movementsRes, settingsRes] = await Promise.all([movementsPromise, settingsPromise]);
 
-      const [movementsRes, settingsRes] = await Promise.all(promises);
+      
 
       if (movementsRes.error) throw movementsRes.error;
       if (settingsRes.error) throw settingsRes.error;
