@@ -25,6 +25,8 @@ export interface BackroomInventoryRow {
   order_qty: number;
   status: StockStatus;
   charge_per_gram: number | null;
+  supplier_name: string | null;
+  supplier_email: string | null;
 }
 
 export function getStockStatus(qty: number | null, reorderLevel: number | null, parLevel: number | null): StockStatus {
