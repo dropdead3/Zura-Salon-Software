@@ -97,7 +97,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
       {/* ── Setup Banner (collapsible) ── */}
       {showSetupBanner && (
         <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
-          <Card className="border-amber-500/40 bg-amber-500/5 border-l-2 border-l-amber-500">
+          <Card className="border-amber-500/40 bg-amber-500/5">
             <CardContent className="py-4">
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
