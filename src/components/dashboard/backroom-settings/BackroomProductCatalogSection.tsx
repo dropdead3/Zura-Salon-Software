@@ -1183,7 +1183,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         }}
                         className={cn(
                           'group relative flex flex-col items-center justify-center gap-2 rounded-xl border pt-9 pb-8 px-4 text-center transition-all duration-200 min-h-[160px]',
-                          'border bg-card/50',
+                          'border-border/20 border bg-card-inner/50',
                           'hover:border-border hover:bg-muted/40 hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
