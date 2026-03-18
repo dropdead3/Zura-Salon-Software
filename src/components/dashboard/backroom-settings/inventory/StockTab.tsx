@@ -1,24 +1,28 @@
 /**
  * StockTab — Stock overview with KPI cards and enhanced inventory table.
  * Groups by brand → category with collapsible brand sections,
- * supplier chips, and "Set Supplier" actions.
+ * supplier chips, "Set Supplier" actions, inline editing, and PDF export.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useInlineStockEdit } from '@/hooks/backroom/useInlineStockEdit';
+import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
+import { format } from 'date-fns';
 
 interface StockTabProps {
   locationId?: string;
@@ -31,14 +35,153 @@ interface BrandGroup {
   categories: Map<string, BackroomInventoryRow[]>;
 }
 
+// ─── Inline Edit Cell ──────────────────────────────────
+
+function InlineEditCell({
+  value,
+  placeholder = '—',
+  onSave,
+  className,
+}: {
+  value: number | null;
+  placeholder?: string;
+  onSave: (newValue: number | null) => void;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed === '') {
+      onSave(null);
+      return;
+    }
+    const parsed = parseFloat(trimmed);
+    if (!isNaN(parsed) && parsed !== value) {
+      onSave(parsed);
+    }
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit();
+          if (e.key === 'Escape') setEditing(false);
+        }}
+        className={cn(
+          'w-16 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40',
+          className,
+        )}
+        autoCapitalize="off"
+      />
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        'cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums',
+        className,
+      )}
+      onClick={() => {
+        setDraft(value != null ? String(value) : '');
+        setEditing(true);
+      }}
+      title="Click to edit"
+    >
+      {value != null ? value : placeholder}
+    </span>
+  );
+}
+
+// ─── PDF Export ──────────────────────────────────────────
+
+async function exportStockPdf(
+  rows: BackroomInventoryRow[],
+  orgName: string,
+  logoUrl: string | null | undefined,
+  formatCurrency: (n: number) => string,
+) {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const logoDataUrl = await fetchLogoAsDataUrl(logoUrl);
+  const now = new Date();
+  const headerOpts: ReportHeaderOptions = {
+    orgName,
+    logoDataUrl,
+    reportTitle: 'Inventory Stock Report',
+    dateFrom: format(now, 'yyyy-MM-dd'),
+    dateTo: format(now, 'yyyy-MM-dd'),
+    generatedAt: now,
+  };
+
+  addReportHeader(doc, headerOpts);
+
+  const tableData = rows.map((r) => [
+    r.name,
+    r.brand || '—',
+    r.category || '—',
+    r.quantity_on_hand,
+    r.reorder_level ?? '—',
+    r.par_level ?? '—',
+    STOCK_STATUS_CONFIG[r.status].label,
+    r.cost_price != null ? formatCurrency(r.cost_price) : r.cost_per_gram != null ? `${formatCurrency(r.cost_per_gram)}/g` : '—',
+  ]);
+
+  autoTable(doc, {
+    startY: 72,
+    head: [['Product', 'Brand', 'Category', 'Stock', 'Min', 'Max', 'Status', 'Cost']],
+    body: tableData,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
+    columnStyles: {
+      3: { halign: 'right' },
+      4: { halign: 'right' },
+      5: { halign: 'right' },
+      7: { halign: 'right' },
+    },
+    margin: { top: 72 },
+    didDrawPage: () => { addReportHeader(doc, headerOpts); },
+  });
+
+  addReportFooter(doc);
+  doc.save(`inventory-stock-${format(now, 'yyyy-MM-dd')}.pdf`);
+}
+
+// ─── Main Component ─────────────────────────────────────
+
 export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
+  const { adjustStock, updateMinMax } = useInlineStockEdit();
+  const orgId = useBackroomOrgId();
+  const { effectiveOrganization } = useOrganizationContext();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
+  const [exporting, setExporting] = useState(false);
 
   // Compute KPIs
   const kpis = useMemo(() => {
@@ -92,6 +235,20 @@ export function StockTab({ locationId }: StockTabProps) {
       });
   }, [filtered]);
 
+  const handlePdfExport = useCallback(async () => {
+    setExporting(true);
+    try {
+      await exportStockPdf(
+        filtered,
+        effectiveOrganization?.name ?? 'Organization',
+        effectiveOrganization?.logo_url,
+        formatCurrency,
+      );
+    } finally {
+      setExporting(false);
+    }
+  }, [filtered, effectiveOrganization, formatCurrency]);
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
@@ -118,7 +275,7 @@ export function StockTab({ locationId }: StockTabProps) {
         <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} />
       </div>
 
-      {/* Filters */}
+      {/* Filters + PDF Export */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -151,6 +308,16 @@ export function StockTab({ locationId }: StockTabProps) {
             <SelectItem value="out_of_stock">Out of Stock</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          className="font-sans"
+          onClick={handlePdfExport}
+          disabled={exporting || filtered.length === 0}
+        >
+          {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
+          PDF
+        </Button>
       </div>
 
       {/* Stock Table */}
@@ -185,6 +352,10 @@ export function StockTab({ locationId }: StockTabProps) {
                     group={bg}
                     formatCurrency={formatCurrency}
                     formatNumber={formatNumber}
+                    orgId={orgId}
+                    locationId={locationId}
+                    adjustStock={adjustStock}
+                    updateMinMax={updateMinMax}
                     onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
                   />
                 ))}
@@ -233,10 +404,14 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, onSetSupplier }: {
+function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onSetSupplier }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
+  orgId: string | undefined;
+  locationId: string | undefined;
+  adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
+  updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
   onSetSupplier: () => void;
 }) {
   const [open, setOpen] = useState(true);
@@ -285,17 +460,31 @@ function BrandSection({ group, formatCurrency, formatNumber, onSetSupplier }: {
       </TableRow>
 
       {open && sortedCategories.map(([category, rows]) => (
-        <CategoryGroup key={`${group.brand}-${category}`} category={category} rows={rows} formatCurrency={formatCurrency} formatNumber={formatNumber} />
+        <CategoryGroup
+          key={`${group.brand}-${category}`}
+          category={category}
+          rows={rows}
+          formatCurrency={formatCurrency}
+          formatNumber={formatNumber}
+          orgId={orgId}
+          locationId={locationId}
+          adjustStock={adjustStock}
+          updateMinMax={updateMinMax}
+        />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber }: {
+function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
+  orgId: string | undefined;
+  locationId: string | undefined;
+  adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
+  updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
 }) {
   return (
     <>
@@ -317,9 +506,54 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber }: {
               </div>
             </TableCell>
             <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{row.container_size || '—'}</TableCell>
-            <TableCell className="text-right font-medium tabular-nums">{formatNumber(row.quantity_on_hand)}</TableCell>
-            <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.reorder_level ?? '—'}</TableCell>
-            <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.par_level ?? '—'}</TableCell>
+            <TableCell className="text-right">
+              <InlineEditCell
+                value={row.quantity_on_hand}
+                onSave={(newVal) => {
+                  if (!orgId || newVal == null) return;
+                  adjustStock.mutate({
+                    orgId,
+                    productId: row.id,
+                    currentQty: row.quantity_on_hand,
+                    newQty: newVal,
+                    locationId,
+                  });
+                }}
+                className="font-medium"
+              />
+            </TableCell>
+            <TableCell className="text-right hidden sm:table-cell">
+              <InlineEditCell
+                value={row.reorder_level}
+                onSave={(newVal) => {
+                  if (!orgId) return;
+                  updateMinMax.mutate({
+                    orgId,
+                    productId: row.id,
+                    field: 'reorder_level',
+                    value: newVal,
+                    locationId,
+                  });
+                }}
+                className="text-muted-foreground"
+              />
+            </TableCell>
+            <TableCell className="text-right hidden sm:table-cell">
+              <InlineEditCell
+                value={row.par_level}
+                onSave={(newVal) => {
+                  if (!orgId) return;
+                  updateMinMax.mutate({
+                    orgId,
+                    productId: row.id,
+                    field: 'par_level',
+                    value: newVal,
+                    locationId,
+                  });
+                }}
+                className="text-muted-foreground"
+              />
+            </TableCell>
             <TableCell className="text-right hidden lg:table-cell tabular-nums">
               {row.order_qty > 0 ? <span className="text-warning font-medium">{row.order_qty}</span> : '—'}
             </TableCell>
