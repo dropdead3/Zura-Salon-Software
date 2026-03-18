@@ -49,10 +49,13 @@ export function BackroomInsightsSection() {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [sortKey, setSortKey] = useState<SortKey>('sessions');
   const [sortAsc, setSortAsc] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
 
   const { start, end, label: rangeLabel } = getDateRange(datePreset);
-  const { data: analytics, isLoading: analyticsLoading } = useBackroomAnalytics(start, end);
-  const { data: staffMetrics, isLoading: staffLoading } = useBackroomStaffMetrics(start, end);
+  const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
+  const { data: analytics, isLoading: analyticsLoading } = useBackroomAnalytics(start, end, effectiveLocationId);
+  const { data: staffMetrics, isLoading: staffLoading } = useBackroomStaffMetrics(start, end, effectiveLocationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
 
