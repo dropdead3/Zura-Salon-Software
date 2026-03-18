@@ -84,6 +84,9 @@ export function BackroomInventorySection() {
         <TabsContent value="counts" className="mt-4">
           <CountsTab locationId={effectiveLocationId} />
         </TabsContent>
+        <TabsContent value="audit" className="mt-4">
+          <AuditLogTab locationId={effectiveLocationId} />
+        </TabsContent>
       </Tabs>
     </div>
   );
