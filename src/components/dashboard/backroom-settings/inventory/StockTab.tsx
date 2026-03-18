@@ -294,7 +294,7 @@ export function StockTab({ locationId }: StockTabProps) {
           </SelectTrigger>
           <SelectContent>
             {categories.map(c => (
-              <SelectItem key={c} value={c}>{c === 'all' ? 'All Categories' : c}</SelectItem>
+              <SelectItem key={c} value={c}>{c === 'all' ? 'All Categories' : c.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase())}</SelectItem>
             ))}
           </SelectContent>
         </Select>
