@@ -204,27 +204,35 @@ export function AutoCreatePODialog({
           ))}
 
           {unassigned.length > 0 && (
-            <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/30 bg-warning/5">
-              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-              <div>
-                <span className="font-sans text-sm font-medium text-warning">
-                  {unassigned.length} product{unassigned.length !== 1 ? 's' : ''} without supplier
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  These will be skipped. Assign a supplier via the brand header to include them.
-                </p>
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {unassigned.slice(0, 5).map(p => (
-                    <Badge key={p.id} variant="outline" className="text-[10px] font-medium">
-                      {p.name.replace(/\s*[—–-]\s*\d+(\.\d+)?\s*(g|oz|ml|L)\s*$/i, '').trim()}
-                    </Badge>
-                  ))}
-                  {unassigned.length > 5 && (
-                    <Badge variant="outline" className="text-[10px] font-medium">
-                      +{unassigned.length - 5} more
-                    </Badge>
-                  )}
+            <div className="p-3 rounded-lg border border-warning/30 bg-warning/5 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-sans text-sm font-medium text-warning">
+                    {unassigned.length} product{unassigned.length !== 1 ? 's' : ''} without supplier
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    These will be skipped. Assign a supplier below to include them.
+                  </p>
                 </div>
+              </div>
+              <div className="space-y-1.5 pl-6">
+                {unassignedByBrand.map(([brand, brandProducts]) => (
+                  <div key={brand} className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground truncate">
+                      {brand} ({brandProducts.length})
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs shrink-0"
+                      onClick={() => setSupplierDialog({ open: true, brand, products: brandProducts })}
+                    >
+                      Assign Supplier
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
