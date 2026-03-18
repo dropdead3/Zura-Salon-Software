@@ -19,6 +19,10 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
+import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
+import { generateCountSheetPdf } from '@/lib/generateCountSheetPdf';
+import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
+import { toast } from 'sonner';
 
 interface CountsTabProps {
   locationId?: string;
