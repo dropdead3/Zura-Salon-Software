@@ -256,7 +256,7 @@ html, body, #root {
     --sidebar-primary-foreground: 0 0% 4%;
     --sidebar-accent: 0 0% 16%;
     --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 0 0% 44%;
+    --sidebar-border: 0 0% 20%;
     --sidebar-ring: 40 20% 92%;
 
     --card-inner: 0 0% 8%;
