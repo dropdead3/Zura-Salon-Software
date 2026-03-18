@@ -481,6 +481,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
           locationId={locationId}
           adjustStock={adjustStock}
           updateMinMax={updateMinMax}
+          onAudit={onAudit}
         />
       ))}
     </>
