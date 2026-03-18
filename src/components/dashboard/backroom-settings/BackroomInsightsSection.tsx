@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
-  DollarSign, Beaker, Scale, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2,
+  DollarSign, Beaker, Scale, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2, MapPin,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
