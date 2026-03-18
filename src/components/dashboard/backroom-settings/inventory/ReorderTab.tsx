@@ -274,6 +274,46 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
           ))}
         </div>
       )}
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-md shadow-lg">
+          <div className="max-w-[1600px] mx-auto px-8 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedIds.size === reorderQueue.length}
+                  onCheckedChange={(checked) => checked ? selectAll() : deselectAll()}
+                />
+                <span className={tokens.body.emphasis}>
+                  {selectedIds.size} selected
+                </span>
+              </div>
+              <span className="text-muted-foreground text-sm">
+                Est: {formatCurrency(selectedTotalCost)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={deselectAll}>
+                Deselect All
+              </Button>
+              {selectedIds.size < reorderQueue.length && (
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  Select All ({reorderQueue.length})
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleCreateAllPOs}
+                disabled={createMultiLinePO.isPending}
+              >
+                {createMultiLinePO.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                Create POs ({selectedIds.size})
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
