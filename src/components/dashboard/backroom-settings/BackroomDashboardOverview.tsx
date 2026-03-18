@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useBackroomDashboard } from '@/hooks/backroom/useBackroomDashboard';
 import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,11 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Sparkles, Users2, Package, ShieldAlert, Truck, BarChart3, Brain,
+  Sparkles, Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
 } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { BackroomInsightsSection } from './BackroomInsightsSection';
@@ -35,8 +38,29 @@ const PRIORITY_COLORS: Record<string, string> = {
   informational: 'bg-muted text-muted-foreground',
 };
 
+type DatePreset = '7d' | '30d' | 'this_month' | 'last_month' | '90d';
+
+function getDateRange(preset: DatePreset): { start: string; end: string; label: string } {
+  const today = new Date();
+  const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
+  switch (preset) {
+    case '7d': return { start: fmt(subDays(today, 6)), end: fmt(today), label: 'Last 7 Days' };
+    case '30d': return { start: fmt(subDays(today, 29)), end: fmt(today), label: 'Last 30 Days' };
+    case 'this_month': return { start: fmt(startOfMonth(today)), end: fmt(today), label: 'This Month' };
+    case 'last_month': { const lm = subMonths(today, 1); return { start: fmt(startOfMonth(lm)), end: fmt(endOfMonth(lm)), label: 'Last Month' }; }
+    case '90d': return { start: fmt(subDays(today, 89)), end: fmt(today), label: 'Last 90 Days' };
+  }
+}
+
 export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) {
-  const dashboard = useBackroomDashboard();
+  const [datePreset, setDatePreset] = useState<DatePreset>('30d');
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
+
+  const { start, end, label: rangeLabel } = useMemo(() => getDateRange(datePreset), [datePreset]);
+  const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
+
+  const dashboard = useBackroomDashboard(effectiveLocationId, start, end);
   const { formatCurrency } = useFormatCurrency();
   const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
