@@ -723,28 +723,22 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
 
-        {/* Location toggle pills — always visible */}
+        {/* Location dropdown selector */}
         {activeLocations.length > 1 && (
-          <div className="px-6 pb-2 flex items-center gap-2 flex-wrap">
-            {activeLocations.map((loc) => {
-              const isActive = loc.id === effectiveLocationId;
-              return (
-                <button
-                  key={loc.id}
-                  type="button"
-                  onClick={() => setSelectedLocationId(loc.id)}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-sans font-medium transition-colors',
-                    isActive
-                      ? 'bg-foreground text-background'
-                      : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  {isActive && <MapPin className="w-3 h-3" />}
-                  {loc.name}
-                </button>
-              );
-            })}
+          <div className="px-6 pb-2">
+            <Select value={effectiveLocationId} onValueChange={setSelectedLocationId}>
+              <SelectTrigger className="w-fit rounded-full gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Select location" />
+              </SelectTrigger>
+              <SelectContent className="max-h-72 overflow-y-auto">
+                {activeLocations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
