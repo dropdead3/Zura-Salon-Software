@@ -51,8 +51,9 @@ export function AutoCreatePODialog({
   const createPO = useCreateMultiLinePO();
   const { formatCurrency } = useFormatCurrency();
   const [creating, setCreating] = useState(false);
+  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
 
-  const { supplierGroups, unassigned } = useMemo(() => {
+  const { supplierGroups, unassigned, unassignedByBrand } = useMemo(() => {
     const groupMap = new Map<string, SupplierGroup>();
     const unassigned: BackroomInventoryRow[] = [];
 
