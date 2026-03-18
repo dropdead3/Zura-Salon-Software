@@ -633,6 +633,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
           onToggleSelect={onToggleSelect}
           onAudit={onAudit}
           onQuickReorder={onQuickReorder}
+          poHistoryMap={poHistoryMap}
         />
       ))}
     </>
