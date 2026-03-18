@@ -1,15 +1,14 @@
 /**
  * OrdersTab — Purchase order lifecycle management.
- * Apple-grade responsive: scrollable table, mobile-friendly expand, refined transitions.
+ * Lists POs with status filters, expandable line items, and actions.
  */
 
-import { useState, Fragment } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, FileText, ChevronDown, ChevronRight, Send, XCircle } from 'lucide-react';
+import { Loader2, FileText, ChevronDown, ChevronRight, Send, XCircle, Truck } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { usePurchaseOrders, useUpdatePurchaseOrder, type PurchaseOrder } from '@/hooks/usePurchaseOrders';
@@ -48,17 +47,22 @@ export function OrdersTab() {
 
   return (
     <div className="space-y-4">
-      {/* Status filter tabs — horizontally scrollable on mobile */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-1">
+      {/* Status filter tabs */}
+      <div className="flex items-center gap-1 flex-wrap">
         {STATUS_FILTERS.map(s => (
           <Button
             key={s}
             variant={statusFilter === s ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setStatusFilter(s)}
-            className="capitalize text-sm shrink-0 transition-all duration-150"
+            className="capitalize text-sm"
           >
             {s === 'all' ? 'All' : s}
+            {s !== 'all' && (
+              <span className="ml-1 text-xs opacity-60">
+                ({orders.filter(o => o.status === s).length})
+              </span>
+            )}
           </Button>
         ))}
       </div>
@@ -70,105 +74,101 @@ export function OrdersTab() {
           <p className={tokens.empty.description}>Create purchase orders from the Reorder tab or manually.</p>
         </div>
       ) : (
-        <Card className="overflow-hidden">
+        <Card>
           <CardContent className="p-0">
-            <ScrollArea className="w-full">
-              <div className="min-w-[580px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-8" />
-                      <TableHead className={tokens.table.columnHeader}>PO #</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Qty</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Created</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Expected</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((po) => {
-                      const isExpanded = expandedId === po.id;
-                      const statusStyle = PO_STATUS_STYLES[po.status] || PO_STATUS_STYLES.draft;
-                      return (
-                        <Fragment key={po.id}>
-                          <TableRow
-                            className="cursor-pointer transition-colors duration-100"
-                            onClick={() => setExpandedId(isExpanded ? null : po.id)}
-                          >
-                            <TableCell className="pl-3">
-                              <div className={cn('transition-transform duration-150', isExpanded && 'rotate-90')}>
-                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                              </div>
-                            </TableCell>
-                            <TableCell className={tokens.body.emphasis}>{po.id.slice(0, 8).toUpperCase()}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—'}</TableCell>
-                            <TableCell className="text-right tabular-nums">{po.quantity}</TableCell>
-                            <TableCell className="text-right tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn('text-[10px] font-medium border whitespace-nowrap', statusStyle.className)}>
-                                {statusStyle.label}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{format(new Date(po.created_at), 'MMM d, yyyy')}</TableCell>
-                            <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
-                              {po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d') : '—'}
-                            </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <div className="flex gap-1">
-                                {po.status === 'draft' && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSend(po)} title="Send to Supplier">
-                                    <Send className="w-4 h-4" />
-                                  </Button>
-                                )}
-                                {(po.status === 'draft' || po.status === 'sent') && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCancel(po)} title="Cancel">
-                                    <XCircle className="w-4 h-4 text-destructive" />
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                          {isExpanded && (
-                            <TableRow>
-                              <TableCell colSpan={9} className="bg-muted/20 p-3 sm:p-4">
-                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 text-sm">
-                                  <div className="min-w-0">
-                                    <span className={tokens.label.tiny}>Supplier Email</span>
-                                    <p className="text-foreground truncate">{po.supplier_email || '—'}</p>
-                                  </div>
-                                  <div>
-                                    <span className={tokens.label.tiny}>Unit Cost</span>
-                                    <p className="text-foreground">{po.unit_cost != null ? formatCurrency(po.unit_cost) : '—'}</p>
-                                  </div>
-                                  <div>
-                                    <span className={tokens.label.tiny}>Sent At</span>
-                                    <p className="text-foreground">{po.sent_at ? format(new Date(po.sent_at), 'MMM d, yyyy h:mm a') : '—'}</p>
-                                  </div>
-                                  <div>
-                                    <span className={tokens.label.tiny}>Received At</span>
-                                    <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—'}</p>
-                                  </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8" />
+                  <TableHead className={tokens.table.columnHeader}>PO #</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Total</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Created</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Expected</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((po) => {
+                  const isExpanded = expandedId === po.id;
+                  const statusStyle = PO_STATUS_STYLES[po.status] || PO_STATUS_STYLES.draft;
+                  return (
+                    <>
+                      <TableRow
+                        key={po.id}
+                        className="cursor-pointer"
+                        onClick={() => setExpandedId(isExpanded ? null : po.id)}
+                      >
+                        <TableCell className="pl-3">
+                          {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                        </TableCell>
+                        <TableCell className={tokens.body.emphasis}>{po.id.slice(0, 8).toUpperCase()}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—'}</TableCell>
+                        <TableCell className="text-right hidden sm:table-cell tabular-nums">{po.quantity}</TableCell>
+                        <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={cn('text-[10px] font-medium border', statusStyle.className)}>
+                            {statusStyle.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{format(new Date(po.created_at), 'MMM d, yyyy')}</TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
+                          {po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d') : '—'}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-1">
+                            {po.status === 'draft' && (
+                              <Button variant="ghost" size="icon" onClick={() => handleSend(po)} title="Send to Supplier">
+                                <Send className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {(po.status === 'draft' || po.status === 'sent') && (
+                              <Button variant="ghost" size="icon" onClick={() => handleCancel(po)} title="Cancel">
+                                <XCircle className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && (
+                        <TableRow key={`${po.id}-detail`}>
+                          <TableCell colSpan={9} className="bg-muted/20 p-4">
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <span className={tokens.label.tiny}>Supplier Email</span>
+                                  <p className="text-foreground">{po.supplier_email || '—'}</p>
                                 </div>
-                                {po.notes && (
-                                  <div className="mt-3">
-                                    <span className={tokens.label.tiny}>Notes</span>
-                                    <p className="text-sm text-muted-foreground mt-0.5">{po.notes}</p>
-                                  </div>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </Fragment>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+                                <div>
+                                  <span className={tokens.label.tiny}>Unit Cost</span>
+                                  <p className="text-foreground">{po.unit_cost != null ? formatCurrency(po.unit_cost) : '—'}</p>
+                                </div>
+                                <div>
+                                  <span className={tokens.label.tiny}>Sent At</span>
+                                  <p className="text-foreground">{po.sent_at ? format(new Date(po.sent_at), 'MMM d, yyyy h:mm a') : '—'}</p>
+                                </div>
+                                <div>
+                                  <span className={tokens.label.tiny}>Received At</span>
+                                  <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—'}</p>
+                                </div>
+                              </div>
+                              {po.notes && (
+                                <div>
+                                  <span className={tokens.label.tiny}>Notes</span>
+                                  <p className="text-sm text-muted-foreground mt-0.5">{po.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}

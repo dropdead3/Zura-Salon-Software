@@ -17,14 +17,6 @@ import { OrdersTab } from './inventory/OrdersTab';
 import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
 
-const TABS = [
-  { value: 'stock', label: 'Stock', icon: Package },
-  { value: 'reorder', label: 'Reorder', icon: RefreshCcw },
-  { value: 'orders', label: 'Orders', icon: FileText },
-  { value: 'receive', label: 'Receive', icon: Truck },
-  { value: 'counts', label: 'Counts', icon: ClipboardCheck },
-] as const;
-
 export function BackroomInventorySection() {
   const { data: locations = [] } = useActiveLocations();
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
@@ -34,15 +26,13 @@ export function BackroomInventorySection() {
     <div className="space-y-5">
       {/* Section header with location selector */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
+        <div>
           <h2 className={tokens.heading.section}>Inventory Management</h2>
-          <p className={cn(tokens.body.muted, 'mt-1 text-sm')}>
-            Monitor stock, reorder supplies, manage purchase orders, receive shipments, and run physical counts.
-          </p>
+          <p className={cn(tokens.body.muted, 'mt-1')}>Monitor stock, reorder supplies, manage purchase orders, receive shipments, and run physical counts.</p>
         </div>
         {locations.length > 1 && (
           <Select value={effectiveLocationId} onValueChange={setLocationId}>
-            <SelectTrigger className="w-full sm:w-fit rounded-full gap-2 shrink-0">
+            <SelectTrigger className="w-fit rounded-full gap-2 shrink-0">
               <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
               <SelectValue placeholder="Select location" />
             </SelectTrigger>
@@ -57,32 +47,37 @@ export function BackroomInventorySection() {
 
       {/* Tabbed workspace */}
       <Tabs defaultValue="stock" className="w-full">
-        <TabsList className="w-full justify-start bg-muted/50 rounded-xl p-1 h-auto gap-0.5 overflow-x-auto scrollbar-none">
-          {TABS.map(({ value, label, icon: Icon }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm shrink-0 px-3 sm:px-4 transition-all duration-150"
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="hidden xs:inline sm:inline">{label}</span>
-            </TabsTrigger>
-          ))}
+        <TabsList className="w-full justify-start bg-muted/50 rounded-xl p-1 h-auto flex-wrap gap-0.5">
+          <TabsTrigger value="stock" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <Package className="w-4 h-4" /> Stock
+          </TabsTrigger>
+          <TabsTrigger value="reorder" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <RefreshCcw className="w-4 h-4" /> Reorder
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <FileText className="w-4 h-4" /> Orders
+          </TabsTrigger>
+          <TabsTrigger value="receive" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <Truck className="w-4 h-4" /> Receive
+          </TabsTrigger>
+          <TabsTrigger value="counts" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <ClipboardCheck className="w-4 h-4" /> Counts
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stock" className="mt-4 animate-in fade-in-0 duration-200">
+        <TabsContent value="stock" className="mt-4">
           <StockTab locationId={effectiveLocationId} />
         </TabsContent>
-        <TabsContent value="reorder" className="mt-4 animate-in fade-in-0 duration-200">
+        <TabsContent value="reorder" className="mt-4">
           <ReorderTab locationId={effectiveLocationId} />
         </TabsContent>
-        <TabsContent value="orders" className="mt-4 animate-in fade-in-0 duration-200">
+        <TabsContent value="orders" className="mt-4">
           <OrdersTab />
         </TabsContent>
-        <TabsContent value="receive" className="mt-4 animate-in fade-in-0 duration-200">
+        <TabsContent value="receive" className="mt-4">
           <ReceiveTab />
         </TabsContent>
-        <TabsContent value="counts" className="mt-4 animate-in fade-in-0 duration-200">
+        <TabsContent value="counts" className="mt-4">
           <CountsTab locationId={effectiveLocationId} />
         </TabsContent>
       </Tabs>

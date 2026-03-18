@@ -1,6 +1,6 @@
 /**
  * ReceiveTab — Shipment receiving workflow.
- * Apple-grade responsive: stacked card layout, touch-friendly controls.
+ * Lists POs that are sent/partially received. Click to open line-by-line receiving.
  */
 
 import { useState } from 'react';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Truck, CheckCircle2, Package } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -55,9 +56,9 @@ export function ReceiveTab() {
 
   return (
     <div className="space-y-4">
-      <div className="min-w-0">
+      <div>
         <p className={tokens.body.emphasis}>{sentOrders.length} shipment{sentOrders.length !== 1 ? 's' : ''} awaiting receiving</p>
-        <p className={cn(tokens.body.muted, 'text-sm')}>Click a shipment to receive items and update stock levels.</p>
+        <p className={tokens.body.muted}>Click a shipment to receive items and update stock levels.</p>
       </div>
 
       <div className="space-y-3">
@@ -66,26 +67,25 @@ export function ReceiveTab() {
           const qty = receivedQty[po.id] ?? po.quantity;
 
           return (
-            <Card key={po.id} className={cn('transition-all duration-150', isReceiving && 'ring-1 ring-primary/30')}>
-              <CardHeader className="pb-3 p-4">
-                {/* Stacked on mobile, side-by-side on sm+ */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={cn(tokens.card.iconBox, 'shrink-0')}>
+            <Card key={po.id} className={cn(isReceiving && 'ring-1 ring-primary/30')}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={tokens.card.iconBox}>
                       <Package className={tokens.card.icon} />
                     </div>
-                    <div className="min-w-0">
+                    <div>
                       <CardTitle className={cn(tokens.card.title, 'text-sm')}>
                         PO {po.id.slice(0, 8).toUpperCase()}
                       </CardTitle>
-                      <CardDescription className="truncate">
+                      <CardDescription>
                         {po.supplier_name || 'Unknown Supplier'} · {po.quantity} units
                         {po.total_cost != null && ` · ${formatCurrency(po.total_cost)}`}
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    <span className="text-xs text-muted-foreground hidden sm:inline whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
                       Sent {po.sent_at ? format(new Date(po.sent_at), 'MMM d') : '—'}
                     </span>
                     {!isReceiving ? (
@@ -100,7 +100,7 @@ export function ReceiveTab() {
                         className={tokens.button.cardAction}
                       >
                         {markReceived.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                        Confirm
+                        Confirm Receipt
                       </Button>
                     )}
                   </div>
@@ -108,33 +108,31 @@ export function ReceiveTab() {
               </CardHeader>
 
               {isReceiving && (
-                <CardContent className="pt-0 px-4 pb-4">
-                  <div className="rounded-lg border border-border/60 bg-muted/20 p-3 sm:p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                <CardContent className="pt-0">
+                  <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                    <div className="flex items-center gap-4">
                       <div className="flex-1">
                         <label className={tokens.label.default}>Quantity Received</label>
-                        <p className="text-xs text-muted-foreground mb-1.5">Ordered: {po.quantity}</p>
+                        <p className="text-xs text-muted-foreground mb-1.5">Enter actual quantity received (ordered: {po.quantity})</p>
                         <Input
                           type="number"
                           min={0}
                           max={po.quantity}
                           value={qty}
                           onChange={e => setReceivedQty(prev => ({ ...prev, [po.id]: Number(e.target.value) }))}
-                          className="w-full sm:w-32"
+                          className="w-32"
                         />
                       </div>
-                      <div className="shrink-0">
-                        {qty < po.quantity && (
-                          <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
-                            Partial Receive
-                          </Badge>
-                        )}
-                        {qty === po.quantity && (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-xs">
-                            Full Receive
-                          </Badge>
-                        )}
-                      </div>
+                      {qty < po.quantity && (
+                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
+                          Partial Receive
+                        </Badge>
+                      )}
+                      {qty === po.quantity && (
+                        <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-xs">
+                          Full Receive
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardContent>
