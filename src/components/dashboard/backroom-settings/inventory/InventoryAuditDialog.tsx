@@ -227,12 +227,23 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <div className="relative">
                 <div className="absolute left-[11px] top-3 bottom-3 w-px bg-border/60" />
                 {entries.map((entry, i) => (
-                  <AuditRow key={entry.id} entry={entry} isLast={i === entries.length - 1} />
+                  <AuditRow
+                    key={entry.id}
+                    entry={entry}
+                    isLast={i === entries.length - 1}
+                    onClick={() => setSelectedEntry({ ...entry, product_name: productName })}
+                  />
                 ))}
               </div>
             )}
           </div>
         </ScrollArea>
+
+        <AuditEntryDetailPanel
+          open={!!selectedEntry}
+          onOpenChange={(open) => !open && setSelectedEntry(null)}
+          entry={selectedEntry}
+        />
       </DialogContent>
     </Dialog>
   );
