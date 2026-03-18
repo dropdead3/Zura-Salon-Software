@@ -137,6 +137,9 @@ export function BackroomInventorySection() {
           <TabsTrigger value="audit" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <History className="w-4 h-4" /> Audit Log
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="mt-4">
@@ -156,6 +159,9 @@ export function BackroomInventorySection() {
         </TabsContent>
         <TabsContent value="audit" className="mt-4">
           <AuditLogTab locationId={effectiveLocationId} />
+        </TabsContent>
+        <TabsContent value="analytics" className="mt-4">
+          <ReorderAnalyticsTab />
         </TabsContent>
       </Tabs>
     </div>
