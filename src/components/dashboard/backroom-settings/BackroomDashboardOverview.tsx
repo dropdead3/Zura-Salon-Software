@@ -133,6 +133,35 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         </Collapsible>
       )}
 
+      {/* ── Location & Time Filters ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        {activeLocations.length > 1 && (
+          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+            <SelectTrigger className="w-fit gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {activeLocations.map((loc) => (
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
+          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7d">Last 7 Days</SelectItem>
+            <SelectItem value="30d">Last 30 Days</SelectItem>
+            <SelectItem value="this_month">This Month</SelectItem>
+            <SelectItem value="last_month">Last Month</SelectItem>
+            <SelectItem value="90d">Last 90 Days</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground font-sans">{rangeLabel}</span>
+      </div>
+
       {/* ── KPI Strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiTile
