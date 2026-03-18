@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen } from 'lucide-react';
+import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3 } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
