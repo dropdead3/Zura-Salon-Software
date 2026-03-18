@@ -10,7 +10,7 @@ export function LeaderboardConfigurator() {
       <Tabs defaultValue="scoring" className="space-y-6">
         <TabsList>
           <TabsTrigger value="scoring" className="gap-2">
-            <Scale className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" />
             Scoring Weights
           </TabsTrigger>
           <TabsTrigger value="achievements" className="gap-2">
