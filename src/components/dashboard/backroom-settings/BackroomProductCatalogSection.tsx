@@ -1361,8 +1361,8 @@ function InventoryView({
           type="button"
           onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
           className={cn(
-            'rounded-xl border bg-card p-4 text-left transition-all cursor-pointer',
-            stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/80 hover:shadow-sm'
+            'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
+            stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/40 hover:shadow-sm'
           )}
         >
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
