@@ -43,8 +43,6 @@ import { AlertsExceptionsSection } from '@/components/dashboard/backroom-setting
 import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
-import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
-import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
 import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 
 type BackroomSection =
