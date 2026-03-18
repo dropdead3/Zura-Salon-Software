@@ -92,16 +92,16 @@ export function SupplierSettingsSection() {
   };
 
   // Product name lookup
-  const { data: productsData } = useProducts();
+  const { data: allProducts } = useProducts();
   const productNameMap = useMemo(() => {
     const map = new Map<string, { name: string; brand: string | null }>();
-    if (productsData?.products) {
-      for (const p of productsData.products) {
+    if (allProducts) {
+      for (const p of allProducts) {
         map.set(p.id, { name: p.name, brand: p.brand });
       }
     }
     return map;
-  }, [productsData]);
+  }, [allProducts]);
 
   const handleAddSupplier = () => {
     if (!newSupplierName.trim()) return;

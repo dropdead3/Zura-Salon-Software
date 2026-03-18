@@ -307,6 +307,7 @@ export default function BackroomSettings() {
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
             {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}
+            {activeSection === 'suppliers' && <SupplierSettingsSection />}
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
