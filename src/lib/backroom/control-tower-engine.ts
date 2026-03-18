@@ -152,7 +152,7 @@ function buildProfitabilityAlerts(outliers: MarginOutlier[]): ControlTowerAlert[
     entityType: 'appointment',
     entityId: o.appointmentId,
     suggestedAction: 'Review service profitability',
-    actionRoute: '/dashboard/backroom/analytics',
+    actionRoute: '/dashboard/admin/backroom-settings?category=insights',
     createdAt: new Date().toISOString(),
   }));
 }
