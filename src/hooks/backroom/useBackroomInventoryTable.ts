@@ -139,6 +139,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
         const status = getStockStatus(qty, p.reorder_level, p.par_level);
         const orderQty = p.par_level != null ? Math.max(0, p.par_level - qty) : 0;
         const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
+        const sup = supplierMap.get(p.id);
 
         return {
           id: p.id,
@@ -156,6 +157,8 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           order_qty: orderQty,
           status,
           charge_per_gram: chargePerGram,
+          supplier_name: sup?.supplier_name ?? null,
+          supplier_email: sup?.supplier_email ?? null,
         };
       });
     },
