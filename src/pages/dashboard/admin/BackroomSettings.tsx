@@ -30,7 +30,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
-import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/BackroomSetupOverview';
+import { BackroomDashboardOverview } from '@/components/dashboard/backroom-settings/BackroomDashboardOverview';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings/ServiceTrackingSection';
 import { RecipeBaselineSection } from '@/components/dashboard/backroom-settings/RecipeBaselineSection';
