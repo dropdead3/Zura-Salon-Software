@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { purchase_order_id, purchase_order_ids, attachments } = body;
+    const { purchase_order_id, purchase_order_ids, attachments, is_followup } = body;
 
     // attachments: Record<supplierEmail, { filename, content (base64) }[]>
     const pdfAttachments: Record<string, { filename: string; content: string }[]> = attachments || {};
