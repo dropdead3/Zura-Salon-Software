@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
