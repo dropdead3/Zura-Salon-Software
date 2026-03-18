@@ -143,216 +143,244 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         />
       </div>
 
-      {/* ── Two-Column: Control Tower + Procurement ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Control Tower Alerts */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={tokens.card.iconBox}>
-                <ShieldAlert className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
-                <CardDescription>
-                  {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
-                </CardDescription>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('alerts')} className="font-sans text-xs text-muted-foreground">
-              View All
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {alerts.length === 0 ? (
-              <div className="py-6 text-center">
-                <ShieldAlert className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                <p className={tokens.body.muted}>No active alerts — all clear.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {alerts.slice(0, 5).map((alert) => (
-                  <AlertRow key={alert.id} alert={alert} onNavigate={onNavigate} />
-                ))}
-                {alerts.length > 5 && (
-                  <p className="text-xs text-muted-foreground text-center pt-1">
-                    +{alerts.length - 5} more alerts
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ── Sub-tabs ── */}
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+        <SubTabsList>
+          <SubTabsTrigger value="command-center" className="gap-1.5">
+            <ShieldAlert className="w-3.5 h-3.5" /> Command Center
+          </SubTabsTrigger>
+          <SubTabsTrigger value="analytics" className="gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5" /> Analytics
+          </SubTabsTrigger>
+          <SubTabsTrigger value="ai" className="gap-1.5">
+            <Brain className="w-3.5 h-3.5" /> AI Intelligence
+          </SubTabsTrigger>
+        </SubTabsList>
 
-        {/* Procurement Snapshot */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={tokens.card.iconBox}>
-                <Wallet className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className={tokens.card.title}>Procurement</CardTitle>
-                <CardDescription>Budget tracking & projections</CardDescription>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory')} className="font-sans text-xs text-muted-foreground">
-              View Analytics
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {kpis.monthlyBudget > 0 ? (
-              <>
-                <div>
-                  <div className="flex justify-between text-xs font-sans mb-1">
-                    <span className="text-muted-foreground">Month-to-Date</span>
-                    <span className="text-foreground">{formatCurrency(kpis.currentMonthSpend)} / {formatCurrency(kpis.monthlyBudget)}</span>
+        {/* ── Command Center ── */}
+        <TabsContent value="command-center" className="space-y-6 mt-6">
+          {/* Two-Column: Control Tower + Procurement */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Control Tower Alerts */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={tokens.card.iconBox}>
+                    <ShieldAlert className="w-5 h-5 text-primary" />
                   </div>
-                  <Progress
-                    value={Math.min((kpis.currentMonthSpend / kpis.monthlyBudget) * 100, 100)}
-                    className="h-2"
-                    indicatorClassName={
-                      kpis.budgetPct !== null && kpis.budgetPct > 100 ? 'bg-destructive' :
-                      kpis.budgetPct !== null && kpis.budgetPct > kpis.alertThreshold ? 'bg-amber-500' :
-                      'bg-primary'
-                    }
-                  />
+                  <div>
+                    <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
+                    <CardDescription>
+                      {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
+                    </CardDescription>
+                  </div>
                 </div>
-                {reorderData?.projectedNextMonth != null && reorderData.projectedNextMonth > 0 && (
-                  <div className="flex items-center gap-2 text-xs font-sans">
-                    <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-muted-foreground">Next month projection:</span>
-                    <span className="text-foreground font-medium">{formatCurrency(reorderData.projectedNextMonth)}</span>
-                    {reorderData.projectedNextMonth > kpis.monthlyBudget && (
-                      <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30">Over Budget</Badge>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('alerts')} className="font-sans text-xs text-muted-foreground">
+                  View All
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {alerts.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <ShieldAlert className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className={tokens.body.muted}>No active alerts — all clear.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {alerts.slice(0, 5).map((alert) => (
+                      <AlertRow key={alert.id} alert={alert} onNavigate={onNavigate} onSwitchTab={setActiveSubTab} />
+                    ))}
+                    {alerts.length > 5 && (
+                      <p className="text-xs text-muted-foreground text-center pt-1">
+                        +{alerts.length - 5} more alerts
+                      </p>
                     )}
                   </div>
                 )}
-              </>
-            ) : (
-              <div className="py-4 text-center">
-                <p className={tokens.body.muted}>No budget target set.</p>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory')} className="mt-2 font-sans">
-                  Set Budget
+              </CardContent>
+            </Card>
+
+            {/* Procurement Snapshot */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={tokens.card.iconBox}>
+                    <Wallet className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className={tokens.card.title}>Procurement</CardTitle>
+                    <CardDescription>Budget tracking & projections</CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory')} className="font-sans text-xs text-muted-foreground">
+                  View Analytics
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {kpis.monthlyBudget > 0 ? (
+                  <>
+                    <div>
+                      <div className="flex justify-between text-xs font-sans mb-1">
+                        <span className="text-muted-foreground">Month-to-Date</span>
+                        <span className="text-foreground">{formatCurrency(kpis.currentMonthSpend)} / {formatCurrency(kpis.monthlyBudget)}</span>
+                      </div>
+                      <Progress
+                        value={Math.min((kpis.currentMonthSpend / kpis.monthlyBudget) * 100, 100)}
+                        className="h-2"
+                        indicatorClassName={
+                          kpis.budgetPct !== null && kpis.budgetPct > 100 ? 'bg-destructive' :
+                          kpis.budgetPct !== null && kpis.budgetPct > kpis.alertThreshold ? 'bg-amber-500' :
+                          'bg-primary'
+                        }
+                      />
+                    </div>
+                    {reorderData?.projectedNextMonth != null && reorderData.projectedNextMonth > 0 && (
+                      <div className="flex items-center gap-2 text-xs font-sans">
+                        <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">Next month projection:</span>
+                        <span className="text-foreground font-medium">{formatCurrency(reorderData.projectedNextMonth)}</span>
+                        {reorderData.projectedNextMonth > kpis.monthlyBudget && (
+                          <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30">Over Budget</Badge>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-4 text-center">
+                    <p className={tokens.body.muted}>No budget target set.</p>
+                    <Button variant="outline" size="sm" onClick={() => onNavigate('inventory')} className="mt-2 font-sans">
+                      Set Budget
+                    </Button>
+                  </div>
+                )}
+                {reorderData && reorderData.trendPct !== 0 && (
+                  <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
+                    {reorderData.trendPct > 0 ? (
+                      <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+                    ) : (
+                      <TrendingDown className="w-3.5 h-3.5 text-primary" />
+                    )}
+                    <span>{Math.abs(reorderData.trendPct).toFixed(1)}% {reorderData.trendPct > 0 ? 'increase' : 'decrease'} month-over-month</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Two-Column: Staff + Inventory */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Staff Performance */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={tokens.card.iconBox}>
+                    <Users2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
+                    <CardDescription>Last 30 days — by waste rate</CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setActiveSubTab('analytics')} className="font-sans text-xs text-muted-foreground">
+                  Full Report
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {staffSummary.top.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <Users2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className={tokens.body.muted}>No staff data available yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {staffSummary.top.length > 0 && (
+                      <div>
+                        <p className={cn(tokens.label.tiny, 'mb-2')}>Top Performers</p>
+                        {staffSummary.top.map((s) => (
+                          <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} />
+                        ))}
+                      </div>
+                    )}
+                    {staffSummary.bottom.length > 0 && (
+                      <div>
+                        <p className={cn(tokens.label.tiny, 'mb-2')}>Needs Attention</p>
+                        {staffSummary.bottom.map((s) => (
+                          <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} isBottom />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Inventory Health */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={tokens.card.iconBox}>
+                    <Package className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className={tokens.card.title}>Inventory Health</CardTitle>
+                    <CardDescription>Stock risk snapshot</CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory')} className="font-sans text-xs text-muted-foreground">
+                  View Inventory
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {inventoryHealth.total === 0 ? (
+                  <div className="py-6 text-center">
+                    <Package className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                    <p className={tokens.body.muted}>No inventory projections available.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3">
+                    <HealthStat label="Critical" count={inventoryHealth.critical} color="text-destructive" />
+                    <HealthStat label="High Risk" count={inventoryHealth.high} color="text-amber-500" />
+                    <HealthStat label="Medium" count={inventoryHealth.medium} color="text-blue-500" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:counts')} className="font-sans gap-1.5">
+                  <ClipboardList className="w-3.5 h-3.5" /> Start Count
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:orders')} className="font-sans gap-1.5">
+                  <FileText className="w-3.5 h-3.5" /> Create PO
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">
+                  <Eye className="w-3.5 h-3.5" /> View Exceptions
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers')} className="font-sans gap-1.5">
+                  <Truck className="w-3.5 h-3.5" /> Manage Suppliers
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setActiveSubTab('analytics')} className="font-sans gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Export Report
                 </Button>
               </div>
-            )}
-            {reorderData && reorderData.trendPct !== 0 && (
-              <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
-                {reorderData.trendPct > 0 ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
-                ) : (
-                  <TrendingDown className="w-3.5 h-3.5 text-primary" />
-                )}
-                <span>{Math.abs(reorderData.trendPct).toFixed(1)}% {reorderData.trendPct > 0 ? 'increase' : 'decrease'} month-over-month</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* ── Two-Column: Staff + Inventory ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Staff Performance */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={tokens.card.iconBox}>
-                <Users2 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
-                <CardDescription>Last 30 days — by waste rate</CardDescription>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('insights')} className="font-sans text-xs text-muted-foreground">
-              Full Report
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {staffSummary.top.length === 0 ? (
-              <div className="py-6 text-center">
-                <Users2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                <p className={tokens.body.muted}>No staff data available yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {staffSummary.top.length > 0 && (
-                  <div>
-                    <p className={cn(tokens.label.tiny, 'mb-2')}>Top Performers</p>
-                    {staffSummary.top.map((s) => (
-                      <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} />
-                    ))}
-                  </div>
-                )}
-                {staffSummary.bottom.length > 0 && (
-                  <div>
-                    <p className={cn(tokens.label.tiny, 'mb-2')}>Needs Attention</p>
-                    {staffSummary.bottom.map((s) => (
-                      <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} isBottom />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* ── Analytics ── */}
+        <TabsContent value="analytics" className="mt-6">
+          <BackroomInsightsSection />
+        </TabsContent>
 
-        {/* Inventory Health */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={tokens.card.iconBox}>
-                <Package className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className={tokens.card.title}>Inventory Health</CardTitle>
-                <CardDescription>Stock risk snapshot</CardDescription>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory')} className="font-sans text-xs text-muted-foreground">
-              View Inventory
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {inventoryHealth.total === 0 ? (
-              <div className="py-6 text-center">
-                <Package className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                <p className={tokens.body.muted}>No inventory projections available.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                <HealthStat label="Critical" count={inventoryHealth.critical} color="text-destructive" />
-                <HealthStat label="High Risk" count={inventoryHealth.high} color="text-amber-500" />
-                <HealthStat label="Medium" count={inventoryHealth.medium} color="text-blue-500" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Quick Actions ── */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:counts')} className="font-sans gap-1.5">
-              <ClipboardList className="w-3.5 h-3.5" /> Start Count
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:orders')} className="font-sans gap-1.5">
-              <FileText className="w-3.5 h-3.5" /> Create PO
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">
-              <Eye className="w-3.5 h-3.5" /> View Exceptions
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers')} className="font-sans gap-1.5">
-              <Truck className="w-3.5 h-3.5" /> Manage Suppliers
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('insights')} className="font-sans gap-1.5">
-              <Download className="w-3.5 h-3.5" /> Export Report
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* ── AI Intelligence ── */}
+        <TabsContent value="ai" className="mt-6">
+          <SupplyIntelligenceDashboard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
