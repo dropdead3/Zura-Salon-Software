@@ -21,6 +21,7 @@ import { useInlineStockEdit } from '@/hooks/backroom/useInlineStockEdit';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
+import { InventoryAuditDialog } from './InventoryAuditDialog';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
 
