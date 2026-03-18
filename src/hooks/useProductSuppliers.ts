@@ -117,3 +117,47 @@ export function useUpsertSupplier() {
     },
   });
 }
+
+export function useBatchUpsertSupplier() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      product_ids: string[];
+      organization_id: string;
+      supplier_name: string;
+      supplier_email?: string | null;
+      supplier_phone?: string | null;
+      supplier_website?: string | null;
+      account_number?: string | null;
+      lead_time_days?: number | null;
+      moq?: number;
+    }) => {
+      const rows = input.product_ids.map((pid) => ({
+        product_id: pid,
+        organization_id: input.organization_id,
+        supplier_name: input.supplier_name,
+        supplier_email: input.supplier_email || null,
+        supplier_phone: input.supplier_phone || null,
+        supplier_website: input.supplier_website || null,
+        account_number: input.account_number || null,
+        lead_time_days: input.lead_time_days ?? null,
+        moq: input.moq ?? 1,
+      }));
+
+      const { error } = await supabase
+        .from('product_suppliers')
+        .upsert(rows, { onConflict: 'product_id,organization_id', ignoreDuplicates: false });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['product-supplier'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      toast.success('Supplier saved for all products in brand');
+    },
+    onError: (error) => {
+      toast.error('Failed to save supplier: ' + error.message);
+    },
+  });
+}

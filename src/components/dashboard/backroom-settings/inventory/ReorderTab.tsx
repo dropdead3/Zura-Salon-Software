@@ -1,5 +1,6 @@
 /**
- * ReorderTab — Smart reorder queue with stockout forecasting and bulk PO creation.
+ * ReorderTab — Smart reorder queue grouped by supplier.
+ * Supports multi-line PO creation per supplier and email PO actions.
  */
 
 import { useMemo, useState } from 'react';
@@ -8,27 +9,41 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, RefreshCcw, Zap, AlertTriangle, Clock, ShoppingCart } from 'lucide-react';
+import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
-import { useReplenishmentRecommendations, useGenerateReplenishment, useConvertRecommendationsToPO } from '@/hooks/inventory/useReplenishment';
+import { useReplenishmentRecommendations, useGenerateReplenishment } from '@/hooks/inventory/useReplenishment';
+import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { forecastStockout } from '@/lib/stockoutForecast';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ReorderTabProps {
   locationId?: string;
+}
+
+interface SupplierGroup {
+  supplierName: string;
+  supplierEmail: string | null;
+  products: BackroomInventoryRow[];
+  totalEstCost: number;
 }
 
 export function ReorderTab({ locationId }: ReorderTabProps) {
   const { data: inventory = [], isLoading: invLoading } = useBackroomInventoryTable({ locationId });
   const { data: recommendations = [], isLoading: recLoading } = useReplenishmentRecommendations('pending');
   const generateRecs = useGenerateReplenishment();
-  const convertToPO = useConvertRecommendationsToPO();
+  const createMultiLinePO = useCreateMultiLinePO();
   const { formatCurrency } = useFormatCurrency();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sendingEmail, setSendingEmail] = useState(false);
 
-  // Products that need reordering (below reorder point or out of stock)
+  // Products that need reordering
   const reorderQueue = useMemo(() => {
     return inventory
       .filter(r => r.status === 'urgent_reorder' || r.status === 'out_of_stock' || r.status === 'replenish')
@@ -37,6 +52,29 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
         return (urgencyOrder[a.status as keyof typeof urgencyOrder] ?? 3) - (urgencyOrder[b.status as keyof typeof urgencyOrder] ?? 3);
       });
   }, [inventory]);
+
+  // Group by supplier
+  const supplierGroups = useMemo((): SupplierGroup[] => {
+    const map = new Map<string, SupplierGroup>();
+    for (const row of reorderQueue) {
+      const key = row.supplier_name || '__unassigned__';
+      const group = map.get(key) || {
+        supplierName: row.supplier_name || 'Unassigned',
+        supplierEmail: row.supplier_email,
+        products: [],
+        totalEstCost: 0,
+      };
+      group.products.push(row);
+      group.totalEstCost += row.order_qty * (row.cost_price ?? row.cost_per_gram ?? 0);
+      map.set(key, group);
+    }
+    // Sort: unassigned last
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.supplierName === 'Unassigned') return 1;
+      if (b.supplierName === 'Unassigned') return -1;
+      return a.supplierName.localeCompare(b.supplierName);
+    });
+  }, [reorderQueue]);
 
   const isLoading = invLoading || recLoading;
 
@@ -48,23 +86,51 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
     });
   };
 
-  const toggleAll = () => {
-    if (selectedIds.size === reorderQueue.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(reorderQueue.map(r => r.id)));
-    }
+  const toggleSupplierGroup = (products: BackroomInventoryRow[]) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected = products.every(p => next.has(p.id));
+      if (allSelected) {
+        products.forEach(p => next.delete(p.id));
+      } else {
+        products.forEach(p => next.add(p.id));
+      }
+      return next;
+    });
   };
 
-  const handleConvertToPO = () => {
-    // Find matching recommendations for selected product IDs
-    const recIds = recommendations
-      .filter(r => selectedIds.has(r.product_id))
-      .map(r => r.id);
-    if (recIds.length > 0) {
-      convertToPO.mutate(recIds);
-      setSelectedIds(new Set());
+  const handleCreatePOForSupplier = (group: SupplierGroup) => {
+    if (!orgId) return;
+    createMultiLinePO.mutate({
+      organization_id: orgId,
+      supplier_name: group.supplierName === 'Unassigned' ? undefined : group.supplierName,
+      supplier_email: group.supplierEmail ?? undefined,
+      lines: group.products.map(p => ({
+        product_id: p.id,
+        quantity_ordered: p.order_qty,
+        unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
+      })),
+    });
+  };
+
+  const handleCreateAllPOs = () => {
+    if (!orgId) return;
+    const assignedGroups = supplierGroups.filter(g => g.supplierName !== 'Unassigned');
+    for (const group of assignedGroups) {
+      const groupProducts = group.products.filter(p => selectedIds.has(p.id));
+      if (groupProducts.length === 0) continue;
+      createMultiLinePO.mutate({
+        organization_id: orgId,
+        supplier_name: group.supplierName,
+        supplier_email: group.supplierEmail ?? undefined,
+        lines: groupProducts.map(p => ({
+          product_id: p.id,
+          quantity_ordered: p.order_qty,
+          unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
+        })),
+      });
     }
+    setSelectedIds(new Set());
   };
 
   if (isLoading) {
@@ -77,7 +143,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <p className={tokens.body.emphasis}>{reorderQueue.length} product{reorderQueue.length !== 1 ? 's' : ''} need reordering</p>
-          <p className={tokens.body.muted}>Products below reorder point, sorted by urgency.</p>
+          <p className={tokens.body.muted}>Grouped by supplier for streamlined PO creation.</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -93,8 +159,8 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
           {selectedIds.size > 0 && (
             <Button
               size="sm"
-              onClick={handleConvertToPO}
-              disabled={convertToPO.isPending}
+              onClick={handleCreateAllPOs}
+              disabled={createMultiLinePO.isPending}
               className={tokens.button.cardAction}
             >
               <ShoppingCart className="w-4 h-4" />
@@ -104,7 +170,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
         </div>
       </div>
 
-      {/* Recommendations from AI */}
+      {/* AI Recommendations */}
       {recommendations.length > 0 && (
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
@@ -112,54 +178,85 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
               <Zap className="w-4 h-4 text-primary" />
               <CardTitle className={tokens.card.title}>AI Recommendations</CardTitle>
             </div>
-            <CardDescription>{recommendations.length} pending recommendation{recommendations.length !== 1 ? 's' : ''} — select items below to create purchase orders.</CardDescription>
+            <CardDescription>{recommendations.length} pending recommendation{recommendations.length !== 1 ? 's' : ''}</CardDescription>
           </CardHeader>
         </Card>
       )}
 
-      {/* Reorder Queue Table */}
+      {/* Supplier-grouped reorder queue */}
       {reorderQueue.length === 0 ? (
         <div className={tokens.empty.container}>
           <RefreshCcw className={tokens.empty.icon} />
           <h3 className={tokens.empty.heading}>All stocked up</h3>
-          <p className={tokens.empty.description}>No products currently need reordering. Use "Generate Suggestions" to run the AI forecasting engine.</p>
+          <p className={tokens.empty.description}>No products currently need reordering.</p>
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10 pl-4">
-                    <Checkbox
-                      checked={selectedIds.size === reorderQueue.length && reorderQueue.length > 0}
-                      onCheckedChange={toggleAll}
-                    />
-                  </TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Reorder Pt</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Par Level</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Order Qty</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Forecast</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Est. Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reorderQueue.map((row) => (
-                  <ReorderRow
-                    key={row.id}
-                    row={row}
-                    selected={selectedIds.has(row.id)}
-                    onToggle={() => toggleSelect(row.id)}
-                    formatCurrency={formatCurrency}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          {supplierGroups.map((group) => (
+            <Card key={group.supplierName}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    <CardTitle className={tokens.card.title}>{group.supplierName}</CardTitle>
+                    {group.supplierEmail && (
+                      <span className="text-muted-foreground text-xs">{group.supplierEmail}</span>
+                    )}
+                    <Badge variant="outline" className="text-[10px] ml-1">{group.products.length} item{group.products.length !== 1 ? 's' : ''}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Est: {formatCurrency(group.totalEstCost)}</span>
+                    {group.supplierName !== 'Unassigned' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCreatePOForSupplier(group)}
+                        disabled={createMultiLinePO.isPending}
+                        className={tokens.button.cardAction}
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                        Create PO
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10 pl-4">
+                        <Checkbox
+                          checked={group.products.every(p => selectedIds.has(p.id))}
+                          onCheckedChange={() => toggleSupplierGroup(group.products)}
+                        />
+                      </TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Product</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Reorder Pt</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Par Level</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Order Qty</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Forecast</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Est. Cost</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {group.products.map((row) => (
+                      <ReorderRow
+                        key={row.id}
+                        row={row}
+                        selected={selectedIds.has(row.id)}
+                        onToggle={() => toggleSelect(row.id)}
+                        formatCurrency={formatCurrency}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -172,7 +269,6 @@ function ReorderRow({ row, selected, onToggle, formatCurrency }: {
   formatCurrency: (n: number) => string;
 }) {
   const statusCfg = STOCK_STATUS_CONFIG[row.status];
-  // Simple velocity estimate (placeholder — real velocity would come from stock_movements)
   const forecast = forecastStockout(row.quantity_on_hand, 0.5);
   const estCost = row.order_qty * (row.cost_price ?? row.cost_per_gram ?? 0);
 

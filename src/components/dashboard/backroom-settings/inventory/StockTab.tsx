@@ -1,23 +1,34 @@
 /**
  * StockTab — Stock overview with KPI cards and enhanced inventory table.
- * Groups by brand, shows status badges, supports search/filter.
+ * Groups by brand → category with collapsible brand sections,
+ * supplier chips, and "Set Supplier" actions.
  */
 
 import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { SupplierAssignDialog } from './SupplierAssignDialog';
 
 interface StockTabProps {
   locationId?: string;
+}
+
+interface BrandGroup {
+  brand: string;
+  products: BackroomInventoryRow[];
+  supplierName: string | null;
+  categories: Map<string, BackroomInventoryRow[]>;
 }
 
 export function StockTab({ locationId }: StockTabProps) {
@@ -27,6 +38,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
 
   // Compute KPIs
   const kpis = useMemo(() => {
@@ -55,8 +67,8 @@ export function StockTab({ locationId }: StockTabProps) {
     return rows;
   }, [inventory, search, categoryFilter, statusFilter]);
 
-  // Group by brand
-  const grouped = useMemo(() => {
+  // Group by brand → category
+  const brandGroups = useMemo((): BrandGroup[] => {
     const map = new Map<string, BackroomInventoryRow[]>();
     for (const row of filtered) {
       const brand = row.brand || 'Uncategorized';
@@ -64,7 +76,20 @@ export function StockTab({ locationId }: StockTabProps) {
       arr.push(row);
       map.set(brand, arr);
     }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([brand, products]) => {
+        const supplierName = products.find(p => p.supplier_name)?.supplier_name ?? null;
+        const categories = new Map<string, BackroomInventoryRow[]>();
+        for (const p of products) {
+          const cat = p.category || 'Other';
+          const arr = categories.get(cat) ?? [];
+          arr.push(p);
+          categories.set(cat, arr);
+        }
+        return { brand, products, supplierName, categories };
+      });
   }, [filtered]);
 
   if (isLoading) {
@@ -101,11 +126,11 @@ export function StockTab({ locationId }: StockTabProps) {
             placeholder="Search products, brands, SKUs..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className={cn('pl-9', tokens.input.search)}
+            className="pl-9"
           />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className={cn('w-40', tokens.input.filter)}>
+          <SelectTrigger className="w-40">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -115,7 +140,7 @@ export function StockTab({ locationId }: StockTabProps) {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className={cn('w-40', tokens.input.filter)}>
+          <SelectTrigger className="w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -144,7 +169,6 @@ export function StockTab({ locationId }: StockTabProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Category</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Container</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Min</TableHead>
@@ -155,14 +179,27 @@ export function StockTab({ locationId }: StockTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {grouped.map(([brand, rows]) => (
-                  <BrandGroup key={brand} brand={brand} rows={rows} formatCurrency={formatCurrency} formatNumber={formatNumber} />
+                {brandGroups.map((bg) => (
+                  <BrandSection
+                    key={bg.brand}
+                    group={bg}
+                    formatCurrency={formatCurrency}
+                    formatNumber={formatNumber}
+                    onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
+                  />
                 ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       )}
+
+      <SupplierAssignDialog
+        open={supplierDialog.open}
+        onOpenChange={(open) => setSupplierDialog(prev => ({ ...prev, open }))}
+        brand={supplierDialog.brand}
+        products={supplierDialog.products}
+      />
     </div>
   );
 }
@@ -196,32 +233,89 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandGroup({ brand, rows, formatCurrency, formatNumber }: {
-  brand: string;
+function BrandSection({ group, formatCurrency, formatNumber, onSetSupplier }: {
+  group: BrandGroup;
+  formatCurrency: (n: number) => string;
+  formatNumber: (n: number) => string;
+  onSetSupplier: () => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+  return (
+    <>
+      {/* Brand header row */}
+      <TableRow
+        className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
+        onClick={() => setOpen(!open)}
+      >
+        <TableCell colSpan={8} className="py-2">
+          <div className="flex items-center gap-2">
+            {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
+            <span className="text-muted-foreground text-[10px]">({group.products.length})</span>
+            {group.supplierName ? (
+              <Badge variant="outline" className="text-[10px] font-medium border-primary/20 text-primary bg-primary/5 ml-2">
+                <Truck className="w-3 h-3 mr-1" />
+                {group.supplierName}
+              </Badge>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[10px] ml-2 text-muted-foreground hover:text-foreground"
+                onClick={(e) => { e.stopPropagation(); onSetSupplier(); }}
+              >
+                <UserPlus className="w-3 h-3 mr-1" />
+                Set Supplier
+              </Button>
+            )}
+            {group.supplierName && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[10px] ml-1 text-muted-foreground hover:text-foreground"
+                onClick={(e) => { e.stopPropagation(); onSetSupplier(); }}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {open && sortedCategories.map(([category, rows]) => (
+        <CategoryGroup key={`${group.brand}-${category}`} category={category} rows={rows} formatCurrency={formatCurrency} formatNumber={formatNumber} />
+      ))}
+    </>
+  );
+}
+
+function CategoryGroup({ category, rows, formatCurrency, formatNumber }: {
+  category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
 }) {
   return (
     <>
-      {/* Brand header row */}
-      <TableRow className="bg-muted/30 hover:bg-muted/30">
-        <TableCell colSpan={9} className="py-2">
-          <span className={cn(tokens.label.tiny, 'text-foreground/70')}>{brand}</span>
-          <span className="text-muted-foreground text-[10px] ml-2">({rows.length})</span>
+      {/* Category sub-header */}
+      <TableRow className="bg-muted/10 hover:bg-muted/10">
+        <TableCell colSpan={8} className="py-1 pl-10">
+          <span className="text-muted-foreground text-[11px] tracking-wide">{category}</span>
+          <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
       </TableRow>
       {rows.map((row) => {
         const statusCfg = STOCK_STATUS_CONFIG[row.status];
         return (
           <TableRow key={row.id}>
-            <TableCell>
+            <TableCell className="pl-10">
               <div>
                 <span className={tokens.body.emphasis}>{row.name}</span>
                 {row.sku && <span className="text-muted-foreground text-xs ml-2">{row.sku}</span>}
               </div>
             </TableCell>
-            <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{row.category || '—'}</TableCell>
             <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{row.container_size || '—'}</TableCell>
             <TableCell className="text-right font-medium tabular-nums">{formatNumber(row.quantity_on_hand)}</TableCell>
             <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.reorder_level ?? '—'}</TableCell>
