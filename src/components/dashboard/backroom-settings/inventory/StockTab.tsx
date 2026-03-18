@@ -414,7 +414,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onSetSupplier }: {
+function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onSetSupplier, onAudit }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
@@ -423,6 +423,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
   onSetSupplier: () => void;
+  onAudit: (productId: string, productName: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
