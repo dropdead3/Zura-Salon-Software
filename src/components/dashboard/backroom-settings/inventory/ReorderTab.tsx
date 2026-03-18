@@ -85,7 +85,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       if (b.supplierName === 'Unassigned') return -1;
       return a.supplierName.localeCompare(b.supplierName);
     });
-  }, [reorderQueue]);
+  }, [reorderQueue, getOrderQty]);
 
   const isLoading = invLoading || recLoading;
 
