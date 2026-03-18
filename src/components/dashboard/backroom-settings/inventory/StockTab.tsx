@@ -402,6 +402,16 @@ export function StockTab({ locationId }: StockTabProps) {
             </Badge>
           )}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="font-sans"
+          onClick={() => setAutoParDialog(true)}
+          disabled={inventory.length === 0}
+        >
+          <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+          Auto-Set Pars
+        </Button>
       </div>
 
       {/* Selection bar */}
