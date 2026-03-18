@@ -659,7 +659,7 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
     <>
       {/* Category sub-header */}
       <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={10} className="py-1 pl-10">
+        <TableCell colSpan={11} className="py-1 pl-10">
           <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
