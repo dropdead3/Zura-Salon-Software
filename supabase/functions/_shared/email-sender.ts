@@ -29,6 +29,12 @@ export interface EmailResult {
   skipReason?: string;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  content: string; // base64-encoded content
+  type?: string; // MIME type, defaults to application/pdf
+}
+
 export interface OrgEmailPayload {
   to: string[];
   subject: string;
@@ -36,6 +42,7 @@ export interface OrgEmailPayload {
   replyTo?: string;
   clientId?: string;
   emailType?: string; // 'marketing' | 'feedback' | 'transactional'
+  attachments?: EmailAttachment[];
 }
 
 interface SocialLinks {
