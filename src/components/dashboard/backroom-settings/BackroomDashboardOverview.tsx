@@ -14,7 +14,7 @@ import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight,
   FlaskConical, Trash2, Scale, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Sparkles, Users2, Package, ShieldAlert,
+  Sparkles, Users2, Package, ShieldAlert, Truck,
 } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { formatRelativeTime } from '@/lib/format';
