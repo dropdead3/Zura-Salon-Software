@@ -15,7 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Loader2, AlertTriangle, ChevronDown, ChevronRight,
+  Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
   Sparkles, Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
