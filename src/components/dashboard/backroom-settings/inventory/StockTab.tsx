@@ -345,6 +345,7 @@ export function StockTab({ locationId }: StockTabProps) {
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Order Qty</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-10')} />
                 </TableRow>
               </TableHeader>
               <TableBody>
