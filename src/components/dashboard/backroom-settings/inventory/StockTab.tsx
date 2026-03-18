@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -21,6 +21,7 @@ import { useInlineStockEdit } from '@/hooks/backroom/useInlineStockEdit';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
+import { InventoryAuditDialog } from './InventoryAuditDialog';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
 
@@ -181,6 +182,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
+  const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
   const [exporting, setExporting] = useState(false);
 
   // Compute KPIs
@@ -343,6 +345,7 @@ export function StockTab({ locationId }: StockTabProps) {
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Order Qty</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-10')} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -357,6 +360,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     adjustStock={adjustStock}
                     updateMinMax={updateMinMax}
                     onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
+                    onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                   />
                 ))}
               </TableBody>
@@ -370,6 +374,12 @@ export function StockTab({ locationId }: StockTabProps) {
         onOpenChange={(open) => setSupplierDialog(prev => ({ ...prev, open }))}
         brand={supplierDialog.brand}
         products={supplierDialog.products}
+      />
+      <InventoryAuditDialog
+        open={auditDialog.open}
+        onOpenChange={(open) => setAuditDialog(prev => ({ ...prev, open }))}
+        productId={auditDialog.productId}
+        productName={auditDialog.productName}
       />
     </div>
   );
@@ -404,7 +414,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onSetSupplier }: {
+function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onSetSupplier, onAudit }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
@@ -413,6 +423,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
   onSetSupplier: () => void;
+  onAudit: (productId: string, productName: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -424,7 +435,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
         className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
         onClick={() => setOpen(!open)}
       >
-        <TableCell colSpan={8} className="py-2">
+        <TableCell colSpan={9} className="py-2">
           <div className="flex items-center gap-2">
             {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
@@ -470,13 +481,14 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
           locationId={locationId}
           adjustStock={adjustStock}
           updateMinMax={updateMinMax}
+          onAudit={onAudit}
         />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax }: {
+function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onAudit }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -485,12 +497,13 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
   locationId: string | undefined;
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
+  onAudit: (productId: string, productName: string) => void;
 }) {
   return (
     <>
       {/* Category sub-header */}
       <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={8} className="py-1 pl-10">
+        <TableCell colSpan={9} className="py-1 pl-10">
           <span className="text-muted-foreground text-[11px] tracking-wide">{category}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
@@ -532,6 +545,7 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
                     productId: row.id,
                     field: 'reorder_level',
                     value: newVal,
+                    oldValue: row.reorder_level,
                     locationId,
                   });
                 }}
@@ -548,6 +562,7 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
                     productId: row.id,
                     field: 'par_level',
                     value: newVal,
+                    oldValue: row.par_level,
                     locationId,
                   });
                 }}
@@ -564,6 +579,17 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
             </TableCell>
             <TableCell className="text-right hidden xl:table-cell text-muted-foreground tabular-nums">
               {row.cost_price != null ? formatCurrency(row.cost_price) : row.cost_per_gram != null ? `${formatCurrency(row.cost_per_gram)}/g` : '—'}
+            </TableCell>
+            <TableCell className="w-10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => onAudit(row.id, row.name)}
+                title="View audit trail"
+              >
+                <History className="w-3.5 h-3.5" />
+              </Button>
             </TableCell>
           </TableRow>
         );

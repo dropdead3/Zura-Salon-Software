@@ -1,5 +1,6 @@
 /**
  * useInlineStockEdit — Mutations for inline stock/min/max editing in the Stock tab.
+ * Logs min/max changes to inventory_settings_audit for audit trail.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ export function useInlineStockEdit() {
     queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
     queryClient.invalidateQueries({ queryKey: ['inventory-ledger'] });
+    queryClient.invalidateQueries({ queryKey: ['inventory-audit-trail'] });
   };
 
   /** Adjust stock via ledger entry (triggers DB projection update) */
@@ -54,10 +56,10 @@ export function useInlineStockEdit() {
       productId: string;
       field: 'reorder_level' | 'par_level';
       value: number | null;
+      oldValue?: number | null;
       locationId?: string;
     }) => {
       if (params.locationId) {
-        // Location-scoped: upsert location_product_settings
         const { error } = await supabase
           .from('location_product_settings')
           .upsert(
@@ -72,13 +74,24 @@ export function useInlineStockEdit() {
           );
         if (error) throw error;
       } else {
-        // Org-wide: update products table directly
         const { error } = await supabase
           .from('products')
           .update({ [params.field]: params.value } as any)
           .eq('id', params.productId);
         if (error) throw error;
       }
+
+      // Log to audit trail
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from('inventory_settings_audit' as any).insert({
+        organization_id: params.orgId,
+        product_id: params.productId,
+        location_id: params.locationId || null,
+        field_name: params.field,
+        old_value: params.oldValue ?? null,
+        new_value: params.value,
+        changed_by: userData?.user?.id || null,
+      });
     },
     onSuccess: () => {
       invalidate();
