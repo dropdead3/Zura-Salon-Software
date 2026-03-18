@@ -203,7 +203,7 @@ function buildReorderAlerts(forecasts: ProductDemandForecast[]): ControlTowerAle
     entityType: 'product',
     entityId: f.product_id,
     suggestedAction: `Order ${f.recommended_order_qty} ${f.unit}`,
-    actionRoute: '/dashboard/inventory/orders',
+    actionRoute: '/dashboard/admin/backroom-settings?category=inventory&tab=reorder',
     createdAt: new Date().toISOString(),
   }));
 }
