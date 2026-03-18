@@ -94,18 +94,19 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
   const setupHealth = useMemo(() => {
     if (!setupQ.data) return null;
     const h = setupQ.data;
-    const items = [
-      h.trackedProducts > 0,
-      h.trackedServices > 0,
-      h.recipesConfigured > 0,
-      h.allowancePolicies > 0,
-      h.stationsConfigured > 0,
-      h.alertRulesConfigured > 0,
+    const steps = [
+      { label: 'Products', done: h.trackedProducts > 0 },
+      { label: 'Services', done: h.trackedServices > 0 },
+      { label: 'Recipes', done: h.recipesConfigured > 0 },
+      { label: 'Allowances', done: h.allowancePolicies > 0 },
+      { label: 'Stations', done: h.stationsConfigured > 0 },
+      { label: 'Alerts', done: h.alertRulesConfigured > 0 },
     ];
     return {
-      completed: items.filter(Boolean).length,
-      total: items.length,
-      isComplete: items.every(Boolean),
+      steps,
+      completed: steps.filter(s => s.done).length,
+      total: steps.length,
+      isComplete: steps.every(s => s.done),
       warnings: h.warnings,
     };
   }, [setupQ.data]);
