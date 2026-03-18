@@ -47,8 +47,6 @@ import { SupplierSettingsSection } from '@/components/dashboard/backroom-setting
 
 type BackroomSection =
   | 'overview'
-  | 'supply-intelligence'
-  | 'insights'
   | 'products'
   | 'services'
   | 'recipes'
