@@ -1,7 +1,8 @@
 /**
  * StockTab — Stock overview with KPI cards and enhanced inventory table.
  * Groups by brand → category with collapsible brand sections,
- * supplier chips, "Set Supplier" actions, inline editing, and PDF export.
+ * supplier chips, "Set Supplier" actions, inline editing, PDF export,
+ * multi-select checkboxes, per-row reorder, and Auto Create POs.
  */
 
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
@@ -9,9 +10,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History, ShoppingCart, Zap } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -20,10 +22,13 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useInlineStockEdit } from '@/hooks/backroom/useInlineStockEdit';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
 import { InventoryAuditDialog } from './InventoryAuditDialog';
+import { AutoCreatePODialog } from './AutoCreatePODialog';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface StockTabProps {
   locationId?: string;
@@ -34,6 +39,16 @@ interface BrandGroup {
   products: BackroomInventoryRow[];
   supplierName: string | null;
   categories: Map<string, BackroomInventoryRow[]>;
+}
+
+// ─── Helpers ────────────────────────────────────────────
+
+function stripSizeSuffix(name: string): string {
+  return name.replace(/\s*[—–-]\s*\d+(\.\d+)?\s*(g|oz|ml|L)\s*$/i, '').trim();
+}
+
+function formatCategoryLabel(slug: string): string {
+  return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 // ─── Inline Edit Cell ──────────────────────────────────
@@ -139,19 +154,20 @@ async function exportStockPdf(
   addReportHeader(doc, headerOpts);
 
   const tableData = rows.map((r) => [
-    r.name,
+    stripSizeSuffix(r.name),
     r.brand || '—',
-    r.category || '—',
+    r.category ? formatCategoryLabel(r.category) : '—',
     r.quantity_on_hand,
     r.reorder_level ?? '—',
     r.par_level ?? '—',
+    r.recommended_order_qty > 0 ? r.recommended_order_qty : '—',
     STOCK_STATUS_CONFIG[r.status].label,
     r.cost_price != null ? formatCurrency(r.cost_price) : r.cost_per_gram != null ? `${formatCurrency(r.cost_per_gram)}/g` : '—',
   ]);
 
   autoTable(doc, {
     startY: 72,
-    head: [['Product', 'Brand', 'Category', 'Stock', 'Min', 'Max', 'Status', 'Cost']],
+    head: [['Product', 'Brand', 'Category', 'Stock', 'Min', 'Max', 'Reorder Qty', 'Status', 'Cost']],
     body: tableData,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
@@ -159,7 +175,8 @@ async function exportStockPdf(
       3: { halign: 'right' },
       4: { halign: 'right' },
       5: { halign: 'right' },
-      7: { halign: 'right' },
+      6: { halign: 'right' },
+      8: { halign: 'right' },
     },
     margin: { top: 72 },
     didDrawPage: () => { addReportHeader(doc, headerOpts); },
@@ -178,11 +195,14 @@ export function StockTab({ locationId }: StockTabProps) {
   const { adjustStock, updateMinMax } = useInlineStockEdit();
   const orgId = useBackroomOrgId();
   const { effectiveOrganization } = useOrganizationContext();
+  const createPO = useCreateMultiLinePO();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
   const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
+  const [autoPoDialog, setAutoPoDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   // Compute KPIs
@@ -191,7 +211,8 @@ export function StockTab({ locationId }: StockTabProps) {
     const lowStock = inventory.filter(r => r.status === 'replenish' || r.status === 'urgent_reorder').length;
     const outOfStock = inventory.filter(r => r.status === 'out_of_stock').length;
     const totalValue = inventory.reduce((s, r) => s + (r.quantity_on_hand * (r.cost_price ?? r.cost_per_gram ?? 0)), 0);
-    return { totalOnHand, lowStock, outOfStock, totalValue };
+    const needsReorder = inventory.filter(r => r.recommended_order_qty > 0).length;
+    return { totalOnHand, lowStock, outOfStock, totalValue, needsReorder };
   }, [inventory]);
 
   // Categories for filter
@@ -237,6 +258,48 @@ export function StockTab({ locationId }: StockTabProps) {
       });
   }, [filtered]);
 
+  // Selection helpers
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(r => r.id)));
+    }
+  };
+
+  const selectedProducts = filtered.filter(r => selectedIds.has(r.id));
+  const selectedReorderProducts = selectedProducts.filter(r => r.recommended_order_qty > 0);
+
+  // Products for Auto PO — use selection if any, otherwise all needing reorder
+  const autoPoProducts = selectedReorderProducts.length > 0
+    ? selectedReorderProducts
+    : inventory.filter(r => r.recommended_order_qty > 0);
+
+  // Single product quick reorder
+  const handleQuickReorder = (row: BackroomInventoryRow) => {
+    if (!orgId || row.recommended_order_qty <= 0) return;
+    createPO.mutate({
+      organization_id: orgId,
+      supplier_name: row.supplier_name ?? undefined,
+      supplier_email: row.supplier_email ?? undefined,
+      notes: `Reorder for ${stripSizeSuffix(row.name)}`,
+      lines: [{
+        product_id: row.id,
+        quantity_ordered: row.recommended_order_qty,
+        unit_cost: row.cost_price ?? row.cost_per_gram ?? undefined,
+      }],
+    });
+  };
+
   const handlePdfExport = useCallback(async () => {
     setExporting(true);
     try {
@@ -277,7 +340,7 @@ export function StockTab({ locationId }: StockTabProps) {
         <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} />
       </div>
 
-      {/* Filters + PDF Export */}
+      {/* Filters + Actions */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -294,7 +357,7 @@ export function StockTab({ locationId }: StockTabProps) {
           </SelectTrigger>
           <SelectContent>
             {categories.map(c => (
-              <SelectItem key={c} value={c}>{c === 'all' ? 'All Categories' : c.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase())}</SelectItem>
+              <SelectItem key={c} value={c}>{c === 'all' ? 'All Categories' : formatCategoryLabel(c)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -320,7 +383,49 @@ export function StockTab({ locationId }: StockTabProps) {
           {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
           PDF
         </Button>
+        <Button
+          size="sm"
+          className="font-sans"
+          onClick={() => setAutoPoDialog(true)}
+          disabled={kpis.needsReorder === 0}
+        >
+          <Zap className="w-4 h-4 mr-1.5" />
+          Auto Create POs
+          {kpis.needsReorder > 0 && (
+            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
+              {kpis.needsReorder}
+            </Badge>
+          )}
+        </Button>
       </div>
+
+      {/* Selection bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-primary/20 bg-primary/5">
+          <span className="text-sm text-muted-foreground font-sans">
+            {selectedIds.size} selected
+          </span>
+          {selectedReorderProducts.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="font-sans h-7"
+              onClick={() => setAutoPoDialog(true)}
+            >
+              <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+              Reorder {selectedReorderProducts.length} items
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="font-sans h-7 text-muted-foreground"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Clear
+          </Button>
+        </div>
+      )}
 
       {/* Stock Table */}
       {filtered.length === 0 ? (
@@ -337,15 +442,21 @@ export function StockTab({ locationId }: StockTabProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-10')}>
+                    <Checkbox
+                      checked={selectedIds.size === filtered.length && filtered.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Container</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Min</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Max</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Order Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Reorder Qty</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'w-10')} />
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -359,8 +470,11 @@ export function StockTab({ locationId }: StockTabProps) {
                     locationId={locationId}
                     adjustStock={adjustStock}
                     updateMinMax={updateMinMax}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
                     onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
+                    onQuickReorder={handleQuickReorder}
                   />
                 ))}
               </TableBody>
@@ -380,6 +494,12 @@ export function StockTab({ locationId }: StockTabProps) {
         onOpenChange={(open) => setAuditDialog(prev => ({ ...prev, open }))}
         productId={auditDialog.productId}
         productName={auditDialog.productName}
+      />
+      <AutoCreatePODialog
+        open={autoPoDialog}
+        onOpenChange={setAutoPoDialog}
+        products={autoPoProducts}
+        organizationId={orgId ?? ''}
       />
     </div>
   );
@@ -414,7 +534,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onSetSupplier, onAudit }: {
+function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
@@ -422,8 +542,11 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   locationId: string | undefined;
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
   onSetSupplier: () => void;
   onAudit: (productId: string, productName: string) => void;
+  onQuickReorder: (row: BackroomInventoryRow) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -435,7 +558,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
         className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
         onClick={() => setOpen(!open)}
       >
-        <TableCell colSpan={9} className="py-2">
+        <TableCell colSpan={10} className="py-2">
           <div className="flex items-center gap-2">
             {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
@@ -481,14 +604,17 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
           locationId={locationId}
           adjustStock={adjustStock}
           updateMinMax={updateMinMax}
+          selectedIds={selectedIds}
+          onToggleSelect={onToggleSelect}
           onAudit={onAudit}
+          onQuickReorder={onQuickReorder}
         />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onAudit }: {
+function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -497,24 +623,37 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
   locationId: string | undefined;
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
   onAudit: (productId: string, productName: string) => void;
+  onQuickReorder: (row: BackroomInventoryRow) => void;
 }) {
   return (
     <>
       {/* Category sub-header */}
       <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={9} className="py-1 pl-10">
-          <span className="text-muted-foreground text-[11px] tracking-wide">{category}</span>
+        <TableCell colSpan={10} className="py-1 pl-10">
+          <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
       </TableRow>
       {rows.map((row) => {
         const statusCfg = STOCK_STATUS_CONFIG[row.status];
+        const needsReorder = row.recommended_order_qty > 0;
         return (
-          <TableRow key={row.id}>
-            <TableCell className="pl-10">
+          <TableRow
+            key={row.id}
+            className={cn(needsReorder && 'bg-warning/[0.03] hover:bg-warning/[0.06]')}
+          >
+            <TableCell className="w-10">
+              <Checkbox
+                checked={selectedIds.has(row.id)}
+                onCheckedChange={() => onToggleSelect(row.id)}
+              />
+            </TableCell>
+            <TableCell className="pl-2">
               <div>
-                <span className={tokens.body.emphasis}>{row.name}</span>
+                <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
                 {row.sku && <span className="text-muted-foreground text-xs ml-2">{row.sku}</span>}
               </div>
             </TableCell>
@@ -570,7 +709,16 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
               />
             </TableCell>
             <TableCell className="text-right hidden lg:table-cell tabular-nums">
-              {row.order_qty > 0 ? <span className="text-warning font-medium">{row.order_qty}</span> : '—'}
+              {needsReorder ? (
+                <span className="text-warning font-medium">{row.recommended_order_qty}</span>
+              ) : (
+                <span className="text-muted-foreground/40">—</span>
+              )}
+              {row.open_po_qty > 0 && (
+                <span className="text-primary/60 text-[10px] ml-1" title={`${row.open_po_qty} on open POs`}>
+                  ({row.open_po_qty} pending)
+                </span>
+              )}
             </TableCell>
             <TableCell>
               <Badge variant="outline" className={cn('text-[10px] font-medium border', statusCfg.className)}>
@@ -580,16 +728,29 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
             <TableCell className="text-right hidden xl:table-cell text-muted-foreground tabular-nums">
               {row.cost_price != null ? formatCurrency(row.cost_price) : row.cost_per_gram != null ? `${formatCurrency(row.cost_per_gram)}/g` : '—'}
             </TableCell>
-            <TableCell className="w-10">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                onClick={() => onAudit(row.id, row.name)}
-                title="View audit trail"
-              >
-                <History className="w-3.5 h-3.5" />
-              </Button>
+            <TableCell className="w-20">
+              <div className="flex items-center gap-0.5 justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => onAudit(row.id, row.name)}
+                  title="View audit trail"
+                >
+                  <History className="w-3.5 h-3.5" />
+                </Button>
+                {needsReorder && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-warning hover:text-warning hover:bg-warning/10"
+                    onClick={() => onQuickReorder(row)}
+                    title={`Quick reorder ${row.recommended_order_qty} units`}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
             </TableCell>
           </TableRow>
         );
