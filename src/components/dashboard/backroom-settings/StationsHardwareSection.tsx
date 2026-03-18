@@ -37,11 +37,17 @@ interface Props {
 export function StationsHardwareSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: stations, isLoading } = useBackroomStations();
   const { data: locations } = useActiveLocations();
+  const [filterLocationId, setFilterLocationId] = useState('all');
+  const { data: allStations, isLoading } = useBackroomStations();
   const createStation = useCreateBackroomStation();
   const updateStation = useUpdateBackroomStation();
   const deleteStation = useDeleteBackroomStation();
+
+  // Filter stations by selected location
+  const stations = allStations?.filter((s) =>
+    filterLocationId === 'all' ? true : s.location_id === filterLocationId
+  );
 
   const [showForm, setShowForm] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
