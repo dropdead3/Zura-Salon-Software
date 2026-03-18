@@ -62,7 +62,7 @@ export function useBackroomDashboard(locationId?: string) {
   const staffSummary = useMemo(() => {
     const metrics = staffQ.data ?? [];
     if (!metrics.length) return { top: [], bottom: [] };
-    const sorted = [...metrics].sort((a, b) => a.wasteRate - b.wasteRate);
+    const sorted = [...metrics].sort((a, b) => a.wastePct - b.wastePct);
     return {
       top: sorted.slice(0, 3),
       bottom: sorted.length > 3 ? sorted.slice(-3).reverse() : [],

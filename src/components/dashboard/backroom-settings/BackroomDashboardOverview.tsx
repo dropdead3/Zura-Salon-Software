@@ -277,7 +277,7 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
                   <div>
                     <p className={cn(tokens.label.tiny, 'mb-2')}>Needs Attention</p>
                     {staffSummary.bottom.map((s) => (
-                      <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wasteRate} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} isBottom />
+                      <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} isBottom />
                     ))}
                   </div>
                 )}
