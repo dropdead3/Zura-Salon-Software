@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight } from 'lucide-react';
+import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight, FileDown } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useCountSessions, useCreateCountSession, type CountSession } from '@/hooks/inventory/useCountSessions';
@@ -19,6 +19,10 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
+import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
+import { generateCountSheetPdf } from '@/lib/generateCountSheetPdf';
+import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
+import { toast } from 'sonner';
 
 interface CountsTabProps {
   locationId?: string;
@@ -38,12 +42,37 @@ export function CountsTab({ locationId }: CountsTabProps) {
   const isLoading = sessionsLoading || shrinkageLoading;
   const totalShrinkageCost = shrinkage.reduce((s, r) => s + r.shrinkageCost, 0);
 
+  const { data: inventoryProducts = [] } = useBackroomInventoryTable({ locationId });
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
   const handleStartCount = () => {
     if (!orgId) return;
     createSession.mutate({
       organization_id: orgId,
       location_id: locationId,
     });
+  };
+
+  const handlePrintCountSheet = async () => {
+    if (inventoryProducts.length === 0) {
+      toast.error('No products to include in count sheet');
+      return;
+    }
+    setGeneratingPdf(true);
+    try {
+      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      generateCountSheetPdf({
+        products: inventoryProducts,
+        orgName: effectiveOrganization?.name ?? 'Organization',
+        locationName: undefined, // Could be enhanced with location name lookup
+        logoDataUrl,
+      });
+      toast.success('Count sheet PDF downloaded');
+    } catch (err) {
+      toast.error('Failed to generate count sheet');
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   // If a session is active for counting, show the entry form
@@ -69,10 +98,22 @@ export function CountsTab({ locationId }: CountsTabProps) {
           <p className={tokens.body.emphasis}>Physical Count Sessions</p>
           <p className={tokens.body.muted}>Run periodic counts to detect shrinkage and keep stock accurate.</p>
         </div>
-        <Button size="sm" onClick={handleStartCount} disabled={createSession.isPending} className={tokens.button.cardAction}>
-          {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          Start New Count
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrintCountSheet}
+            disabled={generatingPdf || inventoryProducts.length === 0}
+            className={tokens.button.cardAction}
+          >
+            {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+            Print Count Sheet
+          </Button>
+          <Button size="sm" onClick={handleStartCount} disabled={createSession.isPending} className={tokens.button.cardAction}>
+            {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Start New Count
+          </Button>
+        </div>
       </div>
 
       {/* KPI summary */}

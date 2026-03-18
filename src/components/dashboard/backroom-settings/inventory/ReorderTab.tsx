@@ -110,6 +110,20 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
     });
   };
 
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(reorderQueue.map(r => r.id)));
+  }, [reorderQueue]);
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectedTotalCost = useMemo(() => {
+    return reorderQueue
+      .filter(r => selectedIds.has(r.id))
+      .reduce((sum, r) => sum + getOrderQty(r) * (r.cost_price ?? r.cost_per_gram ?? 0), 0);
+  }, [reorderQueue, selectedIds, getOrderQty]);
+
   const handleCreatePOForSupplier = (group: SupplierGroup) => {
     if (!orgId) return;
     createMultiLinePO.mutate({
@@ -149,7 +163,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20">
       {/* Action bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -167,17 +181,6 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
             {generateRecs.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             Generate Suggestions
           </Button>
-          {selectedIds.size > 0 && (
-            <Button
-              size="sm"
-              onClick={handleCreateAllPOs}
-              disabled={createMultiLinePO.isPending}
-              className={tokens.button.cardAction}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              Create POs ({selectedIds.size})
-            </Button>
-          )}
         </div>
       </div>
 
@@ -269,6 +272,46 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-md shadow-lg">
+          <div className="max-w-[1600px] mx-auto px-8 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedIds.size === reorderQueue.length}
+                  onCheckedChange={(checked) => checked ? selectAll() : deselectAll()}
+                />
+                <span className={tokens.body.emphasis}>
+                  {selectedIds.size} selected
+                </span>
+              </div>
+              <span className="text-muted-foreground text-sm">
+                Est: {formatCurrency(selectedTotalCost)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={deselectAll}>
+                Deselect All
+              </Button>
+              {selectedIds.size < reorderQueue.length && (
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  Select All ({reorderQueue.length})
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleCreateAllPOs}
+                disabled={createMultiLinePO.isPending}
+              >
+                {createMultiLinePO.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                Create POs ({selectedIds.size})
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
