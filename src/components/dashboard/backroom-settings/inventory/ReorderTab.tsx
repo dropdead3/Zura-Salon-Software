@@ -275,15 +275,17 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   );
 }
 
-function ReorderRow({ row, selected, onToggle, formatCurrency }: {
+function ReorderRow({ row, selected, onToggle, formatCurrency, orderQty, onOrderQtyChange }: {
   row: BackroomInventoryRow;
   selected: boolean;
   onToggle: () => void;
   formatCurrency: (n: number) => string;
+  orderQty: number;
+  onOrderQtyChange: (qty: number) => void;
 }) {
   const statusCfg = STOCK_STATUS_CONFIG[row.status];
   const forecast = forecastStockout(row.quantity_on_hand, 0.5);
-  const estCost = row.order_qty * (row.cost_price ?? row.cost_per_gram ?? 0);
+  const estCost = orderQty * (row.cost_price ?? row.cost_per_gram ?? 0);
 
   return (
     <TableRow className={cn(selected && 'bg-primary/5')}>
