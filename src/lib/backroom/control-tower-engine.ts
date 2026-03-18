@@ -102,7 +102,7 @@ function buildInventoryAlerts(items: InventoryRiskProjection[]): ControlTowerAle
       suggestedAction: item.recommended_order_qty > 0
         ? `Order ${item.recommended_order_qty} units`
         : 'Review stock levels',
-      actionRoute: '/dashboard/inventory',
+      actionRoute: '/dashboard/admin/backroom-settings?category=inventory&tab=stock',
       createdAt: item.last_forecast_at,
     };
   });
@@ -130,7 +130,7 @@ function buildExceptionAlerts(items: BackroomException[]): ControlTowerAlert[] {
         entityType: exc.reference_type ?? 'exception',
         entityId: exc.reference_id,
         suggestedAction: 'Review and resolve exception',
-        actionRoute: '/dashboard/backroom/exceptions',
+        actionRoute: '/dashboard/admin/backroom-settings?category=alerts',
         createdAt: exc.created_at,
       };
     });
@@ -152,7 +152,7 @@ function buildProfitabilityAlerts(outliers: MarginOutlier[]): ControlTowerAlert[
     entityType: 'appointment',
     entityId: o.appointmentId,
     suggestedAction: 'Review service profitability',
-    actionRoute: '/dashboard/backroom/analytics',
+    actionRoute: '/dashboard/admin/backroom-settings?category=insights',
     createdAt: new Date().toISOString(),
   }));
 }
@@ -178,7 +178,7 @@ function buildStaffAlerts(staff: StaffBackroomPerformance[]): ControlTowerAlert[
         entityType: 'staff',
         entityId: s.staff_id,
         suggestedAction: 'Review mix sessions and provide coaching',
-        actionRoute: '/dashboard/backroom/staff-performance',
+        actionRoute: '/dashboard/admin/backroom-settings?category=insights',
         createdAt: s.last_calculated_at,
       });
     }
@@ -203,7 +203,7 @@ function buildReorderAlerts(forecasts: ProductDemandForecast[]): ControlTowerAle
     entityType: 'product',
     entityId: f.product_id,
     suggestedAction: `Order ${f.recommended_order_qty} ${f.unit}`,
-    actionRoute: '/dashboard/inventory/orders',
+    actionRoute: '/dashboard/admin/backroom-settings?category=inventory&tab=reorder',
     createdAt: new Date().toISOString(),
   }));
 }

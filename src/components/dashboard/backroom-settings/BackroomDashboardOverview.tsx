@@ -403,12 +403,12 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
 
 function AlertRow({ alert, onNavigate }: { alert: ControlTowerAlert; onNavigate: (s: string) => void }) {
   const categoryToSection: Record<string, string> = {
-    inventory: 'inventory',
+    inventory: 'inventory:stock',
     exception: 'alerts',
     profitability: 'insights',
     waste: 'insights',
     staff: 'insights',
-    reorder: 'suppliers',
+    reorder: 'inventory:reorder',
   };
 
   return (
