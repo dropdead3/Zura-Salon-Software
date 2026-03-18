@@ -182,12 +182,15 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
     setSelectedIds(new Set());
   };
 
-  const handleCreateAndEmailPOs = () => {
+  const handleCreateAndEmailPOs = async () => {
     if (!orgId) return;
+    const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
     const items = emailPreviewGroups.flatMap(g =>
       g.products.map(p => ({
         organization_id: orgId,
         product_id: p.id,
+        product_name: p.name,
+        product_sku: p.sku,
         supplier_name: g.supplierName,
         supplier_email: g.supplierEmail ?? undefined,
         quantity: getOrderQty(p),
@@ -199,7 +202,12 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       return;
     }
     batchCreatePOs.mutate(
-      { items, sendEmails: true },
+      {
+        items,
+        sendEmails: true,
+        orgName: effectiveOrganization?.name ?? 'Organization',
+        logoDataUrl,
+      },
       {
         onSuccess: () => {
           setShowEmailPreview(false);
@@ -208,6 +216,53 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
       }
     );
   };
+
+  /** Build the HTML email that suppliers will receive (mirrors edge function template) */
+  const buildEmailPreviewHtml = useCallback((group: SupplierGroup) => {
+    const orgName = effectiveOrganization?.name ?? 'Organization';
+    const selectedProducts = group.products.filter(p => selectedIds.has(p.id));
+    if (selectedProducts.length === 0) return '';
+
+    const hasUnitCost = selectedProducts.some(p => (p.cost_price ?? p.cost_per_gram) != null);
+    const rows = selectedProducts.map(p => {
+      const qty = getOrderQty(p);
+      const unitCost = p.cost_price ?? p.cost_per_gram;
+      const total = unitCost != null ? unitCost * qty : null;
+      return `<tr>
+        <td style="padding: 10px; border: 1px solid #ddd;">${p.name}${p.sku ? ` (SKU: ${p.sku})` : ''}</td>
+        <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${qty}</td>
+        ${hasUnitCost ? `<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${unitCost != null ? `$${unitCost.toFixed(2)}` : '—'}</td>` : ''}
+        ${hasUnitCost ? `<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${total != null ? `$${total.toFixed(2)}` : '—'}</td>` : ''}
+      </tr>`;
+    }).join('');
+
+    const grandTotal = selectedProducts.reduce((s, p) => {
+      const unitCost = p.cost_price ?? p.cost_per_gram ?? 0;
+      return s + getOrderQty(p) * unitCost;
+    }, 0);
+
+    return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #1a1a1a; margin-bottom: 24px;">Purchase Order Request</h2>
+      <p>Dear ${group.supplierName},</p>
+      <p>We would like to place the following order${selectedProducts.length > 1 ? ` (${selectedProducts.length} items)` : ''}:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="background: #f5f5f5;">
+          <th style="text-align: left; padding: 10px; border: 1px solid #ddd;">Product</th>
+          <th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Quantity</th>
+          ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Unit Cost</th>' : ''}
+          ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Total</th>' : ''}
+        </tr>
+        ${rows}
+        ${hasUnitCost && selectedProducts.length > 1 ? `<tr style="background: #f9f9f9; font-weight: bold;">
+          <td style="padding: 10px; border: 1px solid #ddd;" colspan="${hasUnitCost ? 3 : 2}">Grand Total</td>
+          <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${grandTotal.toFixed(2)}</td>
+        </tr>` : ''}
+      </table>
+      <p>Please confirm receipt of this order and provide an estimated delivery date.</p>
+      <p>Thank you,<br/>${orgName}</p>
+      <p style="color: #888; font-size: 12px; margin-top: 16px;"><em>📎 A formatted PO PDF is attached to this email.</em></p>
+    </div>`;
+  }, [effectiveOrganization, selectedIds, getOrderQty]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
