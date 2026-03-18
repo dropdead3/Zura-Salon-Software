@@ -256,7 +256,7 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
                 </TableHeader>
                 <TableBody>
                   {entries.map((entry) => (
-                    <AuditTableRow key={entry.id} entry={entry} />
+                    <AuditTableRow key={entry.id} entry={entry} onClick={() => setSelectedEntry(entry)} />
                   ))}
                 </TableBody>
               </Table>
