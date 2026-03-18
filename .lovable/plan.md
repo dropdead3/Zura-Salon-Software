@@ -1,155 +1,153 @@
 
 
-# Inventory Management System — Gap Analysis and Enhancement Plan
+## Timezone-Safe Scheduling (Implemented)
 
-## Current State Summary
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-The system has six tabs: **Stock**, **Reorder**, **Orders**, **Receive**, **Counts**, and **Audit Log**. It supports location-scoped tracking, inline editing, multi-line PO creation, supplier assignment, PDF/CSV export, auto-par suggestions, and an append-only ledger for audit integrity.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
----
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-## Identified Gaps and Proposed Enhancements
+## Auto-Reorder with Supplier Communication (Implemented)
 
-### 1. Stock Tab — Clarity and Discoverability
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-**Gaps found:**
-- Column headers "Min" and "Max" are ambiguous for salon owners who think in terms of "Reorder Point" and "Par Level"
-- The dashed-underline inline edit affordance is too subtle — many users won't realize stock, min, and max are editable
-- No tooltip explaining what Min, Max, Reorder Qty, or Status mean
-- KPI "Total On Hand" counts units across different unit types (tubes, bottles, etc.) which can be misleading
-- No "Last Ordered" or "Last Received" date visible per product — forces users to check audit trail
-- Brand sections default to open, making long lists overwhelming
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-**Proposed changes:**
-- Rename column headers: "Min" → "Reorder Pt", "Max" → "Par Level" with `MetricInfoTooltip` on each explaining the concept in plain language
-- Add a subtle pencil icon or "click to edit" hint on hover for editable cells
-- Add `MetricInfoTooltip` to each KPI card explaining what the number represents
-- Add a "Last Activity" column (compact date) showing the most recent ledger event per product
-- Collapse all brand sections by default when there are more than 5 brands; add "Expand All / Collapse All" toggle
-- Add a "Needs Setup" filter or badge for products missing both min and max — guides owners to configure thresholds
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-### 2. Reorder Tab — Workflow Gaps
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-**Gaps found:**
-- `order_qty` on the ReorderRow uses a hardcoded `0.5` velocity for forecast (`forecastStockout(row.quantity_on_hand, 0.5)`) instead of actual usage data — forecast is unreliable
-- No way to edit order quantities before creating POs — users are locked into the computed `order_qty`
-- "Generate Suggestions" button is unclear about what it does and when to use it
-- "Unassigned" supplier group has no CTA to assign a supplier (unlike the AutoCreatePO dialog which now has this)
-- No visual indicator of lead time per supplier — critical for prioritizing orders
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-**Proposed changes:**
-- Make order quantity editable inline (same pattern as Stock tab) so users can adjust before PO creation
-- Replace hardcoded velocity with actual `avg_daily_usage` from `inventory_risk_projections` when available
-- Add "Assign Supplier" button to the Unassigned group header (same pattern as Stock tab brand headers)
-- Show supplier lead time badge next to supplier name in group header
-- Rename "Generate Suggestions" to "Refresh AI Recommendations" with a tooltip explaining it re-analyzes usage patterns
+## Product Movement Rating Badges (Implemented)
 
-### 3. Orders Tab — Missing Features
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-**Gaps found:**
-- PO number displays as a truncated UUID (`po.id.slice(0, 8)`) — not human-friendly
-- No ability to edit a draft PO (add/remove lines, change quantities) after creation
-- No expected delivery date shown in the main table row
-- No confirmation dialog before cancelling a PO — destructive action happens on single click
-- "Mark as Sent" has no confirmation — could accidentally mark as sent
-- Cannot create a manual PO from the Orders tab — must go through Stock or Reorder
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-**Proposed changes:**
-- Generate sequential PO numbers (e.g., "PO-00042") stored in the database instead of showing UUIDs
-- Add an "Edit Draft" action that opens a dialog for modifying line items on draft POs
-- Show expected delivery date as a column in the main table
-- Add confirmation dialogs for "Mark as Sent" and "Cancel" actions
-- Add a "New PO" button in the Orders tab header for manual PO creation
-- Add a "Duplicate PO" action for quickly reordering the same items
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-### 4. Receive Tab — Significant Gaps
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-**Gaps found:**
-- Only shows a single quantity input per PO — does not support line-by-line receiving for multi-line POs
-- Uses the legacy single-product `po.quantity` field instead of iterating `purchase_order_lines`
-- No way to record discrepancies (damaged, wrong item, short-shipped) with reason codes
-- No visual display of what products are in the shipment before clicking "Receive"
-- No date picker for actual receipt date (defaults to now) — problems if receiving is logged after the fact
+## Inventory Intelligence Suite v2 (Implemented)
 
-**Proposed changes:**
-- Redesign to show all PO line items with individual quantity inputs for each product
-- Add reason code dropdown for discrepancies (Short Shipped, Damaged, Wrong Item)
-- Show product list preview in each PO card without needing to expand
-- Add receipt date picker defaulting to today
-- Show a summary badge: "3 of 5 items received" for partial receives
-- After receiving, show a success summary with variance notes
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-### 5. Counts Tab — Usability Issues
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-**Gaps found:**
-- "Start New Count" creates a session but there's no workflow to actually enter counts per product — users must go back to the Stock tab and edit quantities manually
-- No ability to select which products to count (full count vs. cycle count)
-- Count sessions show metadata but no drill-down into individual product counts
-- No way to print a count sheet (PDF) listing products for physical counting
-- Shrinkage sub-tab has no date range filter — shows all-time data only
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
-**Proposed changes:**
-- Add a count entry workflow: clicking an active session opens a product-by-product count entry form
-- Support "Cycle Count" mode where users select specific brands or categories to count
-- Add "Print Count Sheet" button that generates a PDF checklist with product names, expected quantities, and blank spaces for actual counts
-- Add expandable session rows showing per-product count details
-- Add date range filter to the Shrinkage view
-- Add a progress indicator to active count sessions (e.g., "12 of 45 products counted")
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-### 6. Audit Log Tab — Minor Improvements
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-**Gaps found:**
-- "Type" column shows "Stock" vs "Setting" which isn't intuitive — salon owners don't think in these terms
-- No quick-filter buttons for common views (e.g., "Today's Changes", "This Week", "Adjustments Only")
-- Page size of 50 with no option to change
+## Enhancement 1: Expiry Tracking (Implemented)
 
-**Proposed changes:**
-- Rename type labels: "Stock" → "Quantity Change", "Setting" → "Level Change"
-- Add quick-filter chips: "Today", "This Week", "Adjustments", "Receiving"
-- Add page size selector (25, 50, 100)
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
 
-### 7. Cross-Tab UX Gaps
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
 
-**Gaps found:**
-- No visual connection between tabs — e.g., creating a PO in Reorder doesn't guide user to Orders tab
-- No global "inventory health" summary visible across all tabs
-- No onboarding guidance for first-time users — the system assumes users understand inventory management concepts
-- Tab names alone don't convey workflow order
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
 
-**Proposed changes:**
-- Add toast actions with navigation: "PO created — View in Orders tab →"
-- Add a compact "Inventory Health" banner above the tabs showing critical alerts (X out of stock, Y POs awaiting receive)
-- Add a first-time setup wizard or contextual help tooltips that explain the workflow: Track Products → Set Levels → Monitor Stock → Reorder → Receive → Count
-- Add subtle tab badges showing counts (e.g., Orders tab shows "3" for draft POs, Receive shows "2" for pending shipments)
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
 
----
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
 
-## Implementation Priority
+## Enhancement 2: Shrinkage Detection (Implemented)
 
-| Priority | Area | Impact |
-|----------|------|--------|
-| **P0 — Critical** | Receive Tab line-by-line receiving | Current receiving is broken for multi-line POs |
-| **P0 — Critical** | Counts Tab entry workflow | Count sessions created but no way to enter counts |
-| **P1 — High** | Editable order qty in Reorder Tab | Users can't adjust quantities before PO creation |
-| **P1 — High** | Column header clarity + tooltips (Stock Tab) | Reduces confusion for non-technical owners |
-| **P1 — High** | Tab badges + cross-tab navigation | Workflow discoverability |
-| **P2 — Medium** | Orders Tab — edit drafts, confirmation dialogs | Prevents accidental actions |
-| **P2 — Medium** | PO number generation | Professional-looking purchase orders |
-| **P2 — Medium** | Inventory Health banner | At-a-glance operational awareness |
-| **P3 — Nice to have** | Count sheet PDF, cycle counts | Operational convenience |
-| **P3 — Nice to have** | Audit log quick filters | Power user efficiency |
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
 
----
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
 
-## Recommended Approach
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
+```
 
-Given the scope, I recommend tackling this in **3 phases**:
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-**Phase 1** — Fix critical workflow gaps (Receive Tab redesign, Counts entry workflow, column clarity + tooltips)
-
-**Phase 2** — Enhance Reorder/Orders workflow (editable quantities, confirmation dialogs, draft editing, tab badges)
-
-**Phase 3** — Polish and power features (health banner, onboarding hints, count sheets, audit improvements)
-
-Each phase can be implemented independently. Let me know which phase or specific items you'd like to start with.
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
