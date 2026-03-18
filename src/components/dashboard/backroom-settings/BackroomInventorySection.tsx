@@ -4,7 +4,7 @@
  * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3 } from 'lucide-react';
@@ -55,13 +55,18 @@ function HealthChip({ icon: Icon, count, label, color, onClick }: {
   );
 }
 
-export function BackroomInventorySection() {
+export function BackroomInventorySection({ initialTab }: { initialTab?: string }) {
   const { data: locations = [] } = useActiveLocations();
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
   const effectiveLocationId = locationId || locations[0]?.id;
 
   // Controlled tabs for programmatic navigation from health banner
-  const [activeTab, setActiveTab] = useState('stock');
+  const [activeTab, setActiveTab] = useState(initialTab || 'stock');
+
+  // React to external tab changes (e.g. quick actions from overview)
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Badge counts
   const { data: inventory = [] } = useBackroomInventoryTable({ locationId: effectiveLocationId });

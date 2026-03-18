@@ -107,6 +107,7 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 
 export default function BackroomSettings() {
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
+  const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
   const navigate = useNavigate();
@@ -171,7 +172,14 @@ export default function BackroomSettings() {
   }, [searchParams, setSearchParams, queryClient, orgId]);
 
   const handleNavigate = useCallback((section: string) => {
-    setActiveSection(section as BackroomSection);
+    if (section.includes(':')) {
+      const [sec, tab] = section.split(':');
+      setActiveSection(sec as BackroomSection);
+      setSubTab(tab);
+    } else {
+      setActiveSection(section as BackroomSection);
+      setSubTab(undefined);
+    }
   }, []);
 
   if (entitlementLoading) {
@@ -294,7 +302,7 @@ export default function BackroomSettings() {
             {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
-            {activeSection === 'inventory' && <BackroomInventorySection />}
+            {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}

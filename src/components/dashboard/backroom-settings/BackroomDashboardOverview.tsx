@@ -17,6 +17,7 @@ import {
   Sparkles, Users2, Package, ShieldAlert,
 } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
+import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 
 interface Props {
@@ -55,7 +56,7 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
     );
   }
 
-  const { kpis, alerts, staffSummary, inventoryHealth, setupHealth, reorderData } = dashboard;
+  const { kpis, alerts, staffSummary, inventoryHealth, setupHealth, reorderData, lastUpdatedAt } = dashboard;
   const showSetupBanner = setupHealth && !setupHealth.isComplete;
 
   return (
@@ -144,7 +145,9 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
               </div>
               <div>
                 <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
-                <CardDescription>Priority alerts requiring attention</CardDescription>
+                <CardDescription>
+                  {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
+                </CardDescription>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => onNavigate('alerts')} className="font-sans text-xs text-muted-foreground">
@@ -323,10 +326,10 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
       <Card>
         <CardContent className="py-4">
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => onNavigate('inventory')} className="font-sans gap-1.5">
+            <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:counts')} className="font-sans gap-1.5">
               <ClipboardList className="w-3.5 h-3.5" /> Start Count
             </Button>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('inventory')} className="font-sans gap-1.5">
+            <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:orders')} className="font-sans gap-1.5">
               <FileText className="w-3.5 h-3.5" /> Create PO
             </Button>
             <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">

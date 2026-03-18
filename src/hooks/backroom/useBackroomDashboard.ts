@@ -3,7 +3,7 @@
  * into a single shaped result for the overview command center.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useBackroomAnalytics } from './useBackroomAnalytics';
 import { useControlTowerAlerts } from './useControlTowerAlerts';
 import { useStockoutAlerts } from './usePredictiveBackroom';
@@ -36,6 +36,16 @@ export function useBackroomDashboard(locationId?: string) {
 
   const isLoading =
     analyticsQ.isLoading || controlTowerQ.isLoading || staffQ.isLoading || reorderQ.isLoading || setupQ.isLoading;
+
+  // Track last-updated timestamp
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const wasLoading = useRef(false);
+  useEffect(() => {
+    if (wasLoading.current && !isLoading) {
+      setLastUpdatedAt(new Date());
+    }
+    wasLoading.current = isLoading;
+  }, [isLoading]);
 
   const kpis = useMemo(() => {
     const a = analyticsQ.data;
@@ -100,6 +110,7 @@ export function useBackroomDashboard(locationId?: string) {
 
   return {
     isLoading,
+    lastUpdatedAt,
     kpis,
     alerts: controlTowerQ.alerts,
     alertSummary: controlTowerQ.summary,
