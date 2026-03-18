@@ -36,7 +36,7 @@ import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings
 import { RecipeBaselineSection } from '@/components/dashboard/backroom-settings/RecipeBaselineSection';
 import { AllowancesBillingSection } from '@/components/dashboard/backroom-settings/AllowancesBillingSection';
 import { StationsHardwareSection } from '@/components/dashboard/backroom-settings/StationsHardwareSection';
-import { InventoryReplenishmentSection } from '@/components/dashboard/backroom-settings/InventoryReplenishmentSection';
+import { BackroomInventorySection } from '@/components/dashboard/backroom-settings/BackroomInventorySection';
 import { BackroomPermissionsSection } from '@/components/dashboard/backroom-settings/BackroomPermissionsSection';
 import { AlertsExceptionsSection } from '@/components/dashboard/backroom-settings/AlertsExceptionsSection';
 import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
@@ -294,7 +294,7 @@ export default function BackroomSettings() {
             {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
-            {activeSection === 'inventory' && <InventoryReplenishmentSection />}
+            {activeSection === 'inventory' && <BackroomInventorySection />}
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
