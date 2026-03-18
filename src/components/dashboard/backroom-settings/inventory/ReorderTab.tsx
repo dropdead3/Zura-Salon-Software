@@ -83,7 +83,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => generateRecs.mutate()}
+            onClick={() => generateRecs.mutate(undefined)}
             disabled={generateRecs.isPending}
             className={tokens.button.cardAction}
           >

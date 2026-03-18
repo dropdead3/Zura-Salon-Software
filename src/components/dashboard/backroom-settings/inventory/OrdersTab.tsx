@@ -60,7 +60,7 @@ export function OrdersTab() {
             {s === 'all' ? 'All' : s}
             {s !== 'all' && (
               <span className="ml-1 text-xs opacity-60">
-                ({orders.filter(o => s === 'all' || o.status === s).length})
+                ({orders.filter(o => o.status === s).length})
               </span>
             )}
           </Button>
