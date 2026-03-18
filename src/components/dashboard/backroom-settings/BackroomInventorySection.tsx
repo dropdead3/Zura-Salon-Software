@@ -1,13 +1,13 @@
 /**
  * BackroomInventorySection — Tabbed inventory management workspace.
- * Workflow-oriented 6-tab layout: Stock | Reorder | Orders | Receive | Counts | Audit Log
+ * Workflow-oriented 7-tab layout: Stock | Reorder | Orders | Receive | Counts | Audit Log | Analytics
  * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
 
 import { useState, useMemo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen } from 'lucide-react';
+import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3 } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
@@ -21,6 +21,7 @@ import { OrdersTab } from './inventory/OrdersTab';
 import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
 import { AuditLogTab } from './inventory/AuditLogTab';
+import { ReorderAnalyticsTab } from './inventory/ReorderAnalyticsTab';
 
 /* ── Health Banner Chip ── */
 function HealthChip({ icon: Icon, count, label, color, onClick }: {
@@ -136,6 +137,9 @@ export function BackroomInventorySection() {
           <TabsTrigger value="audit" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <History className="w-4 h-4" /> Audit Log
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="mt-4">
@@ -155,6 +159,9 @@ export function BackroomInventorySection() {
         </TabsContent>
         <TabsContent value="audit" className="mt-4">
           <AuditLogTab locationId={effectiveLocationId} />
+        </TabsContent>
+        <TabsContent value="analytics" className="mt-4">
+          <ReorderAnalyticsTab />
         </TabsContent>
       </Tabs>
     </div>

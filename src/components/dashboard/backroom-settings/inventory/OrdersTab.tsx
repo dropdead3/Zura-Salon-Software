@@ -1,6 +1,6 @@
 /**
  * OrdersTab — Purchase order lifecycle management.
- * Lists POs with status filters, expandable line items, and email PO actions.
+ * Lists POs with status filters, expandable line items, delivery tracking, and email PO actions.
  */
 
 import { useState, useMemo } from 'react';
@@ -8,11 +8,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, FileText, ChevronDown, ChevronRight, Send, XCircle, Mail } from 'lucide-react';
+import { Loader2, FileText, ChevronDown, ChevronRight, Send, XCircle, Mail, CalendarIcon, Clock } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { usePurchaseOrders, useUpdatePurchaseOrder, type PurchaseOrder } from '@/hooks/usePurchaseOrders';
@@ -21,7 +23,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useProducts } from '@/hooks/useProducts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, isPast, parseISO } from 'date-fns';
 import { SendAllDraftsDialog } from './SendAllDraftsDialog';
 
 const STATUS_FILTERS = ['all', 'draft', 'sent', 'received', 'cancelled'] as const;
@@ -34,6 +36,10 @@ const PO_STATUS_STYLES: Record<string, { label: string; className: string }> = {
   cancelled: { label: 'Cancelled', className: 'bg-destructive/10 text-destructive border-destructive/20' },
   partial: { label: 'Partial', className: 'bg-warning/10 text-warning border-warning/20' },
 };
+
+function getPoLabel(po: PurchaseOrder): string {
+  return (po as any).po_number || po.id.slice(0, 8).toUpperCase();
+}
 
 export function OrdersTab() {
   const [statusFilter, setStatusFilter] = useState<POStatusFilter>('all');
@@ -67,6 +73,26 @@ export function OrdersTab() {
       toast.success('PO emailed to ' + po.supplier_email);
     } catch (err: any) {
       toast.error('Failed to send email: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleFollowUp = async (po: PurchaseOrder) => {
+    if (!po.supplier_email) {
+      toast.error('No supplier email on this PO');
+      return;
+    }
+    try {
+      const { error } = await supabase.functions.invoke('send-reorder-email', {
+        body: { purchase_order_id: po.id, is_followup: true },
+      });
+      if (error) throw error;
+      // Update followup timestamp
+      await supabase.from('purchase_orders').update({
+        delivery_followup_sent_at: new Date().toISOString(),
+      } as any).eq('id', po.id);
+      toast.success('Follow-up sent to ' + po.supplier_email);
+    } catch (err: any) {
+      toast.error('Failed to send follow-up: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -125,6 +151,7 @@ export function OrdersTab() {
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Total</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Created</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Delivery</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -143,6 +170,7 @@ export function OrdersTab() {
                       onSend={() => handleSend(po)}
                       onCancel={() => handleCancel(po)}
                       onEmail={() => handleEmailPO(po)}
+                      onFollowUp={() => handleFollowUp(po)}
                     />
                   );
                 })}
@@ -164,7 +192,7 @@ export function OrdersTab() {
   );
 }
 
-function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, onCancel, onEmail }: {
+function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, onCancel, onEmail, onFollowUp }: {
   po: PurchaseOrder;
   isExpanded: boolean;
   statusStyle: { label: string; className: string };
@@ -173,14 +201,18 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
   onSend: () => void;
   onCancel: () => void;
   onEmail: () => void;
+  onFollowUp: () => void;
 }) {
+  const expectedDate = po.expected_delivery_date ? parseISO(po.expected_delivery_date) : null;
+  const isOverdue = po.status === 'sent' && expectedDate && isPast(expectedDate) && !po.received_at;
+
   return (
     <>
       <TableRow className="cursor-pointer" onClick={onToggle}>
         <TableCell className="pl-3">
           {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
         </TableCell>
-        <TableCell className={tokens.body.emphasis}>{po.id.slice(0, 8).toUpperCase()}</TableCell>
+        <TableCell className={tokens.body.emphasis}>{getPoLabel(po)}</TableCell>
         <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—'}</TableCell>
         <TableCell className="text-right hidden sm:table-cell tabular-nums">{po.quantity}</TableCell>
         <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</TableCell>
@@ -190,8 +222,23 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
           </Badge>
         </TableCell>
         <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{format(new Date(po.created_at), 'MMM d, yyyy')}</TableCell>
+        <TableCell className="hidden xl:table-cell text-sm">
+          {expectedDate ? (
+            <span className={cn('tabular-nums', isOverdue && 'text-destructive')}>
+              {isOverdue && <Clock className="w-3 h-3 inline mr-1" />}
+              {format(expectedDate, 'MMM d')}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
         <TableCell onClick={(e) => e.stopPropagation()}>
           <div className="flex gap-1">
+            {isOverdue && (
+              <Button variant="ghost" size="icon" onClick={onFollowUp} title="Send Delivery Follow-Up">
+                <Clock className="w-4 h-4 text-destructive" />
+              </Button>
+            )}
             {(po.status === 'draft' || po.status === 'sent') && po.supplier_email && (
               <Button variant="ghost" size="icon" onClick={onEmail} title="Email PO to Supplier">
                 <Mail className="w-4 h-4" />
@@ -213,7 +260,7 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
                   <AlertDialogHeader>
                     <AlertDialogTitle>Cancel Purchase Order?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will mark PO #{po.id.slice(0, 8).toUpperCase()} as cancelled. This action cannot be undone.
+                      This will mark {getPoLabel(po)} as cancelled. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -240,18 +287,35 @@ function POExpandedRow({ poId, po, formatCurrency }: {
 }) {
   const { data: lines = [], isLoading } = usePurchaseOrderLines(poId);
   const { data: products = [] } = useProducts({});
+  const updatePO = useUpdatePurchaseOrder();
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(
+    po.expected_delivery_date ? parseISO(po.expected_delivery_date) : undefined
+  );
 
   const getProductName = (productId: string) => {
     const product = products.find((p: any) => p.id === productId);
     return product?.name || productId.slice(0, 8);
   };
 
+  const handleDeliveryDateChange = (date: Date | undefined) => {
+    setDeliveryDate(date);
+    if (date) {
+      updatePO.mutate({ id: poId, updates: { expected_delivery_date: date.toISOString() } as any });
+    }
+  };
+
+  const confirmedDate = (po as any).supplier_confirmed_delivery_date;
+
   return (
     <TableRow>
-      <TableCell colSpan={8} className="bg-muted/20 p-4">
+      <TableCell colSpan={9} className="bg-muted/20 p-4">
         <div className="space-y-3">
           {/* PO metadata */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+            <div>
+              <span className={tokens.label.tiny}>PO Number</span>
+              <p className="text-foreground">{getPoLabel(po)}</p>
+            </div>
             <div>
               <span className={tokens.label.tiny}>Supplier Email</span>
               <p className="text-foreground">{po.supplier_email || '—'}</p>
@@ -262,13 +326,35 @@ function POExpandedRow({ poId, po, formatCurrency }: {
             </div>
             <div>
               <span className={tokens.label.tiny}>Expected Delivery</span>
-              <p className="text-foreground">{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d, yyyy') : '—'}</p>
+              {po.status === 'draft' || po.status === 'sent' ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-sm gap-1.5 -ml-2">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={deliveryDate} onSelect={handleDeliveryDateChange} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <p className="text-foreground">{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d, yyyy') : '—'}</p>
+              )}
             </div>
             <div>
               <span className={tokens.label.tiny}>Received At</span>
               <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—'}</p>
             </div>
           </div>
+
+          {/* Supplier confirmed date */}
+          {confirmedDate && (
+            <div className="text-sm">
+              <span className={tokens.label.tiny}>Supplier Confirmed Delivery</span>
+              <p className="text-foreground">{format(new Date(confirmedDate), 'MMM d, yyyy')}</p>
+            </div>
+          )}
 
           {/* Line items */}
           {isLoading ? (

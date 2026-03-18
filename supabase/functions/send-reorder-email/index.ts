@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { purchase_order_id, purchase_order_ids, attachments } = body;
+    const { purchase_order_id, purchase_order_ids, attachments, is_followup } = body;
 
     // attachments: Record<supplierEmail, { filename, content (base64) }[]>
     const pdfAttachments: Record<string, { filename: string; content: string }[]> = attachments || {};
@@ -108,13 +108,30 @@ Deno.serve(async (req) => {
 
       const allNotes = supplierPOs.filter(po => po.notes).map(po => po.notes).join("; ");
 
-      const emailHtml = `
+      const poNumbers = supplierPOs.map(po => po.po_number || po.id.slice(0, 8).toUpperCase()).join(', ');
+      
+      const emailHtml = is_followup ? `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1a1a1a; margin-bottom: 24px;">Delivery Follow-Up</h2>
+          <p>Dear ${supplierName},</p>
+          <p>We're following up on our purchase order(s) <strong>${poNumbers}</strong> which ${supplierPOs.length === 1 ? 'is' : 'are'} past the expected delivery date.</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="background: #f5f5f5;">
+              <th style="text-align: left; padding: 10px; border: 1px solid #ddd;">Product</th>
+              <th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Quantity</th>
+            </tr>
+            ${productRows}
+          </table>
+          <p>Could you please provide an updated delivery estimate?</p>
+          <p>Thank you,<br/>${orgName}</p>
+        </div>
+      ` : `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #1a1a1a; margin-bottom: 24px;">Purchase Order Request</h2>
           
           <p>Dear ${supplierName},</p>
           
-          <p>We would like to place the following order${supplierPOs.length > 1 ? ` (${supplierPOs.length} items)` : ""}:</p>
+          <p>We would like to place the following order${supplierPOs.length > 1 ? ` (${supplierPOs.length} items)` : ""} — PO: ${poNumbers}:</p>
           
           <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
             <tr style="background: #f5f5f5;">
@@ -143,12 +160,16 @@ Deno.serve(async (req) => {
         ? `${supplierPOs[0].quantity}x ${productMap.get(supplierPOs[0].product_id)?.name || "Product"}`
         : `${supplierPOs.length} products`;
 
+      const emailSubject = is_followup
+        ? `Delivery Follow-Up: ${subjectProducts}`
+        : `Purchase Order: ${subjectProducts}`;
+
       // Include PDF attachments if provided for this supplier
       const supplierAttachments = pdfAttachments[supplierEmail] || [];
 
       const emailResult = await sendOrgEmail(supabase, orgId, {
         to: [supplierEmail],
-        subject: `Purchase Order: ${subjectProducts}`,
+        subject: emailSubject,
         html: emailHtml,
         attachments: supplierAttachments.map(att => ({
           filename: att.filename,
