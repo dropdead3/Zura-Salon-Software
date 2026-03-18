@@ -59,7 +59,7 @@ export function AutoCreatePODialog({
       const effectiveQty = p.recommended_order_qty > 0 ? p.recommended_order_qty : 1;
       const productWithQty = { ...p, recommended_order_qty: effectiveQty };
       if (!p.supplier_name) {
-        unassigned.push(p);
+        unassigned.push(productWithQty);
         continue;
       }
       const key = p.supplier_name;
@@ -73,9 +73,9 @@ export function AutoCreatePODialog({
         });
       }
       const g = groupMap.get(key)!;
-      g.products.push(p);
+      g.products.push(productWithQty);
       g.lineCount += 1;
-      g.estimatedCost += p.recommended_order_qty * (p.cost_price ?? p.cost_per_gram ?? 0);
+      g.estimatedCost += effectiveQty * (p.cost_price ?? p.cost_per_gram ?? 0);
     }
 
     return {
