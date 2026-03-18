@@ -335,6 +335,9 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
             <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">
               <Eye className="w-3.5 h-3.5" /> View Exceptions
             </Button>
+            <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers')} className="font-sans gap-1.5">
+              <Truck className="w-3.5 h-3.5" /> Manage Suppliers
+            </Button>
             <Button variant="outline" size="sm" onClick={() => onNavigate('insights')} className="font-sans gap-1.5">
               <Download className="w-3.5 h-3.5" /> Export Report
             </Button>
