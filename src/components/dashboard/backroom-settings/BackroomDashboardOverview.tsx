@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight,
-  FlaskConical, Trash2, Scale, AlertCircle, Wallet,
+  FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
   Sparkles, Users2, Package, ShieldAlert, Truck,
 } from 'lucide-react';
