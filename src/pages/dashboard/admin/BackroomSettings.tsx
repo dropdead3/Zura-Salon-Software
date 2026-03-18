@@ -24,7 +24,6 @@ import {
   Building2,
   ShieldCheck,
   Lock,
-  Brain,
   CreditCard,
   Truck,
 } from 'lucide-react';
