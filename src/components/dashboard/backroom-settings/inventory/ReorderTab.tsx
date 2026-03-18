@@ -13,7 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus, Mail } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Loader2, Zap, AlertTriangle, Clock, ShoppingCart, RefreshCcw, Truck, Send, UserPlus, Mail, Eye, FileText } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -23,6 +24,7 @@ import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { forecastStockout } from '@/lib/stockoutForecast';
+import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
