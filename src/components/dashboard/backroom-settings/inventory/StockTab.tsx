@@ -488,7 +488,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax }: {
+function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, onAudit }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -497,12 +497,13 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
   locationId: string | undefined;
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
+  onAudit: (productId: string, productName: string) => void;
 }) {
   return (
     <>
       {/* Category sub-header */}
       <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={8} className="py-1 pl-10">
+        <TableCell colSpan={9} className="py-1 pl-10">
           <span className="text-muted-foreground text-[11px] tracking-wide">{category}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
@@ -544,6 +545,7 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
                     productId: row.id,
                     field: 'reorder_level',
                     value: newVal,
+                    oldValue: row.reorder_level,
                     locationId,
                   });
                 }}
@@ -560,6 +562,7 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
                     productId: row.id,
                     field: 'par_level',
                     value: newVal,
+                    oldValue: row.par_level,
                     locationId,
                   });
                 }}
@@ -576,6 +579,17 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
             </TableCell>
             <TableCell className="text-right hidden xl:table-cell text-muted-foreground tabular-nums">
               {row.cost_price != null ? formatCurrency(row.cost_price) : row.cost_per_gram != null ? `${formatCurrency(row.cost_per_gram)}/g` : '—'}
+            </TableCell>
+            <TableCell className="w-10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => onAudit(row.id, row.name)}
+                title="View audit trail"
+              >
+                <History className="w-3.5 h-3.5" />
+              </Button>
             </TableCell>
           </TableRow>
         );
