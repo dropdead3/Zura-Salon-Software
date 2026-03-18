@@ -147,6 +147,15 @@ export function OrdersTab() {
           </CardContent>
         </Card>
       )}
+
+      <SendAllDraftsDialog
+        open={sendAllOpen}
+        onOpenChange={setSendAllOpen}
+        draftPOs={draftPOs}
+        onComplete={() => {
+          setStatusFilter('all');
+        }}
+      />
     </div>
   );
 }
