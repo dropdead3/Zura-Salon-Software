@@ -72,7 +72,7 @@ export function OrdersTab() {
 
   return (
     <div className="space-y-4">
-      {/* Status filter tabs */}
+      {/* Status filter tabs + batch actions */}
       <div className="flex items-center gap-1 flex-wrap">
         {STATUS_FILTERS.map(s => (
           <Button
@@ -85,6 +85,21 @@ export function OrdersTab() {
             {s === 'all' ? 'All' : s}
           </Button>
         ))}
+
+        {draftPOs.length > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto font-sans"
+            onClick={() => setSendAllOpen(true)}
+          >
+            <Mail className="w-4 h-4 mr-1.5" />
+            Send All Drafts
+            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
+              {draftPOs.length}
+            </Badge>
+          </Button>
+        )}
       </div>
 
       {orders.length === 0 ? (
