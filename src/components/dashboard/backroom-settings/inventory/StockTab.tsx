@@ -491,6 +491,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                     onQuickReorder={handleQuickReorder}
+                    poHistoryMap={poHistoryMap}
                   />
                 ))}
               </TableBody>
