@@ -17,7 +17,10 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { purchase_order_id, purchase_order_ids } = body;
+    const { purchase_order_id, purchase_order_ids, attachments } = body;
+
+    // attachments: Record<supplierEmail, { filename, content (base64) }[]>
+    const pdfAttachments: Record<string, { filename: string; content: string }[]> = attachments || {};
 
     // Support single or batch mode
     const poIds: string[] = purchase_order_ids
