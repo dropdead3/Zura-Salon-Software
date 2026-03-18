@@ -735,6 +735,31 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
 
+        {/* Location toggle pills — always visible */}
+        {activeLocations.length > 1 && (
+          <div className="px-6 pb-2 flex items-center gap-2 flex-wrap">
+            {activeLocations.map((loc) => {
+              const isActive = loc.id === effectiveLocationId;
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => setSelectedLocationId(loc.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-sans font-medium transition-colors',
+                    isActive
+                      ? 'bg-foreground text-background'
+                      : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  {isActive && <MapPin className="w-3 h-3" />}
+                  {loc.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <CardContent className="space-y-4">
           {/* ====== BRAND DETAIL (FINDER) ====== */}
           {selectedBrand ? (
