@@ -35,13 +35,18 @@ const PRIORITY_COLORS: Record<string, string> = {
   informational: 'bg-muted text-muted-foreground',
 };
 
-export function BackroomDashboardOverview({ onNavigate }: Props) {
+export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) {
   const dashboard = useBackroomDashboard();
   const { formatCurrency } = useFormatCurrency();
   const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState(initialSubTab || 'command-center');
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
+
+  useEffect(() => {
+    if (initialSubTab) setActiveSubTab(initialSubTab);
+  }, [initialSubTab]);
 
   if (dashboard.isLoading) {
     return (
