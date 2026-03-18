@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History, ShoppingCart, Zap } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History, ShoppingCart, Zap, SlidersHorizontal } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -26,6 +26,9 @@ import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
 import { InventoryAuditDialog } from './InventoryAuditDialog';
 import { AutoCreatePODialog } from './AutoCreatePODialog';
+import { AutoParDialog } from './AutoParDialog';
+import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
+import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -190,6 +193,7 @@ async function exportStockPdf(
 
 export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
+  const { data: poHistoryMap } = useProductPOHistory();
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
@@ -203,6 +207,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
   const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
   const [autoPoDialog, setAutoPoDialog] = useState(false);
+  const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   // Compute KPIs
@@ -397,6 +402,16 @@ export function StockTab({ locationId }: StockTabProps) {
             </Badge>
           )}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="font-sans"
+          onClick={() => setAutoParDialog(true)}
+          disabled={inventory.length === 0}
+        >
+          <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+          Auto-Set Pars
+        </Button>
       </div>
 
       {/* Selection bar */}
@@ -454,6 +469,7 @@ export function StockTab({ locationId }: StockTabProps) {
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Min</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Max</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Reorder Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell w-[72px]')}>PO History</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
@@ -475,6 +491,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                     onQuickReorder={handleQuickReorder}
+                    poHistoryMap={poHistoryMap}
                   />
                 ))}
               </TableBody>
@@ -500,6 +517,13 @@ export function StockTab({ locationId }: StockTabProps) {
         onOpenChange={setAutoPoDialog}
         products={autoPoProducts}
         organizationId={orgId ?? ''}
+      />
+      <AutoParDialog
+        open={autoParDialog}
+        onOpenChange={setAutoParDialog}
+        productIds={inventory.map(r => r.id)}
+        orgId={orgId ?? ''}
+        locationId={locationId}
       />
     </div>
   );
@@ -534,7 +558,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder }: {
+function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   formatNumber: (n: number) => string;
@@ -547,6 +571,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   onSetSupplier: () => void;
   onAudit: (productId: string, productName: string) => void;
   onQuickReorder: (row: BackroomInventoryRow) => void;
+  poHistoryMap?: Map<string, number[]>;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -558,7 +583,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
         className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
         onClick={() => setOpen(!open)}
       >
-        <TableCell colSpan={10} className="py-2">
+        <TableCell colSpan={11} className="py-2">
           <div className="flex items-center gap-2">
             {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
@@ -608,13 +633,14 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
           onToggleSelect={onToggleSelect}
           onAudit={onAudit}
           onQuickReorder={onQuickReorder}
+          poHistoryMap={poHistoryMap}
         />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder }: {
+function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -627,12 +653,13 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
   onToggleSelect: (id: string) => void;
   onAudit: (productId: string, productName: string) => void;
   onQuickReorder: (row: BackroomInventoryRow) => void;
+  poHistoryMap?: Map<string, number[]>;
 }) {
   return (
     <>
       {/* Category sub-header */}
       <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={10} className="py-1 pl-10">
+        <TableCell colSpan={11} className="py-1 pl-10">
           <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
@@ -719,6 +746,15 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
                   ({row.open_po_qty} pending)
                 </span>
               )}
+            </TableCell>
+            <TableCell className="hidden xl:table-cell">
+              {(() => {
+                const history = poHistoryMap?.get(row.id);
+                if (!history || history.every(v => v === 0)) {
+                  return <span className="text-muted-foreground/40 text-xs">—</span>;
+                }
+                return <TrendSparkline data={history} variant="muted" width={64} height={20} />;
+              })()}
             </TableCell>
             <TableCell>
               <Badge variant="outline" className={cn('text-[10px] font-medium border', statusCfg.className)}>

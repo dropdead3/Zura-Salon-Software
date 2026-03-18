@@ -3,7 +3,7 @@
  * Lists POs with status filters, expandable line items, and email PO actions.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { SendAllDraftsDialog } from './SendAllDraftsDialog';
 
 const STATUS_FILTERS = ['all', 'draft', 'sent', 'received', 'cancelled'] as const;
 type POStatusFilter = typeof STATUS_FILTERS[number];
@@ -33,9 +34,13 @@ const PO_STATUS_STYLES: Record<string, { label: string; className: string }> = {
 export function OrdersTab() {
   const [statusFilter, setStatusFilter] = useState<POStatusFilter>('all');
   const { data: orders = [], isLoading } = usePurchaseOrders({ status: statusFilter });
+  const { data: allOrders = [] } = usePurchaseOrders({ status: 'all' });
   const updatePO = useUpdatePurchaseOrder();
   const { formatCurrency } = useFormatCurrency();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sendAllOpen, setSendAllOpen] = useState(false);
+
+  const draftPOs = useMemo(() => allOrders.filter(po => po.status === 'draft'), [allOrders]);
 
   const handleSend = (po: PurchaseOrder) => {
     updatePO.mutate({ id: po.id, updates: { status: 'sent', sent_at: new Date().toISOString() } });
@@ -67,7 +72,7 @@ export function OrdersTab() {
 
   return (
     <div className="space-y-4">
-      {/* Status filter tabs */}
+      {/* Status filter tabs + batch actions */}
       <div className="flex items-center gap-1 flex-wrap">
         {STATUS_FILTERS.map(s => (
           <Button
@@ -80,6 +85,21 @@ export function OrdersTab() {
             {s === 'all' ? 'All' : s}
           </Button>
         ))}
+
+        {draftPOs.length > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto font-sans"
+            onClick={() => setSendAllOpen(true)}
+          >
+            <Mail className="w-4 h-4 mr-1.5" />
+            Send All Drafts
+            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
+              {draftPOs.length}
+            </Badge>
+          </Button>
+        )}
       </div>
 
       {orders.length === 0 ? (
@@ -127,6 +147,15 @@ export function OrdersTab() {
           </CardContent>
         </Card>
       )}
+
+      <SendAllDraftsDialog
+        open={sendAllOpen}
+        onOpenChange={setSendAllOpen}
+        draftPOs={draftPOs}
+        onComplete={() => {
+          setStatusFilter('all');
+        }}
+      />
     </div>
   );
 }
