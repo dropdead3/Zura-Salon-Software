@@ -288,12 +288,18 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
             </div>
           </>
         )}
+
+        <AuditEntryDetailPanel
+          open={!!selectedEntry}
+          onOpenChange={(open) => !open && setSelectedEntry(null)}
+          entry={selectedEntry}
+        />
       </CardContent>
     </Card>
   );
 }
 
-function AuditTableRow({ entry }: { entry: BulkAuditEntry }) {
+function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () => void }) {
   const isStock = entry.type === 'stock';
   const isPositive = isStock && (entry.quantity_change ?? 0) > 0;
   const isNegative = isStock && (entry.quantity_change ?? 0) < 0;
