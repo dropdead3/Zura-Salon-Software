@@ -4,13 +4,16 @@
  * Stock | Reorder | Orders | Receive | Counts
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
+import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { NavBadge } from '../NavBadge';
 import { StockTab } from './inventory/StockTab';
 import { ReorderTab } from './inventory/ReorderTab';
 import { OrdersTab } from './inventory/OrdersTab';
