@@ -64,21 +64,21 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
       {/* ── Setup Banner (collapsible) ── */}
       {showSetupBanner && (
         <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
-          <Card className="border-primary/20">
+          <Card className="border-amber-500/40 bg-amber-500/5 border-l-2 border-l-amber-500">
             <CardContent className="py-4">
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
-                  <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={cn(tokens.body.emphasis, 'text-foreground')}>
                       {setupHealth.completed} of {setupHealth.total} areas configured
                     </p>
-                    <Progress value={(setupHealth.completed / setupHealth.total) * 100} className="h-1.5 mt-1.5 max-w-[200px]" />
+                    <Progress value={(setupHealth.completed / setupHealth.total) * 100} className="h-1.5 mt-1.5 max-w-[200px]" indicatorClassName="bg-amber-500" />
                   </div>
                   {!wizardCompleted && (
-                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="shrink-0">
+                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white border-0">
                       Resume Setup
                     </Button>
                   )}
