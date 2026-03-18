@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
 
       const emailResult = await sendOrgEmail(supabase, orgId, {
         to: [supplierEmail],
-        subject: `Purchase Order: ${subjectProducts}`,
+        subject: emailSubject,
         html: emailHtml,
         attachments: supplierAttachments.map(att => ({
           filename: att.filename,
