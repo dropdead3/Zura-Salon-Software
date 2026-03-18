@@ -111,7 +111,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     <Progress value={(setupHealth.completed / setupHealth.total) * 100} className="h-1.5 mt-1.5 max-w-[200px]" indicatorClassName="bg-amber-500" />
                   </div>
                   {!wizardCompleted && (
-                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white border-0">
+                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:border-amber-500/70">
                       Resume Setup
                     </Button>
                   )}
