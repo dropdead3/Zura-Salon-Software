@@ -657,14 +657,16 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   <>
                     <CardTitle className={tokens.card.title}>Backroom Product Catalog</CardTitle>
                     <CardDescription>
-                      Select a brand to manage tracking, depletion methods, and pricing.
+                      {effectiveLocationId
+                        ? `Managing catalog for ${activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'selected location'}`
+                        : 'Select a location to manage tracking, depletion methods, and pricing.'}
                     </CardDescription>
                   </>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
-              
+
               {/* View toggle */}
               {hasProducts && !selectedBrand && (
                 <div className="flex items-center rounded-lg border overflow-hidden">
