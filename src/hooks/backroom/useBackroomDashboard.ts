@@ -22,8 +22,10 @@ function getLast30Days() {
   };
 }
 
-export function useBackroomDashboard(locationId?: string) {
-  const { startDate, endDate } = getLast30Days();
+export function useBackroomDashboard(locationId?: string, startDateOverride?: string, endDateOverride?: string) {
+  const { startDate: defaultStart, endDate: defaultEnd } = getLast30Days();
+  const startDate = startDateOverride || defaultStart;
+  const endDate = endDateOverride || defaultEnd;
 
   const analyticsQ = useBackroomAnalytics(startDate, endDate, locationId);
   const controlTowerQ = useControlTowerAlerts(locationId);
