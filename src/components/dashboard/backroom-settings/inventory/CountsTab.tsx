@@ -4,12 +4,15 @@
  * Active sessions can be opened for product-by-product count entry.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight, FileDown } from 'lucide-react';
+import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight, FileDown, Filter } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useCountSessions, useCreateCountSession, type CountSession } from '@/hooks/inventory/useCountSessions';
@@ -20,7 +23,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
-import { generateCountSheetPdf } from '@/lib/generateCountSheetPdf';
+import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 
@@ -44,6 +47,23 @@ export function CountsTab({ locationId }: CountsTabProps) {
 
   const { data: inventoryProducts = [] } = useBackroomInventoryTable({ locationId });
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+
+  // Extract unique brands and categories
+  const { brands, categories } = useMemo(() => {
+    const brandSet = new Set<string>();
+    const catSet = new Set<string>();
+    for (const p of inventoryProducts) {
+      if (p.brand) brandSet.add(p.brand);
+      if (p.category) catSet.add(p.category);
+    }
+    return {
+      brands: Array.from(brandSet).sort((a, b) => a.localeCompare(b)),
+      categories: Array.from(catSet).sort((a, b) => a.localeCompare(b)),
+    };
+  }, [inventoryProducts]);
 
   const handleStartCount = () => {
     if (!orgId) return;
@@ -53,19 +73,24 @@ export function CountsTab({ locationId }: CountsTabProps) {
     });
   };
 
-  const handlePrintCountSheet = async () => {
+  const handlePrintCountSheet = async (filters?: CountSheetFilters) => {
     if (inventoryProducts.length === 0) {
       toast.error('No products to include in count sheet');
       return;
     }
     setGeneratingPdf(true);
+    setShowFilterDialog(false);
     try {
       const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      // Build a URL that links back to the inventory counts tab
+      const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
       generateCountSheetPdf({
         products: inventoryProducts,
         orgName: effectiveOrganization?.name ?? 'Organization',
-        locationName: undefined, // Could be enhanced with location name lookup
+        locationName: undefined,
         logoDataUrl,
+        filters,
+        countEntryUrl,
       });
       toast.success('Count sheet PDF downloaded');
     } catch (err) {
@@ -74,6 +99,44 @@ export function CountsTab({ locationId }: CountsTabProps) {
       setGeneratingPdf(false);
     }
   };
+
+  const handleFilteredExport = () => {
+    const filters: CountSheetFilters = {};
+    if (selectedBrands.size > 0) filters.brands = Array.from(selectedBrands);
+    if (selectedCategories.size > 0) filters.categories = Array.from(selectedCategories);
+    handlePrintCountSheet(filters);
+  };
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands(prev => {
+      const next = new Set(prev);
+      if (next.has(brand)) next.delete(brand); else next.add(brand);
+      return next;
+    });
+  };
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  // Count how many products match current filter
+  const filteredProductCount = useMemo(() => {
+    let count = inventoryProducts.length;
+    if (selectedBrands.size > 0) {
+      count = inventoryProducts.filter(p => p.brand && selectedBrands.has(p.brand)).length;
+    }
+    if (selectedCategories.size > 0) {
+      const brandFiltered = selectedBrands.size > 0
+        ? inventoryProducts.filter(p => p.brand && selectedBrands.has(p.brand))
+        : inventoryProducts;
+      count = brandFiltered.filter(p => p.category && selectedCategories.has(p.category)).length;
+    }
+    return count;
+  }, [inventoryProducts, selectedBrands, selectedCategories]);
 
   // If a session is active for counting, show the entry form
   if (activeSession) {
@@ -102,12 +165,26 @@ export function CountsTab({ locationId }: CountsTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handlePrintCountSheet}
+            onClick={() => handlePrintCountSheet()}
             disabled={generatingPdf || inventoryProducts.length === 0}
             className={tokens.button.cardAction}
           >
             {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
             Print Count Sheet
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedBrands(new Set());
+              setSelectedCategories(new Set());
+              setShowFilterDialog(true);
+            }}
+            disabled={generatingPdf || inventoryProducts.length === 0}
+            className={tokens.button.cardAction}
+          >
+            <Filter className="w-4 h-4" />
+            Filtered Sheet
           </Button>
           <Button size="sm" onClick={handleStartCount} disabled={createSession.isPending} className={tokens.button.cardAction}>
             {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
@@ -115,6 +192,72 @@ export function CountsTab({ locationId }: CountsTabProps) {
           </Button>
         </div>
       </div>
+
+      {/* Filter dialog for count sheet */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className={tokens.card.title}>Filter Count Sheet</DialogTitle>
+            <DialogDescription>Select brands and/or categories to include. Leave empty for all products.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Brands */}
+            {brands.length > 0 && (
+              <div>
+                <p className={cn(tokens.label.default, 'mb-2')}>Brands</p>
+                <ScrollArea className="max-h-[140px]">
+                  <div className="space-y-1.5">
+                    {brands.map(brand => (
+                      <label key={brand} className="flex items-center gap-2 cursor-pointer py-0.5">
+                        <Checkbox
+                          checked={selectedBrands.has(brand)}
+                          onCheckedChange={() => toggleBrand(brand)}
+                        />
+                        <span className="text-sm">{brand}</span>
+                      </label>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {/* Categories */}
+            {categories.length > 0 && (
+              <div>
+                <p className={cn(tokens.label.default, 'mb-2')}>Categories</p>
+                <ScrollArea className="max-h-[140px]">
+                  <div className="space-y-1.5">
+                    {categories.map(cat => (
+                      <label key={cat} className="flex items-center gap-2 cursor-pointer py-0.5">
+                        <Checkbox
+                          checked={selectedCategories.has(cat)}
+                          onCheckedChange={() => toggleCategory(cat)}
+                        />
+                        <span className="text-sm">{cat}</span>
+                      </label>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            <p className="text-muted-foreground text-xs">
+              {filteredProductCount} product{filteredProductCount !== 1 ? 's' : ''} will be included
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setShowFilterDialog(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              onClick={handleFilteredExport}
+              disabled={filteredProductCount === 0}
+            >
+              <FileDown className="w-4 h-4" />
+              Export PDF ({filteredProductCount})
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* KPI summary */}
       {shrinkage.length > 0 && (
