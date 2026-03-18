@@ -110,6 +110,20 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
     });
   };
 
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(reorderQueue.map(r => r.id)));
+  }, [reorderQueue]);
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectedTotalCost = useMemo(() => {
+    return reorderQueue
+      .filter(r => selectedIds.has(r.id))
+      .reduce((sum, r) => sum + getOrderQty(r) * (r.cost_price ?? r.cost_per_gram ?? 0), 0);
+  }, [reorderQueue, selectedIds, getOrderQty]);
+
   const handleCreatePOForSupplier = (group: SupplierGroup) => {
     if (!orgId) return;
     createMultiLinePO.mutate({
@@ -147,20 +161,6 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
-
-  const selectAll = () => {
-    setSelectedIds(new Set(reorderQueue.map(r => r.id)));
-  };
-
-  const deselectAll = () => {
-    setSelectedIds(new Set());
-  };
-
-  const selectedTotalCost = useMemo(() => {
-    return reorderQueue
-      .filter(r => selectedIds.has(r.id))
-      .reduce((sum, r) => sum + getOrderQty(r) * (r.cost_price ?? r.cost_per_gram ?? 0), 0);
-  }, [reorderQueue, selectedIds, getOrderQty]);
 
   return (
     <div className="space-y-4 pb-20">
