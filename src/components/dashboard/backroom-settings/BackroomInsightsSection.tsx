@@ -25,6 +25,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BackroomBrandUsageCard } from './BackroomBrandUsageCard';
 import { BackroomHistoryChart } from './BackroomHistoryChart';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
 type DatePreset = 'today' | '7d' | '30d' | 'this_month' | 'last_month' | '90d';
