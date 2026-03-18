@@ -110,14 +110,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     </p>
                     {/* Step tracker */}
                     <div className="flex items-center mt-2 w-full">
-                      {[
-                        { label: 'Products', done: (setupHealth as any).trackedProducts > 0 },
-                        { label: 'Services', done: (setupHealth as any).trackedServices > 0 },
-                        { label: 'Recipes', done: (setupHealth as any).recipesConfigured > 0 },
-                        { label: 'Allowances', done: (setupHealth as any).allowancePolicies > 0 },
-                        { label: 'Stations', done: (setupHealth as any).stationsConfigured > 0 },
-                        { label: 'Alerts', done: (setupHealth as any).alertRulesConfigured > 0 },
-                      ].map((step, i, arr) => (
+                      {setupHealth.steps.map((step, i, arr) => (
                         <div key={step.label} className="flex items-center flex-1 last:flex-none">
                           <div className="flex flex-col items-center gap-1">
                             <div className={cn(
