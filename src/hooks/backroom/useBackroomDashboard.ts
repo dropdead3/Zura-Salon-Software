@@ -37,6 +37,16 @@ export function useBackroomDashboard(locationId?: string) {
   const isLoading =
     analyticsQ.isLoading || controlTowerQ.isLoading || staffQ.isLoading || reorderQ.isLoading || setupQ.isLoading;
 
+  // Track last-updated timestamp
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const wasLoading = useRef(false);
+  useEffect(() => {
+    if (wasLoading.current && !isLoading) {
+      setLastUpdatedAt(new Date());
+    }
+    wasLoading.current = isLoading;
+  }, [isLoading]);
+
   const kpis = useMemo(() => {
     const a = analyticsQ.data;
     const budget = budgetQ.budget;
