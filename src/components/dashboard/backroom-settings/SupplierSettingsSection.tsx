@@ -28,6 +28,7 @@ import {
   useUnlinkedProducts,
   useAllProductsWithSupplier,
   useSupplierStats,
+  useSupplierSpendSummary,
   useUpdateSupplierContact,
   useLinkProducts,
   useUnlinkProduct,
@@ -35,6 +36,7 @@ import {
   useDeleteSupplier,
   type SupplierGroup,
 } from '@/hooks/backroom/useSupplierSettings';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useProducts } from '@/hooks/useProducts';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 
