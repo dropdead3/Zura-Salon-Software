@@ -438,19 +438,20 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
   );
 }
 
-function AlertRow({ alert, onNavigate }: { alert: ControlTowerAlert; onNavigate: (s: string) => void }) {
-  const categoryToSection: Record<string, string> = {
-    inventory: 'inventory:stock',
-    exception: 'alerts',
-    profitability: 'insights',
-    waste: 'insights',
-    staff: 'insights',
-    reorder: 'inventory:reorder',
+function AlertRow({ alert, onNavigate, onSwitchTab }: { alert: ControlTowerAlert; onNavigate: (s: string) => void; onSwitchTab: (tab: string) => void }) {
+  const handleClick = () => {
+    const tabRoutes: Record<string, string> = { profitability: 'analytics', waste: 'analytics', staff: 'analytics' };
+    const sectionRoutes: Record<string, string> = { inventory: 'inventory:stock', exception: 'alerts', reorder: 'inventory:reorder' };
+    if (tabRoutes[alert.category]) {
+      onSwitchTab(tabRoutes[alert.category]);
+    } else {
+      onNavigate(sectionRoutes[alert.category] ?? 'alerts');
+    }
   };
 
   return (
     <button
-      onClick={() => onNavigate(categoryToSection[alert.category] ?? 'alerts')}
+      onClick={handleClick}
       className="w-full flex items-start gap-2.5 p-2.5 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors text-left"
     >
       <Badge className={cn('text-[10px] px-1.5 py-0 shrink-0 mt-0.5', PRIORITY_COLORS[alert.priority])}>
