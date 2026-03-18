@@ -1,11 +1,13 @@
 /**
  * useReorderAnalytics — Aggregates 6 months of PO data for analytics dashboard.
+ * useProcurementBudget — Read/update per-org procurement budget targets.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from './useBackroomOrgId';
-import { subMonths, format, differenceInDays } from 'date-fns';
+import { subMonths, addMonths, format, differenceInDays } from 'date-fns';
+import { toast } from 'sonner';
 
 export interface ReorderAnalyticsData {
   totalPOs: number;
@@ -13,6 +15,11 @@ export interface ReorderAnalyticsData {
   avgOrderValue: number;
   avgLeadTimeDays: number | null;
   monthlySpendBySupplier: { month: string; supplier: string; spend: number }[];
+  monthlyTotals: { month: string; spend: number }[];
+  projectedNextMonth: number;
+  projected3Months: { month: string; projected: number }[];
+  trendPct: number;
+  currentMonthSpend: number;
   topProducts: {
     productId: string;
     productName: string;
@@ -30,6 +37,17 @@ export interface ReorderAnalyticsData {
   }[];
 }
 
+/** Weighted moving average: recent months weighted heavier (3x, 2x, 1x). */
+function weightedMovingAvg(values: number[]): number {
+  if (values.length === 0) return 0;
+  if (values.length === 1) return values[0];
+
+  const recent = values.slice(-3);
+  const weights = recent.length === 3 ? [1, 2, 3] : recent.length === 2 ? [1, 2] : [1];
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  return recent.reduce((sum, v, i) => sum + v * weights[i], 0) / weightSum;
+}
+
 export function useReorderAnalytics() {
   const orgId = useBackroomOrgId();
 
@@ -37,6 +55,7 @@ export function useReorderAnalytics() {
     queryKey: ['reorder-analytics', orgId],
     queryFn: async (): Promise<ReorderAnalyticsData> => {
       const cutoff = subMonths(new Date(), 6).toISOString();
+      const currentMonth = format(new Date(), 'yyyy-MM');
 
       // Fetch POs from last 6 months
       const { data: orders = [] } = await supabase
@@ -103,10 +122,43 @@ export function useReorderAnalytics() {
       }
       monthlySpendBySupplier.sort((a, b) => a.month.localeCompare(b.month));
 
+      // Monthly totals (aggregate across suppliers)
+      const monthTotalMap = new Map<string, number>();
+      for (const entry of monthlySpendBySupplier) {
+        monthTotalMap.set(entry.month, (monthTotalMap.get(entry.month) || 0) + entry.spend);
+      }
+      const monthlyTotals = [...monthTotalMap.entries()]
+        .map(([month, spend]) => ({ month, spend }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      // Current month spend
+      const currentMonthSpend = monthTotalMap.get(currentMonth) || 0;
+
+      // Projections — weighted moving average
+      const spendValues = monthlyTotals.map(m => m.spend);
+      const projectedNextMonth = weightedMovingAvg(spendValues);
+
+      // Project 3 months out
+      const projected3Months: ReorderAnalyticsData['projected3Months'] = [];
+      const projectionValues = [...spendValues];
+      for (let i = 1; i <= 3; i++) {
+        const projected = weightedMovingAvg(projectionValues);
+        const monthLabel = format(addMonths(new Date(), i), 'yyyy-MM');
+        projected3Months.push({ month: monthLabel, projected });
+        projectionValues.push(projected);
+      }
+
+      // Trend % (month-over-month)
+      let trendPct = 0;
+      if (spendValues.length >= 2) {
+        const prev = spendValues[spendValues.length - 2];
+        const curr = spendValues[spendValues.length - 1];
+        trendPct = prev > 0 ? Math.round(((curr - prev) / prev) * 100) : 0;
+      }
+
       // Top products (from lines + single-product POs)
       const productAgg = new Map<string, { orderCount: number; totalUnits: number; totalSpend: number; totalCostEntries: number }>();
       
-      // From PO lines
       for (const l of lines) {
         const existing = productAgg.get(l.product_id) || { orderCount: 0, totalUnits: 0, totalSpend: 0, totalCostEntries: 0 };
         existing.orderCount++;
@@ -116,7 +168,6 @@ export function useReorderAnalytics() {
         productAgg.set(l.product_id, existing);
       }
 
-      // From single-product POs (those without lines)
       const posWithLines = new Set(lines.map(l => l.purchase_order_id));
       for (const o of orders) {
         if (posWithLines.has(o.id)) continue;
@@ -178,6 +229,11 @@ export function useReorderAnalytics() {
         avgOrderValue,
         avgLeadTimeDays,
         monthlySpendBySupplier,
+        monthlyTotals,
+        projectedNextMonth,
+        projected3Months,
+        trendPct,
+        currentMonthSpend,
         topProducts,
         supplierPerformance,
       };
@@ -185,4 +241,65 @@ export function useReorderAnalytics() {
     enabled: !!orgId,
     staleTime: 5 * 60_000,
   });
+}
+
+/* ── Procurement Budget Hook ── */
+
+export interface ProcurementBudget {
+  id: string;
+  organization_id: string;
+  monthly_budget: number;
+  alert_threshold_pct: number;
+  updated_at: string;
+}
+
+export function useProcurementBudget() {
+  const orgId = useBackroomOrgId();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['procurement-budget', orgId],
+    queryFn: async (): Promise<ProcurementBudget | null> => {
+      const { data, error } = await supabase
+        .from('procurement_budgets')
+        .select('*')
+        .eq('organization_id', orgId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data as ProcurementBudget | null;
+    },
+    enabled: !!orgId,
+    staleTime: 5 * 60_000,
+  });
+
+  const upsertMutation = useMutation({
+    mutationFn: async (input: { monthly_budget: number; alert_threshold_pct: number }) => {
+      const { data, error } = await supabase
+        .from('procurement_budgets')
+        .upsert({
+          organization_id: orgId!,
+          monthly_budget: input.monthly_budget,
+          alert_threshold_pct: input.alert_threshold_pct,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'organization_id' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['procurement-budget', orgId] });
+      toast.success('Budget target updated');
+    },
+    onError: (err) => {
+      toast.error('Failed to update budget: ' + err.message);
+    },
+  });
+
+  return {
+    budget: query.data,
+    isLoading: query.isLoading,
+    upsertBudget: upsertMutation.mutate,
+    isUpdating: upsertMutation.isPending,
+  };
 }
