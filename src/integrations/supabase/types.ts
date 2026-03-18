@@ -14846,6 +14846,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          delivery_followup_sent_at: string | null
           expected_delivery_date: string | null
           grand_total: number | null
           id: string
@@ -14863,6 +14864,7 @@ export type Database = {
           status: string
           subtotal: number | null
           supplier_confirmed_at: string | null
+          supplier_confirmed_delivery_date: string | null
           supplier_email: string | null
           supplier_name: string | null
           tax_amount: number | null
@@ -14874,6 +14876,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          delivery_followup_sent_at?: string | null
           expected_delivery_date?: string | null
           grand_total?: number | null
           id?: string
@@ -14891,6 +14894,7 @@ export type Database = {
           status?: string
           subtotal?: number | null
           supplier_confirmed_at?: string | null
+          supplier_confirmed_delivery_date?: string | null
           supplier_email?: string | null
           supplier_name?: string | null
           tax_amount?: number | null
@@ -14902,6 +14906,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          delivery_followup_sent_at?: string | null
           expected_delivery_date?: string | null
           grand_total?: number | null
           id?: string
@@ -14919,6 +14924,7 @@ export type Database = {
           status?: string
           subtotal?: number | null
           supplier_confirmed_at?: string | null
+          supplier_confirmed_delivery_date?: string | null
           supplier_email?: string | null
           supplier_name?: string | null
           tax_amount?: number | null
