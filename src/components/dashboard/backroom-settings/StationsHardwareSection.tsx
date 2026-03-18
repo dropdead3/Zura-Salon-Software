@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight } from 'lucide-react';
+import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
