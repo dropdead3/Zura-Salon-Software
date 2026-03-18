@@ -21,6 +21,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { format, subDays } from 'date-fns';
 import { useBackroomComplianceTracker } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/backroom/useEvaluateComplianceLog';
+import { useActiveLocations } from '@/hooks/useLocations';
 
 type RangeKey = 'today' | '7d' | '14d' | '30d';
 
