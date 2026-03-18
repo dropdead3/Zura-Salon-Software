@@ -1,6 +1,6 @@
 /**
  * BackroomInventorySection — Tabbed inventory management workspace.
- * Workflow-oriented 6-tab layout: Stock | Reorder | Orders | Receive | Counts | Audit Log
+ * Workflow-oriented 7-tab layout: Stock | Reorder | Orders | Receive | Counts | Audit Log | Analytics
  * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
 
