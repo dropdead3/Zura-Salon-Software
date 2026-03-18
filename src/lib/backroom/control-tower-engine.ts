@@ -102,7 +102,7 @@ function buildInventoryAlerts(items: InventoryRiskProjection[]): ControlTowerAle
       suggestedAction: item.recommended_order_qty > 0
         ? `Order ${item.recommended_order_qty} units`
         : 'Review stock levels',
-      actionRoute: '/dashboard/inventory',
+      actionRoute: '/dashboard/admin/backroom-settings?category=inventory&tab=stock',
       createdAt: item.last_forecast_at,
     };
   });
