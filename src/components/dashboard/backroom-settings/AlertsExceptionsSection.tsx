@@ -94,6 +94,20 @@ export function AlertsExceptionsSection() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {activeLocations.length > 1 && (
+              <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+                <SelectTrigger className="w-fit gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {activeLocations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {(!rules || rules.length === 0) && (
               <Button size="sm" onClick={handleApplyRecommended}>
                 <Zap className="w-4 h-4 mr-1.5" /> Use Recommended
