@@ -4,7 +4,7 @@
  * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3 } from 'lucide-react';
