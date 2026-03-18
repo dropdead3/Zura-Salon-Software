@@ -143,10 +143,18 @@ Deno.serve(async (req) => {
         ? `${supplierPOs[0].quantity}x ${productMap.get(supplierPOs[0].product_id)?.name || "Product"}`
         : `${supplierPOs.length} products`;
 
+      // Include PDF attachments if provided for this supplier
+      const supplierAttachments = pdfAttachments[supplierEmail] || [];
+
       const emailResult = await sendOrgEmail(supabase, orgId, {
         to: [supplierEmail],
         subject: `Purchase Order: ${subjectProducts}`,
         html: emailHtml,
+        attachments: supplierAttachments.map(att => ({
+          filename: att.filename,
+          content: att.content,
+          type: 'application/pdf',
+        })),
       }, { emailType: "transactional" });
 
       if (!emailResult.success) {
