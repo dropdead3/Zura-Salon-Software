@@ -27,9 +27,19 @@ const RECOMMENDED_RULES = [
 export function AlertsExceptionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: rules, isLoading } = useBackroomAlertRules();
+  const [filterLocationId, setFilterLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
+  const effectiveLocationId = filterLocationId === 'all' ? undefined : filterLocationId;
+  const { data: allRules, isLoading } = useBackroomAlertRules(filterLocationId === 'all' ? null : filterLocationId);
   const upsertRule = useUpsertAlertRule();
   const deleteRule = useDeleteAlertRule();
+
+  // When "All Locations", show all rules; when filtered, show org-wide + location-specific
+  const rules = useMemo(() => {
+    if (!allRules) return [];
+    if (filterLocationId === 'all') return allRules;
+    return allRules.filter((r) => !r.location_id || r.location_id === filterLocationId);
+  }, [allRules, filterLocationId]);
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({

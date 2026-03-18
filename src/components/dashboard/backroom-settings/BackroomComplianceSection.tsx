@@ -84,6 +84,20 @@ export function BackroomComplianceSection() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {activeLocations.length > 1 && (
+            <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+              <SelectTrigger className="w-fit gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {activeLocations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>{RANGE_OPTIONS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
