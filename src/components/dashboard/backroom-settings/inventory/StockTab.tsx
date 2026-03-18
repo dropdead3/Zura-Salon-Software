@@ -161,7 +161,7 @@ async function exportStockPdf(
       7: { halign: 'right' },
     },
     margin: { top: 72 },
-    didDrawPage: () => addReportHeader(doc, headerOpts),
+    didDrawPage: () => { addReportHeader(doc, headerOpts); },
   });
 
   addReportFooter(doc);
