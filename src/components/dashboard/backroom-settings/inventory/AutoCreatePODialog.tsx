@@ -261,6 +261,13 @@ export function AutoCreatePODialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <SupplierAssignDialog
+        open={supplierDialog.open}
+        onOpenChange={(isOpen) => setSupplierDialog(prev => ({ ...prev, open: isOpen }))}
+        brand={supplierDialog.brand}
+        products={supplierDialog.products}
+      />
     </Dialog>
   );
 }
