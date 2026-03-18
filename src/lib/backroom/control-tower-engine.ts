@@ -130,7 +130,7 @@ function buildExceptionAlerts(items: BackroomException[]): ControlTowerAlert[] {
         entityType: exc.reference_type ?? 'exception',
         entityId: exc.reference_id,
         suggestedAction: 'Review and resolve exception',
-        actionRoute: '/dashboard/backroom/exceptions',
+        actionRoute: '/dashboard/admin/backroom-settings?category=alerts',
         createdAt: exc.created_at,
       };
     });
