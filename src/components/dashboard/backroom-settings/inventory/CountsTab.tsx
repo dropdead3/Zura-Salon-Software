@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight } from 'lucide-react';
+import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight, FileDown } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useCountSessions, useCreateCountSession, type CountSession } from '@/hooks/inventory/useCountSessions';
