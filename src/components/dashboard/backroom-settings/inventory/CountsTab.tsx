@@ -42,12 +42,37 @@ export function CountsTab({ locationId }: CountsTabProps) {
   const isLoading = sessionsLoading || shrinkageLoading;
   const totalShrinkageCost = shrinkage.reduce((s, r) => s + r.shrinkageCost, 0);
 
+  const { data: inventoryProducts = [] } = useBackroomInventoryTable({ locationId });
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
   const handleStartCount = () => {
     if (!orgId) return;
     createSession.mutate({
       organization_id: orgId,
       location_id: locationId,
     });
+  };
+
+  const handlePrintCountSheet = async () => {
+    if (inventoryProducts.length === 0) {
+      toast.error('No products to include in count sheet');
+      return;
+    }
+    setGeneratingPdf(true);
+    try {
+      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      generateCountSheetPdf({
+        products: inventoryProducts,
+        orgName: effectiveOrganization?.name ?? 'Organization',
+        locationName: undefined, // Could be enhanced with location name lookup
+        logoDataUrl,
+      });
+      toast.success('Count sheet PDF downloaded');
+    } catch (err) {
+      toast.error('Failed to generate count sheet');
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   // If a session is active for counting, show the entry form
