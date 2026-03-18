@@ -130,6 +130,8 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const entries = data?.entries ?? [];
   const hasMore = data?.hasMore ?? false;
 
+  const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
+
   return (
     <Card>
       <CardContent className="p-4 space-y-4">
