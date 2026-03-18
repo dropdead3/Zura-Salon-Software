@@ -76,7 +76,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
         totalEstCost: 0,
       };
       group.products.push(row);
-      group.totalEstCost += row.order_qty * (row.cost_price ?? row.cost_per_gram ?? 0);
+      group.totalEstCost += getOrderQty(row) * (row.cost_price ?? row.cost_per_gram ?? 0);
       map.set(key, group);
     }
     // Sort: unassigned last
