@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
-  DollarSign, Beaker, Scale, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2, MapPin,
+  DollarSign, Beaker, ClipboardCheck, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2, MapPin,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -141,7 +141,7 @@ export function BackroomInsightsSection() {
         <KPICard icon={Beaker} label="Product Dispensed" tooltip="Total quantity (grams) of product dispensed across all mixing sessions." loading={analyticsLoading}>
           <span className={tokens.kpi.value}>{formatNumber(analytics?.totalDispensedQty ?? 0, { maximumFractionDigits: 0 })}g</span>
         </KPICard>
-        <KPICard icon={Scale} label="Reweighed %" tooltip="Percentage of bowls that were reweighed after application. Higher rates improve waste tracking accuracy." loading={analyticsLoading} accent={getComplianceAccent(analytics?.reweighCompliancePct)}>
+        <KPICard icon={ClipboardCheck} label="Reweighed %" tooltip="Percentage of bowls that were reweighed after application. Higher rates improve waste tracking accuracy." loading={analyticsLoading} accent={getComplianceAccent(analytics?.reweighCompliancePct)}>
           <span className={tokens.kpi.value}>{formatPercent(analytics?.reweighCompliancePct ?? 0, false)}</span>
         </KPICard>
         <KPICard icon={Trash2} label="Waste Rate" tooltip="Percentage of dispensed product recorded as waste. Lower is better — industry target is under 15%." loading={analyticsLoading} accent={getWasteAccent(analytics?.wastePct)}>
