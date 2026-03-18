@@ -160,6 +160,10 @@ Deno.serve(async (req) => {
         ? `${supplierPOs[0].quantity}x ${productMap.get(supplierPOs[0].product_id)?.name || "Product"}`
         : `${supplierPOs.length} products`;
 
+      const emailSubject = is_followup
+        ? `Delivery Follow-Up: ${subjectProducts}`
+        : `Purchase Order: ${subjectProducts}`;
+
       // Include PDF attachments if provided for this supplier
       const supplierAttachments = pdfAttachments[supplierEmail] || [];
 
