@@ -104,17 +104,33 @@ export function BackroomInsightsSection() {
           <h2 className={tokens.heading.section}>Backroom Insights</h2>
           <p className="text-sm text-muted-foreground mt-1">High-level backroom performance for {rangeLabel.toLowerCase()}</p>
         </div>
-        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="7d">Last 7 Days</SelectItem>
-            <SelectItem value="30d">Last 30 Days</SelectItem>
-            <SelectItem value="this_month">This Month</SelectItem>
-            <SelectItem value="last_month">Last Month</SelectItem>
-            <SelectItem value="90d">Last 90 Days</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {activeLocations.length > 1 && (
+            <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+              <SelectTrigger className="w-fit gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {activeLocations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+              <SelectItem value="90d">Last 90 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
