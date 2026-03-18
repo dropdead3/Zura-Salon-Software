@@ -109,6 +109,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
   const [typeFilter, setTypeFilter] = useState<'all' | 'stock' | 'setting'>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
 
   const filters: AuditFilters = {
     typeFilter,
