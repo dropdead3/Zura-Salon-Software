@@ -60,9 +60,15 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
   return useQuery({
     queryKey: ['backroom-inventory-table', orgId, locationId],
     queryFn: async (): Promise<BackroomInventoryRow[]> => {
+      // Fetch all supplier data for the org once
+      const { data: suppliersData } = await supabase
+        .from('product_suppliers')
+        .select('product_id, supplier_name, supplier_email')
+        .eq('organization_id', orgId!);
+      const supplierMap = new Map((suppliersData || []).map((s: any) => [s.product_id, s]));
+
       // If a location is selected, join with location_product_settings for tracking
       if (locationId) {
-        // Get products that are tracked at this location
         const { data: settings, error: settingsErr } = await supabase
           .from('location_product_settings')
           .select('product_id, par_level, reorder_level')
@@ -92,6 +98,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           const status = getStockStatus(qty, reorderLevel, parLevel);
           const orderQty = parLevel != null ? Math.max(0, parLevel - qty) : 0;
           const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
+          const sup = supplierMap.get(p.id);
 
           return {
             id: p.id,
@@ -109,6 +116,8 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
             order_qty: orderQty,
             status,
             charge_per_gram: chargePerGram,
+            supplier_name: sup?.supplier_name ?? null,
+            supplier_email: sup?.supplier_email ?? null,
           };
         });
       }
