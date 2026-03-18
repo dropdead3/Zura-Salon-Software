@@ -98,17 +98,60 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
       {showSetupBanner && (
         <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
           <Card className="border-amber-500/40 bg-amber-500/5">
-            <CardContent className="py-4">
+            <CardContent className="py-4" style={{ containerType: 'inline-size' }}>
+              {(() => {
+                const steps = [
+                  { label: 'Products', done: (setupHealth as any).trackedProducts > 0 },
+                  { label: 'Services', done: (setupHealth as any).trackedServices > 0 },
+                  { label: 'Recipes', done: (setupHealth as any).recipesConfigured > 0 },
+                  { label: 'Allowances', done: (setupHealth as any).allowancePolicies > 0 },
+                  { label: 'Stations', done: (setupHealth as any).stationsConfigured > 0 },
+                  { label: 'Alerts', done: (setupHealth as any).alertRulesConfigured > 0 },
+                ];
+                return null;
+              })()}
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
                     <Sparkles className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'text-foreground')}>
+                    <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>
                       {setupHealth.completed} of {setupHealth.total} areas configured
                     </p>
-                    <Progress value={(setupHealth.completed / setupHealth.total) * 100} className="h-1.5 mt-1.5 max-w-[200px]" indicatorClassName="bg-amber-500" />
+                    {/* Step tracker */}
+                    <div className="flex items-center mt-2 w-full">
+                      {[
+                        { label: 'Products', done: (setupHealth as any).trackedProducts > 0 },
+                        { label: 'Services', done: (setupHealth as any).trackedServices > 0 },
+                        { label: 'Recipes', done: (setupHealth as any).recipesConfigured > 0 },
+                        { label: 'Allowances', done: (setupHealth as any).allowancePolicies > 0 },
+                        { label: 'Stations', done: (setupHealth as any).stationsConfigured > 0 },
+                        { label: 'Alerts', done: (setupHealth as any).alertRulesConfigured > 0 },
+                      ].map((step, i, arr) => (
+                        <div key={step.label} className="flex items-center flex-1 last:flex-none">
+                          <div className="flex flex-col items-center gap-1">
+                            <div className={cn(
+                              'w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors',
+                              step.done
+                                ? 'bg-amber-500 text-amber-950'
+                                : 'border border-amber-500/40 bg-transparent'
+                            )}>
+                              {step.done && <Check className="w-3 h-3" />}
+                            </div>
+                            <span className="hidden @[600px]:block text-[10px] font-sans text-muted-foreground whitespace-nowrap">
+                              {step.label}
+                            </span>
+                          </div>
+                          {i < arr.length - 1 && (
+                            <div className={cn(
+                              'flex-1 h-px mx-1',
+                              step.done ? 'bg-amber-500/60' : 'bg-border/60'
+                            )} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   {!wizardCompleted && (
                     <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:border-amber-500/70">
