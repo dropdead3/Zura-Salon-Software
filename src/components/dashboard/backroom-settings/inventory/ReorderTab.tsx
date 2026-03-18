@@ -353,16 +353,98 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
               )}
               <Button
                 size="sm"
+                variant="outline"
                 onClick={handleCreateAllPOs}
                 disabled={createMultiLinePO.isPending}
               >
                 {createMultiLinePO.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                 Create POs ({selectedIds.size})
               </Button>
+              {emailPreviewGroups.length > 0 && (
+                <Button
+                  size="sm"
+                  onClick={() => setShowEmailPreview(true)}
+                  disabled={batchCreatePOs.isPending}
+                >
+                  <Mail className="w-4 h-4" />
+                  Create & Email ({emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)})
+                </Button>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Bulk Email Preview Dialog */}
+      <Dialog open={showEmailPreview} onOpenChange={setShowEmailPreview}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle className={tokens.card.title}>Confirm PO Email Send</DialogTitle>
+            <DialogDescription>
+              Review the purchase orders that will be created and emailed to suppliers.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[400px] pr-2">
+            <div className="space-y-4 py-2">
+              {emailPreviewGroups.map(group => (
+                <div key={group.supplierName} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    <span className={tokens.body.emphasis}>{group.supplierName}</span>
+                    <span className="text-muted-foreground text-xs">→ {group.supplierEmail}</span>
+                  </div>
+                  <div className="pl-6 space-y-1">
+                    {group.products.map(p => (
+                      <div key={p.id} className="flex items-center justify-between text-sm">
+                        <span>{p.name}</span>
+                        <div className="flex items-center gap-3 text-muted-foreground tabular-nums">
+                          <span>×{getOrderQty(p)}</span>
+                          <span>{formatCurrency(getOrderQty(p) * (p.cost_price ?? p.cost_per_gram ?? 0))}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex justify-end pt-1 border-t border-border/40">
+                      <span className="text-sm text-muted-foreground">
+                        Subtotal: {formatCurrency(group.products.reduce((s, p) => s + getOrderQty(p) * (p.cost_price ?? p.cost_per_gram ?? 0), 0))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          {selectedWithoutEmail > 0 && (
+            <p className="text-xs text-warning flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {selectedWithoutEmail} selected item{selectedWithoutEmail !== 1 ? 's' : ''} skipped (no supplier email)
+            </p>
+          )}
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {emailPreviewGroups.length} supplier{emailPreviewGroups.length !== 1 ? 's' : ''} ·{' '}
+              {emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)} items ·{' '}
+              {formatCurrency(emailPreviewGroups.reduce((s, g) => s + g.products.reduce((ss, p) => ss + getOrderQty(p) * (p.cost_price ?? p.cost_per_gram ?? 0), 0), 0))}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowEmailPreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleCreateAndEmailPOs}
+                disabled={batchCreatePOs.isPending}
+              >
+                {batchCreatePOs.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Create & Send
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
