@@ -579,35 +579,79 @@ export function SupplierSettingsSection() {
   );
 }
 
-/** Compact supplier stats card */
+/** Supplier stats card with PO history + inventory spend/margin */
 function SupplierStatsCard({ supplierName }: { supplierName: string }) {
-  const { data: stats, isLoading } = useSupplierStats(supplierName);
+  const { data: stats, isLoading: statsLoading } = useSupplierStats(supplierName);
+  const { data: spend, isLoading: spendLoading } = useSupplierSpendSummary(supplierName);
+  const { formatCurrency } = useFormatCurrency();
 
-  if (isLoading || !stats || stats.po_count === 0) return null;
+  const hasPOData = stats && stats.po_count > 0;
+  const hasSpendData = spend && spend.productCount > 0;
+
+  if ((statsLoading && spendLoading) || (!hasPOData && !hasSpendData)) return null;
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-muted/30 border border-border/40">
-      <ShoppingCart className="w-4 h-4 text-muted-foreground shrink-0" />
-      <div className="flex items-center gap-6 text-sm">
-        <div>
-          <span className="text-muted-foreground">POs: </span>
-          <span className={tokens.body.emphasis}>{stats.po_count}</span>
+    <div className="space-y-2">
+      {/* Row 1: PO stats */}
+      {hasPOData && (
+        <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-muted/30 border border-border/40">
+          <ShoppingCart className="w-4 h-4 text-muted-foreground shrink-0" />
+          <div className="flex items-center gap-6 text-sm">
+            <div>
+              <span className="text-muted-foreground">POs: </span>
+              <span className={tokens.body.emphasis}>{stats.po_count}</span>
+            </div>
+            {stats.last_order_date && (
+              <div>
+                <span className="text-muted-foreground">Last order: </span>
+                <span className={tokens.body.emphasis}>
+                  {format(new Date(stats.last_order_date), 'MMM d, yyyy')}
+                </span>
+              </div>
+            )}
+            {stats.total_spend > 0 && (
+              <div>
+                <span className="text-muted-foreground">PO Spend: </span>
+                <span className={tokens.body.emphasis}>{formatCurrency(stats.total_spend)}</span>
+              </div>
+            )}
+          </div>
         </div>
-        {stats.last_order_date && (
-          <div>
-            <span className="text-muted-foreground">Last order: </span>
-            <span className={tokens.body.emphasis}>
-              {format(new Date(stats.last_order_date), 'MMM d, yyyy')}
-            </span>
+      )}
+
+      {/* Row 2: Inventory value & margin */}
+      {hasSpendData && (
+        <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-muted/30 border border-border/40">
+          <Package className="w-4 h-4 text-muted-foreground shrink-0" />
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+            <div>
+              <span className="text-muted-foreground">Cost Value: </span>
+              <span className={tokens.body.emphasis}>{formatCurrency(spend.inventoryValueAtCost)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Retail Value: </span>
+              <span className={tokens.body.emphasis}>{formatCurrency(spend.inventoryValueAtRetail)}</span>
+            </div>
+            {spend.impliedMarginPct !== null && (
+              <div>
+                <span className="text-muted-foreground">Margin: </span>
+                <span className={cn(
+                  tokens.body.emphasis,
+                  spend.impliedMarginPct < 40 ? 'text-amber-500' : 'text-primary'
+                )}>
+                  {spend.impliedMarginPct.toFixed(1)}%
+                </span>
+              </div>
+            )}
+            {spend.missingCostCount > 0 && (
+              <div className="flex items-center gap-1 text-amber-500">
+                <AlertTriangle className="w-3 h-3" />
+                <span className="text-xs">{spend.missingCostCount} missing cost</span>
+              </div>
+            )}
           </div>
-        )}
-        {stats.total_spend > 0 && (
-          <div>
-            <span className="text-muted-foreground">Spend: </span>
-            <span className={tokens.body.emphasis}>${stats.total_spend.toLocaleString()}</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -408,7 +408,7 @@ function AlertRow({ alert, onNavigate }: { alert: ControlTowerAlert; onNavigate:
     profitability: 'insights',
     waste: 'insights',
     staff: 'insights',
-    reorder: 'inventory',
+    reorder: 'suppliers',
   };
 
   return (
