@@ -23,6 +23,7 @@ import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
 import type { BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import { SupplierAssignDialog } from './SupplierAssignDialog';
 
 interface SupplierGroup {
   supplierName: string;
