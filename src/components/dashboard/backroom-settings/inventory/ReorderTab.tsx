@@ -136,7 +136,7 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
         supplier_email: group.supplierEmail ?? undefined,
         lines: groupProducts.map(p => ({
           product_id: p.id,
-          quantity_ordered: p.order_qty,
+          quantity_ordered: getOrderQty(p),
           unit_cost: p.cost_price ?? p.cost_per_gram ?? undefined,
         })),
       });
