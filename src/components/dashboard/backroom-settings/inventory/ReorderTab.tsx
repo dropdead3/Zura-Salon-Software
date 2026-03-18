@@ -42,11 +42,12 @@ export function ReorderTab({ locationId }: ReorderTabProps) {
   const { data: recommendations = [], isLoading: recLoading } = useReplenishmentRecommendations('pending');
   const generateRecs = useGenerateReplenishment();
   const createMultiLinePO = useCreateMultiLinePO();
+  const batchCreatePOs = useBatchCreatePurchaseOrders();
   const { formatCurrency } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [sendingEmail, setSendingEmail] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
   // Editable order quantity overrides (product id -> qty)
   const [qtyOverrides, setQtyOverrides] = useState<Record<string, number>>({});
 
