@@ -110,6 +110,7 @@ export function useBackroomDashboard(locationId?: string) {
 
   return {
     isLoading,
+    lastUpdatedAt,
     kpis,
     alerts: controlTowerQ.alerts,
     alertSummary: controlTowerQ.summary,

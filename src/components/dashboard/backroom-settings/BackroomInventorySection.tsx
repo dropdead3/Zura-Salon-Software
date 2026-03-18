@@ -55,13 +55,18 @@ function HealthChip({ icon: Icon, count, label, color, onClick }: {
   );
 }
 
-export function BackroomInventorySection() {
+export function BackroomInventorySection({ initialTab }: { initialTab?: string }) {
   const { data: locations = [] } = useActiveLocations();
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
   const effectiveLocationId = locationId || locations[0]?.id;
 
   // Controlled tabs for programmatic navigation from health banner
-  const [activeTab, setActiveTab] = useState('stock');
+  const [activeTab, setActiveTab] = useState(initialTab || 'stock');
+
+  // React to external tab changes (e.g. quick actions from overview)
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Badge counts
   const { data: inventory = [] } = useBackroomInventoryTable({ locationId: effectiveLocationId });

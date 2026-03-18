@@ -145,7 +145,9 @@ export function BackroomDashboardOverview({ onNavigate }: Props) {
               </div>
               <div>
                 <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
-                <CardDescription>Priority alerts requiring attention</CardDescription>
+                <CardDescription>
+                  {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
+                </CardDescription>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => onNavigate('alerts')} className="font-sans text-xs text-muted-foreground">

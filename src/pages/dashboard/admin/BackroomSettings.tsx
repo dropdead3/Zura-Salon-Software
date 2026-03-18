@@ -302,7 +302,7 @@ export default function BackroomSettings() {
             {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
-            {activeSection === 'inventory' && <BackroomInventorySection />}
+            {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}
             {activeSection === 'permissions' && <BackroomPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
