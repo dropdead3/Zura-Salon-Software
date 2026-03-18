@@ -13588,6 +13588,41 @@ export type Database = {
           },
         ]
       }
+      procurement_budgets: {
+        Row: {
+          alert_threshold_pct: number
+          id: string
+          monthly_budget: number
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          alert_threshold_pct?: number
+          id?: string
+          monthly_budget?: number
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          alert_threshold_pct?: number
+          id?: string
+          monthly_budget?: number
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_budgets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_categories: {
         Row: {
           created_at: string | null
