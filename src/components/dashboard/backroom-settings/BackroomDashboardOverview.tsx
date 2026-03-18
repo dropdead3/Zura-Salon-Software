@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBackroomDashboard } from '@/hooks/backroom/useBackroomDashboard';
 import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
@@ -10,18 +10,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Sparkles, Users2, Package, ShieldAlert, Truck,
+  Sparkles, Users2, Package, ShieldAlert, Truck, BarChart3, Brain,
 } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
+import { BackroomInsightsSection } from './BackroomInsightsSection';
+import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
 import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 
 interface Props {
   onNavigate: (section: string) => void;
+  initialSubTab?: string;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
