@@ -552,12 +552,13 @@ export function StockTab({ locationId }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function KpiCard({ icon, label, value, accent, onClick }: {
+function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   accent?: 'warning' | 'destructive';
   onClick?: () => void;
+  tooltip?: string;
 }) {
   return (
     <div
@@ -570,6 +571,7 @@ function KpiCard({ icon, label, value, accent, onClick }: {
       )}
       onClick={onClick}
     >
+      {tooltip && <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />}
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <span className={tokens.kpi.label}>{label}</span>
