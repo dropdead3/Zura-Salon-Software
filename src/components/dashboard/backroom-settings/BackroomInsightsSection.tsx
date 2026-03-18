@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
-  DollarSign, Beaker, Scale, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2,
+  DollarSign, Beaker, Scale, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2, MapPin,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BackroomBrandUsageCard } from './BackroomBrandUsageCard';
 import { BackroomHistoryChart } from './BackroomHistoryChart';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
 type DatePreset = 'today' | '7d' | '30d' | 'this_month' | 'last_month' | '90d';
@@ -48,10 +49,13 @@ export function BackroomInsightsSection() {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [sortKey, setSortKey] = useState<SortKey>('sessions');
   const [sortAsc, setSortAsc] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
+  const { data: activeLocations = [] } = useActiveLocations();
 
   const { start, end, label: rangeLabel } = getDateRange(datePreset);
-  const { data: analytics, isLoading: analyticsLoading } = useBackroomAnalytics(start, end);
-  const { data: staffMetrics, isLoading: staffLoading } = useBackroomStaffMetrics(start, end);
+  const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
+  const { data: analytics, isLoading: analyticsLoading } = useBackroomAnalytics(start, end, effectiveLocationId);
+  const { data: staffMetrics, isLoading: staffLoading } = useBackroomStaffMetrics(start, end, effectiveLocationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
 
@@ -100,17 +104,33 @@ export function BackroomInsightsSection() {
           <h2 className={tokens.heading.section}>Backroom Insights</h2>
           <p className="text-sm text-muted-foreground mt-1">High-level backroom performance for {rangeLabel.toLowerCase()}</p>
         </div>
-        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="7d">Last 7 Days</SelectItem>
-            <SelectItem value="30d">Last 30 Days</SelectItem>
-            <SelectItem value="this_month">This Month</SelectItem>
-            <SelectItem value="last_month">Last Month</SelectItem>
-            <SelectItem value="90d">Last 90 Days</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {activeLocations.length > 1 && (
+            <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+              <SelectTrigger className="w-fit gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {activeLocations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+              <SelectItem value="90d">Last 90 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -197,8 +217,8 @@ export function BackroomInsightsSection() {
         </CardContent>
       </Card>
 
-      <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} />
-      <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} />
+      <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+      <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
     </div>
   );
 }

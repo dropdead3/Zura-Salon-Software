@@ -38,10 +38,11 @@ interface Props {
   startDate: string;
   endDate: string;
   rangeLabel: string;
+  locationId?: string;
 }
 
-export function BackroomBrandUsageCard({ startDate, endDate, rangeLabel }: Props) {
-  const { data: brands, isLoading } = useBackroomBrandUsage(startDate, endDate);
+export function BackroomBrandUsageCard({ startDate, endDate, rangeLabel, locationId }: Props) {
+  const { data: brands, isLoading } = useBackroomBrandUsage(startDate, endDate, locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
 

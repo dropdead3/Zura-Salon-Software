@@ -28,11 +28,12 @@ interface Props {
   startDate: string;
   endDate: string;
   rangeLabel: string;
+  locationId?: string;
 }
 
-export function BackroomHistoryChart({ startDate, endDate, rangeLabel }: Props) {
+export function BackroomHistoryChart({ startDate, endDate, rangeLabel, locationId }: Props) {
   const [bucketMode, setBucketMode] = useState<BucketMode>('daily');
-  const { data: history, isLoading } = useBackroomHistory(startDate, endDate, bucketMode);
+  const { data: history, isLoading } = useBackroomHistory(startDate, endDate, bucketMode, locationId);
   const { formatNumber } = useFormatNumber();
 
   const formatPeriod = (period: string) => {
