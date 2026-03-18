@@ -518,6 +518,13 @@ export function StockTab({ locationId }: StockTabProps) {
         products={autoPoProducts}
         organizationId={orgId ?? ''}
       />
+      <AutoParDialog
+        open={autoParDialog}
+        onOpenChange={setAutoParDialog}
+        productIds={inventory.map(r => r.id)}
+        orgId={orgId ?? ''}
+        locationId={locationId}
+      />
     </div>
   );
 }
