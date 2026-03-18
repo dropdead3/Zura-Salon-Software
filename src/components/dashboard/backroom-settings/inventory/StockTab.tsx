@@ -464,10 +464,30 @@ export function StockTab({ locationId }: StockTabProps) {
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Container</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Min</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Max</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Reorder Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                    <span className="inline-flex items-center gap-1">
+                      Stock
+                      <MetricInfoTooltip description="Current quantity on hand. Click the number to adjust." />
+                    </span>
+                  </TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Reorder Pt
+                      <MetricInfoTooltip description="When stock drops to this level, a reorder is triggered. Click to edit." />
+                    </span>
+                  </TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Par Level
+                      <MetricInfoTooltip description="Your target stock level — the ideal quantity to have on hand. Click to edit." />
+                    </span>
+                  </TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Reorder Qty
+                      <MetricInfoTooltip description="How many units to order to reach Par Level, minus any already on open POs." />
+                    </span>
+                  </TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell w-[72px]')}>PO History</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
