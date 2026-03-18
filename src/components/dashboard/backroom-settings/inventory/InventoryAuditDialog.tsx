@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { useInventoryAuditTrail, type AuditEntry, type AuditFilters } from '@/hooks/backroom/useInventoryAuditTrail';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { format, formatDistanceToNow } from 'date-fns';
+import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
 interface InventoryAuditDialogProps {
   open: boolean;
