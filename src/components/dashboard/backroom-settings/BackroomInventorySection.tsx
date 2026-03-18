@@ -1,19 +1,20 @@
 /**
  * BackroomInventorySection — Tabbed inventory management workspace.
- * Replaces InventoryReplenishmentSection with a workflow-oriented 5-tab layout:
- * Stock | Reorder | Orders | Receive | Counts
+ * Workflow-oriented 6-tab layout: Stock | Reorder | Orders | Receive | Counts | Audit Log
+ * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
 
 import { useState, useMemo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History } from 'lucide-react';
+import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { NavBadge } from '../NavBadge';
+import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
 import { StockTab } from './inventory/StockTab';
 import { ReorderTab } from './inventory/ReorderTab';
 import { OrdersTab } from './inventory/OrdersTab';
@@ -21,21 +22,57 @@ import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
 import { AuditLogTab } from './inventory/AuditLogTab';
 
+/* ── Health Banner Chip ── */
+function HealthChip({ icon: Icon, count, label, color, onClick }: {
+  icon: React.ElementType;
+  count: number;
+  label: string;
+  color: 'destructive' | 'warning' | 'primary' | 'accent';
+  onClick: () => void;
+}) {
+  if (count <= 0) return null;
+
+  const colorMap = {
+    destructive: 'bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15',
+    warning: 'bg-warning/10 text-warning border-warning/20 hover:bg-warning/15',
+    primary: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15',
+    accent: 'bg-accent/50 text-accent-foreground border-accent/30 hover:bg-accent/60',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer',
+        colorMap[color]
+      )}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      <span className="tabular-nums">{count}</span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
 export function BackroomInventorySection() {
   const { data: locations = [] } = useActiveLocations();
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
   const effectiveLocationId = locationId || locations[0]?.id;
 
+  // Controlled tabs for programmatic navigation from health banner
+  const [activeTab, setActiveTab] = useState('stock');
+
   // Badge counts
   const { data: inventory = [] } = useBackroomInventoryTable({ locationId: effectiveLocationId });
   const { data: allOrders = [] } = usePurchaseOrders({ status: 'all' });
 
-  const reorderCount = useMemo(() =>
-    inventory.filter(r => r.status === 'urgent_reorder' || r.status === 'out_of_stock' || r.status === 'replenish').length,
-    [inventory]
-  );
+  const outOfStockCount = useMemo(() => inventory.filter(r => r.status === 'out_of_stock').length, [inventory]);
+  const lowStockCount = useMemo(() => inventory.filter(r => r.status === 'urgent_reorder' || r.status === 'replenish').length, [inventory]);
+  const reorderCount = outOfStockCount + lowStockCount;
   const draftOrderCount = useMemo(() => allOrders.filter(po => po.status === 'draft').length, [allOrders]);
   const receivableCount = useMemo(() => allOrders.filter(po => po.status === 'sent' || po.status === 'partially_received').length, [allOrders]);
+
+  const hasHealthAlerts = outOfStockCount > 0 || lowStockCount > 0 || draftOrderCount > 0 || receivableCount > 0;
 
   return (
     <div className="space-y-5">
@@ -60,8 +97,26 @@ export function BackroomInventorySection() {
         )}
       </div>
 
+      {/* Inventory Health Banner */}
+      {hasHealthAlerts && (
+        <div className="flex items-center gap-2 flex-wrap p-2.5 rounded-lg bg-muted/40 border border-border/60">
+          <span className="text-xs text-muted-foreground font-sans mr-1">Needs attention:</span>
+          <HealthChip icon={XCircle} count={outOfStockCount} label="Out of Stock" color="destructive" onClick={() => setActiveTab('reorder')} />
+          <HealthChip icon={AlertTriangle} count={lowStockCount} label="Low Stock" color="warning" onClick={() => setActiveTab('reorder')} />
+          <HealthChip icon={Inbox} count={draftOrderCount} label="Draft POs" color="primary" onClick={() => setActiveTab('orders')} />
+          <HealthChip icon={PackageOpen} count={receivableCount} label="Awaiting Receive" color="accent" onClick={() => setActiveTab('receive')} />
+        </div>
+      )}
+
+      {/* First-time onboarding hint */}
+      <FirstTimeCallout
+        id="backroom-inventory-workflow"
+        title="Inventory Workflow"
+        description="Track Products → Set Reorder Levels → Monitor Stock → Create Orders → Receive Shipments → Run Counts"
+      />
+
       {/* Tabbed workspace */}
-      <Tabs defaultValue="stock" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start bg-muted/50 rounded-xl p-1 h-auto flex-wrap gap-0.5">
           <TabsTrigger value="stock" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <Package className="w-4 h-4" /> Stock

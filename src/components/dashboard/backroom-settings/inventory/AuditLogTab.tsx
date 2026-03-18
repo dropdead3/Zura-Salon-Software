@@ -1,6 +1,6 @@
 /**
  * AuditLogTab — Bulk cross-product audit view.
- * Table layout with filters, search, pagination, and CSV/PDF export.
+ * Table layout with quick-filter chips, filters, search, pagination with page size selector, and CSV/PDF export.
  */
 
 import { useState } from 'react';
@@ -17,7 +17,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/backroom/useBulkInventoryAuditTrail';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { format } from 'date-fns';
+import { format, startOfDay, startOfWeek } from 'date-fns';
 import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
 interface AuditLogTabProps {
@@ -49,7 +49,7 @@ function exportBulkCsv(entries: BulkAuditEntry[]) {
   const rows = entries.map(e => [
     new Date(e.created_at).toISOString(),
     escape(e.product_name),
-    e.type,
+    e.type === 'stock' ? 'Qty Change' : 'Level Change',
     getFieldLabel(e.field),
     e.quantity_change != null ? (e.quantity_change > 0 ? `+${e.quantity_change}` : String(e.quantity_change)) : '',
     e.quantity_after ?? '',
@@ -84,7 +84,7 @@ async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string) {
   const tableData = entries.map(e => [
     format(new Date(e.created_at), 'MMM d, yyyy h:mm a'),
     e.product_name,
-    e.type === 'stock' ? 'Stock' : 'Setting',
+    e.type === 'stock' ? 'Qty Change' : 'Level Change',
     getFieldLabel(e.field),
     e.quantity_change != null ? (e.quantity_change > 0 ? `+${e.quantity_change}` : String(e.quantity_change)) : '—',
     e.quantity_after ?? '—',
@@ -105,7 +105,9 @@ async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string) {
   doc.save(`inventory-audit-log-${today}.pdf`);
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
+
+type QuickFilterKey = 'today' | 'thisWeek' | 'adjustments' | 'receiving' | null;
 
 export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
@@ -116,6 +118,58 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilterKey>(null);
+
+  const applyQuickFilter = (key: QuickFilterKey) => {
+    if (activeQuickFilter === key) {
+      // Toggle off
+      setActiveQuickFilter(null);
+      setTypeFilter('all');
+      setDateFrom(undefined);
+      setDateTo(undefined);
+      setSearch('');
+      setPage(0);
+      return;
+    }
+    setActiveQuickFilter(key);
+    setPage(0);
+    switch (key) {
+      case 'today':
+        setDateFrom(startOfDay(new Date()));
+        setDateTo(undefined);
+        setTypeFilter('all');
+        setSearch('');
+        break;
+      case 'thisWeek':
+        setDateFrom(startOfWeek(new Date(), { weekStartsOn: 1 }));
+        setDateTo(undefined);
+        setTypeFilter('all');
+        setSearch('');
+        break;
+      case 'adjustments':
+        setTypeFilter('stock');
+        setSearch('adjustment');
+        setDateFrom(undefined);
+        setDateTo(undefined);
+        break;
+      case 'receiving':
+        setTypeFilter('stock');
+        setSearch('receiving');
+        setDateFrom(undefined);
+        setDateTo(undefined);
+        break;
+    }
+  };
+
+  const clearAll = () => {
+    setTypeFilter('all');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setSearch('');
+    setPage(0);
+    setActiveQuickFilter(null);
+  };
 
   const filters: BulkAuditFilters = {
     typeFilter,
@@ -123,7 +177,7 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
     dateTo: dateTo ? new Date(dateTo.getTime() + 86400000 - 1) : undefined,
     search,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   };
 
   const { data, isLoading } = useBulkInventoryAuditTrail(filters);
@@ -132,9 +186,35 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
 
   const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
 
+  const hasActiveFilters = dateFrom || dateTo || typeFilter !== 'all' || search;
+
   return (
     <Card>
       <CardContent className="p-4 space-y-4">
+        {/* Quick filter chips */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground font-sans mr-1">Quick filters:</span>
+          {([
+            { key: 'today' as const, label: 'Today' },
+            { key: 'thisWeek' as const, label: 'This Week' },
+            { key: 'adjustments' as const, label: 'Adjustments' },
+            { key: 'receiving' as const, label: 'Receiving' },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => applyQuickFilter(key)}
+              className={cn(
+                'inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer',
+                activeQuickFilter === key
+                  ? 'bg-primary/10 text-primary border-primary/30'
+                  : 'bg-muted/40 text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground'
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Filter bar */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative flex-1 min-w-[180px] max-w-xs">
@@ -142,19 +222,19 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
             <Input
               placeholder="Search products, users, notes..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); setActiveQuickFilter(null); }}
               className="pl-8 h-8 text-sm"
             />
           </div>
 
-          <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as any); setPage(0); }}>
+          <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as any); setPage(0); setActiveQuickFilter(null); }}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Changes</SelectItem>
-              <SelectItem value="stock">Stock Changes</SelectItem>
-              <SelectItem value="setting">Setting Changes</SelectItem>
+              <SelectItem value="stock">Qty Changes</SelectItem>
+              <SelectItem value="setting">Level Changes</SelectItem>
             </SelectContent>
           </Select>
 
@@ -169,7 +249,7 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
               <Calendar
                 mode="single"
                 selected={dateFrom}
-                onSelect={(d) => { setDateFrom(d); setPage(0); }}
+                onSelect={(d) => { setDateFrom(d); setPage(0); setActiveQuickFilter(null); }}
                 initialFocus
                 className="p-3 pointer-events-auto"
               />
@@ -187,19 +267,19 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
               <Calendar
                 mode="single"
                 selected={dateTo}
-                onSelect={(d) => { setDateTo(d); setPage(0); }}
+                onSelect={(d) => { setDateTo(d); setPage(0); setActiveQuickFilter(null); }}
                 initialFocus
                 className="p-3 pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
 
-          {(dateFrom || dateTo || typeFilter !== 'all' || search) && (
+          {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
               className="h-8 text-xs text-muted-foreground"
-              onClick={() => { setTypeFilter('all'); setDateFrom(undefined); setDateTo(undefined); setSearch(''); setPage(0); }}
+              onClick={clearAll}
             >
               Clear
             </Button>
@@ -262,9 +342,25 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
               </Table>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination with page size selector */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Page {page + 1}</span>
+              <div className="flex items-center gap-2">
+                <span>Page {page + 1}</span>
+                <span className="text-border">·</span>
+                <div className="flex items-center gap-1">
+                  <span>Rows:</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(0); }}>
+                    <SelectTrigger className="h-6 w-[60px] text-xs border-border/60">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAGE_SIZE_OPTIONS.map(size => (
+                        <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
@@ -315,7 +411,7 @@ function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () 
           'text-[10px]',
           isStock ? 'bg-muted/50 text-foreground/70' : 'bg-primary/5 text-primary border-primary/20'
         )}>
-          {isStock ? 'Stock' : 'Setting'}
+          {isStock ? 'Qty Change' : 'Level Change'}
         </Badge>
       </TableCell>
       <TableCell>{getFieldLabel(entry.field)}</TableCell>
