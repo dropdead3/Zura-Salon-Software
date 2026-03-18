@@ -84,7 +84,7 @@ export function CountsTab({ locationId }: CountsTabProps) {
       const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
       // Build a URL that links back to the inventory counts tab
       const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
-      generateCountSheetPdf({
+      await generateCountSheetPdf({
         products: inventoryProducts,
         orgName: effectiveOrganization?.name ?? 'Organization',
         locationName: undefined,

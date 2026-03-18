@@ -241,6 +241,15 @@ export async function sendOrgEmail(
     reply_to: replyTo,
   };
 
+  // Attach files if provided
+  if (payload.attachments && payload.attachments.length > 0) {
+    resendBody.attachments = payload.attachments.map(att => ({
+      filename: att.filename,
+      content: att.content,
+      type: att.type || 'application/pdf',
+    }));
+  }
+
   // Add List-Unsubscribe headers for Gmail/Yahoo compliance
   if (unsubscribeUrl) {
     resendBody.headers = {
