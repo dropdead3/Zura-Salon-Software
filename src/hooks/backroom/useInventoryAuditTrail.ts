@@ -41,36 +41,37 @@ export function useInventoryAuditTrail(productId: string | null, limit = 50, fil
       const fetchStock = typeFilter === 'all' || typeFilter === 'stock';
       const fetchSettings = typeFilter === 'all' || typeFilter === 'setting';
 
-      const promises: [Promise<any>, Promise<any>] = [
-        fetchStock
-          ? (() => {
-              let q = supabase
-                .from('stock_movements')
-                .select('id, created_at, created_by, quantity_change, quantity_after, event_type, reason, notes')
-                .eq('organization_id', orgId!)
-                .eq('product_id', productId!)
-                .order('created_at', { ascending: false })
-                .limit(limit);
-              if (filters?.dateFrom) q = q.gte('created_at', filters.dateFrom.toISOString());
-              if (filters?.dateTo) q = q.lte('created_at', filters.dateTo.toISOString());
-              return q;
-            })()
-          : Promise.resolve({ data: [], error: null }),
-        fetchSettings
-          ? (() => {
-              let q = supabase
-                .from('inventory_settings_audit' as any)
-                .select('id, created_at, changed_by, field_name, old_value, new_value')
-                .eq('organization_id', orgId!)
-                .eq('product_id', productId!)
-                .order('created_at', { ascending: false })
-                .limit(limit);
-              if (filters?.dateFrom) q = q.gte('created_at', filters.dateFrom.toISOString());
-              if (filters?.dateTo) q = q.lte('created_at', filters.dateTo.toISOString());
-              return q;
-            })()
-          : Promise.resolve({ data: [], error: null }),
-      ];
+      const movementsPromise = fetchStock
+        ? (async () => {
+            let q = supabase
+              .from('stock_movements')
+              .select('id, created_at, created_by, quantity_change, quantity_after, event_type, reason, notes')
+              .eq('organization_id', orgId!)
+              .eq('product_id', productId!)
+              .order('created_at', { ascending: false })
+              .limit(limit);
+            if (filters?.dateFrom) q = q.gte('created_at', filters.dateFrom.toISOString());
+            if (filters?.dateTo) q = q.lte('created_at', filters.dateTo.toISOString());
+            return q;
+          })()
+        : Promise.resolve({ data: [] as any[], error: null });
+
+      const settingsPromise = fetchSettings
+        ? (async () => {
+            let q = supabase
+              .from('inventory_settings_audit' as any)
+              .select('id, created_at, changed_by, field_name, old_value, new_value')
+              .eq('organization_id', orgId!)
+              .eq('product_id', productId!)
+              .order('created_at', { ascending: false })
+              .limit(limit);
+            if (filters?.dateFrom) q = q.gte('created_at', filters.dateFrom.toISOString());
+            if (filters?.dateTo) q = q.lte('created_at', filters.dateTo.toISOString());
+            return q;
+          })()
+        : Promise.resolve({ data: [] as any[], error: null });
+
+      const [movementsRes, settingsRes] = await Promise.all([movementsPromise, settingsPromise]);
 
       const [movementsRes, settingsRes] = await Promise.all(promises);
 
