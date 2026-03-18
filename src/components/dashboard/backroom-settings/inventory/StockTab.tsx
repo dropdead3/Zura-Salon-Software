@@ -329,13 +329,14 @@ export function StockTab({ locationId }: StockTabProps) {
     <div className="space-y-4">
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={<Package className="w-5 h-5 text-primary" />} label="Total On Hand" value={formatNumber(kpis.totalOnHand)} />
+        <KpiCard icon={<Package className="w-5 h-5 text-primary" />} label="Total On Hand" value={formatNumber(kpis.totalOnHand)} tooltip="Sum of all tracked product quantities across this location." />
         <KpiCard
           icon={<AlertTriangle className="w-5 h-5 text-warning" />}
           label="Low Stock"
           value={String(kpis.lowStock)}
           accent={kpis.lowStock > 0 ? 'warning' : undefined}
           onClick={() => setStatusFilter(statusFilter === 'replenish' ? 'all' : 'replenish')}
+          tooltip="Products at or below their Reorder Point. Click to filter."
         />
         <KpiCard
           icon={<XCircle className="w-5 h-5 text-destructive" />}
@@ -343,8 +344,9 @@ export function StockTab({ locationId }: StockTabProps) {
           value={String(kpis.outOfStock)}
           accent={kpis.outOfStock > 0 ? 'destructive' : undefined}
           onClick={() => setStatusFilter(statusFilter === 'out_of_stock' ? 'all' : 'out_of_stock')}
+          tooltip="Products with zero quantity on hand. Click to filter."
         />
-        <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} />
+        <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} tooltip="Total cost value of all stock on hand (quantity × unit cost)." />
       </div>
 
       {/* Filters + Actions */}
