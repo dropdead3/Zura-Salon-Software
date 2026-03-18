@@ -30,7 +30,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
-import { BackroomSetupOverview } from '@/components/dashboard/backroom-settings/BackroomSetupOverview';
+import { BackroomDashboardOverview } from '@/components/dashboard/backroom-settings/BackroomDashboardOverview';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings/ServiceTrackingSection';
 import { RecipeBaselineSection } from '@/components/dashboard/backroom-settings/RecipeBaselineSection';
@@ -206,8 +206,8 @@ export default function BackroomSettings() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className={tokens.heading.page}>Backroom Settings</h1>
-              <p className="text-muted-foreground">Configure products, services, allowances, and operational policies that power Zura Backroom.</p>
+              <h1 className={tokens.heading.page}>Zura Backroom</h1>
+              <p className="text-muted-foreground">Operational command center — monitor performance, track inventory, and manage backroom policies.</p>
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ export default function BackroomSettings() {
 
           {/* Content area */}
           <div className="flex-1 min-w-0">
-            {activeSection === 'overview' && <BackroomSetupOverview onNavigate={handleNavigate} />}
+            {activeSection === 'overview' && <BackroomDashboardOverview onNavigate={handleNavigate} />}
             {activeSection === 'supply-intelligence' && <SupplyIntelligenceDashboard />}
             {activeSection === 'insights' && <BackroomInsightsSection />}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
