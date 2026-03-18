@@ -301,7 +301,15 @@ function ReorderRow({ row, selected, onToggle, formatCurrency, orderQty, onOrder
       <TableCell className="text-right font-medium tabular-nums">{row.quantity_on_hand}</TableCell>
       <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.reorder_level ?? '—'}</TableCell>
       <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">{row.par_level ?? '—'}</TableCell>
-      <TableCell className="text-right font-medium tabular-nums text-warning">{row.order_qty || '—'}</TableCell>
+      <TableCell className="text-right">
+        <Input
+          type="number"
+          min={0}
+          value={orderQty}
+          onChange={(e) => onOrderQtyChange(parseInt(e.target.value) || 0)}
+          className="w-16 h-7 text-right tabular-nums text-sm ml-auto"
+        />
+      </TableCell>
       <TableCell className="hidden lg:table-cell">
         {forecast.daysUntilStockout === 0 ? (
           <span className="text-destructive text-xs font-medium flex items-center gap-1">

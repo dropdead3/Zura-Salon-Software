@@ -67,13 +67,13 @@ export function BackroomInventorySection() {
             <Package className="w-4 h-4" /> Stock
           </TabsTrigger>
           <TabsTrigger value="reorder" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <RefreshCcw className="w-4 h-4" /> Reorder
+            <RefreshCcw className="w-4 h-4" /> Reorder <NavBadge count={reorderCount} />
           </TabsTrigger>
           <TabsTrigger value="orders" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <FileText className="w-4 h-4" /> Orders
+            <FileText className="w-4 h-4" /> Orders <NavBadge count={draftOrderCount} />
           </TabsTrigger>
           <TabsTrigger value="receive" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <Truck className="w-4 h-4" /> Receive
+            <Truck className="w-4 h-4" /> Receive <NavBadge count={receivableCount} />
           </TabsTrigger>
           <TabsTrigger value="counts" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <ClipboardCheck className="w-4 h-4" /> Counts
