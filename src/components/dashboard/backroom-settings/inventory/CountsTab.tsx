@@ -98,10 +98,22 @@ export function CountsTab({ locationId }: CountsTabProps) {
           <p className={tokens.body.emphasis}>Physical Count Sessions</p>
           <p className={tokens.body.muted}>Run periodic counts to detect shrinkage and keep stock accurate.</p>
         </div>
-        <Button size="sm" onClick={handleStartCount} disabled={createSession.isPending} className={tokens.button.cardAction}>
-          {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          Start New Count
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrintCountSheet}
+            disabled={generatingPdf || inventoryProducts.length === 0}
+            className={tokens.button.cardAction}
+          >
+            {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+            Print Count Sheet
+          </Button>
+          <Button size="sm" onClick={handleStartCount} disabled={createSession.isPending} className={tokens.button.cardAction}>
+            {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Start New Count
+          </Button>
+        </div>
       </div>
 
       {/* KPI summary */}
