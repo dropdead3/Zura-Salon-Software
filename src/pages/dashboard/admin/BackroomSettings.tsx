@@ -172,7 +172,14 @@ export default function BackroomSettings() {
   }, [searchParams, setSearchParams, queryClient, orgId]);
 
   const handleNavigate = useCallback((section: string) => {
-    setActiveSection(section as BackroomSection);
+    if (section.includes(':')) {
+      const [sec, tab] = section.split(':');
+      setActiveSection(sec as BackroomSection);
+      setSubTab(tab);
+    } else {
+      setActiveSection(section as BackroomSection);
+      setSubTab(undefined);
+    }
   }, []);
 
   if (entitlementLoading) {
