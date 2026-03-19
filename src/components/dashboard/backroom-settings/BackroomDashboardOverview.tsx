@@ -28,6 +28,7 @@ import { WasteCategoryBreakdownCard } from '@/components/dashboard/backroom/Wast
 import { ServicePLReport } from '@/components/dashboard/backroom/ServicePLReport';
 import { BackroomInventoryValuationCard } from '@/components/dashboard/backroom/BackroomInventoryValuationCard';
 import { SeasonalDemandOverlay } from '@/components/dashboard/backroom/SeasonalDemandOverlay';
+import { ProductUsageFrequencyTable } from '@/components/dashboard/backroom/ProductUsageFrequencyTable';
 import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 
@@ -478,6 +479,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
           <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
           <BackroomInventoryValuationCard locationId={effectiveLocationId} />
           <SeasonalDemandOverlay locationId={effectiveLocationId} />
+          <ProductUsageFrequencyTable locationId={effectiveLocationId} />
         </TabsContent>
 
         {/* ── AI Intelligence ── */}
