@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 interface SalesReportPDFProps {
   dateFrom: string;
   dateTo: string;
+  orgName?: string;
   metrics?: {
     totalRevenue: number;
     serviceRevenue: number;
