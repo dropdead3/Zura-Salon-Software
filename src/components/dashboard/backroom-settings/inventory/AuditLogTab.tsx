@@ -23,7 +23,7 @@ import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetail
 
 interface AuditLogTabProps {
   locationId?: string;
-  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
+  pdfExportRef?: React.MutableRefObject<((locationIds: string[], combined: boolean) => void) | null>;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -194,7 +194,7 @@ export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
 
   // Register PDF export handler for parent header button
   useEffect(() => {
-    if (pdfExportRef) pdfExportRef.current = handleBulkPdfExport;
+    if (pdfExportRef) pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handleBulkPdfExport();
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [handleBulkPdfExport, pdfExportRef]);
 

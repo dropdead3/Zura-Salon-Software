@@ -46,7 +46,7 @@ import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
 
 interface StockTabProps {
   locationId?: string;
-  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
+  pdfExportRef?: React.MutableRefObject<((locationIds: string[], combined: boolean) => void) | null>;
 }
 
 interface SupplierGroup {
@@ -323,7 +323,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
 
   // Register PDF export handler for parent header button
   useEffect(() => {
-    if (pdfExportRef) pdfExportRef.current = handlePdfExport;
+    if (pdfExportRef) pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handlePdfExport();
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [handlePdfExport, pdfExportRef]);
 

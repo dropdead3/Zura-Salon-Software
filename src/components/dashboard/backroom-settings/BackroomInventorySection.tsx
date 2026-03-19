@@ -22,6 +22,7 @@ import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
 import { AuditLogTab } from './inventory/AuditLogTab';
 import { ReorderAnalyticsTab } from './inventory/ReorderAnalyticsTab';
+import { PdfExportDialog, type ExportScope, type ExportFormat } from './inventory/PdfExportDialog';
 
 /* ── Health Banner Chip ── */
 function HealthChip({ icon: Icon, count, label, color, onClick }: {
@@ -79,7 +80,29 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
 
   const hasHealthAlerts = outOfStockCount > 0 || lowStockCount > 0 || draftOrderCount > 0 || receivableCount > 0;
 
-  const pdfExportRef = useRef<(() => void) | null>(null);
+  const pdfExportRef = useRef<((locationIds: string[], combined: boolean) => void) | null>(null);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+
+  const currentLocationName = useMemo(() => {
+    return locations.find(l => l.id === effectiveLocationId)?.name;
+  }, [locations, effectiveLocationId]);
+
+  const handlePdfClick = () => {
+    // Single location: export directly without dialog
+    if (locations.length <= 1) {
+      const ids = effectiveLocationId ? [effectiveLocationId] : [];
+      pdfExportRef.current?.(ids, false);
+      return;
+    }
+    setPdfDialogOpen(true);
+  };
+
+  const handlePdfExportConfirm = (scope: ExportScope, format: ExportFormat) => {
+    const ids = scope === 'all'
+      ? locations.map(l => l.id)
+      : effectiveLocationId ? [effectiveLocationId] : [];
+    pdfExportRef.current?.(ids, format === 'combined');
+  };
 
   return (
     <div className="space-y-5">
@@ -108,13 +131,22 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
               variant="outline"
               size="sm"
               className="font-sans rounded-full gap-1.5 shrink-0"
-              onClick={() => pdfExportRef.current?.()}
+              onClick={handlePdfClick}
             >
               <FileDown className="w-4 h-4" /> PDF
             </Button>
           )}
         </div>
       </div>
+
+      <PdfExportDialog
+        open={pdfDialogOpen}
+        onOpenChange={setPdfDialogOpen}
+        locations={locations}
+        currentLocationId={effectiveLocationId}
+        currentLocationName={currentLocationName}
+        onExport={handlePdfExportConfirm}
+      />
 
 
       {/* First-time onboarding hint */}
