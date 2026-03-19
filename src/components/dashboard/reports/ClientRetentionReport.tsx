@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { CLV_TIERS } from '@/lib/clv-calculator';
