@@ -163,7 +163,7 @@ export function downloadPurchaseOrderPdf(options: GeneratePOPdfOptions): void {
   // Re-use same layout logic
   const result = generatePurchaseOrderPdf(options);
   // For download, just regenerate and save
-  const fileName = `PO_${options.supplierName.replace(/\s+/g, '_')}_${today}.pdf`;
+  const fileName = buildReportFileName({ orgName: options.orgName, reportSlug: `PO-${options.supplierName.replace(/\s+/g, '-')}`, dateFrom: today });
   
   // Convert base64 back to blob and save
   const byteCharacters = atob(result.base64);
