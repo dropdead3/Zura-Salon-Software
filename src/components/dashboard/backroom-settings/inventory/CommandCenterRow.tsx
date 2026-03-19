@@ -303,7 +303,7 @@ export function CommandCenterRow({
                 ) : (
                   <span
                     className={cn(
-                      'text-lg tabular-nums cursor-pointer transition-colors',
+                      'text-lg tabular-nums cursor-pointer transition-colors duration-150',
                       isOverridden
                         ? 'text-primary border-b border-dashed border-primary/40'
                         : 'text-foreground font-medium border-b border-dashed border-transparent hover:border-muted-foreground/30',
