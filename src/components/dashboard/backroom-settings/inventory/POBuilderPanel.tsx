@@ -231,7 +231,7 @@ function SupplierPOCard({
                     className="w-10 h-6 text-center text-xs tabular-nums rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
                   />
                   <button
-                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
                     onClick={() => {
                       const newQty = qty + 1;
                       onQtyOverride(item.id, newQty === item.recommended_order_qty ? null : newQty);
