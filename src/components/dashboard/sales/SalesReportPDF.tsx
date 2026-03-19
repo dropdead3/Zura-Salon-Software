@@ -50,7 +50,7 @@ interface SalesReportPDFProps {
   }>;
 }
 
-export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locationData }: SalesReportPDFProps) {
+export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData, locationData }: SalesReportPDFProps) {
   const { formatDate } = useFormatDate();
   const { formatNumber } = useFormatNumber();
   const [open, setOpen] = useState(false);
