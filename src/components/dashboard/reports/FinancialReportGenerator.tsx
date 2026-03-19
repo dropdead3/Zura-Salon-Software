@@ -26,6 +26,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportFooter, addReportHeader, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
@@ -52,6 +53,7 @@ export function FinancialReportGenerator({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
 
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFrom, dateTo, locationId);
   const goals = useSalesGoals().goals;
@@ -99,6 +101,7 @@ export function FinancialReportGenerator({
         reportTitle: getReportTitle(),
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

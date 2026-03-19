@@ -24,6 +24,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
 
 interface CapacityReportProps {
@@ -46,6 +47,7 @@ export function CapacityReport({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
 
   const { data: capacityData, isLoading } = useCapacityReport(dateFrom, dateTo, locationId);
 
@@ -60,6 +62,7 @@ export function CapacityReport({
         reportTitle: 'Capacity Utilization Report',
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

@@ -22,6 +22,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useRetailAnalytics } from '@/hooks/useRetailAnalytics';
 
 interface RetailStaffReportProps {
@@ -41,6 +42,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
 
   const generatePDF = async () => {
@@ -49,7 +51,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
     try {
       const doc = new jsPDF('landscape');
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
-      const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'Retail Sales by Staff', dateFrom, dateTo } as const;
+      const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'Retail Sales by Staff', dateFrom, dateTo, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
 

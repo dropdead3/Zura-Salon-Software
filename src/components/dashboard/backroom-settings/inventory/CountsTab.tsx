@@ -26,6 +26,7 @@ import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventory
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
 
 interface CountsTabProps {
@@ -35,6 +36,7 @@ interface CountsTabProps {
 export function CountsTab({ locationId }: CountsTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const orgId = effectiveOrganization?.id;
   const { data: sessions = [], isLoading: sessionsLoading } = useCountSessions();
   const { data: shrinkage = [], isLoading: shrinkageLoading } = useShrinkageSummary(locationId);
@@ -89,7 +91,7 @@ export function CountsTab({ locationId }: CountsTabProps) {
       await generateCountSheetPdf({
         products: inventoryProducts,
         orgName: effectiveOrganization?.name ?? 'Organization',
-        locationName: undefined,
+        locationName: locationInfo?.name,
         logoDataUrl,
         filters,
         countEntryUrl,

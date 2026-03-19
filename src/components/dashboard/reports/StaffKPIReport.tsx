@@ -23,6 +23,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
@@ -47,6 +48,7 @@ export function StaffKPIReport({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: kpiData, isLoading } = useStaffKPIReport(dateFrom, dateTo, locationId);
@@ -72,6 +74,7 @@ export function StaffKPIReport({
         reportTitle: getReportTitle(),
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       const y = addReportHeader(doc, headerOpts);

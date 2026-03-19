@@ -31,6 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
 
 interface IndividualStaffReportProps {
@@ -85,6 +86,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -112,6 +114,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
         reportTitle: `Staff Report: ${data.profile.name}`,
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

@@ -37,8 +37,9 @@ import { AutoParDialog } from './AutoParDialog';
 import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
 import { useInventoryIntelligence, type ProductIntelligence } from '@/hooks/backroom/useInventoryIntelligence';
 import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions, REPORT_BODY_START_Y } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions, type ReportLocationInfo, REPORT_BODY_START_Y } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
@@ -61,6 +62,7 @@ async function exportStockPdf(
   orgName: string,
   logoUrl: string | null | undefined,
   formatCurrency: (n: number) => string,
+  locationInfo?: ReportLocationInfo,
 ) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
@@ -77,6 +79,7 @@ async function exportStockPdf(
     dateFrom: format(now, 'yyyy-MM-dd'),
     dateTo: format(now, 'yyyy-MM-dd'),
     generatedAt: now,
+    locationInfo,
   };
 
   addReportHeader(doc, headerOpts);
@@ -118,6 +121,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const { data: poHistoryMap } = useProductPOHistory();
   const { data: intelligenceMap } = useInventoryIntelligence(locationId);
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
@@ -309,6 +313,7 @@ export function StockTab({ locationId }: StockTabProps) {
         effectiveOrganization?.name ?? 'Organization',
         businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
         formatCurrency,
+        locationInfo,
       );
     } finally {
       setExporting(false);
