@@ -412,6 +412,7 @@ function StepDetails({
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Method</Label>
           <Select value={details.reorder_method} onValueChange={v => {
+            if (!v) return;
             update('reorder_method', v);
             if (v !== 'other') update('reorder_method_other', '');
           }}>
@@ -425,12 +426,13 @@ function StepDetails({
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
-          <Input
-            value={details.reorder_method_other}
-            onChange={e => update('reorder_method_other', e.target.value)}
-            placeholder="Specify method..."
-            className={cn("mt-1.5", details.reorder_method !== 'other' && "hidden")}
-          />
+          <div className={cn("mt-1.5 transition-all", details.reorder_method !== 'other' ? "h-0 overflow-hidden opacity-0" : "h-auto opacity-100")}>
+            <Input
+              value={details.reorder_method_other}
+              onChange={e => update('reorder_method_other', e.target.value)}
+              placeholder="Specify method..."
+            />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Notes</Label>

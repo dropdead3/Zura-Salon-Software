@@ -358,8 +358,9 @@ export function SupplierSettingsSection() {
                         <Select
                           value={watch('reorder_method') || ''}
                           onValueChange={val => {
-                            setValue('reorder_method', val);
-                            if (val !== 'other') setValue('reorder_method_other', '');
+                            if (!val) return;
+                            setValue('reorder_method', val, { shouldDirty: true });
+                            if (val !== 'other') setValue('reorder_method_other', '', { shouldDirty: true });
                           }}
                         >
                           <SelectTrigger className="h-9">
@@ -372,11 +373,12 @@ export function SupplierSettingsSection() {
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Input
-                          {...register('reorder_method_other')}
-                          placeholder="Specify method..."
-                          className={cn("mt-1.5", watch('reorder_method') !== 'other' && "hidden")}
-                        />
+                        <div className={cn("mt-1.5 transition-all", watch('reorder_method') !== 'other' ? "h-0 overflow-hidden opacity-0" : "h-auto opacity-100")}>
+                          <Input
+                            {...register('reorder_method_other')}
+                            placeholder="Specify method..."
+                          />
+                        </div>
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="srn" className={tokens.label.default}>Reorder Notes</Label>
