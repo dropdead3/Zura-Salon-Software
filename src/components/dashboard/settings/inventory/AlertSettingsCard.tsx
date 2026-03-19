@@ -31,6 +31,12 @@ export function AlertSettingsCard() {
   const [requirePoApproval, setRequirePoApproval] = useState(true);
   const [deadStockEnabled, setDeadStockEnabled] = useState(true);
   const [deadStockDays, setDeadStockDays] = useState(90);
+  const [auditFrequency, setAuditFrequency] = useState('monthly');
+  const [auditReminderEnabled, setAuditReminderEnabled] = useState(true);
+  const [auditReminderDaysBefore, setAuditReminderDaysBefore] = useState(3);
+  const [auditNotifyInventoryManager, setAuditNotifyInventoryManager] = useState(true);
+  const [auditNotifyManager, setAuditNotifyManager] = useState(true);
+  const [auditNotifyAdmin, setAuditNotifyAdmin] = useState(false);
 
   // Sync from server
   useEffect(() => {
