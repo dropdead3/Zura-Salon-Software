@@ -361,12 +361,12 @@ export function CommandCenterRow({
         {/* Supplier */}
         <TableCell className="hidden lg:table-cell">
           {row.supplier_name ? (
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
-              <Truck className="w-3 h-3 shrink-0" />
+            <span className="text-sm text-muted-foreground/70 flex items-center gap-1">
+              <Truck className="w-3 h-3 shrink-0 text-muted-foreground/40" />
               <span className="truncate max-w-[120px]">{row.supplier_name}</span>
             </span>
           ) : (
-            <span className="text-muted-foreground/30 text-sm">—</span>
+            <span className="text-muted-foreground/25 text-sm">—</span>
           )}
         </TableCell>
 
