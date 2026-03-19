@@ -25,6 +25,7 @@ import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
+import { buildReportFileName } from '@/lib/reportPdfLayout';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
 import { fetchInventoryForLocation } from '@/lib/fetchInventoryForLocation';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
