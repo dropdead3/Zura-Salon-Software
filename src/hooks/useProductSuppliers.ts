@@ -84,6 +84,9 @@ export function useUpsertSupplier() {
             lead_time_days: supplier.lead_time_days,
             account_number: supplier.account_number,
             moq: supplier.moq ?? 1,
+            secondary_contact_name: supplier.secondary_contact_name ?? null,
+            secondary_contact_email: supplier.secondary_contact_email ?? null,
+            secondary_contact_phone: supplier.secondary_contact_phone ?? null,
           })
           .eq('id', supplier.id)
           .select()
