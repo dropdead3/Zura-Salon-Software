@@ -79,6 +79,17 @@ export function useBackroomSetupHealth() {
         });
       }
 
+      // No suppliers configured
+      if (trackedProducts.length > 0 && suppliersConfigured === 0) {
+        warnings.push({
+          id: 'no-suppliers',
+          severity: 'info',
+          title: 'No suppliers configured',
+          description: 'Link suppliers to your tracked products for reorder and procurement workflows.',
+          section: 'suppliers',
+        });
+      }
+
       // Tracked services with no components
       if (trackedServices.length > 0) {
         const componentServiceIds = new Set((componentsRes.data || []).map((c: { service_id: string }) => c.service_id));
