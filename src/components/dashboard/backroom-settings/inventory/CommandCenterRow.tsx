@@ -344,11 +344,11 @@ export function CommandCenterRow({
         </TableCell>
 
         {/* Status — Dual-Layer: State + Severity */}
-        <TableCell>
+        <TableCell className="w-24">
           <div className="flex flex-col leading-tight">
             <span className={cn(
               'text-xs font-sans',
-              row.stock_state === 'out_of_stock' ? 'text-destructive' : 'text-foreground',
+              row.stock_state === 'out_of_stock' ? 'text-destructive' : 'text-foreground/80',
             )}>
               {row.stock_state === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
             </span>
