@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Loader2, Download } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatCurrencyWhole } from '@/lib/formatCurrency';
