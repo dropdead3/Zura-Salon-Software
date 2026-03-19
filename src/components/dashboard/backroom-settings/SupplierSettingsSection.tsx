@@ -3,6 +3,7 @@
  * Enhanced with rename, delete, search, reorder fields, unlink confirmation, reassign, and stats.
  */
 import { useState, useEffect, useMemo } from 'react';
+import { AddSupplierWizard } from './AddSupplierWizard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
