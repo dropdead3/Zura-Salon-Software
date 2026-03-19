@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Truck, Plus, X, AlertTriangle, Package, Loader2, Search, Pencil, Trash2, FileText, ShoppingCart } from 'lucide-react';
+import { Truck, Plus, X, AlertTriangle, Package, Loader2, Search, Pencil, Trash2, FileText, ShoppingCart, Lock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import {
@@ -377,7 +377,7 @@ export function SupplierSettingsSection() {
                             <SelectItem value="email">Email</SelectItem>
                             <SelectItem value="phone">Phone</SelectItem>
                              <SelectItem value="portal">Supplier Website</SelectItem>
-                             <SelectItem value="auto_reorder" disabled className="opacity-50">Auto-Reorder (API) — Coming Soon</SelectItem>
+                             <SelectItem value="auto_reorder" disabled className="opacity-50"><Lock className="w-3.5 h-3.5 mr-1.5 inline-block" />Auto-Reorder (Coming Soon)</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>

@@ -12,7 +12,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers, Plus, X } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers, Plus, X, Lock } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -668,7 +668,7 @@ function SuppliersStep({
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="phone">Phone</SelectItem>
                  <SelectItem value="portal">Supplier Website</SelectItem>
-                 <SelectItem value="auto_reorder" disabled className="opacity-50">Auto-Reorder (API) — Coming Soon</SelectItem>
+                 <SelectItem value="auto_reorder" disabled className="opacity-50"><Lock className="w-3.5 h-3.5 mr-1.5 inline-block" />Auto-Reorder (Coming Soon)</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>

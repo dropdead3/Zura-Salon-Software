@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
@@ -123,7 +123,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="phone">Phone</SelectItem>
                      <SelectItem value="website">Supplier Website</SelectItem>
-                     <SelectItem value="auto_reorder" disabled className="opacity-50">Auto-Reorder (API) — Coming Soon</SelectItem>
+                     <SelectItem value="auto_reorder" disabled className="opacity-50"><Lock className="w-3.5 h-3.5 mr-1.5 inline-block" />Auto-Reorder (Coming Soon)</SelectItem>
                     <SelectItem value="manual">Manual</SelectItem>
                   </SelectContent>
                 </Select>
