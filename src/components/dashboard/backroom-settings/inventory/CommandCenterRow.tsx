@@ -1,15 +1,15 @@
 /**
  * CommandCenterRow — Single inventory row for the Smart Inventory Command Center.
- * Shows: Checkbox, Product, Stock, Suggested Order, Status, Supplier, Cost, Actions.
+ * Shows: Checkbox, Product, Stock, Suggested Order (with manual override), Status, Supplier, Cost, Actions.
  * Expandable detail row reveals Reorder Pt, Par Level, Container, PO History.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, Package } from 'lucide-react';
+import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, Package, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -146,8 +146,11 @@ interface CommandCenterRowProps {
   adjustStock: any;
   updateMinMax: any;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow) => void;
+  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
   poHistory?: number[];
+  /** Manual quantity override map — managed by parent */
+  qtyOverride?: number | null;
+  onQtyOverride?: (productId: string, qty: number | null) => void;
 }
 
 export function CommandCenterRow({
@@ -162,10 +165,25 @@ export function CommandCenterRow({
   onAudit,
   onQuickReorder,
   poHistory,
+  qtyOverride,
+  onQtyOverride,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const [editingQty, setEditingQty] = useState(false);
+  const [qtyDraft, setQtyDraft] = useState('');
+  const qtyInputRef = useRef<HTMLInputElement>(null);
   const statusCfg = STOCK_STATUS_CONFIG[row.status];
   const needsReorder = row.recommended_order_qty > 0;
+  const isOverridden = qtyOverride != null;
+  const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
+  const effectiveStock = row.effective_stock;
+
+  useEffect(() => {
+    if (editingQty && qtyInputRef.current) {
+      qtyInputRef.current.focus();
+      qtyInputRef.current.select();
+    }
+  }, [editingQty]);
 
   return (
     <>
@@ -216,13 +234,68 @@ export function CommandCenterRow({
           />
         </TableCell>
 
-        {/* Suggested Order — PRIMARY */}
+        {/* Suggested Order — PRIMARY DECISION SIGNAL */}
         <TableCell className="text-right tabular-nums">
-          {needsReorder ? (
-            <div className="flex flex-col items-end">
-              <span className="text-foreground font-medium text-base">{row.recommended_order_qty}</span>
+          {needsReorder || isOverridden ? (
+            <div className="flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-1.5 justify-end">
+                {/* Editable quantity */}
+                {editingQty ? (
+                  <input
+                    ref={qtyInputRef}
+                    type="number"
+                    min={0}
+                    value={qtyDraft}
+                    onChange={(e) => setQtyDraft(e.target.value)}
+                    onBlur={() => {
+                      setEditingQty(false);
+                      const parsed = parseInt(qtyDraft, 10);
+                      if (!isNaN(parsed) && parsed >= 0 && parsed !== row.recommended_order_qty) {
+                        onQtyOverride?.(row.id, parsed === 0 ? null : parsed);
+                      } else if (!isNaN(parsed) && parsed === row.recommended_order_qty) {
+                        onQtyOverride?.(row.id, null); // Reset to auto
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                      if (e.key === 'Escape') setEditingQty(false);
+                    }}
+                    className="w-14 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  />
+                ) : (
+                  <span
+                    className={cn(
+                      'text-lg tabular-nums cursor-pointer transition-colors',
+                      isOverridden
+                        ? 'text-primary border-b border-dashed border-primary/40'
+                        : 'text-foreground font-medium border-b border-dashed border-transparent hover:border-muted-foreground/30',
+                    )}
+                    onClick={() => {
+                      setQtyDraft(String(displayOrderQty));
+                      setEditingQty(true);
+                    }}
+                    title="Click to override quantity"
+                  >
+                    {displayOrderQty}
+                  </span>
+                )}
+                {/* Auto / Edited indicator */}
+                {isOverridden ? (
+                  <button
+                    className="text-[9px] text-primary/70 hover:text-primary bg-primary/5 px-1.5 py-0.5 rounded-full transition-colors flex items-center gap-0.5"
+                    onClick={() => onQtyOverride?.(row.id, null)}
+                    title="Reset to auto-calculated quantity"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" />
+                    Edited
+                  </button>
+                ) : needsReorder ? (
+                  <span className="text-[9px] text-muted-foreground/50">Auto</span>
+                ) : null}
+              </div>
+              {/* Effective stock context */}
               {row.open_po_qty > 0 && (
-                <span className="text-primary/60 text-[10px]" title={`${row.open_po_qty} on open POs`}>
+                <span className="text-primary/60 text-[10px]" title={`${row.quantity_on_hand} on hand + ${row.open_po_qty} on order = ${effectiveStock} effective`}>
                   {row.open_po_qty} on order
                 </span>
               )}

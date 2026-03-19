@@ -116,6 +116,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [qtyOverrides, setQtyOverrides] = useState<Map<string, number>>(new Map());
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
   const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
   const [autoPoDialog, setAutoPoDialog] = useState(false);
@@ -200,9 +201,20 @@ export function StockTab({ locationId }: StockTabProps) {
     ? selectedReorderProducts
     : inventory.filter(r => r.recommended_order_qty > 0);
 
-  // Single product quick reorder
-  const handleQuickReorder = (row: BackroomInventoryRow) => {
-    if (!orgId || row.recommended_order_qty <= 0) return;
+  // Override handler
+  const handleQtyOverride = (productId: string, qty: number | null) => {
+    setQtyOverrides(prev => {
+      const next = new Map(prev);
+      if (qty == null) next.delete(productId);
+      else next.set(productId, qty);
+      return next;
+    });
+  };
+
+  // Single product quick reorder — respects override
+  const handleQuickReorder = (row: BackroomInventoryRow, overrideQty?: number) => {
+    const qty = overrideQty ?? qtyOverrides.get(row.id) ?? row.recommended_order_qty;
+    if (!orgId || qty <= 0) return;
     createPO.mutate({
       organization_id: orgId,
       supplier_name: row.supplier_name ?? undefined,
@@ -210,7 +222,7 @@ export function StockTab({ locationId }: StockTabProps) {
       notes: `Reorder for ${stripSizeSuffix(row.name)}`,
       lines: [{
         product_id: row.id,
-        quantity_ordered: row.recommended_order_qty,
+        quantity_ordered: qty,
         unit_cost: row.cost_price ?? row.cost_per_gram ?? undefined,
       }],
     });
@@ -408,6 +420,8 @@ export function StockTab({ locationId }: StockTabProps) {
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                     onQuickReorder={handleQuickReorder}
                     poHistoryMap={poHistoryMap}
+                    qtyOverrides={qtyOverrides}
+                    onQtyOverride={handleQtyOverride}
                   />
                 ))}
               </TableBody>
@@ -476,7 +490,7 @@ function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap }: {
+function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -487,8 +501,10 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
   onToggleSelect: (id: string) => void;
   onSetSupplier: () => void;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow) => void;
+  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
   poHistoryMap?: Map<string, number[]>;
+  qtyOverrides: Map<string, number>;
+  onQtyOverride: (productId: string, qty: number | null) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -550,13 +566,15 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
           onAudit={onAudit}
           onQuickReorder={onQuickReorder}
           poHistoryMap={poHistoryMap}
+          qtyOverrides={qtyOverrides}
+          onQtyOverride={onQtyOverride}
         />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap }: {
+function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -567,8 +585,10 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow) => void;
+  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
   poHistoryMap?: Map<string, number[]>;
+  qtyOverrides: Map<string, number>;
+  onQtyOverride: (productId: string, qty: number | null) => void;
 }) {
   return (
     <>
@@ -593,6 +613,8 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
           onAudit={onAudit}
           onQuickReorder={onQuickReorder}
           poHistory={poHistoryMap?.get(row.id)}
+          qtyOverride={qtyOverrides.get(row.id) ?? null}
+          onQtyOverride={onQtyOverride}
         />
       ))}
     </>

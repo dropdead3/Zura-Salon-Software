@@ -25,6 +25,7 @@ export interface BackroomInventoryRow {
   cost_price: number | null;
   order_qty: number;
   open_po_qty: number;
+  effective_stock: number;
   recommended_order_qty: number;
   status: StockStatus;
   charge_per_gram: number | null;
@@ -84,11 +85,12 @@ async function fetchOpenPoQuantities(orgId: string): Promise<Map<string, number>
 }
 
 function computeReorderFields(qty: number, parLevel: number | null, reorderLevel: number | null, openPoQty: number) {
+  const effectiveStock = qty + openPoQty;
   const needsReorder = reorderLevel != null && qty <= reorderLevel;
   const target = parLevel ?? reorderLevel;
   const orderQty = target != null && (needsReorder || qty <= 0) ? Math.max(0, target - qty) : 0;
   const recommendedOrderQty = target != null ? Math.max(0, target - qty - openPoQty) : 0;
-  return { orderQty, recommendedOrderQty };
+  return { orderQty, recommendedOrderQty, effectiveStock };
 }
 
 export function useBackroomInventoryTable(options?: { enabled?: boolean; locationId?: string }) {
@@ -112,7 +114,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
         const qty = p.quantity_on_hand ?? 0;
         const status = getStockStatus(qty, reorderLevel, parLevel);
         const openPoQty = openPoMap.get(p.id) ?? 0;
-        const { orderQty, recommendedOrderQty } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
+        const { orderQty, recommendedOrderQty, effectiveStock } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
         const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
         const sup = supplierMap.get(p.id);
 
@@ -131,6 +133,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           cost_price: p.cost_price,
           order_qty: orderQty,
           open_po_qty: openPoQty,
+          effective_stock: effectiveStock,
           recommended_order_qty: recommendedOrderQty,
           status,
           charge_per_gram: chargePerGram,
