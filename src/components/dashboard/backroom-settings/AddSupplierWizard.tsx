@@ -544,7 +544,7 @@ function StepReview({
     { label: 'Account #', value: details.account_number },
     { label: 'Lead Time', value: details.lead_time_days ? `${details.lead_time_days} days` : '' },
     { label: 'MOQ', value: details.moq !== '1' ? details.moq : '' },
-    { label: 'Reorder Method', value: details.reorder_method },
+    { label: 'Reorder Method', value: details.reorder_method === 'other' && details.reorder_method_other ? `Other — ${details.reorder_method_other}` : details.reorder_method },
   ].filter(r => r.value);
 
   return (

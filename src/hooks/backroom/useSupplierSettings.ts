@@ -208,6 +208,7 @@ export function useUpdateSupplierContact() {
       lead_time_days?: number | null;
       moq?: number;
       reorder_method?: string | null;
+      reorder_method_other?: string | null;
       reorder_notes?: string | null;
     }) => {
       const { error } = await supabase
@@ -220,6 +221,7 @@ export function useUpdateSupplierContact() {
           lead_time_days: params.lead_time_days ?? null,
           moq: params.moq ?? 1,
           reorder_method: params.reorder_method ?? null,
+          reorder_method_other: params.reorder_method === 'other' ? (params.reorder_method_other ?? null) : null,
           reorder_notes: params.reorder_notes ?? null,
         })
         .eq('organization_id', orgId!)

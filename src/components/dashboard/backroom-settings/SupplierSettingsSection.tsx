@@ -334,7 +334,10 @@ export function SupplierSettingsSection() {
                         <Label htmlFor="srm" className={tokens.label.default}>Reorder Method</Label>
                         <Select
                           value={watch('reorder_method') || ''}
-                          onValueChange={val => setValue('reorder_method', val)}
+                          onValueChange={val => {
+                            setValue('reorder_method', val);
+                            if (val !== 'other') setValue('reorder_method_other', '');
+                          }}
                         >
                           <SelectTrigger className="h-9">
                             <SelectValue placeholder="Select method..." />
@@ -346,6 +349,13 @@ export function SupplierSettingsSection() {
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
+                        {watch('reorder_method') === 'other' && (
+                          <Input
+                            {...register('reorder_method_other')}
+                            placeholder="Specify method..."
+                            className="mt-1.5"
+                          />
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="srn" className={tokens.label.default}>Reorder Notes</Label>
