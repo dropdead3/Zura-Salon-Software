@@ -61,7 +61,7 @@ function blobToDataUrl(blob: Blob): Promise<string | null> {
  * Rasterize an SVG data URL to a PNG data URL via canvas.
  * jsPDF cannot embed SVGs, so this converts them to raster format.
  */
-function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Promise<string | null> {
+function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Promise<{ dataUrl: string; width: number; height: number } | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -76,10 +76,22 @@ function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Prom
       const ctx = canvas.getContext('2d');
       if (!ctx) { resolve(null); return; }
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/png'));
+      resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h });
     };
     img.onerror = () => resolve(null);
     img.src = svgDataUrl;
+  });
+}
+
+/**
+ * Load an image data URL and return its natural pixel dimensions.
+ */
+function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
   });
 }
 
