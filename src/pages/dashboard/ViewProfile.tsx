@@ -564,7 +564,7 @@ export default function ViewProfile() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className="pl-10"
                       placeholder="480-555-1234"
                       maxLength={12}

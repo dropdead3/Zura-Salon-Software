@@ -390,7 +390,7 @@ export function NewClientDialog({
               id="phone"
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+              onChange={(e) => setPhone(e.target.value)}
               placeholder="(555) 123-4567"
             />
           </div>

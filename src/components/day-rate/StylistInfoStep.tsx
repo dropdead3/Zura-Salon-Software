@@ -123,7 +123,7 @@ export function StylistInfoStep({ initialData, onSubmit }: StylistInfoStepProps)
                     placeholder="(555) 123-4567"
                     {...field}
                     onChange={(e) => {
-                      field.onChange(formatPhoneNumber(e.target.value));
+                      field.onChange(e.target.value);
                     }}
                   />
                 </FormControl>
