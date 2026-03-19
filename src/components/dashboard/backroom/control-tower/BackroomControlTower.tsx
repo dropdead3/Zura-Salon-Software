@@ -20,6 +20,7 @@ const CATEGORY_FILTERS: { key: AlertCategory | null; label: string }[] = [
   { key: 'profitability', label: 'Profitability' },
   { key: 'waste', label: 'Waste' },
   { key: 'reorder', label: 'Reorders' },
+  { key: 'audit_overdue', label: 'Audits' },
 ];
 
 interface BackroomControlTowerProps {

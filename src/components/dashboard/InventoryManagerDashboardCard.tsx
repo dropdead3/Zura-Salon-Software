@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
-import { Package, ClipboardList, Truck, AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
+import { Package, ClipboardList, Truck, AlertTriangle, ChevronRight, Loader2, CalendarCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { VisibilityGate } from '@/components/visibility';
+import { useNextPendingAudit } from '@/hooks/inventory/useAuditSchedule';
+import { format, isPast } from 'date-fns';
 
 function useInventoryManagerStats() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -69,6 +72,8 @@ export function InventoryManagerDashboardCard() {
 
 function InventoryManagerDashboardCardInner() {
   const { data: stats, isLoading } = useInventoryManagerStats();
+  const { data: nextAudit } = useNextPendingAudit();
+  const isOverdue = nextAudit ? isPast(new Date(nextAudit.due_date + 'T23:59:59')) : false;
 
   const quickActions = [
     {
@@ -144,6 +149,19 @@ function InventoryManagerDashboardCardInner() {
             </p>
             <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans text-destructive" asChild>
               <Link to="/dashboard/admin/backroom-settings?section=inventory&tab=reorder">Review</Link>
+            </Button>
+          </div>
+        )}
+
+        {/* Next Audit Due */}
+        {nextAudit && (
+          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${isOverdue ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
+            <CalendarCheck className={`w-4 h-4 shrink-0 ${isOverdue ? 'text-destructive' : 'text-primary'}`} />
+            <p className={`text-xs font-sans ${isOverdue ? 'text-destructive' : 'text-foreground'}`}>
+              Next audit {isOverdue ? 'overdue' : 'due'}: {format(new Date(nextAudit.due_date), 'MMM d, yyyy')}
+            </p>
+            <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans" asChild>
+              <Link to="/dashboard/admin/backroom-settings?section=inventory&tab=counts">View</Link>
             </Button>
           </div>
         )}

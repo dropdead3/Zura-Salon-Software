@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight, FileDown, Filter } from 'lucide-react';
+import { Loader2, ClipboardCheck, Plus, AlertTriangle, TrendingDown, ChevronRight, FileDown, Filter, CalendarCheck } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,6 +23,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
+import { AuditComplianceTracker } from './AuditComplianceTracker';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { buildReportFileName } from '@/lib/reportPdfLayout';
@@ -51,7 +52,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
   const createSession = useCreateCountSession();
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
-  const [tab, setTab] = useState<'sessions' | 'shrinkage'>('sessions');
+  const [tab, setTab] = useState<'sessions' | 'shrinkage' | 'audit'>('sessions');
   const [activeSession, setActiveSession] = useState<CountSession | null>(null);
 
   const isLoading = sessionsLoading || shrinkageLoading;
@@ -354,6 +355,9 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
         <Button variant={tab === 'shrinkage' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('shrinkage')}>
           <TrendingDown className="w-4 h-4 mr-1" /> Shrinkage
         </Button>
+        <Button variant={tab === 'audit' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('audit')}>
+          <CalendarCheck className="w-4 h-4 mr-1" /> Audit Schedule
+        </Button>
       </div>
 
       {/* Sessions list */}
@@ -477,6 +481,11 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
             </CardContent>
           </Card>
         )
+      )}
+
+      {/* Audit Schedule */}
+      {tab === 'audit' && (
+        <AuditComplianceTracker locationId={locationId} />
       )}
     </div>
   );

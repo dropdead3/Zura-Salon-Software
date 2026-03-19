@@ -18,6 +18,10 @@ export interface InventoryAlertSettings {
   require_po_approval: boolean;
   dead_stock_enabled: boolean;
   dead_stock_days: number;
+  audit_frequency: string;
+  audit_reminder_enabled: boolean;
+  audit_reminder_days_before: number;
+  audit_notify_roles: string[];
   created_at: string;
   updated_at: string;
 }

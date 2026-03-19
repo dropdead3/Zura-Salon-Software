@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Bell, ChevronDown, ChevronUp, Loader2, Users, AlertTriangle } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp, Loader2, Users, AlertTriangle, CalendarCheck } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
@@ -30,6 +31,12 @@ export function AlertSettingsCard() {
   const [requirePoApproval, setRequirePoApproval] = useState(true);
   const [deadStockEnabled, setDeadStockEnabled] = useState(true);
   const [deadStockDays, setDeadStockDays] = useState(90);
+  const [auditFrequency, setAuditFrequency] = useState('monthly');
+  const [auditReminderEnabled, setAuditReminderEnabled] = useState(true);
+  const [auditReminderDaysBefore, setAuditReminderDaysBefore] = useState(3);
+  const [auditNotifyInventoryManager, setAuditNotifyInventoryManager] = useState(true);
+  const [auditNotifyManager, setAuditNotifyManager] = useState(true);
+  const [auditNotifyAdmin, setAuditNotifyAdmin] = useState(false);
 
   // Sync from server
   useEffect(() => {
@@ -45,8 +52,22 @@ export function AlertSettingsCard() {
       setRequirePoApproval(settings.require_po_approval ?? true);
       setDeadStockEnabled(settings.dead_stock_enabled ?? true);
       setDeadStockDays(settings.dead_stock_days ?? 90);
+      setAuditFrequency(settings.audit_frequency ?? 'monthly');
+      setAuditReminderEnabled(settings.audit_reminder_enabled ?? true);
+      setAuditReminderDaysBefore(settings.audit_reminder_days_before ?? 3);
+      const roles = settings.audit_notify_roles ?? ['inventory_manager', 'manager'];
+      setAuditNotifyInventoryManager(roles.includes('inventory_manager'));
+      setAuditNotifyManager(roles.includes('manager'));
+      setAuditNotifyAdmin(roles.includes('admin'));
     }
   }, [settings]);
+
+  const currentAuditRoles = [
+    ...(auditNotifyInventoryManager ? ['inventory_manager'] : []),
+    ...(auditNotifyManager ? ['manager'] : []),
+    ...(auditNotifyAdmin ? ['admin'] : []),
+  ];
+  const serverAuditRoles = settings?.audit_notify_roles ?? ['inventory_manager', 'manager'];
 
   const isDirty = settings ? (
     enabled !== settings.enabled ||
@@ -59,7 +80,11 @@ export function AlertSettingsCard() {
     maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
     requirePoApproval !== (settings.require_po_approval ?? true) ||
     deadStockEnabled !== (settings.dead_stock_enabled ?? true) ||
-    deadStockDays !== (settings.dead_stock_days ?? 90)
+    deadStockDays !== (settings.dead_stock_days ?? 90) ||
+    auditFrequency !== (settings.audit_frequency ?? 'monthly') ||
+    auditReminderEnabled !== (settings.audit_reminder_enabled ?? true) ||
+    auditReminderDaysBefore !== (settings.audit_reminder_days_before ?? 3) ||
+    JSON.stringify(currentAuditRoles.sort()) !== JSON.stringify([...serverAuditRoles].sort())
   ) : true;
 
   const handleSave = () => {
@@ -78,6 +103,10 @@ export function AlertSettingsCard() {
       require_po_approval: requirePoApproval,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
+      audit_frequency: auditFrequency,
+      audit_reminder_enabled: auditReminderEnabled,
+      audit_reminder_days_before: auditReminderDaysBefore,
+      audit_notify_roles: currentAuditRoles,
     });
   };
 
@@ -280,6 +309,78 @@ export function AlertSettingsCard() {
                         <span>30 days</span>
                         <span>90 days</span>
                         <span>365 days</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Audit Schedule */}
+                <div className="pt-3 border-t space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm flex items-center gap-1.5">
+                        <CalendarCheck className="w-3.5 h-3.5 text-primary" />
+                        Scheduled audit reminders
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Remind backroom managers when periodic inventory audits are due
+                      </p>
+                    </div>
+                    <Switch checked={auditReminderEnabled} onCheckedChange={setAuditReminderEnabled} />
+                  </div>
+                  {auditReminderEnabled && (
+                    <div className="space-y-4 ml-4 pl-4 border-l border-border">
+                      <div className="space-y-2">
+                        <Label className="text-sm">Audit frequency</Label>
+                        <Select value={auditFrequency} onValueChange={setAuditFrequency}>
+                          <SelectTrigger className="max-w-[200px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="biweekly">Biweekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="quarterly">Quarterly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Remind before due date</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Send reminder {auditReminderDaysBefore} day{auditReminderDaysBefore !== 1 ? 's' : ''} before the audit is due
+                        </p>
+                        <Slider
+                          value={[auditReminderDaysBefore]}
+                          onValueChange={([v]) => setAuditReminderDaysBefore(v)}
+                          min={1}
+                          max={7}
+                          step={1}
+                          className="mt-2"
+                        />
+                        <div className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>1 day</span>
+                          <span>3 days</span>
+                          <span>7 days</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Notify roles</Label>
+                        <div className="flex flex-wrap items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox checked={auditNotifyInventoryManager} onCheckedChange={(v) => setAuditNotifyInventoryManager(!!v)} />
+                            <span className="text-sm">Inventory Manager</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox checked={auditNotifyManager} onCheckedChange={(v) => setAuditNotifyManager(!!v)} />
+                            <span className="text-sm">Manager</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox checked={auditNotifyAdmin} onCheckedChange={(v) => setAuditNotifyAdmin(!!v)} />
+                            <span className="text-sm">Admin</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   )}
