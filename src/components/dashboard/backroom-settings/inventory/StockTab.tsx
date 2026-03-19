@@ -372,9 +372,9 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
           const locInfo: ReportLocationInfo | undefined = { name: locName };
-          const pdfBytes = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, undefined, true);
+          const pdfBytes = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, undefined, true) as unknown as ArrayBuffer;
           const fileName = buildReportFileName({ orgName, locationName: locName, reportSlug: 'backroom-stock', dateFrom: dateStr });
-          zip.file(fileName, pdfBytes as ArrayBuffer);
+          zip.file(fileName, pdfBytes);
         }
         toast.dismiss('pdf-progress');
         const blob = await zip.generateAsync({ type: 'blob' });
