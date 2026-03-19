@@ -123,6 +123,16 @@ export function StockTab({ locationId }: StockTabProps) {
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
+  const [poItemIds, setPoItemIds] = useState<Set<string>>(new Set());
+
+  const toggleAddToPo = useCallback((productId: string) => {
+    setPoItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }, []);
 
   // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
