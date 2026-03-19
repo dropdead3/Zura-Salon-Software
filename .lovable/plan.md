@@ -1,46 +1,36 @@
 
 
-# Simplify PO Action Redundancies
+# Remove PO Builder — Simplify to Single PO Action
 
 ## Problem
-When products are selected, users see the same actions repeated across multiple UI layers:
-- **Selection bar**: "Add Selected to PO", "Auto Build PO", "Create & Email"
-- **Actions row**: "Review Items", "Auto Build PO" (duplicate), "Auto-Set Pars", "PO Builder"
-- **Supplier group**: "Create PO", "Assign Supplier"
+Three overlapping PO workflows confuse users:
+1. "Add Selected to PO" → stages in PO Builder panel → submit from panel
+2. "Auto Build PO" → dialog → creates POs directly
+3. The table itself already shows supplier grouping, quantities, and costs
 
-"Auto Build PO" appears twice. "Add Selected to PO" and "PO Builder" overlap. "Create PO" on supplier groups is yet another entry point. It's overwhelming.
+The PO Builder panel is a redundant middle layer.
 
-## Approach: Context-Aware Action Consolidation
+## Approach: Remove PO Builder, Unify Around Auto Build PO
 
-**When nothing is selected** — show the full actions row as-is (Review Items, Auto Build PO, Auto-Set Pars, PO Builder).
+- **Remove** the PO Builder panel entirely (slide-out panel + button + all staging state)
+- **Replace** "Add Selected to PO" in the selection bar with **"Create PO"** that opens `AutoCreatePODialog` with just the selected products
+- **Keep** "Auto Build PO" in the actions row — it opens the same dialog with ALL reorder-eligible products
+- Net result: one dialog, two entry points (selected items vs all items)
 
-**When items are selected** — hide the redundant actions row buttons and let the selection bar be the single action surface. Specifically:
+### What gets removed
+- `POBuilderPanel` component usage (the slide-out panel)
+- `poItemIds`, `poBuilderOpen`, `qtyOverrides`, `toggleAddToPo`, `handleQtyOverride` state
+- "PO Builder" button in the actions row
+- `stageSupplierToPo` function
 
-1. **Selection bar** (keep, simplify):
-   - "Add to PO" (adds selected to PO Builder) — keep
-   - "Auto Build PO" — **remove** from selection bar (it's already in the actions row and isn't selection-specific)
-   - "Create & Email" — keep (only shows when email-eligible items exist)
-   - Keep: count, est. cost, Clear
+### What changes
+- Selection bar: "Add Selected to PO" → "Create PO" button that opens `AutoCreatePODialog` with `selectedReorderProducts`
+- Need a second state for the dialog to distinguish "selected only" vs "all items" mode
 
-2. **Actions row** — always visible, but:
-   - "Auto Build PO" — keep here as the single home for this action
-   - "Review Items" — keep
-   - "Auto-Set Pars" — keep
-   - "PO Builder" badge — keep (this is the cart/checkout, distinct from "add to cart")
+### Files changed
+- **`StockTab.tsx`**: Remove PO Builder state/panel, rewire selection bar button
+- **`POBuilderPanel.tsx`**: No longer imported (can be deleted later)
+- **`CommandCenterRow.tsx`**: Remove `addedToPo` / `onToggleAddToPo` props if present
 
-3. **Supplier group "Create PO"** — **remove**. Users can select products and use "Add to PO" or use "Auto Build PO" which already groups by supplier. The "Assign Supplier" button stays since it's unique functionality.
-
-Net result: "Auto Build PO" appears once. "Create PO" on supplier rows is removed. The selection bar focuses on "Add to PO" + "Create & Email" only.
-
-## Changes
-
-**File: `src/components/dashboard/backroom-settings/inventory/StockTab.tsx`**
-
-1. **Selection bar** (~lines 549-611): Remove the "Auto Build PO" button from the selection bar (lines 575-583)
-2. **Supplier group row**: Remove the "Create PO" button — need to check where SupplierSection renders this
-
-**File: SupplierSection component** (likely in same file or CommandCenterRow):
-- Remove "Create PO" button from supplier group header, keep "Assign Supplier"
-
-**~2 spots edited in 1-2 files.**
+**~1 file edited, significant state cleanup.**
 
