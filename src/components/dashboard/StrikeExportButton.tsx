@@ -11,6 +11,8 @@ import { Download, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
   StaffStrikeWithDetails,
   STRIKE_TYPE_LABELS,
