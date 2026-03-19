@@ -17,6 +17,9 @@ export interface ProductSupplier {
   lead_time_days: number | null;
   account_number: string | null;
   moq: number;
+  secondary_contact_name: string | null;
+  secondary_contact_email: string | null;
+  secondary_contact_phone: string | null;
   avg_delivery_days: number | null;
   delivery_count: number;
   created_at: string;
