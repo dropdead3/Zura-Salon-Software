@@ -100,7 +100,7 @@ function getImageDimensions(dataUrl: string): Promise<{ width: number; height: n
  * SVGs are automatically rasterized to PNG via canvas.
  * Returns null on CORS or network errors so reports still generate without logo.
  */
-export async function fetchLogoAsDataUrl(url: string | null | undefined): Promise<string | null> {
+export async function fetchLogoAsDataUrl(url: string | null | undefined): Promise<LogoDataResult | null> {
   if (!url || typeof url !== 'string') return null;
   try {
     const res = await fetch(url, { mode: 'cors' });
@@ -113,7 +113,11 @@ export async function fetchLogoAsDataUrl(url: string | null | undefined): Promis
     if (blob.type === 'image/svg+xml' || rawDataUrl.startsWith('data:image/svg')) {
       return await rasterizeSvgToPng(rawDataUrl, 400, 140);
     }
-    return rawDataUrl;
+
+    // Get dimensions for raster images
+    const dims = await getImageDimensions(rawDataUrl);
+    if (!dims) return { dataUrl: rawDataUrl, width: 200, height: 70 };
+    return { dataUrl: rawDataUrl, width: dims.width, height: dims.height };
   } catch {
     return null;
   }
