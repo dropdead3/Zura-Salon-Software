@@ -59,6 +59,8 @@ export function ClientMemoryPanel({ clientId, serviceName, orgId, className, onV
       empty: 'No formula on file',
       accent: 'text-violet-600 dark:text-violet-400',
       bg: 'bg-violet-500/10',
+      count: formulaHistory.length,
+      onViewAll: onViewFormulas,
     },
     {
       icon: FileText,
