@@ -395,7 +395,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   /** Build the HTML email that suppliers will receive */
   const buildEmailPreviewHtml = useCallback((group: { supplierName: string; supplierEmail: string | null; products: BackroomInventoryRow[] }) => {
-    const orgName = effectiveOrganization?.name ?? 'Organization';
+    const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
     const selectedProducts = group.products.filter(p => selectedIds.has(p.id));
     if (selectedProducts.length === 0) return '';
 
