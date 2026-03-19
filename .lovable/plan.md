@@ -1,153 +1,86 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Refinement Pass — 10 Polish Points
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Files Changed
+| File | Changes |
+|------|--------|
+| `CommandCenterRow.tsx` | Human-friendly days remaining text, row tint reduction, Add to PO padding/contrast, Auto/Manual styling refinement |
+| `StockTab.tsx` | Decision header → command strip, supplier Assign button for all + Create PO for selected, column header "Order" micro-label |
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+---
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## 1. Decision Header → Command Strip
 
-## Auto-Reorder with Supplier Communication (Implemented)
+**StockTab.tsx lines 329-385**
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+Remove border glow and card-like feel. Change to a minimal command strip:
+- Remove `border border-destructive/20` and `bg-destructive/[0.02]` — use `bg-transparent` or very subtle `bg-muted/10`
+- Keep the left accent bar but make it `w-0.5` (thinner)
+- Increase the count text clarity: keep `text-2xl font-display` but ensure high contrast
+- The overall feel: a flat directive strip, not a bordered alert card
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+## 2. Days Remaining — Human-Friendly Text
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+**CommandCenterRow.tsx lines 277-293**
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+Replace cryptic `~Xd` and `0d` with human-readable labels:
+- `0` or out_of_stock → `"Out now"` in `text-destructive`
+- `1-3` → `"~Xd left"` in `text-destructive/70`  
+- `4-7` → `"~Xd left"` in `text-warning/70`
+- `8-14` → `"~Xd left"` in `text-muted-foreground/50`
+- `>14` → `"~Xd"` in `text-muted-foreground/40`
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+## 3. Suggested Order Column Header
 
-## Product Movement Rating Badges (Implemented)
+**StockTab.tsx — TableHead for Suggested Order**
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+Add micro-label: change header text from "Suggested Order" to include a secondary `"Order"` label or just simplify the header. The column already says "Suggested Order" — keep as is but the visual dominance from the row values handles this.
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+## 4. Row Tint — Further Reduction
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+**CommandCenterRow.tsx lines 222-224**
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+- Critical: `bg-destructive/[0.02]` → `bg-destructive/[0.015]`, hover stays `bg-destructive/[0.04]`
+- Low: `bg-warning/[0.015]` → `bg-warning/[0.01]`, hover stays `bg-warning/[0.03]`
 
-## Inventory Intelligence Suite v2 (Implemented)
+## 5. Supplier Section — Assign Button for All Suppliers
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+**StockTab.tsx lines 686-708**
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+Currently "Assign Supplier" only shows for unassigned. Add it for assigned suppliers too (to reassign). Also ensure "Create PO" shows for any supplier with reorder items (already done for non-unassigned). For unassigned with reorder items, also show "Create PO" alongside "Assign Supplier".
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+## 6. Expanded Row — Usage Context
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+**CommandCenterRow.tsx lines 458-470**
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+Enhance the activity label to be more contextual:
+- Instead of just "Active — used daily", show "Active — ~X/day avg"
+- Keep "Slow mover — <1/day" as is
 
-## Enhancement 1: Expiry Tracking (Implemented)
+## 7. Auto vs Manual Confidence — Already Good
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+Current implementation matches the request. Auto is `text-muted-foreground/30`, Manual is `bg-accent/10` with accent text. No changes needed.
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+## 8. "Affects Upcoming Appointments" — Deferred
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+This requires joining inventory data with appointment/service data. Not implementable without a new query joining products → services → appointments. Flag for future implementation.
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+## 9. Add to PO — Slight Polish
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+**CommandCenterRow.tsx lines 405-419**
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+- Increase horizontal padding from `px-2.5` to `px-3`
+- Ensure hover state is crisp: add `active:scale-[0.98]` for tactile feel
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+## 10. Auto Build PO — Already Wired to Dialog
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+Current implementation already opens `AutoCreatePODialog` when clicking "Auto Build PO" (line 377: `onClick={() => setAutoPoDialog(true)}`). The dialog serves as the preview/confirmation step. No changes needed.
 
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
+---
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+## Summary of Actual Edits
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+1. **StockTab.tsx**: Strip decision header down to flat command strip (remove border/bg), add Create PO for unassigned suppliers with reorder items
+2. **CommandCenterRow.tsx**: Human-friendly days text ("Out now", "~Xd left"), reduce row tints further, polish Add to PO button padding
+
