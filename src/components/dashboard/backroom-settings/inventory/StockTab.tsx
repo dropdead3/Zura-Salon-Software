@@ -62,6 +62,7 @@ async function exportStockPdf(
   orgName: string,
   logoUrl: string | null | undefined,
   formatCurrency: (n: number) => string,
+  locationInfo?: ReportLocationInfo,
 ) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
