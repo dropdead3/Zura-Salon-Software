@@ -66,13 +66,18 @@ async function exportStockPdf(
   logoUrl: string | null | undefined,
   formatCurrency: (n: number) => string,
   locationInfo?: ReportLocationInfo,
+  /** Pass an existing jsPDF doc to append pages (combined mode) */
+  existingDoc?: InstanceType<typeof import('jspdf').jsPDF>,
 ) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
   ]);
 
-  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const doc = existingDoc || new jsPDF('landscape', 'mm', 'a4');
+  // If appending to existing doc, add a new page
+  if (existingDoc) doc.addPage('a4', 'landscape');
+
   const logoDataUrl = await fetchLogoAsDataUrl(logoUrl);
   const now = new Date();
   const headerOpts: ReportHeaderOptions = {
@@ -113,8 +118,13 @@ async function exportStockPdf(
     didDrawPage: () => { addReportHeader(doc, headerOpts); },
   });
 
-  addReportFooter(doc, orgName);
-  doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
+  // Only save/footer if standalone (not combined mode)
+  if (!existingDoc) {
+    addReportFooter(doc, orgName);
+    doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
+  }
+
+  return doc;
 }
 
 // ─── Main Component ─────────────────────────────────
