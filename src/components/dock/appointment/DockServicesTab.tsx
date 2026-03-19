@@ -53,6 +53,10 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const markUnresolved = useMarkDockSessionUnresolved();
   const { effectiveOrganization } = useOrganizationContext();
 
+  // Get the first session ID for stats query
+  const primarySessionId = sessions?.[0]?.id || null;
+  const { data: sessionStats } = useDockSessionStats(primarySessionId);
+
   const handleCreateBowl = (lines: FormulaLine[], _baseWeight: number) => {
     if (!effectiveOrganization?.id) return;
 
