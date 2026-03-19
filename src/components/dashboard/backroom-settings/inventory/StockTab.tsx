@@ -417,18 +417,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [handlePdfExport, pdfExportRef]);
 
-  // Stage all supplier items into PO builder
-  const stageSupplierToPo = useCallback((products: BackroomInventoryRow[]) => {
-    const reorderItems = products.filter(p => p.recommended_order_qty > 0 || p.stock_state === 'out_of_stock');
-    if (reorderItems.length === 0) return;
-    setPoItemIds(prev => {
-      const next = new Set(prev);
-      reorderItems.forEach(r => next.add(r.id));
-      return next;
-    });
-    setPoBuilderOpen(true);
-    toast.success(`${reorderItems.length} items added to PO Builder`);
-  }, []);
 
   // ─── Email Send Flow (ported from ReorderTab) ───────────
 
