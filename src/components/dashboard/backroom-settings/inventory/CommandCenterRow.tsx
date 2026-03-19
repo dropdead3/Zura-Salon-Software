@@ -371,12 +371,12 @@ export function CommandCenterRow({
         </TableCell>
 
         {/* Cost */}
-        <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">
+        <TableCell className="text-right hidden sm:table-cell text-muted-foreground/70 tabular-nums w-20">
           {row.cost_price != null
             ? formatCurrency(row.cost_price)
             : row.cost_per_gram != null
               ? `${formatCurrency(row.cost_per_gram)}/g`
-              : '—'}
+              : <span className="text-muted-foreground/25">—</span>}
         </TableCell>
 
         {/* Actions — Primary: Add to PO */}
