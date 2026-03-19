@@ -164,6 +164,7 @@ export function useControlTowerAlerts(
     staffQ.data,
     stockoutQ.data,
     draftPOsQ.data,
+    overdueAuditsQ.data,
     categoryFilter,
   ]);
 
