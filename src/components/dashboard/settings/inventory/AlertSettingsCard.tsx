@@ -62,6 +62,13 @@ export function AlertSettingsCard() {
     }
   }, [settings]);
 
+  const currentAuditRoles = [
+    ...(auditNotifyInventoryManager ? ['inventory_manager'] : []),
+    ...(auditNotifyManager ? ['manager'] : []),
+    ...(auditNotifyAdmin ? ['admin'] : []),
+  ];
+  const serverAuditRoles = settings?.audit_notify_roles ?? ['inventory_manager', 'manager'];
+
   const isDirty = settings ? (
     enabled !== settings.enabled ||
     thresholdPct !== settings.default_threshold_pct ||
@@ -73,7 +80,11 @@ export function AlertSettingsCard() {
     maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
     requirePoApproval !== (settings.require_po_approval ?? true) ||
     deadStockEnabled !== (settings.dead_stock_enabled ?? true) ||
-    deadStockDays !== (settings.dead_stock_days ?? 90)
+    deadStockDays !== (settings.dead_stock_days ?? 90) ||
+    auditFrequency !== (settings.audit_frequency ?? 'monthly') ||
+    auditReminderEnabled !== (settings.audit_reminder_enabled ?? true) ||
+    auditReminderDaysBefore !== (settings.audit_reminder_days_before ?? 3) ||
+    JSON.stringify(currentAuditRoles.sort()) !== JSON.stringify([...serverAuditRoles].sort())
   ) : true;
 
   const handleSave = () => {
