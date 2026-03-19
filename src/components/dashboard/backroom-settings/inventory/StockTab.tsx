@@ -307,7 +307,7 @@ export function StockTab({ locationId }: StockTabProps) {
       await exportStockPdf(
         filtered,
         effectiveOrganization?.name ?? 'Organization',
-        effectiveOrganization?.logo_url,
+        businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
         formatCurrency,
       );
     } finally {
