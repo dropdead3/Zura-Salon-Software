@@ -487,6 +487,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 function WelcomeStep() {
   const features = [
     { icon: Package, label: 'Track products used per service' },
+    { icon: Truck, label: 'Link suppliers for procurement' },
     { icon: Wrench, label: 'Map services to supply components' },
     { icon: DollarSign, label: 'Set allowances and overage billing' },
     { icon: Monitor, label: 'Configure mixing stations' },
