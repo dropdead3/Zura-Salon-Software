@@ -141,10 +141,11 @@ export function AddSupplierWizard({ open, onOpenChange, onComplete }: AddSupplie
         {
           onSuccess: () => {
             // Now update contact details if any were provided
-            const hasContact = details.email || details.phone || details.website || details.account_number || details.lead_time_days || details.reorder_method;
+            const hasContact = details.contact_name || details.email || details.phone || details.website || details.account_number || details.lead_time_days || details.reorder_method;
             if (hasContact) {
               updateContact.mutate({
                 supplier_name: name,
+                contact_name: details.contact_name || null,
                 supplier_email: details.email || null,
                 supplier_phone: details.phone || null,
                 supplier_website: details.website || null,
