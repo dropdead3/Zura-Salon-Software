@@ -49,9 +49,11 @@ export function useDockBrands() {
 
 /** Fetch products for a specific brand, grouped by category */
 export function useDockBrandProducts(brand: string | null) {
+  const { isDemoMode } = useDockDemo();
   return useQuery({
-    queryKey: ['dock-brand-products', brand],
+    queryKey: ['dock-brand-products', brand, isDemoMode],
     queryFn: async (): Promise<DockProduct[]> => {
+      if (isDemoMode) return getDemoProductsByBrand(brand!);
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('id, brand, name, category, product_line, swatch_color, wholesale_price, default_unit')
