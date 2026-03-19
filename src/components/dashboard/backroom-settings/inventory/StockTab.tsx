@@ -627,16 +627,6 @@ export function StockTab({ locationId }: StockTabProps) {
               </SelectContent>
             </Select>
             <Button
-              variant="outline"
-              size="sm"
-              className="font-sans"
-              onClick={handlePdfExport}
-              disabled={exporting || filtered.length === 0}
-            >
-              {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
-              PDF
-            </Button>
-            <Button
               size="sm"
               variant="outline"
               className="font-sans"
