@@ -321,6 +321,12 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     }
   }, [filtered, effectiveOrganization, formatCurrency]);
 
+  // Register PDF export handler for parent header button
+  useEffect(() => {
+    if (pdfExportRef) pdfExportRef.current = handlePdfExport;
+    return () => { if (pdfExportRef) pdfExportRef.current = null; };
+  }, [handlePdfExport, pdfExportRef]);
+
   // Stage all supplier items into PO builder
   const stageSupplierToPo = useCallback((products: BackroomInventoryRow[]) => {
     const reorderItems = products.filter(p => p.recommended_order_qty > 0 || p.stock_state === 'out_of_stock');

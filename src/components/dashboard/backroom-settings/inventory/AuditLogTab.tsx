@@ -187,6 +187,17 @@ export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
   const entries = data?.entries ?? [];
   const hasMore = data?.hasMore ?? false;
 
+  // Stable callback for PDF export ref registration
+  const handleBulkPdfExport = useCallback(() => {
+    if (entries.length > 0) exportBulkPdf(entries, orgName);
+  }, [entries, orgName]);
+
+  // Register PDF export handler for parent header button
+  useEffect(() => {
+    if (pdfExportRef) pdfExportRef.current = handleBulkPdfExport;
+    return () => { if (pdfExportRef) pdfExportRef.current = null; };
+  }, [handleBulkPdfExport, pdfExportRef]);
+
   const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
 
   const hasActiveFilters = dateFrom || dateTo || typeFilter !== 'all' || search;
