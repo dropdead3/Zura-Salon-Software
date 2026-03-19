@@ -327,7 +327,7 @@ export function CommandCenterRow({
                     className={cn(
                       'tabular-nums cursor-pointer transition-colors duration-150',
                       // Point 2: Larger, more prominent
-                      'text-xl font-medium',
+                      'text-xl font-medium tracking-tight',
                       displayOrderQty > 0 && 'bg-primary/[0.06] px-2 py-0.5 rounded-md',
                       isOverridden
                         ? 'text-primary border-b border-dashed border-primary/40'
