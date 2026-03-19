@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Truck, Minus, Plus, Send, FileText, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Truck, Minus, Plus, Send, FileText, Trash2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
