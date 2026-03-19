@@ -313,6 +313,7 @@ export function StockTab({ locationId }: StockTabProps) {
         effectiveOrganization?.name ?? 'Organization',
         businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
         formatCurrency,
+        locationInfo,
       );
     } finally {
       setExporting(false);
