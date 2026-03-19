@@ -90,7 +90,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
     );
   }
 
-  const { kpis, alerts, staffSummary, inventoryHealth, setupHealth, reorderData, lastUpdatedAt } = dashboard;
+  const { kpis, alerts, staffSummary, inventoryHealth, setupHealth, reorderData, lastUpdatedAt, supplyCostRecovery, supplyCostRecoveryEnabled } = dashboard;
   const showSetupBanner = setupHealth && !setupHealth.isComplete;
 
   return (
