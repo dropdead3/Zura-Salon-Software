@@ -436,47 +436,47 @@ export function CommandCenterRow({
               />
               {row.container_size && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Container</span>
-                  <span className="text-sm text-muted-foreground">{row.container_size}</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Container</span>
+                  <span className="text-sm text-muted-foreground/70">{row.container_size}</span>
                 </div>
               )}
               {row.brand && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Brand</span>
-                  <span className="text-sm text-muted-foreground">{row.brand}</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Brand</span>
+                  <span className="text-sm text-muted-foreground/70">{row.brand}</span>
                 </div>
               )}
               {row.category && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Category</span>
-                  <span className="text-sm text-muted-foreground">{formatCategoryLabel(row.category)}</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Category</span>
+                  <span className="text-sm text-muted-foreground/70">{formatCategoryLabel(row.category)}</span>
                 </div>
               )}
               <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground/60 font-sans">PO History</span>
+                <span className="text-[10px] text-muted-foreground/50 font-sans">PO History</span>
                 {poHistory && poHistory.some(v => v > 0) ? (
                   <TrendSparkline data={poHistory} variant="muted" width={80} height={24} />
                 ) : (
-                  <span className="text-muted-foreground/40 text-xs">—</span>
+                  <span className="text-muted-foreground/25 text-xs">—</span>
                 )}
               </div>
               {intelligence && intelligence.dailyUsage > 0 && (
                 <>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground/60 font-sans">Avg Daily Usage</span>
-                    <span className="text-sm text-muted-foreground tabular-nums">{intelligence.dailyUsage}/day</span>
+                    <span className="text-[10px] text-muted-foreground/50 font-sans">Avg Daily Usage</span>
+                    <span className="text-sm text-muted-foreground/70 tabular-nums">{intelligence.dailyUsage}/day</span>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground/60 font-sans">Days Remaining</span>
+                    <span className="text-[10px] text-muted-foreground/50 font-sans">Days Remaining</span>
                     <span className={cn(
                       'text-sm tabular-nums',
                       intelligence.daysRemaining === Infinity
-                        ? 'text-muted-foreground/40'
+                        ? 'text-muted-foreground/25'
                         : intelligence.daysRemaining < 7
                           ? 'text-destructive'
                           : intelligence.daysRemaining < 14
                             ? 'text-warning'
-                            : 'text-muted-foreground',
+                            : 'text-muted-foreground/70',
                     )}>
                       {intelligence.daysRemaining === Infinity ? '—' : `~${intelligence.daysRemaining}d`}
                     </span>
@@ -485,8 +485,8 @@ export function CommandCenterRow({
               )}
               {row.open_po_qty > 0 && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Pending Orders</span>
-                  <span className="text-sm text-primary">{row.open_po_qty} units</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Pending Orders</span>
+                  <span className="text-sm text-primary/80 tabular-nums">{row.open_po_qty} units</span>
                 </div>
               )}
             </div>
