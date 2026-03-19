@@ -160,6 +160,9 @@ export function useBatchUpsertSupplier() {
         account_number: input.account_number || null,
         lead_time_days: input.lead_time_days ?? null,
         moq: input.moq ?? 1,
+        secondary_contact_name: input.secondary_contact_name || null,
+        secondary_contact_email: input.secondary_contact_email || null,
+        secondary_contact_phone: input.secondary_contact_phone || null,
       }));
 
       const { error } = await supabase

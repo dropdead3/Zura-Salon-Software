@@ -238,6 +238,9 @@ export function useUpdateSupplierContact() {
           reorder_method: params.reorder_method ?? null,
           reorder_method_other: params.reorder_method === 'other' ? (params.reorder_method_other ?? null) : null,
           reorder_notes: params.reorder_notes ?? null,
+          secondary_contact_name: params.secondary_contact_name ?? null,
+          secondary_contact_email: params.secondary_contact_email ?? null,
+          secondary_contact_phone: params.secondary_contact_phone ?? null,
         })
         .eq('organization_id', orgId!)
         .eq('supplier_name', params.supplier_name);
