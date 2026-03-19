@@ -1020,30 +1020,8 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
               </Badge>
             )}
             <div className="ml-auto flex items-center gap-1.5">
-              {!isUnassigned && reorderCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-3 text-xs font-sans border-primary/20 text-primary/80 hover:text-primary hover:bg-primary/5"
-                  onClick={(e) => { e.stopPropagation(); onStageToPo(group.products); }}
-                >
-                  <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-                  Create PO
-                </Button>
-              )}
               {isUnassigned && (
                 <>
-                  {reorderCount > 0 && (
-                  <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-3 text-xs font-sans border-primary/20 text-primary/80 hover:text-primary hover:bg-primary/5"
-                      onClick={(e) => { e.stopPropagation(); onStageToPo(group.products); }}
-                    >
-                      <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-                      Create PO
-                    </Button>
-                  )}
                   <Button
                     variant="ghost"
                     size="sm"
