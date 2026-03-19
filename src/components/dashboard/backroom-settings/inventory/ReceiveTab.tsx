@@ -223,25 +223,31 @@ export function ReceiveTab() {
       };
     });
 
-    // Filter out lines with 0 quantity
     const validLines = lines.filter((l) => l.quantity_received > 0 || l.quantity_damaged > 0);
     if (validLines.length === 0) return;
 
-    receiveShipment.mutate(
-      {
-        organization_id: effectiveOrganization?.id || '',
-        purchase_order_id: expandedPO.id,
-        notes: receiveNotes || undefined,
-        lines: validLines,
+    // Stash payload and show FIFO reminder before processing
+    pendingReceiveData.current = {
+      organization_id: effectiveOrganization?.id || '',
+      purchase_order_id: expandedPO.id,
+      notes: receiveNotes || undefined,
+      lines: validLines,
+    };
+    setShowFifoReminder(true);
+  };
+
+  const handleAcknowledgeFifo = () => {
+    setShowFifoReminder(false);
+    if (!pendingReceiveData.current) return;
+
+    receiveShipment.mutate(pendingReceiveData.current, {
+      onSuccess: () => {
+        setExpandedPoId(null);
+        setLineStates({});
+        setReceiveNotes('');
+        pendingReceiveData.current = null;
       },
-      {
-        onSuccess: () => {
-          setExpandedPoId(null);
-          setLineStates({});
-          setReceiveNotes('');
-        },
-      }
-    );
+    });
   };
 
   // Summary stats for the receiving form
