@@ -1,38 +1,65 @@
 
-# Post-Build Gap Fixes — All 5 Gaps + 4 Enhancements ✅
 
-## Completed
+# Inventory Manager Role — Current State & What's Needed
 
-### Gap 1 ✅: Shared formulas wired into formula resolver
-- Added `shared_formula` source type and `fetchSharedFormula()` function
-- Inserted as Priority 2.5 (after stylist, before salon recipe) in `resolveFormula()`
-- Queries `shared_formulas` → `client_formula_history` for the target client, preferring service-matching formulas
+## What Exists Today
 
-### Gap 2 ✅: `check-reorder-levels` respects `require_po_approval`
-- When `require_po_approval = false` AND supplier has email, POs auto-send as `sent` status
-- Edge function deployed
+1. **Backroom Permissions Matrix** — Has an `inventory_manager` column with granular permissions (edit_inventory, perform_counts, receive_po, etc.), but this is a **soft label** stored in a JSON settings blob (`backroom_settings`), not an actual `app_role` enum value.
 
-### Gap 3 ✅: Control Tower "POs Awaiting Approval" alerts
-- Added `po_approval` alert category and `DraftPOAlert` type to `control-tower-engine.ts`
-- Added `buildPOApprovalAlerts()` builder (auto vs manual PO grouping)
-- `useControlTowerAlerts` now fetches draft POs via `useDraftPOs` hook
+2. **Inventory Lead Assignment** — A `location_inventory_leads` table + `InventoryLeadAssignmentCard` lets orgs assign a specific person as the inventory lead per location. This is a designation, not a role.
 
-### Gap 4 ✅: Seasonal demand blended into forecasting
-- Added `fetchSeasonalWeights()` to `predictive-backroom-service.ts`
-- Blends same-week-last-year usage at 30% weight (70/30 current/seasonal)
+3. **No `inventory_manager` in `app_role` enum** — The current enum has 11 values: `admin`, `manager`, `stylist`, `receptionist`, `assistant`, `stylist_assistant`, `admin_assistant`, `operations_assistant`, `super_admin`, `booth_renter`, `bookkeeper`. There is no dedicated inventory management role.
 
-### Gap 5 ✅: Verified — waste categories exist in DB types
+4. **No dashboard personalization** — The "Inventory Lead" badge is mentioned in UI copy but never actually rendered. No inventory-specific dashboard widgets surface for assigned leads.
 
-### Enhancement 1 ✅: Type safety for AlertSettingsCard
-- Added `require_po_approval`, `dead_stock_enabled`, `dead_stock_days` to `InventoryAlertSettings` interface
-- Removed all `as any` casts in AlertSettingsCard
+## What Needs to Be Built
 
-### Enhancement 2: SeasonalDemandOverlay query optimization
-- Deferred (non-blocking) — sequential queries work, can optimize to RPC later
+### 1. Add `inventory_manager` to `app_role` enum
+- Migration: `ALTER TYPE app_role ADD VALUE 'inventory_manager'`
+- This makes it a real assignable role in the Access Hub, invitable via the staff invite flow
 
-### Enhancement 3 ✅: BackroomInventoryValuationCard `is_professional`
-- Verified column exists in DB types — `as any` casts are on the `products` table generic, not the column itself
+### 2. Wire into role metadata
+- Add `inventory_manager` to the `roles` DB table (name, label "Inventory Manager", description, icon `Package`, color `teal`, category `operations`)
+- Grant default permissions: `manage_inventory`, `view_backroom`, `view_transactions`
+- Add to `useInvitableRoles.ts` under `MANAGER_INVITABLE_ROLES`
+- Add to `dashboard_element_visibility` defaults
 
-### Enhancement 4 ✅: CSV comma escaping
-- Added `esc()` helper to both `ServicePLReport` and `BackroomInventoryValuationCard`
-- Wraps values containing commas/quotes in proper CSV escaping
+### 3. Inventory Manager Dashboard Widget
+- New component: `InventoryManagerDashboardCard.tsx` — a role-aware card on the main dashboard that shows:
+  - Pending POs awaiting approval
+  - Low stock alerts count
+  - Next scheduled count date
+  - Quick actions: "Receive PO", "Start Count", "View Reorder Queue"
+- Only visible when user has `inventory_manager` role or is an assigned Inventory Lead
+
+### 4. Surface backroom inventory access
+- The Inventory Manager role should auto-grant access to:
+  - `/dashboard/inventory` (retail)
+  - Backroom Hub inventory tab (professional products)
+  - Reorder queue and PO management
+- Update `ProtectedRoute` permission checks and sidebar visibility
+
+### 5. Notification routing
+- Update `AlertsExceptionsSection` to include `inventory_manager` as a first-class notify target (already partially done — it's in `NOTIFY_ROLE_OPTIONS`)
+- Wire Control Tower alerts to route to users with `inventory_manager` role
+
+### 6. Inventory Lead → Role sync
+- When someone is assigned as Inventory Lead for a location but doesn't have the `inventory_manager` role, show a prompt: "Assign Inventory Manager role to this person?"
+- This bridges the existing Lead assignment with the new formal role
+
+## Technical Summary
+
+| Change | Type |
+|--------|------|
+| `ALTER TYPE app_role ADD VALUE 'inventory_manager'` | Migration |
+| Insert into `roles` table (metadata) | Migration |
+| Insert default `role_permissions` | Migration |
+| Insert `dashboard_element_visibility` entries | Migration |
+| `InventoryManagerDashboardCard.tsx` | New component |
+| `useInvitableRoles.ts` | Edit |
+| `BackroomPermissionsSection.tsx` | Already has it |
+| `InventoryLeadAssignmentCard.tsx` | Edit (role sync prompt) |
+| Sidebar/nav visibility for inventory routes | Edit |
+
+## Files Modified (~8), New Files (1), Migrations (1)
+
