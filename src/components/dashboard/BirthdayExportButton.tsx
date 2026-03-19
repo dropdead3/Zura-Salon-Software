@@ -66,7 +66,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
