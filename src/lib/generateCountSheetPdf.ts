@@ -1,7 +1,5 @@
 /**
  * Generates a printable physical count sheet PDF.
- * Products grouped by brand, sorted alphabetically, with blank columns for actual counts.
- * Supports optional brand/category filtering and scannable QR code linking back to digital entry.
  */
 
 import jsPDF from 'jspdf';
