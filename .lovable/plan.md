@@ -1,153 +1,77 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Enhance Reweigh Reports with Waste, Overage & Staff Integration
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+## Summary
+Expand the Reweigh Reports section to include waste metrics (percentage + dollar amounts), overage attachment rate to appointments, and wire it into the Staff Performance composite and 1:1 meeting reports.
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+## Current Gaps Identified
+1. **Reweigh Reports UI** only shows reweigh rate, color appointment counts, and missing sessions — no waste or cost data
+2. **Compliance tracker hook** (`useBackroomComplianceTracker`) reads `backroom_compliance_log` which has no waste/cost columns
+3. **Staff compliance summary** (`useStaffComplianceSummary`) used by 1:1 ReportBuilder has no waste or overage data
+4. **Staff Performance composite** (`useStaffPerformanceComposite`) already has `wasteRate` and `avgChemicalCostPerService` but missing reweigh compliance rate and overage attachment rate
+5. **1:1 ReportBuilder** includes compliance section but not waste $, waste %, or overage attachment info
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## Data Sources Available
+- `backroom_analytics_snapshots`: has `total_waste_qty`, `waste_pct`, `total_dispensed_qty`, `total_product_cost`
+- `waste_events`: per-session waste with `quantity`, `waste_category`, linked to `mix_sessions` and `products`
+- `checkout_usage_charges`: overage charges per appointment with `charge_amount`, `overage_qty`, `appointment_id`
+- `service_profitability_snapshots`: has `waste_cost`, `overage_revenue` per service/appointment
+- `staff_backroom_performance`: has `waste_rate`, `total_product_cost`, `total_dispensed_weight` per staff
 
-## Auto-Reorder with Supplier Communication (Implemented)
+---
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+## Changes
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### 1. Enhance `useBackroomComplianceTracker` hook
+Add waste and overage aggregation alongside existing compliance data:
+- For sessions that exist (`mix_session_id` not null), fetch associated `waste_events` to compute total waste qty and estimated waste cost
+- Fetch `checkout_usage_charges` for the same org/date range to compute overage attachment rate (appointments with a charge / total color appointments)
+- Add to `ComplianceSummary`: `wasteQty`, `wasteCost`, `wastePct`, `overageAttachmentRate`, `overageChargeTotal`
+- Add to `StaffComplianceBreakdown`: `wasteQty`, `wastePct`, `wasteCost`
+- Add waste % to trend data points
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+### 2. Update `BackroomComplianceSection` UI
+Add 3 new KPI cards to the existing 4-card grid (make it a 7-card responsive grid):
+- **Waste Rate**: Percentage of dispensed product wasted (from waste_events vs dispensed totals)
+- **Est. Waste Cost**: Dollar amount of product wasted (waste_qty * avg cost per unit from product cost)
+- **Overage Attachment**: % of color appointments that generated an overage/product charge
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+Update Staff Leaderboard table to add Waste % and Waste $ columns.
+Add waste % as a second line on the trend chart (dual-axis or second Area).
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+### 3. Enhance `useStaffComplianceSummary` for 1:1 reports
+Add waste and overage data for the individual staff member:
+- Query `waste_events` joined through `mix_sessions` for this staff member's sessions
+- Query `checkout_usage_charges` for this staff member's appointments
+- Return: `wasteQty`, `wastePct`, `wasteCost`, `overageAttachmentRate`, `overageChargeTotal`
 
-## Product Movement Rating Badges (Implemented)
+### 4. Update `ReportBuilder` 1:1 report content
+Expand the "Backroom Compliance" report section (renamed to "Backroom Performance"):
+- Add waste rate %, estimated waste cost
+- Add overage attachment rate and total overage charges
+- Add coaching callout if waste rate > 15% or overage attachment < salon average
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### 5. Wire reweigh + waste into `useStaffPerformanceComposite`
+- Add `reweighComplianceRate` field to `StaffPerformanceRow` (sourced from `staff_backroom_performance.reweigh_compliance_rate`)
+- Add `overageAttachmentRate` field
+- Add coaching signals: "Reweigh rate below 80%" and "Low overage attachment — review checkout workflow"
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+### 6. Update `StaffPerformanceReport` table
+- Add "Reweigh %" sortable column
+- Add "Waste $" sortable column
+- Update coaching signals expansion row to show new signals
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+---
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+## Files to Edit
+1. `src/hooks/backroom/useBackroomComplianceTracker.ts` — add waste/overage aggregation
+2. `src/components/dashboard/backroom-settings/BackroomComplianceSection.tsx` — add KPI cards, table columns, trend line
+3. `src/hooks/backroom/useStaffComplianceSummary.ts` — add waste/overage per-staff data
+4. `src/components/coaching/ReportBuilder.tsx` — expand backroom section with waste + overage
+5. `src/hooks/useStaffPerformanceComposite.ts` — add reweigh rate + overage attachment
+6. `src/components/dashboard/analytics/StaffPerformanceReport.tsx` — add columns + signals
 
-## Inventory Intelligence Suite v2 (Implemented)
+## No DB changes needed
+All required data already exists in `waste_events`, `checkout_usage_charges`, `staff_backroom_performance`, and `mix_sessions`.
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
-
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
-
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
-
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
-
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
-
-## Enhancement 1: Expiry Tracking (Implemented)
-
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
-
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
-
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
-
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
-
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
-
-## Enhancement 2: Shrinkage Detection (Implemented)
-
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
-
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
-
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
-
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
-
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
