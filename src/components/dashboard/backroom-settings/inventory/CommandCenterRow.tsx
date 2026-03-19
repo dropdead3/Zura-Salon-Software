@@ -235,6 +235,20 @@ export function CommandCenterRow({
               {row.container_size && (
                 <span className="text-muted-foreground/50 text-[10px] ml-1.5">{row.container_size}</span>
               )}
+              {intelligence && intelligence.dailyUsage > 0 && intelligence.daysRemaining !== Infinity && (
+                <div className="mt-0.5">
+                  <span className={cn(
+                    'text-[10px]',
+                    intelligence.daysRemaining < 7
+                      ? 'text-destructive/60'
+                      : intelligence.daysRemaining < 14
+                        ? 'text-warning/60'
+                        : 'text-muted-foreground/50',
+                  )}>
+                    ~{intelligence.daysRemaining}d remaining
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </TableCell>
