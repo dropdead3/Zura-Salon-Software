@@ -10,6 +10,12 @@ import { useBackroomOrgId } from './useBackroomOrgId';
 
 export type StockStatus = 'in_stock' | 'replenish' | 'urgent_reorder' | 'out_of_stock' | 'not_stocked';
 
+/** Layer 1 — binary state */
+export type StockState = 'in_stock' | 'out_of_stock';
+
+/** Layer 2 — severity / urgency */
+export type StockSeverity = 'critical' | 'low' | 'healthy';
+
 export interface BackroomInventoryRow {
   id: string;
   name: string;
@@ -28,6 +34,10 @@ export interface BackroomInventoryRow {
   effective_stock: number;
   recommended_order_qty: number;
   status: StockStatus;
+  /** Dual-layer: binary state */
+  stock_state: StockState;
+  /** Dual-layer: severity */
+  severity: StockSeverity;
   charge_per_gram: number | null;
   supplier_name: string | null;
   supplier_email: string | null;
