@@ -47,6 +47,7 @@ export function CapacityReport({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
 
   const { data: capacityData, isLoading } = useCapacityReport(dateFrom, dateTo, locationId);
 
