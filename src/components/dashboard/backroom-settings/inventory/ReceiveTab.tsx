@@ -558,6 +558,57 @@ export function ReceiveTab() {
           );
         })}
       </div>
+
+      {/* ── FIFO Stock Rotation Reminder ── */}
+      <AlertDialog open={showFifoReminder} onOpenChange={setShowFifoReminder}>
+        <PlatformAlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                <RotateCcw className="w-5 h-5 text-warning" />
+              </div>
+              <PlatformAlertDialogTitle>Stock Rotation Reminder</PlatformAlertDialogTitle>
+            </div>
+            <PlatformAlertDialogDescription>
+              Before shelving new inventory, complete the FIFO checklist to keep stock fresh and reduce waste.
+            </PlatformAlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3 py-2 px-1">
+            <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-sans">1</span>
+              <div>
+                <p className="text-sm font-sans">Pull existing stock forward</p>
+                <p className="text-xs text-muted-foreground">Move all current inventory to the front of the shelf.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-sans">2</span>
+              <div>
+                <p className="text-sm font-sans">Place new inventory behind old</p>
+                <p className="text-xs text-muted-foreground">New stock goes to the back so older product is used first.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning text-xs font-sans">3</span>
+              <div>
+                <p className="text-sm font-sans">Check for expired or near-expiry items</p>
+                <p className="text-xs text-muted-foreground">Remove anything expired and flag items approaching their use-by date.</p>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <PlatformAlertDialogCancel onClick={() => setShowFifoReminder(false)}>
+              Go Back
+            </PlatformAlertDialogCancel>
+            <AlertDialogAction onClick={handleAcknowledgeFifo}>
+              <RotateCcw className="w-4 h-4 mr-1" />
+              I've Rotated Stock — Confirm Receive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </PlatformAlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
