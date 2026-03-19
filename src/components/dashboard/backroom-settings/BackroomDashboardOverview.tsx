@@ -140,7 +140,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                           'w-5 h-5 rounded-full flex items-center justify-center transition-colors',
                           step.done
                             ? 'bg-amber-500 text-amber-950'
-                            : 'border border-amber-500/40 bg-transparent'
+                            : 'border border-amber-400 dark:border-amber-500/40 bg-transparent'
                         )}>
                           {step.done && <Check className="w-3 h-3" />}
                         </div>
