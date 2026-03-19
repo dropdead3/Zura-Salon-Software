@@ -771,9 +771,10 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
           poHistory={poHistoryMap?.get(row.id)}
           qtyOverride={qtyOverrides.get(row.id) ?? null}
           onQtyOverride={onQtyOverride}
-          addedToPo={poItemIds.has(row.id)}
-          onToggleAddToPo={onToggleAddToPo}
-        />
+           addedToPo={poItemIds.has(row.id)}
+           onToggleAddToPo={onToggleAddToPo}
+           intelligence={intelligenceMap?.get(row.id)}
+         />
       ))}
     </>
   );
