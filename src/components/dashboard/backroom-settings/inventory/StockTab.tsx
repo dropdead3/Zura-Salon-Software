@@ -568,6 +568,16 @@ export function StockTab({ locationId }: StockTabProps) {
                     <Zap className="w-3.5 h-3.5 mr-1" />
                     Auto Build PO
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="font-sans rounded-full h-7 px-3 text-xs"
+                    onClick={handlePdfExport}
+                    disabled={exporting || filtered.length === 0}
+                  >
+                    {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
+                    PDF
+                  </Button>
                 </div>
               </>
             ) : (
