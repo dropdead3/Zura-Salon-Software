@@ -83,7 +83,7 @@ export function useUpsertRecipeBaseline() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
-      toast.success('Recipe baseline saved');
+      toast.success('Formula baseline saved');
     },
     onError: (error) => {
       toast.error('Failed to save baseline: ' + error.message);

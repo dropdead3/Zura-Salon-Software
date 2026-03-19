@@ -107,7 +107,7 @@ export function FormulaAssistanceSection() {
           ))}
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or recipe baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
+              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or formula baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
               <p className="text-sm text-muted-foreground">Automatically fill formula fields when a match is found</p>
             </div>
             <Switch checked={(currentRecall.auto_populate as boolean) ?? true} onCheckedChange={(checked) => setRecallConfig({ ...currentRecall, auto_populate: checked })} />

@@ -70,7 +70,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+                <CardTitle className={tokens.card.title}>Formula Baselines</CardTitle>
                 <MetricInfoTooltip description="The expected amount of each product for a standard application. Zura flags deviations beyond the variance threshold." />
               </div>
               <CardDescription>

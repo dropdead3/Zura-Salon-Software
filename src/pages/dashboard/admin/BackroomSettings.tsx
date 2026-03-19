@@ -329,7 +329,7 @@ export default function BackroomSettings() {
             {activeSection === 'overview' && <BackroomDashboardOverview onNavigate={handleNavigate} initialSubTab={subTab} />}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
-            {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
+            {activeSection === 'formulas' && <RecipeBaselineSection onNavigate={handleNavigate} />}
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
             {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}

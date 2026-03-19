@@ -72,7 +72,7 @@ export function useEstimatedProductCharge(
 
       const orgDefaultMarkup = (billingSettings as any)?.default_product_markup_pct ?? 0;
 
-      // 3. Get recipe baselines for these services
+      // 3. Get formula baselines for these services
       const { data: baselines } = await supabase
         .from('service_recipe_baselines')
         .select('service_id, product_id, expected_quantity')

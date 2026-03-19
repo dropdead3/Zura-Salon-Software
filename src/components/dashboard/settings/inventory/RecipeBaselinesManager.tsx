@@ -113,7 +113,7 @@ export function RecipeBaselinesManager() {
             <FlaskConical className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+            <CardTitle className={tokens.card.title}>Formula Baselines</CardTitle>
             <CardDescription className="font-sans text-sm">
               Define expected product usage per service for variance tracking
             </CardDescription>

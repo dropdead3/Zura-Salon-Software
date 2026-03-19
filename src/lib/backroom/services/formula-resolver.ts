@@ -285,7 +285,7 @@ export async function resolveFormulaMemory(
   const anyResult = await fetchClientAnyFormula(orgId, clientId);
   if (anyResult) return anyResult;
 
-  // Priority 3: Salon recipe baseline
+  // Priority 3: Salon formula baseline
   if (serviceName) {
     const recipe = await fetchSalonRecipe(orgId, serviceName);
     if (recipe) {

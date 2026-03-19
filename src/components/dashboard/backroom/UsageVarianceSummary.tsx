@@ -1,6 +1,6 @@
 /**
  * UsageVarianceSummary — Shows per-product variance after session completion.
- * Compares actual bowl line usage against service recipe baselines.
+ * Compares actual bowl line usage against service formula baselines.
  */
 
 import { Badge } from '@/components/ui/badge';

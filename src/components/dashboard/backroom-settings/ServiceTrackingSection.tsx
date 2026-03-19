@@ -266,8 +266,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           {/* Next step hint */}
           {onNavigate && tracked.length > 0 && (
             <div className="flex justify-end pt-2 border-t">
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('recipes')}>
-                Next: Recipe Baselines <ArrowRight className="w-3 h-3 ml-1" />
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('formulas')}>
+                Next: Formula Baselines <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
           )}
