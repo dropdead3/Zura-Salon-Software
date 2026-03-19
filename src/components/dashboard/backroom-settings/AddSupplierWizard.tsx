@@ -43,6 +43,7 @@ const EMPTY_DETAILS: SupplierDetails = {
   lead_time_days: '',
   moq: '1',
   reorder_method: '',
+  reorder_method_other: '',
   reorder_notes: '',
 };
 
