@@ -440,160 +440,6 @@ export function StockTab({ locationId }: StockTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* ─── Decision Header ─── */}
-      <div className="bg-card/80 backdrop-blur-xl border border-border rounded-full px-4 py-2.5 flex items-center gap-3 shadow-lg">
-        {hasActionItems ? (
-          <>
-            {/* Left: count + label */}
-            <div className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-lg font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
-              <span className="text-xs text-foreground/80 font-sans">need action</span>
-            </div>
-
-            {/* Center: severity breakdown */}
-            <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-xs font-sans">
-              <button
-                onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
-                className={cn(
-                  'tabular-nums transition-colors duration-150 shrink-0',
-                  severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
-                )}
-              >
-                {kpis.criticalCount} Critical
-              </button>
-              <span className="text-muted-foreground/30">·</span>
-              <button
-                onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
-                className={cn(
-                  'tabular-nums transition-colors duration-150 shrink-0',
-                  severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
-                )}
-              >
-                {kpis.lowStock} Low
-              </button>
-              <span className="text-muted-foreground/30">·</span>
-              <span className="text-muted-foreground tabular-nums shrink-0">
-                Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
-              </span>
-            </div>
-
-            {/* Right: actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                className="font-sans rounded-full h-7 px-3 text-xs"
-                onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
-              >
-                {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
-              </Button>
-              <Button
-                size="sm"
-                className="font-sans rounded-full h-7 px-3 text-xs"
-                onClick={() => setAutoPoDialog(true)}
-                disabled={kpis.needsReorder === 0}
-              >
-                <Zap className="w-3.5 h-3.5 mr-1" />
-                Auto Build PO
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
-              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-              <span className="text-xs font-sans">All stock levels healthy</span>
-            </div>
-            <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
-              {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* Filters + Actions */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search products, brands, SKUs..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(c => (
-              <SelectItem key={c} value={c}>{c === 'all' ? 'All Categories' : formatCategoryLabel(c)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="in_stock">In Stock</SelectItem>
-            <SelectItem value="replenish">Replenish</SelectItem>
-            <SelectItem value="urgent_reorder">Urgent Reorder</SelectItem>
-            <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          className="font-sans"
-          onClick={handlePdfExport}
-          disabled={exporting || filtered.length === 0}
-        >
-          {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
-          PDF
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="font-sans"
-          onClick={() => setAutoParDialog(true)}
-          disabled={inventory.length === 0}
-        >
-          <SlidersHorizontal className="w-4 h-4 mr-1.5" />
-          Auto-Set Pars
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                role="button"
-                className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-muted text-muted-foreground hover:bg-foreground/20 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Info className="w-3 h-3" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-[300px] text-center">
-              A par level is the ideal maximum stock quantity to keep on hand. This tool automatically calculates par levels and reorder points based on your 30-day usage velocity and supplier lead times.
-            </TooltipContent>
-          </Tooltip>
-        </Button>
-        {poItemIds.size > 0 && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="font-sans border-primary/30 text-primary"
-            onClick={() => setPoBuilderOpen(!poBuilderOpen)}
-          >
-            <FileText className="w-4 h-4 mr-1.5" />
-            PO Builder
-            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
-              {poItemIds.size}
-            </Badge>
-          </Button>
-        )}
-      </div>
-
       {/* Sticky Bulk Action Bar */}
       {selectedIds.size > 0 && (
         <div className="sticky bottom-0 z-20 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg animate-in slide-in-from-bottom-2 fade-in duration-200">
@@ -671,6 +517,154 @@ export function StockTab({ locationId }: StockTabProps) {
         </div>
       ) : (
         <Card className="overflow-hidden">
+          {/* ─── Decision Header ─── */}
+          <div className="px-4 py-2.5 border-b border-border flex items-center gap-3">
+            {hasActionItems ? (
+              <>
+                <div className="flex items-baseline gap-1.5 shrink-0">
+                  <span className="text-lg font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
+                  <span className="text-xs text-foreground/80 font-sans">need action</span>
+                </div>
+                <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-xs font-sans">
+                  <button
+                    onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
+                    className={cn(
+                      'tabular-nums transition-colors duration-150 shrink-0',
+                      severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
+                    )}
+                  >
+                    {kpis.criticalCount} Critical
+                  </button>
+                  <span className="text-muted-foreground/30">·</span>
+                  <button
+                    onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
+                    className={cn(
+                      'tabular-nums transition-colors duration-150 shrink-0',
+                      severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
+                    )}
+                  >
+                    {kpis.lowStock} Low
+                  </button>
+                  <span className="text-muted-foreground/30">·</span>
+                  <span className="text-muted-foreground tabular-nums shrink-0">
+                    Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="font-sans rounded-full h-7 px-3 text-xs"
+                    onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
+                  >
+                    {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="font-sans rounded-full h-7 px-3 text-xs"
+                    onClick={() => setAutoPoDialog(true)}
+                    disabled={kpis.needsReorder === 0}
+                  >
+                    <Zap className="w-3.5 h-3.5 mr-1" />
+                    Auto Build PO
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                  <span className="text-xs font-sans">All stock levels healthy</span>
+                </div>
+                <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
+                  {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Filters + Actions */}
+          <div className="px-4 py-2.5 border-b border-border flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products, brands, SKUs..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(c => (
+                  <SelectItem key={c} value={c}>{c === 'all' ? 'All Categories' : formatCategoryLabel(c)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="in_stock">In Stock</SelectItem>
+                <SelectItem value="replenish">Replenish</SelectItem>
+                <SelectItem value="urgent_reorder">Urgent Reorder</SelectItem>
+                <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="font-sans"
+              onClick={handlePdfExport}
+              disabled={exporting || filtered.length === 0}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="font-sans"
+              onClick={() => setAutoParDialog(true)}
+              disabled={inventory.length === 0}
+            >
+              <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+              Auto-Set Pars
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    role="button"
+                    className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-muted text-muted-foreground hover:bg-foreground/20 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Info className="w-3 h-3" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[300px] text-center">
+                  A par level is the ideal maximum stock quantity to keep on hand. This tool automatically calculates par levels and reorder points based on your 30-day usage velocity and supplier lead times.
+                </TooltipContent>
+              </Tooltip>
+            </Button>
+            {poItemIds.size > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="font-sans border-primary/30 text-primary"
+                onClick={() => setPoBuilderOpen(!poBuilderOpen)}
+              >
+                <FileText className="w-4 h-4 mr-1.5" />
+                PO Builder
+                <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
+                  {poItemIds.size}
+                </Badge>
+              </Button>
+            )}
+          </div>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
