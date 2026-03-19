@@ -33,6 +33,7 @@ import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './Comman
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
 
 interface StockTabProps {
   locationId?: string;
