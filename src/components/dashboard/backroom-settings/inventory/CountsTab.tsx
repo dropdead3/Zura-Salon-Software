@@ -355,6 +355,9 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
         <Button variant={tab === 'shrinkage' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('shrinkage')}>
           <TrendingDown className="w-4 h-4 mr-1" /> Shrinkage
         </Button>
+        <Button variant={tab === 'audit' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('audit')}>
+          <CalendarCheck className="w-4 h-4 mr-1" /> Audit Schedule
+        </Button>
       </div>
 
       {/* Sessions list */}
