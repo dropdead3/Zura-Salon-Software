@@ -11,6 +11,7 @@ import {
   addReportFooter,
   getReportAutoTableBranding,
   type ReportHeaderOptions,
+  type LogoDataResult,
 } from '@/lib/reportPdfLayout';
 
 export interface CountSheetProduct {
