@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, ChevronDown, ChevronRight, UserPlus, FileDown, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
+import { Loader2, Search, Package, ChevronDown, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './Comman
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
 
 interface StockTabProps {
   locationId?: string;
@@ -124,6 +125,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
   const [poItemIds, setPoItemIds] = useState<Set<string>>(new Set());
+  const [poBuilderOpen, setPoBuilderOpen] = useState(false);
 
   const toggleAddToPo = useCallback((productId: string) => {
     setPoItemIds(prev => {
@@ -132,7 +134,37 @@ export function StockTab({ locationId }: StockTabProps) {
       else next.add(productId);
       return next;
     });
+    // Auto-open panel when adding items
+    setPoBuilderOpen(true);
   }, []);
+
+  const poItems = useMemo(() => inventory.filter(r => poItemIds.has(r.id)), [inventory, poItemIds]);
+
+  const handleSubmitPO = useCallback((group: SupplierPOGroup) => {
+    if (!orgId) return;
+    const lines = group.items.map(item => ({
+      product_id: item.id,
+      quantity_ordered: qtyOverrides.get(item.id) ?? item.recommended_order_qty,
+      unit_cost: item.cost_price ?? item.cost_per_gram ?? undefined,
+    }));
+    createPO.mutate({
+      organization_id: orgId,
+      supplier_name: group.supplier !== 'Unassigned' ? group.supplier : undefined,
+      supplier_email: group.items.find(i => i.supplier_email)?.supplier_email ?? undefined,
+      notes: `PO for ${group.supplier}`,
+      lines,
+    }, {
+      onSuccess: () => {
+        // Remove submitted items from staged set
+        setPoItemIds(prev => {
+          const next = new Set(prev);
+          group.items.forEach(i => next.delete(i.id));
+          return next;
+        });
+        toast.success(`Draft PO created for ${group.supplier}`);
+      },
+    });
+  }, [orgId, qtyOverrides, createPO]);
 
   // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
@@ -375,6 +407,20 @@ export function StockTab({ locationId }: StockTabProps) {
           <SlidersHorizontal className="w-4 h-4 mr-1.5" />
           Auto-Set Pars
         </Button>
+        {poItemIds.size > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="font-sans border-primary/30 text-primary"
+            onClick={() => setPoBuilderOpen(!poBuilderOpen)}
+          >
+            <FileText className="w-4 h-4 mr-1.5" />
+            PO Builder
+            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
+              {poItemIds.size}
+            </Badge>
+          </Button>
+        )}
       </div>
 
       {/* Sticky Bulk Action Bar */}
@@ -530,6 +576,17 @@ export function StockTab({ locationId }: StockTabProps) {
         productIds={inventory.map(r => r.id)}
         orgId={orgId ?? ''}
         locationId={locationId}
+      />
+      <POBuilderPanel
+        open={poBuilderOpen}
+        onClose={() => setPoBuilderOpen(false)}
+        items={poItems}
+        qtyOverrides={qtyOverrides}
+        onQtyOverride={handleQtyOverride}
+        onRemoveItem={toggleAddToPo}
+        onClearAll={() => { setPoItemIds(new Set()); setPoBuilderOpen(false); }}
+        onSubmitPO={handleSubmitPO}
+        formatCurrency={formatCurrency}
       />
     </div>
   );
