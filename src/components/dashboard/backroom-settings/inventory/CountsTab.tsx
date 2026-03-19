@@ -105,6 +105,14 @@ export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
     }
   };
 
+  // Register PDF export handler for parent header button
+  useEffect(() => {
+    if (pdfExportRef) {
+      pdfExportRef.current = () => handlePrintCountSheet();
+    }
+    return () => { if (pdfExportRef) pdfExportRef.current = null; };
+  }, [inventoryProducts, businessSettings, effectiveOrganization, locationInfo, pdfExportRef]);
+
   const handleFilteredExport = () => {
     const filters: CountSheetFilters = {};
     if (selectedBrands.size > 0) filters.brands = Array.from(selectedBrands);
