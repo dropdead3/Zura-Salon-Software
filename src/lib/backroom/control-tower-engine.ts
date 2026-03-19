@@ -36,6 +36,17 @@ export interface ControlTowerAlert {
   createdAt: string;
 }
 
+export interface DraftPOAlert {
+  id: string;
+  po_number: string;
+  product_name: string;
+  supplier_name: string;
+  quantity: number;
+  created_at: string;
+  import_source?: string | null;
+  notes?: string | null;
+}
+
 export interface ControlTowerSources {
   inventoryRisk: InventoryRiskProjection[];
   exceptions: BackroomException[];
@@ -43,6 +54,7 @@ export interface ControlTowerSources {
   staffPerformance: StaffBackroomPerformance[];
   forecastSummary: ForecastSummary | null;
   stockoutAlerts: ProductDemandForecast[];
+  draftPOs?: DraftPOAlert[];
 }
 
 export interface PrioritySummary {
