@@ -129,7 +129,7 @@ function DetailEditCell({
         />
       ) : (
         <span
-          className="text-sm tabular-nums cursor-pointer border-b border-dashed border-muted-foreground/20 hover:border-primary/60 transition-colors text-muted-foreground"
+          className="text-sm tabular-nums cursor-pointer border-b border-dashed border-muted-foreground/20 hover:border-primary/60 transition-colors duration-150 text-muted-foreground"
           onClick={() => { setDraft(value != null ? String(value) : ''); setEditing(true); }}
           title="Click to edit"
         >
