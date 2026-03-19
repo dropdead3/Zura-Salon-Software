@@ -407,6 +407,20 @@ export function StockTab({ locationId }: StockTabProps) {
           <SlidersHorizontal className="w-4 h-4 mr-1.5" />
           Auto-Set Pars
         </Button>
+        {poItemIds.size > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="font-sans border-primary/30 text-primary"
+            onClick={() => setPoBuilderOpen(!poBuilderOpen)}
+          >
+            <FileText className="w-4 h-4 mr-1.5" />
+            PO Builder
+            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
+              {poItemIds.size}
+            </Badge>
+          </Button>
+        )}
       </div>
 
       {/* Sticky Bulk Action Bar */}
