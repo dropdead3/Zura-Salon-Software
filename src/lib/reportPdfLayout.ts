@@ -119,20 +119,19 @@ export function addReportHeader(
 
   // ── Logo ──
   if (opts.logoDataUrl) {
-    const imageFormat = getImageFormatFromDataUrl(opts.logoDataUrl) ?? 'PNG';
-    const { w, h } = getScaledLogoDimensions(opts.logoDataUrl, LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT);
+    const imageFormat = getImageFormatFromDataUrl(opts.logoDataUrl);
     try {
       doc.addImage(
         opts.logoDataUrl,
         imageFormat,
         marginLeft,
         HEADER_TOP,
-        w,
-        h,
+        LOGO_MAX_WIDTH,
+        LOGO_MAX_HEIGHT,
         undefined,
         'FAST',
       );
-      textStartX = marginLeft + w + 4;
+      textStartX = marginLeft + LOGO_MAX_WIDTH + 4;
     } catch {
       // Skip logo on error
     }
