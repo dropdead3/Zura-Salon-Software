@@ -30,30 +30,52 @@ const FOOTER_BOTTOM = 8;
 /** Body content should start below this Y to avoid overlapping the header on any page. */
 export const REPORT_BODY_START_Y = 48;
 
-function getImageFormatFromDataUrl(dataUrl: string): 'PNG' | 'JPEG' | undefined {
+function getImageFormatFromDataUrl(dataUrl: string): 'PNG' | 'JPEG' {
   if (dataUrl.startsWith('data:image/jpeg') || dataUrl.startsWith('data:image/jpg')) return 'JPEG';
-  if (dataUrl.startsWith('data:image/png')) return 'PNG';
-  return undefined;
+  return 'PNG';
 }
 
 /**
- * Get the natural dimensions of an image from its data URL so we can
- * scale proportionally within max bounds.
+ * Convert a Blob to a data URL via FileReader.
  */
-function getScaledLogoDimensions(
-  dataUrl: string,
-  maxW: number,
-  maxH: number,
-): { w: number; h: number } {
-  // We can't use Image() in a non-browser context (SSR / edge), so
-  // fall back to max bounds. In the browser, jsPDF will render fine.
-  // For proportional scaling we parse the image header if possible.
-  // Since jsPDF handles aspect ratio poorly, we just cap to max dims.
-  return { w: maxW, h: maxH };
+function blobToDataUrl(blob: Blob): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
 }
 
 /**
- * Fetches an image URL and returns a data URL for embedding in jsPDF.
+ * Rasterize an SVG data URL to a PNG data URL via canvas.
+ * jsPDF cannot embed SVGs, so this converts them to raster format.
+ */
+function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const natW = img.naturalWidth || maxW;
+      const natH = img.naturalHeight || maxH;
+      const scale = Math.min(maxW / natW, maxH / natH, 1);
+      const w = Math.round(natW * scale);
+      const h = Math.round(natH * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(null); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = svgDataUrl;
+  });
+}
+
+/**
+ * Fetches an image URL and returns a raster data URL for embedding in jsPDF.
+ * SVGs are automatically rasterized to PNG via canvas.
  * Returns null on CORS or network errors so reports still generate without logo.
  */
 export async function fetchLogoAsDataUrl(url: string | null | undefined): Promise<string | null> {
@@ -62,12 +84,14 @@ export async function fetchLogoAsDataUrl(url: string | null | undefined): Promis
     const res = await fetch(url, { mode: 'cors' });
     if (!res.ok) return null;
     const blob = await res.blob();
-    return await new Promise<string | null>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
+    const rawDataUrl = await blobToDataUrl(blob);
+    if (!rawDataUrl) return null;
+
+    // SVGs must be rasterized — jsPDF cannot embed SVG directly
+    if (blob.type === 'image/svg+xml' || rawDataUrl.startsWith('data:image/svg')) {
+      return await rasterizeSvgToPng(rawDataUrl, 400, 140);
+    }
+    return rawDataUrl;
   } catch {
     return null;
   }
@@ -95,20 +119,19 @@ export function addReportHeader(
 
   // ── Logo ──
   if (opts.logoDataUrl) {
-    const imageFormat = getImageFormatFromDataUrl(opts.logoDataUrl) ?? 'PNG';
-    const { w, h } = getScaledLogoDimensions(opts.logoDataUrl, LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT);
+    const imageFormat = getImageFormatFromDataUrl(opts.logoDataUrl);
     try {
       doc.addImage(
         opts.logoDataUrl,
         imageFormat,
         marginLeft,
         HEADER_TOP,
-        w,
-        h,
+        LOGO_MAX_WIDTH,
+        LOGO_MAX_HEIGHT,
         undefined,
         'FAST',
       );
-      textStartX = marginLeft + w + 4;
+      textStartX = marginLeft + LOGO_MAX_WIDTH + 4;
     } catch {
       // Skip logo on error
     }
