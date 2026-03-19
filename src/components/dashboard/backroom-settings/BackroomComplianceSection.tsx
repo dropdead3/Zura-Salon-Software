@@ -193,7 +193,7 @@ export function BackroomComplianceSection() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
                       <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                      <Tooltip formatter={(v: number) => [`${v}%`, 'Compliance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Tooltip formatter={(v: number) => [`${v}%`, 'Reweigh Rate']} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                       <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#complianceGrad)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
