@@ -386,11 +386,21 @@ export function StockTab({ locationId }: StockTabProps) {
         <Button
           size="sm"
           className="font-sans"
-          onClick={() => setAutoPoDialog(true)}
+          onClick={() => {
+            const reorderItems = inventory.filter(r => r.recommended_order_qty > 0);
+            if (reorderItems.length === 0) return;
+            setPoItemIds(prev => {
+              const next = new Set(prev);
+              reorderItems.forEach(r => next.add(r.id));
+              return next;
+            });
+            setPoBuilderOpen(true);
+            toast.success(`${reorderItems.length} items added to PO Builder`);
+          }}
           disabled={kpis.needsReorder === 0}
         >
           <Zap className="w-4 h-4 mr-1.5" />
-          Auto Create POs
+          Auto Build PO
           {kpis.needsReorder > 0 && (
             <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
               {kpis.needsReorder}
@@ -455,11 +465,14 @@ export function StockTab({ locationId }: StockTabProps) {
             variant="outline"
             className="font-sans h-7 gap-1"
             onClick={() => {
-              inventory.forEach(r => {
-                if (r.recommended_order_qty > 0 && !poItemIds.has(r.id)) {
-                  toggleAddToPo(r.id);
-                }
+              const reorderItems = inventory.filter(r => r.recommended_order_qty > 0 && !poItemIds.has(r.id));
+              setPoItemIds(prev => {
+                const next = new Set(prev);
+                reorderItems.forEach(r => next.add(r.id));
+                return next;
               });
+              setPoBuilderOpen(true);
+              toast.success(`${reorderItems.length} items added to PO Builder`);
             }}
           >
             <Zap className="w-3.5 h-3.5" />
