@@ -26,6 +26,7 @@ export interface DockAppointment {
 }
 
 export function useDockAppointments(staffUserId: string | null) {
+  const { isDemoMode } = useDockDemo();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   return useQuery({
