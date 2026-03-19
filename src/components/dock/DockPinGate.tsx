@@ -125,6 +125,21 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           );
         })}
       </div>
+
+      {import.meta.env.DEV && (
+        <button
+          onClick={() =>
+            onSuccess({
+              userId: 'dev-bypass-000',
+              displayName: 'Dev Tester',
+              avatarUrl: null,
+            })
+          }
+          className="mt-8 text-xs text-[hsl(var(--platform-foreground-muted)/0.4)] hover:text-violet-400 transition-colors"
+        >
+          Dev Bypass →
+        </button>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Tablet, Scale, FlaskConical, ClipboardCheck, Lock, Bluetooth } from 'lucide-react';
+import { Tablet, Scale, FlaskConical, ClipboardCheck, ExternalLink, Bluetooth } from 'lucide-react';
 import { PlatformCard, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription, PlatformCardContent } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
@@ -47,9 +47,9 @@ export function DockAppTab() {
               BLE Scale Ready
             </PlatformBadge>
           </div>
-          <PlatformButton variant="outline" disabled className="mt-2">
-            <Lock className="w-3.5 h-3.5" />
-            Launch Dock Preview (Coming Soon)
+          <PlatformButton variant="outline" className="mt-2" onClick={() => window.open('/dock', '_blank')}>
+            <ExternalLink className="w-3.5 h-3.5" />
+            Launch Dock Preview
           </PlatformButton>
         </div>
       </PlatformCard>
