@@ -198,8 +198,8 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
 
   // Stable callback for PDF export ref registration
   const handleBulkPdfExport = useCallback(() => {
-    if (entries.length > 0) exportBulkPdf(entries, orgName, currentLocationName);
-  }, [entries, orgName, currentLocationName]);
+    if (entries.length > 0) exportBulkPdf(entries, orgName, currentLocationName, dateFrom, dateTo);
+  }, [entries, orgName, currentLocationName, dateFrom, dateTo]);
 
   // Register PDF export handler for parent header button
   // Audit log is org-wide (not location-scoped), so multi-location just exports current view
