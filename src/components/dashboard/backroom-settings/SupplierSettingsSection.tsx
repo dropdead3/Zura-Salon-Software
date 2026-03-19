@@ -305,6 +305,10 @@ export function SupplierSettingsSection() {
 
                   {/* Contact form */}
                   <form onSubmit={handleSubmit(onSaveContact)} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cn" className={tokens.label.default}>Contact Name</Label>
+                      <Input id="cn" {...register('contact_name')} placeholder="e.g. Jane Smith" />
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
                         <Label htmlFor="se" className={tokens.label.default}>Email</Label>
