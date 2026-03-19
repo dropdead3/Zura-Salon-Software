@@ -298,7 +298,7 @@ export function CommandCenterRow({
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                       if (e.key === 'Escape') setEditingQty(false);
                     }}
-                    className="w-14 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    className="w-14 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
                   />
                 ) : (
                   <span
