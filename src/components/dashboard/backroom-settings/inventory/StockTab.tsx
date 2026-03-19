@@ -572,15 +572,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
               </Badge>
             )}
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="font-sans h-7 gap-1"
-            onClick={() => setAutoPoDialog(true)}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            Auto Build PO
-          </Button>
           {emailPreviewGroups.length > 0 && (
             <Button
               size="sm"
