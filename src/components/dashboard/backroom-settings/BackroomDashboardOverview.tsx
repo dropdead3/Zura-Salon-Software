@@ -115,7 +115,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                       Uh-oh, you haven't finished setting up your backroom!
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                      <span className="font-display text-amber-400/80 tracking-wide">{setupHealth.completed} of {setupHealth.total}</span>{' '}areas configured
+                      <span className="font-display text-amber-600 dark:text-amber-400/80 tracking-wide">{setupHealth.completed} of {setupHealth.total}</span>{' '}areas configured
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
