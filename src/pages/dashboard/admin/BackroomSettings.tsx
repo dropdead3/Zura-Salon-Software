@@ -48,7 +48,7 @@ type BackroomSection =
   | 'overview'
   | 'products'
   | 'services'
-  | 'recipes'
+  | 'formulas'
   | 'allowances'
   | 'stations'
   | 'inventory'
