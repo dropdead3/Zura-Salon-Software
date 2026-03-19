@@ -1,4 +1,4 @@
-import { Tablet, Scale, FlaskConical, ClipboardCheck, Lock, Bluetooth } from 'lucide-react';
+import { Tablet, Scale, FlaskConical, ClipboardCheck, ExternalLink, Bluetooth } from 'lucide-react';
 import { PlatformCard, PlatformCardHeader, PlatformCardTitle, PlatformCardDescription, PlatformCardContent } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
