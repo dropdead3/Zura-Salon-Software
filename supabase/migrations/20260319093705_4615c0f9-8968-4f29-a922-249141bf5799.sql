@@ -1,0 +1,1 @@
+ALTER TABLE public.backroom_billing_settings ADD COLUMN IF NOT EXISTS enable_supply_cost_recovery boolean NOT NULL DEFAULT false;
