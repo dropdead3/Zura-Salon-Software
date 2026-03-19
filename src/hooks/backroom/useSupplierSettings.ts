@@ -219,6 +219,7 @@ export function useUpdateSupplierContact() {
       const { error } = await supabase
         .from('product_suppliers')
         .update({
+          contact_name: params.contact_name ?? null,
           supplier_email: params.supplier_email ?? null,
           supplier_phone: params.supplier_phone ?? null,
           supplier_website: params.supplier_website ?? null,
