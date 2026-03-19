@@ -108,6 +108,7 @@ async function exportStockPdf(
 export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
   const { data: poHistoryMap } = useProductPOHistory();
+  const { data: intelligenceMap } = useInventoryIntelligence(locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
