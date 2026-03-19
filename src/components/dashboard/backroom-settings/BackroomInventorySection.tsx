@@ -79,6 +79,8 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
 
   const hasHealthAlerts = outOfStockCount > 0 || lowStockCount > 0 || draftOrderCount > 0 || receivableCount > 0;
 
+  const pdfExportRef = useRef<(() => void) | null>(null);
+
   return (
     <div className="space-y-5">
       {/* Section header with location selector */}
