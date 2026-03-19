@@ -18,7 +18,8 @@ export type AlertCategory =
   | 'waste'
   | 'staff'
   | 'reorder'
-  | 'po_approval';
+  | 'po_approval'
+  | 'audit_overdue';
 
 export type AlertPriority = 'critical' | 'high' | 'medium' | 'informational';
 
