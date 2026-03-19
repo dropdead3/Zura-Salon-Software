@@ -188,8 +188,10 @@ export function CommandCenterRow({
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
   const needsReorder = row.recommended_order_qty > 0;
+  const isOutOfStock = row.stock_state === 'out_of_stock';
   const isOverridden = qtyOverride != null;
-  const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
+  const canAddToPo = needsReorder || isOverridden || isOutOfStock;
+  const displayOrderQty = isOverridden ? qtyOverride : (row.recommended_order_qty > 0 ? row.recommended_order_qty : (isOutOfStock ? 1 : 0));
   const effectiveStock = row.effective_stock;
   const severityCfg = SEVERITY_CONFIG[row.severity];
 
