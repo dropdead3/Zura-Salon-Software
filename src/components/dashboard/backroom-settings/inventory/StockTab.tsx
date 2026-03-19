@@ -123,14 +123,19 @@ export function StockTab({ locationId }: StockTabProps) {
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  // Compute KPIs
+  // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
     const totalOnHand = inventory.reduce((s, r) => s + r.quantity_on_hand, 0);
-    const lowStock = inventory.filter(r => r.status === 'replenish' || r.status === 'urgent_reorder').length;
-    const outOfStock = inventory.filter(r => r.status === 'out_of_stock').length;
+    const lowStock = inventory.filter(r => r.severity === 'low').length;
+    const criticalCount = inventory.filter(r => r.severity === 'critical').length;
+    const outOfStock = inventory.filter(r => r.stock_state === 'out_of_stock').length;
     const totalValue = inventory.reduce((s, r) => s + (r.quantity_on_hand * (r.cost_price ?? r.cost_per_gram ?? 0)), 0);
     const needsReorder = inventory.filter(r => r.recommended_order_qty > 0).length;
-    return { totalOnHand, lowStock, outOfStock, totalValue, needsReorder };
+    const estimatedPoValue = inventory.reduce((s, r) => {
+      if (r.recommended_order_qty <= 0) return s;
+      return s + r.recommended_order_qty * (r.cost_price ?? r.cost_per_gram ?? 0);
+    }, 0);
+    return { totalOnHand, lowStock, criticalCount, outOfStock, totalValue, needsReorder, estimatedPoValue };
   }, [inventory]);
 
   // Categories for filter
