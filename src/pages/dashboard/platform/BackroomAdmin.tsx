@@ -98,6 +98,9 @@ export default function BackroomAdmin() {
         <TabsContent value="hardware-orders" className="mt-6">
           <HardwareOrdersTab />
         </TabsContent>
+        <TabsContent value="dock-app" className="mt-6">
+          <DockAppTab />
+        </TabsContent>
       </Tabs>
     </PlatformPageContainer>
   );
