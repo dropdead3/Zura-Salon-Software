@@ -31,7 +31,7 @@ export function ServiceAddonToast({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="mx-3 mb-2 rounded-xl border border-primary/20 bg-primary/5 backdrop-blur-sm overflow-hidden"
+          className="mx-3 mb-2 rounded-lg border border-primary/20 bg-primary/5 backdrop-blur-sm overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-primary/10">
