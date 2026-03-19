@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
-const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical usage data and recipe baselines. Always verify formulas with your professional judgment before applying.';
+const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical usage data and formula baselines. Always verify formulas with your professional judgment before applying.';
 
 const SUGGESTION_HIERARCHY = [
   { key: 'client_history', label: 'Client History', description: 'Prioritize this client\'s last formula for this service' },
