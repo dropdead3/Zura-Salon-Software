@@ -66,9 +66,22 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
 
-  // ─── Step 2: Product selection state ────────────────────────────────────────
+  // ─── Step 1: Product selection state ────────────────────────────────────────
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [productCosts, setProductCosts] = useState<Record<string, string>>({});
+
+  // ─── Step 2: Supplier state ─────────────────────────────────────────────────
+  const [supplierName, setSupplierName] = useState('');
+  const [supplierEmail, setSupplierEmail] = useState('');
+  const [supplierPhone, setSupplierPhone] = useState('');
+  const [supplierWebsite, setSupplierWebsite] = useState('');
+  const [supplierReorderMethod, setSupplierReorderMethod] = useState('');
+  const [supplierReorderOther, setSupplierReorderOther] = useState('');
+  const [supplierLeadTime, setSupplierLeadTime] = useState('');
+  const [supplierMoq, setSupplierMoq] = useState('1');
+  const [supplierProductIds, setSupplierProductIds] = useState<Set<string>>(new Set());
+  const [supplierAssignMode, setSupplierAssignMode] = useState<'brand' | 'product'>('brand');
+  const [supplierSearch, setSupplierSearch] = useState('');
 
   // ─── Step 3: Service mapping state ──────────────────────────────────────────
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
