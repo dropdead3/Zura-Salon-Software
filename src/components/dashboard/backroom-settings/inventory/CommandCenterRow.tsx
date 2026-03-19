@@ -419,7 +419,7 @@ export function CommandCenterRow({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'h-8 min-w-[96px] px-2.5 text-xs font-sans gap-1 transition-colors duration-150',
+                  'h-8 min-w-[96px] px-3 text-xs font-sans gap-1 transition-colors duration-150 active:scale-[0.98]',
                   addedToPo
                     ? 'text-success bg-success/10 hover:text-success hover:bg-success/15'
                     : 'text-primary bg-primary/10 hover:text-primary hover:bg-primary/15',
