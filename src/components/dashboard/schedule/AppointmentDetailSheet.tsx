@@ -34,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackroomTab } from '@/components/dashboard/backroom/BackroomTab';
+import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/backroom/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
@@ -73,7 +74,7 @@ import {
   ChevronDown, ChevronRight, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera,
+  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera, Beaker,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -1055,6 +1056,10 @@ export function AppointmentDetailSheet({
                   <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
                   <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
                   <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
+                  <TabsTrigger value="formulas" className="font-sans gap-1">
+                    <Beaker className="w-3.5 h-3.5" />
+                    Formulas
+                  </TabsTrigger>
                   <TabsTrigger value="backroom" className="font-sans">Backroom</TabsTrigger>
                 </TabsList>
 
@@ -1745,6 +1750,11 @@ export function AppointmentDetailSheet({
                         <p className={tokens.empty.description}>Link a client to this appointment to add transformation photos.</p>
                       </div>
                     )}
+                  </TabsContent>
+
+                  {/* ─── TAB: Formulas ────────────────────────── */}
+                  <TabsContent value="formulas" className="p-6 pt-4 mt-0">
+                    <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
                   </TabsContent>
 
                   {/* ─── TAB: Backroom ─────────────────────────── */}

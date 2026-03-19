@@ -43,6 +43,7 @@ import {
   Megaphone,
   GitMerge,
   Users,
+  Beaker,
   ExternalLink,
   Receipt,
   Camera
@@ -62,6 +63,7 @@ import { BannedClientAlert } from './clients/BannedClientAlert';
 import { BannedClientBadge } from './clients/BannedClientBadge';
 import { BanClientToggle } from './clients/BanClientToggle';
 import { ClientRedoHistory } from './clients/ClientRedoHistory';
+import { ClientFormulaHistoryTab } from './clients/ClientFormulaHistoryTab';
 import { ArchiveClientToggle } from './clients/ArchiveClientToggle';
 import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -1321,6 +1323,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 <Receipt className="w-3.5 h-3.5" />
                 Transactions
               </TabsTrigger>
+              <TabsTrigger value="formulas" className="flex-1 gap-1">
+                <Beaker className="w-3.5 h-3.5" />
+                Formulas
+              </TabsTrigger>
               <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
               <TabsTrigger value="redos" className="flex-1">Redos</TabsTrigger>
             </TabsList>
@@ -1347,6 +1353,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               />
             </TabsContent>
             
+            <TabsContent value="formulas" className="mt-4">
+              <ClientFormulaHistoryTab clientId={client.phorest_client_id || client.id} />
+            </TabsContent>
+
             <TabsContent value="notes" className="mt-4">
               <ClientNotesSection clientId={client.id} />
             </TabsContent>

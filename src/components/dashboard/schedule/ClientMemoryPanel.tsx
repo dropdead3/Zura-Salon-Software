@@ -7,17 +7,21 @@ import { Beaker, Clock, FileText, ShoppingBag, Sparkles, User } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { useClientMemory } from '@/hooks/useClientMemory';
+import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
 
 interface ClientMemoryPanelProps {
   clientId: string | null | undefined;
   serviceName: string | null | undefined;
   orgId: string | null | undefined;
   className?: string;
+  onViewFormulas?: () => void;
 }
 
-export function ClientMemoryPanel({ clientId, serviceName, orgId, className }: ClientMemoryPanelProps) {
+export function ClientMemoryPanel({ clientId, serviceName, orgId, className, onViewFormulas }: ClientMemoryPanelProps) {
   const { data, isLoading } = useClientMemory(clientId, serviceName, orgId);
+  const { data: formulaHistory = [] } = useClientFormulaHistory(clientId ?? null);
 
   if (!clientId) return null;
 
@@ -55,6 +59,8 @@ export function ClientMemoryPanel({ clientId, serviceName, orgId, className }: C
       empty: 'No formula on file',
       accent: 'text-violet-600 dark:text-violet-400',
       bg: 'bg-violet-500/10',
+      count: formulaHistory.length,
+      onViewAll: onViewFormulas,
     },
     {
       icon: FileText,
@@ -109,6 +115,16 @@ export function ClientMemoryPanel({ clientId, serviceName, orgId, className }: C
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                 {item.label}
               </span>
+              {'count' in item && (item as any).count > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); (item as any).onViewAll?.(); }}
+                  className="ml-auto"
+                >
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                    {(item as any).count} total
+                  </Badge>
+                </button>
+              )}
             </div>
             <p className={cn(
               'text-xs leading-relaxed',
