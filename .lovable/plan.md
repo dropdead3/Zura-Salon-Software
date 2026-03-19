@@ -1,45 +1,33 @@
 
 
-# Simplify Stock Tab Header Layout
+# Reorganize Stock Tab Toolbar — Two Rows
 
 ## Problem
-Four dense horizontal bars stack before any product data is visible: filters row, decision header, table column headers, and supplier group row. This creates visual clutter and makes the page hard to parse at a glance.
+Everything is crammed into one `flex-wrap` row. The search input gets squeezed to its `min-w-[180px]` minimum, making it feel small and crowded alongside filters, KPI badges, and action buttons.
 
-## Approach: Merge the Decision Header into the Filters Row
+## Approach: Split into Two Distinct Rows
 
-Collapse the current 4-bar layout into 3 by merging the "decision header" (bar 2) content into the filters row (bar 1). This removes one full horizontal strip and groups related controls together.
-
-### New layout (3 bars instead of 4)
-
+**Row 1 — Search & Filters** (full breathing room):
 ```text
-┌──────────────────────────────────────────────────────────────────────┐
-│ [🔍 Search...        ] [Category ▼] [Status ▼]  │ 191 Critical · 0 Low · Est. PO: $1,716  [Review Items] [⚡ Auto Build PO] [Auto-Set Pars] │
-├──────────────────────────────────────────────────────────────────────┤
-│ ☐  Product              Stock ⓘ    Suggested ⓘ   Status   Supplier   Cost                │
-├──────────────────────────────────────────────────────────────────────┤
-│ ▸ 🚚 Unassigned Supplier  191 items · $1,716.04 est.  [191 to reorder]    [Create PO] [Assign Supplier]  │
-│    Color (113)                                                        │
+[🔍 Search products, brands, SKUs...              ] [Category ▼] [Status ▼]
 ```
+- Search input gets `flex-1` with no competing elements — it fills all remaining space
+- Two dropdowns sit to the right
+
+**Row 2 — KPI Summary & Actions** (compact utility bar):
+```text
+191 Critical · 0 Low · Est. PO: $1,716.04    [Review Items] [⚡ Auto Build PO] [Auto-Set Pars] [PO Builder]
+```
+- Left-aligned KPI badges, right-aligned action buttons
+- Uses `justify-between` to spread them naturally
 
 ## Changes
 
-**Edit: `src/components/dashboard/backroom-settings/inventory/StockTab.tsx`**
+**Edit: `src/components/dashboard/backroom-settings/inventory/StockTab.tsx`** (~lines 626-755)
 
-1. **Merge decision header into the filters row** (lines ~626-696 and ~698-765):
-   - Remove the standalone `<div className="px-4 py-2.5 border-b...">` decision header inside the Card
-   - Move the action-item summary (critical/low counts, est. PO value) and the "Review Items" / "Auto Build PO" buttons into the existing filters `<div>` row, right-aligned after the filter controls
-   - When `hasActionItems` is false, show the "All stock levels healthy" + totals inline in the same row
-   - The severity count buttons (Critical / Low) become compact badges in the filter bar rather than centered text
-
-2. **Consolidate action buttons**: Move the "PO Builder" badge button and "Auto-Set Pars" button to the right side of the merged bar, grouped with "Review Items" and "Auto Build PO". This puts all actions in one place.
-
-3. **Card starts directly with table headers**: The `<Card>` now opens straight into `<Table>` with column headers — no intermediate decision bar.
-
-### Visual result
-- Filters + KPI summary + actions all in one responsive row (wraps naturally on narrow screens)
-- Table column headers are the first thing inside the card
-- Supplier group rows follow immediately
-- Net: one fewer dense bar, clearer visual hierarchy
+1. Wrap the current single `<div className="flex flex-wrap ...">` in a parent `<div className="flex flex-col gap-2 mb-3">`
+2. **Row 1**: `<div className="flex items-center gap-2">` containing only the search input (`flex-1`, remove `min-w-[180px]`) and the two Select dropdowns
+3. **Row 2**: `<div className="flex flex-wrap items-center gap-2">` containing the KPI summary text, action buttons (Review Items, Auto Build PO, Auto-Set Pars), and PO Builder badge — using `ml-auto` on the buttons group to push them right
 
 **1 file edited.**
 
