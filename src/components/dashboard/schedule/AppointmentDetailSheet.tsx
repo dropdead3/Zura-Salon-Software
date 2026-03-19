@@ -34,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackroomTab } from '@/components/dashboard/backroom/BackroomTab';
+import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/backroom/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
