@@ -117,7 +117,7 @@ async function exportStockPdf(
 
 // ─── Main Component ─────────────────────────────────
 
-export function StockTab({ locationId }: StockTabProps) {
+export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
   const { data: poHistoryMap } = useProductPOHistory();
   const { data: intelligenceMap } = useInventoryIntelligence(locationId);
