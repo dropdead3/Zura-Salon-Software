@@ -69,7 +69,7 @@ function exportBulkCsv(entries: BulkAuditEntry[]) {
   URL.revokeObjectURL(url);
 }
 
-async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string, locationName?: string) {
+async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string, locationName?: string, filterDateFrom?: Date, filterDateTo?: Date) {
   const { default: jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
   const { addReportHeader, addReportFooter, buildReportFileName } = await import('@/lib/reportPdfLayout');
