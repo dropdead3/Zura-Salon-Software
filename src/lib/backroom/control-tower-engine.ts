@@ -17,7 +17,8 @@ export type AlertCategory =
   | 'profitability'
   | 'waste'
   | 'staff'
-  | 'reorder';
+  | 'reorder'
+  | 'po_approval';
 
 export type AlertPriority = 'critical' | 'high' | 'medium' | 'informational';
 
