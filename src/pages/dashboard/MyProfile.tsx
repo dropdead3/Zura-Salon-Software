@@ -758,7 +758,7 @@ export default function MyProfile() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className={cn("pl-10", !formData.phone.trim() && "border-destructive/50")}
                       placeholder="480-555-1234"
                       maxLength={12}
