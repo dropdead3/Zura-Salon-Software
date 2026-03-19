@@ -45,7 +45,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
+
 
 interface StockTabProps {
   locationId?: string;
