@@ -22,6 +22,7 @@ import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
 import { AuditLogTab } from './inventory/AuditLogTab';
 import { ReorderAnalyticsTab } from './inventory/ReorderAnalyticsTab';
+import { PdfExportDialog, type ExportScope, type ExportFormat } from './inventory/PdfExportDialog';
 
 /* ── Health Banner Chip ── */
 function HealthChip({ icon: Icon, count, label, color, onClick }: {
