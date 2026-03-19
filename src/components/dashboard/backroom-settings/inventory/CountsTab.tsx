@@ -34,7 +34,7 @@ interface CountsTabProps {
   pdfExportRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-export function CountsTab({ locationId }: CountsTabProps) {
+export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
