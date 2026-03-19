@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers, Plus, X } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
