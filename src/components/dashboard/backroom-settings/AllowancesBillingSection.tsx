@@ -212,7 +212,33 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
             )
           )}
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
+          {/* Supply Cost Recovery Toggle */}
+          <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-3">
+            <div className="flex items-center gap-2">
+              <MetricInfoTooltip description="When enabled, supply cost recovery metrics appear in the Command Center KPI strip. This tracks how much of your product costs are being recouped through client charges." />
+              <div>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>Supply Cost Recovery Tracking</p>
+                <p className="text-xs text-muted-foreground">
+                  {billingSettings?.enable_supply_cost_recovery
+                    ? 'Recovery rate and recouped costs are visible in the Command Center.'
+                    : 'Enable to track how much product cost is recovered through client billing.'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={billingSettings?.enable_supply_cost_recovery ?? false}
+              onCheckedChange={(checked) => {
+                if (!orgId) return;
+                upsertBillingSettings.mutate({
+                  organization_id: orgId,
+                  enable_supply_cost_recovery: checked,
+                });
+              }}
+            />
+          </div>
+
+          <div className="space-y-3">
           {(!policies || policies.length === 0) ? (
             <div className={tokens.empty.container}>
               <DollarSign className={tokens.empty.icon} />
