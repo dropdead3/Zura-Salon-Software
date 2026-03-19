@@ -477,9 +477,11 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
-      <div className="flex items-start gap-1.5 min-h-[32px]">
-        <Icon className={cn('w-4 h-4 shrink-0 mt-0.5', status === 'warning' ? 'text-amber-500' : 'text-muted-foreground')} />
+      <div className="flex items-start justify-between">
         <span className={tokens.kpi.label}>{label}</span>
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary')} />
+        </div>
       </div>
       <span className={cn(tokens.kpi.value, status === 'warning' && 'text-amber-500')}>{value}</span>
     </div>
@@ -498,9 +500,11 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
 
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
-      <div className="flex items-start gap-1.5 min-h-[32px]">
-        <Wallet className={cn('w-4 h-4 shrink-0 mt-0.5', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-muted-foreground')} />
+      <div className="flex items-start justify-between">
         <span className={tokens.kpi.label}>Budget</span>
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary')} />
+        </div>
       </div>
       {monthlyBudget > 0 ? (
         <>
