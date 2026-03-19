@@ -163,6 +163,8 @@ export function ReceiveTab() {
   const [expandedPoId, setExpandedPoId] = useState<string | null>(null);
   const [lineStates, setLineStates] = useState<Record<string, LineReceiveState>>({});
   const [receiveNotes, setReceiveNotes] = useState('');
+  const [showFifoReminder, setShowFifoReminder] = useState(false);
+  const pendingReceiveData = useRef<ReceiveShipmentInput | null>(null);
 
   const expandedPO = receivablePOs.find((po) => po.id === expandedPoId);
   const { data: poLines = [], isLoading: linesLoading } = usePOLinesWithProducts(expandedPoId);
