@@ -11,6 +11,9 @@ import { useBackroomStaffMetrics } from './useBackroomStaffMetrics';
 import { useReorderAnalytics, useProcurementBudget } from './useReorderAnalytics';
 import { useBackroomSetupHealth } from './useBackroomSetupHealth';
 import { useHighRiskInventory } from '@/hooks/inventory/useInventoryRiskProjection';
+import { useSupplyCostRecovery } from './useSupplyCostRecovery';
+import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
+import { useBackroomOrgId } from './useBackroomOrgId';
 
 function getLast30Days() {
   const end = new Date();
@@ -26,6 +29,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
   const { startDate: defaultStart, endDate: defaultEnd } = getLast30Days();
   const startDate = startDateOverride || defaultStart;
   const endDate = endDateOverride || defaultEnd;
+  const orgId = useBackroomOrgId();
 
   const analyticsQ = useBackroomAnalytics(startDate, endDate, locationId);
   const controlTowerQ = useControlTowerAlerts(locationId);
@@ -35,6 +39,9 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
   const budgetQ = useProcurementBudget();
   const setupQ = useBackroomSetupHealth();
   const inventoryRiskQ = useHighRiskInventory(locationId);
+  const billingSettingsQ = useBackroomBillingSettings(orgId);
+  const supplyCostEnabled = billingSettingsQ.data?.enable_supply_cost_recovery ?? false;
+  const supplyCostQ = useSupplyCostRecovery(startDate, endDate, supplyCostEnabled, locationId);
 
   const isLoading =
     analyticsQ.isLoading || controlTowerQ.isLoading || staffQ.isLoading || reorderQ.isLoading || setupQ.isLoading;
@@ -99,6 +106,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
       { label: 'Services', done: h.trackedServices > 0 },
       { label: 'Formulas', done: h.recipesConfigured > 0 },
       { label: 'Allowances', done: h.allowancePolicies > 0 },
+      { label: 'Billing', done: h.billingConfigured },
       { label: 'Stations', done: h.stationsConfigured > 0 },
       { label: 'Alerts', done: h.alertRulesConfigured > 0 },
     ];
@@ -122,5 +130,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
     setupHealth,
     reorderData: reorderQ.data,
     budgetData: budgetQ.budget,
+    supplyCostRecovery: supplyCostEnabled ? supplyCostQ.data ?? null : null,
+    supplyCostRecoveryEnabled: supplyCostEnabled,
   };
 }

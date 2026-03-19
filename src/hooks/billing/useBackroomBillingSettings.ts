@@ -12,6 +12,7 @@ export interface BackroomBillingSettings {
   default_product_markup_pct: number;
   product_charge_taxable: boolean;
   product_charge_label: string;
+  enable_supply_cost_recovery: boolean;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
@@ -44,6 +45,7 @@ export function useUpsertBackroomBillingSettings() {
       default_product_markup_pct?: number;
       product_charge_taxable?: boolean;
       product_charge_label?: string;
+      enable_supply_cost_recovery?: boolean;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
 
@@ -68,6 +70,9 @@ export function useUpsertBackroomBillingSettings() {
             ...(params.product_charge_label !== undefined && {
               product_charge_label: params.product_charge_label,
             }),
+            ...(params.enable_supply_cost_recovery !== undefined && {
+              enable_supply_cost_recovery: params.enable_supply_cost_recovery,
+            }),
             updated_by: userId,
           } as any)
           .eq('id', (existing as any).id)
@@ -81,6 +86,7 @@ export function useUpsertBackroomBillingSettings() {
             default_product_markup_pct: params.default_product_markup_pct ?? 0,
             product_charge_taxable: params.product_charge_taxable ?? true,
             product_charge_label: params.product_charge_label ?? 'Product Usage',
+            enable_supply_cost_recovery: params.enable_supply_cost_recovery ?? false,
             updated_by: userId,
           } as any)
           .select()

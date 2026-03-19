@@ -1,63 +1,153 @@
 
 
-# Supply Cost Recovery Analytics — Conditional KPI + Settings Toggle
+## Timezone-Safe Scheduling (Implemented)
 
-## Analysis of Your Idea
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-This is a strong feature. The key insight: only salons that actually charge clients for product usage (via allowance overages or parts-and-labor billing) should see recovery metrics. Surfacing these KPIs universally would confuse salons that don't bill for supplies.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-## Gaps & Considerations
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
-1. **Data source is already there.** `checkout_usage_charges` stores every charge (overage + product_cost types) with amounts and statuses (pending/approved/waived). We just need to aggregate.
+## Auto-Reorder with Supplier Communication (Implemented)
 
-2. **"Enabled" signal.** Currently there's no single boolean "we charge for supplies." The signal is implicit: the org has active `service_allowance_policies` with billing_mode set, AND/OR has a `backroom_billing_settings` row. We should add an explicit `enable_supply_cost_recovery` boolean to `backroom_billing_settings` so there's a clear toggle, rather than inferring from policy existence.
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-3. **Waived charges.** Need to decide: do waived charges count as "lost recovery" or are they excluded? Recommend showing approved charges as "Recouped" and waived as "Waived" so owners see the full picture.
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-4. **Setup wizard gap.** The current 6-step wizard (Products → Services → Formulas → Allowances → Stations → Alerts) doesn't mention billing configuration. Adding a "Billing" step after Allowances makes sense — it's where they'd toggle on supply cost recovery and set markup %.
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-5. **Recovery rate metric.** Raw "$X recouped" is less useful without context. The most actionable KPI is **Recovery Rate = (Charges Collected / Total Product Cost Dispensed) × 100%**. This tells owners what percentage of their supply spend is being passed through to clients.
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-## Plan
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-### 1. Database Migration
-Add `enable_supply_cost_recovery` boolean column to `backroom_billing_settings`:
-```sql
-ALTER TABLE backroom_billing_settings
-  ADD COLUMN enable_supply_cost_recovery boolean NOT NULL DEFAULT false;
+## Product Movement Rating Badges (Implemented)
+
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
+
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
+
+## Inventory Intelligence Suite v2 (Implemented)
+
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
+
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+
+## Enhancement 1: Expiry Tracking (Implemented)
+
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-### 2. Update `useBackroomBillingSettings` hook
-Add `enable_supply_cost_recovery` to the `BackroomBillingSettings` interface and the upsert mutation.
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-### 3. Create `useSupplyCostRecovery` hook
-New hook that queries `checkout_usage_charges` for the date range and computes:
-- **Total Recouped** — sum of `charge_amount` where `status = 'approved'`
-- **Total Waived** — sum where `status = 'waived'`
-- **Total Pending** — sum where `status = 'pending'`
-- **Recovery Rate %** — recouped / total dispensed cost (from analytics data)
-- **Overage Revenue** vs **Product Cost Revenue** breakdown (by `charge_type`)
-
-Only enabled when `enable_supply_cost_recovery` is true.
-
-### 4. Add KPI tile to Command Center
-In `BackroomDashboardOverview.tsx`, conditionally render a 6th KPI tile "Supply Recovery" showing the recovery rate %, with a drill-down showing recouped $ and waived $. The tile only appears when the billing setting flag is on.
-
-### 5. Add to `useBackroomDashboard` composition hook
-Wire `useSupplyCostRecovery` into the dashboard hook and expose `supplyCostRecovery` data alongside existing KPIs.
-
-### 6. Add toggle in Allowances & Billing settings
-In `AllowancesBillingSection.tsx`, add a "Charge clients for supply costs" toggle with subtitle explaining the feature. When toggled on, show the existing markup % and charge label fields.
-
-### 7. Add "Billing" step to Setup Wizard
-In `useBackroomSetupHealth.ts` and `useBackroomDashboard.ts`, add a 7th setup step: `{ label: 'Billing', done: billingConfigured }` where `billingConfigured` = the `backroom_billing_settings` row exists with `enable_supply_cost_recovery = true` OR at least one active allowance policy exists with billing_mode set.
-
-### Files to Edit
-1. **Migration** — add column to `backroom_billing_settings`
-2. `src/hooks/billing/useBackroomBillingSettings.ts` — add field to interface + upsert
-3. **New** `src/hooks/backroom/useSupplyCostRecovery.ts` — aggregation hook
-4. `src/hooks/backroom/useBackroomDashboard.ts` — wire in recovery data + add Billing setup step
-5. `src/hooks/backroom/useBackroomSetupHealth.ts` — add billing step check
-6. `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx` — conditional 6th KPI tile
-7. `src/components/dashboard/backroom-settings/AllowancesBillingSection.tsx` — add toggle UI
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
-  FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
+  FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet, DollarSign,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
   Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
 } from 'lucide-react';
@@ -90,7 +90,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
     );
   }
 
-  const { kpis, alerts, staffSummary, inventoryHealth, setupHealth, reorderData, lastUpdatedAt } = dashboard;
+  const { kpis, alerts, staffSummary, inventoryHealth, setupHealth, reorderData, lastUpdatedAt, supplyCostRecovery, supplyCostRecoveryEnabled } = dashboard;
   const showSetupBanner = setupHealth && !setupHealth.isComplete;
 
   return (
@@ -209,7 +209,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
           {/* ── KPI Strip ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
             <KpiTile
               icon={FlaskConical}
               label="Chemical Cost/Svc"
@@ -241,6 +241,15 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
               formatCurrency={formatCurrency}
               onNavigate={onNavigate}
             />
+            {supplyCostRecoveryEnabled && supplyCostRecovery && (
+              <KpiTile
+                icon={DollarSign}
+                label="Supply Recovery"
+                value={`${supplyCostRecovery.recoveryRate}%`}
+                status={supplyCostRecovery.recoveryRate >= 80 ? 'ok' : supplyCostRecovery.recoveryRate > 0 ? 'warning' : 'neutral'}
+                subtitle={`${formatCurrency(supplyCostRecovery.totalRecouped)} recouped · ${formatCurrency(supplyCostRecovery.totalWaived)} waived`}
+              />
+            )}
           </div>
           {/* Two-Column: Control Tower + Procurement */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -470,11 +479,12 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
 /* ── Sub-components ── */
 
-function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
+function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
   icon: typeof FlaskConical;
   label: string;
   value: string;
   status?: 'ok' | 'warning' | 'neutral';
+  subtitle?: string;
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
@@ -485,6 +495,9 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
         <span className={tokens.kpi.label}>{label}</span>
       </div>
       <span className={cn(tokens.kpi.value, status === 'warning' && 'text-amber-500')}>{value}</span>
+      {subtitle && (
+        <span className="text-[10px] font-sans text-muted-foreground mt-1 block">{subtitle}</span>
+      )}
     </div>
   );
 }

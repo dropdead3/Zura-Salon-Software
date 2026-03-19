@@ -1907,6 +1907,7 @@ export type Database = {
         Row: {
           created_at: string
           default_product_markup_pct: number
+          enable_supply_cost_recovery: boolean
           id: string
           organization_id: string
           product_charge_label: string
@@ -1917,6 +1918,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_product_markup_pct?: number
+          enable_supply_cost_recovery?: boolean
           id?: string
           organization_id: string
           product_charge_label?: string
@@ -1927,6 +1929,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_product_markup_pct?: number
+          enable_supply_cost_recovery?: boolean
           id?: string
           organization_id?: string
           product_charge_label?: string

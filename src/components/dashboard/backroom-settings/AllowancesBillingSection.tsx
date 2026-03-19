@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceAllowancePolicies, useUpsertAllowancePolicy, useDeleteAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useAllowanceBuckets, useUpsertAllowanceBucket, useDeleteAllowanceBucket } from '@/hooks/backroom/useAllowanceBuckets';
+import { useBackroomBillingSettings, useUpsertBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -48,6 +49,8 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
   const deletePolicy = useDeleteAllowancePolicy();
   const upsertBucket = useUpsertAllowanceBucket();
   const deleteBucket = useDeleteAllowanceBucket();
+  const { data: billingSettings } = useBackroomBillingSettings(orgId);
+  const upsertBillingSettings = useUpsertBackroomBillingSettings();
 
   const { data: servicesMap } = useQuery({
     queryKey: ['services-name-map', orgId],
@@ -209,7 +212,33 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
             )
           )}
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
+          {/* Supply Cost Recovery Toggle */}
+          <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-3">
+            <div className="flex items-center gap-2">
+              <MetricInfoTooltip description="When enabled, supply cost recovery metrics appear in the Command Center KPI strip. This tracks how much of your product costs are being recouped through client charges." />
+              <div>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>Supply Cost Recovery Tracking</p>
+                <p className="text-xs text-muted-foreground">
+                  {billingSettings?.enable_supply_cost_recovery
+                    ? 'Recovery rate and recouped costs are visible in the Command Center.'
+                    : 'Enable to track how much product cost is recovered through client billing.'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={billingSettings?.enable_supply_cost_recovery ?? false}
+              onCheckedChange={(checked) => {
+                if (!orgId) return;
+                upsertBillingSettings.mutate({
+                  organization_id: orgId,
+                  enable_supply_cost_recovery: checked,
+                });
+              }}
+            />
+          </div>
+
+          <div className="space-y-3">
           {(!policies || policies.length === 0) ? (
             <div className={tokens.empty.container}>
               <DollarSign className={tokens.empty.icon} />
@@ -475,6 +504,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
               )}
             </>
           )}
+          </div>
         </CardContent>
       </Card>
     </div>
