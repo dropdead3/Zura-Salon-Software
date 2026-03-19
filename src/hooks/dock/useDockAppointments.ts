@@ -6,6 +6,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_APPOINTMENTS } from './dockDemoData';
 
 export interface DockAppointment {
   id: string;
