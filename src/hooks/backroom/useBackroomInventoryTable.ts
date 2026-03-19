@@ -128,6 +128,19 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
         const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
         const sup = supplierMap.get(p.id);
 
+        // Dual-layer: state
+        const stock_state: StockState = qty <= 0 ? 'out_of_stock' : 'in_stock';
+
+        // Dual-layer: severity
+        let severity: StockSeverity = 'healthy';
+        if (qty <= 0) {
+          severity = 'critical';
+        } else if (reorderLevel != null && qty <= reorderLevel) {
+          severity = 'critical';
+        } else if (parLevel != null && qty < parLevel) {
+          severity = 'low';
+        }
+
         return {
           id: p.id,
           name: p.name,
@@ -146,6 +159,8 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           effective_stock: effectiveStock,
           recommended_order_qty: recommendedOrderQty,
           status,
+          stock_state,
+          severity,
           charge_per_gram: chargePerGram,
           supplier_name: sup?.supplier_name ?? null,
           supplier_email: sup?.supplier_email ?? null,

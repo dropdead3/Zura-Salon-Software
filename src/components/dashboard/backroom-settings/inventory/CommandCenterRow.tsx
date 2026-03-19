@@ -6,13 +6,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, Package, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import { STOCK_STATUS_CONFIG, type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
 // ─── Helpers ──────────────────────────────────────
