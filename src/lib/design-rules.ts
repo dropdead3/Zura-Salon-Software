@@ -84,6 +84,14 @@ export const TYPOGRAPHY_RULES = {
     prohibited: ['rounded-full on toasts', 'rounded-xl on toasts', 'rounded-2xl on toasts', 'pill-shaped toasts'],
     note: 'Toasts are rectangular with slightly rounded corners. Never pill-shaped.',
   },
+
+  TAB_RULES: {
+    defaultTab: 'Pages with tabs MUST default-land on the first tab in the list',
+    controlled: 'useState initial value must match the first TabsTrigger value',
+    uncontrolled: 'Tabs defaultValue must match the first TabsTrigger value',
+    prohibited: ['Initializing tab state to a non-first tab without URL param override'],
+    note: 'URL search params (e.g. ?tab=inventory) may override the default, but the fallback must always be the first tab.',
+  },
 } as const;
 
 export function isProhibitedFontWeight(className: string): boolean {
