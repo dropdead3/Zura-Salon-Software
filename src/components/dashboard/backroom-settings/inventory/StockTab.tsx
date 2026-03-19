@@ -682,7 +682,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
               </Badge>
             )}
             {group.estimatedTotal > 0 && (
-              <span className="text-[10px] text-muted-foreground/60 ml-auto mr-2 tabular-nums">
+              <span className="text-[10px] text-muted-foreground/50 ml-auto mr-2 tabular-nums">
                 Est. {formatCurrency(group.estimatedTotal)}
               </span>
             )}
