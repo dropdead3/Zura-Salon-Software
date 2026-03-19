@@ -94,16 +94,20 @@ export function BackroomInventoryValuationCard({ locationId }: { locationId?: st
 
   const handleExport = useCallback(() => {
     if (!data?.length) return;
+    const esc = (v: string | number) => {
+      const s = String(v);
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const headers = ['Brand', 'SKUs', 'Units', 'Cost Value', 'Retail Value', 'Implied Margin %'];
     const rows = data.map((b) => [
-      b.brand,
+      esc(b.brand),
       b.itemCount,
       b.totalUnits,
       b.costValue.toFixed(2),
       b.retailValue.toFixed(2),
       b.retailValue > 0 ? (((b.retailValue - b.costValue) / b.retailValue) * 100).toFixed(1) + '%' : '0%',
     ]);
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csv = [headers.join(','), ...rows.map((r) => r.map(String).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

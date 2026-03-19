@@ -42,9 +42,9 @@ export function AlertSettingsCard() {
       setAutoReorderEnabled(settings.auto_reorder_enabled ?? false);
       setAutoReorderMode(settings.auto_reorder_mode ?? 'to_par');
       setMaxAutoReorderValue(settings.max_auto_reorder_value?.toString() ?? '');
-      setRequirePoApproval((settings as any).require_po_approval ?? true);
-      setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
-      setDeadStockDays((settings as any).dead_stock_days ?? 90);
+      setRequirePoApproval(settings.require_po_approval ?? true);
+      setDeadStockEnabled(settings.dead_stock_enabled ?? true);
+      setDeadStockDays(settings.dead_stock_days ?? 90);
     }
   }, [settings]);
 
@@ -57,9 +57,9 @@ export function AlertSettingsCard() {
     autoReorderEnabled !== (settings.auto_reorder_enabled ?? false) ||
     autoReorderMode !== (settings.auto_reorder_mode ?? 'to_par') ||
     maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
-    requirePoApproval !== ((settings as any).require_po_approval ?? true) ||
-    deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
-    deadStockDays !== ((settings as any).dead_stock_days ?? 90)
+    requirePoApproval !== (settings.require_po_approval ?? true) ||
+    deadStockEnabled !== (settings.dead_stock_enabled ?? true) ||
+    deadStockDays !== (settings.dead_stock_days ?? 90)
   ) : true;
 
   const handleSave = () => {
@@ -78,7 +78,7 @@ export function AlertSettingsCard() {
       require_po_approval: requirePoApproval,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
-    } as any);
+    });
   };
 
   if (isLoading) return null;

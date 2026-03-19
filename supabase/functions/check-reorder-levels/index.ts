@@ -153,12 +153,12 @@ Deno.serve(async (req) => {
         if (suggestedQty <= 0) suggestedQty = moq;
 
         // Determine PO status: auto-send or draft
+        const requirePoApproval = settings?.require_po_approval ?? true;
         let poStatus = "draft";
         let shouldSendEmail = false;
 
         if (autoReorderEnabled && supplier.supplier_email) {
           // Check spend cap
-          const estimatedCost = suggestedQty * 0; // We don't have unit_cost here, use product cost_price
           if (maxAutoReorderValue && dailySpentSoFar >= maxAutoReorderValue) {
             // Spend cap exceeded, keep as draft
             poStatus = "draft";
@@ -166,6 +166,10 @@ Deno.serve(async (req) => {
             poStatus = "sent";
             shouldSendEmail = true;
           }
+        } else if (!requirePoApproval && supplier.supplier_email) {
+          // No approval required — auto-send even when auto_reorder is off
+          poStatus = "sent";
+          shouldSendEmail = true;
         }
 
         const notes = autoReorderEnabled && shouldSendEmail

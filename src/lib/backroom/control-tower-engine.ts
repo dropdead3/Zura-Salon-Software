@@ -17,7 +17,8 @@ export type AlertCategory =
   | 'profitability'
   | 'waste'
   | 'staff'
-  | 'reorder';
+  | 'reorder'
+  | 'po_approval';
 
 export type AlertPriority = 'critical' | 'high' | 'medium' | 'informational';
 
@@ -35,6 +36,17 @@ export interface ControlTowerAlert {
   createdAt: string;
 }
 
+export interface DraftPOAlert {
+  id: string;
+  po_number: string;
+  product_name: string;
+  supplier_name: string;
+  quantity: number;
+  created_at: string;
+  import_source?: string | null;
+  notes?: string | null;
+}
+
 export interface ControlTowerSources {
   inventoryRisk: InventoryRiskProjection[];
   exceptions: BackroomException[];
@@ -42,6 +54,7 @@ export interface ControlTowerSources {
   staffPerformance: StaffBackroomPerformance[];
   forecastSummary: ForecastSummary | null;
   stockoutAlerts: ProductDemandForecast[];
+  draftPOs?: DraftPOAlert[];
 }
 
 export interface PrioritySummary {
@@ -208,6 +221,57 @@ function buildReorderAlerts(forecasts: ProductDemandForecast[]): ControlTowerAle
   }));
 }
 
+function buildPOApprovalAlerts(draftPOs: DraftPOAlert[]): ControlTowerAlert[] {
+  if (!draftPOs.length) return [];
+
+  // Group auto-generated POs (single alert if many)
+  const autoPOs = draftPOs.filter(
+    (po) => po.import_source === 'auto_reorder' || (po.notes ?? '').toLowerCase().includes('auto'),
+  );
+  const manualPOs = draftPOs.filter(
+    (po) => !autoPOs.includes(po),
+  );
+
+  const alerts: ControlTowerAlert[] = [];
+
+  if (autoPOs.length > 0) {
+    alerts.push({
+      id: `po-approval-auto-${autoPOs.length}`,
+      category: 'po_approval',
+      priority: autoPOs.length >= 5 ? 'high' : 'medium',
+      title: `${autoPOs.length} Auto-Generated PO${autoPOs.length > 1 ? 's' : ''} Awaiting Approval`,
+      description: `Auto-reorder created ${autoPOs.length} draft PO${autoPOs.length > 1 ? 's' : ''}. Review and approve to send to suppliers.`,
+      metrics: {
+        'Draft POs': autoPOs.length,
+        'Total Units': autoPOs.reduce((s, po) => s + po.quantity, 0),
+      },
+      entityType: 'purchase_order',
+      entityId: autoPOs[0].id,
+      suggestedAction: 'Review and approve pending purchase orders',
+      actionRoute: '/dashboard/admin/backroom-settings?category=inventory&tab=orders',
+      createdAt: autoPOs[0].created_at,
+    });
+  }
+
+  if (manualPOs.length > 0) {
+    alerts.push({
+      id: `po-approval-manual-${manualPOs.length}`,
+      category: 'po_approval',
+      priority: 'informational',
+      title: `${manualPOs.length} Draft PO${manualPOs.length > 1 ? 's' : ''} Pending`,
+      description: `${manualPOs.length} draft purchase order${manualPOs.length > 1 ? 's' : ''} awaiting review.`,
+      metrics: { 'Draft POs': manualPOs.length },
+      entityType: 'purchase_order',
+      entityId: manualPOs[0].id,
+      suggestedAction: 'Review draft purchase orders',
+      actionRoute: '/dashboard/admin/backroom-settings?category=inventory&tab=orders',
+      createdAt: manualPOs[0].created_at,
+    });
+  }
+
+  return alerts;
+}
+
 // ── Main Builder ───────────────────────────────────────────────────
 
 const MAX_ALERTS = 20;
@@ -219,6 +283,7 @@ export function buildControlTowerAlerts(sources: ControlTowerSources): ControlTo
     ...buildProfitabilityAlerts(sources.marginOutliers),
     ...buildStaffAlerts(sources.staffPerformance),
     ...buildReorderAlerts(sources.stockoutAlerts),
+    ...buildPOApprovalAlerts(sources.draftPOs ?? []),
   ];
 
   return sortAlertsByPriority(all);
