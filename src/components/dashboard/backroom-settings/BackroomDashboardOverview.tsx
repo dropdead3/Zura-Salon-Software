@@ -18,8 +18,9 @@ import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Sparkles, Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
+  Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
 } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { BackroomInsightsSection } from './BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
