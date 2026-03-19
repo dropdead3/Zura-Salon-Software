@@ -615,6 +615,17 @@ export function StockTab({ locationId }: StockTabProps) {
             <Zap className="w-3.5 h-3.5" />
             Auto Build PO
           </Button>
+          {emailPreviewGroups.length > 0 && (
+            <Button
+              size="sm"
+              className="font-sans h-7 gap-1"
+              onClick={() => setShowEmailPreview(true)}
+              disabled={batchCreatePOs.isPending}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              Create & Email ({emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)})
+            </Button>
+          )}
           {selectedReorderProducts.length > 0 && (
             <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
               Est. {formatCurrency(selectedReorderProducts.reduce((s, r) => {
