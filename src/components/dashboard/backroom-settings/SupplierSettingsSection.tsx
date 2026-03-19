@@ -3,6 +3,7 @@
  * Enhanced with rename, delete, search, reorder fields, unlink confirmation, reassign, and stats.
  */
 import { useState, useEffect, useMemo } from 'react';
+import { AddSupplierWizard } from './AddSupplierWizard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +65,6 @@ export function SupplierSettingsSection() {
   const [selected, setSelected] = useState<string | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
-  const [newSupplierName, setNewSupplierName] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [renameMode, setRenameMode] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -134,13 +134,6 @@ export function SupplierSettingsSection() {
     }
     return map;
   }, [allProducts]);
-
-  const handleAddSupplier = () => {
-    if (!newSupplierName.trim()) return;
-    setSelected(newSupplierName.trim());
-    setAddSupplierOpen(false);
-    setNewSupplierName('');
-  };
 
   const handleRename = () => {
     if (!selected || !renameValue.trim() || renameValue.trim() === selected) {
@@ -549,32 +542,14 @@ export function SupplierSettingsSection() {
         isPending={linkProducts.isPending}
       />
 
-      {/* Add Supplier Dialog */}
-      <Dialog open={addSupplierOpen} onOpenChange={setAddSupplierOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Add Supplier</DialogTitle>
-            <DialogDescription>Enter the supplier name. You can add contact details after.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className={tokens.label.default}>Supplier Name</Label>
-              <Input
-                value={newSupplierName}
-                onChange={e => setNewSupplierName(e.target.value)}
-                placeholder="e.g. Goldwell Distribution"
-                onKeyDown={e => e.key === 'Enter' && handleAddSupplier()}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAddSupplierOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddSupplier} disabled={!newSupplierName.trim()}>
-                Add Supplier
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Add Supplier Wizard */}
+      <AddSupplierWizard
+        open={addSupplierOpen}
+        onOpenChange={setAddSupplierOpen}
+        onComplete={(name) => {
+          setSelected(name);
+        }}
+      />
     </div>
   );
 }
