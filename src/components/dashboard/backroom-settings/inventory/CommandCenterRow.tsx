@@ -254,7 +254,7 @@ export function CommandCenterRow({
         </TableCell>
 
         {/* Stock */}
-        <TableCell className="text-right tabular-nums">
+        <TableCell className="text-right tabular-nums w-20">
           <div className="flex flex-col items-end">
             <InlineEditCell
               value={row.quantity_on_hand}
@@ -267,7 +267,7 @@ export function CommandCenterRow({
               className="font-medium"
             />
             {intelligence && intelligence.dailyUsage > 0 && (
-              <span className="text-[10px] text-muted-foreground/40 tabular-nums">{intelligence.dailyUsage}/day</span>
+              <span className="text-[10px] text-muted-foreground/35 tabular-nums">{intelligence.dailyUsage}/day</span>
             )}
           </div>
         </TableCell>
