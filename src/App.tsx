@@ -112,6 +112,7 @@ import PublicBooking from "./pages/PublicBooking";
 import DayRateBooking from "./pages/DayRateBooking";
 import ProductDemo from "./pages/ProductDemo";
 import Kiosk from "./pages/Kiosk";
+import Dock from "./pages/Dock";
 import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
@@ -254,6 +255,7 @@ const App = () => (
                       <Route path="/feedback" element={<ClientFeedbackPage />} />
                       <Route path="/rewards" element={<ClientPortalPage />} />
                       <Route path="/kiosk/:locationId" element={<Kiosk />} />
+                      <Route path="/dock" element={<Dock />} />
 
                       {/* Protected dashboard routes */}
                       <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
