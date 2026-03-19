@@ -16,7 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Loader2, ArrowLeft, ArrowRight, Check, Search, Package, Layers,
+  Loader2, ArrowLeft, ArrowRight, Check, Search, Package, Layers, Plus, X,
 } from 'lucide-react';
 import { useAllProductsWithSupplier } from '@/hooks/backroom/useSupplierSettings';
 import { useLinkProducts, useUpdateSupplierContact } from '@/hooks/backroom/useSupplierSettings';
@@ -292,6 +292,9 @@ function StepDetails({
   details: SupplierDetails;
   onChange: (d: SupplierDetails) => void;
 }) {
+  const [showSecondaryContact, setShowSecondaryContact] = useState(
+    !!(details.secondary_contact_name || details.secondary_contact_email || details.secondary_contact_phone)
+  );
   const update = (field: keyof SupplierDetails, value: string) =>
     onChange({ ...details, [field]: value });
 
@@ -347,36 +350,35 @@ function StepDetails({
       </div>
 
       {/* Secondary Contact */}
-      <div className="border-t border-border/60 pt-4 mt-1 space-y-3">
-        <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
-        <div className="space-y-1.5">
-          <Label className={tokens.label.default}>Name</Label>
-          <Input
-            value={details.secondary_contact_name}
-            onChange={e => update('secondary_contact_name', e.target.value)}
-            placeholder="e.g. John Doe"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className={tokens.label.default}>Email</Label>
-            <Input
-              type="email"
-              value={details.secondary_contact_email}
-              onChange={e => update('secondary_contact_email', e.target.value)}
-              placeholder="backup@supplier.com"
-            />
+      <div className="border-t border-border/60 pt-4 mt-1">
+        {!(showSecondaryContact || details.secondary_contact_name || details.secondary_contact_email || details.secondary_contact_phone) ? (
+          <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground" onClick={() => setShowSecondaryContact(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Add another contact
+          </Button>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); update('secondary_contact_name', ''); update('secondary_contact_email', ''); update('secondary_contact_phone', ''); }}>
+                <X className="w-3.5 h-3.5 mr-1" /> Remove
+              </Button>
+            </div>
+            <div className="space-y-1.5">
+              <Label className={tokens.label.default}>Name</Label>
+              <Input value={details.secondary_contact_name} onChange={e => update('secondary_contact_name', e.target.value)} placeholder="e.g. John Doe" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className={tokens.label.default}>Email</Label>
+                <Input type="email" value={details.secondary_contact_email} onChange={e => update('secondary_contact_email', e.target.value)} placeholder="backup@supplier.com" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className={tokens.label.default}>Phone</Label>
+                <Input value={details.secondary_contact_phone} onChange={e => update('secondary_contact_phone', e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
+              </div>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className={tokens.label.default}>Phone</Label>
-            <Input
-              value={details.secondary_contact_phone}
-              onChange={e => update('secondary_contact_phone', e.target.value)}
-              placeholder="(555) 987-6543"
-              autoCapitalize="off"
-            />
-          </div>
-        </div>
+        )}
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1.5">

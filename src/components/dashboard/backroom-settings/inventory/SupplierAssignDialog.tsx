@@ -3,12 +3,12 @@
  * Pre-fills from existing supplier data if any product in that brand has one.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -42,7 +42,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
   // Find existing supplier from any product in this brand
   const existingSupplier = products.find(p => p.supplier_name);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<SupplierForm>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<SupplierForm>({
     defaultValues: {
       supplier_name: '',
       supplier_email: '',
@@ -56,6 +56,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
       secondary_contact_phone: '',
     },
   });
+  const [showSecondaryContact, setShowSecondaryContact] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -146,24 +147,37 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
             </div>
           </div>
 
-          {/* Secondary Contact */}
-          <div className="border-t border-border/60 pt-3 mt-1 space-y-3">
-            <p className="text-sm font-sans text-foreground">Secondary Contact</p>
-            <div className="space-y-2">
-              <Label htmlFor="secondary_contact_name">Name</Label>
-              <Input id="secondary_contact_name" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="secondary_contact_email">Email</Label>
-                <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="secondary_contact_phone">Phone</Label>
-                <Input id="secondary_contact_phone" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
-              </div>
-            </div>
-          </div>
+           {/* Secondary Contact */}
+           <div className="border-t border-border/60 pt-3 mt-1">
+             {!(showSecondaryContact || watch('secondary_contact_name') || watch('secondary_contact_email') || watch('secondary_contact_phone')) ? (
+               <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground" onClick={() => setShowSecondaryContact(true)}>
+                 <Plus className="w-4 h-4 mr-1" /> Add another contact
+               </Button>
+             ) : (
+               <div className="space-y-3">
+                 <div className="flex items-center justify-between">
+                   <p className="text-sm font-sans text-foreground">Secondary Contact</p>
+                   <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); setValue('secondary_contact_name', ''); setValue('secondary_contact_email', ''); setValue('secondary_contact_phone', ''); }}>
+                     <X className="w-3.5 h-3.5 mr-1" /> Remove
+                   </Button>
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="secondary_contact_name">Name</Label>
+                   <Input id="secondary_contact_name" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+                 </div>
+                 <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-2">
+                     <Label htmlFor="secondary_contact_email">Email</Label>
+                     <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+                   </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="secondary_contact_phone">Phone</Label>
+                     <Input id="secondary_contact_phone" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                   </div>
+                 </div>
+               </div>
+             )}
+           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={batchUpsert.isPending}>
