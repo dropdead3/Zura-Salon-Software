@@ -1,11 +1,11 @@
 /**
- * DockServicesTab — Bowl cards grid + "Add Bowl" action for the appointment.
+ * DockServicesTab — Bowl cards grid + "Add Bowl" + session complete action.
  * Queries mix sessions for this appointment and displays bowl status.
  * Tapping a bowl opens DockLiveDispensing. Creating a bowl wires through command layer.
  */
 
 import { useState } from 'react';
-import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
@@ -13,7 +13,9 @@ import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMix
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
 import { DockLiveDispensing } from '../mixing/DockLiveDispensing';
+import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
+import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
@@ -43,8 +45,11 @@ interface ActiveBowl {
 export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
   const [showNewBowl, setShowNewBowl] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
   const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
   const createBowl = useCreateDockBowl();
+  const completeSession = useCompleteDockSession();
+  const markUnresolved = useMarkDockSessionUnresolved();
   const { effectiveOrganization } = useOrganizationContext();
 
   const handleCreateBowl = (lines: FormulaLine[], _baseWeight: number) => {
@@ -70,13 +75,37 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   };
 
   const handleBowlTap = (session: DockMixSession, index: number) => {
-    // Navigate to the live dispensing view for this session's bowl
-    // For now, we use the session ID as the bowl proxy
     setActiveBowl({
       sessionId: session.id,
-      bowlId: session.id, // Will be replaced when we have bowl-level nav
+      bowlId: session.id,
       bowlNumber: index,
       status: session.status,
+    });
+  };
+
+  const handleCompleteSession = (notes?: string) => {
+    const session = sessions?.[0];
+    if (!session || !effectiveOrganization?.id) return;
+    completeSession.mutate({
+      sessionId: session.id,
+      organizationId: effectiveOrganization.id,
+      locationId: appointment.location_id || undefined,
+      notes,
+    }, {
+      onSuccess: () => setShowComplete(false),
+    });
+  };
+
+  const handleMarkUnresolved = (reason: string) => {
+    const session = sessions?.[0];
+    if (!session || !effectiveOrganization?.id) return;
+    markUnresolved.mutate({
+      sessionId: session.id,
+      organizationId: effectiveOrganization.id,
+      locationId: appointment.location_id || undefined,
+      reason,
+    }, {
+      onSuccess: () => setShowComplete(false),
     });
   };
 
@@ -103,6 +132,17 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   }
 
   const bowls = sessions || [];
+  const hasActiveSessions = bowls.some((s) => !isTerminalSessionStatus(s.status as any));
+
+  // Session summary stats for the complete sheet
+  const sessionStats = {
+    totalBowls: bowls.length,
+    reweighedBowls: bowls.filter((s) => s.status === 'completed').length,
+    totalDispensed: 0,
+    totalLeftover: 0,
+    totalNetUsage: 0,
+    totalCost: 0,
+  };
 
   return (
     <div className="px-5 py-4 space-y-4">
@@ -140,11 +180,32 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         {createBowl.isPending ? 'Creating...' : 'Add Bowl'}
       </button>
 
+      {/* Complete Session button — shown when bowls exist */}
+      {bowls.length > 0 && (
+        <button
+          onClick={() => setShowComplete(true)}
+          className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-emerald-600/15 border border-emerald-500/20 text-emerald-400 text-sm font-medium transition-colors hover:bg-emerald-600/25"
+        >
+          <Check className="w-4 h-4" />
+          Complete Session
+        </button>
+      )}
+
       {/* New bowl sheet */}
       <DockNewBowlSheet
         open={showNewBowl}
         onClose={() => setShowNewBowl(false)}
         onCreateBowl={handleCreateBowl}
+      />
+
+      {/* Session complete sheet */}
+      <DockSessionCompleteSheet
+        open={showComplete}
+        stats={sessionStats}
+        onComplete={handleCompleteSession}
+        onMarkUnresolved={handleMarkUnresolved}
+        onClose={() => setShowComplete(false)}
+        isPending={completeSession.isPending || markUnresolved.isPending}
       />
     </div>
   );
@@ -175,6 +236,9 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
       <p className={cn('text-xs', status.color)}>
         {status.label}
       </p>
+      {session.unresolved_flag && (
+        <p className="text-[10px] text-amber-400/70 mt-1">⚠ Flagged for review</p>
+      )}
       {session.notes && (
         <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] mt-1 truncate">
           {session.notes}
