@@ -567,8 +567,8 @@ export function StockTab({ locationId }: StockTabProps) {
               Auto-Set Pars
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[240px] text-center">
-            Automatically calculate reorder points and par levels based on 28-day usage velocity and supplier lead times.
+          <TooltipContent side="bottom" className="max-w-[300px] text-center">
+            A par level is the ideal maximum stock quantity to keep on hand. This tool automatically calculates par levels and reorder points based on your 30-day usage velocity and supplier lead times.
           </TooltipContent>
         </Tooltip>
         {poItemIds.size > 0 && (
