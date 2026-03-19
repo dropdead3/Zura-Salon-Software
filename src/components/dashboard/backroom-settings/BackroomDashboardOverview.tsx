@@ -103,11 +103,11 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
       {/* ── Setup Banner (collapsible) ── */}
       {showSetupBanner && (
         <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
-          <Card className="border-amber-500/50 bg-amber-500/[0.08]">
+          <Card className="border-amber-500/30 dark:border-amber-500/50 bg-amber-100/80 dark:bg-amber-500/[0.08]">
             <CardHeader className="pb-0 pt-5 px-5">
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
                     <ZuraZIcon className="w-5 h-5 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -115,12 +115,12 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                       Uh-oh, you haven't finished setting up your backroom!
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                      <span className="font-display text-amber-400/80 tracking-wide">{setupHealth.completed} of {setupHealth.total}</span>{' '}areas configured
+                      <span className="font-display text-amber-600 dark:text-amber-400/80 tracking-wide">{setupHealth.completed} of {setupHealth.total}</span>{' '}areas configured
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {!wizardCompleted && (
-                      <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:border-amber-500/70">
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 dark:border-amber-500/50 hover:border-amber-500/60">
                         Resume Setup
                       </Button>
                     )}
@@ -140,7 +140,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                           'w-5 h-5 rounded-full flex items-center justify-center transition-colors',
                           step.done
                             ? 'bg-amber-500 text-amber-950'
-                            : 'border border-amber-500/40 bg-transparent'
+                            : 'border border-amber-400 dark:border-amber-500/40 bg-transparent'
                         )}>
                           {step.done && <Check className="w-3 h-3" />}
                         </div>
@@ -149,7 +149,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                         </span>
                       </div>
                       {i < arr.length - 1 && (
-                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-500/60' : 'bg-border/60')} />
+                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60')} />
                       )}
                     </React.Fragment>
                   ))}
