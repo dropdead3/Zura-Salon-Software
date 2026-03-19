@@ -33,6 +33,9 @@ interface SupplierDetails {
   reorder_method: string;
   reorder_method_other: string;
   reorder_notes: string;
+  secondary_contact_name: string;
+  secondary_contact_email: string;
+  secondary_contact_phone: string;
 }
 
 const EMPTY_DETAILS: SupplierDetails = {
@@ -47,6 +50,9 @@ const EMPTY_DETAILS: SupplierDetails = {
   reorder_method: '',
   reorder_method_other: '',
   reorder_notes: '',
+  secondary_contact_name: '',
+  secondary_contact_email: '',
+  secondary_contact_phone: '',
 };
 
 const STEPS = ['Supplier Details', 'Assign Products', 'Review & Confirm'] as const;
