@@ -131,11 +131,14 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
       }
 
       // Multi-location: always separate files (count sheets are per-location by nature)
-      for (const locId of locationIds) {
+      for (let i = 0; i < locationIds.length; i++) {
+        const locId = locationIds[i];
+        const locName = locations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
+        toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
         const products = locId === locationId ? inventoryProducts : await fetchInventoryForLocation(orgId!, locId);
-        const locName = locations.find(l => l.id === locId)?.name;
         await generateCountSheetPdf({ products, orgName, locationName: locName, logoDataUrl, countEntryUrl });
       }
+      toast.dismiss('pdf-progress');
       toast.success(`${locationIds.length} count sheets downloaded`);
     } catch (err) {
       toast.error('Failed to generate count sheet');

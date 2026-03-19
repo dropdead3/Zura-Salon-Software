@@ -340,12 +340,15 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         // Combined: merge all locations into one PDF
         const { jsPDF } = await import('jspdf');
         let doc: InstanceType<typeof jsPDF> | undefined;
-        for (const locId of locationIds) {
+        for (let i = 0; i < locationIds.length; i++) {
+          const locId = locationIds[i];
+          const locName = allLocations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
+          toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
-          const locName = allLocations.find(l => l.id === locId)?.name;
-          const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : undefined;
+          const locInfo: ReportLocationInfo | undefined = { name: locName };
           doc = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, doc) as any;
         }
+        toast.dismiss('pdf-progress');
         if (doc) {
           addReportFooter(doc, orgName);
           const now = new Date();
@@ -354,12 +357,15 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         toast.success('Combined stock report downloaded');
       } else {
         // Separate: download one PDF per location
-        for (const locId of locationIds) {
+        for (let i = 0; i < locationIds.length; i++) {
+          const locId = locationIds[i];
+          const locName = allLocations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
+          toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
-          const locName = allLocations.find(l => l.id === locId)?.name;
-          const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : undefined;
+          const locInfo: ReportLocationInfo | undefined = { name: locName };
           await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo);
         }
+        toast.dismiss('pdf-progress');
         toast.success(`${locationIds.length} stock reports downloaded`);
       }
     } catch (err) {
