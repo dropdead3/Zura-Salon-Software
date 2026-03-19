@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { DockLayout } from '@/components/dock/DockLayout';
 import { DockPinGate } from '@/components/dock/DockPinGate';
+import { DockDemoProvider } from '@/contexts/DockDemoContext';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 
 export type DockTab = 'schedule' | 'active' | 'clients' | 'scale' | 'settings';
@@ -50,17 +51,19 @@ export default function Dock() {
   }
 
   return (
-    <DockLayout
-      activeTab={activeTab}
-      onTabChange={(tab) => {
-        setActiveTab(tab);
-        setView({ screen: 'tabs' });
-      }}
-      staff={staff}
-      onLogout={handleLogout}
-      view={view}
-      onOpenAppointment={handleOpenAppointment}
-      onBack={handleBack}
-    />
+    <DockDemoProvider staff={staff}>
+      <DockLayout
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setView({ screen: 'tabs' });
+        }}
+        staff={staff}
+        onLogout={handleLogout}
+        view={view}
+        onOpenAppointment={handleOpenAppointment}
+        onBack={handleBack}
+      />
+    </DockDemoProvider>
   );
 }

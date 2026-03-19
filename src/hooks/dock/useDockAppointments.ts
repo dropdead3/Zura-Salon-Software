@@ -6,6 +6,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_APPOINTMENTS } from './dockDemoData';
 
 export interface DockAppointment {
   id: string;
@@ -24,11 +26,13 @@ export interface DockAppointment {
 }
 
 export function useDockAppointments(staffUserId: string | null) {
+  const { isDemoMode } = useDockDemo();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   return useQuery({
     queryKey: ['dock-appointments', staffUserId, today],
     queryFn: async (): Promise<DockAppointment[]> => {
+      if (isDemoMode) return DEMO_APPOINTMENTS;
       // Fetch from both phorest_appointments and appointments in parallel
       const [phorestResult, localResult] = await Promise.all([
         supabase

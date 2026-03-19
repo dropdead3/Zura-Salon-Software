@@ -5,6 +5,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_MIX_SESSIONS } from './dockDemoData';
 
 export interface DockMixSession {
   id: string;
@@ -18,9 +20,11 @@ export interface DockMixSession {
 }
 
 export function useDockMixSessions(appointmentId: string | null) {
+  const { isDemoMode } = useDockDemo();
   return useQuery({
-    queryKey: ['dock-mix-sessions', appointmentId],
+    queryKey: ['dock-mix-sessions', appointmentId, isDemoMode],
     queryFn: async (): Promise<DockMixSession[]> => {
+      if (isDemoMode) return DEMO_MIX_SESSIONS[appointmentId!] || [];
       const { data, error } = await supabase
         .from('mix_sessions')
         .select('id, status, notes, started_at, completed_at, is_manual_override, unresolved_flag, unresolved_reason')

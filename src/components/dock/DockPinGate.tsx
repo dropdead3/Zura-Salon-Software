@@ -137,7 +137,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           }
           className="mt-8 text-xs text-[hsl(var(--platform-foreground-muted)/0.4)] hover:text-violet-400 transition-colors"
         >
-          Dev Bypass →
+          Demo Mode →
         </button>
       )}
     </div>
