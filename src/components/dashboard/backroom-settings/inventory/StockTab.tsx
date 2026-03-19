@@ -116,6 +116,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [qtyOverrides, setQtyOverrides] = useState<Map<string, number>>(new Map());
   const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
   const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
   const [autoPoDialog, setAutoPoDialog] = useState(false);
