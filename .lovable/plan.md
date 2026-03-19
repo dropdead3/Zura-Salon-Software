@@ -1,39 +1,27 @@
 
 
-# Add Info Tooltips to Lead Time and MOQ Labels
+# Relabel "Portal" → "Supplier Website" + Add Disabled "Auto-Reorder (API)" Option
 
-## What
-Add a `MetricInfoTooltip` icon next to every "Lead Time (days)" and "MOQ" label across all supplier forms, explaining what each term means on hover.
+## Changes (4 files)
 
-## Tooltip Content
-
-- **Lead Time (days)**: "Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock."
-- **MOQ**: "Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold."
-
-## Files to Update (5 files, same pattern in each)
-
-Each file gets `import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip'` and wraps the Label text + tooltip in a `flex items-center gap-1.5` div.
-
-1. **`src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`** — lines 394, 403
-2. **`src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`** — lines 676, 680
-3. **`src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`** — lines 345, 349
-4. **`src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx`** — lines 141, 145
-5. **`src/components/dashboard/settings/inventory/SupplierDialog.tsx`** — lines 130, 140
-
-### Pattern (applied identically)
+In each file, replace the "Portal" select item and add a disabled auto-reorder option:
 
 **Before:**
 ```tsx
-<Label>Lead Time (days)</Label>
+<SelectItem value="portal">Portal</SelectItem>
 ```
 
 **After:**
 ```tsx
-<div className="flex items-center gap-1.5">
-  <Label>Lead Time (days)</Label>
-  <MetricInfoTooltip description="Average number of days between placing an order and receiving delivery. Used to calculate reorder points and safety stock." />
-</div>
+<SelectItem value="portal">Supplier Website</SelectItem>
+<SelectItem value="auto_reorder" disabled className="opacity-50">
+  Auto-Reorder (API) — Coming Soon
+</SelectItem>
 ```
 
-Same for MOQ with its respective description.
+### Files
+1. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx` — line 433
+2. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx` — line 670
+3. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx` — line 379
+4. `src/components/dashboard/settings/inventory/SupplierDialog.tsx` — line 125: already says "Website / Portal", will update to "Supplier Website" for consistency and add the auto-reorder option
 
