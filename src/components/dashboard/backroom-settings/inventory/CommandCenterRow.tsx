@@ -146,8 +146,11 @@ interface CommandCenterRowProps {
   adjustStock: any;
   updateMinMax: any;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow) => void;
+  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
   poHistory?: number[];
+  /** Manual quantity override map — managed by parent */
+  qtyOverride?: number | null;
+  onQtyOverride?: (productId: string, qty: number | null) => void;
 }
 
 export function CommandCenterRow({
