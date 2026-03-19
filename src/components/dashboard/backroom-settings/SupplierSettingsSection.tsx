@@ -42,6 +42,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 
 interface ContactForm {
+  contact_name: string;
   supplier_email: string;
   supplier_phone: string;
   supplier_website: string;
