@@ -210,7 +210,7 @@ function SupplierPOCard({
                 {/* Qty stepper */}
                 <div className="flex items-center gap-0.5">
                   <button
-                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
                     onClick={() => {
                       const newQty = Math.max(1, qty - 1);
                       onQtyOverride(item.id, newQty === item.recommended_order_qty ? null : newQty);
