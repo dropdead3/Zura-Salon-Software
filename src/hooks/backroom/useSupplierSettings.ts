@@ -129,6 +129,7 @@ export function useAllProductsWithSupplier() {
         .select('id, name, brand, category')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
+        .eq('product_type', 'Supplies')
         .order('brand')
         .order('name');
 
