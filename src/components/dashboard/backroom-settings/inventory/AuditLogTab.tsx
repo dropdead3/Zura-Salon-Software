@@ -17,6 +17,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/backroom/useBulkInventoryAuditTrail';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { format, startOfDay, startOfWeek } from 'date-fns';
 import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
