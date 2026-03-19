@@ -79,8 +79,8 @@ export function BackroomComplianceSection() {
             <ShieldCheck className={tokens.card.icon} />
           </div>
           <div>
-            <h2 className={tokens.card.title}>Backroom Compliance</h2>
-            <p className="font-sans text-sm text-muted-foreground">Track which color appointments are being properly logged in Zura Backroom</p>
+            <h2 className={tokens.card.title}>Reweigh Reports</h2>
+            <p className="font-sans text-sm text-muted-foreground">Track which color appointments have bowls properly reweighed in Zura Backroom</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
