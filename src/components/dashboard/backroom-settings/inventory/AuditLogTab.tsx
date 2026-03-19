@@ -24,6 +24,7 @@ import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetail
 interface AuditLogTabProps {
   locationId?: string;
   pdfExportRef?: React.MutableRefObject<((locationIds: string[], combined: boolean) => void) | null>;
+  locations?: { id: string; name: string }[];
 }
 
 const FIELD_LABELS: Record<string, string> = {
