@@ -72,6 +72,8 @@ export function InventoryManagerDashboardCard() {
 
 function InventoryManagerDashboardCardInner() {
   const { data: stats, isLoading } = useInventoryManagerStats();
+  const { data: nextAudit } = useNextPendingAudit();
+  const isOverdue = nextAudit ? isPast(new Date(nextAudit.due_date + 'T23:59:59')) : false;
 
   const quickActions = [
     {
