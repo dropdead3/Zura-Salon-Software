@@ -51,6 +51,7 @@ export function FinancialReportGenerator({
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
 
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFrom, dateTo, locationId);
   const goals = useSalesGoals().goals;
