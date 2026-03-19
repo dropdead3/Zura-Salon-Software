@@ -154,6 +154,7 @@ export function useBackroomAnalytics(
           totalUnderageQty: 0,
           bowlsTotal: 0,
           bowlsReweighed: 0,
+          totalProductCost: 0,
         };
         existing.sessionCount++;
         if (s.started_at && s.completed_at) {
