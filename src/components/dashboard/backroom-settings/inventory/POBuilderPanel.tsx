@@ -242,8 +242,8 @@ function SupplierPOCard({
                 </div>
 
                 {/* Line total */}
-                <span className="text-xs tabular-nums text-muted-foreground w-16 text-right">
-                  {lineTotal > 0 ? formatCurrency(lineTotal) : '—'}
+                <span className="text-xs tabular-nums text-muted-foreground/60 w-16 text-right">
+                  {lineTotal > 0 ? formatCurrency(lineTotal) : <span className="text-muted-foreground/25">—</span>}
                 </span>
 
                 {/* Remove */}
