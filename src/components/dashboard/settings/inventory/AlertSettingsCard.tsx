@@ -103,6 +103,10 @@ export function AlertSettingsCard() {
       require_po_approval: requirePoApproval,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
+      audit_frequency: auditFrequency,
+      audit_reminder_enabled: auditReminderEnabled,
+      audit_reminder_days_before: auditReminderDaysBefore,
+      audit_notify_roles: currentAuditRoles,
     });
   };
 
