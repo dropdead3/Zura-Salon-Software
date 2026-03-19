@@ -1,0 +1,89 @@
+/**
+ * DockSummaryTab — Session summary with bowl counts and status overview.
+ */
+
+import { Receipt, FlaskConical, CheckCircle2, Loader2 } from 'lucide-react';
+import type { DockStaffSession } from '@/pages/Dock';
+import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
+import { useDockMixSessions } from '@/hooks/dock/useDockMixSessions';
+import { normalizeSessionStatus } from '@/lib/backroom/session-state-machine';
+
+interface DockSummaryTabProps {
+  appointment: DockAppointment;
+  staff: DockStaffSession;
+}
+
+export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
+  const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+      </div>
+    );
+  }
+
+  const bowls = sessions || [];
+  const completed = bowls.filter((s) => normalizeSessionStatus(s.status as any) === 'completed').length;
+  const active = bowls.filter((s) => {
+    const n = normalizeSessionStatus(s.status as any);
+    return n === 'active' || n === 'draft' || n === 'awaiting_reweigh' || n === 'awaiting_stylist_approval';
+  }).length;
+
+  const stats = [
+    { label: 'Total Bowls', value: bowls.length, icon: FlaskConical },
+    { label: 'Completed', value: completed, icon: CheckCircle2 },
+    { label: 'In Progress', value: active, icon: FlaskConical },
+  ];
+
+  return (
+    <div className="px-5 py-4 space-y-4">
+      {/* Appointment info */}
+      <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 space-y-2">
+        <InfoRow label="Client" value={appointment.client_name || 'Walk-in'} />
+        <InfoRow label="Service" value={appointment.service_name || '—'} />
+        <InfoRow label="Status" value={appointment.status || 'Pending'} />
+        <InfoRow label="Stylist" value={staff.displayName} />
+      </div>
+
+      {/* Bowl stats */}
+      {bowls.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {stats.map(({ label, value, icon: Icon }) => (
+            <div
+              key={label}
+              className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-3 text-center"
+            >
+              <Icon className="w-4 h-4 text-violet-400 mx-auto mb-1" />
+              <p className="font-display text-lg tracking-wide text-[hsl(var(--platform-foreground))]">
+                {value}
+              </p>
+              <p className="text-[10px] text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {bowls.length === 0 && (
+        <div className="flex flex-col items-center justify-center pt-8 text-center">
+          <Receipt className="w-10 h-10 text-violet-400/30 mb-3" />
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            No mixing activity yet
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{label}</span>
+      <span className="text-xs text-[hsl(var(--platform-foreground))] font-medium">{value}</span>
+    </div>
+  );
+}

@@ -10,6 +10,7 @@ import { DockAppointmentCard } from './DockAppointmentCard';
 
 interface DockScheduleTabProps {
   staff: DockStaffSession;
+  onOpenAppointment: (appointment: DockAppointment) => void;
 }
 
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
@@ -35,14 +36,13 @@ function groupAppointments(appointments: DockAppointment[]) {
 }
 
 function formatTime(time: string) {
-  // time is HH:mm:ss or HH:mm — format to 12h
   const [h, m] = time.split(':').map(Number);
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour12 = h % 12 || 12;
   return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-export function DockScheduleTab({ staff }: DockScheduleTabProps) {
+export function DockScheduleTab({ staff, onOpenAppointment }: DockScheduleTabProps) {
   const { data: appointments, isLoading } = useDockAppointments(staff.userId);
   const today = format(new Date(), 'EEEE, MMMM d');
 
@@ -86,13 +86,13 @@ export function DockScheduleTab({ staff }: DockScheduleTabProps) {
         ) : (
           <>
             {active.length > 0 && (
-              <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" />
+              <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} />
             )}
             {scheduled.length > 0 && (
-              <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" />
+              <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} />
             )}
             {completed.length > 0 && (
-              <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" />
+              <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} />
             )}
           </>
         )}
@@ -106,11 +106,13 @@ function AppointmentGroup({
   count,
   appointments,
   accentColor,
+  onTap,
 }: {
   label: string;
   count: number;
   appointments: DockAppointment[];
   accentColor: 'violet' | 'blue' | 'slate';
+  onTap: (appointment: DockAppointment) => void;
 }) {
   const dotColor = {
     violet: 'bg-violet-500',
@@ -131,7 +133,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-2">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} />
         ))}
       </div>
     </div>
