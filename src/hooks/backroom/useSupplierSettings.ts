@@ -72,6 +72,7 @@ export function useSupplierGroups() {
             lead_time_days: row.lead_time_days,
             moq: row.moq,
             reorder_method: row.reorder_method,
+            reorder_method_other: (row as any).reorder_method_other ?? null,
             reorder_notes: row.reorder_notes,
             product_ids: [],
             rows: [],
