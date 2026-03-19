@@ -1,10 +1,11 @@
 /**
  * InstantFormulaCard — Surfaces the client's most relevant previous formula
- * at the top of the backroom workspace.
+ * at the top of the backroom workspace. Includes formula sharing.
  */
 
+import { useState } from 'react';
 import { format } from 'date-fns';
-import { Clock, FlaskConical, History } from 'lucide-react';
+import { Clock, FlaskConical, History, Share2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
