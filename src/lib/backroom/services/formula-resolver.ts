@@ -49,7 +49,7 @@ export const SOURCE_LABELS: Record<SuggestionSource, string> = {
   client_last_visit: "Client's Last Visit",
   client_any_service: "Client's Previous Formula",
   stylist_most_used: "Stylist's Most Used Formula",
-  salon_recipe: 'Salon Service Recipe',
+  salon_recipe: 'Salon Service Formula',
 };
 
 // ─── Ratio Computation ──────────────────────────────
