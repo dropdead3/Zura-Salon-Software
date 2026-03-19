@@ -36,6 +36,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
 
   const filters = { dateFrom, dateTo, locationId: locationId || 'all' };
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics(filters);
