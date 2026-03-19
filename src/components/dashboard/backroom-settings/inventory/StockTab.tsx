@@ -124,6 +124,9 @@ async function exportStockPdf(
   // Only save/footer if standalone (not combined mode)
   if (!existingDoc) {
     addReportFooter(doc, orgName);
+    if (returnBytes) {
+      return doc.output('arraybuffer') as unknown as typeof doc;
+    }
     doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
   }
 
