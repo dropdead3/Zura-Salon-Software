@@ -208,9 +208,9 @@ export function CommandCenterRow({
   // Usage activity label for expanded row
   const usageActivityLabel = intelligence
     ? intelligence.dailyUsage >= 1
-      ? 'Active — used daily'
+      ? `Active — ~${intelligence.dailyUsage}/day avg`
       : intelligence.dailyUsage > 0
-        ? 'Slow mover — <1/day'
+        ? `Low activity — ~${intelligence.dailyUsage}/day avg`
         : null
     : null;
 
@@ -220,8 +220,8 @@ export function CommandCenterRow({
         className={cn(
           'group/row transition-colors duration-150 relative',
           // Point 3: Reduced row tinting — subtle wash only
-          row.severity === 'critical' && 'bg-destructive/[0.02] hover:bg-destructive/[0.04]',
-          row.severity === 'low' && 'bg-warning/[0.015] hover:bg-warning/[0.03]',
+          row.severity === 'critical' && 'bg-destructive/[0.015] hover:bg-destructive/[0.03]',
+          row.severity === 'low' && 'bg-warning/[0.01] hover:bg-warning/[0.025]',
           row.severity === 'healthy' && 'hover:bg-muted/40',
         )}
       >
@@ -275,23 +275,22 @@ export function CommandCenterRow({
               </span>
             )}
             {/* Point 4: Days remaining promoted */}
-            {daysRemaining !== null && (
+            {daysRemaining !== null ? (
               <span className={cn(
                 'text-[11px] tabular-nums',
                 daysRemaining === 0
                   ? 'text-destructive'
-                  : daysRemaining < 7
+                  : daysRemaining <= 3
                     ? 'text-destructive/70'
-                    : daysRemaining < 14
+                    : daysRemaining <= 7
                       ? 'text-warning/70'
                       : 'text-muted-foreground/40',
               )}>
-                ~{daysRemaining}d
+                {daysRemaining === 0 ? 'Out now' : `~${daysRemaining}d left`}
               </span>
-            )}
-            {row.stock_state === 'out_of_stock' && daysRemaining === null && (
-              <span className="text-[11px] text-destructive tabular-nums">0d</span>
-            )}
+            ) : row.stock_state === 'out_of_stock' ? (
+              <span className="text-[11px] text-destructive tabular-nums">Out now</span>
+            ) : null}
           </div>
         </TableCell>
 
@@ -328,7 +327,7 @@ export function CommandCenterRow({
                     className={cn(
                       'tabular-nums cursor-pointer transition-colors duration-150',
                       // Point 2: Larger, more prominent
-                      'text-xl font-medium',
+                      'text-xl font-medium tracking-tight',
                       displayOrderQty > 0 && 'bg-primary/[0.06] px-2 py-0.5 rounded-md',
                       isOverridden
                         ? 'text-primary border-b border-dashed border-primary/40'
@@ -420,7 +419,7 @@ export function CommandCenterRow({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'h-8 min-w-[96px] px-2.5 text-xs font-sans gap-1 transition-colors duration-150',
+                  'h-8 min-w-[96px] px-3 text-xs font-sans gap-1 transition-colors duration-150 active:scale-[0.98]',
                   addedToPo
                     ? 'text-success bg-success/10 hover:text-success hover:bg-success/15'
                     : 'text-primary bg-primary/10 hover:text-primary hover:bg-primary/15',
