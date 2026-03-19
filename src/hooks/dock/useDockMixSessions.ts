@@ -5,6 +5,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_MIX_SESSIONS } from './dockDemoData';
 
 export interface DockMixSession {
   id: string;
