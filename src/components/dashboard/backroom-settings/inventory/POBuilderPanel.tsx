@@ -176,8 +176,8 @@ function SupplierPOCard({
         <span className={cn('text-xs font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground')}>
           {group.supplier}
         </span>
-        <span className="text-[10px] text-muted-foreground">({group.items.length})</span>
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+        <span className="text-[10px] text-muted-foreground/50">({group.items.length})</span>
+        <span className="ml-auto text-xs tabular-nums text-muted-foreground/70">
           {formatCurrency(group.totalCost)}
         </span>
       </div>
