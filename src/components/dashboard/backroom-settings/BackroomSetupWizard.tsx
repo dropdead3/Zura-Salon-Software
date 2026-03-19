@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, ArrowLeft, ArrowRight, Package, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,10 +19,11 @@ import { useUpsertTrackingComponent } from '@/hooks/backroom/useServiceTrackingC
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useCreateBackroomStation } from '@/hooks/backroom/useBackroomStations';
 import { useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
-const STEP_COUNT = 5;
+const STEP_COUNT = 6;
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -63,9 +66,22 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
 
-  // ─── Step 2: Product selection state ────────────────────────────────────────
+  // ─── Step 1: Product selection state ────────────────────────────────────────
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [productCosts, setProductCosts] = useState<Record<string, string>>({});
+
+  // ─── Step 2: Supplier state ─────────────────────────────────────────────────
+  const [supplierName, setSupplierName] = useState('');
+  const [supplierEmail, setSupplierEmail] = useState('');
+  const [supplierPhone, setSupplierPhone] = useState('');
+  const [supplierWebsite, setSupplierWebsite] = useState('');
+  const [supplierReorderMethod, setSupplierReorderMethod] = useState('');
+  const [supplierReorderOther, setSupplierReorderOther] = useState('');
+  const [supplierLeadTime, setSupplierLeadTime] = useState('');
+  const [supplierMoq, setSupplierMoq] = useState('1');
+  const [supplierProductIds, setSupplierProductIds] = useState<Set<string>>(new Set());
+  const [supplierAssignMode, setSupplierAssignMode] = useState<'brand' | 'product'>('brand');
+  const [supplierSearch, setSupplierSearch] = useState('');
 
   // ─── Step 3: Service mapping state ──────────────────────────────────────────
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
@@ -150,6 +166,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const upsertAllowance = useUpsertAllowancePolicy();
   const createStation = useCreateBackroomStation();
   const upsertSetting = useUpsertBackroomSetting();
+  const batchUpsertSupplier = useBatchUpsertSupplier();
 
   // ─── Navigation ─────────────────────────────────────────────────────────────
   const goNext = async () => {
@@ -158,7 +175,20 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       await bulkUpdateProducts.mutateAsync(Array.from(selectedProductIds));
     }
 
-    if (step === 2 && selectedServiceIds.size > 0) {
+    if (step === 2 && supplierName.trim() && supplierProductIds.size > 0 && orgId) {
+      await batchUpsertSupplier.mutateAsync({
+        product_ids: Array.from(supplierProductIds),
+        organization_id: orgId,
+        supplier_name: supplierName.trim(),
+        supplier_email: supplierEmail || null,
+        supplier_phone: supplierPhone || null,
+        supplier_website: supplierWebsite || null,
+        lead_time_days: supplierLeadTime ? parseInt(supplierLeadTime) : null,
+        moq: supplierMoq ? parseInt(supplierMoq) : 1,
+      });
+    }
+
+    if (step === 3 && selectedServiceIds.size > 0) {
       await bulkUpdateServices.mutateAsync(Array.from(selectedServiceIds));
       for (const svcId of Array.from(selectedServiceIds)) {
         const prodId = serviceProductMap[svcId];
@@ -172,7 +202,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 3 && orgId) {
+    if (step === 4 && orgId) {
       for (const svcId of Object.keys(allowances)) {
         const a = allowances[svcId];
         if (a.qty && a.rate) {
@@ -187,7 +217,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 4 && stationName && stationLocationId && orgId) {
+    if (step === 5 && stationName && stationLocationId && orgId) {
       await createStation.mutateAsync({
         organization_id: orgId,
         location_id: stationLocationId,
@@ -220,6 +250,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 
   const isSaving =
     bulkUpdateProducts.isPending ||
+    batchUpsertSupplier.isPending ||
     bulkUpdateServices.isPending ||
     upsertComponent.isPending ||
     upsertAllowance.isPending ||
@@ -249,9 +280,41 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
     [selectedServiceIds, services]
   );
 
+  // ─── Supplier brand grouping ─────────────────────────────────────────────────
+  const supplierBrands = useMemo(() => {
+    const tracked = products.filter((p) => selectedProductIds.has(p.id) || p.is_backroom_tracked);
+    const map = new Map<string, ProductRow[]>();
+    for (const p of tracked) {
+      const brand = p.brand || 'Uncategorized';
+      if (!map.has(brand)) map.set(brand, []);
+      map.get(brand)!.push(p);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([brand, prods]) => ({ brand, products: prods }));
+  }, [products, selectedProductIds]);
+
+  const supplierFilteredProducts = useMemo(() => {
+    const tracked = products.filter((p) => selectedProductIds.has(p.id) || p.is_backroom_tracked);
+    if (!supplierSearch) return tracked;
+    const q = supplierSearch.toLowerCase();
+    return tracked.filter(p => p.name.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
+  }, [products, selectedProductIds, supplierSearch]);
+
+  const supplierBrandCounts = useMemo(() => {
+    const map = new Map<string, { total: number; selected: number }>();
+    for (const b of supplierBrands) {
+      map.set(b.brand, {
+        total: b.products.length,
+        selected: b.products.filter(p => supplierProductIds.has(p.id)).length,
+      });
+    }
+    return map;
+  }, [supplierBrands, supplierProductIds]);
+
   const progressPct = Math.round(((step + 1) / STEP_COUNT) * 100);
 
-  const stepLabels = ['Welcome', 'Products', 'Services', 'Allowances', 'Station'];
+  const stepLabels = ['Welcome', 'Products', 'Suppliers', 'Services', 'Allowances', 'Station'];
 
   return (
     <div className="space-y-6">
@@ -306,6 +369,49 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
             />
           )}
           {step === 2 && (
+            <SuppliersStep
+              supplierName={supplierName}
+              onNameChange={setSupplierName}
+              supplierEmail={supplierEmail}
+              onEmailChange={setSupplierEmail}
+              supplierPhone={supplierPhone}
+              onPhoneChange={setSupplierPhone}
+              supplierWebsite={supplierWebsite}
+              onWebsiteChange={setSupplierWebsite}
+              reorderMethod={supplierReorderMethod}
+              onReorderMethodChange={setSupplierReorderMethod}
+              reorderOther={supplierReorderOther}
+              onReorderOtherChange={setSupplierReorderOther}
+              leadTimeDays={supplierLeadTime}
+              onLeadTimeChange={setSupplierLeadTime}
+              moq={supplierMoq}
+              onMoqChange={setSupplierMoq}
+              assignMode={supplierAssignMode}
+              onAssignModeChange={setSupplierAssignMode}
+              brands={supplierBrands}
+              filteredProducts={supplierFilteredProducts}
+              selectedIds={supplierProductIds}
+              onToggleProduct={(id) => {
+                setSupplierProductIds(prev => {
+                  const next = new Set(prev);
+                  next.has(id) ? next.delete(id) : next.add(id);
+                  return next;
+                });
+              }}
+              onToggleBrand={(prods) => {
+                setSupplierProductIds(prev => {
+                  const next = new Set(prev);
+                  const allSelected = prods.every(p => next.has(p.id));
+                  prods.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id));
+                  return next;
+                });
+              }}
+              brandCounts={supplierBrandCounts}
+              search={supplierSearch}
+              onSearchChange={setSupplierSearch}
+            />
+          )}
+          {step === 3 && (
             <ServicesStep
               services={services}
               isLoading={servicesLoading}
@@ -324,7 +430,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               }
             />
           )}
-          {step === 3 && (
+          {step === 4 && (
             <AllowancesStep
               services={services.filter((s) => trackedServiceIds.has(s.id))}
               allowances={allowances}
@@ -336,7 +442,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               }
             />
           )}
-          {step === 4 && (
+          {step === 5 && (
             <StationStep
               stationName={stationName}
               onNameChange={setStationName}
@@ -381,6 +487,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 function WelcomeStep() {
   const features = [
     { icon: Package, label: 'Track products used per service' },
+    { icon: Truck, label: 'Link suppliers for procurement' },
     { icon: Wrench, label: 'Map services to supply components' },
     { icon: DollarSign, label: 'Set allowances and overage billing' },
     { icon: Monitor, label: 'Configure mixing stations' },
@@ -411,6 +518,180 @@ function WelcomeStep() {
               </div>
             );
           })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Step 2: Suppliers ────────────────────────────────────────────────────────
+function SuppliersStep({
+  supplierName, onNameChange,
+  supplierEmail, onEmailChange,
+  supplierPhone, onPhoneChange,
+  supplierWebsite, onWebsiteChange,
+  reorderMethod, onReorderMethodChange,
+  reorderOther, onReorderOtherChange,
+  leadTimeDays, onLeadTimeChange,
+  moq, onMoqChange,
+  assignMode, onAssignModeChange,
+  brands, filteredProducts, selectedIds,
+  onToggleProduct, onToggleBrand, brandCounts,
+  search, onSearchChange,
+}: {
+  supplierName: string; onNameChange: (v: string) => void;
+  supplierEmail: string; onEmailChange: (v: string) => void;
+  supplierPhone: string; onPhoneChange: (v: string) => void;
+  supplierWebsite: string; onWebsiteChange: (v: string) => void;
+  reorderMethod: string; onReorderMethodChange: (v: string) => void;
+  reorderOther: string; onReorderOtherChange: (v: string) => void;
+  leadTimeDays: string; onLeadTimeChange: (v: string) => void;
+  moq: string; onMoqChange: (v: string) => void;
+  assignMode: 'brand' | 'product'; onAssignModeChange: (m: 'brand' | 'product') => void;
+  brands: { brand: string; products: ProductRow[] }[];
+  filteredProducts: ProductRow[];
+  selectedIds: Set<string>;
+  onToggleProduct: (id: string) => void;
+  onToggleBrand: (prods: ProductRow[]) => void;
+  brandCounts: Map<string, { total: number; selected: number }>;
+  search: string; onSearchChange: (s: string) => void;
+}) {
+  return (
+    <Card className={tokens.card.wrapper}>
+      <CardHeader>
+        <CardTitle className={tokens.card.title}>Set Up Supplier</CardTitle>
+        <CardDescription className={tokens.body.muted}>
+          Add your primary supplier and link them to tracked products. You can add more suppliers later.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 max-h-[55vh] overflow-y-auto">
+        {/* Supplier contact info */}
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>
+            Supplier Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            value={supplierName}
+            onChange={e => onNameChange(e.target.value)}
+            placeholder="e.g. Goldwell Distribution"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Email</Label>
+            <Input type="email" value={supplierEmail} onChange={e => onEmailChange(e.target.value)} placeholder="orders@supplier.com" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Phone</Label>
+            <Input value={supplierPhone} onChange={e => onPhoneChange(e.target.value)} placeholder="(555) 123-4567" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>Website</Label>
+          <Input value={supplierWebsite} onChange={e => onWebsiteChange(e.target.value)} placeholder="https://supplier.com" />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Reorder Method</Label>
+            <Select value={reorderMethod} onValueChange={v => { onReorderMethodChange(v); if (v !== 'other') onReorderOtherChange(''); }}>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="portal">Portal</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {reorderMethod === 'other' && (
+              <Input value={reorderOther} onChange={e => onReorderOtherChange(e.target.value)} placeholder="Specify method..." className="mt-1.5" />
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Lead Time (days)</Label>
+            <Input type="number" value={leadTimeDays} onChange={e => onLeadTimeChange(e.target.value)} placeholder="5" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>MOQ</Label>
+            <Input type="number" value={moq} onChange={e => onMoqChange(e.target.value)} placeholder="1" />
+          </div>
+        </div>
+
+        {/* Product assignment */}
+        <div className="border-t border-border/60 pt-4 mt-4 space-y-3">
+          <p className={cn(tokens.body.emphasis, 'text-foreground')}>Link Products to This Supplier</p>
+          <div className="flex gap-1 p-0.5 bg-muted rounded-full w-fit">
+            <button
+              onClick={() => onAssignModeChange('brand')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
+                assignMode === 'brand' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              By Brand
+            </button>
+            <button
+              onClick={() => onAssignModeChange('product')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
+                assignMode === 'product' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Package className="w-3.5 h-3.5" />
+              By Product
+            </button>
+          </div>
+
+          <p className={cn(tokens.body.muted, 'text-xs')}>
+            {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
+            {assignMode === 'brand' && ' • Check a brand to assign all its products'}
+          </p>
+
+          {assignMode === 'product' && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input value={search} onChange={e => onSearchChange(e.target.value)} placeholder="Search products..." className="pl-9" />
+            </div>
+          )}
+
+          <ScrollArea className="h-[200px] border border-border/60 rounded-lg">
+            <div className="p-2 space-y-0.5">
+              {assignMode === 'brand' ? (
+                brands.length === 0 ? (
+                  <p className={cn(tokens.body.muted, 'text-center py-8')}>No tracked products yet. Go back and select products first.</p>
+                ) : (
+                  brands.map(({ brand, products: prods }) => {
+                    const counts = brandCounts.get(brand);
+                    const allSelected = counts ? counts.selected === counts.total : false;
+                    const someSelected = counts ? counts.selected > 0 && !allSelected : false;
+                    return (
+                      <label key={brand} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                        <Checkbox checked={allSelected ? true : someSelected ? 'indeterminate' : false} onCheckedChange={() => onToggleBrand(prods)} />
+                        <span className={cn(tokens.body.default, 'truncate flex-1')}>{brand}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {counts?.selected || 0}/{counts?.total || 0}
+                        </Badge>
+                      </label>
+                    );
+                  })
+                )
+              ) : (
+                filteredProducts.length === 0 ? (
+                  <p className={cn(tokens.body.muted, 'text-center py-8')}>No matching products</p>
+                ) : (
+                  filteredProducts.map(p => (
+                    <label key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => onToggleProduct(p.id)} />
+                      <div className="min-w-0 flex-1">
+                        <span className={cn(tokens.body.default, 'truncate block')}>{p.name}</span>
+                        {p.brand && <span className="text-xs text-muted-foreground">{p.brand}</span>}
+                      </div>
+                    </label>
+                  ))
+                )
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </CardContent>
     </Card>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Truck, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { Infotainer } from '@/components/ui/Infotainer';
 
@@ -52,6 +52,7 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   const checklistItems = [
     { label: 'Backroom products configured', value: health.trackedProducts, total: health.totalProducts, section: 'products', icon: Package, done: health.trackedProducts > 0 },
+    { label: 'Suppliers linked to products', value: health.suppliersConfigured, section: 'suppliers', icon: Truck, done: health.suppliersConfigured > 0 },
     { label: 'Services mapped for tracking', value: health.trackedServices, total: health.totalServices, section: 'services', icon: Wrench, done: health.trackedServices > 0 },
     { label: 'Recipe baselines defined', value: health.recipesConfigured, section: 'recipes', icon: BarChart3, done: health.recipesConfigured > 0 },
     { label: 'Allowance policies configured', value: health.allowancePolicies, section: 'allowances', icon: DollarSign, done: health.allowancePolicies > 0 },

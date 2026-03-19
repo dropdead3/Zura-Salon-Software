@@ -17,6 +17,7 @@ export interface SetupWarning {
 export interface SetupHealthMetrics {
   trackedProducts: number;
   totalProducts: number;
+  suppliersConfigured: number;
   trackedServices: number;
   totalServices: number;
   recipesConfigured: number;
@@ -36,7 +37,7 @@ export function useBackroomSetupHealth() {
       const warnings: SetupWarning[] = [];
 
       // Parallel queries
-      const [productsRes, servicesRes, recipesRes, policiesRes, stationsRes, alertsRes, componentsRes, billingRes] = await Promise.all([
+      const [productsRes, servicesRes, recipesRes, policiesRes, stationsRes, alertsRes, componentsRes, billingRes, suppliersRes] = await Promise.all([
         supabase.from('products').select('id, is_backroom_tracked, cost_price, cost_per_gram, is_active', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
         supabase.from('services').select('id, is_backroom_tracked, name', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
         supabase.from('service_recipe_baselines').select('id', { count: 'exact' }).eq('organization_id', orgId!),
@@ -45,12 +46,15 @@ export function useBackroomSetupHealth() {
         supabase.from('backroom_alert_rules').select('id', { count: 'exact' }).eq('organization_id', orgId!),
         supabase.from('service_tracking_components').select('service_id', { count: 'exact' }).eq('organization_id', orgId!),
         supabase.from('backroom_billing_settings' as any).select('enable_supply_cost_recovery').eq('organization_id', orgId!).maybeSingle(),
+        supabase.from('product_suppliers').select('supplier_name').eq('organization_id', orgId!),
       ]);
 
       const products = productsRes.data || [];
       const services = servicesRes.data || [];
       const trackedProducts = products.filter((p: { is_backroom_tracked: boolean }) => p.is_backroom_tracked);
       const trackedServices = services.filter((s: { is_backroom_tracked: boolean }) => s.is_backroom_tracked);
+      const distinctSuppliers = new Set((suppliersRes.data || []).map((r: { supplier_name: string }) => r.supplier_name));
+      const suppliersConfigured = distinctSuppliers.size;
 
       // Products missing cost
       const missingCost = trackedProducts.filter((p: { cost_price: number | null; cost_per_gram: number | null }) => !p.cost_price && !p.cost_per_gram);
@@ -72,6 +76,17 @@ export function useBackroomSetupHealth() {
           title: 'No backroom products configured',
           description: 'Assign products to backroom tracking before services can be tracked.',
           section: 'products',
+        });
+      }
+
+      // No suppliers configured
+      if (trackedProducts.length > 0 && suppliersConfigured === 0) {
+        warnings.push({
+          id: 'no-suppliers',
+          severity: 'info',
+          title: 'No suppliers configured',
+          description: 'Link suppliers to your tracked products for reorder and procurement workflows.',
+          section: 'suppliers',
         });
       }
 
@@ -118,6 +133,7 @@ export function useBackroomSetupHealth() {
       return {
         trackedProducts: trackedProducts.length,
         totalProducts: products.length,
+        suppliersConfigured,
         trackedServices: trackedServices.length,
         totalServices: services.length,
         recipesConfigured: recipesRes.count || 0,
