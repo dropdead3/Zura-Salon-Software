@@ -19,6 +19,9 @@ export interface SupplierGroup {
   reorder_method: string | null;
   reorder_method_other: string | null;
   reorder_notes: string | null;
+  secondary_contact_name: string | null;
+  secondary_contact_email: string | null;
+  secondary_contact_phone: string | null;
   product_ids: string[];
   /** One representative row id for updates */
   rows: { id: string; product_id: string }[];
