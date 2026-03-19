@@ -68,6 +68,36 @@ export function InventoryLeadAssignmentCard() {
   const { data: staffOptions, isLoading: staffLoading } = useOrgStaffOptions();
   const assignLead = useAssignInventoryLead();
   const removeLead = useRemoveInventoryLead();
+  const [pendingRoleSync, setPendingRoleSync] = useState<{ userId: string; name: string } | null>(null);
+
+  const handleAssignLead = async (locationId: string, userId: string) => {
+    assignLead.mutate({ locationId, userId });
+    
+    // Check if this user has the inventory_manager role
+    const { data: existingRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'inventory_manager');
+
+    if (!existingRoles || existingRoles.length === 0) {
+      const staff = staffOptions?.find(s => s.user_id === userId);
+      setPendingRoleSync({ userId, name: staff?.display_name || 'this person' });
+    }
+  };
+
+  const handleGrantInventoryRole = async () => {
+    if (!pendingRoleSync) return;
+    const { error } = await supabase
+      .from('user_roles')
+      .insert({ user_id: pendingRoleSync.userId, role: 'inventory_manager' });
+    if (error) {
+      toast.error('Failed to assign role', { description: error.message });
+    } else {
+      toast.success('Inventory Manager role granted');
+    }
+    setPendingRoleSync(null);
+  };
 
   const leadByLocation = useMemo(() => {
     const map = new Map<string, typeof leads extends (infer T)[] | undefined ? T : never>();
