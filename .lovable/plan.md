@@ -1,153 +1,141 @@
 
 
-## Timezone-Safe Scheduling (Implemented)
+# Batch Feature Build — 9 Features for Zura Backroom
 
-### Problem
-`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
+These 9 features span waste analytics, financial reporting, purchasing intelligence, forecasting, mobile optimization, formula collaboration, and automation. Grouped by effort and dependency.
 
-### Solution
-- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
-- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
-- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
+---
 
-### Files Updated
-- `ScheduleHeader.tsx` — today button, quick days, isToday checks
-- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
-- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
-- `MonthView.tsx` — today highlight
-- `AgendaView.tsx` — today/tomorrow labels, today border
-- `ScheduleActionBar.tsx` — payment queue timing
-- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
-- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
-- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
-- `useHuddles.ts` — today's huddle query
+## Feature 4 & 13: Waste Reason Codes + Waste Category Breakdown
 
-## Auto-Reorder with Supplier Communication (Implemented)
+These are essentially the same feature. Waste categories **already exist** as a DB enum (`waste_category`) with 5 values: `leftover_bowl_waste`, `overmix_waste`, `spill_waste`, `expired_product_discard`, `contamination_discard`. The `WasteRecordDialog` already lets users pick a category.
 
-### What It Does
-Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
+**What's missing:** A `notes` field on waste events is supported in DB but not surfaced in the dialog, and there's no **analytics breakdown by category** in the Command Center.
 
-### Database Changes
-- `products.par_level` (INT, nullable) — desired stock level to reorder up to
-- `product_suppliers.moq` (INT, default 1) — minimum order quantity
-- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
-- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
-- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
-- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
+### Changes
+1. **`WasteRecordDialog.tsx`** — Add an optional "Reason / Notes" text field below the category dropdown
+2. **New: `WasteCategoryBreakdownCard.tsx`** — Donut chart + table showing waste by category (g and $), surfaced in the Analytics sub-tab of Command Center
+3. **`useBackroomAnalytics.ts`** — Already aggregates `wasteByCategory`; expose this data to the new card
+4. **Migration** — Add two new enum values: `wrong_mix` and `client_refusal` to `waste_category` enum for completeness
 
-### Quantity Calculation
-```
-deficit = par_level - quantity_on_hand
-order_qty = max(moq, deficit)
-if moq > 1: round up to nearest MOQ multiple
-```
-Fallback: if par_level is null, uses `reorder_level * 2`.
+---
 
-### Files Updated
-- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
-- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
-- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
-- `useInventoryAlertSettings.ts` — updated interface
-- `useProducts.ts` — added par_level to Product interface
-- `useProductSuppliers.ts` — added moq to ProductSupplier interface
-- `ProductEditDialog.tsx` — added par level field
-- `RetailProductsSettingsContent.tsx` — added par level to product form
-- `SupplierDialog.tsx` — added MOQ field
+## Feature 6: Service-Level P&L Report
 
-### Safety Features
-- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
-- Audit trail: auto_reorder logged as stock_movement reason
-- Supplier confirmation tracking via supplier_confirmed_at timestamp
+A `ProfitByServiceTable` and `AppointmentProfitCard` already exist in `src/components/dashboard/backroom/appointment-profit/`. The `appointment-profit-engine` calculates revenue, chemical cost, labor cost, and margin per service.
 
-## Product Movement Rating Badges (Implemented)
+**What's missing:** An exportable summary view and a dedicated P&L sub-tab.
 
-### What It Does
-Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
+### Changes
+1. **New: `ServicePLReport.tsx`** — Tabular P&L layout: Service Name | Revenue | Product Cost | Est. Labor | Gross Margin | Margin % with totals row, date range filter, and CSV export button
+2. **Wire into Analytics sub-tab** of BackroomDashboardOverview, alongside existing profit cards
+3. **CSV export utility** — Simple function to convert the table data to downloadable CSV
 
-### Rating Tiers
-- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
-- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
-- **Steady**: Velocity >0.05/day (muted)
-- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
-- **Stagnant**: Zero velocity, sold within 180 days (orange)
-- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
-- Products with zero stock excluded from negative ratings
+---
 
-### Files Created
-- `src/lib/productMovementRating.ts` — pure rating logic + badge config
-- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
-- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
+## Feature 7: Inventory Valuation Report
 
-### Files Updated
-- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
-- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
-- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
-- `ProductDetailModal.tsx` — Movement badge with velocity context
+An `InventoryValuationCard` already exists in `src/components/dashboard/analytics/` for retail. The backroom needs its own version scoped to professional products.
 
-## Inventory Intelligence Suite v2 (Implemented)
+### Changes
+1. **New: `BackroomInventoryValuationCard.tsx`** — Shows total inventory at cost, at retail, implied margin %, grouped by brand and by location. Includes CSV export.
+2. **Data source** — Query `products` + `inventory_projections` for professional products (where `is_professional = true` or category in color/developer/etc.)
+3. **Wire into** Command Center Analytics sub-tab
 
-### 1. Dead Stock Auto-Clearance Pipeline
-- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
-- One-click "Mark for Clearance" applies discount and sets clearance_status
+---
 
-### 2. Supplier Lead Time Tracker
-- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
-- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
+## Feature 8: MOQ Validation on PO Creation
 
-### 3. Inventory Valuation Dashboard Card
-- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
+MOQ is already stored on `product_suppliers.moq` and `vendor_products.moq`. The `check-reorder-levels` edge function already respects MOQ when calculating suggested quantities. But the **PO Builder UI** doesn't warn when a manual line is below MOQ.
 
-### 4. Reorder Approval Queue
-- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
+### Changes
+1. **`POBuilderPanel.tsx`** — When user enters/edits a quantity on a PO line, compare against the product's supplier MOQ. Show inline amber warning badge: "Below MOQ (min: X)" if qty < moq
+2. **`useReplenishment.ts`** — Already fetches `vendor_products.moq`; ensure this data is available in the PO builder context
 
-### 5. Stock Transfer Between Locations
-- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
-- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
-- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
-- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
+---
 
-## Enhancement 1: Expiry Tracking (Implemented)
+## Feature 9: Seasonal Demand Patterns
 
-### What It Does
-Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+The predictive backroom currently uses recent usage history (last 30-90 days). Adding a year-over-year overlay would improve accuracy.
 
-### Database Changes
-- `products.expires_at` (DATE, nullable) — expiration date for perishable products
-- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+### Changes
+1. **`predictive-backroom-service.ts`** — Add a `fetchHistoricalUsageSameWeekLastYear()` function that queries mix sessions from the same calendar week 52 weeks ago. Blend with recent velocity (weighted: 70% recent, 30% YoY if available).
+2. **New: `SeasonalDemandOverlay.tsx`** — Small chart card in the Command Center Analytics sub-tab showing current week usage vs same week last year for top 10 products. Simple bar comparison.
+3. **Graceful degradation** — If org has < 12 months of data, hide the overlay and don't blend YoY into forecasts.
 
-### Expiry Alert Buckets
-- **Expired** (red): past expiration → suggests 50% markdown
-- **Critical** (orange): within alert threshold → suggests 25% markdown
-- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+---
 
-### Files Created
-- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+## Feature 11: Backroom Mobile View Optimization
 
-### Files Updated
-- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+The mixing workflow happens at stations, often on tablets. Key touch targets and layouts need auditing.
 
-## Enhancement 2: Shrinkage Detection (Implemented)
+### Changes
+1. **`MixSessionManager.tsx`** — Add responsive classes: stack bowl cards vertically on `< md`, increase touch targets on buttons to min 44px
+2. **`BowlCard.tsx`** — Responsive product line layout: two-column on desktop, single-column stack on mobile with larger tap targets
+3. **`WasteRecordDialog.tsx`** — Full-screen sheet on mobile (`< sm`) instead of centered dialog
+4. **`ManualWeightInput.tsx`** — Larger number input and +/- buttons on mobile (min 48px touch)
+5. **General** — Audit key backroom components for `min-h-[44px]` on interactive elements, add `@container` queries where beneficial
 
-### What It Does
-Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+---
 
-### Database Changes
-- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+## Feature 12: Formula Sharing Between Stylists
 
-### Shrinkage Calculation
-```
-variance = counted_quantity - expected_quantity
-shrinkage_units = |variance| when variance < 0
-shrinkage_cost = shrinkage_units × cost_price
-```
+Currently formulas are resolved per-client or per-stylist. No mechanism to share a formula with a colleague.
 
-### Files Created
-- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
-- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
-- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
+### Changes
+1. **Migration** — New table `shared_formulas`:
+   ```sql
+   CREATE TABLE shared_formulas (
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+     formula_history_id UUID NOT NULL REFERENCES client_formula_history(id) ON DELETE CASCADE,
+     shared_by UUID NOT NULL REFERENCES auth.users(id),
+     shared_with UUID NOT NULL REFERENCES auth.users(id),
+     client_id UUID NOT NULL,
+     notes TEXT,
+     created_at TIMESTAMPTZ DEFAULT now(),
+     UNIQUE(formula_history_id, shared_with)
+   );
+   ```
+   With RLS: org members can view their own shared formulas.
+2. **New: `useSharedFormulas.ts`** — Hook to create/query shared formulas
+3. **`InstantFormulaCard.tsx`** — Add a "Share with stylist" button (icon) that opens a staff picker dialog
+4. **New: `ShareFormulaDialog.tsx`** — Staff selector + optional notes field
+5. **Formula resolver** — Add shared formulas as a new tier in the hierarchy (after client history, before service baseline)
 
-### Files Updated
-- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
-- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub
+---
+
+## Feature 14: Automatic Reorder with Approval Gate
+
+The `check-reorder-levels` edge function already supports `auto_create_draft_po` and `auto_reorder_enabled` with `max_auto_reorder_value` spend cap. Draft POs are created automatically.
+
+**What's missing:** A manager approval gate before drafts are sent to suppliers, and push notification to managers.
+
+### Changes
+1. **`AlertSettingsCard.tsx`** — Add "Require manager approval before sending auto-generated POs" toggle (new column `require_po_approval` on `inventory_alert_settings`)
+2. **Migration** — Add `require_po_approval boolean NOT NULL DEFAULT true` to `inventory_alert_settings`
+3. **`ReorderApprovalCard.tsx`** — Already shows draft POs with approve/reject. Enhance with batch approve, spend summary, and "Auto-generated" badge
+4. **Control Tower integration** — Add a new alert type "POs Awaiting Approval" to surface pending drafts prominently
+5. **`check-reorder-levels` edge function** — When `require_po_approval` is true, create POs as `draft` status (already does this). When false, auto-set to `sent` and trigger email.
+
+---
+
+## Summary of New Files
+
+| File | Feature |
+|------|---------|
+| `src/components/dashboard/backroom/WasteCategoryBreakdownCard.tsx` | 4 & 13 |
+| `src/components/dashboard/backroom/ServicePLReport.tsx` | 6 |
+| `src/components/dashboard/backroom/BackroomInventoryValuationCard.tsx` | 7 |
+| `src/components/dashboard/backroom/SeasonalDemandOverlay.tsx` | 9 |
+| `src/components/dashboard/backroom/ShareFormulaDialog.tsx` | 12 |
+| `src/hooks/backroom/useSharedFormulas.ts` | 12 |
+
+## Migrations (3)
+1. Add `wrong_mix`, `client_refusal` to `waste_category` enum
+2. Create `shared_formulas` table with RLS
+3. Add `require_po_approval` to `inventory_alert_settings`
+
+## Existing Files Modified (~15)
+- `WasteRecordDialog.tsx`, `useBackroomAnalytics.ts`, `BackroomDashboardOverview.tsx`, `POBuilderPanel.tsx`, `predictive-backroom-service.ts`, `MixSessionManager.tsx`, `BowlCard.tsx`, `ManualWeightInput.tsx`, `InstantFormulaCard.tsx`, `formula-resolver.ts`, `AlertSettingsCard.tsx`, `ReorderApprovalCard.tsx`, `check-reorder-levels/index.ts`
+
