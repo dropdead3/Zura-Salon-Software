@@ -103,56 +103,58 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
       {/* ── Setup Banner (collapsible) ── */}
       {showSetupBanner && (
         <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
-          <Card className="border-amber-500/40 bg-amber-500/5">
-            <CardContent className="py-4" style={{ containerType: 'inline-size' }}>
+          <Card className="border-amber-500/50 bg-amber-500/[0.08]">
+            <CardHeader className="pb-0 pt-5 px-5">
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                    <ZuraZIcon className="w-4 h-4 text-amber-500" />
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <ZuraZIcon className="w-5 h-5 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="flex items-baseline gap-1.5">
-                      <span className="font-display text-sm text-amber-400 tracking-wide">
-                        {setupHealth.completed} OF {setupHealth.total}
-                      </span>
-                      <span className="font-sans text-xs text-muted-foreground">
-                        areas configured
-                      </span>
-                    </p>
-                    {/* Step tracker — unified column layout */}
-                    <div className="mt-2 w-full px-4">
-                      <div className="flex items-start w-full">
-                        {setupHealth.steps.map((step, i, arr) => (
-                          <React.Fragment key={step.label}>
-                            <div className="flex flex-col items-center shrink-0">
-                              <div className={cn(
-                                'w-5 h-5 rounded-full flex items-center justify-center transition-colors',
-                                step.done
-                                  ? 'bg-amber-500 text-amber-950'
-                                  : 'border border-amber-500/40 bg-transparent'
-                              )}>
-                                {step.done && <Check className="w-3 h-3" />}
-                              </div>
-                              <span className="hidden @[600px]:block text-[10px] text-center font-sans text-muted-foreground whitespace-nowrap mt-1">
-                                {step.label}
-                              </span>
-                            </div>
-                            {i < arr.length - 1 && (
-                              <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-500/60' : 'bg-border/60')} />
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    </div>
+                    <CardTitle className="font-display text-sm tracking-wide text-amber-400">
+                      Uh-oh, you haven't finished setting up your backroom!
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                      <span className="font-display text-amber-400/80 tracking-wide">{setupHealth.completed} of {setupHealth.total}</span>{' '}areas configured
+                    </CardDescription>
                   </div>
-                  {!wizardCompleted && (
-                    <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:border-amber-500/70">
-                      Resume Setup
-                    </Button>
-                  )}
-                  {setupOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!wizardCompleted && (
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:border-amber-500/70">
+                        Resume Setup
+                      </Button>
+                    )}
+                    {setupOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                  </div>
                 </button>
               </CollapsibleTrigger>
+            </CardHeader>
+            <CardContent className="py-4 px-5" style={{ containerType: 'inline-size' }}>
+              {/* Step tracker — unified column layout */}
+              <div className="w-full px-4">
+                <div className="flex items-start w-full">
+                  {setupHealth.steps.map((step, i, arr) => (
+                    <React.Fragment key={step.label}>
+                      <div className="flex flex-col items-center shrink-0">
+                        <div className={cn(
+                          'w-5 h-5 rounded-full flex items-center justify-center transition-colors',
+                          step.done
+                            ? 'bg-amber-500 text-amber-950'
+                            : 'border border-amber-500/40 bg-transparent'
+                        )}>
+                          {step.done && <Check className="w-3 h-3" />}
+                        </div>
+                        <span className="hidden @[600px]:block text-[10px] text-center font-sans text-muted-foreground whitespace-nowrap mt-1">
+                          {step.label}
+                        </span>
+                      </div>
+                      {i < arr.length - 1 && (
+                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-500/60' : 'bg-border/60')} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
               <CollapsibleContent className="mt-3 pt-3 border-t border-border/40">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {setupHealth.warnings.slice(0, 3).map((w) => (
