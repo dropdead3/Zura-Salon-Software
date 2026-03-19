@@ -7,7 +7,9 @@ export type WasteCategory =
   | 'overmix_waste'
   | 'spill_waste'
   | 'expired_product_discard'
-  | 'contamination_discard';
+  | 'contamination_discard'
+  | 'wrong_mix'
+  | 'client_refusal';
 
 export const WASTE_CATEGORY_LABELS: Record<WasteCategory, string> = {
   leftover_bowl_waste: 'Leftover Bowl Waste',
