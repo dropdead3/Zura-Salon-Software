@@ -239,9 +239,11 @@ function KPICard({ icon: Icon, label, tooltip, loading, children, accent }: {
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
-      <div className={tokens.kpi.infoIcon}><MetricInfoTooltip description={tooltip} /></div>
-      <div className="flex items-start gap-2 mb-1 min-h-[32px] pr-6">
-        <Icon className="w-4 h-4 shrink-0 mt-0.5 text-muted-foreground" />
+      <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <Icon className="w-4 h-4 text-primary" />
+        </div>
         <span className={tokens.kpi.label}>{label}</span>
       </div>
       {loading ? <Skeleton className="h-7 w-24" /> : <div className={accent}>{children}</div>}
