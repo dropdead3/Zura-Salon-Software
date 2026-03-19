@@ -677,7 +677,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
             </span>
             <span className="text-muted-foreground/40 text-[10px] tabular-nums">({group.products.length})</span>
             {reorderCount > 0 && (
-              <Badge variant="outline" className="text-[10px] font-sans border-warning/30 text-warning bg-warning/5 ml-1">
+              <Badge variant="outline" className="text-[10px] font-sans border-warning/20 text-warning/80 bg-warning/5 ml-1">
                 {reorderCount} to reorder
               </Badge>
             )}
