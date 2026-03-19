@@ -437,7 +437,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
       {/* Sticky Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="sticky bottom-0 z-20 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg">
+        <div className="sticky bottom-0 z-20 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg animate-in slide-in-from-bottom-2 fade-in duration-200">
           <span className="text-sm text-muted-foreground font-sans tabular-nums">
             {selectedIds.size} selected
           </span>
