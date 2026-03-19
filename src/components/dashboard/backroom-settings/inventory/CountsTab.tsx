@@ -25,8 +25,10 @@ import { CountEntryForm } from './CountEntryForm';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
+import { fetchInventoryForLocation } from '@/lib/fetchInventoryForLocation';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
 interface CountsTabProps {
