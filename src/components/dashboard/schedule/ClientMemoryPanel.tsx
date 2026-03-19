@@ -16,6 +16,7 @@ interface ClientMemoryPanelProps {
   serviceName: string | null | undefined;
   orgId: string | null | undefined;
   className?: string;
+  onViewFormulas?: () => void;
 }
 
 export function ClientMemoryPanel({ clientId, serviceName, orgId, className }: ClientMemoryPanelProps) {
