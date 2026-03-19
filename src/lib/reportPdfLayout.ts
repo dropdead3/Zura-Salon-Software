@@ -121,6 +121,17 @@ export function addReportHeader(
   doc.setFont('helvetica', 'normal');
   doc.text(opts.orgName, textStartX, y);
 
+  // ── Location info (compact, muted, below org name) ──
+  if (opts.locationInfo) {
+    y += 4;
+    const parts: string[] = [opts.locationInfo.name];
+    if (opts.locationInfo.storeNumber) parts.push(`#${opts.locationInfo.storeNumber}`);
+    if (opts.locationInfo.address) parts.push(opts.locationInfo.address);
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.text(parts.join(' · '), textStartX, y);
+  }
+
   // ── Report title (large, bold) ──
   y += 7;
   doc.setFontSize(16);
@@ -139,7 +150,8 @@ export function addReportHeader(
   doc.text(generatedText, pageWidth - marginRight, HEADER_TOP + 9, { align: 'right' });
 
   // ── Accent divider ──
-  const dividerY = REPORT_BODY_START_Y - 6;
+  const bodyStartY = opts.locationInfo ? REPORT_BODY_START_Y + 4 : REPORT_BODY_START_Y;
+  const dividerY = bodyStartY - 6;
   doc.setDrawColor(...ACCENT_COLOR);
   doc.setLineWidth(0.6);
   doc.line(marginLeft, dividerY, pageWidth - marginRight, dividerY);
@@ -148,7 +160,7 @@ export function addReportHeader(
 
   // Reset text color
   doc.setTextColor(0, 0, 0);
-  return REPORT_BODY_START_Y;
+  return bodyStartY;
 }
 
 /**
