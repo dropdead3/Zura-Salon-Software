@@ -54,6 +54,7 @@ export function ClientRetentionReport({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: retentionData, isLoading } = useClientRetentionReport(dateFrom, dateTo, locationId);
