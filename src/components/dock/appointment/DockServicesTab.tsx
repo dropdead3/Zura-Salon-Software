@@ -18,6 +18,7 @@ import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockM
 import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -51,6 +52,10 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const completeSession = useCompleteDockSession();
   const markUnresolved = useMarkDockSessionUnresolved();
   const { effectiveOrganization } = useOrganizationContext();
+
+  // Get the first session ID for stats query
+  const primarySessionId = sessions?.[0]?.id || null;
+  const { data: sessionStats } = useDockSessionStats(primarySessionId);
 
   const handleCreateBowl = (lines: FormulaLine[], _baseWeight: number) => {
     if (!effectiveOrganization?.id) return;
@@ -134,8 +139,8 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const bowls = sessions || [];
   const hasActiveSessions = bowls.some((s) => !isTerminalSessionStatus(s.status as any));
 
-  // Session summary stats for the complete sheet
-  const sessionStats = {
+  // Use real stats from projections, fallback to basic counts
+  const completeStats = sessionStats || {
     totalBowls: bowls.length,
     reweighedBowls: bowls.filter((s) => s.status === 'completed').length,
     totalDispensed: 0,
@@ -201,7 +206,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       {/* Session complete sheet */}
       <DockSessionCompleteSheet
         open={showComplete}
-        stats={sessionStats}
+        stats={completeStats}
         onComplete={handleCompleteSession}
         onMarkUnresolved={handleMarkUnresolved}
         onClose={() => setShowComplete(false)}
