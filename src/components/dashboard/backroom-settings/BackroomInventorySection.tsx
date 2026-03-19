@@ -101,16 +101,6 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
         )}
       </div>
 
-      {/* Inventory Health Banner */}
-      {hasHealthAlerts && (
-        <div className="flex items-center gap-2 flex-wrap p-2.5 rounded-lg bg-muted/40 border border-border/60">
-          <span className="text-xs text-muted-foreground font-sans mr-1">Needs attention:</span>
-          <HealthChip icon={XCircle} count={outOfStockCount} label="Out of Stock" color="destructive" onClick={() => setActiveTab('stock')} />
-          <HealthChip icon={AlertTriangle} count={lowStockCount} label="Low Stock" color="warning" onClick={() => setActiveTab('stock')} />
-          <HealthChip icon={Inbox} count={draftOrderCount} label="Draft POs" color="primary" onClick={() => setActiveTab('orders')} />
-          <HealthChip icon={PackageOpen} count={receivableCount} label="Awaiting Receive" color="accent" onClick={() => setActiveTab('receive')} />
-        </div>
-      )}
 
       {/* First-time onboarding hint */}
       <FirstTimeCallout
