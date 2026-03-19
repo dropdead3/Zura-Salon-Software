@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { Badge } from '@/components/ui/badge';
 import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
