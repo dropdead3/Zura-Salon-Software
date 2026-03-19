@@ -543,17 +543,11 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           <Button
             size="sm"
             className="font-sans h-7 gap-1"
-            onClick={() => {
-              selectedProducts.forEach(r => {
-                if ((r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock') && !poItemIds.has(r.id)) {
-                  toggleAddToPo(r.id);
-                }
-              });
-            }}
+            onClick={() => setAutoPoDialog(true)}
             disabled={selectedReorderProducts.length === 0}
           >
             <ShoppingCart className="w-3.5 h-3.5" />
-            Add Selected to PO
+            Create PO
             {selectedReorderProducts.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5 rounded-full">
                 {selectedReorderProducts.length}
