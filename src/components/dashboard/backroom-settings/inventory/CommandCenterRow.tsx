@@ -219,8 +219,8 @@ export function CommandCenterRow({
         className={cn(
           'group/row transition-colors duration-150 relative',
           // Point 3: Reduced row tinting — subtle wash only
-          row.severity === 'critical' && 'bg-destructive/[0.02] hover:bg-destructive/[0.04]',
-          row.severity === 'low' && 'bg-warning/[0.015] hover:bg-warning/[0.03]',
+          row.severity === 'critical' && 'bg-destructive/[0.015] hover:bg-destructive/[0.04]',
+          row.severity === 'low' && 'bg-warning/[0.01] hover:bg-warning/[0.03]',
           row.severity === 'healthy' && 'hover:bg-muted/40',
         )}
       >
