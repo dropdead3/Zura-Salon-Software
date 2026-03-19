@@ -735,6 +735,7 @@ export function StockTab({ locationId }: StockTabProps) {
             </Table>
           </CardContent>
         </Card>
+        </>
       )}
 
       <SupplierAssignDialog
