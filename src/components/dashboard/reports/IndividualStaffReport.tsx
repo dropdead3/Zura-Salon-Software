@@ -86,6 +86,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
   const { formatCurrencyWhole } = useFormatCurrency();
