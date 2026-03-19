@@ -21,6 +21,7 @@ import {
   type PrioritySummary,
   type AlertCategory,
   type DraftPOAlert,
+  type AuditOverdueAlert,
 } from '@/lib/backroom/control-tower-engine';
 
 export interface ControlTowerResult {
