@@ -180,6 +180,7 @@ export function CommandCenterRow({
   onQtyOverride,
   addedToPo = false,
   onToggleAddToPo,
+  intelligence,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingQty, setEditingQty] = useState(false);
