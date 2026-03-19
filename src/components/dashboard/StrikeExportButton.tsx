@@ -132,7 +132,7 @@ export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportBut
         },
       });
 
-      doc.save(`${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       toast.success('PDF exported successfully');
     } catch (error) {
       console.error('PDF export error:', error);
