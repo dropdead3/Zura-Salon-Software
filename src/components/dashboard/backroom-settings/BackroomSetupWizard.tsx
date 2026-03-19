@@ -374,6 +374,8 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
             <SuppliersStep
               supplierName={supplierName}
               onNameChange={setSupplierName}
+              supplierContactName={supplierContactName}
+              onContactNameChange={setSupplierContactName}
               supplierEmail={supplierEmail}
               onEmailChange={setSupplierEmail}
               supplierPhone={supplierPhone}
