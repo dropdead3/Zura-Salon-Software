@@ -87,6 +87,9 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
         account_number: data.account_number || null,
         lead_time_days: data.lead_time_days ? parseInt(data.lead_time_days) : null,
         moq: data.moq ? parseInt(data.moq) : 1,
+        secondary_contact_name: data.secondary_contact_name || null,
+        secondary_contact_email: data.secondary_contact_email || null,
+        secondary_contact_phone: data.secondary_contact_phone || null,
       },
       { onSuccess: () => onOpenChange(false) }
     );
