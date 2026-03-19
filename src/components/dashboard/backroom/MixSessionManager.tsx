@@ -709,8 +709,8 @@ export function MixSessionManager({
         </div>
       </div>
 
-      {/* Bowls */}
-      <div className="space-y-3">
+      {/* Bowls — stacked vertically on mobile, grid on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {bowls.map((bowl) => (
           <BowlCardWithLines
             key={bowl.id}
