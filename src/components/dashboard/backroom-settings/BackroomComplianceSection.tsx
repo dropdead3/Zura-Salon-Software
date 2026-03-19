@@ -114,7 +114,7 @@ export function BackroomComplianceSection() {
       ) : !summary || summary.totalColorAppointments === 0 ? (
         <div className={tokens.empty.container}>
           <Beaker className={tokens.empty.icon} />
-          <h3 className={tokens.empty.heading}>No Compliance Data</h3>
+          <h3 className={tokens.empty.heading}>No Reweigh Data</h3>
           <p className={tokens.empty.description}>No color/chemical appointments found for the selected period. Click "Evaluate Today" to scan.</p>
         </div>
       ) : (
