@@ -130,5 +130,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
     setupHealth,
     reorderData: reorderQ.data,
     budgetData: budgetQ.budget,
+    supplyCostRecovery: supplyCostEnabled ? supplyCostQ.data ?? null : null,
+    supplyCostRecoveryEnabled: supplyCostEnabled,
   };
 }
