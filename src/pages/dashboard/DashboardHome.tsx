@@ -69,6 +69,7 @@ import { StylistPushList } from '@/components/dashboard/StylistPushList';
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
 import { ActiveCampaignsCard } from '@/components/dashboard/ActiveCampaignsCard';
+import { InventoryManagerDashboardCard } from '@/components/dashboard/InventoryManagerDashboardCard';
 const ROLE_MESSAGES = {
   leadership: {
     greetings: ["Welcome back,", "Ready to lead,", "Let's build momentum,", "Great things ahead,", "Another strong day,", "Let's make it count,"],
