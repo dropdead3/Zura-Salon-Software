@@ -43,6 +43,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
 
   const { data: levels, isLoading: levelsLoading } = useStylistLevels();
   const { currentPeriod } = usePaySchedule();
