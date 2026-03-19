@@ -333,7 +333,7 @@ export function CommandCenterRow({
               </div>
               {/* Effective stock context */}
               {row.open_po_qty > 0 && (
-                <span className="text-primary/60 text-[10px]" title={`${row.quantity_on_hand} on hand + ${row.open_po_qty} on order = ${effectiveStock} effective`}>
+                <span className="text-primary/50 text-[10px] tabular-nums" title={`${row.quantity_on_hand} on hand + ${row.open_po_qty} on order = ${effectiveStock} effective`}>
                   {row.open_po_qty} on order
                 </span>
               )}
