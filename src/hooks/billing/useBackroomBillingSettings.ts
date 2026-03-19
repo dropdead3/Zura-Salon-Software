@@ -45,6 +45,7 @@ export function useUpsertBackroomBillingSettings() {
       default_product_markup_pct?: number;
       product_charge_taxable?: boolean;
       product_charge_label?: string;
+      enable_supply_cost_recovery?: boolean;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
 
