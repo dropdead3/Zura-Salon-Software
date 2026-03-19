@@ -591,7 +591,7 @@ export function StockTab({ locationId }: StockTabProps) {
             className="font-sans h-7 gap-1"
             onClick={() => {
               selectedProducts.forEach(r => {
-                if (r.recommended_order_qty > 0 && !poItemIds.has(r.id)) {
+                if ((r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock') && !poItemIds.has(r.id)) {
                   toggleAddToPo(r.id);
                 }
               });
