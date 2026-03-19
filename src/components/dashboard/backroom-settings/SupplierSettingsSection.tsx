@@ -110,6 +110,9 @@ export function SupplierSettingsSection() {
         reorder_method: selectedGroup.reorder_method || '',
         reorder_method_other: selectedGroup.reorder_method_other || '',
         reorder_notes: selectedGroup.reorder_notes || '',
+        secondary_contact_name: selectedGroup.secondary_contact_name || '',
+        secondary_contact_email: selectedGroup.secondary_contact_email || '',
+        secondary_contact_phone: selectedGroup.secondary_contact_phone || '',
       });
       setRenameMode(false);
     }
