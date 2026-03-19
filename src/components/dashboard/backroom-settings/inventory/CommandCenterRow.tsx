@@ -179,7 +179,6 @@ export function CommandCenterRow({
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
   const needsReorder = row.recommended_order_qty > 0;
-  const needsReorder = row.recommended_order_qty > 0;
   const isOverridden = qtyOverride != null;
   const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
   const effectiveStock = row.effective_stock;
