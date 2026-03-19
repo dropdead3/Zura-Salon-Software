@@ -180,6 +180,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           cost_price: p.cost_price,
           order_qty: orderQty,
           open_po_qty: openPoQty,
+          open_po_status_counts: openPoStatusCounts,
           effective_stock: effectiveStock,
           recommended_order_qty: recommendedOrderQty,
           status,
