@@ -122,6 +122,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [autoPoDialog, setAutoPoDialog] = useState(false);
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
 
   // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
