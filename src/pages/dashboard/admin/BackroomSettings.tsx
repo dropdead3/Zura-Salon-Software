@@ -272,9 +272,6 @@ export default function BackroomSettings() {
                                   <Icon className="w-4 h-4 shrink-0" />
                                 )}
                                 <span className="flex-1 truncate">{s.label}</span>
-                                {status === 'done' && (
-                                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                                )}
                               </button>
                         );
                       })}
