@@ -31,6 +31,8 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
     
     if (name === "location") {
       setFormData({ ...formData, location: value, stylist: "" });
+    } else if (name === "phone") {
+      setFormData({ ...formData, phone: formatPhoneNumber(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }

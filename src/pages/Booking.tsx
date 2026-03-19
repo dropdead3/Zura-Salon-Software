@@ -30,6 +30,8 @@ export default function Booking() {
     // Reset stylist selection when location changes
     if (name === "location") {
       setFormData({ ...formData, location: value, stylist: "" });
+    } else if (name === "phone") {
+      setFormData({ ...formData, phone: formatPhoneNumber(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
