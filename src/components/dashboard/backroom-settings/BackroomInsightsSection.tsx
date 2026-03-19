@@ -45,12 +45,21 @@ function getDateRange(preset: DatePreset): { start: string; end: string; label: 
 
 type SortKey = 'name' | 'sessions' | 'waste' | 'reweigh' | 'duration';
 
-export function BackroomInsightsSection() {
-  const [datePreset, setDatePreset] = useState<DatePreset>('30d');
+interface BackroomInsightsSectionProps {
+  locationId?: string;
+  datePreset?: DatePreset;
+  hideFilters?: boolean;
+}
+
+export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters }: BackroomInsightsSectionProps = {}) {
+  const [internalDatePreset, setInternalDatePreset] = useState<DatePreset>('30d');
   const [sortKey, setSortKey] = useState<SortKey>('sessions');
   const [sortAsc, setSortAsc] = useState(false);
-  const [selectedLocationId, setSelectedLocationId] = useState('all');
+  const [internalLocationId, setInternalLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
+
+  const datePreset = propDatePreset ?? internalDatePreset;
+  const selectedLocationId = propLocationId ?? internalLocationId;
 
   const { start, end, label: rangeLabel } = getDateRange(datePreset);
   const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
