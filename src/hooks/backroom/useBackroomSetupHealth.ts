@@ -37,7 +37,7 @@ export function useBackroomSetupHealth() {
       const warnings: SetupWarning[] = [];
 
       // Parallel queries
-      const [productsRes, servicesRes, recipesRes, policiesRes, stationsRes, alertsRes, componentsRes, billingRes] = await Promise.all([
+      const [productsRes, servicesRes, recipesRes, policiesRes, stationsRes, alertsRes, componentsRes, billingRes, suppliersRes] = await Promise.all([
         supabase.from('products').select('id, is_backroom_tracked, cost_price, cost_per_gram, is_active', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
         supabase.from('services').select('id, is_backroom_tracked, name', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
         supabase.from('service_recipe_baselines').select('id', { count: 'exact' }).eq('organization_id', orgId!),
@@ -46,6 +46,7 @@ export function useBackroomSetupHealth() {
         supabase.from('backroom_alert_rules').select('id', { count: 'exact' }).eq('organization_id', orgId!),
         supabase.from('service_tracking_components').select('service_id', { count: 'exact' }).eq('organization_id', orgId!),
         supabase.from('backroom_billing_settings' as any).select('enable_supply_cost_recovery').eq('organization_id', orgId!).maybeSingle(),
+        supabase.from('product_suppliers').select('supplier_name').eq('organization_id', orgId!),
       ]);
 
       const products = productsRes.data || [];
