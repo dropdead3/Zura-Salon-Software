@@ -16,6 +16,12 @@ export type StockState = 'in_stock' | 'out_of_stock';
 /** Layer 2 — severity / urgency */
 export type StockSeverity = 'critical' | 'low' | 'healthy';
 
+export interface OpenPoStatusCounts {
+  draft: number;
+  sent: number;
+  partially_received: number;
+}
+
 export interface BackroomInventoryRow {
   id: string;
   name: string;
@@ -31,6 +37,8 @@ export interface BackroomInventoryRow {
   cost_price: number | null;
   order_qty: number;
   open_po_qty: number;
+  /** Status breakdown of open POs for this product */
+  open_po_status_counts: OpenPoStatusCounts;
   effective_stock: number;
   recommended_order_qty: number;
   status: StockStatus;
