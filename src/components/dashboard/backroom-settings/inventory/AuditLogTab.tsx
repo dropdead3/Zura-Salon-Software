@@ -23,7 +23,7 @@ import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetail
 
 interface AuditLogTabProps {
   locationId?: string;
-  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
+  pdfExportRef?: React.MutableRefObject<((locationIds: string[], combined: boolean) => void) | null>;
 }
 
 const FIELD_LABELS: Record<string, string> = {

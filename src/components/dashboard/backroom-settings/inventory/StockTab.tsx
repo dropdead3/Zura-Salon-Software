@@ -46,7 +46,7 @@ import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
 
 interface StockTabProps {
   locationId?: string;
-  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
+  pdfExportRef?: React.MutableRefObject<((locationIds: string[], combined: boolean) => void) | null>;
 }
 
 interface SupplierGroup {

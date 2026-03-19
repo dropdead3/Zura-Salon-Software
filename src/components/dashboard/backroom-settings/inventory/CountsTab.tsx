@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 
 interface CountsTabProps {
   locationId?: string;
-  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
+  pdfExportRef?: React.MutableRefObject<((locationIds: string[], combined: boolean) => void) | null>;
 }
 
 export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
