@@ -972,7 +972,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap }: {
+function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, intelligenceMap }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -987,8 +987,6 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
-  poItemIds: Set<string>;
-  onToggleAddToPo: (productId: string) => void;
   intelligenceMap?: Map<string, ProductIntelligence>;
 }) {
   return (
