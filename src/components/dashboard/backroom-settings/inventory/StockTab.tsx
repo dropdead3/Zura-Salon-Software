@@ -516,97 +516,9 @@ export function StockTab({ locationId }: StockTabProps) {
           </p>
         </div>
       ) : (
-        <Card className="overflow-hidden">
-          {/* ─── Decision Header ─── */}
-          <div className="px-4 py-2.5 border-b border-border flex items-center gap-3">
-            {hasActionItems ? (
-              <>
-                <div className="flex items-baseline gap-1.5 shrink-0">
-                  <span className="text-lg font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
-                  <span className="text-xs text-foreground/80 font-sans">need action</span>
-                </div>
-                <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-xs font-sans">
-                  <button
-                    onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
-                    className={cn(
-                      'tabular-nums transition-colors duration-150 shrink-0',
-                      severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
-                    )}
-                  >
-                    {kpis.criticalCount} Critical
-                  </button>
-                  <span className="text-muted-foreground/30">·</span>
-                  <button
-                    onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
-                    className={cn(
-                      'tabular-nums transition-colors duration-150 shrink-0',
-                      severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
-                    )}
-                  >
-                    {kpis.lowStock} Low
-                  </button>
-                  <span className="text-muted-foreground/30">·</span>
-                  <span className="text-muted-foreground tabular-nums shrink-0">
-                    Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="font-sans rounded-full h-7 px-3 text-xs"
-                    onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
-                  >
-                    {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="font-sans rounded-full h-7 px-3 text-xs"
-                    onClick={() => setAutoPoDialog(true)}
-                    disabled={kpis.needsReorder === 0}
-                  >
-                    <Zap className="w-3.5 h-3.5 mr-1" />
-                    Auto Build PO
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="font-sans rounded-full h-7 px-3 text-xs"
-                    onClick={handlePdfExport}
-                    disabled={exporting || filtered.length === 0}
-                  >
-                    {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
-                    PDF
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                  <span className="text-xs font-sans">All stock levels healthy</span>
-                </div>
-                <div className="flex items-center gap-2 ml-auto shrink-0">
-                  <span className="text-xs text-muted-foreground font-sans tabular-nums hidden sm:block">
-                    {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="font-sans rounded-full h-7 px-3 text-xs"
-                    onClick={handlePdfExport}
-                    disabled={exporting || filtered.length === 0}
-                  >
-                    {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
-                    PDF
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Filters + Actions */}
-          <div className="px-4 py-2.5 border-b border-border flex flex-col sm:flex-row gap-2">
+        <>
+          {/* Filters + Actions — above the card */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -677,7 +589,96 @@ export function StockTab({ locationId }: StockTabProps) {
               </Button>
             )}
           </div>
-          <CardContent className="p-0">
+
+          <Card className="overflow-hidden">
+            {/* ─── Decision Header ─── */}
+            <div className="px-4 py-2.5 border-b border-border flex items-center gap-3">
+              {hasActionItems ? (
+                <>
+                  <div className="flex items-baseline gap-1.5 shrink-0">
+                    <span className="text-lg font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
+                    <span className="text-xs text-foreground/80 font-sans">need action</span>
+                  </div>
+                  <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-xs font-sans">
+                    <button
+                      onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
+                      className={cn(
+                        'tabular-nums transition-colors duration-150 shrink-0',
+                        severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
+                      )}
+                    >
+                      {kpis.criticalCount} Critical
+                    </button>
+                    <span className="text-muted-foreground/30">·</span>
+                    <button
+                      onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
+                      className={cn(
+                        'tabular-nums transition-colors duration-150 shrink-0',
+                        severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
+                      )}
+                    >
+                      {kpis.lowStock} Low
+                    </button>
+                    <span className="text-muted-foreground/30">·</span>
+                    <span className="text-muted-foreground tabular-nums shrink-0">
+                      Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-sans rounded-full h-7 px-3 text-xs"
+                      onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
+                    >
+                      {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="font-sans rounded-full h-7 px-3 text-xs"
+                      onClick={() => setAutoPoDialog(true)}
+                      disabled={kpis.needsReorder === 0}
+                    >
+                      <Zap className="w-3.5 h-3.5 mr-1" />
+                      Auto Build PO
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-sans rounded-full h-7 px-3 text-xs"
+                      onClick={handlePdfExport}
+                      disabled={exporting || filtered.length === 0}
+                    >
+                      {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
+                      PDF
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                    <span className="text-xs font-sans">All stock levels healthy</span>
+                  </div>
+                  <div className="flex items-center gap-2 ml-auto shrink-0">
+                    <span className="text-xs text-muted-foreground font-sans tabular-nums hidden sm:block">
+                      {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-sans rounded-full h-7 px-3 text-xs"
+                      onClick={handlePdfExport}
+                      disabled={exporting || filtered.length === 0}
+                    >
+                      {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
+                      PDF
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+            <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -734,6 +735,7 @@ export function StockTab({ locationId }: StockTabProps) {
             </Table>
           </CardContent>
         </Card>
+        </>
       )}
 
       <SupplierAssignDialog
