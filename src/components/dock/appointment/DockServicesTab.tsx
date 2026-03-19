@@ -3,12 +3,15 @@
  * Queries mix sessions for this appointment and displays bowl status.
  */
 
+import { useState } from 'react';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
+import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
+import type { FormulaLine } from '../mixing/DockFormulaBuilder';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -28,6 +31,12 @@ function getStatusDisplay(status: string) {
 
 export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
+  const [showNewBowl, setShowNewBowl] = useState(false);
+
+  const handleCreateBowl = (_lines: FormulaLine[], _baseWeight: number) => {
+    // Phase 5 will wire this to useCreateMixSession + bowl line creation
+    console.log('[DockServicesTab] Create bowl with', _lines.length, 'ingredients, base weight', _baseWeight);
+  };
 
   if (isLoading) {
     return (
@@ -61,10 +70,20 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       )}
 
       {/* Add Bowl FAB */}
-      <button className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium">
+      <button
+        onClick={() => setShowNewBowl(true)}
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
+      >
         <Plus className="w-4 h-4" />
         Add Bowl
       </button>
+
+      {/* New bowl sheet */}
+      <DockNewBowlSheet
+        open={showNewBowl}
+        onClose={() => setShowNewBowl(false)}
+        onCreateBowl={handleCreateBowl}
+      />
     </div>
   );
 }
