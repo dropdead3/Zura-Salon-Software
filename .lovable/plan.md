@@ -1,29 +1,33 @@
 
 
-# Fix "+ Add another contact" Button Styling
+# Make All Dialogs Responsive with Scroll Overflow
 
 ## Problem
-The button uses `variant="ghost"` with `text-muted-foreground` which renders as light-on-light in dark mode — poor contrast and no visible padding/hover state.
+Dialogs can overflow the viewport on smaller screens — content gets cut off with no way to scroll. The fix needs to be global so all current and future dialogs inherit the behavior.
 
-## Fix
-In all 4 files, replace the current button class:
+## Approach
+Fix at the **base `DialogContent` component** level in `src/components/ui/dialog.tsx` so every dialog automatically gets responsive sizing and scroll capability. No need to touch individual dialog files.
+
+### Changes to `src/components/ui/dialog.tsx` — `DialogContent`
+
+Add to the base className:
+- `max-h-[90vh]` — prevent dialogs from exceeding 90% of viewport height
+- `overflow-y-auto` — enable vertical scrolling when content overflows
+- On mobile, use full-screen approach: `max-h-[100dvh] sm:max-h-[90vh]` with `sm:m-4` margin so small screens get full height while desktop stays inset
+
+Updated base classes:
 ```
-className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground"
-```
-with an outline-style approach that works in dark mode:
-```
-className="font-sans text-sm text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-foreground/40 hover:bg-accent px-3 py-1.5 rounded-md"
+"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 max-h-[100dvh] sm:max-h-[85vh] overflow-y-auto ..."
 ```
 
-This gives:
-- Visible dashed border so it reads as a clickable affordance
-- Proper padding (`px-3 py-1.5`) inside the label
-- Clear hover state with `bg-accent` background + border/text brightening
-- No light-on-light issue — uses `muted-foreground` (adapts to dark mode) with transparent background
+This is safe because:
+- Dialogs that already set their own `max-h-*` and `overflow` via className will override these defaults (Tailwind last-class wins with `cn()`)
+- The drilldown dialogs use `overflow-hidden flex flex-col` which will still win when passed via className
+- No individual dialog files need updating
 
-### Files
-1. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx` — line 355
-2. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx` — line 632
-3. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx` — line 398
-4. `src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx` — line 153
+### Also update `drilldownDialogStyles.ts`
+The shared constant already has `max-h-[85vh] flex flex-col` which is correct. No change needed there.
+
+## Summary
+One file change (`dialog.tsx`) — add `max-h-[100dvh] sm:max-h-[85vh] overflow-y-auto` to the base `DialogContent` className. All 65+ dialogs instantly become responsive and scrollable.
 
