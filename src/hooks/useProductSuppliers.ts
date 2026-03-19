@@ -145,6 +145,9 @@ export function useBatchUpsertSupplier() {
       account_number?: string | null;
       lead_time_days?: number | null;
       moq?: number;
+      secondary_contact_name?: string | null;
+      secondary_contact_email?: string | null;
+      secondary_contact_phone?: string | null;
     }) => {
       const rows = input.product_ids.map((pid) => ({
         product_id: pid,
