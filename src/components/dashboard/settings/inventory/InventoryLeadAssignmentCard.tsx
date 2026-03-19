@@ -269,7 +269,7 @@ export function InventoryLeadAssignmentCard() {
                 ) : (
                   <Select
                     onValueChange={(userId) => {
-                      assignLead.mutate({ locationId: location.id, userId });
+                      handleAssignLead(location.id, userId);
                     }}
                   >
                     <SelectTrigger className="w-[200px] h-8 text-xs">
