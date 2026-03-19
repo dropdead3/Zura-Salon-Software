@@ -16,6 +16,12 @@ export type StockState = 'in_stock' | 'out_of_stock';
 /** Layer 2 — severity / urgency */
 export type StockSeverity = 'critical' | 'low' | 'healthy';
 
+export interface OpenPoStatusCounts {
+  draft: number;
+  sent: number;
+  partially_received: number;
+}
+
 export interface BackroomInventoryRow {
   id: string;
   name: string;
@@ -31,6 +37,8 @@ export interface BackroomInventoryRow {
   cost_price: number | null;
   order_qty: number;
   open_po_qty: number;
+  /** Status breakdown of open POs for this product */
+  open_po_status_counts: OpenPoStatusCounts;
   effective_stock: number;
   recommended_order_qty: number;
   status: StockStatus;
@@ -71,27 +79,42 @@ export const STOCK_STATUS_CONFIG: Record<StockStatus, { label: string; className
  * Fetch open PO line quantities grouped by product_id.
  * Only considers POs in draft, sent, or partially_received status.
  */
-async function fetchOpenPoQuantities(orgId: string): Promise<Map<string, number>> {
+async function fetchOpenPoQuantities(orgId: string): Promise<{ qtyMap: Map<string, number>; statusMap: Map<string, OpenPoStatusCounts> }> {
   const { data: openPOs } = await supabase
     .from('purchase_orders')
-    .select('id')
+    .select('id, status')
     .eq('organization_id', orgId)
     .in('status', ['draft', 'sent', 'partially_received']);
 
-  if (!openPOs || openPOs.length === 0) return new Map();
+  if (!openPOs || openPOs.length === 0) return { qtyMap: new Map(), statusMap: new Map() };
 
-  const poIds = openPOs.map(po => po.id);
+  const poStatusMap = new Map<string, string>();
+  const poIds = openPOs.map(po => {
+    poStatusMap.set(po.id, po.status);
+    return po.id;
+  });
+
   const { data: lines } = await supabase
     .from('purchase_order_lines')
-    .select('product_id, quantity_ordered, quantity_received')
+    .select('product_id, quantity_ordered, quantity_received, purchase_order_id')
     .in('purchase_order_id', poIds);
 
-  const map = new Map<string, number>();
+  const qtyMap = new Map<string, number>();
+  const statusMap = new Map<string, OpenPoStatusCounts>();
+
   for (const line of lines || []) {
     const remaining = Math.max(0, (line.quantity_ordered ?? 0) - (line.quantity_received ?? 0));
-    map.set(line.product_id, (map.get(line.product_id) ?? 0) + remaining);
+    qtyMap.set(line.product_id, (qtyMap.get(line.product_id) ?? 0) + remaining);
+
+    const poStatus = poStatusMap.get(line.purchase_order_id) as keyof OpenPoStatusCounts;
+    if (!statusMap.has(line.product_id)) {
+      statusMap.set(line.product_id, { draft: 0, sent: 0, partially_received: 0 });
+    }
+    const counts = statusMap.get(line.product_id)!;
+    counts[poStatus] = (counts[poStatus] ?? 0) + 1;
   }
-  return map;
+
+  return { qtyMap, statusMap };
 }
 
 function computeReorderFields(qty: number, parLevel: number | null, reorderLevel: number | null, openPoQty: number) {
@@ -111,7 +134,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
     queryKey: ['backroom-inventory-table', orgId, locationId],
     queryFn: async (): Promise<BackroomInventoryRow[]> => {
       // Fetch supplier data and open PO quantities in parallel
-      const [suppliersResult, openPoMap] = await Promise.all([
+      const [suppliersResult, openPoData] = await Promise.all([
         supabase
           .from('product_suppliers')
           .select('product_id, supplier_name, supplier_email')
@@ -123,7 +146,8 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
       function buildRow(p: any, parLevel: number | null, reorderLevel: number | null): BackroomInventoryRow {
         const qty = p.quantity_on_hand ?? 0;
         const status = getStockStatus(qty, reorderLevel, parLevel);
-        const openPoQty = openPoMap.get(p.id) ?? 0;
+        const openPoQty = openPoData.qtyMap.get(p.id) ?? 0;
+        const openPoStatusCounts = openPoData.statusMap.get(p.id) ?? { draft: 0, sent: 0, partially_received: 0 };
         const { orderQty, recommendedOrderQty, effectiveStock } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
         const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
         const sup = supplierMap.get(p.id);
@@ -156,6 +180,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           cost_price: p.cost_price,
           order_qty: orderQty,
           open_po_qty: openPoQty,
+          open_po_status_counts: openPoStatusCounts,
           effective_stock: effectiveStock,
           recommended_order_qty: recommendedOrderQty,
           status,
