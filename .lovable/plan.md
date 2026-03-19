@@ -1,23 +1,24 @@
 
+# Fix Amber Ghost Styling for Light Mode
 
-# Add "Uh-oh" Header to Setup Wizard Banner
+## Problem
+The setup banner uses amber colors with low-opacity backgrounds (`bg-amber-500/[0.08]`, `bg-amber-500/10`, `text-amber-400`) designed for dark mode. On light mode these are nearly invisible or washed out.
 
-## What to Change
+## Changes
 
-**Edit: `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx`** (lines ~106-167)
+**Edit: `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx`**
 
-Restructure the setup banner card to include a prominent card header with the attention-grabbing message before the step tracker:
+Update these amber color classes to use dark-mode-aware variants:
 
-1. Add a `CardHeader` above `CardContent` with:
-   - **Title**: `"Uh-oh, you haven't finished setting up your backroom!"` — styled as `text-amber-400 font-display tracking-wide text-sm` to match the amber theme
-   - The Zura Z icon moves up into the header row alongside the title
-   - The "Resume Setup" button also moves into the header row (right-aligned)
+| Element | Current | Updated |
+|---------|---------|---------|
+| Card bg/border (line 106) | `border-amber-500/50 bg-amber-500/[0.08]` | `border-amber-500/30 dark:border-amber-500/50 bg-amber-100/80 dark:bg-amber-500/[0.08]` |
+| Z icon container (line 110) | `bg-amber-500/15` | `bg-amber-100 dark:bg-amber-500/15` |
+| Counter text (line 118) | `text-amber-400/80` | `text-amber-600 dark:text-amber-400/80` |
+| Resume Setup button (line 123) | `bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/50 hover:border-amber-500/70` | `bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-500/50 hover:border-amber-500/60` |
+| Incomplete step circles (line 143) | `border-amber-500/40` | `border-amber-400 dark:border-amber-500/40` |
+| Step connector done (line 152) | `bg-amber-500/60` | `bg-amber-400 dark:bg-amber-500/60` |
 
-2. The step tracker (progress circles + labels) and the `X OF 7 areas configured` counter remain in the `CardContent` below the header
+This gives warm, visible amber tones on light backgrounds while preserving the existing dark-mode ghost aesthetic.
 
-3. Slightly increase the card's border emphasis (`border-amber-500/50`) and background (`bg-amber-500/8`) so the card pops more on the dark theme
-
-This keeps the existing collapsible behavior and step tracker intact while adding the prominent header callout that makes incomplete setup impossible to miss.
-
-**1 file edited, 0 new files, 0 migrations.**
-
+**1 file edited.**
