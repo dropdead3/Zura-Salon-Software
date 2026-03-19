@@ -52,6 +52,9 @@ interface ContactForm {
   reorder_method: string;
   reorder_method_other: string;
   reorder_notes: string;
+  secondary_contact_name: string;
+  secondary_contact_email: string;
+  secondary_contact_phone: string;
 }
 
 export function SupplierSettingsSection() {
