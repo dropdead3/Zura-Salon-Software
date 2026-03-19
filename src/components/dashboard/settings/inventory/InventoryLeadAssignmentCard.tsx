@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/select';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
-import { MapPin, UserCheck, X, Loader2, RotateCcw, Search, Bell, BadgeCheck } from 'lucide-react';
+import { MapPin, UserCheck, X, Loader2, RotateCcw, Search, Bell, BadgeCheck, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ import {
 } from '@/hooks/useLocationInventoryLeads';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 function getInitials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
