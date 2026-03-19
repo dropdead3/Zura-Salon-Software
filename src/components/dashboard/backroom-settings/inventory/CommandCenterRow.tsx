@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { STOCK_STATUS_CONFIG, type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
+import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
 // ─── Severity visual config ──────────────────────
