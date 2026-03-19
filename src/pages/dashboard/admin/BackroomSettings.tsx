@@ -85,8 +85,8 @@ const sections: SectionMeta[] = [
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
   { id: 'compliance', label: 'Reweigh Reports', icon: ShieldCheck, tooltip: 'Reweigh tracking and accountability reports.', group: 'operations' },
   // Configuration
-  { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', group: 'configuration' },
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
+  { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
   { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
   { id: 'formulas', label: 'Formula Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
   { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
