@@ -479,11 +479,12 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
 /* ── Sub-components ── */
 
-function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
+function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
   icon: typeof FlaskConical;
   label: string;
   value: string;
   status?: 'ok' | 'warning' | 'neutral';
+  subtitle?: string;
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
@@ -494,6 +495,9 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
         <span className={tokens.kpi.label}>{label}</span>
       </div>
       <span className={cn(tokens.kpi.value, status === 'warning' && 'text-amber-500')}>{value}</span>
+      {subtitle && (
+        <span className="text-[10px] font-sans text-muted-foreground mt-1 block">{subtitle}</span>
+      )}
     </div>
   );
 }
