@@ -40,9 +40,13 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
 
   const handleExportCSV = useCallback(() => {
     if (!rankings.length) return;
+    const esc = (v: string | number) => {
+      const s = String(v);
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const headers = ['Service', 'Appointments', 'Revenue', 'Chemical Cost', 'Labor Est.', 'Gross Margin', 'Margin %'];
     const rows = rankings.map((r) => [
-      r.serviceName,
+      esc(r.serviceName),
       r.appointmentCount,
       r.totalRevenue.toFixed(2),
       (r.avgChemicalCost * r.appointmentCount).toFixed(2),
@@ -61,7 +65,7 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
         totals.revenue > 0 ? ((totals.margin / totals.revenue) * 100).toFixed(1) + '%' : '0%',
       ]);
     }
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csv = [headers.join(','), ...rows.map((r) => r.map(String).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
