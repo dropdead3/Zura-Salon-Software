@@ -160,6 +160,8 @@ interface CommandCenterRowProps {
   /** Whether this item has been added to the PO builder */
   addedToPo?: boolean;
   onToggleAddToPo?: (productId: string) => void;
+  /** Smart intelligence data from usage velocity */
+  intelligence?: { dailyUsage: number; daysRemaining: number };
 }
 
 export function CommandCenterRow({
