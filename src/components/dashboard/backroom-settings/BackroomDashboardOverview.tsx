@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useBackroomDashboard } from '@/hooks/backroom/useBackroomDashboard';
 import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
