@@ -320,7 +320,7 @@ export function CommandCenterRow({
                 {/* Auto / Edited indicator */}
                 {isOverridden ? (
                   <button
-                    className="text-[9px] text-primary/70 hover:text-primary bg-primary/5 px-1.5 py-0.5 rounded-full transition-colors flex items-center gap-0.5"
+                    className="text-[9px] text-primary/70 hover:text-primary bg-primary/5 px-1.5 py-0.5 rounded-full transition-colors duration-150 flex items-center gap-0.5"
                     onClick={() => onQtyOverride?.(row.id, null)}
                     title="Reset to auto-calculated quantity"
                   >
