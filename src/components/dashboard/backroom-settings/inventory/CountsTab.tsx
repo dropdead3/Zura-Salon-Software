@@ -52,7 +52,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
   const createSession = useCreateCountSession();
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
-  const [tab, setTab] = useState<'sessions' | 'shrinkage'>('sessions');
+  const [tab, setTab] = useState<'sessions' | 'shrinkage' | 'audit'>('sessions');
   const [activeSession, setActiveSession] = useState<CountSession | null>(null);
 
   const isLoading = sessionsLoading || shrinkageLoading;
