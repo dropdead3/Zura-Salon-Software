@@ -55,6 +55,9 @@ interface SalesReportPDFProps {
 export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData, locationData }: SalesReportPDFProps) {
   const { formatDate } = useFormatDate();
   const { formatNumber } = useFormatNumber();
+  const { data: businessSettings } = useBusinessSettings();
+  const { effectiveOrganization } = useOrganizationContext();
+  const resolvedOrgName = orgName || businessSettings?.business_name || effectiveOrganization?.name;
   const [open, setOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [options, setOptions] = useState({
