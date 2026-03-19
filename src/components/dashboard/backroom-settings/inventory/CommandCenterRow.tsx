@@ -183,6 +183,7 @@ export function CommandCenterRow({
   const isOverridden = qtyOverride != null;
   const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
   const effectiveStock = row.effective_stock;
+  const severityCfg = SEVERITY_CONFIG[row.severity];
 
   useEffect(() => {
     if (editingQty && qtyInputRef.current) {
@@ -195,12 +196,15 @@ export function CommandCenterRow({
     <>
       <TableRow
         className={cn(
-          'group/row transition-colors',
+          'group/row transition-colors relative',
           needsReorder && 'bg-warning/[0.03] hover:bg-warning/[0.06]',
         )}
       >
-        {/* Checkbox */}
-        <TableCell className="w-10">
+        {/* Severity color bar */}
+        <TableCell className="w-10 relative">
+          {row.severity !== 'healthy' && (
+            <span className={cn('absolute left-0 top-1 bottom-1 w-[3px] rounded-full', severityCfg.barColor)} />
+          )}
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onToggleSelect(row.id)}
