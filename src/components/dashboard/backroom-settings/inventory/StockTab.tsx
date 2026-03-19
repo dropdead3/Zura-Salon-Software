@@ -319,24 +319,59 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     });
   };
 
-  const handlePdfExport = useCallback(async () => {
+  const handlePdfExport = useCallback(async (locationIds: string[], combined: boolean) => {
     setExporting(true);
+    const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
+    const logoUrl = businessSettings?.logo_light_url || effectiveOrganization?.logo_url;
+
     try {
-      await exportStockPdf(
-        filtered,
-        businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
-        businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
-        formatCurrency,
-        locationInfo,
-      );
+      // Single location — use already-loaded data if it matches
+      if (locationIds.length <= 1) {
+        const targetId = locationIds[0] || locationId;
+        const rows = targetId === locationId ? filtered : await fetchInventoryForLocation(orgId!, targetId!);
+        const locName = allLocations.find(l => l.id === targetId)?.name;
+        const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : locationInfo;
+        await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo);
+        toast.success('Stock report downloaded');
+        return;
+      }
+
+      if (combined) {
+        // Combined: merge all locations into one PDF
+        const { jsPDF } = await import('jspdf');
+        let doc: InstanceType<typeof jsPDF> | undefined;
+        for (const locId of locationIds) {
+          const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
+          const locName = allLocations.find(l => l.id === locId)?.name;
+          const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : undefined;
+          doc = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, doc) as any;
+        }
+        if (doc) {
+          addReportFooter(doc, orgName);
+          const now = new Date();
+          doc.save(buildReportFileName({ orgName, reportSlug: 'backroom-stock-all-locations', dateFrom: format(now, 'yyyy-MM-dd') }));
+        }
+        toast.success('Combined stock report downloaded');
+      } else {
+        // Separate: download one PDF per location
+        for (const locId of locationIds) {
+          const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
+          const locName = allLocations.find(l => l.id === locId)?.name;
+          const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : undefined;
+          await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo);
+        }
+        toast.success(`${locationIds.length} stock reports downloaded`);
+      }
+    } catch (err) {
+      toast.error('Failed to export stock report');
     } finally {
       setExporting(false);
     }
-  }, [filtered, effectiveOrganization, formatCurrency]);
+  }, [filtered, effectiveOrganization, businessSettings, formatCurrency, locationId, locationInfo, orgId, allLocations]);
 
   // Register PDF export handler for parent header button
   useEffect(() => {
-    if (pdfExportRef) pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handlePdfExport();
+    if (pdfExportRef) pdfExportRef.current = handlePdfExport;
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [handlePdfExport, pdfExportRef]);
 
