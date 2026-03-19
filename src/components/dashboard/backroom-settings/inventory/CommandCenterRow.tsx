@@ -273,23 +273,25 @@ export function CommandCenterRow({
                 ({row.open_po_qty} on order)
               </span>
             )}
-            {/* Point 4: Days remaining promoted */}
+            {/* Point 4: Days remaining — human-friendly */}
             {daysRemaining !== null && (
               <span className={cn(
                 'text-[11px] tabular-nums',
                 daysRemaining === 0
                   ? 'text-destructive'
-                  : daysRemaining < 7
+                  : daysRemaining <= 3
                     ? 'text-destructive/70'
-                    : daysRemaining < 14
+                    : daysRemaining <= 7
                       ? 'text-warning/70'
-                      : 'text-muted-foreground/40',
+                      : daysRemaining <= 14
+                        ? 'text-muted-foreground/50'
+                        : 'text-muted-foreground/40',
               )}>
-                ~{daysRemaining}d
+                {daysRemaining === 0 ? 'Out now' : `~${daysRemaining}d left`}
               </span>
             )}
             {row.stock_state === 'out_of_stock' && daysRemaining === null && (
-              <span className="text-[11px] text-destructive tabular-nums">0d</span>
+              <span className="text-[11px] text-destructive tabular-nums">Out now</span>
             )}
           </div>
         </TableCell>
