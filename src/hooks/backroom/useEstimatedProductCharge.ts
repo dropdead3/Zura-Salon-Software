@@ -2,7 +2,7 @@
  * useEstimatedProductCharge — Estimates product cost charges for the booking wizard.
  *
  * For each service in a booking that uses 'parts_and_labor' billing mode,
- * joins service_recipe_baselines → products to compute:
+ * joins service formula baselines → products to compute:
  *   SUM(expected_qty × cost_per_gram × (1 + markup_pct / 100))
  *
  * Falls back to org-level default_product_markup_pct when per-product markup is null.
