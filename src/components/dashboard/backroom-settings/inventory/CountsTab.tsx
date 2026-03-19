@@ -110,13 +110,47 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
     }
   };
 
+  // Multi-location PDF export handler
+  const handleMultiLocationExport = useCallback(async (locationIds: string[], combined: boolean) => {
+    const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
+    const logoUrl = businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null;
+
+    setGeneratingPdf(true);
+    try {
+      const logoDataUrl = await fetchLogoAsDataUrl(logoUrl);
+      const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
+
+      // Single location
+      if (locationIds.length <= 1) {
+        const targetId = locationIds[0] || locationId;
+        const products = targetId === locationId ? inventoryProducts : await fetchInventoryForLocation(orgId!, targetId!);
+        const locName = locations.find(l => l.id === targetId)?.name || locationInfo?.name;
+        await generateCountSheetPdf({ products, orgName, locationName: locName, logoDataUrl, countEntryUrl });
+        toast.success('Count sheet downloaded');
+        return;
+      }
+
+      // Multi-location: always separate files (count sheets are per-location by nature)
+      for (const locId of locationIds) {
+        const products = locId === locationId ? inventoryProducts : await fetchInventoryForLocation(orgId!, locId);
+        const locName = locations.find(l => l.id === locId)?.name;
+        await generateCountSheetPdf({ products, orgName, locationName: locName, logoDataUrl, countEntryUrl });
+      }
+      toast.success(`${locationIds.length} count sheets downloaded`);
+    } catch (err) {
+      toast.error('Failed to generate count sheet');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }, [inventoryProducts, businessSettings, effectiveOrganization, locationInfo, locationId, orgId, locations]);
+
   // Register PDF export handler for parent header button
   useEffect(() => {
     if (pdfExportRef) {
-      pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handlePrintCountSheet();
+      pdfExportRef.current = handleMultiLocationExport;
     }
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
-  }, [inventoryProducts, businessSettings, effectiveOrganization, locationInfo, pdfExportRef]);
+  }, [handleMultiLocationExport, pdfExportRef]);
 
   const handleFilteredExport = () => {
     const filters: CountSheetFilters = {};

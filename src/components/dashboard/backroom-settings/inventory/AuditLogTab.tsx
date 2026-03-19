@@ -112,7 +112,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 type QuickFilterKey = 'today' | 'thisWeek' | 'adjustments' | 'receiving' | null;
 
-export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
+export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp }: AuditLogTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
@@ -194,6 +194,7 @@ export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
   }, [entries, orgName]);
 
   // Register PDF export handler for parent header button
+  // Audit log is org-wide (not location-scoped), so multi-location just exports current view
   useEffect(() => {
     if (pdfExportRef) pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handleBulkPdfExport();
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
