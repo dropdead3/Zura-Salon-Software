@@ -531,6 +531,7 @@ function WelcomeStep() {
 // ─── Step 2: Suppliers ────────────────────────────────────────────────────────
 function SuppliersStep({
   supplierName, onNameChange,
+  supplierContactName, onContactNameChange,
   supplierEmail, onEmailChange,
   supplierPhone, onPhoneChange,
   supplierWebsite, onWebsiteChange,
@@ -544,6 +545,7 @@ function SuppliersStep({
   search, onSearchChange,
 }: {
   supplierName: string; onNameChange: (v: string) => void;
+  supplierContactName: string; onContactNameChange: (v: string) => void;
   supplierEmail: string; onEmailChange: (v: string) => void;
   supplierPhone: string; onPhoneChange: (v: string) => void;
   supplierWebsite: string; onWebsiteChange: (v: string) => void;
