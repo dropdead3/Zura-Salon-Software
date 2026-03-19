@@ -172,8 +172,9 @@ export function getReportAutoTableBranding(doc: jsPDF, opts: ReportHeaderOptions
   margin: { top: number };
   didDrawPage: () => void;
 } {
+  const topMargin = opts.locationInfo ? REPORT_BODY_START_Y + 4 : REPORT_BODY_START_Y;
   return {
-    margin: { top: REPORT_BODY_START_Y },
+    margin: { top: topMargin },
     didDrawPage: () => addReportHeader(doc, opts),
   };
 }
