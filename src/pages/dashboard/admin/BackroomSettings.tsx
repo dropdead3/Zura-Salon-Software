@@ -241,57 +241,68 @@ export default function BackroomSettings() {
           {/* Sidebar nav */}
           <nav className="w-56 shrink-0 hidden lg:block">
             <TooltipProvider delayDuration={300}>
-              <div className="space-y-0.5 sticky top-24">
-                {sections.map((s) => {
-                  const Icon = s.icon;
-                  const isActive = activeSection === s.id;
-                  const status = getSectionStatus(s.id, health);
-                  const prereqOk = isPrereqMet(s, health);
+              <div className="sticky top-24 space-y-1">
+                {sectionsByGroup.map((group, gi) => (
+                  <div key={group.group}>
+                    {gi > 0 && <div className="mx-3 my-2 h-px bg-border/40" />}
+                    <p className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest font-display text-muted-foreground/60">
+                      {group.label}
+                    </p>
+                    <div className="space-y-0.5">
+                      {group.items.map((s) => {
+                        const Icon = s.icon;
+                        const isActive = activeSection === s.id;
+                        const status = getSectionStatus(s.id, health);
+                        const prereqOk = isPrereqMet(s, health);
 
-                  return (
-                    <Tooltip key={s.id}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => setActiveSection(s.id)}
-                          className={cn(
-                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
-                            isActive
-                              ? 'bg-muted text-foreground font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                            !prereqOk && !isActive && 'opacity-60'
-                          )}
-                        >
-                          {!prereqOk ? (
-                            <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
-                          ) : (
-                            <Icon className="w-4 h-4 shrink-0" />
-                          )}
-                          <span className="flex-1 truncate">{s.label}</span>
-                          {status === 'done' && (
-                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[220px]">
-                        <p className="text-xs font-sans">{s.tooltip}</p>
-                        {!prereqOk && s.requiresLabel && (
-                          <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-
-                {/* Subscription link */}
-                <div className="mt-4 pt-4 border-t border-border/40">
-                  <button
-                    onClick={() => navigate('/dashboard/admin/backroom-subscription')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
-                  >
-                    <CreditCard className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 truncate">Subscription</span>
-                  </button>
-                </div>
+                        return (
+                          <Tooltip key={s.id}>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => setActiveSection(s.id)}
+                                className={cn(
+                                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
+                                  isActive
+                                    ? 'bg-muted text-foreground font-medium'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                                  !prereqOk && !isActive && 'opacity-60'
+                                )}
+                              >
+                                {!prereqOk ? (
+                                  <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
+                                ) : (
+                                  <Icon className="w-4 h-4 shrink-0" />
+                                )}
+                                <span className="flex-1 truncate">{s.label}</span>
+                                {status === 'done' && (
+                                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-[220px]">
+                              <p className="text-xs font-sans">{s.tooltip}</p>
+                              {!prereqOk && s.requiresLabel && (
+                                <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                      {/* Subscription inside Settings group */}
+                      {group.group === 'settings' && (
+                        <div className="mt-2 pt-2 border-t border-border/40">
+                          <button
+                            onClick={() => navigate('/dashboard/admin/backroom-subscription')}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
+                          >
+                            <CreditCard className="w-4 h-4 shrink-0" />
+                            <span className="flex-1 truncate">Subscription</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </TooltipProvider>
           </nav>
