@@ -70,7 +70,7 @@ export function FormulaAssistanceSection() {
           <Switch checked={settings?.is_enabled ?? false} onCheckedChange={(checked) => updateSettings.mutate({ is_enabled: checked })} />
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
+          <div className="rounded-lg border border-border/60 bg-card/80 p-4 pr-0 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Ratio Lock</p><MetricInfoTooltip description="When enabled, Smart Mix Assist enforces the same product ratios used in previous formulas, preventing ratio drift between sessions." /></div>
               <p className="text-sm text-muted-foreground">Enforce consistent ratios when suggesting formulas</p>
