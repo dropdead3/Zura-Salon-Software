@@ -198,7 +198,9 @@ export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData
       }
 
       // Save
-      const filename = `sales-report-${dateFrom}-to-${dateTo}.pdf`;
+      const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const prefix = orgName ? `${sanitize(orgName)}_` : '';
+      const filename = `${prefix}sales-report_${dateFrom}_to-${dateTo}.pdf`;
       doc.save(filename);
       setOpen(false);
     } catch (error) {
