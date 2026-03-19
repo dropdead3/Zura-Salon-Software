@@ -135,13 +135,6 @@ export function SupplierSettingsSection() {
     return map;
   }, [allProducts]);
 
-  const handleAddSupplier = () => {
-    if (!newSupplierName.trim()) return;
-    setSelected(newSupplierName.trim());
-    setAddSupplierOpen(false);
-    setNewSupplierName('');
-  };
-
   const handleRename = () => {
     if (!selected || !renameValue.trim() || renameValue.trim() === selected) {
       setRenameMode(false);
