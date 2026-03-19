@@ -356,7 +356,10 @@ function StepDetails({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Method</Label>
-          <Select value={details.reorder_method} onValueChange={v => update('reorder_method', v)}>
+          <Select value={details.reorder_method} onValueChange={v => {
+            update('reorder_method', v);
+            if (v !== 'other') update('reorder_method_other', '');
+          }}>
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select method..." />
             </SelectTrigger>
@@ -367,6 +370,14 @@ function StepDetails({
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
+          {details.reorder_method === 'other' && (
+            <Input
+              value={details.reorder_method_other}
+              onChange={e => update('reorder_method_other', e.target.value)}
+              placeholder="Specify method..."
+              className="mt-1.5"
+            />
+          )}
         </div>
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Notes</Label>
