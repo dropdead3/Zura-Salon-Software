@@ -1056,6 +1056,10 @@ export function AppointmentDetailSheet({
                   <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
                   <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
                   <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
+                  <TabsTrigger value="formulas" className="font-sans gap-1">
+                    <Beaker className="w-3.5 h-3.5" />
+                    Formulas
+                  </TabsTrigger>
                   <TabsTrigger value="backroom" className="font-sans">Backroom</TabsTrigger>
                 </TabsList>
 
