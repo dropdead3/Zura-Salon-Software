@@ -577,6 +577,17 @@ export function StockTab({ locationId }: StockTabProps) {
         orgId={orgId ?? ''}
         locationId={locationId}
       />
+      <POBuilderPanel
+        open={poBuilderOpen}
+        onClose={() => setPoBuilderOpen(false)}
+        items={poItems}
+        qtyOverrides={qtyOverrides}
+        onQtyOverride={handleQtyOverride}
+        onRemoveItem={toggleAddToPo}
+        onClearAll={() => { setPoItemIds(new Set()); setPoBuilderOpen(false); }}
+        onSubmitPO={handleSubmitPO}
+        formatCurrency={formatCurrency}
+      />
     </div>
   );
 }
