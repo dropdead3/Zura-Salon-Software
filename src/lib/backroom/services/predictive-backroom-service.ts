@@ -244,6 +244,19 @@ export async function generateForecast(
 
   if (demandMap.size === 0) return [];
 
+  // 3b. Seasonal blending — fetch same-week-last-year usage and blend at 30%
+  const seasonalWeights = await fetchSeasonalWeights(orgId, startDate, endDate, locationId);
+  if (seasonalWeights.size > 0) {
+    for (const [productId, demand] of demandMap) {
+      const lastYearUsage = seasonalWeights.get(demand.product_name);
+      if (lastYearUsage != null && lastYearUsage > 0) {
+        // Blend: 70% current forecast + 30% YoY seasonal
+        demand.usage_7d = demand.usage_7d * 0.7 + lastYearUsage * 0.3;
+        demand.usage_1d = demand.usage_1d * 0.7 + (lastYearUsage / 7) * 0.3;
+      }
+    }
+  }
+
   // 4. Fetch inventory projections for demanded products
   const productIds = Array.from(demandMap.keys());
   const { data: projections } = await supabase
@@ -332,6 +345,61 @@ export async function generateForecast(
   forecasts.sort((a, b) => riskOrder[a.stockout_risk] - riskOrder[b.stockout_risk]);
 
   return forecasts;
+}
+
+// ─── Seasonal Weight Fetcher ────────────────────────
+
+async function fetchSeasonalWeights(
+  orgId: string,
+  startDate: string,
+  endDate: string,
+  locationId?: string | null,
+): Promise<Map<string, number>> {
+  // Calculate same week last year
+  const lastYearStart = new Date(startDate);
+  lastYearStart.setFullYear(lastYearStart.getFullYear() - 1);
+  const lastYearEnd = new Date(endDate);
+  lastYearEnd.setFullYear(lastYearEnd.getFullYear() - 1);
+
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+  // Fetch mix sessions from same week last year
+  let sessionQuery = supabase
+    .from('mix_sessions')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('status', 'completed')
+    .gte('started_at', fmt(lastYearStart))
+    .lte('started_at', fmt(lastYearEnd) + 'T23:59:59');
+
+  if (locationId && locationId !== 'all') {
+    sessionQuery = sessionQuery.eq('location_id', locationId);
+  }
+
+  const { data: sessions } = await sessionQuery;
+  const sessionIds = (sessions ?? []).map((s: any) => s.id);
+  if (!sessionIds.length) return new Map();
+
+  const { data: bowls } = await supabase
+    .from('mix_bowls')
+    .select('id')
+    .in('mix_session_id', sessionIds);
+
+  const bowlIds = (bowls ?? []).map((b: any) => b.id);
+  if (!bowlIds.length) return new Map();
+
+  const { data: lines } = await supabase
+    .from('mix_bowl_lines')
+    .select('product_name_snapshot, dispensed_quantity')
+    .in('bowl_id', bowlIds);
+
+  const usage = new Map<string, number>();
+  for (const line of (lines ?? []) as any[]) {
+    const name = line.product_name_snapshot ?? 'Unknown';
+    usage.set(name, (usage.get(name) ?? 0) + (line.dispensed_quantity ?? 0));
+  }
+
+  return usage;
 }
 
 // ─── Summary Generator ──────────────────────────────
