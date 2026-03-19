@@ -311,11 +311,19 @@ export function CommandCenterRow({
           )}
         </TableCell>
 
-        {/* Status */}
+        {/* Status — Dual-Layer: State + Severity */}
         <TableCell>
-          <Badge variant="outline" className={cn('text-[10px] font-medium border', statusCfg.className)}>
-            {statusCfg.label}
-          </Badge>
+          <div className="flex flex-col leading-tight">
+            <span className={cn(
+              'text-xs font-sans',
+              row.stock_state === 'out_of_stock' ? 'text-destructive' : 'text-foreground',
+            )}>
+              {row.stock_state === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
+            </span>
+            <span className={cn('text-[10px] font-sans', SEVERITY_CONFIG[row.severity].labelColor)}>
+              {SEVERITY_CONFIG[row.severity].label}
+            </span>
+          </div>
         </TableCell>
 
         {/* Supplier */}
