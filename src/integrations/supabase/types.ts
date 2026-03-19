@@ -8277,6 +8277,10 @@ export type Database = {
       inventory_alert_settings: {
         Row: {
           alert_channels: string[]
+          audit_frequency: string
+          audit_notify_roles: string[]
+          audit_reminder_days_before: number
+          audit_reminder_enabled: boolean
           auto_create_draft_po: boolean
           auto_reorder_enabled: boolean
           auto_reorder_mode: string
@@ -8295,6 +8299,10 @@ export type Database = {
         }
         Insert: {
           alert_channels?: string[]
+          audit_frequency?: string
+          audit_notify_roles?: string[]
+          audit_reminder_days_before?: number
+          audit_reminder_enabled?: boolean
           auto_create_draft_po?: boolean
           auto_reorder_enabled?: boolean
           auto_reorder_mode?: string
@@ -8313,6 +8321,10 @@ export type Database = {
         }
         Update: {
           alert_channels?: string[]
+          audit_frequency?: string
+          audit_notify_roles?: string[]
+          audit_reminder_days_before?: number
+          audit_reminder_enabled?: boolean
           auto_create_draft_po?: boolean
           auto_reorder_enabled?: boolean
           auto_reorder_mode?: string
@@ -8334,6 +8346,66 @@ export type Database = {
             foreignKeyName: "inventory_alert_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_audit_schedule: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          count_session_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          reminder_sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          count_session_id?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          reminder_sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          count_session_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          reminder_sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_audit_schedule_count_session_id_fkey"
+            columns: ["count_session_id"]
+            isOneToOne: false
+            referencedRelation: "count_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_audit_schedule_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
