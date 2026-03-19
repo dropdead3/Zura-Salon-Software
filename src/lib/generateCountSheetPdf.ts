@@ -36,6 +36,8 @@ export interface GenerateCountSheetOptions {
   filters?: CountSheetFilters;
   /** Full URL to include as scannable QR code on the sheet */
   countEntryUrl?: string;
+  /** When true, return PDF bytes instead of triggering download */
+  returnBytes?: boolean;
 }
 
 /**
@@ -62,7 +64,8 @@ export async function generateCountSheetPdf({
   logoDataUrl,
   filters,
   countEntryUrl,
-}: GenerateCountSheetOptions): Promise<void> {
+  returnBytes,
+}: GenerateCountSheetOptions): Promise<ArrayBuffer | void> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -210,5 +213,8 @@ export async function generateCountSheetPdf({
 
   addReportFooter(doc);
 
+  if (returnBytes) {
+    return doc.output('arraybuffer');
+  }
   doc.save(buildReportFileName({ orgName, locationName, reportSlug: 'count-sheet', dateFrom: today }));
 }
