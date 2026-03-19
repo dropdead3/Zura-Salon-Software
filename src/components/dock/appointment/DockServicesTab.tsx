@@ -139,8 +139,8 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const bowls = sessions || [];
   const hasActiveSessions = bowls.some((s) => !isTerminalSessionStatus(s.status as any));
 
-  // Session summary stats for the complete sheet
-  const sessionStats = {
+  // Use real stats from projections, fallback to basic counts
+  const completeStats = sessionStats || {
     totalBowls: bowls.length,
     reweighedBowls: bowls.filter((s) => s.status === 'completed').length,
     totalDispensed: 0,
