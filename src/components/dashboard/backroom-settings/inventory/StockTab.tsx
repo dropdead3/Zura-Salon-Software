@@ -381,7 +381,7 @@ export function StockTab({ locationId }: StockTabProps) {
       {
         items,
         sendEmails: true,
-        orgName: effectiveOrganization?.name ?? 'Organization',
+        orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
         logoDataUrl,
       },
       {
