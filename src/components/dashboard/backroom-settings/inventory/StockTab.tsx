@@ -553,16 +553,23 @@ export function StockTab({ locationId }: StockTabProps) {
           {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
           PDF
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="font-sans"
-          onClick={() => setAutoParDialog(true)}
-          disabled={inventory.length === 0}
-        >
-          <SlidersHorizontal className="w-4 h-4 mr-1.5" />
-          Auto-Set Pars
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="font-sans"
+              onClick={() => setAutoParDialog(true)}
+              disabled={inventory.length === 0}
+            >
+              <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+              Auto-Set Pars
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[240px] text-center">
+            Automatically calculate reorder points and par levels based on 28-day usage velocity and supplier lead times.
+          </TooltipContent>
+        </Tooltip>
         {poItemIds.size > 0 && (
           <Button
             size="sm"
