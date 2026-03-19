@@ -48,6 +48,7 @@ export function StaffKPIReport({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: kpiData, isLoading } = useStaffKPIReport(dateFrom, dateTo, locationId);
