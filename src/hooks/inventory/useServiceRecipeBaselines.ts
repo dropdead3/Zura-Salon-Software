@@ -1,5 +1,5 @@
 /**
- * useServiceRecipeBaselines — CRUD for service recipe baselines.
+ * useServiceRecipeBaselines — CRUD for service formula baselines.
  * Defines expected product usage per service type for variance detection.
  */
 
