@@ -86,6 +86,28 @@ function useDraftPOs(locationId?: string | null) {
   });
 }
 
+function useOverdueAudits() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  return useQuery({
+    queryKey: ['overdue-audits-tower', orgId],
+    queryFn: async (): Promise<AuditOverdueAlert[]> => {
+      const { data, error } = await supabase
+        .from('inventory_audit_schedule')
+        .select('id, due_date, status')
+        .eq('organization_id', orgId!)
+        .in('status', ['pending', 'overdue'])
+        .order('due_date', { ascending: true });
+
+      if (error || !data) return [];
+      return (data as any[]).filter(a => isPast(new Date(a.due_date + 'T23:59:59')));
+    },
+    enabled: !!orgId,
+    staleTime: 2 * 60_000,
+  });
+}
+
 export function useControlTowerAlerts(
   locationId?: string | null,
   categoryFilter?: AlertCategory | null
