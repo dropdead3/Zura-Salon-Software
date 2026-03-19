@@ -73,7 +73,7 @@ export function POBuilderPanel({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-[400px] max-w-[90vw] bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+    <div className="fixed inset-y-0 right-0 z-40 w-[400px] max-w-[90vw] bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right fade-in duration-200 ease-out">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
