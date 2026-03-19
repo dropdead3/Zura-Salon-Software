@@ -882,7 +882,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap, onStageToPo }: {
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, intelligenceMap }: {
   group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -897,10 +897,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
-  poItemIds: Set<string>;
-  onToggleAddToPo: (productId: string) => void;
   intelligenceMap?: Map<string, ProductIntelligence>;
-  onStageToPo: (products: BackroomInventoryRow[]) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
