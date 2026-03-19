@@ -134,7 +134,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
     queryKey: ['backroom-inventory-table', orgId, locationId],
     queryFn: async (): Promise<BackroomInventoryRow[]> => {
       // Fetch supplier data and open PO quantities in parallel
-      const [suppliersResult, openPoMap] = await Promise.all([
+      const [suppliersResult, openPoData] = await Promise.all([
         supabase
           .from('product_suppliers')
           .select('product_id, supplier_name, supplier_email')
@@ -146,7 +146,8 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
       function buildRow(p: any, parLevel: number | null, reorderLevel: number | null): BackroomInventoryRow {
         const qty = p.quantity_on_hand ?? 0;
         const status = getStockStatus(qty, reorderLevel, parLevel);
-        const openPoQty = openPoMap.get(p.id) ?? 0;
+        const openPoQty = openPoData.qtyMap.get(p.id) ?? 0;
+        const openPoStatusCounts = openPoData.statusMap.get(p.id) ?? { draft: 0, sent: 0, partially_received: 0 };
         const { orderQty, recommendedOrderQty, effectiveStock } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
         const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
         const sup = supplierMap.get(p.id);
