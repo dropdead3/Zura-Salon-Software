@@ -129,7 +129,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
       }
 
       addReportFooter(doc);
-      doc.save(`payroll-summary-${payFrom}-to-${payTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'payroll-summary', dateFrom: payFrom, dateTo: payTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

@@ -103,7 +103,7 @@ async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string) {
   });
 
   addReportFooter(doc);
-  doc.save(`inventory-audit-log-${today}.pdf`);
+  doc.save(buildReportFileName({ orgName, reportSlug: 'inventory-audit-log', dateFrom: today }));
 }
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;

@@ -112,7 +112,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
       }
 
       addReportFooter(doc);
-      doc.save(`end-of-month-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'end-of-month', dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

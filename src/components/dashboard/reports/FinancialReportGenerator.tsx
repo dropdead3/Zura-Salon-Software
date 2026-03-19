@@ -234,7 +234,7 @@ export function FinancialReportGenerator({
 
       addReportFooter(doc);
 
-      doc.save(`${reportType}-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: reportType, dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

@@ -102,7 +102,7 @@ async function exportAuditPdf(entries: AuditEntry[], productName: string, orgNam
   });
 
   addReportFooter(doc);
-  doc.save(`audit-trail-${productName.replace(/\s+/g, '-').toLowerCase()}-${today}.pdf`);
+  doc.save(buildReportFileName({ orgName, reportSlug: `audit-trail-${productName.replace(/\s+/g, '-').toLowerCase()}`, dateFrom: today }));
 }
 
 export function InventoryAuditDialog({ open, onOpenChange, productId, productName }: InventoryAuditDialogProps) {

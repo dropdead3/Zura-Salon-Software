@@ -171,8 +171,7 @@ export function SalesReportGenerator({
       addReportFooter(doc);
 
       // Save
-      const filename = `${reportType}-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: reportType, dateFrom, dateTo }));
 
       // Log to report history
       if (user) {

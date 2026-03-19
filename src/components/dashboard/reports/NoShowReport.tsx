@@ -132,8 +132,7 @@ export function NoShowReport({
 
       addReportFooter(doc);
 
-      const filename = `${reportType}-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: reportType, dateFrom, dateTo }));
 
       // Log to report history
       if (user) {

@@ -111,7 +111,7 @@ async function exportStockPdf(
   });
 
   addReportFooter(doc, orgName);
-  doc.save(`inventory-stock-${format(now, 'yyyy-MM-dd')}.pdf`);
+  doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
 }
 
 // ─── Main Component ─────────────────────────────────

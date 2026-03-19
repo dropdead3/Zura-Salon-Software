@@ -209,6 +209,5 @@ export async function generateCountSheetPdf({
 
   addReportFooter(doc);
 
-  const fileName = `Count_Sheet_${locationName ? locationName.replace(/\s+/g, '_') + '_' : ''}${today}.pdf`;
-  doc.save(fileName);
+  doc.save(buildReportFileName({ orgName, locationName, reportSlug: 'count-sheet', dateFrom: today }));
 }

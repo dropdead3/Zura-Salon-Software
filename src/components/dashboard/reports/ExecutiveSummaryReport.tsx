@@ -106,7 +106,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
       }
 
       addReportFooter(doc);
-      doc.save(`executive-summary-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'executive-summary', dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

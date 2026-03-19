@@ -211,8 +211,7 @@ export function ClientRetentionReport({
 
       addReportFooter(doc);
 
-      const filename = `${reportType}-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: reportType, dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

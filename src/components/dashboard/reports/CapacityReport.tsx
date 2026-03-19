@@ -117,8 +117,7 @@ export function CapacityReport({
 
       addReportFooter(doc);
 
-      const filename = `capacity-report-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'capacity-report', dateFrom, dateTo }));
 
       // Log to report history
       if (user) {

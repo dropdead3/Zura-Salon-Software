@@ -78,7 +78,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
       });
 
       addReportFooter(doc);
-      doc.save(`retail-by-staff-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'retail-by-staff', dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

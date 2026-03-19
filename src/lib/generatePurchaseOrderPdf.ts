@@ -139,7 +139,7 @@ export function generatePurchaseOrderPdf(options: GeneratePOPdfOptions): POPdfRe
 
   addReportFooter(doc);
 
-  const fileName = `PO_${supplierName.replace(/\s+/g, '_')}_${today}.pdf`;
+  const fileName = buildReportFileName({ orgName, reportSlug: `PO-${supplierName.replace(/\s+/g, '-')}`, dateFrom: today });
   const base64 = doc.output('datauristring').split(',')[1];
 
   return { base64, fileName };

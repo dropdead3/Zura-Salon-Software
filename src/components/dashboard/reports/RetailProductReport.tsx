@@ -93,7 +93,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
       }
 
       addReportFooter(doc);
-      doc.save(`retail-report-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'retail-report', dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({
