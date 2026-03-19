@@ -6,14 +6,20 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, Package, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
+
+// ─── Severity visual config ──────────────────────
+const SEVERITY_CONFIG: Record<StockSeverity, { barColor: string; label: string; labelColor: string }> = {
+  critical: { barColor: 'bg-destructive', label: 'Critical', labelColor: 'text-destructive' },
+  low: { barColor: 'bg-warning', label: 'Low', labelColor: 'text-warning' },
+  healthy: { barColor: 'bg-success', label: 'Healthy', labelColor: 'text-success/70' },
+};
 
 // ─── Helpers ──────────────────────────────────────
 
@@ -172,11 +178,11 @@ export function CommandCenterRow({
   const [editingQty, setEditingQty] = useState(false);
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
-  const statusCfg = STOCK_STATUS_CONFIG[row.status];
   const needsReorder = row.recommended_order_qty > 0;
   const isOverridden = qtyOverride != null;
   const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
   const effectiveStock = row.effective_stock;
+  const severityCfg = SEVERITY_CONFIG[row.severity];
 
   useEffect(() => {
     if (editingQty && qtyInputRef.current) {
@@ -189,12 +195,15 @@ export function CommandCenterRow({
     <>
       <TableRow
         className={cn(
-          'group/row transition-colors',
+          'group/row transition-colors relative',
           needsReorder && 'bg-warning/[0.03] hover:bg-warning/[0.06]',
         )}
       >
-        {/* Checkbox */}
-        <TableCell className="w-10">
+        {/* Severity color bar */}
+        <TableCell className="w-10 relative">
+          {row.severity !== 'healthy' && (
+            <span className={cn('absolute left-0 top-1 bottom-1 w-[3px] rounded-full', severityCfg.barColor)} />
+          )}
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onToggleSelect(row.id)}
@@ -305,11 +314,19 @@ export function CommandCenterRow({
           )}
         </TableCell>
 
-        {/* Status */}
+        {/* Status — Dual-Layer: State + Severity */}
         <TableCell>
-          <Badge variant="outline" className={cn('text-[10px] font-medium border', statusCfg.className)}>
-            {statusCfg.label}
-          </Badge>
+          <div className="flex flex-col leading-tight">
+            <span className={cn(
+              'text-xs font-sans',
+              row.stock_state === 'out_of_stock' ? 'text-destructive' : 'text-foreground',
+            )}>
+              {row.stock_state === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
+            </span>
+            <span className={cn('text-[10px] font-sans', SEVERITY_CONFIG[row.severity].labelColor)}>
+              {SEVERITY_CONFIG[row.severity].label}
+            </span>
+          </div>
         </TableCell>
 
         {/* Supplier */}
