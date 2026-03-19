@@ -150,6 +150,7 @@ export function AddSupplierWizard({ open, onOpenChange, onComplete }: AddSupplie
                 lead_time_days: details.lead_time_days ? parseInt(details.lead_time_days) : null,
                 moq: details.moq ? parseInt(details.moq) : 1,
                 reorder_method: details.reorder_method || null,
+                reorder_method_other: details.reorder_method === 'other' ? (details.reorder_method_other || null) : null,
                 reorder_notes: details.reorder_notes || null,
               }, {
                 onSuccess: () => {
