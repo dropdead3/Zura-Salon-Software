@@ -239,6 +239,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
               monthlyBudget={kpis.monthlyBudget}
               threshold={kpis.alertThreshold}
               formatCurrency={formatCurrency}
+              onNavigate={onNavigate}
             />
           </div>
           {/* Two-Column: Control Tower + Procurement */}
