@@ -1,0 +1,1 @@
+ALTER TABLE public.product_suppliers ADD COLUMN IF NOT EXISTS reorder_method_other TEXT;

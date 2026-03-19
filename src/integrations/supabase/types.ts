@@ -13917,6 +13917,7 @@ export type Database = {
           organization_id: string
           product_id: string
           reorder_method: string | null
+          reorder_method_other: string | null
           reorder_notes: string | null
           supplier_email: string | null
           supplier_name: string
@@ -13935,6 +13936,7 @@ export type Database = {
           organization_id: string
           product_id: string
           reorder_method?: string | null
+          reorder_method_other?: string | null
           reorder_notes?: string | null
           supplier_email?: string | null
           supplier_name: string
@@ -13953,6 +13955,7 @@ export type Database = {
           organization_id?: string
           product_id?: string
           reorder_method?: string | null
+          reorder_method_other?: string | null
           reorder_notes?: string | null
           supplier_email?: string | null
           supplier_name?: string
