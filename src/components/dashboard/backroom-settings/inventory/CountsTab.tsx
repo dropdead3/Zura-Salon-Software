@@ -91,7 +91,7 @@ export function CountsTab({ locationId }: CountsTabProps) {
       await generateCountSheetPdf({
         products: inventoryProducts,
         orgName: effectiveOrganization?.name ?? 'Organization',
-        locationName: undefined,
+        locationName: locationInfo?.name,
         logoDataUrl,
         filters,
         countEntryUrl,
