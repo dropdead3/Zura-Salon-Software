@@ -113,7 +113,7 @@ function DetailEditCell({
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] text-muted-foreground/60 font-sans">{label}</span>
+      <span className="text-[10px] text-muted-foreground/50 font-sans">{label}</span>
       {editing ? (
         <input
           type="number"
@@ -231,19 +231,19 @@ export function CommandCenterRow({
             </button>
             <div className="min-w-0">
               <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
-              {row.sku && <span className="text-muted-foreground text-xs ml-2">{row.sku}</span>}
+              {row.sku && <span className="text-muted-foreground/50 text-[11px] ml-2 tabular-nums">{row.sku}</span>}
               {row.container_size && (
-                <span className="text-muted-foreground/50 text-[10px] ml-1.5">{row.container_size}</span>
+                <span className="text-muted-foreground/40 text-[10px] ml-1.5">{row.container_size}</span>
               )}
               {intelligence && intelligence.dailyUsage > 0 && intelligence.daysRemaining !== Infinity && (
                 <div className="mt-0.5">
                   <span className={cn(
-                    'text-[10px]',
+                    'text-[10px] tabular-nums',
                     intelligence.daysRemaining < 7
                       ? 'text-destructive/60'
                       : intelligence.daysRemaining < 14
                         ? 'text-warning/60'
-                        : 'text-muted-foreground/50',
+                        : 'text-muted-foreground/40',
                   )}>
                     ~{intelligence.daysRemaining}d remaining
                   </span>
@@ -254,7 +254,7 @@ export function CommandCenterRow({
         </TableCell>
 
         {/* Stock */}
-        <TableCell className="text-right tabular-nums">
+        <TableCell className="text-right tabular-nums w-20">
           <div className="flex flex-col items-end">
             <InlineEditCell
               value={row.quantity_on_hand}
@@ -267,13 +267,13 @@ export function CommandCenterRow({
               className="font-medium"
             />
             {intelligence && intelligence.dailyUsage > 0 && (
-              <span className="text-[10px] text-muted-foreground/40 tabular-nums">{intelligence.dailyUsage}/day</span>
+              <span className="text-[10px] text-muted-foreground/35 tabular-nums">{intelligence.dailyUsage}/day</span>
             )}
           </div>
         </TableCell>
 
         {/* Suggested Order — PRIMARY DECISION SIGNAL */}
-        <TableCell className="text-right tabular-nums">
+        <TableCell className="text-right tabular-nums w-28">
           {needsReorder || isOverridden ? (
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center gap-1.5 justify-end">
@@ -298,12 +298,12 @@ export function CommandCenterRow({
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                       if (e.key === 'Escape') setEditingQty(false);
                     }}
-                    className="w-14 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    className="w-14 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
                   />
                 ) : (
                   <span
                     className={cn(
-                      'text-lg tabular-nums cursor-pointer transition-colors',
+                      'text-lg tabular-nums cursor-pointer transition-colors duration-150',
                       isOverridden
                         ? 'text-primary border-b border-dashed border-primary/40'
                         : 'text-foreground font-medium border-b border-dashed border-transparent hover:border-muted-foreground/30',
@@ -320,7 +320,7 @@ export function CommandCenterRow({
                 {/* Auto / Edited indicator */}
                 {isOverridden ? (
                   <button
-                    className="text-[9px] text-primary/70 hover:text-primary bg-primary/5 px-1.5 py-0.5 rounded-full transition-colors flex items-center gap-0.5"
+                    className="text-[9px] text-primary/70 hover:text-primary bg-primary/5 px-1.5 py-0.5 rounded-full transition-colors duration-150 flex items-center gap-0.5"
                     onClick={() => onQtyOverride?.(row.id, null)}
                     title="Reset to auto-calculated quantity"
                   >
@@ -328,27 +328,27 @@ export function CommandCenterRow({
                     Edited
                   </button>
                 ) : needsReorder ? (
-                  <span className="text-[9px] text-muted-foreground/50">Auto</span>
+                  <span className="text-[9px] text-muted-foreground/40">Auto</span>
                 ) : null}
               </div>
               {/* Effective stock context */}
               {row.open_po_qty > 0 && (
-                <span className="text-primary/60 text-[10px]" title={`${row.quantity_on_hand} on hand + ${row.open_po_qty} on order = ${effectiveStock} effective`}>
+                <span className="text-primary/50 text-[10px] tabular-nums" title={`${row.quantity_on_hand} on hand + ${row.open_po_qty} on order = ${effectiveStock} effective`}>
                   {row.open_po_qty} on order
                 </span>
               )}
             </div>
           ) : (
-            <span className="text-muted-foreground/30">—</span>
+            <span className="text-muted-foreground/25 tabular-nums">—</span>
           )}
         </TableCell>
 
         {/* Status — Dual-Layer: State + Severity */}
-        <TableCell>
+        <TableCell className="w-24">
           <div className="flex flex-col leading-tight">
             <span className={cn(
               'text-xs font-sans',
-              row.stock_state === 'out_of_stock' ? 'text-destructive' : 'text-foreground',
+              row.stock_state === 'out_of_stock' ? 'text-destructive' : 'text-foreground/80',
             )}>
               {row.stock_state === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
             </span>
@@ -361,22 +361,22 @@ export function CommandCenterRow({
         {/* Supplier */}
         <TableCell className="hidden lg:table-cell">
           {row.supplier_name ? (
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
-              <Truck className="w-3 h-3 shrink-0" />
+            <span className="text-sm text-muted-foreground/70 flex items-center gap-1">
+              <Truck className="w-3 h-3 shrink-0 text-muted-foreground/40" />
               <span className="truncate max-w-[120px]">{row.supplier_name}</span>
             </span>
           ) : (
-            <span className="text-muted-foreground/30 text-sm">—</span>
+            <span className="text-muted-foreground/25 text-sm">—</span>
           )}
         </TableCell>
 
         {/* Cost */}
-        <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">
+        <TableCell className="text-right hidden sm:table-cell text-muted-foreground/70 tabular-nums w-20">
           {row.cost_price != null
             ? formatCurrency(row.cost_price)
             : row.cost_per_gram != null
               ? `${formatCurrency(row.cost_per_gram)}/g`
-              : '—'}
+              : <span className="text-muted-foreground/25">—</span>}
         </TableCell>
 
         {/* Actions — Primary: Add to PO */}
@@ -436,47 +436,47 @@ export function CommandCenterRow({
               />
               {row.container_size && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Container</span>
-                  <span className="text-sm text-muted-foreground">{row.container_size}</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Container</span>
+                  <span className="text-sm text-muted-foreground/70">{row.container_size}</span>
                 </div>
               )}
               {row.brand && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Brand</span>
-                  <span className="text-sm text-muted-foreground">{row.brand}</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Brand</span>
+                  <span className="text-sm text-muted-foreground/70">{row.brand}</span>
                 </div>
               )}
               {row.category && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Category</span>
-                  <span className="text-sm text-muted-foreground">{formatCategoryLabel(row.category)}</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Category</span>
+                  <span className="text-sm text-muted-foreground/70">{formatCategoryLabel(row.category)}</span>
                 </div>
               )}
               <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground/60 font-sans">PO History</span>
+                <span className="text-[10px] text-muted-foreground/50 font-sans">PO History</span>
                 {poHistory && poHistory.some(v => v > 0) ? (
                   <TrendSparkline data={poHistory} variant="muted" width={80} height={24} />
                 ) : (
-                  <span className="text-muted-foreground/40 text-xs">—</span>
+                  <span className="text-muted-foreground/25 text-xs">—</span>
                 )}
               </div>
               {intelligence && intelligence.dailyUsage > 0 && (
                 <>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground/60 font-sans">Avg Daily Usage</span>
-                    <span className="text-sm text-muted-foreground tabular-nums">{intelligence.dailyUsage}/day</span>
+                    <span className="text-[10px] text-muted-foreground/50 font-sans">Avg Daily Usage</span>
+                    <span className="text-sm text-muted-foreground/70 tabular-nums">{intelligence.dailyUsage}/day</span>
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground/60 font-sans">Days Remaining</span>
+                    <span className="text-[10px] text-muted-foreground/50 font-sans">Days Remaining</span>
                     <span className={cn(
                       'text-sm tabular-nums',
                       intelligence.daysRemaining === Infinity
-                        ? 'text-muted-foreground/40'
+                        ? 'text-muted-foreground/25'
                         : intelligence.daysRemaining < 7
                           ? 'text-destructive'
                           : intelligence.daysRemaining < 14
                             ? 'text-warning'
-                            : 'text-muted-foreground',
+                            : 'text-muted-foreground/70',
                     )}>
                       {intelligence.daysRemaining === Infinity ? '—' : `~${intelligence.daysRemaining}d`}
                     </span>
@@ -485,8 +485,8 @@ export function CommandCenterRow({
               )}
               {row.open_po_qty > 0 && (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-sans">Pending Orders</span>
-                  <span className="text-sm text-primary">{row.open_po_qty} units</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-sans">Pending Orders</span>
+                  <span className="text-sm text-primary/80 tabular-nums">{row.open_po_qty} units</span>
                 </div>
               )}
             </div>

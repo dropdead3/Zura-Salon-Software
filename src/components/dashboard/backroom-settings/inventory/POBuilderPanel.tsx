@@ -111,7 +111,7 @@ export function POBuilderPanel({
         </div>
       ) : (
         <ScrollArea className="flex-1">
-          <div className="p-3 space-y-3">
+          <div className="p-3 space-y-2.5">
             {supplierGroups.map((group) => (
               <SupplierPOCard
                 key={group.supplier}
@@ -165,7 +165,7 @@ function SupplierPOCard({
   const isUnassigned = group.supplier === 'Unassigned';
 
   return (
-    <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+    <div className="rounded-lg border border-border/60 bg-muted/15 overflow-hidden">
       {/* Supplier header */}
       <div
         className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors duration-150"
@@ -176,15 +176,15 @@ function SupplierPOCard({
         <span className={cn('text-xs font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground')}>
           {group.supplier}
         </span>
-        <span className="text-[10px] text-muted-foreground">({group.items.length})</span>
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+        <span className="text-[10px] text-muted-foreground/50">({group.items.length})</span>
+        <span className="ml-auto text-xs tabular-nums text-muted-foreground/70">
           {formatCurrency(group.totalCost)}
         </span>
       </div>
 
       {/* Line items */}
       {!collapsed && (
-        <div className="border-t border-border/50">
+        <div className="border-t border-border/30">
           {group.items.map((item) => {
             const qty = qtyOverrides.get(item.id) ?? item.recommended_order_qty;
             const unitCost = item.cost_price ?? item.cost_per_gram ?? 0;
@@ -193,7 +193,7 @@ function SupplierPOCard({
             return (
               <div
                 key={item.id}
-                className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 last:border-b-0 group/line hover:bg-muted/30 transition-colors duration-150"
+                className="flex items-center gap-2 px-3 py-1.5 border-b border-border/20 last:border-b-0 group/line hover:bg-muted/30 transition-colors duration-150"
               >
                 {/* Product name */}
                 <div className="flex-1 min-w-0">
@@ -201,8 +201,8 @@ function SupplierPOCard({
                     {stripSizeSuffix(item.name)}
                   </span>
                   {unitCost > 0 && (
-                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">
-                      {formatCurrency(unitCost)} each
+                    <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                      {formatCurrency(unitCost)} ea
                     </span>
                   )}
                 </div>
@@ -228,7 +228,7 @@ function SupplierPOCard({
                         onQtyOverride(item.id, v === item.recommended_order_qty ? null : v);
                       }
                     }}
-                    className="w-10 h-6 text-center text-xs tabular-nums rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    className="w-10 h-6 text-center text-xs tabular-nums rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
                   />
                   <button
                     className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
@@ -242,8 +242,8 @@ function SupplierPOCard({
                 </div>
 
                 {/* Line total */}
-                <span className="text-xs tabular-nums text-muted-foreground w-16 text-right">
-                  {lineTotal > 0 ? formatCurrency(lineTotal) : '—'}
+                <span className="text-xs tabular-nums text-muted-foreground/60 w-16 text-right">
+                  {lineTotal > 0 ? formatCurrency(lineTotal) : <span className="text-muted-foreground/25">—</span>}
                 </span>
 
                 {/* Remove */}
@@ -259,8 +259,8 @@ function SupplierPOCard({
           })}
 
           {/* Submit button per supplier */}
-          <div className="px-3 py-2 flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground/50 font-sans">
+          <div className="px-3 py-2 flex items-center justify-between border-t border-border/20">
+            <span className="text-[10px] text-muted-foreground/40 font-sans tabular-nums">
               {group.items.length} {group.items.length === 1 ? 'item' : 'items'} · {formatCurrency(group.totalCost)}
             </span>
             <Button

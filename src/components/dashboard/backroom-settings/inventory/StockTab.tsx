@@ -665,24 +665,24 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
     <>
       {/* Supplier header row */}
       <TableRow
-        className="bg-muted/30 hover:bg-muted/40 cursor-pointer transition-colors duration-150"
+        className="bg-muted/20 hover:bg-muted/30 cursor-pointer transition-colors duration-150"
         onClick={() => setOpen(!open)}
       >
         <TableCell colSpan={8} className="py-2">
           <div className="flex items-center gap-2">
-            <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform duration-150', open && 'rotate-90')} />
-            <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary')} />
-            <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
+            <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150', open && 'rotate-90')} />
+            <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70')} />
+            <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/50' : 'text-foreground/70')}>
               {group.supplier}
             </span>
-            <span className="text-muted-foreground text-[10px]">({group.products.length})</span>
+            <span className="text-muted-foreground/40 text-[10px] tabular-nums">({group.products.length})</span>
             {reorderCount > 0 && (
-              <Badge variant="outline" className="text-[10px] font-sans border-warning/30 text-warning bg-warning/5 ml-1">
+              <Badge variant="outline" className="text-[10px] font-sans border-warning/20 text-warning/80 bg-warning/5 ml-1">
                 {reorderCount} to reorder
               </Badge>
             )}
             {group.estimatedTotal > 0 && (
-              <span className="text-[10px] text-muted-foreground/60 ml-auto mr-2 tabular-nums">
+              <span className="text-[10px] text-muted-foreground/50 ml-auto mr-2 tabular-nums">
                 Est. {formatCurrency(group.estimatedTotal)}
               </span>
             )}
@@ -749,10 +749,10 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   return (
     <>
       {/* Category sub-header */}
-      <TableRow className="bg-muted/10 hover:bg-muted/15 transition-colors duration-150">
+      <TableRow className="bg-muted/[0.06] hover:bg-muted/10 transition-colors duration-150">
         <TableCell colSpan={8} className="py-1 pl-10">
-          <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
-          <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
+          <span className="text-muted-foreground/60 text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
+          <span className="text-muted-foreground/35 text-[10px] ml-1.5 tabular-nums">({rows.length})</span>
         </TableCell>
       </TableRow>
       {rows.map((row) => (
