@@ -554,23 +554,30 @@ export function StockTab({ locationId }: StockTabProps) {
           {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
           PDF
         </Button>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              className="font-sans"
-              onClick={() => setAutoParDialog(true)}
-              disabled={inventory.length === 0}
-            >
-              <SlidersHorizontal className="w-4 h-4 mr-1.5" />
-              Auto-Set Pars
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[300px] text-center">
-            A par level is the ideal maximum stock quantity to keep on hand. This tool automatically calculates par levels and reorder points based on your 30-day usage velocity and supplier lead times.
-          </TooltipContent>
-        </Tooltip>
+        <Button
+          size="sm"
+          variant="outline"
+          className="font-sans"
+          onClick={() => setAutoParDialog(true)}
+          disabled={inventory.length === 0}
+        >
+          <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+          Auto-Set Pars
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="button"
+                className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-muted text-muted-foreground hover:bg-foreground/20 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Info className="w-3 h-3" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[300px] text-center">
+              A par level is the ideal maximum stock quantity to keep on hand. This tool automatically calculates par levels and reorder points based on your 30-day usage velocity and supplier lead times.
+            </TooltipContent>
+          </Tooltip>
+        </Button>
         {poItemIds.size > 0 && (
           <Button
             size="sm"
