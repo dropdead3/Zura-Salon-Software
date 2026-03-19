@@ -109,7 +109,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                       {setupHealth.completed} of {setupHealth.total} areas configured
                     </p>
                     {/* Step tracker — two-row layout for line alignment */}
-                    <div className="mt-2 w-full">
+                    <div className="mt-2 w-full px-4">
                       {/* Row 1: circles + connecting lines */}
                       <div className="flex items-center w-full">
                         {setupHealth.steps.map((step, i, arr) => (
