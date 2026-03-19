@@ -331,7 +331,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                 ) : (
                   <div className="py-4 text-center">
                     <p className={tokens.body.muted}>No budget target set.</p>
-                    <Button variant="outline" size="sm" onClick={() => onNavigate('inventory')} className="mt-2 font-sans">
+                    <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:reorder')} className="mt-2 font-sans">
                       Set Budget
                     </Button>
                   </div>
