@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
-  DollarSign, Beaker, ClipboardCheck, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronDown, Loader2, MapPin,
+  DollarSign, Beaker, ClipboardCheck, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronUp, ChevronDown, Loader2, MapPin, Eye, EyeOff,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -16,9 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useBackroomAnalytics } from '@/hooks/backroom/useBackroomAnalytics';
 import { useBackroomStaffMetrics } from '@/hooks/backroom/useBackroomStaffMetrics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -28,6 +25,7 @@ import { BackroomHistoryChart } from './BackroomHistoryChart';
 import { BackroomProductAnalyticsCard } from './BackroomProductAnalyticsCard';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
+import type { StaffMetric } from '@/lib/backroom/analytics-engine';
 
 type DatePreset = 'today' | '7d' | '30d' | 'this_month' | 'last_month' | '90d';
 
@@ -44,7 +42,22 @@ function getDateRange(preset: DatePreset): { start: string; end: string; label: 
   }
 }
 
-type SortKey = 'name' | 'sessions' | 'waste' | 'reweigh' | 'duration';
+// Sortable column keys
+type SortKey = 'name' | 'totalServices' | 'totalProductCost' | 'productPerServiceCost' | 'reweigh' | 'wastePerServiceCost' | 'productCharges' | 'sessionsPerDay' | 'duration' | 'waste' | 'variance';
+
+// Staff avatar colors (cycling)
+const AVATAR_COLORS = [
+  'bg-primary/20 text-primary',
+  'bg-accent/20 text-accent-foreground',
+  'bg-destructive/10 text-destructive',
+  'bg-muted text-muted-foreground',
+  'bg-secondary text-secondary-foreground',
+  'bg-primary/30 text-primary',
+];
+
+function getAvatarColor(index: number) {
+  return AVATAR_COLORS[index % AVATAR_COLORS.length];
+}
 
 interface BackroomInsightsSectionProps {
   locationId?: string;
@@ -54,8 +67,9 @@ interface BackroomInsightsSectionProps {
 
 export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters }: BackroomInsightsSectionProps = {}) {
   const [internalDatePreset, setInternalDatePreset] = useState<DatePreset>('30d');
-  const [sortKey, setSortKey] = useState<SortKey>('sessions');
+  const [sortKey, setSortKey] = useState<SortKey>('totalServices');
   const [sortAsc, setSortAsc] = useState(false);
+  const [showHiddenFields, setShowHiddenFields] = useState(false);
   const [internalLocationId, setInternalLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
 
@@ -76,10 +90,16 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
       let cmp = 0;
       switch (sortKey) {
         case 'name': cmp = a.staffName.localeCompare(b.staffName); break;
-        case 'sessions': cmp = a.sessionsPerDay - b.sessionsPerDay; break;
-        case 'waste': cmp = a.wastePct - b.wastePct; break;
+        case 'totalServices': cmp = a.totalServices - b.totalServices; break;
+        case 'totalProductCost': cmp = a.totalProductCost - b.totalProductCost; break;
+        case 'productPerServiceCost': cmp = a.productPerServiceCost - b.productPerServiceCost; break;
         case 'reweigh': cmp = a.reweighCompliancePct - b.reweighCompliancePct; break;
+        case 'wastePerServiceCost': cmp = a.wastePerServiceCost - b.wastePerServiceCost; break;
+        case 'productCharges': cmp = a.productCharges - b.productCharges; break;
+        case 'sessionsPerDay': cmp = a.sessionsPerDay - b.sessionsPerDay; break;
         case 'duration': cmp = a.avgSessionDurationMinutes - b.avgSessionDurationMinutes; break;
+        case 'waste': cmp = a.wastePct - b.wastePct; break;
+        case 'variance': cmp = a.variancePct - b.variancePct; break;
       }
       return sortAsc ? cmp : -cmp;
     });
@@ -88,10 +108,17 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
 
   const handleSort = (key: SortKey) => { if (sortKey === key) setSortAsc(!sortAsc); else { setSortKey(key); setSortAsc(false); } };
 
+  const hiddenFieldCount = 4;
+
   const handleExportCSV = () => {
     if (!sortedStaff.length) { toast.error('No data to export'); return; }
-    const headers = ['Staff', 'Sessions/Day', 'Avg Duration (min)', 'Waste %', 'Reweigh %'];
-    const rows = sortedStaff.map((s) => [s.staffName, s.sessionsPerDay, s.avgSessionDurationMinutes, s.wastePct, s.reweighCompliancePct]);
+    const headers = ['Staff', 'Services', 'Product Dispensed ($)', 'Product Dispensed (g)', 'Product/Service ($)', 'Product/Service (g)', '% Reweighed', 'Waste/Service ($)', 'Product Charges ($)', 'Sessions/Day', 'Avg Duration (min)', 'Waste %', 'Variance %'];
+    const rows = sortedStaff.map((s) => [
+      s.staffName, s.totalServices, s.totalProductCost, s.totalDispensedQty,
+      s.productPerServiceCost, s.productPerServiceQty, s.reweighCompliancePct,
+      s.wastePerServiceCost, s.productCharges, s.sessionsPerDay,
+      s.avgSessionDurationMinutes, s.wastePct, s.variancePct,
+    ]);
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -177,14 +204,26 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>Employee Performance</CardTitle>
-                <MetricInfoTooltip description="Per-stylist backroom efficiency metrics for the selected date range. Sessions/Day, average mix duration, waste percentage, and reweigh rate." />
+                <MetricInfoTooltip description="Per-stylist backroom efficiency metrics including product usage, cost per service, reweigh compliance, and waste analysis." />
               </div>
               <CardDescription className="text-xs">{rangeLabel}</CardDescription>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!sortedStaff.length}>
-            <Download className="w-4 h-4 mr-1.5" /> Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHiddenFields(!showHiddenFields)}
+              className="text-xs text-muted-foreground"
+            >
+              {showHiddenFields ? <EyeOff className="w-3.5 h-3.5 mr-1.5" /> : <Eye className="w-3.5 h-3.5 mr-1.5" />}
+              {hiddenFieldCount} Hidden Fields
+              {showHiddenFields ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!sortedStaff.length}>
+              <Download className="w-4 h-4 mr-1.5" /> Export
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {staffLoading ? (
@@ -200,29 +239,70 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead><SortButton label="Staff" field="name" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Sessions/Day" field="sessions" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Avg Duration" field="duration" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Waste %" field="waste" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Reweigh %" field="reweigh" /></TableHead>
+                    <TableHead><SortButton label="Name" field="name" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Services" field="totalServices" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Product Dispensed" field="totalProductCost" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Product / Service" field="productPerServiceCost" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="% Reweighed" field="reweigh" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Waste / Service" field="wastePerServiceCost" /></TableHead>
+                    <TableHead className="text-right"><SortButton label="Product Charges" field="productCharges" /></TableHead>
+                    {showHiddenFields && (
+                      <>
+                        <TableHead className="text-right"><SortButton label="Sessions/Day" field="sessionsPerDay" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Avg Duration" field="duration" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Waste %" field="waste" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Variance %" field="variance" /></TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedStaff.map((s) => (
+                  {sortedStaff.map((s, idx) => (
                     <TableRow key={s.staffUserId}>
-                      <TableCell className="font-sans text-sm font-medium">{s.staffName}</TableCell>
-                      <TableCell className="text-right tabular-nums">{s.sessionsPerDay}</TableCell>
-                      <TableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0', getAvatarColor(idx))}>
+                            {s.staffName.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-sans text-sm font-medium">{s.staffName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{s.totalServices}</TableCell>
                       <TableCell className="text-right">
-                        <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary')}>
-                          {formatPercent(s.wastePct, false)}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.totalProductCost)}</BlurredAmount>
+                          <span className="text-xs text-muted-foreground tabular-nums">{formatNumber(s.totalDispensedQty, { maximumFractionDigits: 1 })}g</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end">
+                          <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.productPerServiceCost)}</BlurredAmount>
+                          <span className="text-xs text-muted-foreground tabular-nums">{formatNumber(s.productPerServiceQty, { maximumFractionDigits: 1 })}g</span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-primary')}>
                           {formatPercent(s.reweighCompliancePct, false)}
                         </span>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.wastePerServiceCost)}</BlurredAmount>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.productCharges)}</BlurredAmount>
+                      </TableCell>
+                      {showHiddenFields && (
+                        <>
+                          <TableCell className="text-right tabular-nums">{s.sessionsPerDay}</TableCell>
+                          <TableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</TableCell>
+                          <TableCell className="text-right">
+                            <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary')}>
+                              {formatPercent(s.wastePct, false)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">{formatPercent(s.variancePct, false)}</TableCell>
+                        </>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

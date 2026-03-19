@@ -56,6 +56,7 @@ export interface StaffSessionData {
   totalUnderageQty: number;
   bowlsTotal: number;
   bowlsReweighed: number;
+  totalProductCost: number;
 }
 
 export interface StaffMetric {
@@ -66,6 +67,13 @@ export interface StaffMetric {
   wastePct: number;
   variancePct: number;
   reweighCompliancePct: number;
+  totalServices: number;
+  totalProductCost: number;
+  totalDispensedQty: number;
+  productPerServiceCost: number;
+  productPerServiceQty: number;
+  wastePerServiceCost: number;
+  productCharges: number;
 }
 
 export interface InventoryDaysInput {
@@ -217,29 +225,42 @@ export function calculateStaffEfficiency(
 ): StaffMetric[] {
   const safeDays = Math.max(daysInPeriod, 1);
 
-  return staffData.map((s) => ({
-    staffUserId: s.staffUserId,
-    staffName: s.staffName,
-    sessionsPerDay: Math.round((s.sessionCount / safeDays) * 10) / 10,
-    avgSessionDurationMinutes:
-      s.sessionCount > 0
-        ? Math.round((s.totalDurationMinutes / s.sessionCount) * 10) / 10
-        : 0,
-    wastePct:
+  return staffData.map((s) => {
+    const wastePct =
       s.totalDispensedQty > 0
         ? Math.round((s.totalWasteQty / s.totalDispensedQty) * 1000) / 10
-        : 0,
-    variancePct:
-      s.totalDispensedQty > 0
-        ? Math.round(
-            ((s.totalOverageQty - s.totalUnderageQty) / s.totalDispensedQty) * 1000
-          ) / 10
-        : 0,
-    reweighCompliancePct:
-      s.bowlsTotal > 0
-        ? Math.round((s.bowlsReweighed / s.bowlsTotal) * 1000) / 10
-        : 100,
-  }));
+        : 0;
+    const totalProductCost = s.totalProductCost ?? 0;
+    const sessionCount = s.sessionCount || 1;
+
+    return {
+      staffUserId: s.staffUserId,
+      staffName: s.staffName,
+      sessionsPerDay: Math.round((s.sessionCount / safeDays) * 10) / 10,
+      avgSessionDurationMinutes:
+        s.sessionCount > 0
+          ? Math.round((s.totalDurationMinutes / s.sessionCount) * 10) / 10
+          : 0,
+      wastePct,
+      variancePct:
+        s.totalDispensedQty > 0
+          ? Math.round(
+              ((s.totalOverageQty - s.totalUnderageQty) / s.totalDispensedQty) * 1000
+            ) / 10
+          : 0,
+      reweighCompliancePct:
+        s.bowlsTotal > 0
+          ? Math.round((s.bowlsReweighed / s.bowlsTotal) * 1000) / 10
+          : 100,
+      totalServices: s.sessionCount,
+      totalProductCost: Math.round(totalProductCost * 100) / 100,
+      totalDispensedQty: Math.round(s.totalDispensedQty * 10) / 10,
+      productPerServiceCost: Math.round((totalProductCost / sessionCount) * 100) / 100,
+      productPerServiceQty: Math.round((s.totalDispensedQty / sessionCount) * 10) / 10,
+      wastePerServiceCost: Math.round(((wastePct / 100) * totalProductCost / sessionCount) * 100) / 100,
+      productCharges: 0, // populated externally
+    };
+  });
 }
 
 /**
