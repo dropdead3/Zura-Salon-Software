@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, UserPlus, FileDown, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
+import { Loader2, Search, Package, ChevronDown, ChevronRight, UserPlus, FileDown, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -122,15 +122,21 @@ export function StockTab({ locationId }: StockTabProps) {
   const [autoPoDialog, setAutoPoDialog] = useState(false);
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
 
-  // Compute KPIs
+  // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
     const totalOnHand = inventory.reduce((s, r) => s + r.quantity_on_hand, 0);
-    const lowStock = inventory.filter(r => r.status === 'replenish' || r.status === 'urgent_reorder').length;
-    const outOfStock = inventory.filter(r => r.status === 'out_of_stock').length;
+    const lowStock = inventory.filter(r => r.severity === 'low').length;
+    const criticalCount = inventory.filter(r => r.severity === 'critical').length;
+    const outOfStock = inventory.filter(r => r.stock_state === 'out_of_stock').length;
     const totalValue = inventory.reduce((s, r) => s + (r.quantity_on_hand * (r.cost_price ?? r.cost_per_gram ?? 0)), 0);
     const needsReorder = inventory.filter(r => r.recommended_order_qty > 0).length;
-    return { totalOnHand, lowStock, outOfStock, totalValue, needsReorder };
+    const estimatedPoValue = inventory.reduce((s, r) => {
+      if (r.recommended_order_qty <= 0) return s;
+      return s + r.recommended_order_qty * (r.cost_price ?? r.cost_per_gram ?? 0);
+    }, 0);
+    return { totalOnHand, lowStock, criticalCount, outOfStock, totalValue, needsReorder, estimatedPoValue };
   }, [inventory]);
 
   // Categories for filter
@@ -148,8 +154,11 @@ export function StockTab({ locationId }: StockTabProps) {
     }
     if (categoryFilter !== 'all') rows = rows.filter(r => r.category === categoryFilter);
     if (statusFilter !== 'all') rows = rows.filter(r => r.status === statusFilter);
+    if (severityFilter === 'critical') rows = rows.filter(r => r.severity === 'critical');
+    else if (severityFilter === 'low') rows = rows.filter(r => r.severity === 'low');
+    else if (severityFilter === 'needs_reorder') rows = rows.filter(r => r.recommended_order_qty > 0);
     return rows;
-  }, [inventory, search, categoryFilter, statusFilter]);
+  }, [inventory, search, categoryFilter, statusFilter, severityFilter]);
 
   // Group by supplier → category
   const supplierGroups = useMemo((): SupplierGroup[] => {
@@ -257,26 +266,36 @@ export function StockTab({ locationId }: StockTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard icon={<Package className="w-5 h-5 text-primary" />} label="Total On Hand" value={formatNumber(kpis.totalOnHand)} tooltip="Sum of all tracked product quantities across this location." />
-        <KpiCard
-          icon={<AlertTriangle className="w-5 h-5 text-warning" />}
-          label="Low Stock"
-          value={String(kpis.lowStock)}
+      {/* Summary / Control Bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <SummaryChip
+          label="Needs Reorder"
+          value={kpis.needsReorder}
+          active={severityFilter === 'needs_reorder'}
+          onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
+          accent={kpis.needsReorder > 0 ? 'warning' : undefined}
+        />
+        <SummaryChip
+          label="Critical"
+          value={kpis.criticalCount}
+          active={severityFilter === 'critical'}
+          onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
+          accent={kpis.criticalCount > 0 ? 'destructive' : undefined}
+        />
+        <SummaryChip
+          label="Low"
+          value={kpis.lowStock}
+          active={severityFilter === 'low'}
+          onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
           accent={kpis.lowStock > 0 ? 'warning' : undefined}
-          onClick={() => setStatusFilter(statusFilter === 'replenish' ? 'all' : 'replenish')}
-          tooltip="Products at or below their Reorder Point. Click to filter."
         />
-        <KpiCard
-          icon={<XCircle className="w-5 h-5 text-destructive" />}
-          label="Out of Stock"
-          value={String(kpis.outOfStock)}
-          accent={kpis.outOfStock > 0 ? 'destructive' : undefined}
-          onClick={() => setStatusFilter(statusFilter === 'out_of_stock' ? 'all' : 'out_of_stock')}
-          tooltip="Products with zero quantity on hand. Click to filter."
-        />
-        <KpiCard icon={<DollarSign className="w-5 h-5 text-primary" />} label="Inventory Value" value={formatCurrency(kpis.totalValue)} tooltip="Total cost value of all stock on hand (quantity × unit cost)." />
+        <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
+        <span className="text-xs text-muted-foreground font-sans tabular-nums">
+          Est. PO Value: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
+        </span>
+        <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
+          {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
+        </span>
       </div>
 
       {/* Filters + Actions */}
@@ -470,32 +489,30 @@ export function StockTab({ locationId }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
-  icon: React.ReactNode;
+function SummaryChip({ label, value, active, onClick, accent }: {
   label: string;
-  value: string;
+  value: number;
+  active: boolean;
+  onClick: () => void;
   accent?: 'warning' | 'destructive';
-  onClick?: () => void;
-  tooltip?: string;
 }) {
   return (
-    <div
-      className={cn(
-        tokens.kpi.tile,
-        'relative',
-        onClick && 'cursor-pointer hover:border-primary/40 transition-colors',
-        accent === 'warning' && 'border-warning/30',
-        accent === 'destructive' && 'border-destructive/30',
-      )}
+    <button
       onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+        active
+          ? accent === 'destructive'
+            ? 'bg-destructive/10 border-destructive/30 text-destructive'
+            : accent === 'warning'
+              ? 'bg-warning/10 border-warning/30 text-warning'
+              : 'bg-primary/10 border-primary/30 text-primary'
+          : 'bg-muted/40 border-border/60 text-muted-foreground hover:border-border hover:text-foreground',
+      )}
     >
-      {tooltip && <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />}
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <span className={tokens.kpi.label}>{label}</span>
-      </div>
-      <span className={tokens.kpi.value}>{value}</span>
-    </div>
+      <span className="tabular-nums font-medium">{value}</span>
+      {label}
+    </button>
   );
 }
 
