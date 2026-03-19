@@ -25,6 +25,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BackroomBrandUsageCard } from './BackroomBrandUsageCard';
 import { BackroomHistoryChart } from './BackroomHistoryChart';
+import { BackroomProductAnalyticsCard } from './BackroomProductAnalyticsCard';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
