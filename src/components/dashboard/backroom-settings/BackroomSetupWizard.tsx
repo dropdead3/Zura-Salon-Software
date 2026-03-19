@@ -280,9 +280,41 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
     [selectedServiceIds, services]
   );
 
+  // ─── Supplier brand grouping ─────────────────────────────────────────────────
+  const supplierBrands = useMemo(() => {
+    const tracked = products.filter((p) => selectedProductIds.has(p.id) || p.is_backroom_tracked);
+    const map = new Map<string, ProductRow[]>();
+    for (const p of tracked) {
+      const brand = p.brand || 'Uncategorized';
+      if (!map.has(brand)) map.set(brand, []);
+      map.get(brand)!.push(p);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([brand, prods]) => ({ brand, products: prods }));
+  }, [products, selectedProductIds]);
+
+  const supplierFilteredProducts = useMemo(() => {
+    const tracked = products.filter((p) => selectedProductIds.has(p.id) || p.is_backroom_tracked);
+    if (!supplierSearch) return tracked;
+    const q = supplierSearch.toLowerCase();
+    return tracked.filter(p => p.name.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
+  }, [products, selectedProductIds, supplierSearch]);
+
+  const supplierBrandCounts = useMemo(() => {
+    const map = new Map<string, { total: number; selected: number }>();
+    for (const b of supplierBrands) {
+      map.set(b.brand, {
+        total: b.products.length,
+        selected: b.products.filter(p => supplierProductIds.has(p.id)).length,
+      });
+    }
+    return map;
+  }, [supplierBrands, supplierProductIds]);
+
   const progressPct = Math.round(((step + 1) / STEP_COUNT) * 100);
 
-  const stepLabels = ['Welcome', 'Products', 'Services', 'Allowances', 'Station'];
+  const stepLabels = ['Welcome', 'Products', 'Suppliers', 'Services', 'Allowances', 'Station'];
 
   return (
     <div className="space-y-6">
@@ -337,6 +369,49 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
             />
           )}
           {step === 2 && (
+            <SuppliersStep
+              supplierName={supplierName}
+              onNameChange={setSupplierName}
+              supplierEmail={supplierEmail}
+              onEmailChange={setSupplierEmail}
+              supplierPhone={supplierPhone}
+              onPhoneChange={setSupplierPhone}
+              supplierWebsite={supplierWebsite}
+              onWebsiteChange={setSupplierWebsite}
+              reorderMethod={supplierReorderMethod}
+              onReorderMethodChange={setSupplierReorderMethod}
+              reorderOther={supplierReorderOther}
+              onReorderOtherChange={setSupplierReorderOther}
+              leadTimeDays={supplierLeadTime}
+              onLeadTimeChange={setSupplierLeadTime}
+              moq={supplierMoq}
+              onMoqChange={setSupplierMoq}
+              assignMode={supplierAssignMode}
+              onAssignModeChange={setSupplierAssignMode}
+              brands={supplierBrands}
+              filteredProducts={supplierFilteredProducts}
+              selectedIds={supplierProductIds}
+              onToggleProduct={(id) => {
+                setSupplierProductIds(prev => {
+                  const next = new Set(prev);
+                  next.has(id) ? next.delete(id) : next.add(id);
+                  return next;
+                });
+              }}
+              onToggleBrand={(prods) => {
+                setSupplierProductIds(prev => {
+                  const next = new Set(prev);
+                  const allSelected = prods.every(p => next.has(p.id));
+                  prods.forEach(p => allSelected ? next.delete(p.id) : next.add(p.id));
+                  return next;
+                });
+              }}
+              brandCounts={supplierBrandCounts}
+              search={supplierSearch}
+              onSearchChange={setSupplierSearch}
+            />
+          )}
+          {step === 3 && (
             <ServicesStep
               services={services}
               isLoading={servicesLoading}
@@ -355,7 +430,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               }
             />
           )}
-          {step === 3 && (
+          {step === 4 && (
             <AllowancesStep
               services={services.filter((s) => trackedServiceIds.has(s.id))}
               allowances={allowances}
@@ -367,7 +442,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               }
             />
           )}
-          {step === 4 && (
+          {step === 5 && (
             <StationStep
               stationName={stationName}
               onNameChange={setStationName}
