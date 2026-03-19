@@ -528,7 +528,7 @@ function SummaryChip({ label, value, active, onClick, accent }: {
   );
 }
 
-function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo }: {
   group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -543,6 +543,8 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
+  poItemIds: Set<string>;
+  onToggleAddToPo: (productId: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
