@@ -108,7 +108,7 @@ export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
   // Register PDF export handler for parent header button
   useEffect(() => {
     if (pdfExportRef) {
-      pdfExportRef.current = () => handlePrintCountSheet();
+      pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handlePrintCountSheet();
     }
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [inventoryProducts, businessSettings, effectiveOrganization, locationInfo, pdfExportRef]);
