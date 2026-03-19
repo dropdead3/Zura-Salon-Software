@@ -730,7 +730,7 @@ export function MixSessionManager({
           variant="outline"
           onClick={handleAddBowl}
           disabled={createBowl.isPending}
-          className="w-full h-11 font-sans"
+          className="w-full h-11 min-h-[44px] font-sans"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           Add Bowl

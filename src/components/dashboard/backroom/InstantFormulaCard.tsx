@@ -138,6 +138,17 @@ export function InstantFormulaCard({
               Use Last Formula
             </Button>
           )}
+          {formula.referenceId && clientId && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="font-sans font-medium text-muted-foreground"
+              onClick={() => setShowShareDialog(true)}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </Button>
+          )}
           {onViewHistory && (
             <Button
               size="sm"
@@ -150,6 +161,21 @@ export function InstantFormulaCard({
             </Button>
           )}
         </div>
+
+        {formula.referenceId && clientId && (
+          <ShareFormulaDialog
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+            onSubmit={(sharedWithUserId, notes) => {
+              shareFormula.mutate({
+                formulaHistoryId: formula.referenceId!,
+                sharedWithUserId,
+                clientId: clientId!,
+                notes: notes || undefined,
+              });
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );

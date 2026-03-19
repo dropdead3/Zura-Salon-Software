@@ -24,6 +24,10 @@ import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { BackroomInsightsSection } from './BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
+import { WasteCategoryBreakdownCard } from '@/components/dashboard/backroom/WasteCategoryBreakdownCard';
+import { ServicePLReport } from '@/components/dashboard/backroom/ServicePLReport';
+import { BackroomInventoryValuationCard } from '@/components/dashboard/backroom/BackroomInventoryValuationCard';
+import { SeasonalDemandOverlay } from '@/components/dashboard/backroom/SeasonalDemandOverlay';
 import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 

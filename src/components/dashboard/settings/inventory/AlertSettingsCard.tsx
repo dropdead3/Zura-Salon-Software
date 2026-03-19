@@ -236,6 +236,21 @@ export function AlertSettingsCard() {
                   </div>
                 )}
 
+                {/* Require PO Approval */}
+                {autoCreatePo && (
+                  <div className="ml-4 pl-4 border-l border-border">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm">Require manager approval</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Auto-generated POs stay as drafts until a manager approves them
+                        </p>
+                      </div>
+                      <Switch checked={requirePoApproval} onCheckedChange={setRequirePoApproval} />
+                    </div>
+                  </div>
+                )}
+
                 {/* Dead Stock Detection */}
                 <div className="pt-3 border-t space-y-3">
                   <div className="flex items-center justify-between">

@@ -46,7 +46,7 @@ export function ManualWeightInput({
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className="h-12 text-lg font-display tabular-nums"
+          className="h-12 sm:h-12 text-lg font-display tabular-nums min-h-[48px]"
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
         />
       </div>
@@ -55,7 +55,7 @@ export function ManualWeightInput({
         size="lg"
         onClick={handleSubmit}
         disabled={disabled || !value || parseFloat(value) <= 0}
-        className="h-12 min-w-[48px] shrink-0"
+        className="h-12 min-w-[48px] min-h-[48px] shrink-0"
       >
         <Weight className="w-4 h-4 mr-1.5" />
         Capture
