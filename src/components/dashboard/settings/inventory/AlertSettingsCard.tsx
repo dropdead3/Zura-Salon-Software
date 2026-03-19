@@ -52,6 +52,13 @@ export function AlertSettingsCard() {
       setRequirePoApproval(settings.require_po_approval ?? true);
       setDeadStockEnabled(settings.dead_stock_enabled ?? true);
       setDeadStockDays(settings.dead_stock_days ?? 90);
+      setAuditFrequency(settings.audit_frequency ?? 'monthly');
+      setAuditReminderEnabled(settings.audit_reminder_enabled ?? true);
+      setAuditReminderDaysBefore(settings.audit_reminder_days_before ?? 3);
+      const roles = settings.audit_notify_roles ?? ['inventory_manager', 'manager'];
+      setAuditNotifyInventoryManager(roles.includes('inventory_manager'));
+      setAuditNotifyManager(roles.includes('manager'));
+      setAuditNotifyAdmin(roles.includes('admin'));
     }
   }, [settings]);
 
