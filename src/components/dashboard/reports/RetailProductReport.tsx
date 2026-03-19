@@ -38,6 +38,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
 
   const generatePDF = async () => {
