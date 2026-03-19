@@ -479,6 +479,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
           <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
           <BackroomInventoryValuationCard locationId={effectiveLocationId} />
           <SeasonalDemandOverlay locationId={effectiveLocationId} />
+          <ProductUsageFrequencyTable locationId={effectiveLocationId} />
         </TabsContent>
 
         {/* ── AI Intelligence ── */}
