@@ -25,6 +25,7 @@ export interface BackroomInventoryRow {
   cost_price: number | null;
   order_qty: number;
   open_po_qty: number;
+  effective_stock: number;
   recommended_order_qty: number;
   status: StockStatus;
   charge_per_gram: number | null;
