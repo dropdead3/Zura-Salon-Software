@@ -109,7 +109,7 @@ function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof 
   switch (sectionId) {
     case 'products': return health.trackedProducts > 0 ? 'done' : 'none';
     case 'services': return health.trackedServices > 0 ? 'done' : 'none';
-    case 'recipes': return health.recipesConfigured > 0 ? 'done' : 'none';
+    case 'formulas': return health.recipesConfigured > 0 ? 'done' : 'none';
     case 'allowances': return health.allowancePolicies > 0 ? 'done' : 'none';
     case 'stations': return health.stationsConfigured > 0 ? 'done' : 'none';
     case 'alerts': return health.alertRulesConfigured > 0 ? 'done' : 'none';
