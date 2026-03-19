@@ -181,6 +181,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
         product_ids: Array.from(supplierProductIds),
         organization_id: orgId,
         supplier_name: supplierName.trim(),
+        contact_name: supplierContactName || null,
         supplier_email: supplierEmail || null,
         supplier_phone: supplierPhone || null,
         supplier_website: supplierWebsite || null,
