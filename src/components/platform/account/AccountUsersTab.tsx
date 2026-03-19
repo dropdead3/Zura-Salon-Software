@@ -70,6 +70,7 @@ const roleColors: Record<AppRole, string> = {
   operations_assistant: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
   booth_renter: 'bg-orange-600/20 text-orange-400 border-orange-600/30',
   bookkeeper: 'bg-emerald-600/20 text-emerald-400 border-emerald-600/30',
+  inventory_manager: 'bg-teal-600/20 text-teal-400 border-teal-600/30',
 };
 
 export function AccountUsersTab({ organizationId, organizationName }: AccountUsersTabProps) {

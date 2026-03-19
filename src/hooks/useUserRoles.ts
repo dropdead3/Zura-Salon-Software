@@ -35,6 +35,7 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   operations_assistant: 'Supports daily salon operations',
   booth_renter: 'Independent stylist renting space',
   bookkeeper: 'External accounting access for payroll, sales data, and financial reports',
+  inventory_manager: 'Manages stock levels, purchase orders, and inventory counts across locations',
 };
 
 export interface UserWithRoles {
