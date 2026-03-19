@@ -527,7 +527,7 @@ export function StockTab({ locationId }: StockTabProps) {
                       <MetricInfoTooltip description="Current quantity on hand. Click the number to adjust." />
                     </span>
                   </TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>
                     <span className="inline-flex items-center gap-1 justify-end">
                       Suggested Order
                       <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
