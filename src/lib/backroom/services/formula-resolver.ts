@@ -133,6 +133,72 @@ export async function fetchStylistMostUsed(
   };
 }
 
+// ─── Priority 2.5: Shared Formula ──────────────────
+
+export async function fetchSharedFormula(
+  orgId: string,
+  clientId: string,
+  serviceName?: string | null,
+): Promise<ResolvedFormula | null> {
+  // Find shared formulas for this client
+  const { data: shares } = await supabase
+    .from('shared_formulas')
+    .select('formula_history_id')
+    .eq('organization_id', orgId)
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (!shares?.length) return null;
+
+  const historyIds = (shares as any[]).map((s) => s.formula_history_id);
+
+  // Fetch the referenced formula history entries
+  let query = supabase
+    .from('client_formula_history')
+    .select('id, formula_data, service_name')
+    .in('id', historyIds)
+    .order('created_at', { ascending: false });
+
+  // Prefer service-matching formula if service name provided
+  if (serviceName) {
+    const { data: matchData } = await query.ilike('service_name', serviceName).limit(1).maybeSingle();
+    if (matchData) {
+      const lines = (matchData as any).formula_data as FormulaLine[];
+      if (lines?.length) {
+        return {
+          lines,
+          source: 'shared_formula',
+          sourceLabel: SOURCE_LABELS.shared_formula,
+          referenceId: (matchData as any).id,
+          ratio: computeRatio(lines),
+        };
+      }
+    }
+  }
+
+  // Fallback: any shared formula for this client
+  const { data: anyData } = await supabase
+    .from('client_formula_history')
+    .select('id, formula_data')
+    .in('id', historyIds)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!anyData) return null;
+  const lines = (anyData as any).formula_data as FormulaLine[];
+  if (!lines?.length) return null;
+
+  return {
+    lines,
+    source: 'shared_formula',
+    sourceLabel: SOURCE_LABELS.shared_formula,
+    referenceId: (anyData as any).id,
+    ratio: computeRatio(lines),
+  };
+}
+
 // ─── Priority 3: Salon Service Formula ──────────────
 
 export async function fetchSalonRecipe(
