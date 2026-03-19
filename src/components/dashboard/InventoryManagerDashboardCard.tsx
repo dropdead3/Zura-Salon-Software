@@ -153,6 +153,19 @@ function InventoryManagerDashboardCardInner() {
           </div>
         )}
 
+        {/* Next Audit Due */}
+        {nextAudit && (
+          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${isOverdue ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
+            <CalendarCheck className={`w-4 h-4 shrink-0 ${isOverdue ? 'text-destructive' : 'text-primary'}`} />
+            <p className={`text-xs font-sans ${isOverdue ? 'text-destructive' : 'text-foreground'}`}>
+              Next audit {isOverdue ? 'overdue' : 'due'}: {format(new Date(nextAudit.due_date), 'MMM d, yyyy')}
+            </p>
+            <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans" asChild>
+              <Link to="/dashboard/admin/backroom-settings?section=inventory&tab=counts">View</Link>
+            </Button>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="grid grid-cols-3 gap-2">
           {quickActions.map((action) => (

@@ -482,6 +482,11 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
           </Card>
         )
       )}
+
+      {/* Audit Schedule */}
+      {tab === 'audit' && (
+        <AuditComplianceTracker locationId={locationId} />
+      )}
     </div>
   );
 }
