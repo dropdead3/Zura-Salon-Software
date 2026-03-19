@@ -133,6 +133,7 @@ export function useBackroomSetupHealth() {
       return {
         trackedProducts: trackedProducts.length,
         totalProducts: products.length,
+        suppliersConfigured,
         trackedServices: trackedServices.length,
         totalServices: services.length,
         recipesConfigured: recipesRes.count || 0,

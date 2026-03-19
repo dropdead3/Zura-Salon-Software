@@ -52,6 +52,7 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   const checklistItems = [
     { label: 'Backroom products configured', value: health.trackedProducts, total: health.totalProducts, section: 'products', icon: Package, done: health.trackedProducts > 0 },
+    { label: 'Suppliers linked to products', value: health.suppliersConfigured, section: 'suppliers', icon: Truck, done: health.suppliersConfigured > 0 },
     { label: 'Services mapped for tracking', value: health.trackedServices, total: health.totalServices, section: 'services', icon: Wrench, done: health.trackedServices > 0 },
     { label: 'Recipe baselines defined', value: health.recipesConfigured, section: 'recipes', icon: BarChart3, done: health.recipesConfigured > 0 },
     { label: 'Allowance policies configured', value: health.allowancePolicies, section: 'allowances', icon: DollarSign, done: health.allowancePolicies > 0 },
