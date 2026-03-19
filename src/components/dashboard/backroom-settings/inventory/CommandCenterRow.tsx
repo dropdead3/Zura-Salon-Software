@@ -255,16 +255,21 @@ export function CommandCenterRow({
 
         {/* Stock */}
         <TableCell className="text-right tabular-nums">
-          <InlineEditCell
-            value={row.quantity_on_hand}
-            onSave={(newVal) => {
-              if (!orgId || newVal == null) return;
-              adjustStock.mutate({
-                orgId, productId: row.id, currentQty: row.quantity_on_hand, newQty: newVal, locationId,
-              });
-            }}
-            className="font-medium"
-          />
+          <div className="flex flex-col items-end">
+            <InlineEditCell
+              value={row.quantity_on_hand}
+              onSave={(newVal) => {
+                if (!orgId || newVal == null) return;
+                adjustStock.mutate({
+                  orgId, productId: row.id, currentQty: row.quantity_on_hand, newQty: newVal, locationId,
+                });
+              }}
+              className="font-medium"
+            />
+            {intelligence && intelligence.dailyUsage > 0 && (
+              <span className="text-[10px] text-muted-foreground/40 tabular-nums">{intelligence.dailyUsage}/day</span>
+            )}
+          </div>
         </TableCell>
 
         {/* Suggested Order — PRIMARY DECISION SIGNAL */}
