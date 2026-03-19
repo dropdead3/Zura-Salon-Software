@@ -51,6 +51,9 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
       account_number: '',
       lead_time_days: '',
       moq: '1',
+      secondary_contact_name: '',
+      secondary_contact_email: '',
+      secondary_contact_phone: '',
     },
   });
 
