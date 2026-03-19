@@ -17,6 +17,9 @@ export interface ProductSupplier {
   lead_time_days: number | null;
   account_number: string | null;
   moq: number;
+  secondary_contact_name: string | null;
+  secondary_contact_email: string | null;
+  secondary_contact_phone: string | null;
   avg_delivery_days: number | null;
   delivery_count: number;
   created_at: string;
@@ -81,6 +84,9 @@ export function useUpsertSupplier() {
             lead_time_days: supplier.lead_time_days,
             account_number: supplier.account_number,
             moq: supplier.moq ?? 1,
+            secondary_contact_name: supplier.secondary_contact_name ?? null,
+            secondary_contact_email: supplier.secondary_contact_email ?? null,
+            secondary_contact_phone: supplier.secondary_contact_phone ?? null,
           })
           .eq('id', supplier.id)
           .select()
@@ -103,6 +109,9 @@ export function useUpsertSupplier() {
             lead_time_days: supplier.lead_time_days,
             account_number: supplier.account_number,
             moq: supplier.moq ?? 1,
+            secondary_contact_name: supplier.secondary_contact_name ?? null,
+            secondary_contact_email: supplier.secondary_contact_email ?? null,
+            secondary_contact_phone: supplier.secondary_contact_phone ?? null,
           })
           .select()
           .single();
@@ -136,6 +145,9 @@ export function useBatchUpsertSupplier() {
       account_number?: string | null;
       lead_time_days?: number | null;
       moq?: number;
+      secondary_contact_name?: string | null;
+      secondary_contact_email?: string | null;
+      secondary_contact_phone?: string | null;
     }) => {
       const rows = input.product_ids.map((pid) => ({
         product_id: pid,
@@ -148,6 +160,9 @@ export function useBatchUpsertSupplier() {
         account_number: input.account_number || null,
         lead_time_days: input.lead_time_days ?? null,
         moq: input.moq ?? 1,
+        secondary_contact_name: input.secondary_contact_name || null,
+        secondary_contact_email: input.secondary_contact_email || null,
+        secondary_contact_phone: input.secondary_contact_phone || null,
       }));
 
       const { error } = await supabase

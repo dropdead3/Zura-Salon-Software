@@ -19,6 +19,9 @@ export interface SupplierGroup {
   reorder_method: string | null;
   reorder_method_other: string | null;
   reorder_notes: string | null;
+  secondary_contact_name: string | null;
+  secondary_contact_email: string | null;
+  secondary_contact_phone: string | null;
   product_ids: string[];
   /** One representative row id for updates */
   rows: { id: string; product_id: string }[];
@@ -54,7 +57,7 @@ export function useSupplierGroups() {
     queryFn: async (): Promise<SupplierGroup[]> => {
       const { data, error } = await supabase
         .from('product_suppliers')
-        .select('id, product_id, supplier_name, contact_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes')
+        .select('id, product_id, supplier_name, contact_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes, secondary_contact_name, secondary_contact_email, secondary_contact_phone')
         .eq('organization_id', orgId!)
         .order('supplier_name');
 
@@ -76,6 +79,9 @@ export function useSupplierGroups() {
             reorder_method: row.reorder_method,
             reorder_method_other: (row as any).reorder_method_other ?? null,
             reorder_notes: row.reorder_notes,
+            secondary_contact_name: (row as any).secondary_contact_name ?? null,
+            secondary_contact_email: (row as any).secondary_contact_email ?? null,
+            secondary_contact_phone: (row as any).secondary_contact_phone ?? null,
             product_ids: [],
             rows: [],
           });
@@ -215,6 +221,9 @@ export function useUpdateSupplierContact() {
       reorder_method?: string | null;
       reorder_method_other?: string | null;
       reorder_notes?: string | null;
+      secondary_contact_name?: string | null;
+      secondary_contact_email?: string | null;
+      secondary_contact_phone?: string | null;
     }) => {
       const { error } = await supabase
         .from('product_suppliers')
@@ -229,6 +238,9 @@ export function useUpdateSupplierContact() {
           reorder_method: params.reorder_method ?? null,
           reorder_method_other: params.reorder_method === 'other' ? (params.reorder_method_other ?? null) : null,
           reorder_notes: params.reorder_notes ?? null,
+          secondary_contact_name: params.secondary_contact_name ?? null,
+          secondary_contact_email: params.secondary_contact_email ?? null,
+          secondary_contact_phone: params.secondary_contact_phone ?? null,
         })
         .eq('organization_id', orgId!)
         .eq('supplier_name', params.supplier_name);

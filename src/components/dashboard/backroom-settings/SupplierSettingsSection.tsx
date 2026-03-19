@@ -52,6 +52,9 @@ interface ContactForm {
   reorder_method: string;
   reorder_method_other: string;
   reorder_notes: string;
+  secondary_contact_name: string;
+  secondary_contact_email: string;
+  secondary_contact_phone: string;
 }
 
 export function SupplierSettingsSection() {
@@ -107,6 +110,9 @@ export function SupplierSettingsSection() {
         reorder_method: selectedGroup.reorder_method || '',
         reorder_method_other: selectedGroup.reorder_method_other || '',
         reorder_notes: selectedGroup.reorder_notes || '',
+        secondary_contact_name: selectedGroup.secondary_contact_name || '',
+        secondary_contact_email: selectedGroup.secondary_contact_email || '',
+        secondary_contact_phone: selectedGroup.secondary_contact_phone || '',
       });
       setRenameMode(false);
     }
@@ -126,6 +132,9 @@ export function SupplierSettingsSection() {
       reorder_method: data.reorder_method || null,
       reorder_method_other: data.reorder_method === 'other' ? (data.reorder_method_other || null) : null,
       reorder_notes: data.reorder_notes || null,
+      secondary_contact_name: data.secondary_contact_name || null,
+      secondary_contact_email: data.secondary_contact_email || null,
+      secondary_contact_phone: data.secondary_contact_phone || null,
     });
   };
 
@@ -376,6 +385,25 @@ export function SupplierSettingsSection() {
                           className="min-h-[36px] text-sm resize-none"
                           rows={1}
                         />
+                      </div>
+                    </div>
+
+                    {/* Secondary Contact */}
+                    <div className="border-t border-border/60 pt-4 mt-1 space-y-3">
+                      <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="scn" className={tokens.label.default}>Name</Label>
+                        <Input id="scn" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="sce" className={tokens.label.default}>Email</Label>
+                          <Input id="sce" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="scp" className={tokens.label.default}>Phone</Label>
+                          <Input id="scp" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                        </div>
                       </div>
                     </div>
 

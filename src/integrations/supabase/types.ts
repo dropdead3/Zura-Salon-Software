@@ -13920,6 +13920,9 @@ export type Database = {
           reorder_method: string | null
           reorder_method_other: string | null
           reorder_notes: string | null
+          secondary_contact_email: string | null
+          secondary_contact_name: string | null
+          secondary_contact_phone: string | null
           supplier_email: string | null
           supplier_name: string
           supplier_phone: string | null
@@ -13940,6 +13943,9 @@ export type Database = {
           reorder_method?: string | null
           reorder_method_other?: string | null
           reorder_notes?: string | null
+          secondary_contact_email?: string | null
+          secondary_contact_name?: string | null
+          secondary_contact_phone?: string | null
           supplier_email?: string | null
           supplier_name: string
           supplier_phone?: string | null
@@ -13960,6 +13966,9 @@ export type Database = {
           reorder_method?: string | null
           reorder_method_other?: string | null
           reorder_notes?: string | null
+          secondary_contact_email?: string | null
+          secondary_contact_name?: string | null
+          secondary_contact_phone?: string | null
           supplier_email?: string | null
           supplier_name?: string
           supplier_phone?: string | null

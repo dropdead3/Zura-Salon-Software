@@ -29,6 +29,9 @@ interface SupplierForm {
   account_number: string;
   lead_time_days: string;
   moq: string;
+  secondary_contact_name: string;
+  secondary_contact_email: string;
+  secondary_contact_phone: string;
 }
 
 export function SupplierAssignDialog({ open, onOpenChange, brand, products }: SupplierAssignDialogProps) {
@@ -48,6 +51,9 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
       account_number: '',
       lead_time_days: '',
       moq: '1',
+      secondary_contact_name: '',
+      secondary_contact_email: '',
+      secondary_contact_phone: '',
     },
   });
 
@@ -61,6 +67,9 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
         account_number: '',
         lead_time_days: '',
         moq: '1',
+        secondary_contact_name: '',
+        secondary_contact_email: '',
+        secondary_contact_phone: '',
       });
     }
   }, [open, existingSupplier?.supplier_name]);
@@ -78,6 +87,9 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
         account_number: data.account_number || null,
         lead_time_days: data.lead_time_days ? parseInt(data.lead_time_days) : null,
         moq: data.moq ? parseInt(data.moq) : 1,
+        secondary_contact_name: data.secondary_contact_name || null,
+        secondary_contact_email: data.secondary_contact_email || null,
+        secondary_contact_phone: data.secondary_contact_phone || null,
       },
       { onSuccess: () => onOpenChange(false) }
     );
@@ -134,6 +146,24 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
             </div>
           </div>
 
+          {/* Secondary Contact */}
+          <div className="border-t border-border/60 pt-3 mt-1 space-y-3">
+            <p className="text-sm font-sans text-foreground">Secondary Contact</p>
+            <div className="space-y-2">
+              <Label htmlFor="secondary_contact_name">Name</Label>
+              <Input id="secondary_contact_name" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="secondary_contact_email">Email</Label>
+                <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondary_contact_phone">Phone</Label>
+                <Input id="secondary_contact_phone" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+              </div>
+            </div>
+          </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={batchUpsert.isPending}>

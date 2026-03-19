@@ -83,6 +83,9 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const [supplierProductIds, setSupplierProductIds] = useState<Set<string>>(new Set());
   const [supplierAssignMode, setSupplierAssignMode] = useState<'brand' | 'product'>('brand');
   const [supplierSearch, setSupplierSearch] = useState('');
+  const [supplierSecondaryName, setSupplierSecondaryName] = useState('');
+  const [supplierSecondaryEmail, setSupplierSecondaryEmail] = useState('');
+  const [supplierSecondaryPhone, setSupplierSecondaryPhone] = useState('');
 
   // ─── Step 3: Service mapping state ──────────────────────────────────────────
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
@@ -187,6 +190,9 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
         supplier_website: supplierWebsite || null,
         lead_time_days: supplierLeadTime ? parseInt(supplierLeadTime) : null,
         moq: supplierMoq ? parseInt(supplierMoq) : 1,
+        secondary_contact_name: supplierSecondaryName || null,
+        secondary_contact_email: supplierSecondaryEmail || null,
+        secondary_contact_phone: supplierSecondaryPhone || null,
       });
     }
 
@@ -413,6 +419,12 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               brandCounts={supplierBrandCounts}
               search={supplierSearch}
               onSearchChange={setSupplierSearch}
+              secondaryName={supplierSecondaryName}
+              onSecondaryNameChange={setSupplierSecondaryName}
+              secondaryEmail={supplierSecondaryEmail}
+              onSecondaryEmailChange={setSupplierSecondaryEmail}
+              secondaryPhone={supplierSecondaryPhone}
+              onSecondaryPhoneChange={setSupplierSecondaryPhone}
             />
           )}
           {step === 3 && (
@@ -543,6 +555,9 @@ function SuppliersStep({
   brands, filteredProducts, selectedIds,
   onToggleProduct, onToggleBrand, brandCounts,
   search, onSearchChange,
+  secondaryName, onSecondaryNameChange,
+  secondaryEmail, onSecondaryEmailChange,
+  secondaryPhone, onSecondaryPhoneChange,
 }: {
   supplierName: string; onNameChange: (v: string) => void;
   supplierContactName: string; onContactNameChange: (v: string) => void;
@@ -561,6 +576,9 @@ function SuppliersStep({
   onToggleBrand: (prods: ProductRow[]) => void;
   brandCounts: Map<string, { total: number; selected: number }>;
   search: string; onSearchChange: (s: string) => void;
+  secondaryName: string; onSecondaryNameChange: (v: string) => void;
+  secondaryEmail: string; onSecondaryEmailChange: (v: string) => void;
+  secondaryPhone: string; onSecondaryPhoneChange: (v: string) => void;
 }) {
   return (
     <Card className={tokens.card.wrapper}>
@@ -604,6 +622,26 @@ function SuppliersStep({
           <Label className={tokens.label.default}>Website</Label>
           <Input value={supplierWebsite} onChange={e => onWebsiteChange(e.target.value)} placeholder="https://supplier.com" />
         </div>
+
+        {/* Secondary Contact */}
+        <div className="border-t border-border/60 pt-3 mt-1 space-y-3">
+          <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Name</Label>
+            <Input value={secondaryName} onChange={e => onSecondaryNameChange(e.target.value)} placeholder="e.g. John Doe" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className={tokens.label.default}>Email</Label>
+              <Input type="email" value={secondaryEmail} onChange={e => onSecondaryEmailChange(e.target.value)} placeholder="backup@supplier.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className={tokens.label.default}>Phone</Label>
+              <Input value={secondaryPhone} onChange={e => onSecondaryPhoneChange(e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label className={tokens.label.default}>Reorder Method</Label>

@@ -33,6 +33,9 @@ interface SupplierDetails {
   reorder_method: string;
   reorder_method_other: string;
   reorder_notes: string;
+  secondary_contact_name: string;
+  secondary_contact_email: string;
+  secondary_contact_phone: string;
 }
 
 const EMPTY_DETAILS: SupplierDetails = {
@@ -47,6 +50,9 @@ const EMPTY_DETAILS: SupplierDetails = {
   reorder_method: '',
   reorder_method_other: '',
   reorder_notes: '',
+  secondary_contact_name: '',
+  secondary_contact_email: '',
+  secondary_contact_phone: '',
 };
 
 const STEPS = ['Supplier Details', 'Assign Products', 'Review & Confirm'] as const;
@@ -141,7 +147,7 @@ export function AddSupplierWizard({ open, onOpenChange, onComplete }: AddSupplie
         {
           onSuccess: () => {
             // Now update contact details if any were provided
-            const hasContact = details.contact_name || details.email || details.phone || details.website || details.account_number || details.lead_time_days || details.reorder_method;
+            const hasContact = details.contact_name || details.email || details.phone || details.website || details.account_number || details.lead_time_days || details.reorder_method || details.secondary_contact_name || details.secondary_contact_email || details.secondary_contact_phone;
             if (hasContact) {
               updateContact.mutate({
                 supplier_name: name,
@@ -155,6 +161,9 @@ export function AddSupplierWizard({ open, onOpenChange, onComplete }: AddSupplie
                 reorder_method: details.reorder_method || null,
                 reorder_method_other: details.reorder_method === 'other' ? (details.reorder_method_other || null) : null,
                 reorder_notes: details.reorder_notes || null,
+                secondary_contact_name: details.secondary_contact_name || null,
+                secondary_contact_email: details.secondary_contact_email || null,
+                secondary_contact_phone: details.secondary_contact_phone || null,
               }, {
                 onSuccess: () => {
                   onOpenChange(false);
@@ -335,6 +344,39 @@ function StepDetails({
           placeholder="https://supplier.com"
           autoCapitalize="off"
         />
+      </div>
+
+      {/* Secondary Contact */}
+      <div className="border-t border-border/60 pt-4 mt-1 space-y-3">
+        <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>Name</Label>
+          <Input
+            value={details.secondary_contact_name}
+            onChange={e => update('secondary_contact_name', e.target.value)}
+            placeholder="e.g. John Doe"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Email</Label>
+            <Input
+              type="email"
+              value={details.secondary_contact_email}
+              onChange={e => update('secondary_contact_email', e.target.value)}
+              placeholder="backup@supplier.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Phone</Label>
+            <Input
+              value={details.secondary_contact_phone}
+              onChange={e => update('secondary_contact_phone', e.target.value)}
+              placeholder="(555) 987-6543"
+              autoCapitalize="off"
+            />
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1.5">
@@ -557,6 +599,9 @@ function StepReview({
     { label: 'Lead Time', value: details.lead_time_days ? `${details.lead_time_days} days` : '' },
     { label: 'MOQ', value: details.moq !== '1' ? details.moq : '' },
     { label: 'Reorder Method', value: details.reorder_method === 'other' && details.reorder_method_other ? `Other — ${details.reorder_method_other}` : details.reorder_method },
+    { label: 'Secondary Contact', value: details.secondary_contact_name },
+    { label: 'Secondary Email', value: details.secondary_contact_email },
+    { label: 'Secondary Phone', value: details.secondary_contact_phone },
   ].filter(r => r.value);
 
   return (
