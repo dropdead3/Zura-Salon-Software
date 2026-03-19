@@ -201,9 +201,20 @@ export function StockTab({ locationId }: StockTabProps) {
     ? selectedReorderProducts
     : inventory.filter(r => r.recommended_order_qty > 0);
 
-  // Single product quick reorder
-  const handleQuickReorder = (row: BackroomInventoryRow) => {
-    if (!orgId || row.recommended_order_qty <= 0) return;
+  // Override handler
+  const handleQtyOverride = (productId: string, qty: number | null) => {
+    setQtyOverrides(prev => {
+      const next = new Map(prev);
+      if (qty == null) next.delete(productId);
+      else next.set(productId, qty);
+      return next;
+    });
+  };
+
+  // Single product quick reorder — respects override
+  const handleQuickReorder = (row: BackroomInventoryRow, overrideQty?: number) => {
+    const qty = overrideQty ?? qtyOverrides.get(row.id) ?? row.recommended_order_qty;
+    if (!orgId || qty <= 0) return;
     createPO.mutate({
       organization_id: orgId,
       supplier_name: row.supplier_name ?? undefined,
@@ -211,7 +222,7 @@ export function StockTab({ locationId }: StockTabProps) {
       notes: `Reorder for ${stripSizeSuffix(row.name)}`,
       lines: [{
         product_id: row.id,
-        quantity_ordered: row.recommended_order_qty,
+        quantity_ordered: qty,
         unit_cost: row.cost_price ?? row.cost_per_gram ?? undefined,
       }],
     });
