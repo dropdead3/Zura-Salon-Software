@@ -1752,6 +1752,11 @@ export function AppointmentDetailSheet({
                     )}
                   </TabsContent>
 
+                  {/* ─── TAB: Formulas ────────────────────────── */}
+                  <TabsContent value="formulas" className="p-6 pt-4 mt-0">
+                    <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
+                  </TabsContent>
+
                   {/* ─── TAB: Backroom ─────────────────────────── */}
                   <TabsContent value="backroom" className="p-6 pt-4 mt-0">
                     <BackroomTab

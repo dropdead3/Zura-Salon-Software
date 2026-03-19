@@ -1353,6 +1353,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               />
             </TabsContent>
             
+            <TabsContent value="formulas" className="mt-4">
+              <ClientFormulaHistoryTab clientId={client.phorest_client_id || client.id} />
+            </TabsContent>
+
             <TabsContent value="notes" className="mt-4">
               <ClientNotesSection clientId={client.id} />
             </TabsContent>
