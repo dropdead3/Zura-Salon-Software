@@ -47,9 +47,9 @@ export function DockAppTab() {
               BLE Scale Ready
             </PlatformBadge>
           </div>
-          <PlatformButton variant="outline" disabled className="mt-2">
-            <Lock className="w-3.5 h-3.5" />
-            Launch Dock Preview (Coming Soon)
+          <PlatformButton variant="outline" className="mt-2" onClick={() => window.open('/dock', '_blank')}>
+            <ExternalLink className="w-3.5 h-3.5" />
+            Launch Dock Preview
           </PlatformButton>
         </div>
       </PlatformCard>
