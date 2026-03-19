@@ -173,7 +173,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>Employee Performance</CardTitle>
-                <MetricInfoTooltip description="Per-stylist backroom efficiency metrics for the selected date range. Sessions/Day, average mix duration, waste percentage, and reweigh compliance." />
+                <MetricInfoTooltip description="Per-stylist backroom efficiency metrics for the selected date range. Sessions/Day, average mix duration, waste percentage, and reweigh rate." />
               </div>
               <CardDescription className="text-xs">{rangeLabel}</CardDescription>
             </div>

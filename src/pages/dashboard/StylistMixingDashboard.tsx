@@ -76,7 +76,7 @@ export default function StylistMixingDashboard() {
           variant={stats && parseFloat(stats.wasteRate) > 10 ? 'warning' : 'default'}
         />
         <StatTile
-          label="Reweigh Compliance"
+          label="Reweigh Rate"
           value={stats ? `${stats.reweighCompliance}%` : '—'}
           icon={<BarChart3 className="w-4 h-4 text-primary" />}
           variant={stats && parseInt(stats.reweighCompliance) < 80 ? 'warning' : 'default'}
