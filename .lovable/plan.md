@@ -1,31 +1,36 @@
 
 
-# Add "Other" Specification Input for Dropdown Selections
+# Add Suppliers to the Backroom Setup Wizard
 
-## Problem
-When "Other" is selected in a dropdown (e.g., Reorder Method), there's no way to specify what "Other" means.
+## Overview
+Insert a "Suppliers" step into the setup wizard after Products (step 2), and add supplier tracking to the setup health metrics and dashboard banner.
 
 ## Changes
 
-### 1. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`
-- Add a `reorder_method_other` field to the wizard's `details` state
-- After the Reorder Method select, conditionally render a text Input when `reorder_method === 'other'` with placeholder "Specify method..."
-- Pass `reorder_method_other` through to the supplier creation so it persists (likely stored in `reorder_notes` or a new column)
+### 1. `src/hooks/backroom/useBackroomSetupHealth.ts`
+- Add a query for distinct `supplier_name` count from `product_suppliers`
+- Add `suppliersConfigured: number` to `SetupHealthMetrics`
+- Add a warning when no suppliers are configured but tracked products exist
 
-### 2. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`
-- Same pattern: after the Reorder Method select (~line 348), add a conditional Input when value is `'other'`
-- Wire it into the form via `register('reorder_method_other')` or store in `reorder_notes`
+### 2. `src/hooks/backroom/useBackroomDashboard.ts`
+- Add `{ label: 'Suppliers', done: h.suppliersConfigured > 0 }` step after Products in the `setupHealth` steps array (line ~105)
 
-### 3. Database consideration
-The `suppliers` table likely doesn't have a `reorder_method_other` column. Two options:
-- **Simple**: Concatenate into existing `reorder_method` field as `"other:Website XYZ"` and parse on display
-- **Cleaner**: Add a `reorder_method_other` text column to the suppliers table via migration
+### 3. `src/components/dashboard/backroom-settings/BackroomSetupOverview.tsx`
+- Add suppliers to the `checklistItems` array after the products entry (line ~54)
 
-I'll add the column for cleanliness, with a single migration adding `reorder_method_other text` to the suppliers table.
+### 4. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`
+- Bump `STEP_COUNT` from 5 → 6
+- Add supplier state: `supplierName`, `supplierEmail`, `supplierPhone`, `supplierWebsite`, `reorderMethod`, `reorderMethodOther`, `leadTimeDays`, `moq`, `selectedBrandNames` (for by-brand assignment), `selectedSupplierProductIds`
+- Insert new step 2 (SuppliersStep) — reuses the same two-tab pattern from `AddSupplierWizard` (By Brand / By Product), plus supplier contact fields
+- On `goNext` for step 2: call `useBatchUpsertSupplier` to persist the supplier + product links
+- Shift existing steps 2-4 → 3-5; update `stepLabels` to include 'Suppliers'
+- Update `isSaving` to include the new mutation
 
-### 4. `src/pages/dashboard/platform/Accounts.tsx`
-- Same pattern for the "Other" business type selection (~line 264): show an input when `other` is selected to capture the specific type
+### 5. New `SuppliersStep` component (inside wizard file)
+- Supplier name (required), email, phone, website, reorder method (with "other" input), lead time, MOQ
+- Two-tab product assignment: By Brand (checkbox brand cards with product counts) and By Product (searchable checkbox list)
+- Products query filtered to `product_type = 'Supplies'` and those selected in step 1
 
 ## Summary
-Three locations get the conditional input field. One small migration adds the column. Clean and consistent.
+Six files touched. The wizard gains one new step, the dashboard banner gains one new tracker dot, and the setup overview gains one new checklist item.
 
