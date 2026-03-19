@@ -192,40 +192,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         
       </div>
 
-      {/* ── KPI Strip ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <KpiTile
-          icon={FlaskConical}
-          label="Chemical Cost/Svc"
-          value={formatCurrency(kpis.chemicalCostPerService)}
-        />
-        <KpiTile
-          icon={Trash2}
-          label="Waste Rate"
-          value={`${kpis.wasteRate.toFixed(1)}%`}
-          status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral'}
-        />
-        <KpiTile
-          icon={ClipboardCheck}
-          label="Reweigh Compliance"
-          value={`${kpis.reweighCompliance.toFixed(0)}%`}
-          status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
-        />
-        <KpiTile
-          icon={AlertCircle}
-          label="Stockout Alerts"
-          value={String(kpis.stockoutAlertCount)}
-          status={kpis.stockoutAlertCount > 0 ? 'warning' : 'ok'}
-        />
-        <BudgetKpiTile
-          budgetPct={kpis.budgetPct}
-          currentSpend={kpis.currentMonthSpend}
-          monthlyBudget={kpis.monthlyBudget}
-          threshold={kpis.alertThreshold}
-          formatCurrency={formatCurrency}
-        />
-      </div>
-
       {/* ── Sub-tabs ── */}
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList>
@@ -242,6 +208,39 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
+          {/* ── KPI Strip ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <KpiTile
+              icon={FlaskConical}
+              label="Chemical Cost/Svc"
+              value={formatCurrency(kpis.chemicalCostPerService)}
+            />
+            <KpiTile
+              icon={Trash2}
+              label="Waste Rate"
+              value={`${kpis.wasteRate.toFixed(1)}%`}
+              status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral'}
+            />
+            <KpiTile
+              icon={ClipboardCheck}
+              label="Reweigh Compliance"
+              value={`${kpis.reweighCompliance.toFixed(0)}%`}
+              status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
+            />
+            <KpiTile
+              icon={AlertCircle}
+              label="Stockout Alerts"
+              value={String(kpis.stockoutAlertCount)}
+              status={kpis.stockoutAlertCount > 0 ? 'warning' : 'ok'}
+            />
+            <BudgetKpiTile
+              budgetPct={kpis.budgetPct}
+              currentSpend={kpis.currentMonthSpend}
+              monthlyBudget={kpis.monthlyBudget}
+              threshold={kpis.alertThreshold}
+              formatCurrency={formatCurrency}
+            />
+          </div>
           {/* Two-Column: Control Tower + Procurement */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Control Tower Alerts */}
