@@ -1,13 +1,13 @@
 /**
  * BackroomInventorySection — Tabbed inventory management workspace.
- * Workflow-oriented 7-tab layout: Stock | Reorder | Orders | Receive | Counts | Audit Log | Analytics
+ * Workflow-oriented 6-tab layout: Stock | Orders | Receive | Counts | Audit Log | Analytics
  * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
 
 import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, RefreshCcw, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3 } from 'lucide-react';
+import { MapPin, Package, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3 } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { NavBadge } from '../NavBadge';
 import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
 import { StockTab } from './inventory/StockTab';
-import { ReorderTab } from './inventory/ReorderTab';
 import { OrdersTab } from './inventory/OrdersTab';
 import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
@@ -74,7 +73,6 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
 
   const outOfStockCount = useMemo(() => inventory.filter(r => r.status === 'out_of_stock').length, [inventory]);
   const lowStockCount = useMemo(() => inventory.filter(r => r.status === 'urgent_reorder' || r.status === 'replenish').length, [inventory]);
-  const reorderCount = outOfStockCount + lowStockCount;
   const draftOrderCount = useMemo(() => allOrders.filter(po => po.status === 'draft').length, [allOrders]);
   const receivableCount = useMemo(() => allOrders.filter(po => po.status === 'sent' || po.status === 'partially_received').length, [allOrders]);
 
@@ -107,8 +105,8 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
       {hasHealthAlerts && (
         <div className="flex items-center gap-2 flex-wrap p-2.5 rounded-lg bg-muted/40 border border-border/60">
           <span className="text-xs text-muted-foreground font-sans mr-1">Needs attention:</span>
-          <HealthChip icon={XCircle} count={outOfStockCount} label="Out of Stock" color="destructive" onClick={() => setActiveTab('reorder')} />
-          <HealthChip icon={AlertTriangle} count={lowStockCount} label="Low Stock" color="warning" onClick={() => setActiveTab('reorder')} />
+          <HealthChip icon={XCircle} count={outOfStockCount} label="Out of Stock" color="destructive" onClick={() => setActiveTab('stock')} />
+          <HealthChip icon={AlertTriangle} count={lowStockCount} label="Low Stock" color="warning" onClick={() => setActiveTab('stock')} />
           <HealthChip icon={Inbox} count={draftOrderCount} label="Draft POs" color="primary" onClick={() => setActiveTab('orders')} />
           <HealthChip icon={PackageOpen} count={receivableCount} label="Awaiting Receive" color="accent" onClick={() => setActiveTab('receive')} />
         </div>
@@ -126,9 +124,6 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
         <TabsList className="w-full justify-start bg-muted/50 rounded-xl p-1 h-auto flex-wrap gap-0.5">
           <TabsTrigger value="stock" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <Package className="w-4 h-4" /> Stock
-          </TabsTrigger>
-          <TabsTrigger value="reorder" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
-            <RefreshCcw className="w-4 h-4" /> Reorder <NavBadge count={reorderCount} />
           </TabsTrigger>
           <TabsTrigger value="orders" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <FileText className="w-4 h-4" /> Orders <NavBadge count={draftOrderCount} />
@@ -149,9 +144,6 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
 
         <TabsContent value="stock" className="mt-4">
           <StockTab locationId={effectiveLocationId} />
-        </TabsContent>
-        <TabsContent value="reorder" className="mt-4">
-          <ReorderTab locationId={effectiveLocationId} />
         </TabsContent>
         <TabsContent value="orders" className="mt-4">
           <OrdersTab />
