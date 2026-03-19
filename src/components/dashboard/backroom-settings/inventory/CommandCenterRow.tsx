@@ -231,19 +231,19 @@ export function CommandCenterRow({
             </button>
             <div className="min-w-0">
               <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
-              {row.sku && <span className="text-muted-foreground text-xs ml-2">{row.sku}</span>}
+              {row.sku && <span className="text-muted-foreground/50 text-[11px] ml-2 tabular-nums">{row.sku}</span>}
               {row.container_size && (
-                <span className="text-muted-foreground/50 text-[10px] ml-1.5">{row.container_size}</span>
+                <span className="text-muted-foreground/40 text-[10px] ml-1.5">{row.container_size}</span>
               )}
               {intelligence && intelligence.dailyUsage > 0 && intelligence.daysRemaining !== Infinity && (
                 <div className="mt-0.5">
                   <span className={cn(
-                    'text-[10px]',
+                    'text-[10px] tabular-nums',
                     intelligence.daysRemaining < 7
                       ? 'text-destructive/60'
                       : intelligence.daysRemaining < 14
                         ? 'text-warning/60'
-                        : 'text-muted-foreground/50',
+                        : 'text-muted-foreground/40',
                   )}>
                     ~{intelligence.daysRemaining}d remaining
                   </span>
