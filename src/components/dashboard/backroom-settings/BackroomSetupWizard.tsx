@@ -83,6 +83,9 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const [supplierProductIds, setSupplierProductIds] = useState<Set<string>>(new Set());
   const [supplierAssignMode, setSupplierAssignMode] = useState<'brand' | 'product'>('brand');
   const [supplierSearch, setSupplierSearch] = useState('');
+  const [supplierSecondaryName, setSupplierSecondaryName] = useState('');
+  const [supplierSecondaryEmail, setSupplierSecondaryEmail] = useState('');
+  const [supplierSecondaryPhone, setSupplierSecondaryPhone] = useState('');
 
   // ─── Step 3: Service mapping state ──────────────────────────────────────────
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
