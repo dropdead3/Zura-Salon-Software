@@ -146,6 +146,7 @@ export function useControlTowerAlerts(
       forecastSummary: null,
       stockoutAlerts: stockoutQ.data ?? [],
       draftPOs: draftPOsQ.data ?? [],
+      overdueAudits: overdueAuditsQ.data ?? [],
     });
 
     const filtered = categoryFilter
