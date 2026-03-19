@@ -339,7 +339,7 @@ export function CommandCenterRow({
               )}
             </div>
           ) : (
-            <span className="text-muted-foreground/30">—</span>
+            <span className="text-muted-foreground/25 tabular-nums">—</span>
           )}
         </TableCell>
 
