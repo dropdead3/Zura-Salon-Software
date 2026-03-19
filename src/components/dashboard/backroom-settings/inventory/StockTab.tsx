@@ -38,8 +38,10 @@ import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
 import { useInventoryIntelligence, type ProductIntelligence } from '@/hooks/backroom/useInventoryIntelligence';
 import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, buildReportFileName, type ReportHeaderOptions, type ReportLocationInfo, REPORT_BODY_START_Y } from '@/lib/reportPdfLayout';
+import { fetchInventoryForLocation } from '@/lib/fetchInventoryForLocation';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
@@ -64,13 +66,18 @@ async function exportStockPdf(
   logoUrl: string | null | undefined,
   formatCurrency: (n: number) => string,
   locationInfo?: ReportLocationInfo,
+  /** Pass an existing jsPDF doc to append pages (combined mode) */
+  existingDoc?: InstanceType<typeof import('jspdf').jsPDF>,
 ) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
   ]);
 
-  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const doc = existingDoc || new jsPDF('landscape', 'mm', 'a4');
+  // If appending to existing doc, add a new page
+  if (existingDoc) doc.addPage('a4', 'landscape');
+
   const logoDataUrl = await fetchLogoAsDataUrl(logoUrl);
   const now = new Date();
   const headerOpts: ReportHeaderOptions = {
@@ -111,14 +118,20 @@ async function exportStockPdf(
     didDrawPage: () => { addReportHeader(doc, headerOpts); },
   });
 
-  addReportFooter(doc, orgName);
-  doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
+  // Only save/footer if standalone (not combined mode)
+  if (!existingDoc) {
+    addReportFooter(doc, orgName);
+    doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
+  }
+
+  return doc;
 }
 
 // ─── Main Component ─────────────────────────────────
 
 export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
+  const { data: allLocations = [] } = useActiveLocations();
   const { data: poHistoryMap } = useProductPOHistory();
   const { data: intelligenceMap } = useInventoryIntelligence(locationId);
   const { data: businessSettings } = useBusinessSettings();
@@ -306,24 +319,59 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     });
   };
 
-  const handlePdfExport = useCallback(async () => {
+  const handlePdfExport = useCallback(async (locationIds: string[], combined: boolean) => {
     setExporting(true);
+    const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
+    const logoUrl = businessSettings?.logo_light_url || effectiveOrganization?.logo_url;
+
     try {
-      await exportStockPdf(
-        filtered,
-        businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
-        businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
-        formatCurrency,
-        locationInfo,
-      );
+      // Single location — use already-loaded data if it matches
+      if (locationIds.length <= 1) {
+        const targetId = locationIds[0] || locationId;
+        const rows = targetId === locationId ? filtered : await fetchInventoryForLocation(orgId!, targetId!);
+        const locName = allLocations.find(l => l.id === targetId)?.name;
+        const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : locationInfo;
+        await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo);
+        toast.success('Stock report downloaded');
+        return;
+      }
+
+      if (combined) {
+        // Combined: merge all locations into one PDF
+        const { jsPDF } = await import('jspdf');
+        let doc: InstanceType<typeof jsPDF> | undefined;
+        for (const locId of locationIds) {
+          const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
+          const locName = allLocations.find(l => l.id === locId)?.name;
+          const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : undefined;
+          doc = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, doc) as any;
+        }
+        if (doc) {
+          addReportFooter(doc, orgName);
+          const now = new Date();
+          doc.save(buildReportFileName({ orgName, reportSlug: 'backroom-stock-all-locations', dateFrom: format(now, 'yyyy-MM-dd') }));
+        }
+        toast.success('Combined stock report downloaded');
+      } else {
+        // Separate: download one PDF per location
+        for (const locId of locationIds) {
+          const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
+          const locName = allLocations.find(l => l.id === locId)?.name;
+          const locInfo: ReportLocationInfo | undefined = locName ? { name: locName } : undefined;
+          await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo);
+        }
+        toast.success(`${locationIds.length} stock reports downloaded`);
+      }
+    } catch (err) {
+      toast.error('Failed to export stock report');
     } finally {
       setExporting(false);
     }
-  }, [filtered, effectiveOrganization, formatCurrency]);
+  }, [filtered, effectiveOrganization, businessSettings, formatCurrency, locationId, locationInfo, orgId, allLocations]);
 
   // Register PDF export handler for parent header button
   useEffect(() => {
-    if (pdfExportRef) pdfExportRef.current = (_locationIds: string[], _combined: boolean) => handlePdfExport();
+    if (pdfExportRef) pdfExportRef.current = handlePdfExport;
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [handlePdfExport, pdfExportRef]);
 
