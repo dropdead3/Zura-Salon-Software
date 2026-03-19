@@ -663,16 +663,6 @@ export function StockTab({ locationId }: StockTabProps) {
                     <span className="text-xs text-muted-foreground font-sans tabular-nums hidden sm:block">
                       {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="font-sans rounded-full h-7 px-3 text-xs"
-                      onClick={handlePdfExport}
-                      disabled={exporting || filtered.length === 0}
-                    >
-                      {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
-                      PDF
-                    </Button>
                   </div>
                 </>
               )}

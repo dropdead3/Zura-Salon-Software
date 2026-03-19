@@ -170,16 +170,6 @@ export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handlePrintCountSheet()}
-            disabled={generatingPdf || inventoryProducts.length === 0}
-            className={tokens.button.cardAction}
-          >
-            {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-            Print Count Sheet
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => {
               setSelectedBrands(new Set());
               setSelectedCategories(new Set());

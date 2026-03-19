@@ -298,15 +298,6 @@ export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
             >
               <Download className="w-3.5 h-3.5" /> CSV
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs gap-1"
-              disabled={entries.length === 0}
-              onClick={() => exportBulkPdf(entries, orgName)}
-            >
-              <FileText className="w-3.5 h-3.5" /> PDF
-            </Button>
           </div>
         </div>
 
