@@ -749,10 +749,10 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   return (
     <>
       {/* Category sub-header */}
-      <TableRow className="bg-muted/10 hover:bg-muted/15 transition-colors duration-150">
+      <TableRow className="bg-muted/[0.06] hover:bg-muted/10 transition-colors duration-150">
         <TableCell colSpan={8} className="py-1 pl-10">
-          <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
-          <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
+          <span className="text-muted-foreground/60 text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
+          <span className="text-muted-foreground/35 text-[10px] ml-1.5 tabular-nums">({rows.length})</span>
         </TableCell>
       </TableRow>
       {rows.map((row) => (
