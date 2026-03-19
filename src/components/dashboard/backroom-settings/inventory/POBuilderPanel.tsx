@@ -248,7 +248,7 @@ function SupplierPOCard({
 
                 {/* Remove */}
                 <button
-                  className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/40 hover:text-destructive opacity-0 group-hover/line:opacity-100 transition-opacity"
+                  className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/40 hover:text-destructive opacity-0 group-hover/line:opacity-100 transition-opacity duration-150"
                   onClick={() => onRemoveItem(item.id)}
                   title="Remove from PO"
                 >

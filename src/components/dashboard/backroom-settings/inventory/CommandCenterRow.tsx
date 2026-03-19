@@ -414,7 +414,7 @@ export function CommandCenterRow({
 
       {/* Expandable Detail Row */}
       {expanded && (
-        <TableRow className="bg-muted/20 hover:bg-muted/20">
+        <TableRow className="bg-muted/20 hover:bg-muted/20 animate-in fade-in duration-150">
           <TableCell />
           <TableCell colSpan={7} className="py-3">
             <div className="flex flex-wrap items-start gap-6 pl-6">
