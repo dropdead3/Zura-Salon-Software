@@ -42,6 +42,7 @@ export function AlertSettingsCard() {
       setAutoReorderEnabled(settings.auto_reorder_enabled ?? false);
       setAutoReorderMode(settings.auto_reorder_mode ?? 'to_par');
       setMaxAutoReorderValue(settings.max_auto_reorder_value?.toString() ?? '');
+      setRequirePoApproval((settings as any).require_po_approval ?? true);
       setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
       setDeadStockDays((settings as any).dead_stock_days ?? 90);
     }
