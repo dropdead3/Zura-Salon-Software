@@ -212,7 +212,7 @@ export function CommandCenterRow({
         {/* Severity color bar */}
         <TableCell className="w-10 relative">
           {row.severity !== 'healthy' && (
-            <span className={cn('absolute left-0 top-1 bottom-1 w-[3px] rounded-full', severityCfg.barColor)} />
+            <span className={cn('absolute left-0 top-1 bottom-1 w-[3px] rounded-full transition-opacity duration-150', severityCfg.barColor)} />
           )}
           <Checkbox
             checked={isSelected}
