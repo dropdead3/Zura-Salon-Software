@@ -727,10 +727,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                     poHistoryMap={poHistoryMap}
                     qtyOverrides={qtyOverrides}
                     onQtyOverride={handleQtyOverride}
-                    poItemIds={poItemIds}
-                    onToggleAddToPo={toggleAddToPo}
                     intelligenceMap={intelligenceMap}
-                    onStageToPo={stageSupplierToPo}
                   />
                 ))}
               </TableBody>
