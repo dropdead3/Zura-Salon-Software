@@ -122,7 +122,8 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                   <SelectContent>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="phone">Phone</SelectItem>
-                    <SelectItem value="website">Website / Portal</SelectItem>
+                     <SelectItem value="website">Supplier Website</SelectItem>
+                     <SelectItem value="auto_reorder" disabled className="opacity-50">Auto-Reorder (API) — Coming Soon</SelectItem>
                     <SelectItem value="manual">Manual</SelectItem>
                   </SelectContent>
                 </Select>

@@ -667,7 +667,8 @@ function SuppliersStep({
               <SelectContent>
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="phone">Phone</SelectItem>
-                <SelectItem value="portal">Portal</SelectItem>
+                 <SelectItem value="portal">Supplier Website</SelectItem>
+                 <SelectItem value="auto_reorder" disabled className="opacity-50">Auto-Reorder (API) — Coming Soon</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
