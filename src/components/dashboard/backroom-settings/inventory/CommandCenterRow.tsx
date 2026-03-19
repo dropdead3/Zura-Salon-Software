@@ -383,34 +383,26 @@ export function CommandCenterRow({
         <TableCell className="w-24">
           <div className="flex items-center gap-0.5 justify-end">
             {(needsReorder || isOverridden) && (
-              addedToPo ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-sans text-success hover:text-success hover:bg-success/10 gap-1"
-                  onClick={() => onToggleAddToPo?.(row.id)}
-                  title="Remove from PO"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  Added
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-sans text-primary hover:text-primary hover:bg-primary/10 gap-1"
-                  onClick={() => onToggleAddToPo?.(row.id)}
-                  title={`Add ${displayOrderQty} to PO`}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add to PO
-                </Button>
-              )
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'h-7 min-w-[88px] px-2 text-xs font-sans gap-1 transition-colors duration-150',
+                  addedToPo
+                    ? 'text-success hover:text-success hover:bg-success/10'
+                    : 'text-primary hover:text-primary hover:bg-primary/10',
+                )}
+                onClick={() => onToggleAddToPo?.(row.id)}
+                title={addedToPo ? 'Remove from PO' : `Add ${displayOrderQty} to PO`}
+              >
+                {addedToPo ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                {addedToPo ? 'Added' : 'Add to PO'}
+              </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground opacity-0 group-hover/row:opacity-100 transition-opacity"
+              className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground opacity-0 group-hover/row:opacity-100 transition-opacity duration-150"
               onClick={() => onAudit(row.id, row.name)}
               title="View audit trail"
             >
