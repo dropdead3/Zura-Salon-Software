@@ -21,9 +21,11 @@ export interface DockProduct {
 
 /** Fetch distinct brands with product counts */
 export function useDockBrands() {
+  const { isDemoMode } = useDockDemo();
   return useQuery({
-    queryKey: ['dock-brands'],
+    queryKey: ['dock-brands', isDemoMode],
     queryFn: async () => {
+      if (isDemoMode) return DEMO_BRANDS;
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('brand')
