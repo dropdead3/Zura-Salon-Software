@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { DockLayout } from '@/components/dock/DockLayout';
 import { DockPinGate } from '@/components/dock/DockPinGate';
+import { DockDemoProvider } from '@/contexts/DockDemoContext';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 
 export type DockTab = 'schedule' | 'active' | 'clients' | 'scale' | 'settings';
