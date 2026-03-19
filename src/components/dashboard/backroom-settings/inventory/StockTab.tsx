@@ -566,6 +566,8 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
           onAudit={onAudit}
           onQuickReorder={onQuickReorder}
           poHistoryMap={poHistoryMap}
+          qtyOverrides={qtyOverrides}
+          onQtyOverride={onQtyOverride}
         />
       ))}
     </>
