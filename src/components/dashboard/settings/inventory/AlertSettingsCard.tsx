@@ -75,6 +75,7 @@ export function AlertSettingsCard() {
       auto_reorder_enabled: autoReorderEnabled,
       auto_reorder_mode: autoReorderMode,
       max_auto_reorder_value: maxAutoReorderValue ? parseFloat(maxAutoReorderValue) : null,
+      require_po_approval: requirePoApproval,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
     } as any);
