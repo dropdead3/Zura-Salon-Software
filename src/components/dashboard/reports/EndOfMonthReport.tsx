@@ -39,6 +39,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
 
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({ dateFrom, dateTo, locationId });
   const { data: staffKpi, isLoading: staffLoading } = useStaffKPIReport(dateFrom, dateTo, locationId);
