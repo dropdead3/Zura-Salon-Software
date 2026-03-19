@@ -49,6 +49,7 @@ interface ContactForm {
   lead_time_days: string;
   moq: string;
   reorder_method: string;
+  reorder_method_other: string;
   reorder_notes: string;
 }
 
