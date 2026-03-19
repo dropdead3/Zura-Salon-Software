@@ -621,7 +621,7 @@ function SummaryChip({ label, value, active, onClick, accent }: {
     <button
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all duration-150 border',
         active
           ? accent === 'destructive'
             ? 'bg-destructive/10 border-destructive/30 text-destructive'
