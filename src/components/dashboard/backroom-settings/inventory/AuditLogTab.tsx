@@ -105,7 +105,13 @@ async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string, locatio
   });
 
   addReportFooter(doc);
-  doc.save(buildReportFileName({ orgName, locationName, reportSlug: 'inventory-audit-log', dateFrom: today }));
+  doc.save(buildReportFileName({
+    orgName,
+    locationName,
+    reportSlug: 'inventory-audit-log',
+    dateFrom: filterDateFrom ? format(filterDateFrom, 'yyyy-MM-dd') : today,
+    dateTo: filterDateTo ? format(filterDateTo, 'yyyy-MM-dd') : undefined,
+  }));
 }
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
