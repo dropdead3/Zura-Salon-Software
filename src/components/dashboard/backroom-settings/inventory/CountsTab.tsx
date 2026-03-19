@@ -50,17 +50,6 @@ export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
   const isLoading = sessionsLoading || shrinkageLoading;
   const totalShrinkageCost = shrinkage.reduce((s, r) => s + r.shrinkageCost, 0);
 
-  // Stable callback for PDF export ref registration
-  const handleCountSheetExport = useCallback(() => {
-    handlePrintCountSheet();
-  }, [inventoryProducts, businessSettings, effectiveOrganization, locationInfo]);
-
-  // Register PDF export handler for parent header button
-  useEffect(() => {
-    if (pdfExportRef) pdfExportRef.current = handleCountSheetExport;
-    return () => { if (pdfExportRef) pdfExportRef.current = null; };
-  }, [handleCountSheetExport, pdfExportRef]);
-
   const { data: inventoryProducts = [] } = useBackroomInventoryTable({ locationId });
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
