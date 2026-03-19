@@ -203,7 +203,7 @@ export function CommandCenterRow({
     <>
       <TableRow
         className={cn(
-          'group/row transition-colors relative',
+          'group/row transition-colors duration-150 relative',
           row.severity === 'critical' && 'bg-destructive/[0.04] hover:bg-destructive/[0.07]',
           row.severity === 'low' && 'bg-warning/[0.03] hover:bg-warning/[0.06]',
           row.severity === 'healthy' && 'hover:bg-muted/40',
