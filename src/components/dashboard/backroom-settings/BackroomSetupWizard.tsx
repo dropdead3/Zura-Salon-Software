@@ -190,6 +190,9 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
         supplier_website: supplierWebsite || null,
         lead_time_days: supplierLeadTime ? parseInt(supplierLeadTime) : null,
         moq: supplierMoq ? parseInt(supplierMoq) : 1,
+        secondary_contact_name: supplierSecondaryName || null,
+        secondary_contact_email: supplierSecondaryEmail || null,
+        secondary_contact_phone: supplierSecondaryPhone || null,
       });
     }
 
