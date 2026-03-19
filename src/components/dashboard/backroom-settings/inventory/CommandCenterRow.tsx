@@ -208,9 +208,9 @@ export function CommandCenterRow({
   // Usage activity label for expanded row
   const usageActivityLabel = intelligence
     ? intelligence.dailyUsage >= 1
-      ? 'Active — used daily'
+      ? `Active — ~${intelligence.dailyUsage}/day avg`
       : intelligence.dailyUsage > 0
-        ? 'Slow mover — <1/day'
+        ? `Low activity — ~${intelligence.dailyUsage}/day avg`
         : null
     : null;
 

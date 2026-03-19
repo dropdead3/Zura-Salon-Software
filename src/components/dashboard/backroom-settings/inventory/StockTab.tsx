@@ -696,15 +696,28 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
                 </Button>
               )}
               {isUnassigned && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                  onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
-                >
-                  <UserPlus className="w-3 h-3 mr-1" />
-                  Assign Supplier
-                </Button>
+                <>
+                  {reorderCount > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2.5 text-[10px] font-sans border-primary/20 text-primary/80 hover:text-primary hover:bg-primary/5"
+                      onClick={(e) => { e.stopPropagation(); onStageToPo(group.products); }}
+                    >
+                      <ShoppingCart className="w-3 h-3 mr-1" />
+                      Create PO
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                    onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
+                  >
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Assign Supplier
+                  </Button>
+                </>
               )}
             </div>
           </div>
