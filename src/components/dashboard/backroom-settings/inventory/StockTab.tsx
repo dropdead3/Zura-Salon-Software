@@ -414,10 +414,10 @@ export function StockTab({ locationId }: StockTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {brandGroups.map((bg) => (
-                  <BrandSection
-                    key={bg.brand}
-                    group={bg}
+                {supplierGroups.map((sg) => (
+                  <SupplierSection
+                    key={sg.supplier}
+                    group={sg}
                     formatCurrency={formatCurrency}
                     orgId={orgId}
                     locationId={locationId}
@@ -425,7 +425,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     updateMinMax={updateMinMax}
                     selectedIds={selectedIds}
                     onToggleSelect={toggleSelect}
-                    onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
+                    onSetSupplier={(products) => setSupplierDialog({ open: true, brand: sg.supplier, products })}
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                     onQuickReorder={handleQuickReorder}
                     poHistoryMap={poHistoryMap}
