@@ -28,6 +28,9 @@ interface StrikeExportButtonProps {
 
 export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportButtonProps) {
   const { formatDate } = useFormatDate();
+  const { data: businessSettings } = useBusinessSettings();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgSlug = (businessSettings?.business_name || effectiveOrganization?.name || '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = (data: StaffStrikeWithDetails[], filename: string) => {
