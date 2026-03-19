@@ -19,8 +19,9 @@ interface ClientMemoryPanelProps {
   onViewFormulas?: () => void;
 }
 
-export function ClientMemoryPanel({ clientId, serviceName, orgId, className }: ClientMemoryPanelProps) {
+export function ClientMemoryPanel({ clientId, serviceName, orgId, className, onViewFormulas }: ClientMemoryPanelProps) {
   const { data, isLoading } = useClientMemory(clientId, serviceName, orgId);
+  const { data: formulaHistory = [] } = useClientFormulaHistory(clientId ?? null);
 
   if (!clientId) return null;
 
