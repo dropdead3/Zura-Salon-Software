@@ -352,7 +352,7 @@ function StepDetails({
       {/* Secondary Contact */}
       <div className="border-t border-border/60 pt-4 mt-1">
         {!(showSecondaryContact || details.secondary_contact_name || details.secondary_contact_email || details.secondary_contact_phone) ? (
-          <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground" onClick={() => setShowSecondaryContact(true)}>
+          <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-foreground/40 hover:bg-accent px-3 py-1.5 rounded-md" onClick={() => setShowSecondaryContact(true)}>
             <Plus className="w-4 h-4 mr-1" /> Add another contact
           </Button>
         ) : (
