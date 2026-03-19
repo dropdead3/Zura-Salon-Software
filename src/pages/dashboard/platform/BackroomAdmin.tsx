@@ -11,7 +11,8 @@ import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAna
 import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
 import { CoachPerformanceTab } from '@/components/platform/backroom/CoachPerformanceTab';
 import { RefundHistoryTab } from '@/components/platform/backroom/RefundHistoryTab';
-import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2, ReceiptText, BoxIcon } from 'lucide-react';
+import { DockAppTab } from '@/components/platform/backroom/DockAppTab';
+import { ClipboardList, Database, Building2, Package, BarChart3, CreditCard, Users2, ReceiptText, BoxIcon, Tablet } from 'lucide-react';
 
 const tabTriggerClass =
   'data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:ring-0 data-[state=inactive]:hover:ring-0 text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-border)/0.3)]';
@@ -64,6 +65,10 @@ export default function BackroomAdmin() {
             <BoxIcon className="w-3.5 h-3.5" />
             Hardware Orders
           </TabsTrigger>
+          <TabsTrigger value="dock-app" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <Tablet className="w-3.5 h-3.5" />
+            Dock App
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
@@ -92,6 +97,9 @@ export default function BackroomAdmin() {
         </TabsContent>
         <TabsContent value="hardware-orders" className="mt-6">
           <HardwareOrdersTab />
+        </TabsContent>
+        <TabsContent value="dock-app" className="mt-6">
+          <DockAppTab />
         </TabsContent>
       </Tabs>
     </PlatformPageContainer>
