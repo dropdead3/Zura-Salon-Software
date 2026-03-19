@@ -430,6 +430,8 @@ export function StockTab({ locationId }: StockTabProps) {
       <p style="color: #888; font-size: 12px; margin-top: 16px;"><em>📎 A formatted PO PDF is attached to this email.</em></p>
     </div>`;
   }, [effectiveOrganization, selectedIds, getOrderQtyForEmail]);
+
+  if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
 
