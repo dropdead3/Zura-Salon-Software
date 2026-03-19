@@ -13,6 +13,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { FormulaPreview } from './FormulaPreview';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ShareFormulaDialog } from './ShareFormulaDialog';
+import { useShareFormula } from '@/hooks/backroom/useSharedFormulas';
 import type { ResolvedFormulaMemory } from '@/lib/backroom/services/formula-resolver';
 
 interface InstantFormulaCardProps {
