@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo, useCallback, startTransition, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneNumber } from "@/lib/utils";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight, Sparkles, Info, Star, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
