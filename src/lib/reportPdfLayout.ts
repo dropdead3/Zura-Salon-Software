@@ -7,10 +7,20 @@ export interface ReportLocationInfo {
   storeNumber?: string | null;
 }
 
+export interface LogoDataResult {
+  dataUrl: string;
+  /** Natural width in pixels */
+  width: number;
+  /** Natural height in pixels */
+  height: number;
+}
+
 export interface ReportHeaderOptions {
   orgName: string;
   /** Data URL (e.g. from fetchLogoAsDataUrl) to embed logo in PDF */
   logoDataUrl?: string | null;
+  /** Pre-computed logo dimensions from fetchLogoAsDataUrl */
+  logoDimensions?: { width: number; height: number } | null;
   reportTitle: string;
   dateFrom: string;
   dateTo: string;
@@ -20,9 +30,9 @@ export interface ReportHeaderOptions {
   locationInfo?: ReportLocationInfo;
 }
 
-const HEADER_TOP = 12;
-const LOGO_MAX_WIDTH = 40;
-const LOGO_MAX_HEIGHT = 14;
+const HEADER_TOP = 10;
+const LOGO_MAX_WIDTH_MM = 28;
+const LOGO_MAX_HEIGHT_MM = 10;
 const ACCENT_COLOR: [number, number, number] = [41, 41, 41]; // charcoal
 const FOOTER_FONT_SIZE = 7;
 const FOOTER_BOTTOM = 8;
