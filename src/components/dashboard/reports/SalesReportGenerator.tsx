@@ -51,6 +51,7 @@ export function SalesReportGenerator({
   const { formatNumber } = useFormatNumber();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({
