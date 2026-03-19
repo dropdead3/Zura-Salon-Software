@@ -101,6 +101,7 @@ export function FinancialReportGenerator({
         reportTitle: getReportTitle(),
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

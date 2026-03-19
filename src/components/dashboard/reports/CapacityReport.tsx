@@ -62,6 +62,7 @@ export function CapacityReport({
         reportTitle: 'Capacity Utilization Report',
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

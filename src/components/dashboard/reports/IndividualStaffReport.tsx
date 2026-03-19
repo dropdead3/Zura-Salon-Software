@@ -114,6 +114,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
         reportTitle: `Staff Report: ${data.profile.name}`,
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

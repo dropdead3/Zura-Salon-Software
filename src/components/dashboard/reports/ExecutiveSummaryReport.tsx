@@ -57,6 +57,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
         reportTitle: 'Executive Summary',
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

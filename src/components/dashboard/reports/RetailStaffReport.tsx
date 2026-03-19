@@ -51,7 +51,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
     try {
       const doc = new jsPDF('landscape');
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
-      const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'Retail Sales by Staff', dateFrom, dateTo } as const;
+      const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'Retail Sales by Staff', dateFrom, dateTo, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
 

@@ -74,6 +74,7 @@ export function StaffKPIReport({
         reportTitle: getReportTitle(),
         dateFrom,
         dateTo,
+        locationInfo,
       } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       const y = addReportHeader(doc, headerOpts);
