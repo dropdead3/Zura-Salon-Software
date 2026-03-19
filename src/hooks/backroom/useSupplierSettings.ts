@@ -57,7 +57,7 @@ export function useSupplierGroups() {
     queryFn: async (): Promise<SupplierGroup[]> => {
       const { data, error } = await supabase
         .from('product_suppliers')
-        .select('id, product_id, supplier_name, contact_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes')
+        .select('id, product_id, supplier_name, contact_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes, secondary_contact_name, secondary_contact_email, secondary_contact_phone')
         .eq('organization_id', orgId!)
         .order('supplier_name');
 
