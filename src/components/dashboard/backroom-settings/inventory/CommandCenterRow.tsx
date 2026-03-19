@@ -14,6 +14,13 @@ import { tokens } from '@/lib/design-tokens';
 import { STOCK_STATUS_CONFIG, type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
+// ─── Severity visual config ──────────────────────
+const SEVERITY_CONFIG: Record<StockSeverity, { barColor: string; label: string; labelColor: string }> = {
+  critical: { barColor: 'bg-destructive', label: 'Critical', labelColor: 'text-destructive' },
+  low: { barColor: 'bg-warning', label: 'Low', labelColor: 'text-warning' },
+  healthy: { barColor: 'bg-success', label: 'Healthy', labelColor: 'text-success/70' },
+};
+
 // ─── Helpers ──────────────────────────────────────
 
 export function stripSizeSuffix(name: string): string {
