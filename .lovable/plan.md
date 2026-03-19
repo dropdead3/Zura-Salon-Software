@@ -1,38 +1,36 @@
 
-# Add Secondary Contact for Supplier/Distributor
 
-## Overview
-Add three new columns (`secondary_contact_name`, `secondary_contact_email`, `secondary_contact_phone`) to `product_suppliers` and expose them in all supplier forms.
+# Fix: Reorder Method Select Stuck on "Other"
 
-## Changes
+## Root Cause
+When "Other" is selected, an `Input` is conditionally rendered (`{value === 'other' && <Input ... />}`). When the user opens the dropdown again and picks a different option, the state change causes the Input to unmount mid-interaction, which triggers a layout shift that interferes with Radix Select's internal close/commit cycle — the value reverts or doesn't apply.
 
-### 1. Database Migration
-Add three columns:
-```sql
-ALTER TABLE public.product_suppliers ADD COLUMN secondary_contact_name TEXT;
-ALTER TABLE public.product_suppliers ADD COLUMN secondary_contact_email TEXT;
-ALTER TABLE public.product_suppliers ADD COLUMN secondary_contact_phone TEXT;
+## Fix
+In all four files that have this pattern, replace the conditional render (`{value === 'other' && <Input />}`) with an always-rendered Input that uses a `hidden` class when not needed. This prevents layout shifts during Select value changes.
+
+### Files to update (same pattern in each)
+
+1. **`src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`** (~line 426)
+2. **`src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`** (~line 657)
+3. **`src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`** (~line 371)
+4. **`src/components/dashboard/settings/inventory/SupplierDialog.tsx`** (if same pattern)
+
+**Before:**
+```tsx
+{reorderMethod === 'other' && (
+  <Input value={...} onChange={...} placeholder="Specify method..." className="mt-1.5" />
+)}
 ```
 
-### 2. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`
-- Add `secondary_contact_name`, `secondary_contact_email`, `secondary_contact_phone` to `SupplierDetails` and `EMPTY_DETAILS`
-- Add a "Secondary Contact" section in `StepDetails` after the Website field — name, email, phone fields
-- Include in the Review step
-- Pass through to the upsert on creation
+**After:**
+```tsx
+<Input
+  value={...}
+  onChange={...}
+  placeholder="Specify method..."
+  className={cn("mt-1.5", reorderMethod !== 'other' && "hidden")}
+/>
+```
 
-### 3. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`
-- Add secondary contact fields to `ContactForm`
-- Display in the supplier detail panel form
+This keeps the Input in the DOM at all times, preventing the layout shift that breaks the Select.
 
-### 4. `src/hooks/backroom/useSupplierSettings.ts`
-- Add secondary contact fields to `SupplierGroup`, select query, and `updateContact` mutation
-
-### 5. `src/hooks/useProductSuppliers.ts`
-- Add secondary contact fields to `ProductSupplier` interface and upsert mutations
-
-### 6. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`
-- Add secondary contact state and fields to the SuppliersStep
-- Pass through to batch upsert
-
-### 7. `src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx`
-- Add secondary contact fields to the form
