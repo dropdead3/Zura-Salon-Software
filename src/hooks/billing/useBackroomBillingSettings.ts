@@ -12,6 +12,7 @@ export interface BackroomBillingSettings {
   default_product_markup_pct: number;
   product_charge_taxable: boolean;
   product_charge_label: string;
+  enable_supply_cost_recovery: boolean;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
