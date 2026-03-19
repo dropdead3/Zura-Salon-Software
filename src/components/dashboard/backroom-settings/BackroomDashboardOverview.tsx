@@ -456,7 +456,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
         {/* ── Analytics ── */}
         <TabsContent value="analytics" className="mt-6">
-          <BackroomInsightsSection />
+          <BackroomInsightsSection locationId={selectedLocationId} datePreset={datePreset} hideFilters />
         </TabsContent>
 
         {/* ── AI Intelligence ── */}
