@@ -160,6 +160,8 @@ interface CommandCenterRowProps {
   /** Whether this item has been added to the PO builder */
   addedToPo?: boolean;
   onToggleAddToPo?: (productId: string) => void;
+  /** Smart intelligence data from usage velocity */
+  intelligence?: { dailyUsage: number; daysRemaining: number };
 }
 
 export function CommandCenterRow({
@@ -178,6 +180,7 @@ export function CommandCenterRow({
   onQtyOverride,
   addedToPo = false,
   onToggleAddToPo,
+  intelligence,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingQty, setEditingQty] = useState(false);
@@ -232,22 +235,41 @@ export function CommandCenterRow({
               {row.container_size && (
                 <span className="text-muted-foreground/50 text-[10px] ml-1.5">{row.container_size}</span>
               )}
+              {intelligence && intelligence.dailyUsage > 0 && intelligence.daysRemaining !== Infinity && (
+                <div className="mt-0.5">
+                  <span className={cn(
+                    'text-[10px]',
+                    intelligence.daysRemaining < 7
+                      ? 'text-destructive/60'
+                      : intelligence.daysRemaining < 14
+                        ? 'text-warning/60'
+                        : 'text-muted-foreground/50',
+                  )}>
+                    ~{intelligence.daysRemaining}d remaining
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </TableCell>
 
         {/* Stock */}
         <TableCell className="text-right tabular-nums">
-          <InlineEditCell
-            value={row.quantity_on_hand}
-            onSave={(newVal) => {
-              if (!orgId || newVal == null) return;
-              adjustStock.mutate({
-                orgId, productId: row.id, currentQty: row.quantity_on_hand, newQty: newVal, locationId,
-              });
-            }}
-            className="font-medium"
-          />
+          <div className="flex flex-col items-end">
+            <InlineEditCell
+              value={row.quantity_on_hand}
+              onSave={(newVal) => {
+                if (!orgId || newVal == null) return;
+                adjustStock.mutate({
+                  orgId, productId: row.id, currentQty: row.quantity_on_hand, newQty: newVal, locationId,
+                });
+              }}
+              className="font-medium"
+            />
+            {intelligence && intelligence.dailyUsage > 0 && (
+              <span className="text-[10px] text-muted-foreground/40 tabular-nums">{intelligence.dailyUsage}/day</span>
+            )}
+          </div>
         </TableCell>
 
         {/* Suggested Order — PRIMARY DECISION SIGNAL */}
@@ -446,6 +468,29 @@ export function CommandCenterRow({
                   <span className="text-muted-foreground/40 text-xs">—</span>
                 )}
               </div>
+              {intelligence && intelligence.dailyUsage > 0 && (
+                <>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground/60 font-sans">Avg Daily Usage</span>
+                    <span className="text-sm text-muted-foreground tabular-nums">{intelligence.dailyUsage}/day</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground/60 font-sans">Days Remaining</span>
+                    <span className={cn(
+                      'text-sm tabular-nums',
+                      intelligence.daysRemaining === Infinity
+                        ? 'text-muted-foreground/40'
+                        : intelligence.daysRemaining < 7
+                          ? 'text-destructive'
+                          : intelligence.daysRemaining < 14
+                            ? 'text-warning'
+                            : 'text-muted-foreground',
+                    )}>
+                      {intelligence.daysRemaining === Infinity ? '—' : `~${intelligence.daysRemaining}d`}
+                    </span>
+                  </div>
+                </>
+              )}
               {row.open_po_qty > 0 && (
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] text-muted-foreground/60 font-sans">Pending Orders</span>

@@ -29,6 +29,7 @@ import { InventoryAuditDialog } from './InventoryAuditDialog';
 import { AutoCreatePODialog } from './AutoCreatePODialog';
 import { AutoParDialog } from './AutoParDialog';
 import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
+import { useInventoryIntelligence, type ProductIntelligence } from '@/hooks/backroom/useInventoryIntelligence';
 import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
@@ -107,6 +108,7 @@ async function exportStockPdf(
 export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
   const { data: poHistoryMap } = useProductPOHistory();
+  const { data: intelligenceMap } = useInventoryIntelligence(locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
@@ -557,6 +559,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     onQtyOverride={handleQtyOverride}
                     poItemIds={poItemIds}
                     onToggleAddToPo={toggleAddToPo}
+                    intelligenceMap={intelligenceMap}
                   />
                 ))}
               </TableBody>
@@ -634,7 +637,7 @@ function SummaryChip({ label, value, active, onClick, accent }: {
   );
 }
 
-function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo }: {
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap }: {
   group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -651,6 +654,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   onQtyOverride: (productId: string, qty: number | null) => void;
   poItemIds: Set<string>;
   onToggleAddToPo: (productId: string) => void;
+  intelligenceMap?: Map<string, ProductIntelligence>;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -714,15 +718,16 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
           poHistoryMap={poHistoryMap}
           qtyOverrides={qtyOverrides}
           onQtyOverride={onQtyOverride}
-          poItemIds={poItemIds}
-          onToggleAddToPo={onToggleAddToPo}
-        />
+           poItemIds={poItemIds}
+           onToggleAddToPo={onToggleAddToPo}
+           intelligenceMap={intelligenceMap}
+         />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo }: {
+function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -739,6 +744,7 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   onQtyOverride: (productId: string, qty: number | null) => void;
   poItemIds: Set<string>;
   onToggleAddToPo: (productId: string) => void;
+  intelligenceMap?: Map<string, ProductIntelligence>;
 }) {
   return (
     <>
@@ -765,9 +771,10 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
           poHistory={poHistoryMap?.get(row.id)}
           qtyOverride={qtyOverrides.get(row.id) ?? null}
           onQtyOverride={onQtyOverride}
-          addedToPo={poItemIds.has(row.id)}
-          onToggleAddToPo={onToggleAddToPo}
-        />
+           addedToPo={poItemIds.has(row.id)}
+           onToggleAddToPo={onToggleAddToPo}
+           intelligence={intelligenceMap?.get(row.id)}
+         />
       ))}
     </>
   );
