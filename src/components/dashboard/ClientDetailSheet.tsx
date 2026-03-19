@@ -1323,6 +1323,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 <Receipt className="w-3.5 h-3.5" />
                 Transactions
               </TabsTrigger>
+              <TabsTrigger value="formulas" className="flex-1 gap-1">
+                <Beaker className="w-3.5 h-3.5" />
+                Formulas
+              </TabsTrigger>
               <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
               <TabsTrigger value="redos" className="flex-1">Redos</TabsTrigger>
             </TabsList>
