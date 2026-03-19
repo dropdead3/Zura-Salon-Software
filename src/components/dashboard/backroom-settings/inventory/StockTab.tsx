@@ -79,6 +79,7 @@ async function exportStockPdf(
     dateFrom: format(now, 'yyyy-MM-dd'),
     dateTo: format(now, 'yyyy-MM-dd'),
     generatedAt: now,
+    locationInfo,
   };
 
   addReportHeader(doc, headerOpts);
