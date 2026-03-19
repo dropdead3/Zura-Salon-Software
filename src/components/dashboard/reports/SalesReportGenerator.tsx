@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BentoGrid } from '@/components/ui/bento-grid';
@@ -50,6 +51,7 @@ export function SalesReportGenerator({
   const { formatNumber } = useFormatNumber();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({
@@ -78,7 +80,7 @@ export function SalesReportGenerator({
     setIsGenerating(true);
     try {
       const doc = new jsPDF();
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = {
         orgName: effectiveOrganization?.name ?? 'Organization',
         logoDataUrl,

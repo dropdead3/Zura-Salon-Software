@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useRetailAnalytics } from '@/hooks/useRetailAnalytics';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
@@ -38,6 +39,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
 
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({ dateFrom, dateTo, locationId });
   const { data: staffKpi, isLoading: staffLoading } = useStaffKPIReport(dateFrom, dateTo, locationId);
@@ -53,7 +55,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
     setIsGenerating(true);
     try {
       const doc = new jsPDF('landscape');
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'End-of-Month Summary', dateFrom, dateTo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

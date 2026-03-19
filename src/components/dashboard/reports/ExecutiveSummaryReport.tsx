@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportFooter, addReportHeader, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
 
   const filters = { dateFrom, dateTo, locationId: locationId || 'all' };
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics(filters);
@@ -46,7 +48,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
     setIsGenerating(true);
     try {
       const doc = new jsPDF();
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = {
         orgName: effectiveOrganization?.name ?? 'Organization',
         logoDataUrl,

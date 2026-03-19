@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { useSalesByStylist } from '@/hooks/useSalesData';
 import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
@@ -40,6 +41,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
 
   const { data: levels, isLoading: levelsLoading } = useStylistLevels();
   const { currentPeriod } = usePaySchedule();
@@ -79,7 +81,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
     setIsGenerating(true);
     try {
       const doc = new jsPDF('landscape');
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'Payroll Summary Report', dateFrom: payFrom, dateTo: payTo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);

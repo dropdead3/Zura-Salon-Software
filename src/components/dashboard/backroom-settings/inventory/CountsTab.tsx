@@ -25,6 +25,7 @@ import { CountEntryForm } from './CountEntryForm';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toast } from 'sonner';
 
 interface CountsTabProps {
@@ -33,6 +34,7 @@ interface CountsTabProps {
 
 export function CountsTab({ locationId }: CountsTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const orgId = effectiveOrganization?.id;
   const { data: sessions = [], isLoading: sessionsLoading } = useCountSessions();
   const { data: shrinkage = [], isLoading: shrinkageLoading } = useShrinkageSummary(locationId);
@@ -81,7 +83,7 @@ export function CountsTab({ locationId }: CountsTabProps) {
     setGeneratingPdf(true);
     setShowFilterDialog(false);
     try {
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       // Build a URL that links back to the inventory counts tab
       const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
       await generateCountSheetPdf({

@@ -37,7 +37,8 @@ import { AutoParDialog } from './AutoParDialog';
 import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
 import { useInventoryIntelligence, type ProductIntelligence } from '@/hooks/backroom/useInventoryIntelligence';
 import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions, REPORT_BODY_START_Y } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
@@ -91,21 +92,22 @@ async function exportStockPdf(
   ]);
 
   autoTable(doc, {
-    startY: 72,
+    startY: REPORT_BODY_START_Y,
     head: [['Product', 'Brand', 'Stock', 'Suggested Order', 'Status', 'Supplier', 'Cost']],
     body: tableData,
-    styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
+    styles: { fontSize: 8, cellPadding: 3 },
+    headStyles: { fillColor: [55, 55, 55], fontSize: 8, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 248, 250] },
     columnStyles: {
       2: { halign: 'right' },
       3: { halign: 'right' },
       6: { halign: 'right' },
     },
-    margin: { top: 72 },
+    margin: { top: REPORT_BODY_START_Y },
     didDrawPage: () => { addReportHeader(doc, headerOpts); },
   });
 
-  addReportFooter(doc);
+  addReportFooter(doc, orgName);
   doc.save(`inventory-stock-${format(now, 'yyyy-MM-dd')}.pdf`);
 }
 
@@ -115,6 +117,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
   const { data: poHistoryMap } = useProductPOHistory();
   const { data: intelligenceMap } = useInventoryIntelligence(locationId);
+  const { data: businessSettings } = useBusinessSettings();
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
@@ -304,7 +307,7 @@ export function StockTab({ locationId }: StockTabProps) {
       await exportStockPdf(
         filtered,
         effectiveOrganization?.name ?? 'Organization',
-        effectiveOrganization?.logo_url,
+        businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
         formatCurrency,
       );
     } finally {
@@ -352,7 +355,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   const handleCreateAndEmailPOs = useCallback(async () => {
     if (!orgId) return;
-    const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+    const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
     const items = emailPreviewGroups.flatMap(g =>
       g.products.map(p => ({
         organization_id: orgId,

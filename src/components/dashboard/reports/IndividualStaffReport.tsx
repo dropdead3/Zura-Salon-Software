@@ -30,6 +30,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
 
 interface IndividualStaffReportProps {
@@ -83,6 +84,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const [selectedStaffId, setSelectedStaffId] = useState<string>(initialStaffId || '');
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -103,7 +105,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     setIsGenerating(true);
     try {
       const doc = new jsPDF('landscape');
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = {
         orgName: effectiveOrganization?.name ?? 'Organization',
         logoDataUrl,
