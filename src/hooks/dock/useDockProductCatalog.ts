@@ -72,10 +72,12 @@ export function useDockBrandProducts(brand: string | null) {
 
 /** Search products across all brands */
 export function useDockProductSearch(query: string) {
+  const { isDemoMode } = useDockDemo();
   const trimmed = query.trim();
   return useQuery({
-    queryKey: ['dock-product-search', trimmed],
+    queryKey: ['dock-product-search', trimmed, isDemoMode],
     queryFn: async (): Promise<DockProduct[]> => {
+      if (isDemoMode) return searchDemoProducts(trimmed);
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('id, brand, name, category, product_line, swatch_color, wholesale_price, default_unit')

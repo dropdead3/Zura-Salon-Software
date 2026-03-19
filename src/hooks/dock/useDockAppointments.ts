@@ -32,6 +32,7 @@ export function useDockAppointments(staffUserId: string | null) {
   return useQuery({
     queryKey: ['dock-appointments', staffUserId, today],
     queryFn: async (): Promise<DockAppointment[]> => {
+      if (isDemoMode) return DEMO_APPOINTMENTS;
       // Fetch from both phorest_appointments and appointments in parallel
       const [phorestResult, localResult] = await Promise.all([
         supabase

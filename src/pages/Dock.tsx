@@ -51,17 +51,19 @@ export default function Dock() {
   }
 
   return (
-    <DockLayout
-      activeTab={activeTab}
-      onTabChange={(tab) => {
-        setActiveTab(tab);
-        setView({ screen: 'tabs' });
-      }}
-      staff={staff}
-      onLogout={handleLogout}
-      view={view}
-      onOpenAppointment={handleOpenAppointment}
-      onBack={handleBack}
-    />
+    <DockDemoProvider staff={staff}>
+      <DockLayout
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setView({ screen: 'tabs' });
+        }}
+        staff={staff}
+        onLogout={handleLogout}
+        view={view}
+        onOpenAppointment={handleOpenAppointment}
+        onBack={handleBack}
+      />
+    </DockDemoProvider>
   );
 }
