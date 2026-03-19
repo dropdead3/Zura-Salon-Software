@@ -465,11 +465,14 @@ export function StockTab({ locationId }: StockTabProps) {
             variant="outline"
             className="font-sans h-7 gap-1"
             onClick={() => {
-              inventory.forEach(r => {
-                if (r.recommended_order_qty > 0 && !poItemIds.has(r.id)) {
-                  toggleAddToPo(r.id);
-                }
+              const reorderItems = inventory.filter(r => r.recommended_order_qty > 0 && !poItemIds.has(r.id));
+              setPoItemIds(prev => {
+                const next = new Set(prev);
+                reorderItems.forEach(r => next.add(r.id));
+                return next;
               });
+              setPoBuilderOpen(true);
+              toast.success(`${reorderItems.length} items added to PO Builder`);
             }}
           >
             <Zap className="w-3.5 h-3.5" />
