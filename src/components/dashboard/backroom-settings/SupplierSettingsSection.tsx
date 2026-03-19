@@ -65,7 +65,6 @@ export function SupplierSettingsSection() {
   const [selected, setSelected] = useState<string | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
-  const [newSupplierName, setNewSupplierName] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [renameMode, setRenameMode] = useState(false);
   const [renameValue, setRenameValue] = useState('');
