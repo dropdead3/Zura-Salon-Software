@@ -184,7 +184,7 @@ function SupplierPOCard({
 
       {/* Line items */}
       {!collapsed && (
-        <div className="border-t border-border/50">
+        <div className="border-t border-border/30">
           {group.items.map((item) => {
             const qty = qtyOverrides.get(item.id) ?? item.recommended_order_qty;
             const unitCost = item.cost_price ?? item.cost_per_gram ?? 0;
