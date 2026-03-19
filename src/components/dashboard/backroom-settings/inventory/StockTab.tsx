@@ -608,6 +608,8 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
           poHistoryMap={poHistoryMap}
           qtyOverrides={qtyOverrides}
           onQtyOverride={onQtyOverride}
+          poItemIds={poItemIds}
+          onToggleAddToPo={onToggleAddToPo}
         />
       ))}
     </>
