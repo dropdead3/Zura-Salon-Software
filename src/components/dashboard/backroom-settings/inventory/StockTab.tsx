@@ -533,7 +533,7 @@ export function StockTab({ locationId }: StockTabProps) {
                       <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
                     </span>
                   </TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Supplier</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Cost</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
