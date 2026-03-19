@@ -34,6 +34,7 @@ interface CountsTabProps {
 
 export function CountsTab({ locationId }: CountsTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const orgId = effectiveOrganization?.id;
   const { data: sessions = [], isLoading: sessionsLoading } = useCountSessions();
   const { data: shrinkage = [], isLoading: shrinkageLoading } = useShrinkageSummary(locationId);
