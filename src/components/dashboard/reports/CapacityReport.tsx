@@ -45,6 +45,7 @@ export function CapacityReport({
   const { formatNumber } = useFormatNumber();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
 
   const { data: capacityData, isLoading } = useCapacityReport(dateFrom, dateTo, locationId);
 
