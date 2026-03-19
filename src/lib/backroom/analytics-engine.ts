@@ -56,6 +56,7 @@ export interface StaffSessionData {
   totalUnderageQty: number;
   bowlsTotal: number;
   bowlsReweighed: number;
+  totalProductCost: number;
 }
 
 export interface StaffMetric {
@@ -66,6 +67,13 @@ export interface StaffMetric {
   wastePct: number;
   variancePct: number;
   reweighCompliancePct: number;
+  totalServices: number;
+  totalProductCost: number;
+  totalDispensedQty: number;
+  productPerServiceCost: number;
+  productPerServiceQty: number;
+  wastePerServiceCost: number;
+  productCharges: number;
 }
 
 export interface InventoryDaysInput {
