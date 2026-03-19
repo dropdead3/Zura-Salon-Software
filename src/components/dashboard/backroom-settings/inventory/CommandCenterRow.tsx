@@ -225,9 +225,9 @@ export function CommandCenterRow({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              className="text-muted-foreground hover:text-foreground transition-colors duration-150 shrink-0"
             >
-              {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              <ChevronRight className={cn('w-3.5 h-3.5 transition-transform duration-150', expanded && 'rotate-90')} />
             </button>
             <div className="min-w-0">
               <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
