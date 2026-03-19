@@ -1,15 +1,16 @@
 /**
  * DockLiveDispensing — Full-screen bowl mixing view.
  * Shows ingredient list with target vs actual weights,
- * progress visualization, and seal/discard actions.
+ * progress visualization, seal/reweigh actions, and post-reweigh summary.
  */
 
 import { useState } from 'react';
-import { ArrowLeft, FlaskConical, Lock, Scale, Trash2, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Lock, Scale, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DockWeightInput } from './DockWeightInput';
+import { DockReweighSummary } from './DockReweighSummary';
 import { useRecordDispensedWeight, useSealDockBowl, useReweighDockBowl } from '@/hooks/dock/useDockMixSession';
 import { roundWeight } from '@/lib/backroom/mix-calculations';
 
@@ -19,6 +20,7 @@ interface DockLiveDispensingProps {
   bowlNumber: number;
   organizationId: string;
   bowlStatus: string;
+  leftoverWeight?: number;
   onBack: () => void;
 }
 
@@ -45,7 +47,6 @@ function useBowlLines(bowlId: string | null) {
 
       if (error) throw error;
 
-      // Fetch swatch colors for products
       const productIds = (data || []).map((l: any) => l.product_id).filter(Boolean);
       let swatchMap = new Map<string, string | null>();
       if (productIds.length > 0) {
@@ -75,12 +76,15 @@ export function DockLiveDispensing({
   bowlId,
   bowlNumber,
   organizationId,
-  bowlStatus,
+  bowlStatus: initialBowlStatus,
+  leftoverWeight: initialLeftover,
   onBack,
 }: DockLiveDispensingProps) {
   const { data: lines, isLoading } = useBowlLines(bowlId);
   const [activeView, setActiveView] = useState<DispensingView>('lines');
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [bowlStatus, setBowlStatus] = useState(initialBowlStatus);
+  const [capturedLeftover, setCapturedLeftover] = useState<number | null>(initialLeftover ?? null);
 
   const recordWeight = useRecordDispensedWeight();
   const sealBowl = useSealDockBowl();
@@ -91,7 +95,7 @@ export function DockLiveDispensing({
   const needsReweigh = bowlStatus === 'sealed';
   const isComplete = bowlStatus === 'reweighed' || bowlStatus === 'discarded';
 
-  const totalTarget = (lines || []).reduce((sum, l) => sum + l.dispensed_quantity, 0);
+  const totalDispensed = (lines || []).reduce((sum, l) => sum + l.dispensed_quantity, 0);
   const totalCost = (lines || []).reduce((sum, l) => sum + l.dispensed_quantity * l.dispensed_cost_snapshot, 0);
 
   const handleWeightSubmit = (weight: number) => {
@@ -113,15 +117,16 @@ export function DockLiveDispensing({
 
   const handleSeal = () => {
     sealBowl.mutate({ sessionId, organizationId, bowlId }, {
-      onSuccess: () => onBack(),
+      onSuccess: () => setBowlStatus('sealed'),
     });
   };
 
   const handleReweigh = (weight: number) => {
     reweighBowl.mutate({ sessionId, organizationId, bowlId, leftoverWeight: weight }, {
       onSuccess: () => {
+        setCapturedLeftover(weight);
+        setBowlStatus('reweighed');
         setActiveView('lines');
-        onBack();
       },
     });
   };
@@ -192,7 +197,7 @@ export function DockLiveDispensing({
             </div>
             <div className="flex items-center gap-3 mt-1">
               <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                {roundWeight(totalTarget)}g total
+                {roundWeight(totalDispensed)}g total
               </span>
               <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
                 ${roundWeight(totalCost).toFixed(2)} est. cost
@@ -210,14 +215,26 @@ export function DockLiveDispensing({
         {/* Progress bar */}
         <div className="h-1.5 rounded-full bg-[hsl(var(--platform-bg-card))] overflow-hidden">
           <div
-            className="h-full rounded-full bg-violet-500 transition-all duration-500"
-            style={{ width: `${Math.min(100, (lines?.length || 0) > 0 ? 100 : 0)}%` }}
+            className={cn(
+              'h-full rounded-full transition-all duration-500',
+              isComplete ? 'bg-emerald-500' : 'bg-violet-500'
+            )}
+            style={{ width: `${Math.min(100, (lines?.length || 0) > 0 ? (isComplete ? 100 : 75) : 0)}%` }}
           />
         </div>
       </div>
 
-      {/* Line items */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-3 space-y-2">
+      {/* Line items + reweigh summary */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-3 space-y-3">
+        {/* Reweigh summary card — shown after reweigh */}
+        {isComplete && capturedLeftover !== null && (
+          <DockReweighSummary
+            dispensedTotal={totalDispensed}
+            leftoverWeight={capturedLeftover}
+            estimatedCost={totalCost}
+          />
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
@@ -261,10 +278,13 @@ export function DockLiveDispensing({
           </button>
         )}
         {isComplete && (
-          <div className="flex items-center justify-center gap-2 py-2 text-emerald-400">
+          <button
+            onClick={onBack}
+            className="w-full h-12 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-emerald-500/30 text-emerald-400 font-medium text-sm transition-colors flex items-center justify-center gap-2"
+          >
             <Check className="w-4 h-4" />
-            <span className="text-sm font-medium">Bowl Complete</span>
-          </div>
+            Done — Back to Bowls
+          </button>
         )}
       </div>
     </div>
