@@ -37,9 +37,11 @@ interface CountsTabProps {
   locations?: { id: string; name: string }[];
 }
 
-export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
+export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }: CountsTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const { data: allLocations = [] } = useActiveLocations();
+  const locations = locationsProp || allLocations;
   const locationInfo = useReportLocationInfo(locationId);
   const orgId = effectiveOrganization?.id;
   const { data: sessions = [], isLoading: sessionsLoading } = useCountSessions();
