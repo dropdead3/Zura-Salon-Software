@@ -72,6 +72,7 @@ export function useUpsertSupplier() {
           .from('product_suppliers')
           .update({
             supplier_name: supplier.supplier_name,
+            contact_name: supplier.contact_name ?? null,
             supplier_email: supplier.supplier_email,
             supplier_phone: supplier.supplier_phone,
             supplier_website: supplier.supplier_website,
