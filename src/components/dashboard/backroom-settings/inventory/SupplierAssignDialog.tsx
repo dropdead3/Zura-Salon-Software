@@ -29,6 +29,9 @@ interface SupplierForm {
   account_number: string;
   lead_time_days: string;
   moq: string;
+  secondary_contact_name: string;
+  secondary_contact_email: string;
+  secondary_contact_phone: string;
 }
 
 export function SupplierAssignDialog({ open, onOpenChange, brand, products }: SupplierAssignDialogProps) {
