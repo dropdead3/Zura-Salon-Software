@@ -300,8 +300,23 @@ export function CommandCenterRow({
         <TableCell className="text-right tabular-nums w-28">
           {canAddToPo ? (
             <div className="flex flex-col items-end gap-0.5">
-              <div className="flex items-center gap-1.5 justify-end">
-                {/* Editable quantity */}
+              <div className="flex items-center justify-end">
+                {/* Fixed-width label slot so number position stays stable */}
+                <span className="min-w-[3.5rem] flex justify-end">
+                  {isOverridden ? (
+                    <button
+                      className="text-[9px] text-accent-foreground bg-accent/10 px-1.5 py-0.5 rounded-full transition-colors duration-150 flex items-center gap-0.5 hover:bg-accent/20"
+                      onClick={() => onQtyOverride?.(row.id, null)}
+                      title="Reset to auto-calculated quantity"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      Edited
+                    </button>
+                  ) : needsReorder ? (
+                    <span className="text-[9px] text-muted-foreground/30">Auto</span>
+                  ) : null}
+                </span>
+                {/* Editable quantity with fixed width */}
                 {editingQty ? (
                   <input
                     ref={qtyInputRef}
@@ -315,7 +330,7 @@ export function CommandCenterRow({
                       if (!isNaN(parsed) && parsed >= 0 && parsed !== row.recommended_order_qty) {
                         onQtyOverride?.(row.id, parsed === 0 ? null : parsed);
                       } else if (!isNaN(parsed) && parsed === row.recommended_order_qty) {
-                        onQtyOverride?.(row.id, null); // Reset to auto
+                        onQtyOverride?.(row.id, null);
                       }
                     }}
                     onKeyDown={(e) => {
@@ -327,8 +342,7 @@ export function CommandCenterRow({
                 ) : (
                   <span
                     className={cn(
-                      'tabular-nums cursor-pointer transition-colors duration-150',
-                      // Point 2: Larger, more prominent
+                      'tabular-nums cursor-pointer transition-colors duration-150 min-w-[2rem] text-center',
                       'text-xl font-medium tracking-tight',
                       displayOrderQty > 0 && 'bg-primary/[0.06] px-2 py-0.5 rounded-md',
                       isOverridden
@@ -344,19 +358,6 @@ export function CommandCenterRow({
                     {displayOrderQty}
                   </span>
                 )}
-                {/* Point 8: Auto / Manual confidence layer */}
-                {isOverridden ? (
-                  <button
-                    className="text-[9px] text-accent-foreground bg-accent/10 px-1.5 py-0.5 rounded-full transition-colors duration-150 flex items-center gap-0.5 hover:bg-accent/20"
-                    onClick={() => onQtyOverride?.(row.id, null)}
-                    title="Reset to auto-calculated quantity"
-                  >
-                    <RotateCcw className="w-2.5 h-2.5" />
-                    Edited
-                  </button>
-                ) : needsReorder ? (
-                  <span className="text-[9px] text-muted-foreground/30">Auto</span>
-                ) : null}
               </div>
             </div>
           ) : (
