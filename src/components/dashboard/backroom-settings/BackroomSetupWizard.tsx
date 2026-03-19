@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, ArrowLeft, ArrowRight, Package, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,10 +19,11 @@ import { useUpsertTrackingComponent } from '@/hooks/backroom/useServiceTrackingC
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useCreateBackroomStation } from '@/hooks/backroom/useBackroomStations';
 import { useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
-const STEP_COUNT = 5;
+const STEP_COUNT = 6;
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
