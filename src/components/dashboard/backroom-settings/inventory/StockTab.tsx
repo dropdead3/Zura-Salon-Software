@@ -670,12 +670,12 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
       >
         <TableCell colSpan={8} className="py-2">
           <div className="flex items-center gap-2">
-            <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform duration-150', open && 'rotate-90')} />
-            <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary')} />
-            <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
+            <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150', open && 'rotate-90')} />
+            <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70')} />
+            <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/50' : 'text-foreground/70')}>
               {group.supplier}
             </span>
-            <span className="text-muted-foreground text-[10px]">({group.products.length})</span>
+            <span className="text-muted-foreground/40 text-[10px] tabular-nums">({group.products.length})</span>
             {reorderCount > 0 && (
               <Badge variant="outline" className="text-[10px] font-sans border-warning/30 text-warning bg-warning/5 ml-1">
                 {reorderCount} to reorder
