@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
+import { ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -68,7 +68,7 @@ function InlineEditCell({
           if (e.key === 'Escape') setEditing(false);
         }}
         className={cn(
-          'w-16 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40',
+          'w-16 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150',
           className,
         )}
       />
@@ -78,7 +78,7 @@ function InlineEditCell({
   return (
     <span
       className={cn(
-        'cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums',
+        'inline-block w-16 h-7 leading-7 text-right cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors duration-150 tabular-nums',
         className,
       )}
       onClick={() => { setDraft(value != null ? String(value) : ''); setEditing(true); }}
@@ -125,11 +125,11 @@ function DetailEditCell({
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="w-16 h-6 px-1.5 text-right text-xs tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+          className="w-16 h-6 px-1.5 text-right text-xs tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
         />
       ) : (
         <span
-          className="text-sm tabular-nums cursor-pointer border-b border-dashed border-muted-foreground/20 hover:border-primary/60 transition-colors text-muted-foreground"
+          className="text-sm tabular-nums cursor-pointer border-b border-dashed border-muted-foreground/20 hover:border-primary/60 transition-colors duration-150 text-muted-foreground"
           onClick={() => { setDraft(value != null ? String(value) : ''); setEditing(true); }}
           title="Click to edit"
         >
@@ -203,7 +203,7 @@ export function CommandCenterRow({
     <>
       <TableRow
         className={cn(
-          'group/row transition-colors relative',
+          'group/row transition-colors duration-150 relative',
           row.severity === 'critical' && 'bg-destructive/[0.04] hover:bg-destructive/[0.07]',
           row.severity === 'low' && 'bg-warning/[0.03] hover:bg-warning/[0.06]',
           row.severity === 'healthy' && 'hover:bg-muted/40',
@@ -212,7 +212,7 @@ export function CommandCenterRow({
         {/* Severity color bar */}
         <TableCell className="w-10 relative">
           {row.severity !== 'healthy' && (
-            <span className={cn('absolute left-0 top-1 bottom-1 w-[3px] rounded-full', severityCfg.barColor)} />
+            <span className={cn('absolute left-0 top-1 bottom-1 w-[3px] rounded-full transition-opacity duration-150', severityCfg.barColor)} />
           )}
           <Checkbox
             checked={isSelected}
@@ -225,9 +225,9 @@ export function CommandCenterRow({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              className="text-muted-foreground hover:text-foreground transition-colors duration-150 shrink-0"
             >
-              {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              <ChevronRight className={cn('w-3.5 h-3.5 transition-transform duration-150', expanded && 'rotate-90')} />
             </button>
             <div className="min-w-0">
               <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
@@ -383,34 +383,26 @@ export function CommandCenterRow({
         <TableCell className="w-24">
           <div className="flex items-center gap-0.5 justify-end">
             {(needsReorder || isOverridden) && (
-              addedToPo ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-sans text-success hover:text-success hover:bg-success/10 gap-1"
-                  onClick={() => onToggleAddToPo?.(row.id)}
-                  title="Remove from PO"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  Added
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-sans text-primary hover:text-primary hover:bg-primary/10 gap-1"
-                  onClick={() => onToggleAddToPo?.(row.id)}
-                  title={`Add ${displayOrderQty} to PO`}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add to PO
-                </Button>
-              )
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'h-7 min-w-[88px] px-2 text-xs font-sans gap-1 transition-colors duration-150',
+                  addedToPo
+                    ? 'text-success hover:text-success hover:bg-success/10'
+                    : 'text-primary hover:text-primary hover:bg-primary/10',
+                )}
+                onClick={() => onToggleAddToPo?.(row.id)}
+                title={addedToPo ? 'Remove from PO' : `Add ${displayOrderQty} to PO`}
+              >
+                {addedToPo ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                {addedToPo ? 'Added' : 'Add to PO'}
+              </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground opacity-0 group-hover/row:opacity-100 transition-opacity"
+              className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground opacity-0 group-hover/row:opacity-100 transition-opacity duration-150"
               onClick={() => onAudit(row.id, row.name)}
               title="View audit trail"
             >
@@ -422,7 +414,7 @@ export function CommandCenterRow({
 
       {/* Expandable Detail Row */}
       {expanded && (
-        <TableRow className="bg-muted/20 hover:bg-muted/20">
+        <TableRow className="bg-muted/20 hover:bg-muted/20 animate-in fade-in duration-150">
           <TableCell />
           <TableCell colSpan={7} className="py-3">
             <div className="flex flex-wrap items-start gap-6 pl-6">

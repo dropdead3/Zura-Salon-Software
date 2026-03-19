@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, ChevronDown, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
+import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -437,7 +437,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
       {/* Sticky Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="sticky bottom-0 z-20 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg">
+        <div className="sticky bottom-0 z-20 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg animate-in slide-in-from-bottom-2 fade-in duration-200">
           <span className="text-sm text-muted-foreground font-sans tabular-nums">
             {selectedIds.size} selected
           </span>
@@ -509,7 +509,7 @@ export function StockTab({ locationId }: StockTabProps) {
           </p>
         </div>
       ) : (
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -521,21 +521,21 @@ export function StockTab({ locationId }: StockTabProps) {
                     />
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>
                     <span className="inline-flex items-center gap-1 justify-end">
                       Stock
                       <MetricInfoTooltip description="Current quantity on hand. Click the number to adjust." />
                     </span>
                   </TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>
                     <span className="inline-flex items-center gap-1 justify-end">
                       Suggested Order
                       <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
                     </span>
                   </TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Supplier</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell w-20')}>Cost</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
                 </TableRow>
               </TableHeader>
@@ -621,7 +621,7 @@ function SummaryChip({ label, value, active, onClick, accent }: {
     <button
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all duration-150 border',
         active
           ? accent === 'destructive'
             ? 'bg-destructive/10 border-destructive/30 text-destructive'
@@ -665,12 +665,12 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
     <>
       {/* Supplier header row */}
       <TableRow
-        className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
+        className="bg-muted/30 hover:bg-muted/40 cursor-pointer transition-colors duration-150"
         onClick={() => setOpen(!open)}
       >
         <TableCell colSpan={8} className="py-2">
           <div className="flex items-center gap-2">
-            {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform duration-150', open && 'rotate-90')} />
             <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary')} />
             <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
               {group.supplier}
@@ -749,7 +749,7 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   return (
     <>
       {/* Category sub-header */}
-      <TableRow className="bg-muted/10 hover:bg-muted/10">
+      <TableRow className="bg-muted/10 hover:bg-muted/15 transition-colors duration-150">
         <TableCell colSpan={8} className="py-1 pl-10">
           <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
