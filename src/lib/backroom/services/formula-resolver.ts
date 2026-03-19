@@ -18,6 +18,7 @@ import type { FormulaLine } from '@/lib/backroom/mix-calculations';
 export type SuggestionSource =
   | 'client_last_visit'
   | 'client_any_service'
+  | 'shared_formula'
   | 'stylist_most_used'
   | 'salon_recipe';
 
