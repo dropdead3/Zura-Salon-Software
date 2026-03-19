@@ -613,6 +613,8 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
           onAudit={onAudit}
           onQuickReorder={onQuickReorder}
           poHistory={poHistoryMap?.get(row.id)}
+          qtyOverride={qtyOverrides.get(row.id) ?? null}
+          onQtyOverride={onQtyOverride}
         />
       ))}
     </>
