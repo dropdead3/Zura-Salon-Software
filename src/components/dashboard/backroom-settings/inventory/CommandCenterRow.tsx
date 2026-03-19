@@ -68,7 +68,7 @@ function InlineEditCell({
           if (e.key === 'Escape') setEditing(false);
         }}
         className={cn(
-          'w-16 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40',
+          'w-16 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150',
           className,
         )}
       />
@@ -78,7 +78,7 @@ function InlineEditCell({
   return (
     <span
       className={cn(
-        'cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums',
+        'inline-block w-16 h-7 leading-7 text-right cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors duration-150 tabular-nums',
         className,
       )}
       onClick={() => { setDraft(value != null ? String(value) : ''); setEditing(true); }}
