@@ -49,6 +49,8 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
   const deletePolicy = useDeleteAllowancePolicy();
   const upsertBucket = useUpsertAllowanceBucket();
   const deleteBucket = useDeleteAllowanceBucket();
+  const { data: billingSettings } = useBackroomBillingSettings(orgId);
+  const upsertBillingSettings = useUpsertBackroomBillingSettings();
 
   const { data: servicesMap } = useQuery({
     queryKey: ['services-name-map', orgId],
