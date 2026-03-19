@@ -129,6 +129,7 @@ export function useBatchUpsertSupplier() {
       product_ids: string[];
       organization_id: string;
       supplier_name: string;
+      contact_name?: string | null;
       supplier_email?: string | null;
       supplier_phone?: string | null;
       supplier_website?: string | null;
