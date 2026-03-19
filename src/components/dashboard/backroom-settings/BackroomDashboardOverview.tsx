@@ -105,8 +105,13 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     <Sparkles className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>
-                      {setupHealth.completed} of {setupHealth.total} areas configured
+                    <p className="flex items-baseline gap-1.5">
+                      <span className="font-display text-sm text-amber-400 tracking-wide">
+                        {setupHealth.completed} OF {setupHealth.total}
+                      </span>
+                      <span className="font-sans text-xs text-muted-foreground">
+                        areas configured
+                      </span>
                     </p>
                     {/* Step tracker — two-row layout for line alignment */}
                     <div className="mt-2 w-full px-4">
