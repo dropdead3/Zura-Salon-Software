@@ -472,8 +472,8 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
           <BackroomInsightsSection locationId={selectedLocationId} datePreset={datePreset} hideFilters />
           {/* Additional analytics cards */}
           <WasteCategoryBreakdownCard
-            wasteByCategory={kpis.wasteByCategory ?? {}}
-            totalWasteQty={kpis.totalWasteQty ?? 0}
+            wasteByCategory={dashboard.wasteByCategory ?? {}}
+            totalWasteQty={dashboard.totalWasteQty ?? 0}
           />
           <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
           <BackroomInventoryValuationCard locationId={effectiveLocationId} />

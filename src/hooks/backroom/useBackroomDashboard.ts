@@ -132,5 +132,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
     budgetData: budgetQ.budget,
     supplyCostRecovery: supplyCostEnabled ? supplyCostQ.data ?? null : null,
     supplyCostRecoveryEnabled: supplyCostEnabled,
+    wasteByCategory: (analyticsQ.data as any)?.wasteByCategory ?? {},
+    totalWasteQty: (analyticsQ.data as any)?.totalWasteQty ?? 0,
   };
 }
