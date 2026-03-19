@@ -228,7 +228,7 @@ function SupplierPOCard({
                         onQtyOverride(item.id, v === item.recommended_order_qty ? null : v);
                       }
                     }}
-                    className="w-10 h-6 text-center text-xs tabular-nums rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    className="w-10 h-6 text-center text-xs tabular-nums rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
                   />
                   <button
                     className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
