@@ -17,6 +17,7 @@ export interface SetupWarning {
 export interface SetupHealthMetrics {
   trackedProducts: number;
   totalProducts: number;
+  suppliersConfigured: number;
   trackedServices: number;
   totalServices: number;
   recipesConfigured: number;
