@@ -36,6 +36,8 @@ export interface GenerateCountSheetOptions {
   filters?: CountSheetFilters;
   /** Full URL to include as scannable QR code on the sheet */
   countEntryUrl?: string;
+  /** When true, return PDF bytes instead of triggering download */
+  returnBytes?: boolean;
 }
 
 /**
