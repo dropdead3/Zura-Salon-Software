@@ -23,6 +23,7 @@ import { useLinkProducts, useUpdateSupplierContact } from '@/hooks/backroom/useS
 
 interface SupplierDetails {
   name: string;
+  contact_name: string;
   email: string;
   phone: string;
   website: string;
@@ -36,6 +37,7 @@ interface SupplierDetails {
 
 const EMPTY_DETAILS: SupplierDetails = {
   name: '',
+  contact_name: '',
   email: '',
   phone: '',
   website: '',
