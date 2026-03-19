@@ -240,7 +240,6 @@ export default function BackroomSettings() {
         <div className="flex gap-6">
           {/* Sidebar nav */}
           <nav className="w-56 shrink-0 hidden lg:block">
-            <TooltipProvider delayDuration={300}>
               <div className="sticky top-24 space-y-1">
                 {sectionsByGroup.map((group, gi) => (
                   <div key={group.group}>
@@ -256,9 +255,8 @@ export default function BackroomSettings() {
                         const prereqOk = isPrereqMet(s, health);
 
                         return (
-                          <Tooltip key={s.id}>
-                            <TooltipTrigger asChild>
                               <button
+                                key={s.id}
                                 onClick={() => setActiveSection(s.id)}
                                 className={cn(
                                   'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
@@ -278,14 +276,6 @@ export default function BackroomSettings() {
                                   <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                                 )}
                               </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-[220px]">
-                              <p className="text-xs font-sans">{s.tooltip}</p>
-                              {!prereqOk && s.requiresLabel && (
-                                <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
                         );
                       })}
                       {/* Subscription inside Settings group */}
@@ -304,7 +294,6 @@ export default function BackroomSettings() {
                   </div>
                 ))}
               </div>
-            </TooltipProvider>
           </nav>
 
           {/* Mobile section selector */}
