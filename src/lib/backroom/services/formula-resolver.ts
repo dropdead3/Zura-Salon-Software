@@ -131,7 +131,7 @@ export async function fetchStylistMostUsed(
   };
 }
 
-// ─── Priority 3: Salon Service Recipe ───────────────
+// ─── Priority 3: Salon Service Formula ──────────────
 
 export async function fetchSalonRecipe(
   orgId: string,
