@@ -12,6 +12,8 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { tokens } from '@/lib/design-tokens';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface BirthdayPerson {
   id: string;
@@ -30,6 +32,9 @@ interface BirthdayExportButtonProps {
 
 export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
   const { formatDate } = useFormatDate();
+  const { data: businessSettings } = useBusinessSettings();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgSlug = (businessSettings?.business_name || effectiveOrganization?.name || '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = (data: BirthdayPerson[], filename: string) => {
@@ -61,7 +66,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
@@ -125,7 +130,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
         },
       });
 
-      doc.save(`${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       toast.success('PDF exported successfully');
     } catch (error) {
       console.error('PDF export error:', error);

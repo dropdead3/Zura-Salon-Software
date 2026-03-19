@@ -15,7 +15,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { addReportFooter, addReportHeader, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { addReportFooter, addReportHeader, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -106,7 +106,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
       }
 
       addReportFooter(doc);
-      doc.save(`executive-summary-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'executive-summary', dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

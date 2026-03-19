@@ -22,7 +22,7 @@ import { useNoShowReport } from '@/hooks/useNoShowReport';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
@@ -132,8 +132,7 @@ export function NoShowReport({
 
       addReportFooter(doc);
 
-      const filename = `${reportType}-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: reportType, dateFrom, dateTo }));
 
       // Log to report history
       if (user) {

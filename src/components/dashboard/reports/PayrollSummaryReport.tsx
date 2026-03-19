@@ -19,7 +19,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
@@ -129,7 +129,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
       }
 
       addReportFooter(doc);
-      doc.save(`payroll-summary-${payFrom}-to-${payTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'payroll-summary', dateFrom: payFrom, dateTo: payTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

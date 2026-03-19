@@ -20,7 +20,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useRetailAnalytics } from '@/hooks/useRetailAnalytics';
@@ -78,7 +78,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
       });
 
       addReportFooter(doc);
-      doc.save(`retail-by-staff-${dateFrom}-to-${dateTo}.pdf`);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'retail-by-staff', dateFrom, dateTo }));
 
       if (user) {
         await supabase.from('report_history').insert({

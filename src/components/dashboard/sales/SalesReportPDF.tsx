@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Loader2, Download } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatCurrencyWhole } from '@/lib/formatCurrency';
@@ -23,6 +25,7 @@ import { Label } from '@/components/ui/label';
 interface SalesReportPDFProps {
   dateFrom: string;
   dateTo: string;
+  orgName?: string;
   metrics?: {
     totalRevenue: number;
     serviceRevenue: number;
@@ -49,9 +52,12 @@ interface SalesReportPDFProps {
   }>;
 }
 
-export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locationData }: SalesReportPDFProps) {
+export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData, locationData }: SalesReportPDFProps) {
   const { formatDate } = useFormatDate();
   const { formatNumber } = useFormatNumber();
+  const { data: businessSettings } = useBusinessSettings();
+  const { effectiveOrganization } = useOrganizationContext();
+  const resolvedOrgName = orgName || businessSettings?.business_name || effectiveOrganization?.name;
   const [open, setOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [options, setOptions] = useState({
@@ -197,7 +203,9 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
       }
 
       // Save
-      const filename = `sales-report-${dateFrom}-to-${dateTo}.pdf`;
+      const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const prefix = resolvedOrgName ? `${sanitize(resolvedOrgName)}_` : '';
+      const filename = `${prefix}sales-report_${dateFrom}_to-${dateTo}.pdf`;
       doc.save(filename);
       setOpen(false);
     } catch (error) {

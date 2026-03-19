@@ -70,7 +70,7 @@ function exportAuditCsv(entries: AuditEntry[], productName: string) {
 async function exportAuditPdf(entries: AuditEntry[], productName: string, orgName: string) {
   const { default: jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
-  const { addReportHeader, addReportFooter } = await import('@/lib/reportPdfLayout');
+  const { addReportHeader, addReportFooter, buildReportFileName } = await import('@/lib/reportPdfLayout');
 
   const doc = new jsPDF({ orientation: 'landscape' });
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -102,7 +102,7 @@ async function exportAuditPdf(entries: AuditEntry[], productName: string, orgNam
   });
 
   addReportFooter(doc);
-  doc.save(`audit-trail-${productName.replace(/\s+/g, '-').toLowerCase()}-${today}.pdf`);
+  doc.save(buildReportFileName({ orgName, reportSlug: `audit-trail-${productName.replace(/\s+/g, '-').toLowerCase()}`, dateFrom: today }));
 }
 
 export function InventoryAuditDialog({ open, onOpenChange, productId, productName }: InventoryAuditDialogProps) {

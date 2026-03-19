@@ -251,3 +251,26 @@ export function addReportFooter(doc: jsPDF, orgName?: string): void {
   }
   doc.setTextColor(0, 0, 0);
 }
+
+/**
+ * Build a descriptive PDF filename that includes org, location, report slug, and dates.
+ * Example: `Drop-Dead-Salons_Downtown_capacity-report_2026-03-01_to-2026-03-19.pdf`
+ */
+export function buildReportFileName(parts: {
+  orgName?: string;
+  locationName?: string;
+  reportSlug: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): string {
+  const sanitize = (s: string) =>
+    s.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const segments = [
+    parts.orgName ? sanitize(parts.orgName) : null,
+    parts.locationName ? sanitize(parts.locationName) : null,
+    parts.reportSlug,
+    parts.dateFrom,
+    parts.dateTo && parts.dateTo !== parts.dateFrom ? `to-${parts.dateTo}` : null,
+  ].filter(Boolean);
+  return segments.join('_') + '.pdf';
+}

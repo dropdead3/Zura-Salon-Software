@@ -29,7 +29,7 @@ import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
@@ -195,8 +195,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       }
 
       addReportFooter(doc);
-      const filename = `staff-report-${data.profile.name.replace(/\s+/g, '-').toLowerCase()}-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: `staff-report-${data.profile.name.replace(/\s+/g, '-').toLowerCase()}`, dateFrom, dateTo }));
 
       // Log to report history
       if (user) {

@@ -22,7 +22,7 @@ import { useCapacityReport } from '@/hooks/useCapacityReport';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
@@ -117,8 +117,7 @@ export function CapacityReport({
 
       addReportFooter(doc);
 
-      const filename = `capacity-report-${dateFrom}-to-${dateTo}.pdf`;
-      doc.save(filename);
+      doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: 'capacity-report', dateFrom, dateTo }));
 
       // Log to report history
       if (user) {
