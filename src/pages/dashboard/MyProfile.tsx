@@ -49,10 +49,6 @@ const DAYS_OF_WEEK = [
 const ADMIN_LEVEL_ROLES = ['super_admin', 'admin', 'manager', 'admin_assistant', 'bookkeeper', 'operations_assistant', 'receptionist'] as const;
 
 
-// formatPhoneNumber handled by base Input component for type="tel"
-    return `${limited.slice(0, 3)}-${limited.slice(3, 6)}-${limited.slice(6)}`;
-  }
-};
 
 // Ensure social handle starts with @
 const formatSocialHandle = (value: string) => {
