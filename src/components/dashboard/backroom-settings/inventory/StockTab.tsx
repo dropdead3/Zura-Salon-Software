@@ -674,13 +674,10 @@ export function StockTab({ locationId }: StockTabProps) {
                     </span>
                   </TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-muted-foreground/40 uppercase tracking-wider font-display leading-none mb-0.5">Order</span>
-                      <span className="inline-flex items-center gap-1 justify-end">
-                        Suggested
-                        <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
-                      </span>
-                    </div>
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Suggested
+                      <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
+                    </span>
                   </TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Supplier</TableHead>
