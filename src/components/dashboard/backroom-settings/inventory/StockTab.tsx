@@ -264,7 +264,7 @@ export function StockTab({ locationId }: StockTabProps) {
   };
 
   const selectedProducts = filtered.filter(r => selectedIds.has(r.id));
-  const selectedReorderProducts = selectedProducts.filter(r => r.recommended_order_qty > 0);
+  const selectedReorderProducts = selectedProducts.filter(r => r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock');
 
   const autoPoProducts = selectedReorderProducts.length > 0
     ? selectedReorderProducts
