@@ -716,20 +716,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                     </TooltipContent>
                   </Tooltip>
                 </Button>
-                {poItemIds.size > 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="font-sans h-7 text-xs border-primary/30 text-primary"
-                    onClick={() => setPoBuilderOpen(!poBuilderOpen)}
-                  >
-                    <FileText className="w-3.5 h-3.5 mr-1" />
-                    PO Builder
-                    <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
-                      {poItemIds.size}
-                    </Badge>
-                  </Button>
-                )}
               </div>
             </div>
            </div>
