@@ -524,6 +524,180 @@ function WelcomeStep() {
   );
 }
 
+// ─── Step 2: Suppliers ────────────────────────────────────────────────────────
+function SuppliersStep({
+  supplierName, onNameChange,
+  supplierEmail, onEmailChange,
+  supplierPhone, onPhoneChange,
+  supplierWebsite, onWebsiteChange,
+  reorderMethod, onReorderMethodChange,
+  reorderOther, onReorderOtherChange,
+  leadTimeDays, onLeadTimeChange,
+  moq, onMoqChange,
+  assignMode, onAssignModeChange,
+  brands, filteredProducts, selectedIds,
+  onToggleProduct, onToggleBrand, brandCounts,
+  search, onSearchChange,
+}: {
+  supplierName: string; onNameChange: (v: string) => void;
+  supplierEmail: string; onEmailChange: (v: string) => void;
+  supplierPhone: string; onPhoneChange: (v: string) => void;
+  supplierWebsite: string; onWebsiteChange: (v: string) => void;
+  reorderMethod: string; onReorderMethodChange: (v: string) => void;
+  reorderOther: string; onReorderOtherChange: (v: string) => void;
+  leadTimeDays: string; onLeadTimeChange: (v: string) => void;
+  moq: string; onMoqChange: (v: string) => void;
+  assignMode: 'brand' | 'product'; onAssignModeChange: (m: 'brand' | 'product') => void;
+  brands: { brand: string; products: ProductRow[] }[];
+  filteredProducts: ProductRow[];
+  selectedIds: Set<string>;
+  onToggleProduct: (id: string) => void;
+  onToggleBrand: (prods: ProductRow[]) => void;
+  brandCounts: Map<string, { total: number; selected: number }>;
+  search: string; onSearchChange: (s: string) => void;
+}) {
+  return (
+    <Card className={tokens.card.wrapper}>
+      <CardHeader>
+        <CardTitle className={tokens.card.title}>Set Up Supplier</CardTitle>
+        <CardDescription className={tokens.body.muted}>
+          Add your primary supplier and link them to tracked products. You can add more suppliers later.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 max-h-[55vh] overflow-y-auto">
+        {/* Supplier contact info */}
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>
+            Supplier Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            value={supplierName}
+            onChange={e => onNameChange(e.target.value)}
+            placeholder="e.g. Goldwell Distribution"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Email</Label>
+            <Input type="email" value={supplierEmail} onChange={e => onEmailChange(e.target.value)} placeholder="orders@supplier.com" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Phone</Label>
+            <Input value={supplierPhone} onChange={e => onPhoneChange(e.target.value)} placeholder="(555) 123-4567" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>Website</Label>
+          <Input value={supplierWebsite} onChange={e => onWebsiteChange(e.target.value)} placeholder="https://supplier.com" />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Reorder Method</Label>
+            <Select value={reorderMethod} onValueChange={v => { onReorderMethodChange(v); if (v !== 'other') onReorderOtherChange(''); }}>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="portal">Portal</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {reorderMethod === 'other' && (
+              <Input value={reorderOther} onChange={e => onReorderOtherChange(e.target.value)} placeholder="Specify method..." className="mt-1.5" />
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Lead Time (days)</Label>
+            <Input type="number" value={leadTimeDays} onChange={e => onLeadTimeChange(e.target.value)} placeholder="5" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>MOQ</Label>
+            <Input type="number" value={moq} onChange={e => onMoqChange(e.target.value)} placeholder="1" />
+          </div>
+        </div>
+
+        {/* Product assignment */}
+        <div className="border-t border-border/60 pt-4 mt-4 space-y-3">
+          <p className={cn(tokens.body.emphasis, 'text-foreground')}>Link Products to This Supplier</p>
+          <div className="flex gap-1 p-0.5 bg-muted rounded-full w-fit">
+            <button
+              onClick={() => onAssignModeChange('brand')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
+                assignMode === 'brand' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              By Brand
+            </button>
+            <button
+              onClick={() => onAssignModeChange('product')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
+                assignMode === 'product' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Package className="w-3.5 h-3.5" />
+              By Product
+            </button>
+          </div>
+
+          <p className={cn(tokens.body.muted, 'text-xs')}>
+            {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
+            {assignMode === 'brand' && ' • Check a brand to assign all its products'}
+          </p>
+
+          {assignMode === 'product' && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input value={search} onChange={e => onSearchChange(e.target.value)} placeholder="Search products..." className="pl-9" />
+            </div>
+          )}
+
+          <ScrollArea className="h-[200px] border border-border/60 rounded-lg">
+            <div className="p-2 space-y-0.5">
+              {assignMode === 'brand' ? (
+                brands.length === 0 ? (
+                  <p className={cn(tokens.body.muted, 'text-center py-8')}>No tracked products yet. Go back and select products first.</p>
+                ) : (
+                  brands.map(({ brand, products: prods }) => {
+                    const counts = brandCounts.get(brand);
+                    const allSelected = counts ? counts.selected === counts.total : false;
+                    const someSelected = counts ? counts.selected > 0 && !allSelected : false;
+                    return (
+                      <label key={brand} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                        <Checkbox checked={allSelected ? true : someSelected ? 'indeterminate' : false} onCheckedChange={() => onToggleBrand(prods)} />
+                        <span className={cn(tokens.body.default, 'truncate flex-1')}>{brand}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {counts?.selected || 0}/{counts?.total || 0}
+                        </Badge>
+                      </label>
+                    );
+                  })
+                )
+              ) : (
+                filteredProducts.length === 0 ? (
+                  <p className={cn(tokens.body.muted, 'text-center py-8')}>No matching products</p>
+                ) : (
+                  filteredProducts.map(p => (
+                    <label key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => onToggleProduct(p.id)} />
+                      <div className="min-w-0 flex-1">
+                        <span className={cn(tokens.body.default, 'truncate block')}>{p.name}</span>
+                        {p.brand && <span className="text-xs text-muted-foreground">{p.brand}</span>}
+                      </div>
+                    </label>
+                  ))
+                )
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Step 1: Products ─────────────────────────────────────────────────────────
 function ProductsStep({
   products,
