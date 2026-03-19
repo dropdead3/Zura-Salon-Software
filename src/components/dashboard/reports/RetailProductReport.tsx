@@ -47,7 +47,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
     try {
       const doc = new jsPDF('landscape');
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
-      const headerOpts = { orgName: effectiveOrganization?.name ?? 'Organization', logoDataUrl, reportTitle: 'Retail Product Report', dateFrom, dateTo, locationInfo } as const;
+      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Retail Product Report', dateFrom, dateTo, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
 

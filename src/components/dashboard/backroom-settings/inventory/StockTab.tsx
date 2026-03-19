@@ -75,7 +75,7 @@ async function exportStockPdf(
   const headerOpts: ReportHeaderOptions = {
     orgName,
     logoDataUrl,
-    reportTitle: 'Inventory Stock Report',
+    reportTitle: 'Backroom Stock Report',
     dateFrom: format(now, 'yyyy-MM-dd'),
     dateTo: format(now, 'yyyy-MM-dd'),
     generatedAt: now,
