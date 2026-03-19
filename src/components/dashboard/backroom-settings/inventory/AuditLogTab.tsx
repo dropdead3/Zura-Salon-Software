@@ -3,7 +3,7 @@
  * Table layout with quick-filter chips, filters, search, pagination with page size selector, and CSV/PDF export.
  */
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
