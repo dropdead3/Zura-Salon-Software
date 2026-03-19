@@ -250,6 +250,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 
   const isSaving =
     bulkUpdateProducts.isPending ||
+    batchUpsertSupplier.isPending ||
     bulkUpdateServices.isPending ||
     upsertComponent.isPending ||
     upsertAllowance.isPending ||
