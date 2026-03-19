@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
@@ -157,6 +157,9 @@ interface CommandCenterRowProps {
   /** Manual quantity override map — managed by parent */
   qtyOverride?: number | null;
   onQtyOverride?: (productId: string, qty: number | null) => void;
+  /** Whether this item has been added to the PO builder */
+  addedToPo?: boolean;
+  onToggleAddToPo?: (productId: string) => void;
 }
 
 export function CommandCenterRow({
@@ -173,6 +176,8 @@ export function CommandCenterRow({
   poHistory,
   qtyOverride,
   onQtyOverride,
+  addedToPo = false,
+  onToggleAddToPo,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingQty, setEditingQty] = useState(false);
@@ -352,29 +357,43 @@ export function CommandCenterRow({
               : '—'}
         </TableCell>
 
-        {/* Actions */}
-        <TableCell className="w-20">
+        {/* Actions — Primary: Add to PO */}
+        <TableCell className="w-24">
           <div className="flex items-center gap-0.5 justify-end">
+            {(needsReorder || isOverridden) && (
+              addedToPo ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs font-sans text-success hover:text-success hover:bg-success/10 gap-1"
+                  onClick={() => onToggleAddToPo?.(row.id)}
+                  title="Remove from PO"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Added
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs font-sans text-primary hover:text-primary hover:bg-primary/10 gap-1"
+                  onClick={() => onToggleAddToPo?.(row.id)}
+                  title={`Add ${displayOrderQty} to PO`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add to PO
+                </Button>
+              )
+            )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground opacity-0 group-hover/row:opacity-100 transition-opacity"
               onClick={() => onAudit(row.id, row.name)}
               title="View audit trail"
             >
               <History className="w-3.5 h-3.5" />
             </Button>
-            {needsReorder && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-warning hover:text-warning hover:bg-warning/10"
-                onClick={() => onQuickReorder(row)}
-                title={`Quick reorder ${row.recommended_order_qty} units`}
-              >
-                <ShoppingCart className="w-3.5 h-3.5" />
-              </Button>
-            )}
           </div>
         </TableCell>
       </TableRow>

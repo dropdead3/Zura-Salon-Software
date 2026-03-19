@@ -123,6 +123,16 @@ export function StockTab({ locationId }: StockTabProps) {
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
+  const [poItemIds, setPoItemIds] = useState<Set<string>>(new Set());
+
+  const toggleAddToPo = useCallback((productId: string) => {
+    setPoItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }, []);
 
   // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
@@ -450,6 +460,8 @@ export function StockTab({ locationId }: StockTabProps) {
                     poHistoryMap={poHistoryMap}
                     qtyOverrides={qtyOverrides}
                     onQtyOverride={handleQtyOverride}
+                    poItemIds={poItemIds}
+                    onToggleAddToPo={toggleAddToPo}
                   />
                 ))}
               </TableBody>
@@ -516,7 +528,7 @@ function SummaryChip({ label, value, active, onClick, accent }: {
   );
 }
 
-function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo }: {
   group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -531,6 +543,8 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
+  poItemIds: Set<string>;
+  onToggleAddToPo: (productId: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -594,13 +608,15 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
           poHistoryMap={poHistoryMap}
           qtyOverrides={qtyOverrides}
           onQtyOverride={onQtyOverride}
+          poItemIds={poItemIds}
+          onToggleAddToPo={onToggleAddToPo}
         />
       ))}
     </>
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
+function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -615,6 +631,8 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
+  poItemIds: Set<string>;
+  onToggleAddToPo: (productId: string) => void;
 }) {
   return (
     <>
@@ -641,6 +659,8 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
           poHistory={poHistoryMap?.get(row.id)}
           qtyOverride={qtyOverrides.get(row.id) ?? null}
           onQtyOverride={onQtyOverride}
+          addedToPo={poItemIds.has(row.id)}
+          onToggleAddToPo={onToggleAddToPo}
         />
       ))}
     </>
