@@ -141,9 +141,11 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                 <Input value={form.account_number} onChange={e => setForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Optional" />
               </div>
               <div className="space-y-1.5">
-                <Label>MOQ</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>MOQ</Label>
+                  <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+                </div>
                 <Input type="number" min="1" value={form.moq} onChange={e => setForm(f => ({ ...f, moq: e.target.value }))} placeholder="1" />
-                <p className="text-[11px] text-muted-foreground">Minimum order quantity</p>
               </div>
             </div>
             <div className="space-y-1.5">

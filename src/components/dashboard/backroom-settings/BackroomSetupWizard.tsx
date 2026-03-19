@@ -681,7 +681,10 @@ function SuppliersStep({
             <Input type="number" value={leadTimeDays} onChange={e => onLeadTimeChange(e.target.value)} placeholder="5" />
           </div>
           <div className="space-y-1.5">
-            <Label className={tokens.label.default}>MOQ</Label>
+            <div className="flex items-center gap-1.5">
+              <Label className={tokens.label.default}>MOQ</Label>
+              <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+            </div>
             <Input type="number" value={moq} onChange={e => onMoqChange(e.target.value)} placeholder="1" />
           </div>
         </div>

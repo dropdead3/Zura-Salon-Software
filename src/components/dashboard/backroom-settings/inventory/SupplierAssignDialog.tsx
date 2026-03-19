@@ -146,7 +146,10 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
               <Input id="lead_time_days" type="number" {...register('lead_time_days')} placeholder="5" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="moq">MOQ</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="moq">MOQ</Label>
+                <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+              </div>
               <Input id="moq" type="number" {...register('moq')} placeholder="1" />
             </div>
           </div>

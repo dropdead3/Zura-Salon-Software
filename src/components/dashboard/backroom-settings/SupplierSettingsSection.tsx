@@ -350,7 +350,10 @@ export function SupplierSettingsSection() {
                         <Input id="sl" type="number" {...register('lead_time_days')} placeholder="5" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="sm" className={tokens.label.default}>MOQ</Label>
+                        <div className="flex items-center gap-1.5">
+                          <Label htmlFor="sm" className={tokens.label.default}>MOQ</Label>
+                          <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+                        </div>
                         <Input id="sm" type="number" {...register('moq')} placeholder="1" />
                       </div>
                     </div>
