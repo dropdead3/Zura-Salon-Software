@@ -27,6 +27,7 @@ export function AlertSettingsCard() {
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
   const [autoReorderMode, setAutoReorderMode] = useState('to_par');
   const [maxAutoReorderValue, setMaxAutoReorderValue] = useState('');
+  const [requirePoApproval, setRequirePoApproval] = useState(true);
   const [deadStockEnabled, setDeadStockEnabled] = useState(true);
   const [deadStockDays, setDeadStockDays] = useState(90);
 
