@@ -132,16 +132,27 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
         return;
       }
 
-      // Multi-location: always separate files (count sheets are per-location by nature)
+      // Multi-location: bundle into a single ZIP
+      const zip = new JSZip();
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
       for (let i = 0; i < locationIds.length; i++) {
         const locId = locationIds[i];
         const locName = locations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
         toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
         const products = locId === locationId ? inventoryProducts : await fetchInventoryForLocation(orgId!, locId);
-        await generateCountSheetPdf({ products, orgName, locationName: locName, logoDataUrl, countEntryUrl });
+        const pdfBytes = await generateCountSheetPdf({ products, orgName, locationName: locName, logoDataUrl, countEntryUrl, returnBytes: true });
+        const fileName = buildReportFileName({ orgName, locationName: locName, reportSlug: 'count-sheet', dateFrom: dateStr });
+        zip.file(fileName, pdfBytes as ArrayBuffer);
       }
       toast.dismiss('pdf-progress');
-      toast.success(`${locationIds.length} count sheets downloaded`);
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = buildReportFileName({ orgName, reportSlug: 'count-sheets-all', dateFrom: dateStr }).replace('.pdf', '.zip');
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${locationIds.length} count sheets downloaded as ZIP`);
     } catch (err) {
       toast.error('Failed to generate count sheet');
     } finally {

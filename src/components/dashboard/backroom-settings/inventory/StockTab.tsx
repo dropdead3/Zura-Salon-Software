@@ -362,17 +362,29 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         }
         toast.success('Combined stock report downloaded');
       } else {
-        // Separate: download one PDF per location
+        // Separate: bundle into a single ZIP
+        const zip = new JSZip();
+        const now = new Date();
+        const dateStr = format(now, 'yyyy-MM-dd');
         for (let i = 0; i < locationIds.length; i++) {
           const locId = locationIds[i];
           const locName = allLocations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
           toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
           const locInfo: ReportLocationInfo | undefined = { name: locName };
-          await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo);
+          const pdfBytes = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, undefined, true);
+          const fileName = buildReportFileName({ orgName, locationName: locName, reportSlug: 'backroom-stock', dateFrom: dateStr });
+          zip.file(fileName, pdfBytes as ArrayBuffer);
         }
         toast.dismiss('pdf-progress');
-        toast.success(`${locationIds.length} stock reports downloaded`);
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = buildReportFileName({ orgName, reportSlug: 'backroom-stock-all', dateFrom: dateStr }).replace('.pdf', '.zip');
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`${locationIds.length} stock reports downloaded as ZIP`);
       }
     } catch (err) {
       toast.error('Failed to export stock report');
