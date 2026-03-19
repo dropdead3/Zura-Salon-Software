@@ -1261,7 +1261,9 @@ function InventoryByLocationTab() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
-  const { data: products, isLoading } = useProducts({ locationId: selectedLocationId !== 'all' ? selectedLocationId : undefined });
+  const { data: allRetailProducts, isLoading } = useProducts({ locationId: selectedLocationId !== 'all' ? selectedLocationId : undefined });
+  // Filter to retail-only products (exclude Supplies which belong to Backroom)
+  const products = useMemo(() => (allRetailProducts || []).filter(p => p.product_type !== 'Supplies'), [allRetailProducts]);
   const updateProduct = useUpdateProduct();
   const { data: allSuppliers } = useProductSuppliers();
   const [inventoryView, setInventoryView] = useState<'stock' | 'orders'>('stock');

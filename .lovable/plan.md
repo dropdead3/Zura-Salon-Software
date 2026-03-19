@@ -1,36 +1,18 @@
 
 
-# Remove PO Builder — Simplify to Single PO Action
+# Retail Product Inventory & Reorder Manager — Foundation Build
 
-## Problem
-Three overlapping PO workflows confuse users:
-1. "Add Selected to PO" → stages in PO Builder panel → submit from panel
-2. "Auto Build PO" → dialog → creates POs directly
-3. The table itself already shows supplier grouping, quantities, and costs
+## Status: Phase 1 Complete ✅
 
-The PO Builder panel is a redundant middle layer.
+### What was built
+1. **`retail_product_settings` table** — per-location par/reorder levels for retail products, with RLS policies scoped to org members
+2. **Backroom filter fix** — `useUnlinkedProducts` and `useAllProductsWithSupplier` now filter to `product_type = 'Supplies'` only
+3. **Retail inventory tab filter** — `InventoryByLocationTab` excludes Supplies from the retail inventory view
+4. **Hooks created**:
+   - `src/hooks/retail/useRetailProductSettings.ts` — CRUD for `retail_product_settings` (per-location par/reorder levels)
+   - `src/hooks/retail/useRetailReorderQueue.ts` — joins products + settings to surface items below reorder level
 
-## Approach: Remove PO Builder, Unify Around Auto Build PO
-
-- **Remove** the PO Builder panel entirely (slide-out panel + button + all staging state)
-- **Replace** "Add Selected to PO" in the selection bar with **"Create PO"** that opens `AutoCreatePODialog` with just the selected products
-- **Keep** "Auto Build PO" in the actions row — it opens the same dialog with ALL reorder-eligible products
-- Net result: one dialog, two entry points (selected items vs all items)
-
-### What gets removed
-- `POBuilderPanel` component usage (the slide-out panel)
-- `poItemIds`, `poBuilderOpen`, `qtyOverrides`, `toggleAddToPo`, `handleQtyOverride` state
-- "PO Builder" button in the actions row
-- `stageSupplierToPo` function
-
-### What changes
-- Selection bar: "Add Selected to PO" → "Create PO" button that opens `AutoCreatePODialog` with `selectedReorderProducts`
-- Need a second state for the dialog to distinguish "selected only" vs "all items" mode
-
-### Files changed
-- **`StockTab.tsx`**: Remove PO Builder state/panel, rewire selection bar button
-- **`POBuilderPanel.tsx`**: No longer imported (can be deleted later)
-- **`CommandCenterRow.tsx`**: Remove `addedToPo` / `onToggleAddToPo` props if present
-
-**~1 file edited, significant state cleanup.**
-
+### Phase 2 (Future)
+- Wire `useRetailProductSettingsMap` into `InventoryByLocationTab` for inline par/reorder editing
+- Dedicated reorder queue UI component using `useRetailReorderQueue`
+- Separate nav entry when retail inventory grows in complexity
