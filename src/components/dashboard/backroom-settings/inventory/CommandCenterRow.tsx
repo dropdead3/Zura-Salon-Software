@@ -178,7 +178,7 @@ export function CommandCenterRow({
   const [editingQty, setEditingQty] = useState(false);
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
-  const statusCfg = STOCK_STATUS_CONFIG[row.status];
+  const needsReorder = row.recommended_order_qty > 0;
   const needsReorder = row.recommended_order_qty > 0;
   const isOverridden = qtyOverride != null;
   const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
