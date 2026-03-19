@@ -115,6 +115,16 @@ export function ClientMemoryPanel({ clientId, serviceName, orgId, className, onV
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                 {item.label}
               </span>
+              {'count' in item && (item as any).count > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); (item as any).onViewAll?.(); }}
+                  className="ml-auto"
+                >
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                    {(item as any).count} total
+                  </Badge>
+                </button>
+              )}
             </div>
             <p className={cn(
               'text-xs leading-relaxed',
