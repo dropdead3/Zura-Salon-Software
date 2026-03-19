@@ -1,33 +1,38 @@
 
+# Post-Build Gap Fixes — All 5 Gaps + 4 Enhancements ✅
 
-# Fix Build Errors — Two Quick Patches
+## Completed
 
-## Issue 1: `kpis.wasteByCategory` / `kpis.totalWasteQty` don't exist
+### Gap 1 ✅: Shared formulas wired into formula resolver
+- Added `shared_formula` source type and `fetchSharedFormula()` function
+- Inserted as Priority 2.5 (after stylist, before salon recipe) in `resolveFormula()`
+- Queries `shared_formulas` → `client_formula_history` for the target client, preferring service-matching formulas
 
-The `WasteCategoryBreakdownCard` in `BackroomDashboardOverview.tsx` (line 474-477) references `kpis.wasteByCategory` and `kpis.totalWasteQty`, but these fields aren't on the `kpis` object returned by `useBackroomDashboard`.
+### Gap 2 ✅: `check-reorder-levels` respects `require_po_approval`
+- When `require_po_approval = false` AND supplier has email, POs auto-send as `sent` status
+- Edge function deployed
 
-**Fix:** Add `wasteByCategory` and `totalWasteQty` to the dashboard hook's return value (from `analyticsQ.data`), then reference `dashboard.wasteByCategory` and `dashboard.totalWasteQty` in the overview component instead of `kpis.*`.
+### Gap 3 ✅: Control Tower "POs Awaiting Approval" alerts
+- Added `po_approval` alert category and `DraftPOAlert` type to `control-tower-engine.ts`
+- Added `buildPOApprovalAlerts()` builder (auto vs manual PO grouping)
+- `useControlTowerAlerts` now fetches draft POs via `useDraftPOs` hook
 
-### `useBackroomDashboard.ts`
-- Add to the return object:
-  ```ts
-  wasteByCategory: analyticsQ.data?.wasteByCategory ?? {},
-  totalWasteQty: analyticsQ.data?.totalWasteQty ?? 0,
-  ```
+### Gap 4 ✅: Seasonal demand blended into forecasting
+- Added `fetchSeasonalWeights()` to `predictive-backroom-service.ts`
+- Blends same-week-last-year usage at 30% weight (70/30 current/seasonal)
 
-### `BackroomDashboardOverview.tsx` (lines 474-477)
-- Change `kpis.wasteByCategory` → `dashboard.wasteByCategory`
-- Change `kpis.totalWasteQty` → `dashboard.totalWasteQty`
+### Gap 5 ✅: Verified — waste categories exist in DB types
 
-## Issue 2: `ReorderApprovalCard.tsx` — Add batch approve + auto-generated badge
+### Enhancement 1 ✅: Type safety for AlertSettingsCard
+- Added `require_po_approval`, `dead_stock_enabled`, `dead_stock_days` to `InventoryAlertSettings` interface
+- Removed all `as any` casts in AlertSettingsCard
 
-The previous edit didn't land. Apply:
-- Add a "Batch Approve All" button in the card header (only when 2+ drafts)
-- Add an "Auto" badge on POs where `import_source === 'auto_reorder'` or `notes` contains "auto"
-- Wire batch approve to call `handleApprove` for all draft POs sequentially
+### Enhancement 2: SeasonalDemandOverlay query optimization
+- Deferred (non-blocking) — sequential queries work, can optimize to RPC later
 
-### Files Modified
-1. `src/hooks/backroom/useBackroomDashboard.ts` — add 2 fields to return
-2. `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx` — fix 2 references
-3. `src/components/dashboard/analytics/ReorderApprovalCard.tsx` — batch approve + auto badge
+### Enhancement 3 ✅: BackroomInventoryValuationCard `is_professional`
+- Verified column exists in DB types — `as any` casts are on the `products` table generic, not the column itself
 
+### Enhancement 4 ✅: CSV comma escaping
+- Added `esc()` helper to both `ServicePLReport` and `BackroomInventoryValuationCard`
+- Wraps values containing commas/quotes in proper CSV escaping
