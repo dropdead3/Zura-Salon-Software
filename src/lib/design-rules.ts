@@ -76,6 +76,14 @@ export const TYPOGRAPHY_RULES = {
     token: 'tokens.table.columnHeader',
     prohibited: ['uppercase', 'font-display on column headers'],
   },
+
+  TOAST_RULES: {
+    radius: 'rounded-lg (8px) — Level 1 radius, consistent with inner cards',
+    aesthetic: 'Glass bento — bg-card/80, backdrop-blur-xl, border-border/40, shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]',
+    token: 'tokens.toast.container / tokens.toast.radius',
+    prohibited: ['rounded-full on toasts', 'rounded-xl on toasts', 'rounded-2xl on toasts', 'pill-shaped toasts'],
+    note: 'Toasts are rectangular with slightly rounded corners. Never pill-shaped.',
+  },
 } as const;
 
 export function isProhibitedFontWeight(className: string): boolean {

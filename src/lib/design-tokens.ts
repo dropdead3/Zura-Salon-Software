@@ -336,6 +336,7 @@ export function getTokenFor(context:
   | 'drawer-body'
   | 'drawer-footer'
   | 'drawer-title'
+  | 'toast-container'
 ): string {
   const map: Record<string, string> = {
     'page-title': tokens.heading.page,

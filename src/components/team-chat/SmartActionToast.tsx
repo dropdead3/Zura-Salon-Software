@@ -71,7 +71,7 @@ export function SmartActionToast({
   if (service) details.push(`(${service})`);
 
   return (
-    <Card className="w-full max-w-sm p-4 bg-card/80 backdrop-blur-xl rounded-2xl shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40 animate-in slide-in-from-right-5 duration-300">
+    <Card className="w-full max-w-sm p-4 bg-card/80 backdrop-blur-xl rounded-lg shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] border border-border/40 animate-in slide-in-from-right-5 duration-300">
       <div className="flex items-start gap-3">
         <div className={cn('p-2 rounded-lg', config.color)}>
           <Icon className="h-4 w-4" />

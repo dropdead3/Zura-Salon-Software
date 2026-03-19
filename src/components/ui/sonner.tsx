@@ -36,9 +36,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
             ].join(" "),
           description: "group-[.toast]:text-muted-foreground text-xs leading-snug",
           actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:rounded-full",
+            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:rounded-md",
           cancelButton:
-            "group-[.toast]:bg-muted/60 group-[.toast]:text-muted-foreground group-[.toast]:rounded-full",
+            "group-[.toast]:bg-muted/60 group-[.toast]:text-muted-foreground group-[.toast]:rounded-md",
         },
       }}
       {...props}

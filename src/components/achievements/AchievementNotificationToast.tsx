@@ -88,7 +88,7 @@ export function AchievementNotificationToast({
           transition={{ type: 'spring', damping: 15, stiffness: 300 }}
           className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
         >
-          <div className="relative bg-gradient-to-br from-background via-background to-muted border border-border/50 rounded-2xl shadow-2xl overflow-hidden min-w-[320px] max-w-[400px]">
+          <div className="relative bg-gradient-to-br from-background via-background to-muted border border-border/50 rounded-lg shadow-2xl overflow-hidden min-w-[320px] max-w-[400px]">
             {/* Glow effect */}
             <div
               className="absolute inset-0 opacity-20"

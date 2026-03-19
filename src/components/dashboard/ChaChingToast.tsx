@@ -12,7 +12,7 @@ export function ChaChingToast({ amount, toastId }: ChaChingToastProps) {
   return (
     <SilverShineWrapper variant="card" className="w-[340px]">
       <div
-        className="flex items-center gap-4 bg-card/80 backdrop-blur-xl rounded-xl p-4 cursor-pointer"
+        className="flex items-center gap-4 bg-card/80 backdrop-blur-xl rounded-lg p-4 cursor-pointer"
         onClick={() => toast.dismiss(toastId)}
       >
         {/* Icon */}
