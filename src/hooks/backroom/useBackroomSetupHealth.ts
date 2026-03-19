@@ -23,6 +23,7 @@ export interface SetupHealthMetrics {
   allowancePolicies: number;
   stationsConfigured: number;
   alertRulesConfigured: number;
+  billingConfigured: boolean;
   warnings: SetupWarning[];
 }
 
