@@ -114,7 +114,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
         const qty = p.quantity_on_hand ?? 0;
         const status = getStockStatus(qty, reorderLevel, parLevel);
         const openPoQty = openPoMap.get(p.id) ?? 0;
-        const { orderQty, recommendedOrderQty } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
+        const { orderQty, recommendedOrderQty, effectiveStock } = computeReorderFields(qty, parLevel, reorderLevel, openPoQty);
         const chargePerGram = computeChargePerGram(p.cost_per_gram, p.markup_pct);
         const sup = supplierMap.get(p.id);
 
@@ -133,6 +133,7 @@ export function useBackroomInventoryTable(options?: { enabled?: boolean; locatio
           cost_price: p.cost_price,
           order_qty: orderQty,
           open_po_qty: openPoQty,
+          effective_stock: effectiveStock,
           recommended_order_qty: recommendedOrderQty,
           status,
           charge_per_gram: chargePerGram,
