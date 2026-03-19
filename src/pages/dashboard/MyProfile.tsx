@@ -49,20 +49,7 @@ const DAYS_OF_WEEK = [
 const ADMIN_LEVEL_ROLES = ['super_admin', 'admin', 'manager', 'admin_assistant', 'bookkeeper', 'operations_assistant', 'receptionist'] as const;
 
 
-// Format phone number as XXX-XXX-XXXX
-const formatPhoneNumber = (value: string) => {
-  // Remove all non-numeric characters
-  const digits = value.replace(/\D/g, '');
-  
-  // Limit to 10 digits
-  const limited = digits.slice(0, 10);
-  
-  // Format with dashes
-  if (limited.length <= 3) {
-    return limited;
-  } else if (limited.length <= 6) {
-    return `${limited.slice(0, 3)}-${limited.slice(3)}`;
-  } else {
+// formatPhoneNumber handled by base Input component for type="tel"
     return `${limited.slice(0, 3)}-${limited.slice(3, 6)}-${limited.slice(6)}`;
   }
 };
