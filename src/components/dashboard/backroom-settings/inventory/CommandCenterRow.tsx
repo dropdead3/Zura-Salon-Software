@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
+import { ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
