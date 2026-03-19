@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
-import { Package, ClipboardList, Truck, AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
+import { Package, ClipboardList, Truck, AlertTriangle, ChevronRight, Loader2, CalendarCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { VisibilityGate } from '@/components/visibility';
+import { useNextPendingAudit } from '@/hooks/inventory/useAuditSchedule';
+import { format, isPast } from 'date-fns';
 
 function useInventoryManagerStats() {
   const { effectiveOrganization } = useOrganizationContext();
