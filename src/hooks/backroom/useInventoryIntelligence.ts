@@ -38,7 +38,7 @@ export function useInventoryIntelligence(locationId?: string) {
       // 2. Get trailing 28-day usage movements
       let query = supabase
         .from('stock_movements')
-        .select('product_id, quantity')
+        .select('product_id, quantity_change')
         .eq('organization_id', orgId!)
         .in('reason', ['usage', 'dispensing', 'sold'])
         .gte('created_at', cutoff.toISOString());
