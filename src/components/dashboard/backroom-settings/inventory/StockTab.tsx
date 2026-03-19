@@ -6,6 +6,7 @@
  */
 
 import { useMemo, useState, useCallback, useEffect } from 'react';
+import JSZip from 'jszip';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
