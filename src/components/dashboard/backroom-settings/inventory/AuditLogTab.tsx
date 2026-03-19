@@ -111,7 +111,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 type QuickFilterKey = 'today' | 'thisWeek' | 'adjustments' | 'receiving' | null;
 
-export function AuditLogTab({ locationId }: AuditLogTabProps) {
+export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
