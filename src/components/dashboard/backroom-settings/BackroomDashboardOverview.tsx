@@ -102,7 +102,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                    <img src="/src/assets/z-icon.svg" alt="Zura" className="w-4 h-4" style={{ filter: 'brightness(0) saturate(100%) invert(62%) sepia(93%) saturate(456%) hue-rotate(360deg) brightness(101%) contrast(101%)' }} />
+                    <ZuraZIcon className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="flex items-baseline gap-1.5">
