@@ -1,12 +1,15 @@
 /**
- * DockSummaryTab — Session summary with bowl counts and status overview.
+ * DockSummaryTab — Session summary with bowl counts, cost aggregation, and event timeline.
  */
 
-import { Receipt, FlaskConical, CheckCircle2, Loader2 } from 'lucide-react';
+import { Receipt, FlaskConical, CheckCircle2, Loader2, DollarSign, Scale, Beaker } from 'lucide-react';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions } from '@/hooks/dock/useDockMixSessions';
+import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 import { normalizeSessionStatus } from '@/lib/backroom/session-state-machine';
+import { DockSessionTimeline } from '../mixing/DockSessionTimeline';
+import { roundWeight, roundCost } from '@/lib/backroom/mix-calculations';
 
 interface DockSummaryTabProps {
   appointment: DockAppointment;
@@ -15,6 +18,8 @@ interface DockSummaryTabProps {
 
 export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
+  const primarySessionId = sessions?.[0]?.id || null;
+  const { data: stats } = useDockSessionStats(primarySessionId);
 
   if (isLoading) {
     return (
@@ -31,7 +36,7 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
     return n === 'active' || n === 'draft' || n === 'awaiting_reweigh' || n === 'awaiting_stylist_approval';
   }).length;
 
-  const stats = [
+  const bowlStats = [
     { label: 'Total Bowls', value: bowls.length, icon: FlaskConical },
     { label: 'Completed', value: completed, icon: CheckCircle2 },
     { label: 'In Progress', value: active, icon: FlaskConical },
@@ -50,7 +55,7 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
       {/* Bowl stats */}
       {bowls.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          {stats.map(({ label, value, icon: Icon }) => (
+          {bowlStats.map(({ label, value, icon: Icon }) => (
             <div
               key={label}
               className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-3 text-center"
@@ -65,6 +70,36 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Cost & usage aggregation from projections */}
+      {stats && stats.totalDispensed > 0 && (
+        <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 space-y-3">
+          <h3 className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
+            Session Totals
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            <StatTile icon={Beaker} label="Dispensed" value={`${roundWeight(stats.totalDispensed)}g`} />
+            <StatTile icon={Scale} label="Net Usage" value={`${roundWeight(stats.totalNetUsage)}g`} highlight />
+            <StatTile icon={Scale} label="Leftover" value={`${roundWeight(stats.totalLeftover)}g`} />
+            <StatTile icon={DollarSign} label="Total Cost" value={`$${roundCost(stats.totalCost).toFixed(2)}`} />
+          </div>
+          {stats.totalDispensed > 0 && (
+            <div className="flex items-center justify-between pt-2 border-t border-[hsl(var(--platform-border)/0.1)]">
+              <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">Waste %</span>
+              <span className={`text-xs font-medium ${
+                (stats.totalLeftover / stats.totalDispensed) * 100 > 25 ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {roundWeight((stats.totalLeftover / stats.totalDispensed) * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Event timeline */}
+      {primarySessionId && (
+        <DockSessionTimeline sessionId={primarySessionId} />
       )}
 
       {bowls.length === 0 && (
@@ -84,6 +119,25 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between">
       <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{label}</span>
       <span className="text-xs text-[hsl(var(--platform-foreground))] font-medium">{value}</span>
+    </div>
+  );
+}
+
+function StatTile({ icon: Icon, label, value, highlight }: {
+  icon: typeof Scale;
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="rounded-lg bg-[hsl(var(--platform-bg-elevated))] border border-[hsl(var(--platform-border)/0.1)] p-2.5">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide">{label}</span>
+      </div>
+      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]'}`}>
+        {value}
+      </p>
     </div>
   );
 }

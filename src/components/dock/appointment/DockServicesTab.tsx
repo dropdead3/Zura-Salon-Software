@@ -206,7 +206,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       {/* Session complete sheet */}
       <DockSessionCompleteSheet
         open={showComplete}
-        stats={sessionStats}
+        stats={completeStats}
         onComplete={handleCompleteSession}
         onMarkUnresolved={handleMarkUnresolved}
         onClose={() => setShowComplete(false)}
