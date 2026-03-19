@@ -87,19 +87,31 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
           <h2 className={tokens.heading.section}>Inventory Management</h2>
           <p className={cn(tokens.body.muted, 'mt-1')}>Monitor stock, reorder supplies, manage purchase orders, receive shipments, and run physical counts.</p>
         </div>
-        {locations.length > 1 && (
-          <Select value={effectiveLocationId} onValueChange={setLocationId}>
-            <SelectTrigger className="w-fit rounded-full gap-2 shrink-0">
-              <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {locations.length > 1 && (
+            <Select value={effectiveLocationId} onValueChange={setLocationId}>
+              <SelectTrigger className="w-fit rounded-full gap-2 shrink-0">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Select location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {['stock', 'counts', 'audit'].includes(activeTab) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="font-sans rounded-full gap-1.5 shrink-0"
+              onClick={() => pdfExportRef.current?.()}
+            >
+              <FileDown className="w-4 h-4" /> PDF
+            </Button>
+          )}
+        </div>
       </div>
 
 
