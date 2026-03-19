@@ -1,41 +1,31 @@
 
 
-# Add Supplier Wizard — Multi-Step with Brand & Product Assignment
+# Add "Other" Specification Input for Dropdown Selections
 
-## Current State
-The "Add Supplier" dialog is a single-field form (name only). It doesn't even persist to the database — it just sets the selected supplier name in local state. Linking products is a separate step via the "Link Products" dialog. This means a new supplier has zero product associations until the user manually links them one by one.
+## Problem
+When "Other" is selected in a dropdown (e.g., Reorder Method), there's no way to specify what "Other" means.
 
-## What We're Building
-A multi-step wizard dialog that replaces the current single-field "Add Supplier" dialog:
+## Changes
 
-**Step 1: Supplier Details**
-- Supplier name (required)
-- Email, phone, website, account number (optional)
-- Reorder method dropdown, lead time, MOQ
+### 1. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`
+- Add a `reorder_method_other` field to the wizard's `details` state
+- After the Reorder Method select, conditionally render a text Input when `reorder_method === 'other'` with placeholder "Specify method..."
+- Pass `reorder_method_other` through to the supplier creation so it persists (likely stored in `reorder_notes` or a new column)
 
-**Step 2: Assign Products**
-- Two assignment modes via toggle tabs: **By Brand** and **By Product**
-- **By Brand**: Shows brand cards (only Supplies brands). Check a brand → all its products get assigned. Shows product count per brand.
-- **By Product**: Same searchable product list as current `LinkProductsDialog`, with brand grouping and checkbox selection.
-- Products already assigned to another supplier show a badge (will be reassigned).
+### 2. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`
+- Same pattern: after the Reorder Method select (~line 348), add a conditional Input when value is `'other'`
+- Wire it into the form via `register('reorder_method_other')` or store in `reorder_notes`
 
-**Step 3: Review & Confirm**
-- Summary: supplier name, contact info, number of products being assigned
-- "Create Supplier" button persists everything in one batch
+### 3. Database consideration
+The `suppliers` table likely doesn't have a `reorder_method_other` column. Two options:
+- **Simple**: Concatenate into existing `reorder_method` field as `"other:Website XYZ"` and parse on display
+- **Cleaner**: Add a `reorder_method_other` text column to the suppliers table via migration
 
-## Impact on Setup Wizard Order
-You're right — this implies brands and products should be configured before suppliers in the Backroom setup flow. The current governance order already has "Products & Supplies" before "Suppliers" in the sidebar, so the natural flow is correct. No reordering needed.
+I'll add the column for cleanliness, with a single migration adding `reorder_method_other text` to the suppliers table.
 
-## Files
+### 4. `src/pages/dashboard/platform/Accounts.tsx`
+- Same pattern for the "Other" business type selection (~line 264): show an input when `other` is selected to capture the specific type
 
-| File | Action |
-|------|--------|
-| `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx` | **Create** — 3-step wizard component |
-| `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx` | **Edit** — Replace inline Add Supplier dialog with `AddSupplierWizard`, wire up onComplete to create supplier + link products in one action |
-
-## Technical Notes
-- Reuses existing `useLinkProducts` and `useUpsertSupplier` hooks for persistence
-- Brand list derived from existing products query filtered to `product_type = 'Supplies'`
-- Wizard state managed locally; only persists on final step
-- The existing `LinkProductsDialog` stays for post-creation linking; wizard handles initial assignment
+## Summary
+Three locations get the conditional input field. One small migration adds the column. Clean and consistent.
 
