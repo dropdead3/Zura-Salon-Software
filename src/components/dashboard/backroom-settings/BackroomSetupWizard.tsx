@@ -622,6 +622,26 @@ function SuppliersStep({
           <Label className={tokens.label.default}>Website</Label>
           <Input value={supplierWebsite} onChange={e => onWebsiteChange(e.target.value)} placeholder="https://supplier.com" />
         </div>
+
+        {/* Secondary Contact */}
+        <div className="border-t border-border/60 pt-3 mt-1 space-y-3">
+          <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Name</Label>
+            <Input value={secondaryName} onChange={e => onSecondaryNameChange(e.target.value)} placeholder="e.g. John Doe" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className={tokens.label.default}>Email</Label>
+              <Input type="email" value={secondaryEmail} onChange={e => onSecondaryEmailChange(e.target.value)} placeholder="backup@supplier.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className={tokens.label.default}>Phone</Label>
+              <Input value={secondaryPhone} onChange={e => onSecondaryPhoneChange(e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label className={tokens.label.default}>Reorder Method</Label>
