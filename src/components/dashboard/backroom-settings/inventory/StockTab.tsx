@@ -665,12 +665,12 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
     <>
       {/* Supplier header row */}
       <TableRow
-        className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
+        className="bg-muted/30 hover:bg-muted/40 cursor-pointer transition-colors duration-150"
         onClick={() => setOpen(!open)}
       >
         <TableCell colSpan={8} className="py-2">
           <div className="flex items-center gap-2">
-            {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform duration-150', open && 'rotate-90')} />
             <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary')} />
             <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
               {group.supplier}
