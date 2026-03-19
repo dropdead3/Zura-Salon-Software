@@ -313,6 +313,78 @@ export function AlertSettingsCard() {
                     </div>
                   )}
                 </div>
+
+                {/* Audit Schedule */}
+                <div className="pt-3 border-t space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm flex items-center gap-1.5">
+                        <CalendarCheck className="w-3.5 h-3.5 text-primary" />
+                        Scheduled audit reminders
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Remind backroom managers when periodic inventory audits are due
+                      </p>
+                    </div>
+                    <Switch checked={auditReminderEnabled} onCheckedChange={setAuditReminderEnabled} />
+                  </div>
+                  {auditReminderEnabled && (
+                    <div className="space-y-4 ml-4 pl-4 border-l border-border">
+                      <div className="space-y-2">
+                        <Label className="text-sm">Audit frequency</Label>
+                        <Select value={auditFrequency} onValueChange={setAuditFrequency}>
+                          <SelectTrigger className="max-w-[200px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="biweekly">Biweekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="quarterly">Quarterly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Remind before due date</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Send reminder {auditReminderDaysBefore} day{auditReminderDaysBefore !== 1 ? 's' : ''} before the audit is due
+                        </p>
+                        <Slider
+                          value={[auditReminderDaysBefore]}
+                          onValueChange={([v]) => setAuditReminderDaysBefore(v)}
+                          min={1}
+                          max={7}
+                          step={1}
+                          className="mt-2"
+                        />
+                        <div className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>1 day</span>
+                          <span>3 days</span>
+                          <span>7 days</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Notify roles</Label>
+                        <div className="flex flex-wrap items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox checked={auditNotifyInventoryManager} onCheckedChange={(v) => setAuditNotifyInventoryManager(!!v)} />
+                            <span className="text-sm">Inventory Manager</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox checked={auditNotifyManager} onCheckedChange={(v) => setAuditNotifyManager(!!v)} />
+                            <span className="text-sm">Manager</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox checked={auditNotifyAdmin} onCheckedChange={(v) => setAuditNotifyAdmin(!!v)} />
+                            <span className="text-sm">Admin</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
