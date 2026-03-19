@@ -894,7 +894,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const isUnassigned = group.supplier === 'Unassigned';
-  const reorderCount = group.products.filter(p => p.recommended_order_qty > 0).length;
+  const reorderCount = group.products.filter(p => p.recommended_order_qty > 0 || p.stock_state === 'out_of_stock').length;
 
   return (
     <>
