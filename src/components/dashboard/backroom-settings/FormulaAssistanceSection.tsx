@@ -18,7 +18,7 @@ const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical
 const SUGGESTION_HIERARCHY = [
   { key: 'client_history', label: 'Client History', description: 'Prioritize this client\'s last formula for this service' },
   { key: 'stylist_recent', label: 'Stylist Most Recent', description: 'Fall back to the stylist\'s most recent formula' },
-  { key: 'recipe_baseline', label: 'Recipe Baseline', description: 'Final fallback to the configured recipe baseline' },
+  { key: 'recipe_baseline', label: 'Formula Baseline', description: 'Final fallback to the configured formula baseline' },
 ];
 
 export function FormulaAssistanceSection() {
