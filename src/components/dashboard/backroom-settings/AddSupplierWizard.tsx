@@ -392,7 +392,10 @@ function StepDetails({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className={tokens.label.default}>Lead Time (days)</Label>
+          <div className="flex items-center gap-1.5">
+            <Label className={tokens.label.default}>Lead Time (days)</Label>
+            <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+          </div>
           <Input
             type="number"
             value={details.lead_time_days}
