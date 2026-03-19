@@ -328,7 +328,7 @@ export function CommandCenterRow({
                     Edited
                   </button>
                 ) : needsReorder ? (
-                  <span className="text-[9px] text-muted-foreground/50">Auto</span>
+                  <span className="text-[9px] text-muted-foreground/40">Auto</span>
                 ) : null}
               </div>
               {/* Effective stock context */}
