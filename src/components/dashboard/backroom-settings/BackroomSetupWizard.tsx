@@ -175,7 +175,20 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       await bulkUpdateProducts.mutateAsync(Array.from(selectedProductIds));
     }
 
-    if (step === 2 && selectedServiceIds.size > 0) {
+    if (step === 2 && supplierName.trim() && supplierProductIds.size > 0 && orgId) {
+      await batchUpsertSupplier.mutateAsync({
+        product_ids: Array.from(supplierProductIds),
+        organization_id: orgId,
+        supplier_name: supplierName.trim(),
+        supplier_email: supplierEmail || null,
+        supplier_phone: supplierPhone || null,
+        supplier_website: supplierWebsite || null,
+        lead_time_days: supplierLeadTime ? parseInt(supplierLeadTime) : null,
+        moq: supplierMoq ? parseInt(supplierMoq) : 1,
+      });
+    }
+
+    if (step === 3 && selectedServiceIds.size > 0) {
       await bulkUpdateServices.mutateAsync(Array.from(selectedServiceIds));
       for (const svcId of Array.from(selectedServiceIds)) {
         const prodId = serviceProductMap[svcId];
@@ -189,7 +202,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 3 && orgId) {
+    if (step === 4 && orgId) {
       for (const svcId of Object.keys(allowances)) {
         const a = allowances[svcId];
         if (a.qty && a.rate) {
@@ -204,7 +217,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 4 && stationName && stationLocationId && orgId) {
+    if (step === 5 && stationName && stationLocationId && orgId) {
       await createStation.mutateAsync({
         organization_id: orgId,
         location_id: stationLocationId,
