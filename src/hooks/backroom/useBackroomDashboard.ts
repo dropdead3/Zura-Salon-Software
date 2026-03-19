@@ -29,6 +29,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
   const { startDate: defaultStart, endDate: defaultEnd } = getLast30Days();
   const startDate = startDateOverride || defaultStart;
   const endDate = endDateOverride || defaultEnd;
+  const orgId = useBackroomOrgId();
 
   const analyticsQ = useBackroomAnalytics(startDate, endDate, locationId);
   const controlTowerQ = useControlTowerAlerts(locationId);
@@ -38,6 +39,9 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
   const budgetQ = useProcurementBudget();
   const setupQ = useBackroomSetupHealth();
   const inventoryRiskQ = useHighRiskInventory(locationId);
+  const billingSettingsQ = useBackroomBillingSettings(orgId);
+  const supplyCostEnabled = billingSettingsQ.data?.enable_supply_cost_recovery ?? false;
+  const supplyCostQ = useSupplyCostRecovery(startDate, endDate, supplyCostEnabled, locationId);
 
   const isLoading =
     analyticsQ.isLoading || controlTowerQ.isLoading || staffQ.isLoading || reorderQ.isLoading || setupQ.isLoading;
