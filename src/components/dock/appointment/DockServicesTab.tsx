@@ -18,6 +18,7 @@ import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockM
 import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
