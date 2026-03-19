@@ -13909,6 +13909,7 @@ export type Database = {
         Row: {
           account_number: string | null
           avg_delivery_days: number | null
+          contact_name: string | null
           created_at: string
           delivery_count: number
           id: string
@@ -13928,6 +13929,7 @@ export type Database = {
         Insert: {
           account_number?: string | null
           avg_delivery_days?: number | null
+          contact_name?: string | null
           created_at?: string
           delivery_count?: number
           id?: string
@@ -13947,6 +13949,7 @@ export type Database = {
         Update: {
           account_number?: string | null
           avg_delivery_days?: number | null
+          contact_name?: string | null
           created_at?: string
           delivery_count?: number
           id?: string
