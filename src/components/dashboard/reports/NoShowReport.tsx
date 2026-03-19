@@ -50,6 +50,7 @@ export function NoShowReport({
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
+  const locationInfo = useReportLocationInfo(locationId);
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: noShowData, isLoading } = useNoShowReport(dateFrom, dateTo, locationId);
