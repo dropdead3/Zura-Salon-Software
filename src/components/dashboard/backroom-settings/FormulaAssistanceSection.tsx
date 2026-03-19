@@ -57,7 +57,7 @@ export function FormulaAssistanceSection() {
       <Infotainer id="backroom-formula-guide" title="Formula Assistance" description="Smart Mix Assist suggests formulas based on client history and recipe baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff." icon={<Sparkles className="h-4 w-4 text-primary" />} />
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pr-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -70,7 +70,7 @@ export function FormulaAssistanceSection() {
           <Switch checked={settings?.is_enabled ?? false} onCheckedChange={(checked) => updateSettings.mutate({ is_enabled: checked })} />
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
+          <div className="rounded-lg border border-border/60 bg-card/80 p-4 pr-0 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Ratio Lock</p><MetricInfoTooltip description="When enabled, Smart Mix Assist enforces the same product ratios used in previous formulas, preventing ratio drift between sessions." /></div>
               <p className="text-sm text-muted-foreground">Enforce consistent ratios when suggesting formulas</p>
