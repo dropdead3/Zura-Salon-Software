@@ -79,6 +79,9 @@ export function useSupplierGroups() {
             reorder_method: row.reorder_method,
             reorder_method_other: (row as any).reorder_method_other ?? null,
             reorder_notes: row.reorder_notes,
+            secondary_contact_name: (row as any).secondary_contact_name ?? null,
+            secondary_contact_email: (row as any).secondary_contact_email ?? null,
+            secondary_contact_phone: (row as any).secondary_contact_phone ?? null,
             product_ids: [],
             rows: [],
           });
