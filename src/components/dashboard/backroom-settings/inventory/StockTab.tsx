@@ -489,32 +489,30 @@ export function StockTab({ locationId }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
-  icon: React.ReactNode;
+function SummaryChip({ label, value, active, onClick, accent }: {
   label: string;
-  value: string;
+  value: number;
+  active: boolean;
+  onClick: () => void;
   accent?: 'warning' | 'destructive';
-  onClick?: () => void;
-  tooltip?: string;
 }) {
   return (
-    <div
-      className={cn(
-        tokens.kpi.tile,
-        'relative',
-        onClick && 'cursor-pointer hover:border-primary/40 transition-colors',
-        accent === 'warning' && 'border-warning/30',
-        accent === 'destructive' && 'border-destructive/30',
-      )}
+    <button
       onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+        active
+          ? accent === 'destructive'
+            ? 'bg-destructive/10 border-destructive/30 text-destructive'
+            : accent === 'warning'
+              ? 'bg-warning/10 border-warning/30 text-warning'
+              : 'bg-primary/10 border-primary/30 text-primary'
+          : 'bg-muted/40 border-border/60 text-muted-foreground hover:border-border hover:text-foreground',
+      )}
     >
-      {tooltip && <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />}
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <span className={tokens.kpi.label}>{label}</span>
-      </div>
-      <span className={tokens.kpi.value}>{value}</span>
-    </div>
+      <span className="tabular-nums font-medium">{value}</span>
+      {label}
+    </button>
   );
 }
 
