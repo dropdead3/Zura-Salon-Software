@@ -548,7 +548,8 @@ function StepReview({
   selectedCount: number;
 }) {
   const rows = [
-    { label: 'Supplier Name', value: details.name },
+    { label: 'Supplier or Distributor', value: details.name },
+    { label: 'Contact Name', value: details.contact_name },
     { label: 'Email', value: details.email },
     { label: 'Phone', value: details.phone },
     { label: 'Website', value: details.website },
