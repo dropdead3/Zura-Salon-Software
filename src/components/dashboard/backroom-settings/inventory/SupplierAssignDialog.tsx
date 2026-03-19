@@ -146,24 +146,37 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
             </div>
           </div>
 
-          {/* Secondary Contact */}
-          <div className="border-t border-border/60 pt-3 mt-1 space-y-3">
-            <p className="text-sm font-sans text-foreground">Secondary Contact</p>
-            <div className="space-y-2">
-              <Label htmlFor="secondary_contact_name">Name</Label>
-              <Input id="secondary_contact_name" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="secondary_contact_email">Email</Label>
-                <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="secondary_contact_phone">Phone</Label>
-                <Input id="secondary_contact_phone" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
-              </div>
-            </div>
-          </div>
+           {/* Secondary Contact */}
+           <div className="border-t border-border/60 pt-3 mt-1">
+             {!(showSecondaryContact || watch('secondary_contact_name') || watch('secondary_contact_email') || watch('secondary_contact_phone')) ? (
+               <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground" onClick={() => setShowSecondaryContact(true)}>
+                 <Plus className="w-4 h-4 mr-1" /> Add another contact
+               </Button>
+             ) : (
+               <div className="space-y-3">
+                 <div className="flex items-center justify-between">
+                   <p className="text-sm font-sans text-foreground">Secondary Contact</p>
+                   <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); setValue('secondary_contact_name', ''); setValue('secondary_contact_email', ''); setValue('secondary_contact_phone', ''); }}>
+                     <X className="w-3.5 h-3.5 mr-1" /> Remove
+                   </Button>
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="secondary_contact_name">Name</Label>
+                   <Input id="secondary_contact_name" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+                 </div>
+                 <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-2">
+                     <Label htmlFor="secondary_contact_email">Email</Label>
+                     <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+                   </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="secondary_contact_phone">Phone</Label>
+                     <Input id="secondary_contact_phone" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                   </div>
+                 </div>
+               </div>
+             )}
+           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={batchUpsert.isPending}>

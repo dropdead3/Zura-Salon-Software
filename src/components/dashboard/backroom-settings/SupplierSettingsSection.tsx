@@ -386,24 +386,37 @@ export function SupplierSettingsSection() {
                       </div>
                     </div>
 
-                    {/* Secondary Contact */}
-                    <div className="border-t border-border/60 pt-4 mt-1 space-y-3">
-                      <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="scn" className={tokens.label.default}>Name</Label>
-                        <Input id="scn" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="sce" className={tokens.label.default}>Email</Label>
-                          <Input id="sce" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="scp" className={tokens.label.default}>Phone</Label>
-                          <Input id="scp" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
-                        </div>
-                      </div>
-                    </div>
+                     {/* Secondary Contact */}
+                     <div className="border-t border-border/60 pt-4 mt-1">
+                       {!(showSecondaryContact || watchedSecondaryName || watchedSecondaryEmail || watchedSecondaryPhone) ? (
+                         <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground" onClick={() => setShowSecondaryContact(true)}>
+                           <Plus className="w-4 h-4 mr-1" /> Add another contact
+                         </Button>
+                       ) : (
+                         <div className="space-y-3">
+                           <div className="flex items-center justify-between">
+                             <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+                             <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); setValue('secondary_contact_name', ''); setValue('secondary_contact_email', ''); setValue('secondary_contact_phone', ''); }}>
+                               <X className="w-3.5 h-3.5 mr-1" /> Remove
+                             </Button>
+                           </div>
+                           <div className="space-y-1.5">
+                             <Label htmlFor="scn" className={tokens.label.default}>Name</Label>
+                             <Input id="scn" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+                           </div>
+                           <div className="grid grid-cols-2 gap-3">
+                             <div className="space-y-1.5">
+                               <Label htmlFor="sce" className={tokens.label.default}>Email</Label>
+                               <Input id="sce" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+                             </div>
+                             <div className="space-y-1.5">
+                               <Label htmlFor="scp" className={tokens.label.default}>Phone</Label>
+                               <Input id="scp" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                             </div>
+                           </div>
+                         </div>
+                       )}
+                     </div>
 
                     <Button type="submit" size="sm" disabled={updateContact.isPending}>
                       {updateContact.isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}

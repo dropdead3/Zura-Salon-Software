@@ -624,22 +624,35 @@ function SuppliersStep({
         </div>
 
         {/* Secondary Contact */}
-        <div className="border-t border-border/60 pt-3 mt-1 space-y-3">
-          <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
-          <div className="space-y-1.5">
-            <Label className={tokens.label.default}>Name</Label>
-            <Input value={secondaryName} onChange={e => onSecondaryNameChange(e.target.value)} placeholder="e.g. John Doe" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className={tokens.label.default}>Email</Label>
-              <Input type="email" value={secondaryEmail} onChange={e => onSecondaryEmailChange(e.target.value)} placeholder="backup@supplier.com" />
+        <div className="border-t border-border/60 pt-3 mt-1">
+          {!(showSecondaryContact || secondaryName || secondaryEmail || secondaryPhone) ? (
+            <Button type="button" variant="ghost" size="sm" className="font-sans text-sm text-muted-foreground px-0 hover:text-foreground" onClick={() => setShowSecondaryContact(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Add another contact
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); onSecondaryNameChange(''); onSecondaryEmailChange(''); onSecondaryPhoneChange(''); }}>
+                  <X className="w-3.5 h-3.5 mr-1" /> Remove
+                </Button>
+              </div>
+              <div className="space-y-1.5">
+                <Label className={tokens.label.default}>Name</Label>
+                <Input value={secondaryName} onChange={e => onSecondaryNameChange(e.target.value)} placeholder="e.g. John Doe" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className={tokens.label.default}>Email</Label>
+                  <Input type="email" value={secondaryEmail} onChange={e => onSecondaryEmailChange(e.target.value)} placeholder="backup@supplier.com" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={tokens.label.default}>Phone</Label>
+                  <Input value={secondaryPhone} onChange={e => onSecondaryPhoneChange(e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className={tokens.label.default}>Phone</Label>
-              <Input value={secondaryPhone} onChange={e => onSecondaryPhoneChange(e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-3">
