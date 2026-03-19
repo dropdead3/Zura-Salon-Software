@@ -158,9 +158,6 @@ interface CommandCenterRowProps {
   /** Manual quantity override map — managed by parent */
   qtyOverride?: number | null;
   onQtyOverride?: (productId: string, qty: number | null) => void;
-  /** Whether this item has been added to the PO builder */
-  addedToPo?: boolean;
-  onToggleAddToPo?: (productId: string) => void;
   /** Smart intelligence data from usage velocity */
   intelligence?: { dailyUsage: number; daysRemaining: number };
 }
