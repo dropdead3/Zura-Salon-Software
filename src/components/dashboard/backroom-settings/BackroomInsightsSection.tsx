@@ -25,6 +25,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BackroomBrandUsageCard } from './BackroomBrandUsageCard';
 import { BackroomHistoryChart } from './BackroomHistoryChart';
+import { BackroomProductAnalyticsCard } from './BackroomProductAnalyticsCard';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
@@ -162,6 +163,9 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
           <BlurredAmount className={cn(tokens.kpi.value, 'text-destructive')}>{formatCurrency(((analytics?.totalProductCost ?? 0) * (analytics?.wastePct ?? 0)) / 100)}</BlurredAmount>
         </KPICard>
       </div>
+
+      {/* Product Analytics */}
+      <BackroomProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
 
       {/* Employee Performance Table */}
       <Card>
