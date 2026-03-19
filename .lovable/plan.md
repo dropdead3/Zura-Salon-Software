@@ -1,31 +1,39 @@
 
 
-# Fix "Add another contact" Button — Contrast and Readability
+# Add Info Tooltips to Lead Time and MOQ Labels
 
-## Problem
-The current styling uses `text-muted-foreground` which in the cream/light themes is nearly invisible. The `hover:bg-accent` is also light-on-light. The screenshot confirms the text and border are unreadable.
+## What
+Add a `MetricInfoTooltip` icon next to every "Lead Time (days)" and "MOQ" label across all supplier forms, explaining what each term means on hover.
 
-## Fix
-Replace the className in all 4 files with higher-contrast styling:
+## Tooltip Content
 
-**From:**
+- **Lead Time (days)**: "Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock."
+- **MOQ**: "Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold."
+
+## Files to Update (5 files, same pattern in each)
+
+Each file gets `import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip'` and wraps the Label text + tooltip in a `flex items-center gap-1.5` div.
+
+1. **`src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`** — lines 394, 403
+2. **`src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`** — lines 676, 680
+3. **`src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`** — lines 345, 349
+4. **`src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx`** — lines 141, 145
+5. **`src/components/dashboard/settings/inventory/SupplierDialog.tsx`** — lines 130, 140
+
+### Pattern (applied identically)
+
+**Before:**
+```tsx
+<Label>Lead Time (days)</Label>
 ```
-className="font-sans text-sm text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-foreground/40 hover:bg-accent px-3 py-1.5 rounded-md"
+
+**After:**
+```tsx
+<div className="flex items-center gap-1.5">
+  <Label>Lead Time (days)</Label>
+  <MetricInfoTooltip description="Average number of days between placing an order and receiving delivery. Used to calculate reorder points and safety stock." />
+</div>
 ```
 
-**To:**
-```
-className="font-sans text-sm text-foreground/70 hover:text-foreground border border-dashed border-foreground/25 hover:border-foreground/50 hover:bg-foreground/10 px-3 py-1.5 rounded-md"
-```
-
-Key changes:
-- `text-foreground/70` instead of `text-muted-foreground` — uses the actual foreground color at 70% opacity, readable in both light and dark themes
-- `border-foreground/25` and `hover:border-foreground/50` — border derived from foreground, not muted
-- `hover:bg-foreground/10` instead of `hover:bg-accent` — a subtle tint of the foreground color, guaranteed to contrast against any background
-
-### Files
-1. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx` — line 356
-2. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx` — line 632
-3. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx` — line 398
-4. `src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx` — line 153
+Same for MOQ with its respective description.
 
