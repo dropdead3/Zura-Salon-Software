@@ -275,23 +275,22 @@ export function CommandCenterRow({
               </span>
             )}
             {/* Point 4: Days remaining promoted */}
-            {daysRemaining !== null && (
+            {daysRemaining !== null ? (
               <span className={cn(
                 'text-[11px] tabular-nums',
                 daysRemaining === 0
                   ? 'text-destructive'
-                  : daysRemaining < 7
+                  : daysRemaining <= 3
                     ? 'text-destructive/70'
-                    : daysRemaining < 14
+                    : daysRemaining <= 7
                       ? 'text-warning/70'
                       : 'text-muted-foreground/40',
               )}>
-                ~{daysRemaining}d
+                {daysRemaining === 0 ? 'Out now' : `~${daysRemaining}d left`}
               </span>
-            )}
-            {row.stock_state === 'out_of_stock' && daysRemaining === null && (
-              <span className="text-[11px] text-destructive tabular-nums">0d</span>
-            )}
+            ) : row.stock_state === 'out_of_stock' ? (
+              <span className="text-[11px] text-destructive tabular-nums">Out now</span>
+            ) : null}
           </div>
         </TableCell>
 
