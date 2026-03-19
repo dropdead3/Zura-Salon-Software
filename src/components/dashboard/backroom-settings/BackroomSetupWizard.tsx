@@ -654,9 +654,7 @@ function SuppliersStep({
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
-            {reorderMethod === 'other' && (
-              <Input value={reorderOther} onChange={e => onReorderOtherChange(e.target.value)} placeholder="Specify method..." className="mt-1.5" />
-            )}
+            <Input value={reorderOther} onChange={e => onReorderOtherChange(e.target.value)} placeholder="Specify method..." className={cn("mt-1.5", reorderMethod !== 'other' && "hidden")} />
           </div>
           <div className="space-y-1.5">
             <Label className={tokens.label.default}>Lead Time (days)</Label>

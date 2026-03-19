@@ -423,14 +423,12 @@ function StepDetails({
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
-          {details.reorder_method === 'other' && (
-            <Input
-              value={details.reorder_method_other}
-              onChange={e => update('reorder_method_other', e.target.value)}
-              placeholder="Specify method..."
-              className="mt-1.5"
-            />
-          )}
+          <Input
+            value={details.reorder_method_other}
+            onChange={e => update('reorder_method_other', e.target.value)}
+            placeholder="Specify method..."
+            className={cn("mt-1.5", details.reorder_method !== 'other' && "hidden")}
+          />
         </div>
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Notes</Label>
