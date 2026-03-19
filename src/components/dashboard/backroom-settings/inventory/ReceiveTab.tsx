@@ -3,13 +3,24 @@
  * Lists POs that are sent/partially received. Expand to receive per line item.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Truck, CheckCircle2, Package, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Loader2, Truck, CheckCircle2, Package, ChevronDown, ChevronRight, AlertTriangle, RotateCcw } from 'lucide-react';
+import {
+  AlertDialog,
+  PlatformAlertDialogContent,
+  PlatformAlertDialogTitle,
+  PlatformAlertDialogDescription,
+  PlatformAlertDialogCancel,
+  AlertDialogAction,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from '@/components/platform/ui/PlatformDialog';
+import type { ReceiveShipmentInput } from '@/hooks/inventory/useReceiveShipment';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
