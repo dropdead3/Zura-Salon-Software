@@ -1,6 +1,12 @@
 import type { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 
+export interface ReportLocationInfo {
+  name: string;
+  address?: string;
+  storeNumber?: string | null;
+}
+
 export interface ReportHeaderOptions {
   orgName: string;
   /** Data URL (e.g. from fetchLogoAsDataUrl) to embed logo in PDF */
@@ -10,6 +16,8 @@ export interface ReportHeaderOptions {
   dateTo: string;
   /** Optional; defaults to now */
   generatedAt?: Date;
+  /** Optional location details rendered below org name */
+  locationInfo?: ReportLocationInfo;
 }
 
 const HEADER_TOP = 12;
