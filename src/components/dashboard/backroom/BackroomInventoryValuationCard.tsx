@@ -33,12 +33,12 @@ export function BackroomInventoryValuationCard({ locationId }: { locationId?: st
     queryKey: ['backroom-inventory-valuation', orgId, locationId],
     queryFn: async (): Promise<BrandValuation[]> => {
       // Fetch professional products with inventory projections
-      const { data: products } = await supabase
-        .from('products')
+      const { data: products } = await (supabase
+        .from('products' as any)
         .select('id, name, brand, cost_price, retail_price, is_professional')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
-        .eq('is_professional', true);
+        .eq('is_professional', true) as any);
 
       if (!products?.length) return [];
 
