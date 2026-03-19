@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
 import { useProductSupplier, useUpsertSupplier, type ProductSupplier } from '@/hooks/useProductSuppliers';
@@ -127,7 +128,10 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Lead Time (days)</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>Lead Time (days)</Label>
+                  <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+                </div>
                 <Input type="number" min="0" value={form.lead_time_days} onChange={e => setForm(f => ({ ...f, lead_time_days: e.target.value }))} placeholder="7" />
               </div>
             </div>
@@ -137,9 +141,11 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                 <Input value={form.account_number} onChange={e => setForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Optional" />
               </div>
               <div className="space-y-1.5">
-                <Label>MOQ</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>MOQ</Label>
+                  <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+                </div>
                 <Input type="number" min="1" value={form.moq} onChange={e => setForm(f => ({ ...f, moq: e.target.value }))} placeholder="1" />
-                <p className="text-[11px] text-muted-foreground">Minimum order quantity</p>
               </div>
             </div>
             <div className="space-y-1.5">

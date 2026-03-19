@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -342,11 +343,17 @@ export function SupplierSettingsSection() {
                         <Input id="sa" {...register('account_number')} placeholder="ACC-123" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="sl" className={tokens.label.default}>Lead Time (days)</Label>
+                        <div className="flex items-center gap-1.5">
+                          <Label htmlFor="sl" className={tokens.label.default}>Lead Time (days)</Label>
+                          <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+                        </div>
                         <Input id="sl" type="number" {...register('lead_time_days')} placeholder="5" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="sm" className={tokens.label.default}>MOQ</Label>
+                        <div className="flex items-center gap-1.5">
+                          <Label htmlFor="sm" className={tokens.label.default}>MOQ</Label>
+                          <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+                        </div>
                         <Input id="sm" type="number" {...register('moq')} placeholder="1" />
                       </div>
                     </div>

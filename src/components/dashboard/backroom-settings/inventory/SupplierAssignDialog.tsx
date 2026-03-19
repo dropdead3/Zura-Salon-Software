@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Plus, X } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useForm } from 'react-hook-form';
 import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -138,11 +139,17 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
               <Input id="account_number" {...register('account_number')} placeholder="ACC-123" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lead_time_days">Lead Time (days)</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="lead_time_days">Lead Time (days)</Label>
+                <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+              </div>
               <Input id="lead_time_days" type="number" {...register('lead_time_days')} placeholder="5" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="moq">MOQ</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="moq">MOQ</Label>
+                <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+              </div>
               <Input id="moq" type="number" {...register('moq')} placeholder="1" />
             </div>
           </div>

@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -391,7 +392,10 @@ function StepDetails({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className={tokens.label.default}>Lead Time (days)</Label>
+          <div className="flex items-center gap-1.5">
+            <Label className={tokens.label.default}>Lead Time (days)</Label>
+            <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+          </div>
           <Input
             type="number"
             value={details.lead_time_days}
@@ -400,7 +404,10 @@ function StepDetails({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className={tokens.label.default}>MOQ</Label>
+          <div className="flex items-center gap-1.5">
+            <Label className={tokens.label.default}>MOQ</Label>
+            <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+          </div>
           <Input
             type="number"
             value={details.moq}

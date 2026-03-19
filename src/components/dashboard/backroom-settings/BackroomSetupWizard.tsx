@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -673,11 +674,17 @@ function SuppliersStep({
             <Input value={reorderOther} onChange={e => onReorderOtherChange(e.target.value)} placeholder="Specify method..." className={cn("mt-1.5", reorderMethod !== 'other' && "hidden")} />
           </div>
           <div className="space-y-1.5">
-            <Label className={tokens.label.default}>Lead Time (days)</Label>
+            <div className="flex items-center gap-1.5">
+              <Label className={tokens.label.default}>Lead Time (days)</Label>
+              <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+            </div>
             <Input type="number" value={leadTimeDays} onChange={e => onLeadTimeChange(e.target.value)} placeholder="5" />
           </div>
           <div className="space-y-1.5">
-            <Label className={tokens.label.default}>MOQ</Label>
+            <div className="flex items-center gap-1.5">
+              <Label className={tokens.label.default}>MOQ</Label>
+              <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
+            </div>
             <Input type="number" value={moq} onChange={e => onMoqChange(e.target.value)} placeholder="1" />
           </div>
         </div>
