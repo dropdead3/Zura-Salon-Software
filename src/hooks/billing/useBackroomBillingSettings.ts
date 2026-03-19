@@ -70,6 +70,9 @@ export function useUpsertBackroomBillingSettings() {
             ...(params.product_charge_label !== undefined && {
               product_charge_label: params.product_charge_label,
             }),
+            ...(params.enable_supply_cost_recovery !== undefined && {
+              enable_supply_cost_recovery: params.enable_supply_cost_recovery,
+            }),
             updated_by: userId,
           } as any)
           .eq('id', (existing as any).id)
