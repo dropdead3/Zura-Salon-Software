@@ -182,7 +182,7 @@ export function StockTab({ locationId }: StockTabProps) {
     const criticalCount = inventory.filter(r => r.severity === 'critical').length;
     const outOfStock = inventory.filter(r => r.stock_state === 'out_of_stock').length;
     const totalValue = inventory.reduce((s, r) => s + (r.quantity_on_hand * (r.cost_price ?? r.cost_per_gram ?? 0)), 0);
-    const needsReorder = inventory.filter(r => r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock' || r.stock_state === 'low_stock').length;
+    const needsReorder = inventory.filter(r => r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock' || r.severity === 'low' || r.severity === 'critical').length;
     const estimatedPoValue = inventory.reduce((s, r) => {
       if (r.recommended_order_qty <= 0) return s;
       return s + r.recommended_order_qty * (r.cost_price ?? r.cost_per_gram ?? 0);
