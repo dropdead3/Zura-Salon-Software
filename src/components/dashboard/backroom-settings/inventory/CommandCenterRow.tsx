@@ -125,7 +125,7 @@ function DetailEditCell({
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="w-16 h-6 px-1.5 text-right text-xs tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40"
+          className="w-16 h-6 px-1.5 text-right text-xs tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
         />
       ) : (
         <span
