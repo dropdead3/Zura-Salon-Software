@@ -607,7 +607,7 @@ export function StockTab({ locationId }: StockTabProps) {
                         severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
                       )}
                     >
-                      {kpis.critical} Critical
+                      {kpis.criticalCount} Critical
                     </button>
                     <span className="text-muted-foreground/30">·</span>
                     <button
