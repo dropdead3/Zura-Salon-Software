@@ -64,7 +64,8 @@ export async function generateCountSheetPdf({
   logoDataUrl,
   filters,
   countEntryUrl,
-}: GenerateCountSheetOptions): Promise<void> {
+  returnBytes,
+}: GenerateCountSheetOptions): Promise<ArrayBuffer | void> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const today = format(new Date(), 'yyyy-MM-dd');
 
