@@ -936,23 +936,23 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
               {isUnassigned && (
                 <>
                   {reorderCount > 0 && (
-                    <Button
+                  <Button
                       variant="outline"
                       size="sm"
-                      className="h-6 px-2.5 text-[10px] font-sans border-primary/20 text-primary/80 hover:text-primary hover:bg-primary/5"
+                      className="h-7 px-3 text-xs font-sans border-primary/20 text-primary/80 hover:text-primary hover:bg-primary/5"
                       onClick={(e) => { e.stopPropagation(); onStageToPo(group.products); }}
                     >
-                      <ShoppingCart className="w-3 h-3 mr-1" />
+                      <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
                       Create PO
                     </Button>
                   )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                    className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground"
                     onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
                   >
-                    <UserPlus className="w-3 h-3 mr-1" />
+                    <UserPlus className="w-3.5 h-3.5 mr-1.5" />
                     Assign Supplier
                   </Button>
                 </>
