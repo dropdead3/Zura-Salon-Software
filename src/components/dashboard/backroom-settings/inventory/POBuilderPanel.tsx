@@ -193,7 +193,7 @@ function SupplierPOCard({
             return (
               <div
                 key={item.id}
-                className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 last:border-b-0 group/line hover:bg-muted/30 transition-colors duration-150"
+                className="flex items-center gap-2 px-3 py-1.5 border-b border-border/20 last:border-b-0 group/line hover:bg-muted/30 transition-colors duration-150"
               >
                 {/* Product name */}
                 <div className="flex-1 min-w-0">
