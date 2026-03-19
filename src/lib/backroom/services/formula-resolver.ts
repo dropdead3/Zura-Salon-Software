@@ -310,6 +310,12 @@ export async function resolveFormula(
     if (result) return result;
   }
 
+  // Priority 2.5: Shared formula from another stylist
+  if (client_id) {
+    const shared = await fetchSharedFormula(organization_id, client_id, service_name);
+    if (shared) return shared;
+  }
+
   // Priority 3: Salon formula baseline
   const result = await fetchSalonRecipe(organization_id, service_name);
   if (result) return result;

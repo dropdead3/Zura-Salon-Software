@@ -15,6 +15,9 @@ export interface InventoryAlertSettings {
   auto_reorder_enabled: boolean;
   auto_reorder_mode: string;
   max_auto_reorder_value: number | null;
+  require_po_approval: boolean;
+  dead_stock_enabled: boolean;
+  dead_stock_days: number;
   created_at: string;
   updated_at: string;
 }

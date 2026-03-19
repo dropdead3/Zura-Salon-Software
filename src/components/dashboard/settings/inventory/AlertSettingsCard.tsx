@@ -78,7 +78,7 @@ export function AlertSettingsCard() {
       require_po_approval: requirePoApproval,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
-    } as any);
+    });
   };
 
   if (isLoading) return null;
