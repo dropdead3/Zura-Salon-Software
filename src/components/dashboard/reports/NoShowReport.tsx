@@ -48,6 +48,7 @@ export function NoShowReport({
   const { formatNumber } = useFormatNumber();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const { formatCurrencyWhole } = useFormatCurrency();
 
   const { data: noShowData, isLoading } = useNoShowReport(dateFrom, dateTo, locationId);
