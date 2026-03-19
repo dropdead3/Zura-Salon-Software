@@ -165,10 +165,25 @@ export function CommandCenterRow({
   onAudit,
   onQuickReorder,
   poHistory,
+  qtyOverride,
+  onQtyOverride,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const [editingQty, setEditingQty] = useState(false);
+  const [qtyDraft, setQtyDraft] = useState('');
+  const qtyInputRef = useRef<HTMLInputElement>(null);
   const statusCfg = STOCK_STATUS_CONFIG[row.status];
   const needsReorder = row.recommended_order_qty > 0;
+  const isOverridden = qtyOverride != null;
+  const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
+  const effectiveStock = row.effective_stock;
+
+  useEffect(() => {
+    if (editingQty && qtyInputRef.current) {
+      qtyInputRef.current.focus();
+      qtyInputRef.current.select();
+    }
+  }, [editingQty]);
 
   return (
     <>
