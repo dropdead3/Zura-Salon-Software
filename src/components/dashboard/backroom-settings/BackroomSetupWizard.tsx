@@ -574,12 +574,20 @@ function SuppliersStep({
         {/* Supplier contact info */}
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>
-            Supplier Name <span className="text-destructive">*</span>
+            Supplier or Distributor <span className="text-destructive">*</span>
           </Label>
           <Input
             value={supplierName}
             onChange={e => onNameChange(e.target.value)}
             placeholder="e.g. Goldwell Distribution"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>Contact Name</Label>
+          <Input
+            value={supplierContactName}
+            onChange={e => onContactNameChange(e.target.value)}
+            placeholder="e.g. Jane Smith"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
