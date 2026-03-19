@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
+import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck, AlertTriangle } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -304,43 +304,95 @@ export function StockTab({ locationId }: StockTabProps) {
     }
   }, [filtered, effectiveOrganization, formatCurrency]);
 
+  // Stage all supplier items into PO builder
+  const stageSupplierToPo = useCallback((products: BackroomInventoryRow[]) => {
+    const reorderItems = products.filter(p => p.recommended_order_qty > 0);
+    if (reorderItems.length === 0) return;
+    setPoItemIds(prev => {
+      const next = new Set(prev);
+      reorderItems.forEach(r => next.add(r.id));
+      return next;
+    });
+    setPoBuilderOpen(true);
+    toast.success(`${reorderItems.length} items added to PO Builder`);
+  }, []);
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className={tokens.loading.spinner} /></div>;
   }
 
+  const hasActionItems = kpis.needsReorder > 0;
+
   return (
     <div className="space-y-4">
-      {/* Summary / Control Bar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <SummaryChip
-          label="Needs Reorder"
-          value={kpis.needsReorder}
-          active={severityFilter === 'needs_reorder'}
-          onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
-          accent={kpis.needsReorder > 0 ? 'warning' : undefined}
-        />
-        <SummaryChip
-          label="Critical"
-          value={kpis.criticalCount}
-          active={severityFilter === 'critical'}
-          onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
-          accent={kpis.criticalCount > 0 ? 'destructive' : undefined}
-        />
-        <SummaryChip
-          label="Low"
-          value={kpis.lowStock}
-          active={severityFilter === 'low'}
-          onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
-          accent={kpis.lowStock > 0 ? 'warning' : undefined}
-        />
-        <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
-        <span className="text-xs text-muted-foreground font-sans tabular-nums">
-          Est. PO Value: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
-        </span>
-        <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
-          {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
-        </span>
-      </div>
+      {/* ─── Decision Header ─── */}
+      {hasActionItems ? (
+        <div className="relative rounded-lg border border-destructive/20 bg-destructive/[0.02] p-4 overflow-hidden">
+          {/* Left accent bar */}
+          <span className="absolute left-0 top-0 bottom-0 w-1 bg-destructive/60 rounded-l-lg" />
+          <div className="flex items-center justify-between gap-4 flex-wrap pl-3">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
+                <span className="text-sm text-foreground/80 font-sans">Items Need Action</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-sans">
+                <button
+                  onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
+                  className={cn(
+                    'tabular-nums transition-colors duration-150',
+                    severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
+                  )}
+                >
+                  {kpis.criticalCount} Critical
+                </button>
+                <span className="text-muted-foreground/30">·</span>
+                <button
+                  onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
+                  className={cn(
+                    'tabular-nums transition-colors duration-150',
+                    severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
+                  )}
+                >
+                  {kpis.lowStock} Low
+                </button>
+                <span className="text-muted-foreground/30">·</span>
+                <span className="text-muted-foreground tabular-nums">
+                  Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-sans"
+                onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
+              >
+                {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
+              </Button>
+              <Button
+                size="default"
+                className="font-sans"
+                onClick={() => setAutoPoDialog(true)}
+                disabled={kpis.needsReorder === 0}
+              >
+                <Zap className="w-4 h-4 mr-1.5" />
+                Auto Build PO
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground font-sans">
+            All stock levels healthy
+          </span>
+          <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
+            {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
+          </span>
+        </div>
+      )}
 
       {/* Filters + Actions */}
       <div className="flex flex-col sm:flex-row gap-2">
@@ -384,30 +436,6 @@ export function StockTab({ locationId }: StockTabProps) {
         >
           {exporting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileDown className="w-4 h-4 mr-1.5" />}
           PDF
-        </Button>
-        <Button
-          size="sm"
-          className="font-sans"
-          onClick={() => {
-            const reorderItems = inventory.filter(r => r.recommended_order_qty > 0);
-            if (reorderItems.length === 0) return;
-            setPoItemIds(prev => {
-              const next = new Set(prev);
-              reorderItems.forEach(r => next.add(r.id));
-              return next;
-            });
-            setPoBuilderOpen(true);
-            toast.success(`${reorderItems.length} items added to PO Builder`);
-          }}
-          disabled={kpis.needsReorder === 0}
-        >
-          <Zap className="w-4 h-4 mr-1.5" />
-          Auto Build PO
-          {kpis.needsReorder > 0 && (
-            <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
-              {kpis.needsReorder}
-            </Badge>
-          )}
         </Button>
         <Button
           size="sm"
@@ -466,16 +494,7 @@ export function StockTab({ locationId }: StockTabProps) {
             size="sm"
             variant="outline"
             className="font-sans h-7 gap-1"
-            onClick={() => {
-              const reorderItems = inventory.filter(r => r.recommended_order_qty > 0 && !poItemIds.has(r.id));
-              setPoItemIds(prev => {
-                const next = new Set(prev);
-                reorderItems.forEach(r => next.add(r.id));
-                return next;
-              });
-              setPoBuilderOpen(true);
-              toast.success(`${reorderItems.length} items added to PO Builder`);
-            }}
+            onClick={() => setAutoPoDialog(true)}
           >
             <Zap className="w-3.5 h-3.5" />
             Auto Build PO
@@ -528,15 +547,18 @@ export function StockTab({ locationId }: StockTabProps) {
                     </span>
                   </TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>
-                    <span className="inline-flex items-center gap-1 justify-end">
-                      Suggested Order
-                      <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] text-muted-foreground/40 uppercase tracking-wider font-display leading-none mb-0.5">Order</span>
+                      <span className="inline-flex items-center gap-1 justify-end">
+                        Suggested
+                        <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
+                      </span>
+                    </div>
                   </TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Status</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Supplier</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell w-20')}>Cost</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-24')} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -560,6 +582,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     poItemIds={poItemIds}
                     onToggleAddToPo={toggleAddToPo}
                     intelligenceMap={intelligenceMap}
+                    onStageToPo={stageSupplierToPo}
                   />
                 ))}
               </TableBody>
@@ -610,34 +633,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function SummaryChip({ label, value, active, onClick, accent }: {
-  label: string;
-  value: number;
-  active: boolean;
-  onClick: () => void;
-  accent?: 'warning' | 'destructive';
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all duration-150 border',
-        active
-          ? accent === 'destructive'
-            ? 'bg-destructive/10 border-destructive/30 text-destructive'
-            : accent === 'warning'
-              ? 'bg-warning/10 border-warning/30 text-warning'
-              : 'bg-primary/10 border-primary/30 text-primary'
-          : 'bg-muted/40 border-border/60 text-muted-foreground hover:border-border hover:text-foreground',
-      )}
-    >
-      <span className="tabular-nums font-medium">{value}</span>
-      {label}
-    </button>
-  );
-}
-
-function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap }: {
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap, onStageToPo }: {
   group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -655,6 +651,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   poItemIds: Set<string>;
   onToggleAddToPo: (productId: string) => void;
   intelligenceMap?: Map<string, ProductIntelligence>;
+  onStageToPo: (products: BackroomInventoryRow[]) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -663,40 +660,53 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
 
   return (
     <>
-      {/* Supplier header row */}
+      {/* Supplier header row — Identity Upgrade */}
       <TableRow
         className="bg-muted/20 hover:bg-muted/30 cursor-pointer transition-colors duration-150"
         onClick={() => setOpen(!open)}
       >
-        <TableCell colSpan={8} className="py-2">
-          <div className="flex items-center gap-2">
+        <TableCell colSpan={8} className="py-2.5">
+          <div className="flex items-center gap-2.5">
             <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150', open && 'rotate-90')} />
-            <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70')} />
-            <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/50' : 'text-foreground/70')}>
-              {group.supplier}
-            </span>
-            <span className="text-muted-foreground/40 text-[10px] tabular-nums">({group.products.length})</span>
+            <Truck className={cn('w-4 h-4', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70')} />
+            <div className="flex flex-col">
+              <span className={cn('text-sm font-medium font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
+                {isUnassigned ? 'Unassigned Supplier' : group.supplier}
+              </span>
+              <span className="text-[10px] text-muted-foreground/50 tabular-nums font-sans">
+                {group.products.length} item{group.products.length !== 1 ? 's' : ''}
+                {group.estimatedTotal > 0 && <> · {formatCurrency(group.estimatedTotal)} est.</>}
+              </span>
+            </div>
             {reorderCount > 0 && (
               <Badge variant="outline" className="text-[10px] font-sans border-warning/20 text-warning/80 bg-warning/5 ml-1">
                 {reorderCount} to reorder
               </Badge>
             )}
-            {group.estimatedTotal > 0 && (
-              <span className="text-[10px] text-muted-foreground/50 ml-auto mr-2 tabular-nums">
-                Est. {formatCurrency(group.estimatedTotal)}
-              </span>
-            )}
-            {isUnassigned && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px] ml-1 text-muted-foreground hover:text-foreground"
-                onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
-              >
-                <UserPlus className="w-3 h-3 mr-1" />
-                Assign Supplier
-              </Button>
-            )}
+            <div className="ml-auto flex items-center gap-1.5">
+              {!isUnassigned && reorderCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2.5 text-[10px] font-sans border-primary/20 text-primary/80 hover:text-primary hover:bg-primary/5"
+                  onClick={(e) => { e.stopPropagation(); onStageToPo(group.products); }}
+                >
+                  <ShoppingCart className="w-3 h-3 mr-1" />
+                  Create PO
+                </Button>
+              )}
+              {isUnassigned && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                  onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
+                >
+                  <UserPlus className="w-3 h-3 mr-1" />
+                  Assign Supplier
+                </Button>
+              )}
+            </div>
           </div>
         </TableCell>
       </TableRow>
