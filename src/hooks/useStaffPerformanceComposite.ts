@@ -33,6 +33,10 @@ export interface StaffPerformanceRow {
   mixSessionCount: number;
   /** Appointment count in period */
   appointmentCount: number;
+  /** Reweigh compliance rate 0-100 from backroom performance */
+  reweighComplianceRate: number;
+  /** % of color appointments with overage charges */
+  overageAttachmentRate: number;
   /** Coaching signals derived from data */
   coachingSignals: string[];
 }
@@ -78,6 +82,7 @@ export function useStaffPerformanceComposite(
       wasteRate: number;
       mixSessions: number;
       totalCost: number;
+      reweighComplianceRate: number;
     }>();
     for (const b of backroomData ?? []) {
       const existing = backroomMap.get(b.staff_id);
@@ -86,12 +91,15 @@ export function useStaffPerformanceComposite(
         existing.totalCost += b.total_product_cost;
         // weighted average waste rate
         existing.wasteRate = (existing.wasteRate * (existing.mixSessions - b.mix_session_count) + b.waste_rate * b.mix_session_count) / existing.mixSessions;
+        // weighted average reweigh compliance
+        existing.reweighComplianceRate = (existing.reweighComplianceRate * (existing.mixSessions - b.mix_session_count) + b.reweigh_compliance_rate * b.mix_session_count) / existing.mixSessions;
       } else {
         backroomMap.set(b.staff_id, {
           avgCost: b.mix_session_count > 0 ? b.total_product_cost / b.mix_session_count : 0,
           wasteRate: b.waste_rate,
           mixSessions: b.mix_session_count,
           totalCost: b.total_product_cost,
+          reweighComplianceRate: b.reweigh_compliance_rate,
         });
       }
     }
@@ -113,6 +121,7 @@ export function useStaffPerformanceComposite(
       const avgChem = backroom && backroom.mixSessions > 0
         ? backroom.totalCost / backroom.mixSessions
         : 0;
+      const reweighRate = backroom?.reweighComplianceRate ?? 0;
 
       // Generate coaching signals
       const signals: string[] = [];
@@ -128,6 +137,9 @@ export function useStaffPerformanceComposite(
       }
       if (backroom && backroom.wasteRate > 15) {
         signals.push(`Waste rate ${Math.round(backroom.wasteRate)}% — review dispensing habits`);
+      }
+      if (backroom && backroom.mixSessions > 0 && reweighRate < 80) {
+        signals.push(`Reweigh rate ${Math.round(reweighRate)}% — below 80% target`);
       }
 
       return {
@@ -145,6 +157,8 @@ export function useStaffPerformanceComposite(
         wasteRate: backroom?.wasteRate ?? 0,
         mixSessionCount: backroom?.mixSessions ?? 0,
         appointmentCount: score.appointmentCount,
+        reweighComplianceRate: Math.round(reweighRate),
+        overageAttachmentRate: 0, // requires checkout_usage_charges join — deferred to per-staff drill-down
         coachingSignals: signals,
       };
     });

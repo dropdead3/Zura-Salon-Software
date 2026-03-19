@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Users, ArrowUpDown, ChevronDown, AlertCircle } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -20,7 +19,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-type SortKey = 'revenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore';
+type SortKey = 'revenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore' | 'reweighComplianceRate' | 'wasteRate';
 
 interface StaffPerformanceReportProps {
   dateFrom: string;
@@ -60,6 +59,8 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
     { key: 'rebookRate', label: 'Rebook Rate' },
     { key: 'retailConversion', label: 'Retail %' },
     { key: 'avgChemicalCostPerService', label: 'Avg Chemical' },
+    { key: 'reweighComplianceRate', label: 'Reweigh %' },
+    { key: 'wasteRate', label: 'Waste %' },
     { key: 'experienceScore', label: 'Score' },
   ];
 
@@ -76,7 +77,7 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
                 <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
                 <MetricInfoTooltip
                   title="Staff Performance Intelligence"
-                  description="Unified view of each stylist's revenue, rebook rate, retail conversion, chemical cost efficiency, and composite experience score. Expand rows for coaching signals."
+                  description="Unified view of each stylist's revenue, rebook rate, retail conversion, chemical cost efficiency, reweigh compliance, waste rate, and composite experience score. Expand rows for coaching signals."
                 />
               </div>
               <CardDescription className={tokens.body.muted}>
@@ -106,40 +107,42 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
-                {columns.map(col => (
-                  <TableHead key={col.key} className={tokens.table.columnHeader}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 font-sans text-sm font-medium hover:bg-transparent"
-                      onClick={() => toggleSort(col.key)}
-                    >
-                      {col.label}
-                      <ArrowUpDown className="ml-1 h-3 w-3" />
-                    </Button>
-                  </TableHead>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
+                  {columns.map(col => (
+                    <TableHead key={col.key} className={tokens.table.columnHeader}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 font-sans text-sm font-medium hover:bg-transparent"
+                        onClick={() => toggleSort(col.key)}
+                      >
+                        {col.label}
+                        <ArrowUpDown className="ml-1 h-3 w-3" />
+                      </Button>
+                    </TableHead>
+                  ))}
+                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sorted.map(row => (
+                  <StylistRow
+                    key={row.staffId}
+                    row={row}
+                    expanded={expandedRow === row.staffId}
+                    onToggle={() => setExpandedRow(expandedRow === row.staffId ? null : row.staffId)}
+                    formatCurrency={formatCurrency}
+                    formatPercent={formatPercent}
+                    columnCount={columns.length + 2}
+                  />
                 ))}
-                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sorted.map(row => (
-                <StylistRow
-                  key={row.staffId}
-                  row={row}
-                  expanded={expandedRow === row.staffId}
-                  onToggle={() => setExpandedRow(expandedRow === row.staffId ? null : row.staffId)}
-                  formatCurrency={formatCurrency}
-                  formatPercent={formatPercent}
-                  columnCount={columns.length + 2}
-                />
-              ))}
-            </TableBody>
-          </Table>
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -199,6 +202,18 @@ function StylistRow({
         <TableCell>
           {row.avgChemicalCostPerService > 0
             ? <AnimatedBlurredAmount value={row.avgChemicalCostPerService} currency="USD" decimals={2} />
+            : <span className="text-muted-foreground">—</span>
+          }
+        </TableCell>
+        <TableCell>
+          {row.mixSessionCount > 0
+            ? <span className={cn(row.reweighComplianceRate < 80 && 'text-destructive')}>{row.reweighComplianceRate}%</span>
+            : <span className="text-muted-foreground">—</span>
+          }
+        </TableCell>
+        <TableCell>
+          {row.mixSessionCount > 0
+            ? <span className={cn(row.wasteRate > 15 && 'text-destructive')}>{Math.round(row.wasteRate)}%</span>
             : <span className="text-muted-foreground">—</span>
           }
         </TableCell>
