@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck, AlertTriangle } from 'lucide-react';
+import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -326,73 +326,75 @@ export function StockTab({ locationId }: StockTabProps) {
   return (
     <div className="space-y-4">
       {/* ─── Decision Header ─── */}
-      {hasActionItems ? (
-        <div className="relative rounded-lg bg-transparent p-4 overflow-hidden">
-          {/* Left accent bar */}
-          <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-destructive/60 rounded-l-lg" />
-          <div className="flex items-center justify-between gap-4 flex-wrap pl-3">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
-                <span className="text-sm text-foreground/80 font-sans">Items Need Action</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-sans">
-                <button
-                  onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
-                  className={cn(
-                    'tabular-nums transition-colors duration-150',
-                    severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
-                  )}
-                >
-                  {kpis.criticalCount} Critical
-                </button>
-                <span className="text-muted-foreground/30">·</span>
-                <button
-                  onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
-                  className={cn(
-                    'tabular-nums transition-colors duration-150',
-                    severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
-                  )}
-                >
-                  {kpis.lowStock} Low
-                </button>
-                <span className="text-muted-foreground/30">·</span>
-                <span className="text-muted-foreground tabular-nums">
-                  Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
-                </span>
-              </div>
+      <div className="bg-card/80 backdrop-blur-xl border border-border rounded-full px-4 py-2.5 flex items-center gap-3 shadow-lg">
+        {hasActionItems ? (
+          <>
+            {/* Left: count + label */}
+            <div className="flex items-baseline gap-1.5 shrink-0">
+              <span className="text-lg font-display tracking-wide tabular-nums">{kpis.needsReorder}</span>
+              <span className="text-xs text-foreground/80 font-sans">need action</span>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Center: severity breakdown */}
+            <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-xs font-sans">
+              <button
+                onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
+                className={cn(
+                  'tabular-nums transition-colors duration-150 shrink-0',
+                  severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
+                )}
+              >
+                {kpis.criticalCount} Critical
+              </button>
+              <span className="text-muted-foreground/30">·</span>
+              <button
+                onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
+                className={cn(
+                  'tabular-nums transition-colors duration-150 shrink-0',
+                  severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
+                )}
+              >
+                {kpis.lowStock} Low
+              </button>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-muted-foreground tabular-nums shrink-0">
+                Est. PO: <span className="text-foreground">{formatCurrency(kpis.estimatedPoValue)}</span>
+              </span>
+            </div>
+
+            {/* Right: actions */}
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
-                className="font-sans"
+                className="font-sans rounded-full h-7 px-3 text-xs"
                 onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
               >
                 {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
               </Button>
               <Button
-                size="default"
-                className="font-sans"
+                size="sm"
+                className="font-sans rounded-full h-7 px-3 text-xs"
                 onClick={() => setAutoPoDialog(true)}
                 disabled={kpis.needsReorder === 0}
               >
-                <Zap className="w-4 h-4 mr-1.5" />
+                <Zap className="w-3.5 h-3.5 mr-1" />
                 Auto Build PO
               </Button>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground font-sans">
-            All stock levels healthy
-          </span>
-          <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
-            {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
-          </span>
-        </div>
-      )}
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              <span className="text-xs font-sans">All stock levels healthy</span>
+            </div>
+            <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
+              {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Filters + Actions */}
       <div className="flex flex-col sm:flex-row gap-2">
