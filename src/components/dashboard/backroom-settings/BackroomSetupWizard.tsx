@@ -166,6 +166,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const upsertAllowance = useUpsertAllowancePolicy();
   const createStation = useCreateBackroomStation();
   const upsertSetting = useUpsertBackroomSetting();
+  const batchUpsertSupplier = useBatchUpsertSupplier();
 
   // ─── Navigation ─────────────────────────────────────────────────────────────
   const goNext = async () => {
