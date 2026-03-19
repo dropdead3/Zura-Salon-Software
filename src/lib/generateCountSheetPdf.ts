@@ -1,7 +1,5 @@
 /**
  * Generates a printable physical count sheet PDF.
- * Products grouped by brand, sorted alphabetically, with blank columns for actual counts.
- * Supports optional brand/category filtering and scannable QR code linking back to digital entry.
  */
 
 import jsPDF from 'jspdf';
@@ -13,6 +11,7 @@ import {
   addReportFooter,
   getReportAutoTableBranding,
   type ReportHeaderOptions,
+  type LogoDataResult,
 } from '@/lib/reportPdfLayout';
 
 export interface CountSheetProduct {
@@ -32,7 +31,7 @@ export interface GenerateCountSheetOptions {
   products: CountSheetProduct[];
   orgName: string;
   locationName?: string;
-  logoDataUrl?: string | null;
+  logoDataUrl?: string | LogoDataResult | null;
   filters?: CountSheetFilters;
   /** Full URL to include as scannable QR code on the sheet */
   countEntryUrl?: string;

@@ -11,6 +11,7 @@ import {
   addReportFooter,
   getReportAutoTableBranding,
   type ReportHeaderOptions,
+  type LogoDataResult,
 } from '@/lib/reportPdfLayout';
 
 export interface POLineItem {
@@ -28,7 +29,7 @@ export interface GeneratePOPdfOptions {
   poNumber?: string;
   lines: POLineItem[];
   notes?: string;
-  logoDataUrl?: string | null;
+  logoDataUrl?: string | LogoDataResult | null;
 }
 
 export interface POPdfResult {

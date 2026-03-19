@@ -36,7 +36,7 @@ export function ReportPreviewModal({
   const { formatDate } = useFormatDate();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
-  const orgName = effectiveOrganization?.name ?? 'Organization';
+  const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
   const logoUrl = businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null;
   const dateRange = `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} – ${formatDate(new Date(dateTo), 'MMM d, yyyy')}`;
 

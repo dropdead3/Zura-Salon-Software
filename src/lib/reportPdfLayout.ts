@@ -7,10 +7,18 @@ export interface ReportLocationInfo {
   storeNumber?: string | null;
 }
 
+export interface LogoDataResult {
+  dataUrl: string;
+  /** Natural width in pixels */
+  width: number;
+  /** Natural height in pixels */
+  height: number;
+}
+
 export interface ReportHeaderOptions {
   orgName: string;
-  /** Data URL (e.g. from fetchLogoAsDataUrl) to embed logo in PDF */
-  logoDataUrl?: string | null;
+  /** Logo result from fetchLogoAsDataUrl, or raw data URL string for backward compat */
+  logoDataUrl?: LogoDataResult | string | null;
   reportTitle: string;
   dateFrom: string;
   dateTo: string;
@@ -20,10 +28,10 @@ export interface ReportHeaderOptions {
   locationInfo?: ReportLocationInfo;
 }
 
-const HEADER_TOP = 12;
-const LOGO_MAX_WIDTH = 40;
-const LOGO_MAX_HEIGHT = 14;
-const ACCENT_COLOR: [number, number, number] = [41, 41, 41]; // charcoal
+const HEADER_TOP = 10;
+const LOGO_MAX_WIDTH_MM = 28;
+const LOGO_MAX_HEIGHT_MM = 10;
+const ACCENT_COLOR: [number, number, number] = [41, 41, 41];
 const FOOTER_FONT_SIZE = 7;
 const FOOTER_BOTTOM = 8;
 
@@ -35,9 +43,6 @@ function getImageFormatFromDataUrl(dataUrl: string): 'PNG' | 'JPEG' {
   return 'PNG';
 }
 
-/**
- * Convert a Blob to a data URL via FileReader.
- */
 function blobToDataUrl(blob: Blob): Promise<string | null> {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -47,11 +52,7 @@ function blobToDataUrl(blob: Blob): Promise<string | null> {
   });
 }
 
-/**
- * Rasterize an SVG data URL to a PNG data URL via canvas.
- * jsPDF cannot embed SVGs, so this converts them to raster format.
- */
-function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Promise<string | null> {
+function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Promise<LogoDataResult | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -66,19 +67,28 @@ function rasterizeSvgToPng(svgDataUrl: string, maxW: number, maxH: number): Prom
       const ctx = canvas.getContext('2d');
       if (!ctx) { resolve(null); return; }
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/png'));
+      resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h });
     };
     img.onerror = () => resolve(null);
     img.src = svgDataUrl;
   });
 }
 
+function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
 /**
- * Fetches an image URL and returns a raster data URL for embedding in jsPDF.
+ * Fetches an image URL and returns a raster data URL + dimensions for embedding in jsPDF.
  * SVGs are automatically rasterized to PNG via canvas.
  * Returns null on CORS or network errors so reports still generate without logo.
  */
-export async function fetchLogoAsDataUrl(url: string | null | undefined): Promise<string | null> {
+export async function fetchLogoAsDataUrl(url: string | null | undefined): Promise<LogoDataResult | null> {
   if (!url || typeof url !== 'string') return null;
   try {
     const res = await fetch(url, { mode: 'cors' });
@@ -87,22 +97,35 @@ export async function fetchLogoAsDataUrl(url: string | null | undefined): Promis
     const rawDataUrl = await blobToDataUrl(blob);
     if (!rawDataUrl) return null;
 
-    // SVGs must be rasterized — jsPDF cannot embed SVG directly
     if (blob.type === 'image/svg+xml' || rawDataUrl.startsWith('data:image/svg')) {
       return await rasterizeSvgToPng(rawDataUrl, 400, 140);
     }
-    return rawDataUrl;
+
+    const dims = await getImageDimensions(rawDataUrl);
+    if (!dims) return { dataUrl: rawDataUrl, width: 200, height: 70 };
+    return { dataUrl: rawDataUrl, width: dims.width, height: dims.height };
   } catch {
     return null;
   }
 }
 
+/** Extract the data URL string and pixel dimensions from the logoDataUrl option */
+function resolveLogoData(logo: ReportHeaderOptions['logoDataUrl']): { dataUrl: string; pxW: number; pxH: number } | null {
+  if (!logo) return null;
+  if (typeof logo === 'string') return { dataUrl: logo, pxW: 200, pxH: 70 };
+  return { dataUrl: logo.dataUrl, pxW: logo.width, pxH: logo.height };
+}
+
 /**
  * Adds a branded header to each page:
- *   Logo (left) | Org name + Report title (beside logo) | Date range (right-aligned)
- *   Charcoal accent divider line
+ *   [small logo, aspect-ratio preserved]
+ *   Org name
+ *   Location (if provided)
+ *   Report title
+ *   Date range + generated timestamp (right-aligned)
+ *   Charcoal accent divider
  *
- * Returns the Y position after the header (use as startY for body content).
+ * Returns the Y position after the header.
  */
 export function addReportHeader(
   doc: jsPDF,
@@ -112,57 +135,60 @@ export function addReportHeader(
   const pageWidth = (doc as unknown as { internal: { pageSize: { getWidth: () => number } } }).internal.pageSize.getWidth();
   const marginLeft = 14;
   const marginRight = 14;
-  let textStartX = marginLeft;
 
-  // Reset styles
   doc.setTextColor(0, 0, 0);
 
-  // ── Logo ──
-  if (opts.logoDataUrl) {
-    const imageFormat = getImageFormatFromDataUrl(opts.logoDataUrl);
+  let y = HEADER_TOP;
+
+  // ── Logo (top-left, small, aspect-ratio preserved) ──
+  const logoData = resolveLogoData(opts.logoDataUrl);
+  if (logoData) {
+    const imageFormat = getImageFormatFromDataUrl(logoData.dataUrl);
     try {
+      const scale = Math.min(LOGO_MAX_WIDTH_MM / logoData.pxW, LOGO_MAX_HEIGHT_MM / logoData.pxH, 1);
+      const logoW = logoData.pxW * scale;
+      const logoH = logoData.pxH * scale;
       doc.addImage(
-        opts.logoDataUrl,
+        logoData.dataUrl,
         imageFormat,
         marginLeft,
-        HEADER_TOP,
-        LOGO_MAX_WIDTH,
-        LOGO_MAX_HEIGHT,
+        y,
+        logoW,
+        logoH,
         undefined,
         'FAST',
       );
-      textStartX = marginLeft + LOGO_MAX_WIDTH + 4;
+      y += logoH + 2;
     } catch {
       // Skip logo on error
     }
   }
 
-  // ── Org name (small, muted, above title) ──
-  let y = HEADER_TOP + 4;
+  // ── Org name (small, muted) ──
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
   doc.setFont('helvetica', 'normal');
-  doc.text(opts.orgName, textStartX, y);
+  doc.text(opts.orgName, marginLeft, y + 3);
+  y += 7;
 
   // ── Location info (compact, muted, below org name) ──
   if (opts.locationInfo) {
-    y += 4;
     const parts: string[] = [opts.locationInfo.name];
     if (opts.locationInfo.storeNumber) parts.push(`#${opts.locationInfo.storeNumber}`);
     if (opts.locationInfo.address) parts.push(opts.locationInfo.address);
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
-    doc.text(parts.join(' · '), textStartX, y);
+    doc.text(parts.join(' · '), marginLeft, y);
+    y += 5;
   }
 
   // ── Report title (large, bold) ──
-  y += 7;
   doc.setFontSize(16);
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
-  doc.text(opts.reportTitle, textStartX, y);
+  doc.text(opts.reportTitle, marginLeft, y + 2);
 
-  // ── Date range + generated timestamp (right-aligned) ──
+  // ── Date range + generated timestamp (right-aligned, top area) ──
   const dateRange = `${format(new Date(opts.dateFrom), 'MMM d, yyyy')} – ${format(new Date(opts.dateTo), 'MMM d, yyyy')}`;
   const generatedText = `Generated ${format(generatedAt, 'MMM d, yyyy · h:mm a')}`;
 
@@ -181,15 +207,12 @@ export function addReportHeader(
   doc.setDrawColor(0);
   doc.setLineWidth(0.2);
 
-  // Reset text color
   doc.setTextColor(0, 0, 0);
   return bodyStartY;
 }
 
 /**
- * Common jsPDF-AutoTable settings for branded reports:
- * - Reserves header space on each page
- * - Redraws header on each page
+ * Common jsPDF-AutoTable settings for branded reports.
  */
 export function getReportAutoTableBranding(doc: jsPDF, opts: ReportHeaderOptions): {
   margin: { top: number };
@@ -203,10 +226,7 @@ export function getReportAutoTableBranding(doc: jsPDF, opts: ReportHeaderOptions
 }
 
 /**
- * Adds footer to every page:
- *   Left: org name (muted)
- *   Center: "Page n of N"
- * Call after all body content is added (so page count is final).
+ * Adds footer to every page.
  */
 export function addReportFooter(doc: jsPDF, orgName?: string): void {
   const pageCount = doc.getNumberOfPages();
@@ -217,14 +237,10 @@ export function addReportFooter(doc: jsPDF, orgName?: string): void {
 
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-
-    // Org name on the left
     if (orgName) {
       doc.setTextColor(170, 170, 170);
       doc.text(orgName, 14, pageHeight - FOOTER_BOTTOM);
     }
-
-    // Page number centered
     doc.setTextColor(150, 150, 150);
     doc.text(
       `Page ${i} of ${pageCount}`,

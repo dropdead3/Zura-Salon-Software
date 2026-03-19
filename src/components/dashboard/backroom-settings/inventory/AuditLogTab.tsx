@@ -17,6 +17,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/backroom/useBulkInventoryAuditTrail';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { format, startOfDay, startOfWeek } from 'date-fns';
 import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';
 
@@ -111,7 +112,8 @@ type QuickFilterKey = 'today' | 'thisWeek' | 'adjustments' | 'receiving' | null;
 
 export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
-  const orgName = effectiveOrganization?.name ?? 'Organization';
+  const { data: businessSettings } = useBusinessSettings();
+  const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
 
   const [typeFilter, setTypeFilter] = useState<'all' | 'stock' | 'setting'>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();

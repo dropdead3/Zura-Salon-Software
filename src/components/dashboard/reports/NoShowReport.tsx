@@ -70,7 +70,7 @@ export function NoShowReport({
       const doc = new jsPDF();
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = {
-        orgName: effectiveOrganization?.name ?? 'Organization',
+        orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
         logoDataUrl,
         reportTitle: getReportTitle(),
         dateFrom,

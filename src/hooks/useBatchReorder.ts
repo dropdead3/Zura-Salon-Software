@@ -34,7 +34,7 @@ export function useBatchCreatePurchaseOrders() {
       items: BatchPOItem[];
       sendEmails: boolean;
       orgName?: string;
-      logoDataUrl?: string | null;
+      logoDataUrl?: string | { dataUrl: string; width: number; height: number } | null;
     }): Promise<BatchReorderResult> => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const result: BatchReorderResult = { created: 0, sent: 0, errors: [] };

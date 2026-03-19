@@ -90,7 +90,7 @@ export function CountsTab({ locationId }: CountsTabProps) {
       const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
       await generateCountSheetPdf({
         products: inventoryProducts,
-        orgName: effectiveOrganization?.name ?? 'Organization',
+        orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
         locationName: locationInfo?.name,
         logoDataUrl,
         filters,

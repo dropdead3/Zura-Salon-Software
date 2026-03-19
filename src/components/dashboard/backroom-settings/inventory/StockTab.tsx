@@ -75,7 +75,7 @@ async function exportStockPdf(
   const headerOpts: ReportHeaderOptions = {
     orgName,
     logoDataUrl,
-    reportTitle: 'Inventory Stock Report',
+    reportTitle: 'Backroom Stock Report',
     dateFrom: format(now, 'yyyy-MM-dd'),
     dateTo: format(now, 'yyyy-MM-dd'),
     generatedAt: now,
@@ -310,7 +310,7 @@ export function StockTab({ locationId }: StockTabProps) {
     try {
       await exportStockPdf(
         filtered,
-        effectiveOrganization?.name ?? 'Organization',
+        businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
         businessSettings?.logo_light_url || effectiveOrganization?.logo_url,
         formatCurrency,
         locationInfo,
@@ -381,7 +381,7 @@ export function StockTab({ locationId }: StockTabProps) {
       {
         items,
         sendEmails: true,
-        orgName: effectiveOrganization?.name ?? 'Organization',
+        orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
         logoDataUrl,
       },
       {
@@ -395,7 +395,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   /** Build the HTML email that suppliers will receive */
   const buildEmailPreviewHtml = useCallback((group: { supplierName: string; supplierEmail: string | null; products: BackroomInventoryRow[] }) => {
-    const orgName = effectiveOrganization?.name ?? 'Organization';
+    const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
     const selectedProducts = group.products.filter(p => selectedIds.has(p.id));
     if (selectedProducts.length === 0) return '';
 

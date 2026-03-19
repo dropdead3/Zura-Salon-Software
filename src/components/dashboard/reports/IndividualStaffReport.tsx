@@ -109,7 +109,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       const doc = new jsPDF('landscape');
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = {
-        orgName: effectiveOrganization?.name ?? 'Organization',
+        orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
         logoDataUrl,
         reportTitle: `Staff Report: ${data.profile.name}`,
         dateFrom,
