@@ -362,32 +362,29 @@ export function CommandCenterRow({
           )}
         </TableCell>
 
-        {/* Status — Ghost Badges: State + Severity */}
+        {/* Status — Single Composite Badge */}
         <TableCell className="w-28">
-          <div className="flex flex-col gap-1">
-            <Badge
-              variant="outline"
-              className={cn(
-                'text-[10px] px-1.5 py-0 h-5 font-sans font-normal w-fit',
-                row.stock_state === 'out_of_stock'
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[10px] px-1.5 py-0 h-5 font-sans font-normal w-fit',
+              row.stock_state === 'out_of_stock'
+                ? 'bg-destructive/10 text-destructive border-destructive/20'
+                : row.severity === 'critical'
                   ? 'bg-destructive/10 text-destructive border-destructive/20'
-                  : 'bg-success/10 text-success border-success/20',
-              )}
-            >
-              {row.stock_state === 'out_of_stock' ? 'Out of Stock' : 'In Stock'}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={cn(
-                'text-[10px] px-1.5 py-0 h-5 font-sans font-normal w-fit',
-                row.severity === 'critical' && 'bg-destructive/10 text-destructive border-destructive/20',
-                row.severity === 'low' && 'bg-warning/10 text-warning border-warning/20',
-                row.severity === 'healthy' && 'bg-success/10 text-success/70 border-success/20',
-              )}
-            >
-              {SEVERITY_CONFIG[row.severity].label}
-            </Badge>
-          </div>
+                  : row.severity === 'low'
+                    ? 'bg-warning/10 text-warning border-warning/20'
+                    : 'bg-success/10 text-success/70 border-success/20',
+            )}
+          >
+            {row.stock_state === 'out_of_stock'
+              ? 'Out of Stock'
+              : row.severity === 'critical'
+                ? 'Critical'
+                : row.severity === 'low'
+                  ? 'Low Stock'
+                  : 'In Stock'}
+          </Badge>
         </TableCell>
 
         {/* Supplier */}
