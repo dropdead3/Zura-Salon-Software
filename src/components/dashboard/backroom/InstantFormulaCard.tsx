@@ -32,6 +32,8 @@ export function InstantFormulaCard({
   onUseFormula,
   onViewHistory,
 }: InstantFormulaCardProps) {
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const shareFormula = useShareFormula();
   const { data: formula, isLoading } = useInstantFormulaMemory(clientId, serviceName);
 
   if (!clientId) return null;
