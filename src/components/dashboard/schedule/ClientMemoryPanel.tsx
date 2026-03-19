@@ -7,7 +7,9 @@ import { Beaker, Clock, FileText, ShoppingBag, Sparkles, User } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { useClientMemory } from '@/hooks/useClientMemory';
+import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
 
 interface ClientMemoryPanelProps {
   clientId: string | null | undefined;
