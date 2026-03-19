@@ -165,7 +165,7 @@ function SupplierPOCard({
   const isUnassigned = group.supplier === 'Unassigned';
 
   return (
-    <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+    <div className="rounded-lg border border-border/60 bg-muted/15 overflow-hidden">
       {/* Supplier header */}
       <div
         className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors duration-150"
