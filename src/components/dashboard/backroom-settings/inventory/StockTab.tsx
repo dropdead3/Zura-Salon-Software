@@ -160,48 +160,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
-  const [poItemIds, setPoItemIds] = useState<Set<string>>(new Set());
-  const [poBuilderOpen, setPoBuilderOpen] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
-
-  const toggleAddToPo = useCallback((productId: string) => {
-    setPoItemIds(prev => {
-      const next = new Set(prev);
-      if (next.has(productId)) next.delete(productId);
-      else next.add(productId);
-      return next;
-    });
-    // Auto-open panel when adding items
-    setPoBuilderOpen(true);
-  }, []);
-
-  const poItems = useMemo(() => inventory.filter(r => poItemIds.has(r.id)), [inventory, poItemIds]);
-
-  const handleSubmitPO = useCallback((group: SupplierPOGroup) => {
-    if (!orgId) return;
-    const lines = group.items.map(item => ({
-      product_id: item.id,
-      quantity_ordered: qtyOverrides.get(item.id) ?? (item.recommended_order_qty > 0 ? item.recommended_order_qty : 1),
-      unit_cost: item.cost_price ?? item.cost_per_gram ?? undefined,
-    }));
-    createPO.mutate({
-      organization_id: orgId,
-      supplier_name: group.supplier !== 'Unassigned' ? group.supplier : undefined,
-      supplier_email: group.items.find(i => i.supplier_email)?.supplier_email ?? undefined,
-      notes: `PO for ${group.supplier}`,
-      lines,
-    }, {
-      onSuccess: () => {
-        // Remove submitted items from staged set
-        setPoItemIds(prev => {
-          const next = new Set(prev);
-          group.items.forEach(i => next.delete(i.id));
-          return next;
-        });
-        toast.success(`Draft PO created for ${group.supplier}`);
-      },
-    });
-  }, [orgId, qtyOverrides, createPO]);
 
   // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
