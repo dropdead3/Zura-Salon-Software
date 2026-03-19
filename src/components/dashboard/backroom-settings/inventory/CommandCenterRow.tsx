@@ -1,15 +1,15 @@
 /**
  * CommandCenterRow — Single inventory row for the Smart Inventory Command Center.
- * Shows: Checkbox, Product, Stock, Suggested Order, Status, Supplier, Cost, Actions.
+ * Shows: Checkbox, Product, Stock, Suggested Order (with manual override), Status, Supplier, Cost, Actions.
  * Expandable detail row reveals Reorder Pt, Par Level, Container, PO History.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, Package } from 'lucide-react';
+import { ChevronDown, ChevronRight, History, ShoppingCart, Truck, Package, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
