@@ -16533,6 +16533,60 @@ export type Database = {
           },
         ]
       }
+      retail_product_settings: {
+        Row: {
+          created_at: string
+          display_position: number | null
+          id: string
+          is_tracked: boolean
+          location_id: string
+          organization_id: string
+          par_level: number | null
+          product_id: string
+          reorder_level: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_position?: number | null
+          id?: string
+          is_tracked?: boolean
+          location_id: string
+          organization_id: string
+          par_level?: number | null
+          product_id: string
+          reorder_level?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_position?: number | null
+          id?: string
+          is_tracked?: boolean
+          location_id?: string
+          organization_id?: string
+          par_level?: number | null
+          product_id?: string
+          reorder_level?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retail_product_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_product_settings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       retail_sales_goals: {
         Row: {
           created_at: string
