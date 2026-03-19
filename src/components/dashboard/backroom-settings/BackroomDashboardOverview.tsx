@@ -120,7 +120,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {!wizardCompleted && (
-                      <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:border-amber-500/70">
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); setShowWizard(true); }} className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 dark:border-amber-500/50 hover:border-amber-500/60">
                         Resume Setup
                       </Button>
                     )}
