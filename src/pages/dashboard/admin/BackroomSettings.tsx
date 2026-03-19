@@ -314,8 +314,12 @@ export default function BackroomSettings() {
               onChange={(e) => setActiveSection(e.target.value as BackroomSection)}
               className="w-full rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm font-sans text-foreground"
             >
-              {sections.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+              {sectionsByGroup.map((group) => (
+                <optgroup key={group.group} label={group.label}>
+                  {group.items.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
