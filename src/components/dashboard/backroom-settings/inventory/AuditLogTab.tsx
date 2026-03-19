@@ -111,6 +111,7 @@ type QuickFilterKey = 'today' | 'thisWeek' | 'adjustments' | 'receiving' | null;
 
 export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
 
   const [typeFilter, setTypeFilter] = useState<'all' | 'stock' | 'setting'>('all');
