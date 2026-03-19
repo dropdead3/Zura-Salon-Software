@@ -468,6 +468,29 @@ export function CommandCenterRow({
                   <span className="text-muted-foreground/40 text-xs">—</span>
                 )}
               </div>
+              {intelligence && intelligence.dailyUsage > 0 && (
+                <>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground/60 font-sans">Avg Daily Usage</span>
+                    <span className="text-sm text-muted-foreground tabular-nums">{intelligence.dailyUsage}/day</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground/60 font-sans">Days Remaining</span>
+                    <span className={cn(
+                      'text-sm tabular-nums',
+                      intelligence.daysRemaining === Infinity
+                        ? 'text-muted-foreground/40'
+                        : intelligence.daysRemaining < 7
+                          ? 'text-destructive'
+                          : intelligence.daysRemaining < 14
+                            ? 'text-warning'
+                            : 'text-muted-foreground',
+                    )}>
+                      {intelligence.daysRemaining === Infinity ? '—' : `~${intelligence.daysRemaining}d`}
+                    </span>
+                  </div>
+                </>
+              )}
               {row.open_po_qty > 0 && (
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] text-muted-foreground/60 font-sans">Pending Orders</span>
