@@ -86,6 +86,7 @@ export function useUpsertBackroomBillingSettings() {
             default_product_markup_pct: params.default_product_markup_pct ?? 0,
             product_charge_taxable: params.product_charge_taxable ?? true,
             product_charge_label: params.product_charge_label ?? 'Product Usage',
+            enable_supply_cost_recovery: params.enable_supply_cost_recovery ?? false,
             updated_by: userId,
           } as any)
           .select()
