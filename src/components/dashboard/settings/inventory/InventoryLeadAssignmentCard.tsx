@@ -301,6 +301,27 @@ export function InventoryLeadAssignmentCard() {
         {filteredLocations.length === 0 && search && (
           <p className="text-xs text-muted-foreground text-center py-4">No locations match "{search}"</p>
         )}
+        
+        {/* Role sync prompt */}
+        {pendingRoleSync && (
+          <div className="flex items-center gap-3 rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 mt-2">
+            <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium">Assign Inventory Manager role to {pendingRoleSync.name}?</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                This grants them access to inventory management, PO processing, and stock counts from their dashboard.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button size="sm" className="h-7 text-xs font-sans" onClick={handleGrantInventoryRole}>
+                Grant Role
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-xs font-sans" onClick={() => setPendingRoleSync(null)}>
+                Skip
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
