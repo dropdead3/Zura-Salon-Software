@@ -209,7 +209,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
           {/* ── KPI Strip ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
             <KpiTile
               icon={FlaskConical}
               label="Chemical Cost/Svc"
@@ -241,6 +241,15 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
               formatCurrency={formatCurrency}
               onNavigate={onNavigate}
             />
+            {supplyCostRecoveryEnabled && supplyCostRecovery && (
+              <KpiTile
+                icon={DollarSign}
+                label="Supply Recovery"
+                value={`${supplyCostRecovery.recoveryRate}%`}
+                status={supplyCostRecovery.recoveryRate >= 80 ? 'ok' : supplyCostRecovery.recoveryRate > 0 ? 'warning' : 'neutral'}
+                subtitle={`${formatCurrency(supplyCostRecovery.totalRecouped)} recouped · ${formatCurrency(supplyCostRecovery.totalWaived)} waived`}
+              />
+            )}
           </div>
           {/* Two-Column: Control Tower + Procurement */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
