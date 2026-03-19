@@ -345,6 +345,39 @@ function StepDetails({
           autoCapitalize="off"
         />
       </div>
+
+      {/* Secondary Contact */}
+      <div className="border-t border-border/60 pt-4 mt-1 space-y-3">
+        <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>Name</Label>
+          <Input
+            value={details.secondary_contact_name}
+            onChange={e => update('secondary_contact_name', e.target.value)}
+            placeholder="e.g. John Doe"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Email</Label>
+            <Input
+              type="email"
+              value={details.secondary_contact_email}
+              onChange={e => update('secondary_contact_email', e.target.value)}
+              placeholder="backup@supplier.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={tokens.label.default}>Phone</Label>
+            <Input
+              value={details.secondary_contact_phone}
+              onChange={e => update('secondary_contact_phone', e.target.value)}
+              placeholder="(555) 987-6543"
+              autoCapitalize="off"
+            />
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Account #</Label>
