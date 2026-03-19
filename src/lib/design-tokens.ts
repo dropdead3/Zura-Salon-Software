@@ -231,6 +231,16 @@ export const tokens = {
     /** Button-specific inner (rounded-md) */
     innerButton: 'silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.md)-1px)]',
   },
+
+  // ========================================
+  // TOAST TOKENS
+  // ========================================
+  toast: {
+    /** Toast container: glass card with slight rounding — NEVER rounded-full or rounded-xl */
+    container: 'bg-card/80 backdrop-blur-xl border-border/40 shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)] rounded-lg',
+    /** Toast radius only — for overriding in third-party toast wrappers */
+    radius: 'rounded-lg',
+  },
 } as const;
 
 /**
