@@ -806,17 +806,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         orgId={orgId ?? ''}
         locationId={locationId}
       />
-      <POBuilderPanel
-        open={poBuilderOpen}
-        onClose={() => setPoBuilderOpen(false)}
-        items={poItems}
-        qtyOverrides={qtyOverrides}
-        onQtyOverride={handleQtyOverride}
-        onRemoveItem={toggleAddToPo}
-        onClearAll={() => { setPoItemIds(new Set()); setPoBuilderOpen(false); }}
-        onSubmitPO={handleSubmitPO}
-        formatCurrency={formatCurrency}
-      />
 
       {/* Bulk Email Preview Dialog */}
       <Dialog open={showEmailPreview} onOpenChange={setShowEmailPreview}>
