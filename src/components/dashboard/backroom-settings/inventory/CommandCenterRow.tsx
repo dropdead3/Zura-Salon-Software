@@ -298,7 +298,7 @@ export function CommandCenterRow({
 
         {/* Suggested Order — PRIMARY DECISION SIGNAL (Point 2: Visual dominance) */}
         <TableCell className="text-right tabular-nums w-28">
-          {needsReorder || isOverridden ? (
+          {canAddToPo ? (
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center gap-1.5 justify-end">
                 {/* Editable quantity */}
