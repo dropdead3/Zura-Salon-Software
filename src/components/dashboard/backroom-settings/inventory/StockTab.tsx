@@ -92,21 +92,22 @@ async function exportStockPdf(
   ]);
 
   autoTable(doc, {
-    startY: 72,
+    startY: REPORT_BODY_START_Y,
     head: [['Product', 'Brand', 'Stock', 'Suggested Order', 'Status', 'Supplier', 'Cost']],
     body: tableData,
-    styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
+    styles: { fontSize: 8, cellPadding: 3 },
+    headStyles: { fillColor: [55, 55, 55], fontSize: 8, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 248, 250] },
     columnStyles: {
       2: { halign: 'right' },
       3: { halign: 'right' },
       6: { halign: 'right' },
     },
-    margin: { top: 72 },
+    margin: { top: REPORT_BODY_START_Y },
     didDrawPage: () => { addReportHeader(doc, headerOpts); },
   });
 
-  addReportFooter(doc);
+  addReportFooter(doc, orgName);
   doc.save(`inventory-stock-${format(now, 'yyyy-MM-dd')}.pdf`);
 }
 
