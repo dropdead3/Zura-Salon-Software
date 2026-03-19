@@ -113,7 +113,7 @@ function DetailEditCell({
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] text-muted-foreground/60 font-sans">{label}</span>
+      <span className="text-[10px] text-muted-foreground/50 font-sans">{label}</span>
       {editing ? (
         <input
           type="number"

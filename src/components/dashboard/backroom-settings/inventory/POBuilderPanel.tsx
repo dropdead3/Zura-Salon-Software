@@ -259,8 +259,8 @@ function SupplierPOCard({
           })}
 
           {/* Submit button per supplier */}
-          <div className="px-3 py-2 flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground/50 font-sans">
+          <div className="px-3 py-2 flex items-center justify-between border-t border-border/20">
+            <span className="text-[10px] text-muted-foreground/40 font-sans tabular-nums">
               {group.items.length} {group.items.length === 1 ? 'item' : 'items'} · {formatCurrency(group.totalCost)}
             </span>
             <Button
