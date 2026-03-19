@@ -1,29 +1,23 @@
 
 
-# FIFO Stock Rotation Reminder on Receiving
+# Add "Uh-oh" Header to Setup Wizard Banner
 
-## What to Build
+## What to Change
 
-When a backroom manager confirms a shipment receive, show a FIFO (First In, First Out) reminder alert dialog before the actual submission. The dialog reminds them to:
-- Pull all existing inventory forward on the shelf
-- Place newly received inventory behind the older stock
-- Check for any expired or near-expiry items while rotating
+**Edit: `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx`** (lines ~106-167)
 
-The user must acknowledge the reminder before the receive is processed.
+Restructure the setup banner card to include a prominent card header with the attention-grabbing message before the step tracker:
 
-## Implementation
+1. Add a `CardHeader` above `CardContent` with:
+   - **Title**: `"Uh-oh, you haven't finished setting up your backroom!"` — styled as `text-amber-400 font-display tracking-wide text-sm` to match the amber theme
+   - The Zura Z icon moves up into the header row alongside the title
+   - The "Resume Setup" button also moves into the header row (right-aligned)
 
-### Edit: `src/components/dashboard/backroom-settings/inventory/ReceiveTab.tsx`
+2. The step tracker (progress circles + labels) and the `X OF 7 areas configured` counter remain in the `CardContent` below the header
 
-1. Add state: `showFifoReminder` (boolean) and `pendingReceiveData` (stores the mutation input temporarily)
-2. Change `handleConfirmReceive` to set `showFifoReminder = true` and stash the receive payload instead of calling `receiveShipment.mutate()` directly
-3. Add a new `onAcknowledgeFifo` handler that closes the dialog and fires `receiveShipment.mutate()` with the stashed payload
-4. Render a `PlatformAlertDialog` at the bottom of the component:
-   - Title: "Stock Rotation Reminder"
-   - Icon: `RotateCcw` or `AlertTriangle`
-   - Body: Checklist-style reminder (bring old stock forward, place new stock behind, check for expiry)
-   - Cancel button: goes back to the receive form
-   - Confirm button: "I've Rotated Stock — Confirm Receive"
+3. Slightly increase the card's border emphasis (`border-amber-500/50`) and background (`bg-amber-500/8`) so the card pops more on the dark theme
+
+This keeps the existing collapsible behavior and step tracker intact while adding the prominent header callout that makes incomplete setup impossible to miss.
 
 **1 file edited, 0 new files, 0 migrations.**
 
