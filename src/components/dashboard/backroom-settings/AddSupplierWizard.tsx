@@ -17,7 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
-  Loader2, ArrowLeft, ArrowRight, Check, Search, Package, Layers, Plus, X,
+  Loader2, ArrowLeft, ArrowRight, Check, Search, Package, Layers, Plus, X, Lock,
 } from 'lucide-react';
 import { useAllProductsWithSupplier } from '@/hooks/backroom/useSupplierSettings';
 import { useLinkProducts, useUpdateSupplierContact } from '@/hooks/backroom/useSupplierSettings';

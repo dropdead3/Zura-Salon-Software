@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Truck, Plus, X, AlertTriangle, Package, Loader2, Search, Pencil, Trash2, FileText, ShoppingCart } from 'lucide-react';
+import { Truck, Plus, X, AlertTriangle, Package, Loader2, Search, Pencil, Trash2, FileText, ShoppingCart, Lock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import {
