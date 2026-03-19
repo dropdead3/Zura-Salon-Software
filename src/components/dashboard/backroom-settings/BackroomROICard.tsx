@@ -87,9 +87,9 @@ export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProp
         <div className="grid grid-cols-3 gap-4">
           {kpis.map((kpi) => (
             <div key={kpi.label} className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div className={cn('w-7 h-7 rounded-md flex items-center justify-center', kpi.bgColor)}>
-                  <kpi.icon className={cn('w-3.5 h-3.5', kpi.color)} />
+              <div className="flex items-center gap-2 min-h-[32px]">
+                <div className={cn('w-8 h-8 rounded-md flex items-center justify-center shrink-0', kpi.bgColor)}>
+                  <kpi.icon className={cn('w-4 h-4', kpi.color)} />
                 </div>
                 <span className={cn(tokens.kpi.label, 'text-[10px]')}>{kpi.label}</span>
               </div>

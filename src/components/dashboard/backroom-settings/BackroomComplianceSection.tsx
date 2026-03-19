@@ -123,8 +123,8 @@ export function BackroomComplianceSection() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-muted-foreground" />
                   <p className={tokens.kpi.label}>Compliance Rate</p>
                   <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
                 </div>
@@ -137,8 +137,8 @@ export function BackroomComplianceSection() {
 
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Beaker className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <Beaker className="w-4 h-4 shrink-0 text-muted-foreground" />
                   <p className={tokens.kpi.label}>Color Appointments</p>
                 </div>
                 <span className={tokens.kpi.value}>{summary.totalColorAppointments}</span>
@@ -148,8 +148,8 @@ export function BackroomComplianceSection() {
 
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <TrendingUp className="w-4 h-4 shrink-0 text-muted-foreground" />
                   <p className={tokens.kpi.label}>Reweigh Rate</p>
                   <MetricInfoTooltip description="Of sessions that exist, how many had bowls reweighed after service." />
                 </div>
@@ -159,8 +159,8 @@ export function BackroomComplianceSection() {
 
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <Users className="w-4 h-4 shrink-0 text-muted-foreground" />
                   <p className={tokens.kpi.label}>Repeat Offenders</p>
                   <MetricInfoTooltip description="Staff with compliance rate below 70%." />
                 </div>
