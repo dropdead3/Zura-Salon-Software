@@ -111,7 +111,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     <ZuraZIcon className="w-5 h-5 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="font-display text-sm tracking-wide text-amber-400">
+                    <CardTitle className="font-display text-sm tracking-wide text-foreground">
                       Uh-oh, you haven't finished setting up your backroom!
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground mt-0.5">
