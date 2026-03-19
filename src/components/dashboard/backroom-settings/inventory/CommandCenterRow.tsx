@@ -302,7 +302,7 @@ export function CommandCenterRow({
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center justify-end">
                 {/* Fixed-width label slot so number position stays stable */}
-                <span className="min-w-[3.5rem] flex justify-end">
+                <span className="min-w-[3.5rem] flex justify-end mr-2">
                   {isOverridden ? (
                     <button
                       className="text-[9px] text-accent-foreground bg-accent/10 px-1.5 py-0.5 rounded-full transition-colors duration-150 flex items-center gap-0.5 hover:bg-accent/20"
