@@ -284,6 +284,22 @@ function buildPOApprovalAlerts(draftPOs: DraftPOAlert[]): ControlTowerAlert[] {
 
 const MAX_ALERTS = 20;
 
+function buildAuditOverdueAlerts(audits: AuditOverdueAlert[]): ControlTowerAlert[] {
+  return audits.map((a) => ({
+    id: `audit-overdue-${a.id}`,
+    category: 'audit_overdue' as AlertCategory,
+    priority: 'high' as AlertPriority,
+    title: 'Inventory Audit Overdue',
+    description: `Scheduled audit due ${a.due_date} has not been completed.`,
+    metrics: { due_date: a.due_date },
+    entityType: 'audit_schedule',
+    entityId: a.id,
+    suggestedAction: 'Complete the overdue inventory audit or mark it as skipped with a reason.',
+    actionRoute: '/dashboard/admin/backroom-settings?section=inventory&tab=counts',
+    createdAt: a.due_date,
+  }));
+}
+
 export function buildControlTowerAlerts(sources: ControlTowerSources): ControlTowerAlert[] {
   const all: ControlTowerAlert[] = [
     ...buildInventoryAlerts(sources.inventoryRisk),
@@ -292,6 +308,7 @@ export function buildControlTowerAlerts(sources: ControlTowerSources): ControlTo
     ...buildStaffAlerts(sources.staffPerformance),
     ...buildReorderAlerts(sources.stockoutAlerts),
     ...buildPOApprovalAlerts(sources.draftPOs ?? []),
+    ...buildAuditOverdueAlerts(sources.overdueAudits ?? []),
   ];
 
   return sortAlertsByPriority(all);
