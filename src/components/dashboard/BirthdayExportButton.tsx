@@ -12,6 +12,8 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { tokens } from '@/lib/design-tokens';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface BirthdayPerson {
   id: string;
