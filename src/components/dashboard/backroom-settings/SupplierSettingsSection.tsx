@@ -97,6 +97,7 @@ export function SupplierSettingsSection() {
   useEffect(() => {
     if (selectedGroup) {
       reset({
+        contact_name: selectedGroup.contact_name || '',
         supplier_email: selectedGroup.supplier_email || '',
         supplier_phone: selectedGroup.supplier_phone || '',
         supplier_website: selectedGroup.supplier_website || '',
