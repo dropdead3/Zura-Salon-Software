@@ -419,6 +419,12 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               brandCounts={supplierBrandCounts}
               search={supplierSearch}
               onSearchChange={setSupplierSearch}
+              secondaryName={supplierSecondaryName}
+              onSecondaryNameChange={setSupplierSecondaryName}
+              secondaryEmail={supplierSecondaryEmail}
+              onSecondaryEmailChange={setSupplierSecondaryEmail}
+              secondaryPhone={supplierSecondaryPhone}
+              onSecondaryPhoneChange={setSupplierSecondaryPhone}
             />
           )}
           {step === 3 && (
