@@ -1,29 +1,38 @@
 
+# Add Secondary Contact for Supplier/Distributor
 
-# Add Contact Name Field & Rename "Supplier Name" Label
+## Overview
+Add three new columns (`secondary_contact_name`, `secondary_contact_email`, `secondary_contact_phone`) to `product_suppliers` and expose them in all supplier forms.
 
 ## Changes
 
 ### 1. Database Migration
-Add `contact_name TEXT` column to `product_suppliers`.
+Add three columns:
+```sql
+ALTER TABLE public.product_suppliers ADD COLUMN secondary_contact_name TEXT;
+ALTER TABLE public.product_suppliers ADD COLUMN secondary_contact_email TEXT;
+ALTER TABLE public.product_suppliers ADD COLUMN secondary_contact_phone TEXT;
+```
 
-### 2. `AddSupplierWizard.tsx`
-- Add `contact_name` to `SupplierDetails` interface and `EMPTY_DETAILS`
-- Rename label "Supplier Name" → "Supplier or Distributor"
-- Add "Contact Name" input field right after supplier name
-- Include `contact_name` in the Review step rows
-- Pass `contact_name` through to the upsert on completion
+### 2. `src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`
+- Add `secondary_contact_name`, `secondary_contact_email`, `secondary_contact_phone` to `SupplierDetails` and `EMPTY_DETAILS`
+- Add a "Secondary Contact" section in `StepDetails` after the Website field — name, email, phone fields
+- Include in the Review step
+- Pass through to the upsert on creation
 
-### 3. `BackroomSetupWizard.tsx`
-- Add `supplierContactName` state
-- Rename label "Supplier Name" → "Supplier or Distributor"
-- Add "Contact Name" input after supplier name
-- Pass `contact_name` to the batch upsert mutation
+### 3. `src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`
+- Add secondary contact fields to `ContactForm`
+- Display in the supplier detail panel form
 
-### 4. `SupplierSettingsSection.tsx`
-- Add `contact_name` to the `ContactForm` type and form fields
-- Display in the supplier detail panel
+### 4. `src/hooks/backroom/useSupplierSettings.ts`
+- Add secondary contact fields to `SupplierGroup`, select query, and `updateContact` mutation
 
-### 5. `useSupplierSettings.ts`
-- Add `contact_name` to `SupplierGroup` interface, select query, and `updateContact` mutation
+### 5. `src/hooks/useProductSuppliers.ts`
+- Add secondary contact fields to `ProductSupplier` interface and upsert mutations
 
+### 6. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`
+- Add secondary contact state and fields to the SuppliersStep
+- Pass through to batch upsert
+
+### 7. `src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx`
+- Add secondary contact fields to the form
