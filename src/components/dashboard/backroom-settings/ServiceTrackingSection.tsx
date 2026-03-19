@@ -84,8 +84,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       setShowSuggested(false);
       toast.success('Color/chemical services tracked', {
         action: onNavigate ? {
-          label: 'Next: Recipe Baselines →',
-          onClick: () => onNavigate('recipes'),
+          label: 'Next: Formula Baselines →',
+          onClick: () => onNavigate('formulas'),
         } : undefined,
       });
     },
