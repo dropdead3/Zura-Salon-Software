@@ -112,6 +112,9 @@ export function useBackroomSetupHealth() {
         });
       }
 
+      const billingConfigured = !!(billingRes.data as any)?.enable_supply_cost_recovery ||
+        (policiesRes.count || 0) > 0;
+
       return {
         trackedProducts: trackedProducts.length,
         totalProducts: products.length,
@@ -121,6 +124,7 @@ export function useBackroomSetupHealth() {
         allowancePolicies: policiesRes.count || 0,
         stationsConfigured: stationsRes.count || 0,
         alertRulesConfigured: alertsRes.count || 0,
+        billingConfigured,
         warnings,
       };
     },
