@@ -141,6 +141,7 @@ export function useBatchUpsertSupplier() {
         product_id: pid,
         organization_id: input.organization_id,
         supplier_name: input.supplier_name,
+        contact_name: input.contact_name || null,
         supplier_email: input.supplier_email || null,
         supplier_phone: input.supplier_phone || null,
         supplier_website: input.supplier_website || null,
