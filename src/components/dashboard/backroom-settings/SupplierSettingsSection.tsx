@@ -132,6 +132,9 @@ export function SupplierSettingsSection() {
       reorder_method: data.reorder_method || null,
       reorder_method_other: data.reorder_method === 'other' ? (data.reorder_method_other || null) : null,
       reorder_notes: data.reorder_notes || null,
+      secondary_contact_name: data.secondary_contact_name || null,
+      secondary_contact_email: data.secondary_contact_email || null,
+      secondary_contact_phone: data.secondary_contact_phone || null,
     });
   };
 
