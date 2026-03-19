@@ -122,7 +122,7 @@ function computeReorderFields(qty: number, parLevel: number | null, reorderLevel
   const needsReorder = reorderLevel != null && qty <= reorderLevel;
   const target = parLevel ?? reorderLevel;
   const orderQty = target != null && (needsReorder || qty <= 0) ? Math.max(0, target - qty) : 0;
-  const recommendedOrderQty = target != null ? Math.max(0, target - qty - openPoQty) : 0;
+  const recommendedOrderQty = target != null ? Math.max(0, target - qty - openPoQty) : (qty <= 0 ? 1 : 0);
   return { orderQty, recommendedOrderQty, effectiveStock };
 }
 
