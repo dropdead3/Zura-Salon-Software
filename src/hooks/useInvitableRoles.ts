@@ -24,6 +24,7 @@ const MANAGER_INVITABLE_ROLES: AppRole[] = [
   'receptionist',
   'stylist_assistant',
   'operations_assistant',
+  'inventory_manager',
 ];
 
 // All operational/general roles

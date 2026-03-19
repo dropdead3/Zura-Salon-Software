@@ -32,6 +32,7 @@ const ROLE_DISPLAY_NAMES: Record<AppRole, string> = {
   bookkeeper: 'Bookkeeper',
   operations_assistant: 'Operations Assistant',
   super_admin: 'Super Admin',
+  inventory_manager: 'Inventory Manager',
 };
 
 function getInitials(name: string | null): string {
