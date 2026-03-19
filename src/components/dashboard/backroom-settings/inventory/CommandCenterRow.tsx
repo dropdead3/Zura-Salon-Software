@@ -273,7 +273,7 @@ export function CommandCenterRow({
         </TableCell>
 
         {/* Suggested Order — PRIMARY DECISION SIGNAL */}
-        <TableCell className="text-right tabular-nums">
+        <TableCell className="text-right tabular-nums w-28">
           {needsReorder || isOverridden ? (
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center gap-1.5 justify-end">
