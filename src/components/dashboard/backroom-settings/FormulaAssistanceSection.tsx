@@ -57,7 +57,7 @@ export function FormulaAssistanceSection() {
       <Infotainer id="backroom-formula-guide" title="Formula Assistance" description="Smart Mix Assist suggests formulas based on client history and recipe baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff." icon={<Sparkles className="h-4 w-4 text-primary" />} />
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pr-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary" />
