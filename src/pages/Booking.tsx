@@ -3,6 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { formatPhoneNumber } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown, AlertCircle } from "lucide-react";
 import { captureWebsiteLead } from "@/lib/leadCapture";

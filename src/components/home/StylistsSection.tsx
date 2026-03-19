@@ -216,7 +216,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
             <input
               type="tel"
               value={formData.phone}
-              onChange={(e) => { const { formatPhoneNumber } = require('@/lib/utils'); handleChange("phone", formatPhoneNumber(e.target.value)); }}
+              onChange={(e) => handleChange("phone", formatPhoneNumber(e.target.value))}
               placeholder="(555) 555-5555"
               className="w-full px-4 py-2.5 bg-background border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
             />
