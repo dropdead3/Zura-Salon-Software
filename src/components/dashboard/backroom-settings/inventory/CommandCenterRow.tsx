@@ -514,6 +514,16 @@ export function CommandCenterRow({
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] text-muted-foreground/50 font-sans">Pending Orders</span>
                   <span className="text-sm text-primary/80 tabular-nums">{row.open_po_qty} units</span>
+                  {(() => {
+                    const { draft, sent, partially_received } = row.open_po_status_counts;
+                    const parts: string[] = [];
+                    if (draft > 0) parts.push(`${draft} draft`);
+                    if (sent > 0) parts.push(`${sent} sent`);
+                    if (partially_received > 0) parts.push(`${partially_received} partial`);
+                    return parts.length > 0 ? (
+                      <span className="text-[10px] text-muted-foreground/40 font-sans">{parts.join(', ')}</span>
+                    ) : null;
+                  })()}
                 </div>
               )}
             </div>
