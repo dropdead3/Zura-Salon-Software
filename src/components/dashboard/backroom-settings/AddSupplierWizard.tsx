@@ -23,6 +23,7 @@ import { useLinkProducts, useUpdateSupplierContact } from '@/hooks/backroom/useS
 
 interface SupplierDetails {
   name: string;
+  contact_name: string;
   email: string;
   phone: string;
   website: string;
@@ -36,6 +37,7 @@ interface SupplierDetails {
 
 const EMPTY_DETAILS: SupplierDetails = {
   name: '',
+  contact_name: '',
   email: '',
   phone: '',
   website: '',
@@ -139,10 +141,11 @@ export function AddSupplierWizard({ open, onOpenChange, onComplete }: AddSupplie
         {
           onSuccess: () => {
             // Now update contact details if any were provided
-            const hasContact = details.email || details.phone || details.website || details.account_number || details.lead_time_days || details.reorder_method;
+            const hasContact = details.contact_name || details.email || details.phone || details.website || details.account_number || details.lead_time_days || details.reorder_method;
             if (hasContact) {
               updateContact.mutate({
                 supplier_name: name,
+                contact_name: details.contact_name || null,
                 supplier_email: details.email || null,
                 supplier_phone: details.phone || null,
                 supplier_website: details.website || null,
@@ -287,13 +290,21 @@ function StepDetails({
     <div className="space-y-4">
       <div className="space-y-1.5">
         <Label className={tokens.label.default}>
-          Supplier Name <span className="text-destructive">*</span>
+          Supplier or Distributor <span className="text-destructive">*</span>
         </Label>
         <Input
           value={details.name}
           onChange={e => update('name', e.target.value)}
           placeholder="e.g. Goldwell Distribution"
           autoFocus
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label className={tokens.label.default}>Contact Name</Label>
+        <Input
+          value={details.contact_name}
+          onChange={e => update('contact_name', e.target.value)}
+          placeholder="e.g. Jane Smith"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -537,7 +548,8 @@ function StepReview({
   selectedCount: number;
 }) {
   const rows = [
-    { label: 'Supplier Name', value: details.name },
+    { label: 'Supplier or Distributor', value: details.name },
+    { label: 'Contact Name', value: details.contact_name },
     { label: 'Email', value: details.email },
     { label: 'Phone', value: details.phone },
     { label: 'Website', value: details.website },

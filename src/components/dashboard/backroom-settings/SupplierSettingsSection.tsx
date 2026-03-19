@@ -42,6 +42,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 
 interface ContactForm {
+  contact_name: string;
   supplier_email: string;
   supplier_phone: string;
   supplier_website: string;
@@ -96,6 +97,7 @@ export function SupplierSettingsSection() {
   useEffect(() => {
     if (selectedGroup) {
       reset({
+        contact_name: selectedGroup.contact_name || '',
         supplier_email: selectedGroup.supplier_email || '',
         supplier_phone: selectedGroup.supplier_phone || '',
         supplier_website: selectedGroup.supplier_website || '',
@@ -114,6 +116,7 @@ export function SupplierSettingsSection() {
     if (!selected) return;
     updateContact.mutate({
       supplier_name: selected,
+      contact_name: data.contact_name || null,
       supplier_email: data.supplier_email || null,
       supplier_phone: data.supplier_phone || null,
       supplier_website: data.supplier_website || null,
@@ -302,6 +305,10 @@ export function SupplierSettingsSection() {
 
                   {/* Contact form */}
                   <form onSubmit={handleSubmit(onSaveContact)} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cn" className={tokens.label.default}>Contact Name</Label>
+                      <Input id="cn" {...register('contact_name')} placeholder="e.g. Jane Smith" />
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
                         <Label htmlFor="se" className={tokens.label.default}>Email</Label>

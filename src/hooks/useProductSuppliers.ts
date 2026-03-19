@@ -8,6 +8,7 @@ export interface ProductSupplier {
   product_id: string;
   organization_id: string;
   supplier_name: string;
+  contact_name: string | null;
   supplier_email: string | null;
   supplier_phone: string | null;
   supplier_website: string | null;
@@ -71,6 +72,7 @@ export function useUpsertSupplier() {
           .from('product_suppliers')
           .update({
             supplier_name: supplier.supplier_name,
+            contact_name: supplier.contact_name ?? null,
             supplier_email: supplier.supplier_email,
             supplier_phone: supplier.supplier_phone,
             supplier_website: supplier.supplier_website,
@@ -92,6 +94,7 @@ export function useUpsertSupplier() {
             product_id: supplier.product_id,
             organization_id: supplier.organization_id,
             supplier_name: supplier.supplier_name,
+            contact_name: supplier.contact_name ?? null,
             supplier_email: supplier.supplier_email,
             supplier_phone: supplier.supplier_phone,
             supplier_website: supplier.supplier_website,
@@ -126,6 +129,7 @@ export function useBatchUpsertSupplier() {
       product_ids: string[];
       organization_id: string;
       supplier_name: string;
+      contact_name?: string | null;
       supplier_email?: string | null;
       supplier_phone?: string | null;
       supplier_website?: string | null;
@@ -137,6 +141,7 @@ export function useBatchUpsertSupplier() {
         product_id: pid,
         organization_id: input.organization_id,
         supplier_name: input.supplier_name,
+        contact_name: input.contact_name || null,
         supplier_email: input.supplier_email || null,
         supplier_phone: input.supplier_phone || null,
         supplier_website: input.supplier_website || null,

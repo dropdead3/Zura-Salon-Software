@@ -72,6 +72,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 
   // ─── Step 2: Supplier state ─────────────────────────────────────────────────
   const [supplierName, setSupplierName] = useState('');
+  const [supplierContactName, setSupplierContactName] = useState('');
   const [supplierEmail, setSupplierEmail] = useState('');
   const [supplierPhone, setSupplierPhone] = useState('');
   const [supplierWebsite, setSupplierWebsite] = useState('');
@@ -180,6 +181,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
         product_ids: Array.from(supplierProductIds),
         organization_id: orgId,
         supplier_name: supplierName.trim(),
+        contact_name: supplierContactName || null,
         supplier_email: supplierEmail || null,
         supplier_phone: supplierPhone || null,
         supplier_website: supplierWebsite || null,
@@ -372,6 +374,8 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
             <SuppliersStep
               supplierName={supplierName}
               onNameChange={setSupplierName}
+              supplierContactName={supplierContactName}
+              onContactNameChange={setSupplierContactName}
               supplierEmail={supplierEmail}
               onEmailChange={setSupplierEmail}
               supplierPhone={supplierPhone}
@@ -527,6 +531,7 @@ function WelcomeStep() {
 // ─── Step 2: Suppliers ────────────────────────────────────────────────────────
 function SuppliersStep({
   supplierName, onNameChange,
+  supplierContactName, onContactNameChange,
   supplierEmail, onEmailChange,
   supplierPhone, onPhoneChange,
   supplierWebsite, onWebsiteChange,
@@ -540,6 +545,7 @@ function SuppliersStep({
   search, onSearchChange,
 }: {
   supplierName: string; onNameChange: (v: string) => void;
+  supplierContactName: string; onContactNameChange: (v: string) => void;
   supplierEmail: string; onEmailChange: (v: string) => void;
   supplierPhone: string; onPhoneChange: (v: string) => void;
   supplierWebsite: string; onWebsiteChange: (v: string) => void;
@@ -568,12 +574,20 @@ function SuppliersStep({
         {/* Supplier contact info */}
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>
-            Supplier Name <span className="text-destructive">*</span>
+            Supplier or Distributor <span className="text-destructive">*</span>
           </Label>
           <Input
             value={supplierName}
             onChange={e => onNameChange(e.target.value)}
             placeholder="e.g. Goldwell Distribution"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className={tokens.label.default}>Contact Name</Label>
+          <Input
+            value={supplierContactName}
+            onChange={e => onContactNameChange(e.target.value)}
+            placeholder="e.g. Jane Smith"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">

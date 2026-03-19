@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 export interface SupplierGroup {
   supplier_name: string;
+  contact_name: string | null;
   supplier_email: string | null;
   supplier_phone: string | null;
   supplier_website: string | null;
@@ -53,7 +54,7 @@ export function useSupplierGroups() {
     queryFn: async (): Promise<SupplierGroup[]> => {
       const { data, error } = await supabase
         .from('product_suppliers')
-        .select('id, product_id, supplier_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes')
+        .select('id, product_id, supplier_name, contact_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes')
         .eq('organization_id', orgId!)
         .order('supplier_name');
 
@@ -65,6 +66,7 @@ export function useSupplierGroups() {
         if (!map.has(key)) {
           map.set(key, {
             supplier_name: row.supplier_name,
+            contact_name: (row as any).contact_name ?? null,
             supplier_email: row.supplier_email,
             supplier_phone: row.supplier_phone,
             supplier_website: row.supplier_website,
@@ -203,6 +205,7 @@ export function useUpdateSupplierContact() {
   return useMutation({
     mutationFn: async (params: {
       supplier_name: string;
+      contact_name?: string | null;
       supplier_email?: string | null;
       supplier_phone?: string | null;
       supplier_website?: string | null;
@@ -216,6 +219,7 @@ export function useUpdateSupplierContact() {
       const { error } = await supabase
         .from('product_suppliers')
         .update({
+          contact_name: params.contact_name ?? null,
           supplier_email: params.supplier_email ?? null,
           supplier_phone: params.supplier_phone ?? null,
           supplier_website: params.supplier_website ?? null,

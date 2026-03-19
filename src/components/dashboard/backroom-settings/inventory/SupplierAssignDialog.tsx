@@ -94,7 +94,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="supplier_name">Supplier Name *</Label>
+            <Label htmlFor="supplier_name">Supplier or Distributor *</Label>
             <Input
               id="supplier_name"
               {...register('supplier_name', { required: 'Supplier name is required' })}

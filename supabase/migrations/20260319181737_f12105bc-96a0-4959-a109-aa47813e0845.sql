@@ -1,0 +1,1 @@
+ALTER TABLE public.product_suppliers ADD COLUMN contact_name TEXT;
