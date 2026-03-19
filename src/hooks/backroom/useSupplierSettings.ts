@@ -66,6 +66,7 @@ export function useSupplierGroups() {
         if (!map.has(key)) {
           map.set(key, {
             supplier_name: row.supplier_name,
+            contact_name: (row as any).contact_name ?? null,
             supplier_email: row.supplier_email,
             supplier_phone: row.supplier_phone,
             supplier_website: row.supplier_website,
