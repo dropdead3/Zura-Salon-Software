@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceAllowancePolicies, useUpsertAllowancePolicy, useDeleteAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useAllowanceBuckets, useUpsertAllowanceBucket, useDeleteAllowanceBucket } from '@/hooks/backroom/useAllowanceBuckets';
+import { useBackroomBillingSettings, useUpsertBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
