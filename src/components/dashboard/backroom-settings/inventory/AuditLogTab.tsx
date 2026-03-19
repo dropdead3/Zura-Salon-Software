@@ -69,7 +69,7 @@ function exportBulkCsv(entries: BulkAuditEntry[]) {
   URL.revokeObjectURL(url);
 }
 
-async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string) {
+async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string, locationName?: string) {
   const { default: jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
   const { addReportHeader, addReportFooter, buildReportFileName } = await import('@/lib/reportPdfLayout');
@@ -105,7 +105,7 @@ async function exportBulkPdf(entries: BulkAuditEntry[], orgName: string) {
   });
 
   addReportFooter(doc);
-  doc.save(buildReportFileName({ orgName, reportSlug: 'inventory-audit-log', dateFrom: today }));
+  doc.save(buildReportFileName({ orgName, locationName, reportSlug: 'inventory-audit-log', dateFrom: today }));
 }
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
@@ -188,10 +188,12 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
   const entries = data?.entries ?? [];
   const hasMore = data?.hasMore ?? false;
 
+  const currentLocationName = locationsProp?.find(l => l.id === locationId)?.name;
+
   // Stable callback for PDF export ref registration
   const handleBulkPdfExport = useCallback(() => {
-    if (entries.length > 0) exportBulkPdf(entries, orgName);
-  }, [entries, orgName]);
+    if (entries.length > 0) exportBulkPdf(entries, orgName, currentLocationName);
+  }, [entries, orgName, currentLocationName]);
 
   // Register PDF export handler for parent header button
   // Audit log is org-wide (not location-scoped), so multi-location just exports current view

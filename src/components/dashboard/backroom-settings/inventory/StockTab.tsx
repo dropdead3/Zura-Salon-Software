@@ -352,7 +352,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         if (doc) {
           addReportFooter(doc, orgName);
           const now = new Date();
-          doc.save(buildReportFileName({ orgName, reportSlug: 'backroom-stock-all-locations', dateFrom: format(now, 'yyyy-MM-dd') }));
+          doc.save(buildReportFileName({ orgName, reportSlug: 'backroom-stock-combined', dateFrom: format(now, 'yyyy-MM-dd') }));
         }
         toast.success('Combined stock report downloaded');
       } else {
