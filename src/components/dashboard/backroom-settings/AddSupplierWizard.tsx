@@ -30,6 +30,7 @@ interface SupplierDetails {
   lead_time_days: string;
   moq: string;
   reorder_method: string;
+  reorder_method_other: string;
   reorder_notes: string;
 }
 
@@ -42,6 +43,7 @@ const EMPTY_DETAILS: SupplierDetails = {
   lead_time_days: '',
   moq: '1',
   reorder_method: '',
+  reorder_method_other: '',
   reorder_notes: '',
 };
 
@@ -148,6 +150,7 @@ export function AddSupplierWizard({ open, onOpenChange, onComplete }: AddSupplie
                 lead_time_days: details.lead_time_days ? parseInt(details.lead_time_days) : null,
                 moq: details.moq ? parseInt(details.moq) : 1,
                 reorder_method: details.reorder_method || null,
+                reorder_method_other: details.reorder_method === 'other' ? (details.reorder_method_other || null) : null,
                 reorder_notes: details.reorder_notes || null,
               }, {
                 onSuccess: () => {
@@ -353,7 +356,10 @@ function StepDetails({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Method</Label>
-          <Select value={details.reorder_method} onValueChange={v => update('reorder_method', v)}>
+          <Select value={details.reorder_method} onValueChange={v => {
+            update('reorder_method', v);
+            if (v !== 'other') update('reorder_method_other', '');
+          }}>
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select method..." />
             </SelectTrigger>
@@ -364,6 +370,14 @@ function StepDetails({
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
+          {details.reorder_method === 'other' && (
+            <Input
+              value={details.reorder_method_other}
+              onChange={e => update('reorder_method_other', e.target.value)}
+              placeholder="Specify method..."
+              className="mt-1.5"
+            />
+          )}
         </div>
         <div className="space-y-1.5">
           <Label className={tokens.label.default}>Reorder Notes</Label>
@@ -530,7 +544,7 @@ function StepReview({
     { label: 'Account #', value: details.account_number },
     { label: 'Lead Time', value: details.lead_time_days ? `${details.lead_time_days} days` : '' },
     { label: 'MOQ', value: details.moq !== '1' ? details.moq : '' },
-    { label: 'Reorder Method', value: details.reorder_method },
+    { label: 'Reorder Method', value: details.reorder_method === 'other' && details.reorder_method_other ? `Other — ${details.reorder_method_other}` : details.reorder_method },
   ].filter(r => r.value);
 
   return (

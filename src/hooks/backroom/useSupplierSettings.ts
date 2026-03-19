@@ -16,6 +16,7 @@ export interface SupplierGroup {
   lead_time_days: number | null;
   moq: number;
   reorder_method: string | null;
+  reorder_method_other: string | null;
   reorder_notes: string | null;
   product_ids: string[];
   /** One representative row id for updates */
@@ -52,7 +53,7 @@ export function useSupplierGroups() {
     queryFn: async (): Promise<SupplierGroup[]> => {
       const { data, error } = await supabase
         .from('product_suppliers')
-        .select('id, product_id, supplier_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_notes')
+        .select('id, product_id, supplier_name, supplier_email, supplier_phone, supplier_website, account_number, lead_time_days, moq, reorder_method, reorder_method_other, reorder_notes')
         .eq('organization_id', orgId!)
         .order('supplier_name');
 
@@ -71,6 +72,7 @@ export function useSupplierGroups() {
             lead_time_days: row.lead_time_days,
             moq: row.moq,
             reorder_method: row.reorder_method,
+            reorder_method_other: (row as any).reorder_method_other ?? null,
             reorder_notes: row.reorder_notes,
             product_ids: [],
             rows: [],
@@ -208,6 +210,7 @@ export function useUpdateSupplierContact() {
       lead_time_days?: number | null;
       moq?: number;
       reorder_method?: string | null;
+      reorder_method_other?: string | null;
       reorder_notes?: string | null;
     }) => {
       const { error } = await supabase
@@ -220,6 +223,7 @@ export function useUpdateSupplierContact() {
           lead_time_days: params.lead_time_days ?? null,
           moq: params.moq ?? 1,
           reorder_method: params.reorder_method ?? null,
+          reorder_method_other: params.reorder_method === 'other' ? (params.reorder_method_other ?? null) : null,
           reorder_notes: params.reorder_notes ?? null,
         })
         .eq('organization_id', orgId!)
