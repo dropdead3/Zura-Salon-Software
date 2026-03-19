@@ -656,6 +656,8 @@ function DashboardSections({
       </VisibilityGate>
     ),
     
+    inventory_manager: <InventoryManagerDashboardCard />,
+    
     active_campaigns: isLeadership && <ActiveCampaignsCard />,
     
     widgets: <WidgetsSection />,
