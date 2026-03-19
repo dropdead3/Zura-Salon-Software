@@ -70,7 +70,7 @@ export function BackroomComplianceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-compliance-guide" title="Backroom Compliance" description="Track whether color/chemical appointments are being properly logged. Shows which stylists are weighing their bowls and which are skipping steps." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-compliance-guide" title="Reweigh Reports" description="Track whether color/chemical appointments have bowls properly reweighed. Shows which stylists are weighing their bowls and which are skipping steps." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
 
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -79,8 +79,8 @@ export function BackroomComplianceSection() {
             <ShieldCheck className={tokens.card.icon} />
           </div>
           <div>
-            <h2 className={tokens.card.title}>Backroom Compliance</h2>
-            <p className="font-sans text-sm text-muted-foreground">Track which color appointments are being properly logged in Zura Backroom</p>
+            <h2 className={tokens.card.title}>Reweigh Reports</h2>
+            <p className="font-sans text-sm text-muted-foreground">Track which color appointments have bowls properly reweighed in Zura Backroom</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export function BackroomComplianceSection() {
       ) : !summary || summary.totalColorAppointments === 0 ? (
         <div className={tokens.empty.container}>
           <Beaker className={tokens.empty.icon} />
-          <h3 className={tokens.empty.heading}>No Compliance Data</h3>
+          <h3 className={tokens.empty.heading}>No Reweigh Data</h3>
           <p className={tokens.empty.description}>No color/chemical appointments found for the selected period. Click "Evaluate Today" to scan.</p>
         </div>
       ) : (
@@ -125,8 +125,8 @@ export function BackroomComplianceSection() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-muted-foreground" />
-                  <p className={tokens.kpi.label}>Compliance Rate</p>
-                  <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
+                   <p className={tokens.kpi.label}>Reweigh Rate</p>
+                   <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
                 </div>
                 <div className="flex items-end gap-2">
                   <span className={tokens.kpi.value}>{summary.complianceRate}%</span>
@@ -176,8 +176,8 @@ export function BackroomComplianceSection() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={tokens.card.title}>Compliance Trend</CardTitle>
-                  <MetricInfoTooltip description="Daily compliance rate over the selected period." />
+                   <CardTitle className={tokens.card.title}>Reweigh Trend</CardTitle>
+                   <MetricInfoTooltip description="Daily reweigh rate over the selected period." />
                 </div>
               </CardHeader>
               <CardContent>
@@ -193,7 +193,7 @@ export function BackroomComplianceSection() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
                       <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                      <Tooltip formatter={(v: number) => [`${v}%`, 'Compliance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Tooltip formatter={(v: number) => [`${v}%`, 'Reweigh Rate']} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                       <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#complianceGrad)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -207,8 +207,8 @@ export function BackroomComplianceSection() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={tokens.card.title}>Staff Compliance</CardTitle>
-                  <MetricInfoTooltip description="Per-stylist compliance rates, sorted worst to best." />
+                   <CardTitle className={tokens.card.title}>Staff Reweigh Rates</CardTitle>
+                   <MetricInfoTooltip description="Per-stylist reweigh rates, sorted worst to best." />
                 </div>
               </CardHeader>
               <CardContent>

@@ -223,7 +223,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
             />
             <KpiTile
               icon={ClipboardCheck}
-              label="Reweigh Compliance"
+              label="Reweigh Rate"
               value={`${kpis.reweighCompliance.toFixed(0)}%`}
               status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
             />
