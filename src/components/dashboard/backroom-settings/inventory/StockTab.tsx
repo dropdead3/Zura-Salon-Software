@@ -153,7 +153,7 @@ export function StockTab({ locationId }: StockTabProps) {
     if (!orgId) return;
     const lines = group.items.map(item => ({
       product_id: item.id,
-      quantity_ordered: qtyOverrides.get(item.id) ?? item.recommended_order_qty,
+      quantity_ordered: qtyOverrides.get(item.id) ?? (item.recommended_order_qty > 0 ? item.recommended_order_qty : 1),
       unit_cost: item.cost_price ?? item.cost_per_gram ?? undefined,
     }));
     createPO.mutate({
