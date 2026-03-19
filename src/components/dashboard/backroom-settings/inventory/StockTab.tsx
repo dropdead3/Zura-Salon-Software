@@ -45,7 +45,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
+
 
 interface StockTabProps {
   locationId?: string;
@@ -160,48 +160,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const [autoParDialog, setAutoParDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
-  const [poItemIds, setPoItemIds] = useState<Set<string>>(new Set());
-  const [poBuilderOpen, setPoBuilderOpen] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
-
-  const toggleAddToPo = useCallback((productId: string) => {
-    setPoItemIds(prev => {
-      const next = new Set(prev);
-      if (next.has(productId)) next.delete(productId);
-      else next.add(productId);
-      return next;
-    });
-    // Auto-open panel when adding items
-    setPoBuilderOpen(true);
-  }, []);
-
-  const poItems = useMemo(() => inventory.filter(r => poItemIds.has(r.id)), [inventory, poItemIds]);
-
-  const handleSubmitPO = useCallback((group: SupplierPOGroup) => {
-    if (!orgId) return;
-    const lines = group.items.map(item => ({
-      product_id: item.id,
-      quantity_ordered: qtyOverrides.get(item.id) ?? (item.recommended_order_qty > 0 ? item.recommended_order_qty : 1),
-      unit_cost: item.cost_price ?? item.cost_per_gram ?? undefined,
-    }));
-    createPO.mutate({
-      organization_id: orgId,
-      supplier_name: group.supplier !== 'Unassigned' ? group.supplier : undefined,
-      supplier_email: group.items.find(i => i.supplier_email)?.supplier_email ?? undefined,
-      notes: `PO for ${group.supplier}`,
-      lines,
-    }, {
-      onSuccess: () => {
-        // Remove submitted items from staged set
-        setPoItemIds(prev => {
-          const next = new Set(prev);
-          group.items.forEach(i => next.delete(i.id));
-          return next;
-        });
-        toast.success(`Draft PO created for ${group.supplier}`);
-      },
-    });
-  }, [orgId, qtyOverrides, createPO]);
 
   // Compute KPIs — now includes severity-based metrics
   const kpis = useMemo(() => {
@@ -417,18 +376,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     return () => { if (pdfExportRef) pdfExportRef.current = null; };
   }, [handlePdfExport, pdfExportRef]);
 
-  // Stage all supplier items into PO builder
-  const stageSupplierToPo = useCallback((products: BackroomInventoryRow[]) => {
-    const reorderItems = products.filter(p => p.recommended_order_qty > 0 || p.stock_state === 'out_of_stock');
-    if (reorderItems.length === 0) return;
-    setPoItemIds(prev => {
-      const next = new Set(prev);
-      reorderItems.forEach(r => next.add(r.id));
-      return next;
-    });
-    setPoBuilderOpen(true);
-    toast.success(`${reorderItems.length} items added to PO Builder`);
-  }, []);
 
   // ─── Email Send Flow (ported from ReorderTab) ───────────
 
@@ -555,17 +502,11 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           <Button
             size="sm"
             className="font-sans h-7 gap-1"
-            onClick={() => {
-              selectedProducts.forEach(r => {
-                if ((r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock') && !poItemIds.has(r.id)) {
-                  toggleAddToPo(r.id);
-                }
-              });
-            }}
+            onClick={() => setAutoPoDialog(true)}
             disabled={selectedReorderProducts.length === 0}
           >
             <ShoppingCart className="w-3.5 h-3.5" />
-            Add Selected to PO
+            Create PO
             {selectedReorderProducts.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5 rounded-full">
                 {selectedReorderProducts.length}
@@ -734,20 +675,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                     </TooltipContent>
                   </Tooltip>
                 </Button>
-                {poItemIds.size > 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="font-sans h-7 text-xs border-primary/30 text-primary"
-                    onClick={() => setPoBuilderOpen(!poBuilderOpen)}
-                  >
-                    <FileText className="w-3.5 h-3.5 mr-1" />
-                    PO Builder
-                    <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5 rounded-full">
-                      {poItemIds.size}
-                    </Badge>
-                  </Button>
-                )}
               </div>
             </div>
            </div>
@@ -800,10 +727,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                     poHistoryMap={poHistoryMap}
                     qtyOverrides={qtyOverrides}
                     onQtyOverride={handleQtyOverride}
-                    poItemIds={poItemIds}
-                    onToggleAddToPo={toggleAddToPo}
                     intelligenceMap={intelligenceMap}
-                    onStageToPo={stageSupplierToPo}
                   />
                 ))}
               </TableBody>
@@ -837,17 +761,6 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         productIds={inventory.map(r => r.id)}
         orgId={orgId ?? ''}
         locationId={locationId}
-      />
-      <POBuilderPanel
-        open={poBuilderOpen}
-        onClose={() => setPoBuilderOpen(false)}
-        items={poItems}
-        qtyOverrides={qtyOverrides}
-        onQtyOverride={handleQtyOverride}
-        onRemoveItem={toggleAddToPo}
-        onClearAll={() => { setPoItemIds(new Set()); setPoBuilderOpen(false); }}
-        onSubmitPO={handleSubmitPO}
-        formatCurrency={formatCurrency}
       />
 
       {/* Bulk Email Preview Dialog */}
@@ -969,7 +882,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
 
 // ─── Sub-components ──────────────────────────────────
 
-function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap, onStageToPo }: {
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, intelligenceMap }: {
   group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
@@ -984,10 +897,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
-  poItemIds: Set<string>;
-  onToggleAddToPo: (productId: string) => void;
   intelligenceMap?: Map<string, ProductIntelligence>;
-  onStageToPo: (products: BackroomInventoryRow[]) => void;
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -1055,8 +965,6 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
           poHistoryMap={poHistoryMap}
           qtyOverrides={qtyOverrides}
           onQtyOverride={onQtyOverride}
-           poItemIds={poItemIds}
-           onToggleAddToPo={onToggleAddToPo}
            intelligenceMap={intelligenceMap}
          />
       ))}
@@ -1064,7 +972,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, poItemIds, onToggleAddToPo, intelligenceMap }: {
+function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, intelligenceMap }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
@@ -1079,8 +987,6 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
-  poItemIds: Set<string>;
-  onToggleAddToPo: (productId: string) => void;
   intelligenceMap?: Map<string, ProductIntelligence>;
 }) {
   return (
@@ -1108,8 +1014,6 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
           poHistory={poHistoryMap?.get(row.id)}
           qtyOverride={qtyOverrides.get(row.id) ?? null}
           onQtyOverride={onQtyOverride}
-           addedToPo={poItemIds.has(row.id)}
-           onToggleAddToPo={onToggleAddToPo}
            intelligence={intelligenceMap?.get(row.id)}
          />
       ))}

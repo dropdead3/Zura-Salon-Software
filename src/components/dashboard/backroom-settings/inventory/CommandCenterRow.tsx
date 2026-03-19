@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronRight, History, ShoppingCart, Truck, RotateCcw, Plus, Check } from 'lucide-react';
+import { ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
@@ -158,9 +158,6 @@ interface CommandCenterRowProps {
   /** Manual quantity override map — managed by parent */
   qtyOverride?: number | null;
   onQtyOverride?: (productId: string, qty: number | null) => void;
-  /** Whether this item has been added to the PO builder */
-  addedToPo?: boolean;
-  onToggleAddToPo?: (productId: string) => void;
   /** Smart intelligence data from usage velocity */
   intelligence?: { dailyUsage: number; daysRemaining: number };
 }
@@ -179,8 +176,6 @@ export function CommandCenterRow({
   poHistory,
   qtyOverride,
   onQtyOverride,
-  addedToPo = false,
-  onToggleAddToPo,
   intelligence,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
@@ -414,23 +409,6 @@ export function CommandCenterRow({
         {/* Actions — Point 6: Upgraded Add to PO */}
         <TableCell className="w-24">
           <div className="flex items-center gap-0.5 justify-end">
-            {canAddToPo && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  'h-8 min-w-[96px] px-3 text-xs font-sans gap-1 transition-colors duration-150 active:scale-[0.98]',
-                  addedToPo
-                    ? 'text-success bg-success/10 hover:text-success hover:bg-success/15'
-                    : 'text-primary bg-primary/10 hover:text-primary hover:bg-primary/15',
-                )}
-                onClick={() => onToggleAddToPo?.(row.id)}
-                title={addedToPo ? 'Remove from PO' : `Add ${displayOrderQty} to PO`}
-              >
-                {addedToPo ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                {addedToPo ? 'Added' : 'Add to PO'}
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="sm"
