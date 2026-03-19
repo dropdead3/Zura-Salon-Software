@@ -38,10 +38,10 @@ interface StockTabProps {
   locationId?: string;
 }
 
-interface BrandGroup {
-  brand: string;
+interface SupplierGroup {
+  supplier: string;
   products: BackroomInventoryRow[];
-  supplierName: string | null;
+  estimatedTotal: number;
   categories: Map<string, BackroomInventoryRow[]>;
 }
 
@@ -151,20 +151,29 @@ export function StockTab({ locationId }: StockTabProps) {
     return rows;
   }, [inventory, search, categoryFilter, statusFilter]);
 
-  // Group by brand → category
-  const brandGroups = useMemo((): BrandGroup[] => {
+  // Group by supplier → category
+  const supplierGroups = useMemo((): SupplierGroup[] => {
     const map = new Map<string, BackroomInventoryRow[]>();
     for (const row of filtered) {
-      const brand = row.brand || 'Uncategorized';
-      const arr = map.get(brand) ?? [];
+      const supplier = row.supplier_name || '__unassigned__';
+      const arr = map.get(supplier) ?? [];
       arr.push(row);
-      map.set(brand, arr);
+      map.set(supplier, arr);
     }
 
     return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([brand, products]) => {
-        const supplierName = products.find(p => p.supplier_name)?.supplier_name ?? null;
+      .sort((a, b) => {
+        // Unassigned always last
+        if (a[0] === '__unassigned__') return 1;
+        if (b[0] === '__unassigned__') return -1;
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([supplier, products]) => {
+        const estimatedTotal = products.reduce((sum, p) => {
+          const qty = p.recommended_order_qty;
+          const cost = p.cost_price ?? p.cost_per_gram ?? 0;
+          return sum + qty * cost;
+        }, 0);
         const categories = new Map<string, BackroomInventoryRow[]>();
         for (const p of products) {
           const cat = p.category || 'Other';
@@ -172,7 +181,7 @@ export function StockTab({ locationId }: StockTabProps) {
           arr.push(p);
           categories.set(cat, arr);
         }
-        return { brand, products, supplierName, categories };
+        return { supplier: supplier === '__unassigned__' ? 'Unassigned' : supplier, products, estimatedTotal, categories };
       });
   }, [filtered]);
 
@@ -405,10 +414,10 @@ export function StockTab({ locationId }: StockTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {brandGroups.map((bg) => (
-                  <BrandSection
-                    key={bg.brand}
-                    group={bg}
+                {supplierGroups.map((sg) => (
+                  <SupplierSection
+                    key={sg.supplier}
+                    group={sg}
                     formatCurrency={formatCurrency}
                     orgId={orgId}
                     locationId={locationId}
@@ -416,7 +425,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     updateMinMax={updateMinMax}
                     selectedIds={selectedIds}
                     onToggleSelect={toggleSelect}
-                    onSetSupplier={() => setSupplierDialog({ open: true, brand: bg.brand, products: bg.products })}
+                    onSetSupplier={(products) => setSupplierDialog({ open: true, brand: sg.supplier, products })}
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                     onQuickReorder={handleQuickReorder}
                     poHistoryMap={poHistoryMap}
@@ -490,8 +499,8 @@ function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
-  group: BrandGroup;
+function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride }: {
+  group: SupplierGroup;
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
   locationId: string | undefined;
@@ -499,7 +508,7 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
-  onSetSupplier: () => void;
+  onSetSupplier: (products: BackroomInventoryRow[]) => void;
   onAudit: (productId: string, productName: string) => void;
   onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
   poHistoryMap?: Map<string, number[]>;
@@ -508,10 +517,12 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
 }) {
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const isUnassigned = group.supplier === 'Unassigned';
+  const reorderCount = group.products.filter(p => p.recommended_order_qty > 0).length;
 
   return (
     <>
-      {/* Brand header row */}
+      {/* Supplier header row */}
       <TableRow
         className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
         onClick={() => setOpen(!open)}
@@ -519,32 +530,30 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
         <TableCell colSpan={8} className="py-2">
           <div className="flex items-center gap-2">
             {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-            <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
+            <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary')} />
+            <span className={cn(tokens.label.tiny, isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
+              {group.supplier}
+            </span>
             <span className="text-muted-foreground text-[10px]">({group.products.length})</span>
-            {group.supplierName ? (
-              <Badge variant="outline" className="text-[10px] font-medium border-primary/20 text-primary bg-primary/5 ml-2">
-                <Truck className="w-3 h-3 mr-1" />
-                {group.supplierName}
+            {reorderCount > 0 && (
+              <Badge variant="outline" className="text-[10px] font-sans border-warning/30 text-warning bg-warning/5 ml-1">
+                {reorderCount} to reorder
               </Badge>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px] ml-2 text-muted-foreground hover:text-foreground"
-                onClick={(e) => { e.stopPropagation(); onSetSupplier(); }}
-              >
-                <UserPlus className="w-3 h-3 mr-1" />
-                Set Supplier
-              </Button>
             )}
-            {group.supplierName && (
+            {group.estimatedTotal > 0 && (
+              <span className="text-[10px] text-muted-foreground/60 ml-auto mr-2 tabular-nums">
+                Est. {formatCurrency(group.estimatedTotal)}
+              </span>
+            )}
+            {isUnassigned && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-[10px] ml-1 text-muted-foreground hover:text-foreground"
-                onClick={(e) => { e.stopPropagation(); onSetSupplier(); }}
+                onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
               >
-                Edit
+                <UserPlus className="w-3 h-3 mr-1" />
+                Assign Supplier
               </Button>
             )}
           </div>
@@ -553,7 +562,7 @@ function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, u
 
       {open && sortedCategories.map(([category, rows]) => (
         <CategoryGroup
-          key={`${group.brand}-${category}`}
+          key={`${group.supplier}-${category}`}
           category={category}
           rows={rows}
           formatCurrency={formatCurrency}
