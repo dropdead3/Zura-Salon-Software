@@ -3,7 +3,7 @@
  * Table layout with quick-filter chips, filters, search, pagination with page size selector, and CSV/PDF export.
  */
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetail
 
 interface AuditLogTabProps {
   locationId?: string;
+  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -110,7 +111,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 type QuickFilterKey = 'today' | 'thisWeek' | 'adjustments' | 'receiving' | null;
 
-export function AuditLogTab({ locationId }: AuditLogTabProps) {
+export function AuditLogTab({ locationId, pdfExportRef }: AuditLogTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
@@ -185,6 +186,17 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
   const { data, isLoading } = useBulkInventoryAuditTrail(filters);
   const entries = data?.entries ?? [];
   const hasMore = data?.hasMore ?? false;
+
+  // Stable callback for PDF export ref registration
+  const handleBulkPdfExport = useCallback(() => {
+    if (entries.length > 0) exportBulkPdf(entries, orgName);
+  }, [entries, orgName]);
+
+  // Register PDF export handler for parent header button
+  useEffect(() => {
+    if (pdfExportRef) pdfExportRef.current = handleBulkPdfExport;
+    return () => { if (pdfExportRef) pdfExportRef.current = null; };
+  }, [handleBulkPdfExport, pdfExportRef]);
 
   const [selectedEntry, setSelectedEntry] = useState<AuditDetailEntry | null>(null);
 
@@ -296,15 +308,6 @@ export function AuditLogTab({ locationId }: AuditLogTabProps) {
               onClick={() => exportBulkCsv(entries)}
             >
               <Download className="w-3.5 h-3.5" /> CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs gap-1"
-              disabled={entries.length === 0}
-              onClick={() => exportBulkPdf(entries, orgName)}
-            >
-              <FileText className="w-3.5 h-3.5" /> PDF
             </Button>
           </div>
         </div>

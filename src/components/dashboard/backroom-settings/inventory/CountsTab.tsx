@@ -4,7 +4,7 @@
  * Active sessions can be opened for product-by-product count entry.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,9 +31,10 @@ import { toast } from 'sonner';
 
 interface CountsTabProps {
   locationId?: string;
+  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-export function CountsTab({ locationId }: CountsTabProps) {
+export function CountsTab({ locationId, pdfExportRef }: CountsTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
@@ -104,6 +105,14 @@ export function CountsTab({ locationId }: CountsTabProps) {
     }
   };
 
+  // Register PDF export handler for parent header button
+  useEffect(() => {
+    if (pdfExportRef) {
+      pdfExportRef.current = () => handlePrintCountSheet();
+    }
+    return () => { if (pdfExportRef) pdfExportRef.current = null; };
+  }, [inventoryProducts, businessSettings, effectiveOrganization, locationInfo, pdfExportRef]);
+
   const handleFilteredExport = () => {
     const filters: CountSheetFilters = {};
     if (selectedBrands.size > 0) filters.brands = Array.from(selectedBrands);
@@ -166,16 +175,6 @@ export function CountsTab({ locationId }: CountsTabProps) {
           <p className={tokens.body.muted}>Run periodic counts to detect shrinkage and keep stock accurate.</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePrintCountSheet()}
-            disabled={generatingPdf || inventoryProducts.length === 0}
-            className={tokens.button.cardAction}
-          >
-            {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-            Print Count Sheet
-          </Button>
           <Button
             variant="outline"
             size="sm"

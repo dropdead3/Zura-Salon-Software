@@ -5,7 +5,7 @@
  * Groups by brand with collapsible sections.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,7 @@ import { POBuilderPanel, type SupplierPOGroup } from './POBuilderPanel';
 
 interface StockTabProps {
   locationId?: string;
+  pdfExportRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 interface SupplierGroup {
@@ -116,7 +117,7 @@ async function exportStockPdf(
 
 // ─── Main Component ─────────────────────────────────
 
-export function StockTab({ locationId }: StockTabProps) {
+export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
   const { data: poHistoryMap } = useProductPOHistory();
   const { data: intelligenceMap } = useInventoryIntelligence(locationId);
@@ -319,6 +320,12 @@ export function StockTab({ locationId }: StockTabProps) {
       setExporting(false);
     }
   }, [filtered, effectiveOrganization, formatCurrency]);
+
+  // Register PDF export handler for parent header button
+  useEffect(() => {
+    if (pdfExportRef) pdfExportRef.current = handlePdfExport;
+    return () => { if (pdfExportRef) pdfExportRef.current = null; };
+  }, [handlePdfExport, pdfExportRef]);
 
   // Stage all supplier items into PO builder
   const stageSupplierToPo = useCallback((products: BackroomInventoryRow[]) => {
@@ -650,16 +657,6 @@ export function StockTab({ locationId }: StockTabProps) {
                       <Zap className="w-3.5 h-3.5 mr-1" />
                       Auto Build PO
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="font-sans rounded-full h-7 px-3 text-xs"
-                      onClick={handlePdfExport}
-                      disabled={exporting || filtered.length === 0}
-                    >
-                      {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
-                      PDF
-                    </Button>
                   </div>
                 </>
               ) : (
@@ -672,16 +669,6 @@ export function StockTab({ locationId }: StockTabProps) {
                     <span className="text-xs text-muted-foreground font-sans tabular-nums hidden sm:block">
                       {formatNumber(kpis.totalOnHand)} units · {formatCurrency(kpis.totalValue)} on hand
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="font-sans rounded-full h-7 px-3 text-xs"
-                      onClick={handlePdfExport}
-                      disabled={exporting || filtered.length === 0}
-                    >
-                      {exporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FileDown className="w-4 h-4 mr-1" />}
-                      PDF
-                    </Button>
                   </div>
                 </>
               )}
