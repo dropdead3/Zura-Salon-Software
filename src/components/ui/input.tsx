@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneNumber } from "@/lib/utils";
 
 // Capitalize first letter of text
 const capitalizeFirst = (value: string): string => {
@@ -11,9 +11,19 @@ const capitalizeFirst = (value: string): string => {
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, onChange, autoCapitalize, ...props }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Auto-format phone numbers for tel inputs
+      if (type === 'tel') {
+        const cursorPosition = e.target.selectionStart;
+        e.target.value = formatPhoneNumber(e.target.value);
+        // Restore cursor position
+        if (cursorPosition !== null) {
+          const newPos = Math.min(cursorPosition, e.target.value.length);
+          e.target.setSelectionRange(newPos, newPos);
+        }
+      }
       // Only apply capitalization to text inputs (not email, password, number, etc.)
       // Skip if autoCapitalize is explicitly set to "none" or "off"
-      if ((type === 'text' || type === undefined) && autoCapitalize !== 'none' && autoCapitalize !== 'off') {
+      else if ((type === 'text' || type === undefined) && autoCapitalize !== 'none' && autoCapitalize !== 'off') {
         const cursorPosition = e.target.selectionStart;
         e.target.value = capitalizeFirst(e.target.value);
         // Restore cursor position

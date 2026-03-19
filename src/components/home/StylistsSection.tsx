@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo, useCallback, startTransition, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneNumber } from "@/lib/utils";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight, Sparkles, Info, Star, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -216,7 +216,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
             <input
               type="tel"
               value={formData.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              onChange={(e) => handleChange("phone", formatPhoneNumber(e.target.value))}
               placeholder="(555) 555-5555"
               className="w-full px-4 py-2.5 bg-background border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
             />

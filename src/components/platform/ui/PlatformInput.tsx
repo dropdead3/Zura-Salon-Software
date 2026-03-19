@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneNumber } from '@/lib/utils';
 
 export interface PlatformInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -7,7 +7,19 @@ export interface PlatformInputProps
 }
 
 const PlatformInput = React.forwardRef<HTMLInputElement, PlatformInputProps>(
-  ({ className, type, icon, ...props }, ref) => {
+  ({ className, type, icon, onChange, ...props }, ref) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (type === 'tel') {
+        const cursorPosition = e.target.selectionStart;
+        e.target.value = formatPhoneNumber(e.target.value);
+        if (cursorPosition !== null) {
+          const newPos = Math.min(cursorPosition, e.target.value.length);
+          e.target.setSelectionRange(newPos, newPos);
+        }
+      }
+      onChange?.(e);
+    };
+
     return (
       <div className="relative">
         {icon && (
@@ -28,6 +40,7 @@ const PlatformInput = React.forwardRef<HTMLInputElement, PlatformInputProps>(
             className
           )}
           ref={ref}
+          onChange={handleChange}
           {...props}
         />
       </div>

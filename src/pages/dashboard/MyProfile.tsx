@@ -49,23 +49,6 @@ const DAYS_OF_WEEK = [
 const ADMIN_LEVEL_ROLES = ['super_admin', 'admin', 'manager', 'admin_assistant', 'bookkeeper', 'operations_assistant', 'receptionist'] as const;
 
 
-// Format phone number as XXX-XXX-XXXX
-const formatPhoneNumber = (value: string) => {
-  // Remove all non-numeric characters
-  const digits = value.replace(/\D/g, '');
-  
-  // Limit to 10 digits
-  const limited = digits.slice(0, 10);
-  
-  // Format with dashes
-  if (limited.length <= 3) {
-    return limited;
-  } else if (limited.length <= 6) {
-    return `${limited.slice(0, 3)}-${limited.slice(3)}`;
-  } else {
-    return `${limited.slice(0, 3)}-${limited.slice(3, 6)}-${limited.slice(6)}`;
-  }
-};
 
 // Ensure social handle starts with @
 const formatSocialHandle = (value: string) => {
@@ -775,7 +758,7 @@ export default function MyProfile() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className={cn("pl-10", !formData.phone.trim() && "border-destructive/50")}
                       placeholder="480-555-1234"
                       maxLength={12}
@@ -1447,7 +1430,7 @@ export default function MyProfile() {
                     id="emergency_phone"
                     type="tel"
                     value={formData.emergency_phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, emergency_phone: formatPhoneNumber(e.target.value) }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, emergency_phone: e.target.value }))}
                     className={cn(!formData.emergency_phone.trim() && "border-destructive/50")}
                     placeholder="480-555-1234"
                     maxLength={12}

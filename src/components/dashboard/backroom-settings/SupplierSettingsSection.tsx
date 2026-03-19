@@ -329,7 +329,7 @@ export function SupplierSettingsSection() {
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="sp" className={tokens.label.default}>Phone</Label>
-                        <Input id="sp" {...register('supplier_phone')} placeholder="(555) 123-4567" autoCapitalize="off" />
+                        <Input id="sp" type="tel" {...register('supplier_phone')} placeholder="(555) 123-4567" autoCapitalize="off" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
@@ -417,7 +417,7 @@ export function SupplierSettingsSection() {
                              </div>
                              <div className="space-y-1.5">
                                <Label htmlFor="scp" className={tokens.label.default}>Phone</Label>
-                               <Input id="scp" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                               <Input id="scp" type="tel" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
                              </div>
                            </div>
                          </div>

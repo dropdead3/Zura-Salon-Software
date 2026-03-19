@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPhoneNumber } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, ArrowUpRight, AlertCircle, X } from "lucide-react";
@@ -30,6 +31,8 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
     
     if (name === "location") {
       setFormData({ ...formData, location: value, stylist: "" });
+    } else if (name === "phone") {
+      setFormData({ ...formData, phone: formatPhoneNumber(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }

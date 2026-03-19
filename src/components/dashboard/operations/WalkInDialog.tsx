@@ -191,12 +191,6 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
     setIsRedo(false); setRedoReason(''); setRedoCustomReason('');
   };
 
-  const formatPhoneNumber = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 3) return numbers;
-    if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
-    return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
-  };
 
   const redoReasonValid = !isRedo || !redoPolicy?.redo_reason_required || (redoReason && (redoReason !== 'Other' || redoCustomReason.trim()));
 
@@ -222,7 +216,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="clientPhone" className="text-sm font-medium">Phone</Label>
-              <Input id="clientPhone" placeholder="(555) 555-5555" value={clientPhone} onChange={(e) => setClientPhone(formatPhoneNumber(e.target.value))} className="h-11" />
+              <Input id="clientPhone" type="tel" placeholder="(555) 555-5555" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="h-11" />
             </div>
           </div>
 

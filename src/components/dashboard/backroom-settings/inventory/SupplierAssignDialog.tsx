@@ -123,7 +123,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
             </div>
             <div className="space-y-2">
               <Label htmlFor="supplier_phone">Phone</Label>
-              <Input id="supplier_phone" {...register('supplier_phone')} placeholder="(555) 123-4567" autoCapitalize="off" />
+              <Input id="supplier_phone" type="tel" {...register('supplier_phone')} placeholder="(555) 123-4567" autoCapitalize="off" />
             </div>
           </div>
 

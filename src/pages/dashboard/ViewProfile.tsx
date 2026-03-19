@@ -56,13 +56,6 @@ const roleLabels: Record<string, string> = {
   operations_assistant: 'Operations Assistant',
 };
 
-const formatPhoneNumber = (value: string) => {
-  const digits = value.replace(/\D/g, '');
-  const limited = digits.slice(0, 10);
-  if (limited.length <= 3) return limited;
-  if (limited.length <= 6) return `${limited.slice(0, 3)}-${limited.slice(3)}`;
-  return `${limited.slice(0, 3)}-${limited.slice(3, 6)}-${limited.slice(6)}`;
-};
 
 const formatSocialHandle = (value: string) => {
   const clean = value.replace(/@/g, '').trim();
@@ -571,7 +564,7 @@ export default function ViewProfile() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className="pl-10"
                       placeholder="480-555-1234"
                       maxLength={12}
