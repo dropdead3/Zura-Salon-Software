@@ -290,13 +290,21 @@ function StepDetails({
     <div className="space-y-4">
       <div className="space-y-1.5">
         <Label className={tokens.label.default}>
-          Supplier Name <span className="text-destructive">*</span>
+          Supplier or Distributor <span className="text-destructive">*</span>
         </Label>
         <Input
           value={details.name}
           onChange={e => update('name', e.target.value)}
           placeholder="e.g. Goldwell Distribution"
           autoFocus
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label className={tokens.label.default}>Contact Name</Label>
+        <Input
+          value={details.contact_name}
+          onChange={e => update('contact_name', e.target.value)}
+          placeholder="e.g. Jane Smith"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
