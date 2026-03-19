@@ -177,7 +177,6 @@ export function CommandCenterRow({
   qtyOverride,
   onQtyOverride,
   intelligence,
-  intelligence,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingQty, setEditingQty] = useState(false);
