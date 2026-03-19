@@ -72,6 +72,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 
   // ─── Step 2: Supplier state ─────────────────────────────────────────────────
   const [supplierName, setSupplierName] = useState('');
+  const [supplierContactName, setSupplierContactName] = useState('');
   const [supplierEmail, setSupplierEmail] = useState('');
   const [supplierPhone, setSupplierPhone] = useState('');
   const [supplierWebsite, setSupplierWebsite] = useState('');
