@@ -1,6 +1,7 @@
 /**
  * DockServicesTab — Bowl cards grid + "Add Bowl" action for the appointment.
  * Queries mix sessions for this appointment and displays bowl status.
+ * Tapping a bowl opens DockLiveDispensing. Creating a bowl wires through command layer.
  */
 
 import { useState } from 'react';
@@ -11,7 +12,10 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
+import { DockLiveDispensing } from '../mixing/DockLiveDispensing';
+import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -29,14 +33,66 @@ function getStatusDisplay(status: string) {
   return { icon: Circle, label: 'Draft', color: 'text-blue-400' };
 }
 
+interface ActiveBowl {
+  sessionId: string;
+  bowlId: string;
+  bowlNumber: number;
+  status: string;
+}
+
 export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
   const [showNewBowl, setShowNewBowl] = useState(false);
+  const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
+  const createBowl = useCreateDockBowl();
+  const { effectiveOrganization } = useOrganizationContext();
 
-  const handleCreateBowl = (_lines: FormulaLine[], _baseWeight: number) => {
-    // Phase 5 will wire this to useCreateMixSession + bowl line creation
-    console.log('[DockServicesTab] Create bowl with', _lines.length, 'ingredients, base weight', _baseWeight);
+  const handleCreateBowl = (lines: FormulaLine[], _baseWeight: number) => {
+    if (!effectiveOrganization?.id) return;
+
+    createBowl.mutate({
+      appointmentId: appointment.id,
+      organizationId: effectiveOrganization.id,
+      locationId: appointment.location_id || undefined,
+      staffUserId: staff.userId,
+      lines,
+      baseWeight: _baseWeight,
+    }, {
+      onSuccess: (result: CreatedBowlResult) => {
+        setActiveBowl({
+          sessionId: result.sessionId,
+          bowlId: result.bowlId,
+          bowlNumber: result.bowlNumber,
+          status: 'open',
+        });
+      },
+    });
   };
+
+  const handleBowlTap = (session: DockMixSession, index: number) => {
+    // Navigate to the live dispensing view for this session's bowl
+    // For now, we use the session ID as the bowl proxy
+    setActiveBowl({
+      sessionId: session.id,
+      bowlId: session.id, // Will be replaced when we have bowl-level nav
+      bowlNumber: index,
+      status: session.status,
+    });
+  };
+
+  // Full-screen dispensing view
+  if (activeBowl) {
+    return (
+      <DockLiveDispensing
+        sessionId={activeBowl.sessionId}
+        bowlId={activeBowl.bowlId}
+        bowlNumber={activeBowl.bowlNumber}
+        organizationId={effectiveOrganization?.id || ''}
+        bowlStatus={activeBowl.status}
+        onBack={() => setActiveBowl(null)}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -54,7 +110,12 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       {bowls.length > 0 ? (
         <div className="grid grid-cols-2 gap-3">
           {bowls.map((session, idx) => (
-            <BowlCard key={session.id} session={session} index={idx + 1} />
+            <BowlCard
+              key={session.id}
+              session={session}
+              index={idx + 1}
+              onTap={() => handleBowlTap(session, idx + 1)}
+            />
           ))}
         </div>
       ) : (
@@ -72,10 +133,11 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       {/* Add Bowl FAB */}
       <button
         onClick={() => setShowNewBowl(true)}
-        className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
+        disabled={createBowl.isPending}
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium disabled:opacity-40"
       >
         <Plus className="w-4 h-4" />
-        Add Bowl
+        {createBowl.isPending ? 'Creating...' : 'Add Bowl'}
       </button>
 
       {/* New bowl sheet */}
@@ -88,13 +150,14 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   );
 }
 
-function BowlCard({ session, index }: { session: DockMixSession; index: number }) {
+function BowlCard({ session, index, onTap }: { session: DockMixSession; index: number; onTap: () => void }) {
   const status = getStatusDisplay(session.status);
   const StatusIcon = status.icon;
   const isTerminal = isTerminalSessionStatus(session.status as any);
 
   return (
     <button
+      onClick={onTap}
       className={cn(
         'w-full text-left rounded-xl p-4 border transition-all duration-150',
         'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
