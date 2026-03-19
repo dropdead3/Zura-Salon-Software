@@ -375,7 +375,7 @@ function StepDetails({
               </div>
               <div className="space-y-1.5">
                 <Label className={tokens.label.default}>Phone</Label>
-                <Input value={details.secondary_contact_phone} onChange={e => update('secondary_contact_phone', e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
+                <Input type="tel" value={details.secondary_contact_phone} onChange={e => update('secondary_contact_phone', e.target.value)} placeholder="(555) 987-6543" autoCapitalize="off" />
               </div>
             </div>
           </div>

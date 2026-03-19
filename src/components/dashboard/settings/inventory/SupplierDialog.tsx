@@ -106,7 +106,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
               </div>
               <div className="space-y-1.5">
                 <Label>Phone</Label>
-                <Input value={form.supplier_phone} onChange={e => setForm(f => ({ ...f, supplier_phone: e.target.value }))} placeholder="+1 555-0123" />
+                <Input type="tel" value={form.supplier_phone} onChange={e => setForm(f => ({ ...f, supplier_phone: e.target.value }))} placeholder="+1 555-0123" />
               </div>
             </div>
             <div className="space-y-1.5">
