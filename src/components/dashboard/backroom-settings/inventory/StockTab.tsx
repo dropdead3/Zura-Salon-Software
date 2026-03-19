@@ -521,7 +521,7 @@ export function StockTab({ locationId }: StockTabProps) {
                     />
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>
                     <span className="inline-flex items-center gap-1 justify-end">
                       Stock
                       <MetricInfoTooltip description="Current quantity on hand. Click the number to adjust." />
