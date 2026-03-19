@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
@@ -228,17 +228,17 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
       {/* ── Sub-tabs ── */}
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-        <SubTabsList>
-          <SubTabsTrigger value="command-center" className="gap-1.5">
-            <ShieldAlert className="w-3.5 h-3.5" /> Command Center
-          </SubTabsTrigger>
-          <SubTabsTrigger value="analytics" className="gap-1.5">
-            <BarChart3 className="w-3.5 h-3.5" /> Analytics
-          </SubTabsTrigger>
-          <SubTabsTrigger value="ai" className="gap-1.5">
-            <Brain className="w-3.5 h-3.5" /> AI Intelligence
-          </SubTabsTrigger>
-        </SubTabsList>
+        <TabsList>
+          <TabsTrigger value="command-center" className="gap-1.5">
+            <ShieldAlert className="w-4 h-4" /> Command Center
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1.5">
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="gap-1.5">
+            <Brain className="w-4 h-4" /> AI Intelligence
+          </TabsTrigger>
+        </TabsList>
 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
