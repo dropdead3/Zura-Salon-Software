@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { formatPhoneNumber } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, X, CheckCircle, Calendar, GraduationCap, Heart, Users, Camera, Settings, Award, UsersRound } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
