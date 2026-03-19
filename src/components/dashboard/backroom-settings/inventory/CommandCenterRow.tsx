@@ -176,8 +176,7 @@ export function CommandCenterRow({
   poHistory,
   qtyOverride,
   onQtyOverride,
-  addedToPo = false,
-  onToggleAddToPo,
+  intelligence,
   intelligence,
 }: CommandCenterRowProps) {
   const [expanded, setExpanded] = useState(false);

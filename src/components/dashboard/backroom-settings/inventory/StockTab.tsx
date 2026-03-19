@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, ShoppingCart, Zap, SlidersHorizontal, Truck, AlertTriangle, CheckCircle2, Send, Mail, Eye, Info } from 'lucide-react';
+import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, ShoppingCart, Zap, SlidersHorizontal, Truck, AlertTriangle, CheckCircle2, Send, Mail, Eye, Info } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
