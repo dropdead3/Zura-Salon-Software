@@ -420,6 +420,8 @@ export function StockTab({ locationId }: StockTabProps) {
                     onAudit={(productId, productName) => setAuditDialog({ open: true, productId, productName })}
                     onQuickReorder={handleQuickReorder}
                     poHistoryMap={poHistoryMap}
+                    qtyOverrides={qtyOverrides}
+                    onQtyOverride={handleQtyOverride}
                   />
                 ))}
               </TableBody>
