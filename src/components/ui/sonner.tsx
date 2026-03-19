@@ -27,7 +27,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
               "group-[.toaster]:bg-card/80 group-[.toaster]:backdrop-blur-xl",
               "group-[.toaster]:text-foreground group-[.toaster]:border-border/40",
               "group-[.toaster]:shadow-[0_16px_40px_-18px_hsl(var(--foreground)/0.25)]",
-              "group-[.toaster]:rounded-full",
+              "group-[.toaster]:rounded-lg",
               // typography
               "font-sans",
               // motion polish (sonner uses data-state)
