@@ -684,7 +684,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
               </Badge>
             )}
             <div className="ml-auto flex items-center gap-1.5">
-              {!isUnassigned && reorderCount > 0 && (
+              {reorderCount > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -695,17 +695,15 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
                   Create PO
                 </Button>
               )}
-              {isUnassigned && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                  onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
-                >
-                  <UserPlus className="w-3 h-3 mr-1" />
-                  Assign Supplier
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
+              >
+                <UserPlus className="w-3 h-3 mr-1" />
+                {isUnassigned ? 'Assign Supplier' : 'Change Supplier'}
+              </Button>
             </div>
           </div>
         </TableCell>
