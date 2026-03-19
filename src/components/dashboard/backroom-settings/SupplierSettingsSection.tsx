@@ -116,6 +116,7 @@ export function SupplierSettingsSection() {
     if (!selected) return;
     updateContact.mutate({
       supplier_name: selected,
+      contact_name: data.contact_name || null,
       supplier_email: data.supplier_email || null,
       supplier_phone: data.supplier_phone || null,
       supplier_website: data.supplier_website || null,
