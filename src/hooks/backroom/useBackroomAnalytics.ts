@@ -163,6 +163,18 @@ export function useBackroomAnalytics(
         const sBowls = sessionBowlMap.get(s.id) ?? [];
         existing.bowlsTotal += sBowls.length;
         existing.bowlsReweighed += sBowls.filter((bid) => reweighedBowlIds.has(bid)).length;
+
+        // Accumulate per-staff product cost from bowl lines
+        for (const bid of sBowls) {
+          for (const l of (lines ?? []) as any[]) {
+            if (l.bowl_id === bid) {
+              const cost = productCostMap.get(l.product_id) ?? 0;
+              existing.totalProductCost += (l.dispensed_quantity ?? 0) * cost;
+              existing.totalDispensedQty += (l.dispensed_quantity ?? 0);
+            }
+          }
+        }
+
         staffMap.set(staffId, existing);
       }
 
