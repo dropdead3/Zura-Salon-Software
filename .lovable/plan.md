@@ -1,20 +1,38 @@
 
 
-## Plan: Enable Live Dock Preview
+## Plan: Add Demo Mode to the Dock App
 
-The `/dock` route already exists and renders the full Dock app with PIN gate, schedule, mixing, etc. The only blocker is the `DockAppTab.tsx` button is disabled with "Coming Soon". We need two changes:
+### Approach
+Create a React Context (`DockDemoContext`) that provides mock data when demo mode is active. Each data hook checks this context first — if demo mode is on, return static mock data instead of querying the database. Demo mode activates via the "Dev Bypass" button on the PIN gate.
 
-### 1. Enable the launch button in `DockAppTab.tsx`
-- Remove `disabled` from the button
-- Change label from "Launch Dock Preview (Coming Soon)" to "Launch Dock Preview"
-- Replace `Lock` icon with `ExternalLink`
-- Make it open `/dock` in a new tab (`window.open('/dock', '_blank')`) so it launches as a standalone full-screen app
+### 1. Create `src/hooks/dock/dockDemoData.ts`
+Static mock data file containing:
+- **6 mock appointments** across Active/Scheduled/Completed statuses with realistic salon names and times
+- **3 mock brands** (Wella, Redken, Schwarzkopf) with ~4-5 products each, including swatch colors and wholesale prices
+- **2 mock mix sessions** (one active, one completed) with bowl data
 
-### 2. Add a dev bypass to `DockPinGate`
-The PIN gate requires a valid `login_pin` in `employee_profiles`. For testing, add a "Dev Bypass" button (only visible in development) that creates a mock staff session so you can access the full Dock UI without needing a real PIN in the database.
+### 2. Create `src/contexts/DockDemoContext.tsx`
+- `DockDemoProvider` wrapping the Dock page
+- `useDockDemo()` hook returning `{ isDemoMode, appointments, brands, products, sessions }`
+- Demo mode is enabled when `staff.userId === 'dev-bypass-000'`
+
+### 3. Update data hooks to check demo mode
+Modify these hooks to short-circuit with mock data when demo mode is active:
+- **`useDockAppointments.ts`** — return mock appointments
+- **`useDockProductCatalog.ts`** — return mock brands/products
+- **`useDockMixSessions.ts`** — return mock sessions
+
+Each hook calls `useDockDemo()` and if `isDemoMode`, returns a static `useQuery` with `initialData` and `queryFn` that returns the mock data (no Supabase call).
+
+### 4. Update `Dock.tsx`
+Wrap `DockLayout` in `DockDemoProvider`, passing the staff session so the context knows whether to enable demo mode.
+
+### 5. Update `DockPinGate.tsx`
+Change the Dev Bypass button label to "Demo Mode →" to make it clearer.
 
 ### Technical details
-- Dev bypass checks `import.meta.env.DEV` to only show in development
-- Mock session uses a placeholder userId/displayName
-- The `/dock` route is already registered in `App.tsx` as a public route
+- Mock appointment IDs use `demo-appt-{n}` prefix so they won't collide with real UUIDs
+- Mock product IDs use `demo-prod-{n}` prefix
+- The `useCreateDockBowl` mutation in `DockServicesTab` will be a no-op in demo mode (show a toast saying "Demo mode — bowl creation simulated")
+- All mock data is purely in-memory; no database writes
 
