@@ -48,7 +48,7 @@ type BackroomSection =
   | 'overview'
   | 'products'
   | 'services'
-  | 'recipes'
+  | 'formulas'
   | 'allowances'
   | 'stations'
   | 'inventory'
@@ -88,7 +88,7 @@ const sections: SectionMeta[] = [
   { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', group: 'configuration' },
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
   { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
-  { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
+  { id: 'formulas', label: 'Formula Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
   { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
   { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.', group: 'configuration' },
   { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.', group: 'configuration' },
@@ -109,7 +109,7 @@ function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof 
   switch (sectionId) {
     case 'products': return health.trackedProducts > 0 ? 'done' : 'none';
     case 'services': return health.trackedServices > 0 ? 'done' : 'none';
-    case 'recipes': return health.recipesConfigured > 0 ? 'done' : 'none';
+    case 'formulas': return health.recipesConfigured > 0 ? 'done' : 'none';
     case 'allowances': return health.allowancePolicies > 0 ? 'done' : 'none';
     case 'stations': return health.stationsConfigured > 0 ? 'done' : 'none';
     case 'alerts': return health.alertRulesConfigured > 0 ? 'done' : 'none';
@@ -329,7 +329,7 @@ export default function BackroomSettings() {
             {activeSection === 'overview' && <BackroomDashboardOverview onNavigate={handleNavigate} initialSubTab={subTab} />}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
-            {activeSection === 'recipes' && <RecipeBaselineSection onNavigate={handleNavigate} />}
+            {activeSection === 'formulas' && <RecipeBaselineSection onNavigate={handleNavigate} />}
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
             {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}

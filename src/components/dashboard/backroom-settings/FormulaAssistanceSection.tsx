@@ -13,12 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
-const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical usage data and recipe baselines. Always verify formulas with your professional judgment before applying.';
+const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical usage data and formula baselines. Always verify formulas with your professional judgment before applying.';
 
 const SUGGESTION_HIERARCHY = [
   { key: 'client_history', label: 'Client History', description: 'Prioritize this client\'s last formula for this service' },
   { key: 'stylist_recent', label: 'Stylist Most Recent', description: 'Fall back to the stylist\'s most recent formula' },
-  { key: 'recipe_baseline', label: 'Recipe Baseline', description: 'Final fallback to the configured recipe baseline' },
+  { key: 'recipe_baseline', label: 'Formula Baseline', description: 'Final fallback to the configured formula baseline' },
 ];
 
 export function FormulaAssistanceSection() {
@@ -54,7 +54,7 @@ export function FormulaAssistanceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-formula-guide" title="Formula Assistance" description="Smart Mix Assist suggests formulas based on client history and recipe baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff." icon={<Sparkles className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-formula-guide" title="Formula Assistance" description="Smart Mix Assist suggests formulas based on client history and formula baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff." icon={<Sparkles className="h-4 w-4 text-primary" />} />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pr-6">
@@ -107,7 +107,7 @@ export function FormulaAssistanceSection() {
           ))}
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or recipe baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
+              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or formula baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
               <p className="text-sm text-muted-foreground">Automatically fill formula fields when a match is found</p>
             </div>
             <Switch checked={(currentRecall.auto_populate as boolean) ?? true} onCheckedChange={(checked) => setRecallConfig({ ...currentRecall, auto_populate: checked })} />

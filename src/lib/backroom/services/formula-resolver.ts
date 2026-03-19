@@ -49,7 +49,7 @@ export const SOURCE_LABELS: Record<SuggestionSource, string> = {
   client_last_visit: "Client's Last Visit",
   client_any_service: "Client's Previous Formula",
   stylist_most_used: "Stylist's Most Used Formula",
-  salon_recipe: 'Salon Service Recipe',
+  salon_recipe: 'Salon Service Formula',
 };
 
 // ─── Ratio Computation ──────────────────────────────
@@ -131,7 +131,7 @@ export async function fetchStylistMostUsed(
   };
 }
 
-// ─── Priority 3: Salon Service Recipe ───────────────
+// ─── Priority 3: Salon Service Formula ──────────────
 
 export async function fetchSalonRecipe(
   orgId: string,
@@ -242,7 +242,7 @@ export async function resolveFormula(
     if (result) return result;
   }
 
-  // Priority 3: Salon recipe baseline
+  // Priority 3: Salon formula baseline
   const result = await fetchSalonRecipe(organization_id, service_name);
   if (result) return result;
 
@@ -285,7 +285,7 @@ export async function resolveFormulaMemory(
   const anyResult = await fetchClientAnyFormula(orgId, clientId);
   if (anyResult) return anyResult;
 
-  // Priority 3: Salon recipe baseline
+  // Priority 3: Salon formula baseline
   if (serviceName) {
     const recipe = await fetchSalonRecipe(orgId, serviceName);
     if (recipe) {

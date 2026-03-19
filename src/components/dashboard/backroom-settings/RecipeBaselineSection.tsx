@@ -58,7 +58,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
     <div className="space-y-4">
       <Infotainer
         id="backroom-recipes-guide"
-        title="Recipe Baselines"
+        title="Formula Baselines"
         description="Set the expected product quantities per service — e.g. 'A full highlight uses ~30g lightener + 60ml developer.' Powers Smart Mix Assist suggestions and flags when a stylist uses significantly more or less than expected."
         icon={<BarChart3 className="h-4 w-4 text-primary" />}
       />
@@ -70,7 +70,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>Recipe Baselines</CardTitle>
+                <CardTitle className={tokens.card.title}>Formula Baselines</CardTitle>
                 <MetricInfoTooltip description="The expected amount of each product for a standard application. Zura flags deviations beyond the variance threshold." />
               </div>
               <CardDescription>
