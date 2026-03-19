@@ -111,7 +111,7 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
 
       {/* Tabbed workspace */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start bg-muted/50 rounded-xl p-1 h-auto flex-wrap gap-0.5">
+        <TabsList className="justify-start bg-muted/50 rounded-xl p-1 h-auto flex-wrap gap-0.5">
           <TabsTrigger value="stock" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <Package className="w-4 h-4" /> Stock
           </TabsTrigger>
