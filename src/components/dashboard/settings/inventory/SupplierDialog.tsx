@@ -128,7 +128,10 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Lead Time (days)</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>Lead Time (days)</Label>
+                  <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+                </div>
                 <Input type="number" min="0" value={form.lead_time_days} onChange={e => setForm(f => ({ ...f, lead_time_days: e.target.value }))} placeholder="7" />
               </div>
             </div>
