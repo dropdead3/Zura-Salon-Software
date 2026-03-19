@@ -254,6 +254,7 @@ const App = () => (
                       <Route path="/feedback" element={<ClientFeedbackPage />} />
                       <Route path="/rewards" element={<ClientPortalPage />} />
                       <Route path="/kiosk/:locationId" element={<Kiosk />} />
+                      <Route path="/dock" element={<Dock />} />
 
                       {/* Protected dashboard routes */}
                       <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />

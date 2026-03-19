@@ -43,7 +43,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       try {
         const { data, error: dbError } = await supabase
           .from('employee_profiles')
-          .select('user_id, first_name, last_name, avatar_url')
+          .select('user_id, full_name, display_name, photo_url')
           .eq('login_pin', next)
           .limit(1)
           .maybeSingle();
@@ -55,8 +55,8 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         } else {
           onSuccess({
             userId: data.user_id,
-            displayName: [data.first_name, data.last_name].filter(Boolean).join(' ') || 'Staff',
-            avatarUrl: data.avatar_url,
+            displayName: data.display_name || data.full_name || 'Staff',
+            avatarUrl: data.photo_url,
           });
         }
       } catch {
