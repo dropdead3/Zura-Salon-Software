@@ -149,7 +149,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                         </span>
                       </div>
                       {i < arr.length - 1 && (
-                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-500/60' : 'bg-border/60')} />
+                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60')} />
                       )}
                     </React.Fragment>
                   ))}
