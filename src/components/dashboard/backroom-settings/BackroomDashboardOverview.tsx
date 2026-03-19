@@ -478,8 +478,8 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon className={cn('w-3.5 h-3.5', status === 'warning' ? 'text-amber-500' : 'text-muted-foreground')} />
+      <div className="flex items-start gap-1.5 min-h-[32px]">
+        <Icon className={cn('w-4 h-4 shrink-0 mt-0.5', status === 'warning' ? 'text-amber-500' : 'text-muted-foreground')} />
         <span className={tokens.kpi.label}>{label}</span>
       </div>
       <span className={cn(tokens.kpi.value, status === 'warning' && 'text-amber-500')}>{value}</span>
