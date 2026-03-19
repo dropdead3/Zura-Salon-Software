@@ -123,6 +123,7 @@ export function useControlTowerAlerts(
   const stockoutQ = useStockoutAlerts(locationId);
   const profitQ = useAppointmentProfitSummary(periodStart, periodEnd, locationId ?? undefined);
   const draftPOsQ = useDraftPOs(locationId);
+  const overdueAuditsQ = useOverdueAudits();
 
   const isLoading =
     inventoryQ.isLoading ||
