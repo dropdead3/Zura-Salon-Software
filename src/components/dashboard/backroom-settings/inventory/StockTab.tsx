@@ -37,7 +37,7 @@ import { AutoParDialog } from './AutoParDialog';
 import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
 import { useInventoryIntelligence, type ProductIntelligence } from '@/hooks/backroom/useInventoryIntelligence';
 import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
-import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions, type ReportLocationInfo, REPORT_BODY_START_Y } from '@/lib/reportPdfLayout';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, buildReportFileName, type ReportHeaderOptions, type ReportLocationInfo, REPORT_BODY_START_Y } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { format } from 'date-fns';

@@ -70,7 +70,7 @@ function exportAuditCsv(entries: AuditEntry[], productName: string) {
 async function exportAuditPdf(entries: AuditEntry[], productName: string, orgName: string) {
   const { default: jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
-  const { addReportHeader, addReportFooter } = await import('@/lib/reportPdfLayout');
+  const { addReportHeader, addReportFooter, buildReportFileName } = await import('@/lib/reportPdfLayout');
 
   const doc = new jsPDF({ orientation: 'landscape' });
   const today = format(new Date(), 'yyyy-MM-dd');

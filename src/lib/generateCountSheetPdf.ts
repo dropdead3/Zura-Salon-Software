@@ -10,6 +10,7 @@ import {
   addReportHeader,
   addReportFooter,
   getReportAutoTableBranding,
+  buildReportFileName,
   type ReportHeaderOptions,
   type LogoDataResult,
 } from '@/lib/reportPdfLayout';
