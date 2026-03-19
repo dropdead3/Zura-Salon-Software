@@ -377,20 +377,56 @@ export function StockTab({ locationId }: StockTabProps) {
         </Button>
       </div>
 
-      {/* Selection bar */}
+      {/* Sticky Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-primary/20 bg-primary/5">
-          <span className="text-sm text-muted-foreground font-sans">
+        <div className="sticky bottom-0 z-20 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg">
+          <span className="text-sm text-muted-foreground font-sans tabular-nums">
             {selectedIds.size} selected
           </span>
+          <div className="h-4 w-px bg-border" />
           <Button
             size="sm"
-            className="font-sans h-7"
-            onClick={() => setAutoPoDialog(true)}
+            className="font-sans h-7 gap-1"
+            onClick={() => {
+              selectedProducts.forEach(r => {
+                if (r.recommended_order_qty > 0 && !poItemIds.has(r.id)) {
+                  toggleAddToPo(r.id);
+                }
+              });
+            }}
+            disabled={selectedReorderProducts.length === 0}
           >
-            <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-            Create PO ({selectedIds.size} {selectedIds.size === 1 ? 'item' : 'items'})
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Add Selected to PO
+            {selectedReorderProducts.length > 0 && (
+              <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5 rounded-full">
+                {selectedReorderProducts.length}
+              </Badge>
+            )}
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="font-sans h-7 gap-1"
+            onClick={() => {
+              inventory.forEach(r => {
+                if (r.recommended_order_qty > 0 && !poItemIds.has(r.id)) {
+                  toggleAddToPo(r.id);
+                }
+              });
+            }}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Auto Build PO
+          </Button>
+          {selectedReorderProducts.length > 0 && (
+            <span className="text-xs text-muted-foreground font-sans tabular-nums ml-auto hidden sm:block">
+              Est. {formatCurrency(selectedReorderProducts.reduce((s, r) => {
+                const qty = qtyOverrides.get(r.id) ?? r.recommended_order_qty;
+                return s + qty * (r.cost_price ?? r.cost_per_gram ?? 0);
+              }, 0))}
+            </span>
+          )}
           <Button
             size="sm"
             variant="ghost"
