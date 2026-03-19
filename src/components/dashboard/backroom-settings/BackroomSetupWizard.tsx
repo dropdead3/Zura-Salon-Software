@@ -580,6 +580,9 @@ function SuppliersStep({
   secondaryEmail: string; onSecondaryEmailChange: (v: string) => void;
   secondaryPhone: string; onSecondaryPhoneChange: (v: string) => void;
 }) {
+  const [showSecondaryContact, setShowSecondaryContact] = useState(
+    !!(secondaryName || secondaryEmail || secondaryPhone)
+  );
   return (
     <Card className={tokens.card.wrapper}>
       <CardHeader>
