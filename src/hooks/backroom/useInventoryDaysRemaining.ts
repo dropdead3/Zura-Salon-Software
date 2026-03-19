@@ -50,7 +50,7 @@ export function useInventoryDaysRemaining(locationId?: string) {
         if (!m.product_id) continue;
         usageMap.set(
           m.product_id,
-          (usageMap.get(m.product_id) ?? 0) + Math.abs(m.quantity)
+          (usageMap.get(m.product_id) ?? 0) + Math.abs(m.quantity_change)
         );
       }
 
