@@ -67,10 +67,11 @@ export function useMarkDockSessionUnresolved() {
       locationId?: string;
       reason: string;
     }) => {
+      // Use 'completed' status with unresolved_flag=true since DB enum doesn't have 'unresolved_exception'
       const { error } = await supabase
         .from('mix_sessions')
         .update({
-          status: 'unresolved_exception',
+          status: 'completed',
           unresolved_flag: true,
           unresolved_reason: params.reason,
         })
