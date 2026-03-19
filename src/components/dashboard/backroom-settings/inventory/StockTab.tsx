@@ -355,7 +355,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   const handleCreateAndEmailPOs = useCallback(async () => {
     if (!orgId) return;
-    const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url ?? null);
+    const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
     const items = emailPreviewGroups.flatMap(g =>
       g.products.map(p => ({
         organization_id: orgId,
