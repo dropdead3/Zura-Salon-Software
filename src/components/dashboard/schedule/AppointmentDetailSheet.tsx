@@ -74,7 +74,7 @@ import {
   ChevronDown, ChevronRight, Copy, Check, CheckCircle, UserCheck, XCircle, AlertTriangle,
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
-  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera,
+  UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera, Beaker,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
