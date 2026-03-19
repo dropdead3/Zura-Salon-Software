@@ -370,7 +370,7 @@ export function CommandCenterRow({
           <Badge
             variant="outline"
             className={cn(
-              'text-[10px] px-1.5 py-0 h-5 font-sans font-normal w-fit',
+              'text-[10px] px-1.5 py-0 h-5 font-sans font-normal w-fit whitespace-nowrap',
               row.stock_state === 'out_of_stock'
                 ? 'bg-destructive/10 text-destructive border-destructive/20'
                 : row.severity === 'critical'
