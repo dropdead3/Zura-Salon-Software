@@ -70,7 +70,7 @@ export function BackroomComplianceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-compliance-guide" title="Backroom Compliance" description="Track whether color/chemical appointments are being properly logged. Shows which stylists are weighing their bowls and which are skipping steps." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-compliance-guide" title="Reweigh Reports" description="Track whether color/chemical appointments have bowls properly reweighed. Shows which stylists are weighing their bowls and which are skipping steps." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
 
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
