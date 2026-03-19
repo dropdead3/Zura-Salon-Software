@@ -151,20 +151,29 @@ export function StockTab({ locationId }: StockTabProps) {
     return rows;
   }, [inventory, search, categoryFilter, statusFilter]);
 
-  // Group by brand → category
-  const brandGroups = useMemo((): BrandGroup[] => {
+  // Group by supplier → category
+  const supplierGroups = useMemo((): SupplierGroup[] => {
     const map = new Map<string, BackroomInventoryRow[]>();
     for (const row of filtered) {
-      const brand = row.brand || 'Uncategorized';
-      const arr = map.get(brand) ?? [];
+      const supplier = row.supplier_name || '__unassigned__';
+      const arr = map.get(supplier) ?? [];
       arr.push(row);
-      map.set(brand, arr);
+      map.set(supplier, arr);
     }
 
     return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([brand, products]) => {
-        const supplierName = products.find(p => p.supplier_name)?.supplier_name ?? null;
+      .sort((a, b) => {
+        // Unassigned always last
+        if (a[0] === '__unassigned__') return 1;
+        if (b[0] === '__unassigned__') return -1;
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([supplier, products]) => {
+        const estimatedTotal = products.reduce((sum, p) => {
+          const qty = p.recommended_order_qty;
+          const cost = p.cost_price ?? p.cost_per_gram ?? 0;
+          return sum + qty * cost;
+        }, 0);
         const categories = new Map<string, BackroomInventoryRow[]>();
         for (const p of products) {
           const cat = p.category || 'Other';
@@ -172,7 +181,7 @@ export function StockTab({ locationId }: StockTabProps) {
           arr.push(p);
           categories.set(cat, arr);
         }
-        return { brand, products, supplierName, categories };
+        return { supplier: supplier === '__unassigned__' ? 'Unassigned' : supplier, products, estimatedTotal, categories };
       });
   }, [filtered]);
 
