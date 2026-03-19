@@ -343,7 +343,10 @@ export function SupplierSettingsSection() {
                         <Input id="sa" {...register('account_number')} placeholder="ACC-123" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="sl" className={tokens.label.default}>Lead Time (days)</Label>
+                        <div className="flex items-center gap-1.5">
+                          <Label htmlFor="sl" className={tokens.label.default}>Lead Time (days)</Label>
+                          <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+                        </div>
                         <Input id="sl" type="number" {...register('lead_time_days')} placeholder="5" />
                       </div>
                       <div className="space-y-1.5">
