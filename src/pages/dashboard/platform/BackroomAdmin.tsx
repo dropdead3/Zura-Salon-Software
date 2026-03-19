@@ -65,6 +65,10 @@ export default function BackroomAdmin() {
             <BoxIcon className="w-3.5 h-3.5" />
             Hardware Orders
           </TabsTrigger>
+          <TabsTrigger value="dock-app" className={`${tabTriggerClass} flex items-center gap-1.5`}>
+            <Tablet className="w-3.5 h-3.5" />
+            Dock App
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
