@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 export interface SupplierGroup {
   supplier_name: string;
+  contact_name: string | null;
   supplier_email: string | null;
   supplier_phone: string | null;
   supplier_website: string | null;
