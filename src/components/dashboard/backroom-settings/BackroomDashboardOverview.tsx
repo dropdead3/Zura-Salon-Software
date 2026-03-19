@@ -489,18 +489,22 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral' }: {
   );
 }
 
-function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, formatCurrency: fmt }: {
+function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, formatCurrency: fmt, onNavigate }: {
   budgetPct: number | null;
   currentSpend: number;
   monthlyBudget: number;
   threshold: number;
   formatCurrency: (n: number) => string;
+  onNavigate: (section: string) => void;
 }) {
   const pct = budgetPct ?? 0;
   const status = pct > 100 ? 'over' : pct > threshold ? 'warn' : 'ok';
 
   return (
-    <div className={cn(tokens.kpi.tile, 'relative')}>
+    <button
+      onClick={() => onNavigate('inventory:reorder')}
+      className={cn(tokens.kpi.tile, 'relative cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all text-left w-full')}
+    >
       <div className="flex items-start justify-between">
         <span className={tokens.kpi.label}>Budget</span>
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -521,7 +525,10 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
       ) : (
         <span className={cn(tokens.kpi.value, 'text-muted-foreground')}>Not set</span>
       )}
-    </div>
+      <span className="text-[10px] font-sans text-muted-foreground mt-1 block">
+        {monthlyBudget > 0 ? 'Adjust →' : 'Set budget →'}
+      </span>
+    </button>
   );
 }
 
