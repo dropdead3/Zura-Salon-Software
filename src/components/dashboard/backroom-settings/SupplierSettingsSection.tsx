@@ -368,13 +368,11 @@ export function SupplierSettingsSection() {
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
-                        {watch('reorder_method') === 'other' && (
-                          <Input
-                            {...register('reorder_method_other')}
-                            placeholder="Specify method..."
-                            className="mt-1.5"
-                          />
-                        )}
+                        <Input
+                          {...register('reorder_method_other')}
+                          placeholder="Specify method..."
+                          className={cn("mt-1.5", watch('reorder_method') !== 'other' && "hidden")}
+                        />
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="srn" className={tokens.label.default}>Reorder Notes</Label>
