@@ -1,33 +1,34 @@
 
 
-# Add "Dock App Preview" Tab to Platform Backroom Admin
+# Replace Horizontal Tabs with Left-Hand Sidebar Nav in Backroom Admin
 
-## What
-Add a new tab called **"Dock App"** (with a Tablet icon) to the platform-level Backroom Admin page (`/dashboard/platform/backroom`). This tab will serve as the development workspace for building the user-facing Zura Dock experience — the iPad/mobile mixing station UI where staff weigh products, create formulas, and manage bowls in real time.
+## Problem
+10 tabs in a horizontal bar overflow and create a cluttered, hard-to-scan layout.
 
-## Why
-Currently, the `MixSessionManager` and related mixing components exist but are only embedded inside the admin Backroom Hub. There is no dedicated space to build and preview the touch-optimized iPad/mobile mixing interface. This tab gives us a contained area inside the platform backend to prototype and iterate on the Dock UI.
+## Solution
+Replace the `Tabs`/`TabsList` horizontal bar with a two-column layout: a fixed-width left sidebar nav and a content area on the right. Keep the same state-driven approach (no routing change needed).
 
 ## Implementation
 
-### 1. Create the Dock App tab component
-**New file:** `src/components/platform/backroom/DockAppTab.tsx`
+### File: `src/pages/dashboard/platform/BackroomAdmin.tsx`
 
-A placeholder landing page with:
-- Hero section: "Zura Dock — Mixing Station App" with subtitle explaining it's the user-facing iPad + scale experience
-- Three feature cards outlining the core modules to build:
-  - **Live Mixing** — Weighing, bowl management, product dispensing
-  - **Formula Memory** — Client formula recall, clone, and save
-  - **Session Review** — Reweigh, waste logging, session completion
-- A "Launch Dock Preview" button (disabled/coming soon) that will eventually open a full-screen iPad-optimized view
-- Device mockup context: badges for "iPad Optimized" and "BLE Scale Ready"
+**Layout change:**
+- Remove the `Tabs`/`TabsList`/`TabsTrigger` components
+- Build a `flex` two-column layout below the page header:
+  - **Left nav** (~200px): A vertical list of nav items, each with icon + label, styled with the existing platform theme variables. Active item gets `bg-violet-600 text-white`, inactive items get muted text with hover highlight. Group items into logical sections with subtle labels ("Intelligence", "Pricing", "Operations", "Products").
+  - **Right content area** (`flex-1 min-w-0`): Renders the active tab's component based on state, same as today.
+- Keep `useState('analytics')` for active section, wire each nav button's `onClick` to `setTab(value)`.
 
-### 2. Add the tab to BackroomAdmin.tsx
-- Import `DockAppTab` and the `Tablet` icon from lucide-react
-- Add a new `TabsTrigger` with value `"dock-app"` and the Tablet icon + label "Dock App"
-- Add corresponding `TabsContent`
+**Nav grouping:**
+| Group | Items |
+|-------|-------|
+| Intelligence | Analytics |
+| Pricing | Price Queue, Price Sources, Supply Library |
+| Operations | App Access, Billing, Coach Performance, Refund History, Hardware Orders |
+| Products | Dock App |
+
+**Styling:** Match the platform dark theme — glass-style card for the sidebar, `hsl(var(--platform-*))` variables, violet accent for active state. The nav column gets a subtle right border.
 
 ### Files Changed
-1. `src/components/platform/backroom/DockAppTab.tsx` — **new** (placeholder tab)
-2. `src/pages/dashboard/platform/BackroomAdmin.tsx` — add tab trigger + content
+1. `src/pages/dashboard/platform/BackroomAdmin.tsx` — rewrite layout from horizontal tabs to sidebar + content
 
