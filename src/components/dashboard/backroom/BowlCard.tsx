@@ -141,11 +141,11 @@ export function BowlCard({
 
         {/* Bowl actions */}
         {!isTerminal && (
-          <div className="flex gap-2 pt-2 border-t border-border/50">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border/50">
             {isOpen && lines.length > 0 && (
               <Button
                 onClick={() => onSealBowl(bowl.id)}
-                className="flex-1 h-11 font-sans"
+                className="flex-1 h-11 min-h-[44px] font-sans"
               >
                 <Lock className="w-4 h-4 mr-1.5" />
                 Finalize Mix
@@ -167,7 +167,7 @@ export function BowlCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-11 w-11 text-destructive shrink-0"
+                className="h-11 w-11 min-h-[44px] min-w-[44px] text-destructive shrink-0"
                 onClick={() => onDiscardBowl(bowl.id)}
               >
                 <Trash2 className="w-4 h-4" />

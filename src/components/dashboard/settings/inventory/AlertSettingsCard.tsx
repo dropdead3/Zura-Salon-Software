@@ -27,6 +27,7 @@ export function AlertSettingsCard() {
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
   const [autoReorderMode, setAutoReorderMode] = useState('to_par');
   const [maxAutoReorderValue, setMaxAutoReorderValue] = useState('');
+  const [requirePoApproval, setRequirePoApproval] = useState(true);
   const [deadStockEnabled, setDeadStockEnabled] = useState(true);
   const [deadStockDays, setDeadStockDays] = useState(90);
 
@@ -41,6 +42,7 @@ export function AlertSettingsCard() {
       setAutoReorderEnabled(settings.auto_reorder_enabled ?? false);
       setAutoReorderMode(settings.auto_reorder_mode ?? 'to_par');
       setMaxAutoReorderValue(settings.max_auto_reorder_value?.toString() ?? '');
+      setRequirePoApproval((settings as any).require_po_approval ?? true);
       setDeadStockEnabled((settings as any).dead_stock_enabled ?? true);
       setDeadStockDays((settings as any).dead_stock_days ?? 90);
     }
@@ -55,6 +57,7 @@ export function AlertSettingsCard() {
     autoReorderEnabled !== (settings.auto_reorder_enabled ?? false) ||
     autoReorderMode !== (settings.auto_reorder_mode ?? 'to_par') ||
     maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
+    requirePoApproval !== ((settings as any).require_po_approval ?? true) ||
     deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
     deadStockDays !== ((settings as any).dead_stock_days ?? 90)
   ) : true;
@@ -72,6 +75,7 @@ export function AlertSettingsCard() {
       auto_reorder_enabled: autoReorderEnabled,
       auto_reorder_mode: autoReorderMode,
       max_auto_reorder_value: maxAutoReorderValue ? parseFloat(maxAutoReorderValue) : null,
+      require_po_approval: requirePoApproval,
       dead_stock_enabled: deadStockEnabled,
       dead_stock_days: deadStockDays,
     } as any);
@@ -229,6 +233,21 @@ export function AlertSettingsCard() {
                         </div>
                       </>
                     )}
+                  </div>
+                )}
+
+                {/* Require PO Approval */}
+                {autoCreatePo && (
+                  <div className="ml-4 pl-4 border-l border-border">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm">Require manager approval</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Auto-generated POs stay as drafts until a manager approves them
+                        </p>
+                      </div>
+                      <Switch checked={requirePoApproval} onCheckedChange={setRequirePoApproval} />
+                    </div>
                   </div>
                 )}
 

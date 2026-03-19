@@ -1,10 +1,11 @@
 /**
  * InstantFormulaCard — Surfaces the client's most relevant previous formula
- * at the top of the backroom workspace.
+ * at the top of the backroom workspace. Includes formula sharing.
  */
 
+import { useState } from 'react';
 import { format } from 'date-fns';
-import { Clock, FlaskConical, History } from 'lucide-react';
+import { Clock, FlaskConical, History, Share2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { FormulaPreview } from './FormulaPreview';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ShareFormulaDialog } from './ShareFormulaDialog';
+import { useShareFormula } from '@/hooks/backroom/useSharedFormulas';
 import type { ResolvedFormulaMemory } from '@/lib/backroom/services/formula-resolver';
 
 interface InstantFormulaCardProps {
@@ -29,6 +32,8 @@ export function InstantFormulaCard({
   onUseFormula,
   onViewHistory,
 }: InstantFormulaCardProps) {
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const shareFormula = useShareFormula();
   const { data: formula, isLoading } = useInstantFormulaMemory(clientId, serviceName);
 
   if (!clientId) return null;
@@ -133,6 +138,17 @@ export function InstantFormulaCard({
               Use Last Formula
             </Button>
           )}
+          {formula.referenceId && clientId && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="font-sans font-medium text-muted-foreground"
+              onClick={() => setShowShareDialog(true)}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </Button>
+          )}
           {onViewHistory && (
             <Button
               size="sm"
@@ -145,6 +161,21 @@ export function InstantFormulaCard({
             </Button>
           )}
         </div>
+
+        {formula.referenceId && clientId && (
+          <ShareFormulaDialog
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+            onSubmit={(sharedWithUserId, notes) => {
+              shareFormula.mutate({
+                formulaHistoryId: formula.referenceId!,
+                sharedWithUserId,
+                clientId: clientId!,
+                notes: notes || undefined,
+              });
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );

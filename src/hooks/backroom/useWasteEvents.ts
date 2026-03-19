@@ -7,7 +7,9 @@ export type WasteCategory =
   | 'overmix_waste'
   | 'spill_waste'
   | 'expired_product_discard'
-  | 'contamination_discard';
+  | 'contamination_discard'
+  | 'wrong_mix'
+  | 'client_refusal';
 
 export const WASTE_CATEGORY_LABELS: Record<WasteCategory, string> = {
   leftover_bowl_waste: 'Leftover Bowl Waste',
@@ -15,6 +17,8 @@ export const WASTE_CATEGORY_LABELS: Record<WasteCategory, string> = {
   spill_waste: 'Spill',
   expired_product_discard: 'Expired Product',
   contamination_discard: 'Contamination',
+  wrong_mix: 'Wrong Mix',
+  client_refusal: 'Client Refusal',
 };
 
 export function useCreateWasteEvent() {

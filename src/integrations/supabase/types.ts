@@ -8290,6 +8290,7 @@ export type Database = {
           organization_id: string
           recipient_roles: string[]
           recipient_user_ids: string[]
+          require_po_approval: boolean
           updated_at: string
         }
         Insert: {
@@ -8307,6 +8308,7 @@ export type Database = {
           organization_id: string
           recipient_roles?: string[]
           recipient_user_ids?: string[]
+          require_po_approval?: boolean
           updated_at?: string
         }
         Update: {
@@ -8324,6 +8326,7 @@ export type Database = {
           organization_id?: string
           recipient_roles?: string[]
           recipient_user_ids?: string[]
+          require_po_approval?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -18734,6 +18737,54 @@ export type Database = {
           },
         ]
       }
+      shared_formulas: {
+        Row: {
+          client_id: string
+          created_at: string
+          formula_history_id: string
+          id: string
+          notes: string | null
+          organization_id: string
+          shared_by: string
+          shared_with: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          formula_history_id: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          shared_by: string
+          shared_with: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          formula_history_id?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          shared_by?: string
+          shared_with?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_formulas_formula_history_id_fkey"
+            columns: ["formula_history_id"]
+            isOneToOne: false
+            referencedRelation: "client_formula_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_formulas_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shift_swap_messages: {
         Row: {
           created_at: string | null
@@ -23446,6 +23497,8 @@ export type Database = {
         | "spill_waste"
         | "expired_product_discard"
         | "contamination_discard"
+        | "wrong_mix"
+        | "client_refusal"
       zura_guardrail_severity: "soft_warn" | "hard_block"
       zura_guardrail_type:
         | "topic_block"
@@ -23718,6 +23771,8 @@ export const Constants = {
         "spill_waste",
         "expired_product_discard",
         "contamination_discard",
+        "wrong_mix",
+        "client_refusal",
       ],
       zura_guardrail_severity: ["soft_warn", "hard_block"],
       zura_guardrail_type: [

@@ -193,67 +193,78 @@ function SupplierPOCard({
             return (
               <div
                 key={item.id}
-                className="flex items-center gap-2 px-3 py-1.5 border-b border-border/20 last:border-b-0 group/line hover:bg-muted/30 transition-colors duration-150"
+                className="flex flex-col px-3 py-1.5 border-b border-border/20 last:border-b-0 group/line hover:bg-muted/30 transition-colors duration-150"
               >
-                {/* Product name */}
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-sans text-foreground truncate block">
-                    {stripSizeSuffix(item.name)}
-                  </span>
-                  {unitCost > 0 && (
-                    <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-                      {formatCurrency(unitCost)} ea
+                <div className="flex items-center gap-2">
+                  {/* Product name */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-sans text-foreground truncate block">
+                      {stripSizeSuffix(item.name)}
                     </span>
-                  )}
+                    {unitCost > 0 && (
+                      <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                        {formatCurrency(unitCost)} ea
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Qty stepper */}
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
+                      onClick={() => {
+                        const newQty = Math.max(1, qty - 1);
+                        onQtyOverride(item.id, newQty === item.recommended_order_qty ? null : newQty);
+                      }}
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={qty}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        if (!isNaN(v) && v > 0) {
+                          onQtyOverride(item.id, v === item.recommended_order_qty ? null : v);
+                        }
+                      }}
+                      className="w-10 h-6 text-center text-xs tabular-nums rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
+                    />
+                    <button
+                      className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
+                      onClick={() => {
+                        const newQty = qty + 1;
+                        onQtyOverride(item.id, newQty === item.recommended_order_qty ? null : newQty);
+                      }}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* Line total */}
+                  <span className="text-xs tabular-nums text-muted-foreground/60 w-16 text-right">
+                    {lineTotal > 0 ? formatCurrency(lineTotal) : <span className="text-muted-foreground/25">—</span>}
+                  </span>
+
+                  {/* Remove */}
+                  <button
+                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/40 hover:text-destructive opacity-0 group-hover/line:opacity-100 transition-opacity duration-150"
+                    onClick={() => onRemoveItem(item.id)}
+                    title="Remove from PO"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
 
-                {/* Qty stepper */}
-                <div className="flex items-center gap-0.5">
-                  <button
-                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
-                    onClick={() => {
-                      const newQty = Math.max(1, qty - 1);
-                      onQtyOverride(item.id, newQty === item.recommended_order_qty ? null : newQty);
-                    }}
-                  >
-                    <Minus className="w-3 h-3" />
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={qty}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!isNaN(v) && v > 0) {
-                        onQtyOverride(item.id, v === item.recommended_order_qty ? null : v);
-                      }
-                    }}
-                    className="w-10 h-6 text-center text-xs tabular-nums rounded-md border border-border/60 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all duration-150"
-                  />
-                  <button
-                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
-                    onClick={() => {
-                      const newQty = qty + 1;
-                      onQtyOverride(item.id, newQty === item.recommended_order_qty ? null : newQty);
-                    }}
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </div>
-
-                {/* Line total */}
-                <span className="text-xs tabular-nums text-muted-foreground/60 w-16 text-right">
-                  {lineTotal > 0 ? formatCurrency(lineTotal) : <span className="text-muted-foreground/25">—</span>}
-                </span>
-
-                {/* Remove */}
-                <button
-                  className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/40 hover:text-destructive opacity-0 group-hover/line:opacity-100 transition-opacity duration-150"
-                  onClick={() => onRemoveItem(item.id)}
-                  title="Remove from PO"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                {/* MOQ warning */}
+                {(item as any).moq && qty < (item as any).moq && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-sans">
+                      ⚠ Below MOQ (min: {(item as any).moq})
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}

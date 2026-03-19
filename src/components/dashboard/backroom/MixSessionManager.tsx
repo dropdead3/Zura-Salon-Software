@@ -709,8 +709,8 @@ export function MixSessionManager({
         </div>
       </div>
 
-      {/* Bowls */}
-      <div className="space-y-3">
+      {/* Bowls — stacked vertically on mobile, grid on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {bowls.map((bowl) => (
           <BowlCardWithLines
             key={bowl.id}
@@ -730,7 +730,7 @@ export function MixSessionManager({
           variant="outline"
           onClick={handleAddBowl}
           disabled={createBowl.isPending}
-          className="w-full h-11 font-sans"
+          className="w-full h-11 min-h-[44px] font-sans"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           Add Bowl
