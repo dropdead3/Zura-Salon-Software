@@ -48,6 +48,12 @@ export interface DraftPOAlert {
   notes?: string | null;
 }
 
+export interface AuditOverdueAlert {
+  id: string;
+  due_date: string;
+  status: string;
+}
+
 export interface ControlTowerSources {
   inventoryRisk: InventoryRiskProjection[];
   exceptions: BackroomException[];
@@ -56,6 +62,7 @@ export interface ControlTowerSources {
   forecastSummary: ForecastSummary | null;
   stockoutAlerts: ProductDemandForecast[];
   draftPOs?: DraftPOAlert[];
+  overdueAudits?: AuditOverdueAlert[];
 }
 
 export interface PrioritySummary {
