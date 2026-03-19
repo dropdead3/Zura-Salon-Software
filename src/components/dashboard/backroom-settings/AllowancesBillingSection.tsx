@@ -504,6 +504,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
               )}
             </>
           )}
+          </div>
         </CardContent>
       </Card>
     </div>
