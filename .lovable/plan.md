@@ -1,38 +1,39 @@
 
 
-## Plan: Add Demo Mode to the Dock App
+## Plan: Device Preview Switcher for Dock App
 
-### Approach
-Create a React Context (`DockDemoContext`) that provides mock data when demo mode is active. Each data hook checks this context first — if demo mode is on, return static mock data instead of querying the database. Demo mode activates via the "Dev Bypass" button on the PIN gate.
+### What
+Add a floating device-toggle toolbar to the Dock app that lets you switch between **Phone**, **Tablet**, and **Full** (native) layouts. This is a dev/demo tool — only visible in demo mode.
 
-### 1. Create `src/hooks/dock/dockDemoData.ts`
-Static mock data file containing:
-- **6 mock appointments** across Active/Scheduled/Completed statuses with realistic salon names and times
-- **3 mock brands** (Wella, Redken, Schwarzkopf) with ~4-5 products each, including swatch colors and wholesale prices
-- **2 mock mix sessions** (one active, one completed) with bowl data
+### How
 
-### 2. Create `src/contexts/DockDemoContext.tsx`
-- `DockDemoProvider` wrapping the Dock page
-- `useDockDemo()` hook returning `{ isDemoMode, appointments, brands, products, sessions }`
-- Demo mode is enabled when `staff.userId === 'dev-bypass-000'`
+#### 1. Create `src/components/dock/DockDeviceSwitcher.tsx`
+A small floating pill (top-right corner) with three toggle buttons: Phone · Tablet · Full.
+- Phone: constrains the Dock to a `390×844` centered container with a device frame border
+- Tablet: constrains to `820×1180` centered container
+- Full: no constraint (current behavior, fills the viewport)
+- Persists choice to `localStorage('dock-device-preview')`
 
-### 3. Update data hooks to check demo mode
-Modify these hooks to short-circuit with mock data when demo mode is active:
-- **`useDockAppointments.ts`** — return mock appointments
-- **`useDockProductCatalog.ts`** — return mock brands/products
-- **`useDockMixSessions.ts`** — return mock sessions
+#### 2. Create `src/hooks/dock/useDockDevicePreview.ts`
+Simple state hook returning `{ device, setDevice }` where device is `'phone' | 'tablet' | 'full'`. Reads initial value from localStorage.
 
-Each hook calls `useDockDemo()` and if `isDemoMode`, returns a static `useQuery` with `initialData` and `queryFn` that returns the mock data (no Supabase call).
+#### 3. Update `DockDemoContext.tsx`
+Add `device` and `setDevice` to the context so it's accessible everywhere. Only exposed when `isDemoMode` is true.
 
-### 4. Update `Dock.tsx`
-Wrap `DockLayout` in `DockDemoProvider`, passing the staff session so the context knows whether to enable demo mode.
+#### 4. Update `DockLayout.tsx`
+- When device is `'phone'` or `'tablet'`, wrap the entire layout in a centered container with the fixed dimensions, rounded corners, and a subtle border to simulate the device frame
+- The outer wrapper fills the viewport with a dark grid background so the "device" floats visually
+- When `'full'`, keep current behavior (no wrapper)
 
-### 5. Update `DockPinGate.tsx`
-Change the Dev Bypass button label to "Demo Mode →" to make it clearer.
+#### 5. Provide `dockDevice` CSS class context
+Add a `data-dock-device="phone|tablet|full"` attribute to the layout root so child components can conditionally adjust layout via CSS or reading the context (e.g., tablet mode could show a 2-column schedule grid in the future).
 
-### Technical details
-- Mock appointment IDs use `demo-appt-{n}` prefix so they won't collide with real UUIDs
-- Mock product IDs use `demo-prod-{n}` prefix
-- The `useCreateDockBowl` mutation in `DockServicesTab` will be a no-op in demo mode (show a toast saying "Demo mode — bowl creation simulated")
-- All mock data is purely in-memory; no database writes
+### Device dimensions
+- Phone: `390 × 844` (iPhone 14 Pro)
+- Tablet: `820 × 1180` (iPad Air portrait)
+- Full: viewport
+
+### Visibility
+- Only rendered when `isDemoMode === true`
+- The switcher pill sits in `position: fixed; top: 12px; right: 12px; z-index: 50`
 
