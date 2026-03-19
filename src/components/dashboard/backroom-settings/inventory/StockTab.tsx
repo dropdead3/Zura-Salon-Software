@@ -29,6 +29,7 @@ import { InventoryAuditDialog } from './InventoryAuditDialog';
 import { AutoCreatePODialog } from './AutoCreatePODialog';
 import { AutoParDialog } from './AutoParDialog';
 import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
+import { useInventoryIntelligence, type ProductIntelligence } from '@/hooks/backroom/useInventoryIntelligence';
 import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
