@@ -133,26 +133,37 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
       }
 
       // Multi-location: bundle into a single ZIP
+      const abortController = new AbortController();
       const zip = new JSZip();
       const dateStr = format(new Date(), 'yyyy-MM-dd');
-      for (let i = 0; i < locationIds.length; i++) {
+      const total = locationIds.length;
+      for (let i = 0; i < total; i++) {
+        if (abortController.signal.aborted) break;
         const locId = locationIds[i];
         const locName = locations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
-        toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
+        const pct = Math.round(((i + 1) / total) * 100);
+        toast.loading(`Exporting ${locName} (${i + 1} of ${total} — ${pct}%)…`, {
+          id: 'pdf-progress',
+          action: { label: 'Cancel', onClick: () => abortController.abort() },
+        });
         const products = locId === locationId ? inventoryProducts : await fetchInventoryForLocation(orgId!, locId);
         const pdfBytes = await generateCountSheetPdf({ products, orgName, locationName: locName, logoDataUrl, countEntryUrl, returnBytes: true });
         const fileName = buildReportFileName({ orgName, locationName: locName, reportSlug: 'count-sheet', dateFrom: dateStr });
         zip.file(fileName, pdfBytes as ArrayBuffer);
       }
       toast.dismiss('pdf-progress');
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = buildReportFileName({ orgName, reportSlug: 'count-sheets-all', dateFrom: dateStr }).replace('.pdf', '.zip');
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`${locationIds.length} count sheets downloaded as ZIP`);
+      if (abortController.signal.aborted) {
+        toast.info('Export cancelled');
+      } else {
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = buildReportFileName({ orgName, reportSlug: 'count-sheets-all', dateFrom: dateStr }).replace('.pdf', '.zip');
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`${total} count sheets downloaded as ZIP`);
+      }
     } catch (err) {
       toast.error('Failed to generate count sheet');
     } finally {

@@ -342,34 +342,48 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         return;
       }
 
+      const abortController = new AbortController();
+      const total = locationIds.length;
+      const showProgress = (locName: string, index: number) => {
+        const pct = Math.round(((index + 1) / total) * 100);
+        toast.loading(`Exporting ${locName} (${index + 1} of ${total} — ${pct}%)…`, {
+          id: 'pdf-progress',
+          action: { label: 'Cancel', onClick: () => abortController.abort() },
+        });
+      };
+
       if (combined) {
         // Combined: merge all locations into one PDF
         const { jsPDF } = await import('jspdf');
         let doc: InstanceType<typeof jsPDF> | undefined;
-        for (let i = 0; i < locationIds.length; i++) {
+        for (let i = 0; i < total; i++) {
+          if (abortController.signal.aborted) break;
           const locId = locationIds[i];
           const locName = allLocations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
-          toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
+          showProgress(locName, i);
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
           const locInfo: ReportLocationInfo | undefined = { name: locName };
           doc = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, doc) as any;
         }
         toast.dismiss('pdf-progress');
-        if (doc) {
+        if (abortController.signal.aborted) {
+          toast.info('Export cancelled');
+        } else if (doc) {
           addReportFooter(doc, orgName);
           const now = new Date();
           doc.save(buildReportFileName({ orgName, reportSlug: 'backroom-stock-combined', dateFrom: format(now, 'yyyy-MM-dd') }));
+          toast.success('Combined stock report downloaded');
         }
-        toast.success('Combined stock report downloaded');
       } else {
         // Separate: bundle into a single ZIP
         const zip = new JSZip();
         const now = new Date();
         const dateStr = format(now, 'yyyy-MM-dd');
-        for (let i = 0; i < locationIds.length; i++) {
+        for (let i = 0; i < total; i++) {
+          if (abortController.signal.aborted) break;
           const locId = locationIds[i];
           const locName = allLocations.find(l => l.id === locId)?.name || `Location ${i + 1}`;
-          toast.loading(`Exporting ${locName} (${i + 1} of ${locationIds.length})...`, { id: 'pdf-progress' });
+          showProgress(locName, i);
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
           const locInfo: ReportLocationInfo | undefined = { name: locName };
           const pdfBytes = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, undefined, true) as unknown as ArrayBuffer;
@@ -377,14 +391,18 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           zip.file(fileName, pdfBytes);
         }
         toast.dismiss('pdf-progress');
-        const blob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = buildReportFileName({ orgName, reportSlug: 'backroom-stock-all', dateFrom: dateStr }).replace('.pdf', '.zip');
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(`${locationIds.length} stock reports downloaded as ZIP`);
+        if (abortController.signal.aborted) {
+          toast.info('Export cancelled');
+        } else {
+          const blob = await zip.generateAsync({ type: 'blob' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = buildReportFileName({ orgName, reportSlug: 'backroom-stock-all', dateFrom: dateStr }).replace('.pdf', '.zip');
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success(`${locationIds.length} stock reports downloaded as ZIP`);
+        }
       }
     } catch (err) {
       toast.error('Failed to export stock report');
