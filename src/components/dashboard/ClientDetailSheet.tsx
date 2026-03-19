@@ -43,6 +43,7 @@ import {
   Megaphone,
   GitMerge,
   Users,
+  Beaker,
   ExternalLink,
   Receipt,
   Camera
