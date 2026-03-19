@@ -57,6 +57,7 @@ export function AlertSettingsCard() {
     autoReorderEnabled !== (settings.auto_reorder_enabled ?? false) ||
     autoReorderMode !== (settings.auto_reorder_mode ?? 'to_par') ||
     maxAutoReorderValue !== (settings.max_auto_reorder_value?.toString() ?? '') ||
+    requirePoApproval !== ((settings as any).require_po_approval ?? true) ||
     deadStockEnabled !== ((settings as any).dead_stock_enabled ?? true) ||
     deadStockDays !== ((settings as any).dead_stock_days ?? 90)
   ) : true;
