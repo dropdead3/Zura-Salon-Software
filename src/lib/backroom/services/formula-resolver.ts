@@ -242,7 +242,7 @@ export async function resolveFormula(
     if (result) return result;
   }
 
-  // Priority 3: Salon recipe baseline
+  // Priority 3: Salon formula baseline
   const result = await fetchSalonRecipe(organization_id, service_name);
   if (result) return result;
 
