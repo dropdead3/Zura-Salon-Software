@@ -30,7 +30,7 @@ export interface GenerateCountSheetOptions {
   products: CountSheetProduct[];
   orgName: string;
   locationName?: string;
-  logoDataUrl?: string | null;
+  logoDataUrl?: string | LogoDataResult | null;
   filters?: CountSheetFilters;
   /** Full URL to include as scannable QR code on the sheet */
   countEntryUrl?: string;
