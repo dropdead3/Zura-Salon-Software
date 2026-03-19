@@ -1,36 +1,29 @@
 
 
-# Add Suppliers to the Backroom Setup Wizard
-
-## Overview
-Insert a "Suppliers" step into the setup wizard after Products (step 2), and add supplier tracking to the setup health metrics and dashboard banner.
+# Add Contact Name Field & Rename "Supplier Name" Label
 
 ## Changes
 
-### 1. `src/hooks/backroom/useBackroomSetupHealth.ts`
-- Add a query for distinct `supplier_name` count from `product_suppliers`
-- Add `suppliersConfigured: number` to `SetupHealthMetrics`
-- Add a warning when no suppliers are configured but tracked products exist
+### 1. Database Migration
+Add `contact_name TEXT` column to `product_suppliers`.
 
-### 2. `src/hooks/backroom/useBackroomDashboard.ts`
-- Add `{ label: 'Suppliers', done: h.suppliersConfigured > 0 }` step after Products in the `setupHealth` steps array (line ~105)
+### 2. `AddSupplierWizard.tsx`
+- Add `contact_name` to `SupplierDetails` interface and `EMPTY_DETAILS`
+- Rename label "Supplier Name" → "Supplier or Distributor"
+- Add "Contact Name" input field right after supplier name
+- Include `contact_name` in the Review step rows
+- Pass `contact_name` through to the upsert on completion
 
-### 3. `src/components/dashboard/backroom-settings/BackroomSetupOverview.tsx`
-- Add suppliers to the `checklistItems` array after the products entry (line ~54)
+### 3. `BackroomSetupWizard.tsx`
+- Add `supplierContactName` state
+- Rename label "Supplier Name" → "Supplier or Distributor"
+- Add "Contact Name" input after supplier name
+- Pass `contact_name` to the batch upsert mutation
 
-### 4. `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`
-- Bump `STEP_COUNT` from 5 → 6
-- Add supplier state: `supplierName`, `supplierEmail`, `supplierPhone`, `supplierWebsite`, `reorderMethod`, `reorderMethodOther`, `leadTimeDays`, `moq`, `selectedBrandNames` (for by-brand assignment), `selectedSupplierProductIds`
-- Insert new step 2 (SuppliersStep) — reuses the same two-tab pattern from `AddSupplierWizard` (By Brand / By Product), plus supplier contact fields
-- On `goNext` for step 2: call `useBatchUpsertSupplier` to persist the supplier + product links
-- Shift existing steps 2-4 → 3-5; update `stepLabels` to include 'Suppliers'
-- Update `isSaving` to include the new mutation
+### 4. `SupplierSettingsSection.tsx`
+- Add `contact_name` to the `ContactForm` type and form fields
+- Display in the supplier detail panel
 
-### 5. New `SuppliersStep` component (inside wizard file)
-- Supplier name (required), email, phone, website, reorder method (with "other" input), lead time, MOQ
-- Two-tab product assignment: By Brand (checkbox brand cards with product counts) and By Product (searchable checkbox list)
-- Products query filtered to `product_type = 'Supplies'` and those selected in step 1
-
-## Summary
-Six files touched. The wizard gains one new step, the dashboard banner gains one new tracker dot, and the setup overview gains one new checklist item.
+### 5. `useSupplierSettings.ts`
+- Add `contact_name` to `SupplierGroup` interface, select query, and `updateContact` mutation
 
