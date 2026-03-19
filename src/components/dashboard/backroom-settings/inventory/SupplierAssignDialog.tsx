@@ -3,12 +3,12 @@
  * Pre-fills from existing supplier data if any product in that brand has one.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
