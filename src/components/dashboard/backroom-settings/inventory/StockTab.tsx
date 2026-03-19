@@ -282,7 +282,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   // Single product quick reorder — respects override
   const handleQuickReorder = (row: BackroomInventoryRow, overrideQty?: number) => {
-    const qty = overrideQty ?? qtyOverrides.get(row.id) ?? row.recommended_order_qty;
+    const qty = overrideQty ?? qtyOverrides.get(row.id) ?? (row.recommended_order_qty > 0 ? row.recommended_order_qty : 1);
     if (!orgId || qty <= 0) return;
     createPO.mutate({
       organization_id: orgId,
