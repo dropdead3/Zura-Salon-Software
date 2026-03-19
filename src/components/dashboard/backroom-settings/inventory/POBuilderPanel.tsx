@@ -201,8 +201,8 @@ function SupplierPOCard({
                     {stripSizeSuffix(item.name)}
                   </span>
                   {unitCost > 0 && (
-                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">
-                      {formatCurrency(unitCost)} each
+                    <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                      {formatCurrency(unitCost)} ea
                     </span>
                   )}
                 </div>
