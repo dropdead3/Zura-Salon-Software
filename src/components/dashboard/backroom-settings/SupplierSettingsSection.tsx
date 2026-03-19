@@ -103,6 +103,7 @@ export function SupplierSettingsSection() {
         lead_time_days: selectedGroup.lead_time_days?.toString() || '',
         moq: selectedGroup.moq?.toString() || '1',
         reorder_method: selectedGroup.reorder_method || '',
+        reorder_method_other: selectedGroup.reorder_method_other || '',
         reorder_notes: selectedGroup.reorder_notes || '',
       });
       setRenameMode(false);
@@ -120,6 +121,7 @@ export function SupplierSettingsSection() {
       lead_time_days: data.lead_time_days ? parseInt(data.lead_time_days) : null,
       moq: data.moq ? parseInt(data.moq) : 1,
       reorder_method: data.reorder_method || null,
+      reorder_method_other: data.reorder_method === 'other' ? (data.reorder_method_other || null) : null,
       reorder_notes: data.reorder_notes || null,
     });
   };

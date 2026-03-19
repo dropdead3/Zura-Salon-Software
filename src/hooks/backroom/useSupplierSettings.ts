@@ -16,6 +16,7 @@ export interface SupplierGroup {
   lead_time_days: number | null;
   moq: number;
   reorder_method: string | null;
+  reorder_method_other: string | null;
   reorder_notes: string | null;
   product_ids: string[];
   /** One representative row id for updates */
