@@ -34,9 +34,9 @@ export function useInventoryDaysRemaining(locationId?: string) {
 
       let movementsQuery = supabase
         .from('stock_movements')
-        .select('product_id, quantity')
+        .select('product_id, quantity_change')
         .eq('organization_id', orgId!)
-        .eq('reason', 'usage')
+        .in('reason', ['usage', 'dispensing', 'sold'])
         .gte('created_at', twentyEightDaysAgo.toISOString());
 
       if (locationId) movementsQuery = movementsQuery.eq('location_id', locationId);
@@ -50,7 +50,7 @@ export function useInventoryDaysRemaining(locationId?: string) {
         if (!m.product_id) continue;
         usageMap.set(
           m.product_id,
-          (usageMap.get(m.product_id) ?? 0) + Math.abs(m.quantity)
+          (usageMap.get(m.product_id) ?? 0) + Math.abs(m.quantity_change)
         );
       }
 
