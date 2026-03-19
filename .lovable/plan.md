@@ -1,36 +1,46 @@
 
 
-# Remove PO Builder — Simplify to Single PO Action
+# Retail Product Inventory & Reorder Manager — Foundation Build
 
-## Problem
-Three overlapping PO workflows confuse users:
-1. "Add Selected to PO" → stages in PO Builder panel → submit from panel
-2. "Auto Build PO" → dialog → creates POs directly
-3. The table itself already shows supplier grouping, quantities, and costs
+## Context
+The Backroom tracks **Supplies** (product_type = 'Supplies') — the professional products used at mixing stations. But the salon also sells **retail products** (product_type = 'Products', 'Extensions') at the front desk. These 8 products currently have no dedicated inventory management, reorder workflow, or stock tracking. They just sit in a basic Settings → Retail Products table.
 
-The PO Builder panel is a redundant middle layer.
+## What We're Building (Phase 1: Plumbing)
+A new **Retail Inventory** section accessible from the Settings page, reusing the same data model patterns as Backroom but scoped to retail product types. This phase lays the foundation — stock grid, par levels, and reorder queue — without duplicating Backroom's full complexity.
 
-## Approach: Remove PO Builder, Unify Around Auto Build PO
+### Data Layer
+- **New `retail_product_settings` table** — mirrors `location_product_settings` but for retail:
+  - `id`, `organization_id`, `location_id`, `product_id`, `is_tracked` (default true), `par_level`, `reorder_level`, `display_position`, `created_at`, `updated_at`
+  - Unique constraint on `(organization_id, location_id, product_id)`
+  - RLS: org members can read/write their own org's rows
+- **No new inventory_ledger changes** — retail products already use the same `products.quantity_on_hand` and `inventory_ledger` / `inventory_projections` tables. Stock movements work out of the box.
 
-- **Remove** the PO Builder panel entirely (slide-out panel + button + all staging state)
-- **Replace** "Add Selected to PO" in the selection bar with **"Create PO"** that opens `AutoCreatePODialog` with just the selected products
-- **Keep** "Auto Build PO" in the actions row — it opens the same dialog with ALL reorder-eligible products
-- Net result: one dialog, two entry points (selected items vs all items)
+### UI: New "Inventory" Tab on Retail Products Settings
+Add an "Inventory" tab to the existing `RetailProductsSettingsContent` component (`/dashboard/admin/settings?category=retail-products&tab=inventory`):
 
-### What gets removed
-- `POBuilderPanel` component usage (the slide-out panel)
-- `poItemIds`, `poBuilderOpen`, `qtyOverrides`, `toggleAddToPo`, `handleQtyOverride` state
-- "PO Builder" button in the actions row
-- `stageSupplierToPo` function
+1. **Stock Grid** — table showing retail products with current stock, par level, reorder level, retail price, cost price. Inline-editable par/reorder levels (saves to `retail_product_settings`).
+2. **Reorder Queue** — filtered view of products where `quantity_on_hand <= reorder_level`. Shows suggested reorder quantity (par - on_hand), supplier, estimated cost. Simple "Create PO" action reusing the existing `AutoCreatePODialog`.
+3. **Location selector** — same `MapPin` dropdown pattern used in Backroom for per-location scoping.
 
-### What changes
-- Selection bar: "Add Selected to PO" → "Create PO" button that opens `AutoCreatePODialog` with `selectedReorderProducts`
-- Need a second state for the dialog to distinguish "selected only" vs "all items" mode
+### Hooks
+- `useRetailProductSettings(locationId)` — CRUD for `retail_product_settings` table
+- `useRetailReorderQueue(locationId)` — joins products + retail_product_settings to surface items below reorder level
 
-### Files changed
-- **`StockTab.tsx`**: Remove PO Builder state/panel, rewire selection bar button
-- **`POBuilderPanel.tsx`**: No longer imported (can be deleted later)
-- **`CommandCenterRow.tsx`**: Remove `addedToPo` / `onToggleAddToPo` props if present
+### Files Created/Changed
+| File | Action |
+|------|--------|
+| Migration: `retail_product_settings` table + RLS | Create |
+| `src/hooks/retail/useRetailProductSettings.ts` | Create |
+| `src/hooks/retail/useRetailReorderQueue.ts` | Create |
+| `src/components/dashboard/settings/retail/RetailInventoryTab.tsx` | Create |
+| `src/components/dashboard/settings/retail/RetailReorderQueue.tsx` | Create |
+| `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` | Edit — add "Inventory" tab |
 
-**~1 file edited, significant state cleanup.**
+### What's NOT in Phase 1
+- Dedicated PO workflow for retail (reuses Backroom's `AutoCreatePODialog`)
+- Receiving workflow (uses existing Backroom receive flow)
+- Analytics (retail analytics already exist in Analytics Hub)
+- Separate nav entry (stays nested under Settings → Retail Products for now)
+
+This gets the plumbing in place so retail products have proper stock tracking, par levels, and a reorder queue — distinct from Backroom supplies.
 
