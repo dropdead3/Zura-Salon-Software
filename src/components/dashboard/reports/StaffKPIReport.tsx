@@ -65,7 +65,7 @@ export function StaffKPIReport({
     setIsGenerating(true);
     try {
       const doc = new jsPDF('landscape');
-      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const headerOpts = {
         orgName: effectiveOrganization?.name ?? 'Organization',
         logoDataUrl,
