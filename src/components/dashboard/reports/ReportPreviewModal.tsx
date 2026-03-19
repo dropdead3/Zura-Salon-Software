@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { cn } from '@/lib/utils';
 
 export interface ReportPreviewModalProps {
