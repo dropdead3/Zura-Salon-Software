@@ -327,9 +327,9 @@ export function StockTab({ locationId }: StockTabProps) {
     <div className="space-y-4">
       {/* ─── Decision Header ─── */}
       {hasActionItems ? (
-        <div className="relative rounded-lg p-4 overflow-hidden">
-          {/* Left accent bar — thin directive strip */}
-          <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-destructive/50 rounded-l-lg" />
+        <div className="relative rounded-lg border border-destructive/20 bg-destructive/[0.02] p-4 overflow-hidden">
+          {/* Left accent bar */}
+          <span className="absolute left-0 top-0 bottom-0 w-1 bg-destructive/60 rounded-l-lg" />
           <div className="flex items-center justify-between gap-4 flex-wrap pl-3">
             <div className="flex flex-col gap-1">
               <div className="flex items-baseline gap-2">
@@ -684,7 +684,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
               </Badge>
             )}
             <div className="ml-auto flex items-center gap-1.5">
-              {reorderCount > 0 && (
+              {!isUnassigned && reorderCount > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -695,15 +695,17 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
                   Create PO
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
-              >
-                <UserPlus className="w-3 h-3 mr-1" />
-                {isUnassigned ? 'Assign Supplier' : 'Change Supplier'}
-              </Button>
+              {isUnassigned && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                  onClick={(e) => { e.stopPropagation(); onSetSupplier(group.products); }}
+                >
+                  <UserPlus className="w-3 h-3 mr-1" />
+                  Assign Supplier
+                </Button>
+              )}
             </div>
           </div>
         </TableCell>
