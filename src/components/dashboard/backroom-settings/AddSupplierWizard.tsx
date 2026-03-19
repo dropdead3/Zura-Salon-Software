@@ -599,6 +599,9 @@ function StepReview({
     { label: 'Lead Time', value: details.lead_time_days ? `${details.lead_time_days} days` : '' },
     { label: 'MOQ', value: details.moq !== '1' ? details.moq : '' },
     { label: 'Reorder Method', value: details.reorder_method === 'other' && details.reorder_method_other ? `Other — ${details.reorder_method_other}` : details.reorder_method },
+    { label: 'Secondary Contact', value: details.secondary_contact_name },
+    { label: 'Secondary Email', value: details.secondary_contact_email },
+    { label: 'Secondary Phone', value: details.secondary_contact_phone },
   ].filter(r => r.value);
 
   return (
