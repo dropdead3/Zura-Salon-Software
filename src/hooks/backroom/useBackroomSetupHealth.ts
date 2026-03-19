@@ -53,6 +53,8 @@ export function useBackroomSetupHealth() {
       const services = servicesRes.data || [];
       const trackedProducts = products.filter((p: { is_backroom_tracked: boolean }) => p.is_backroom_tracked);
       const trackedServices = services.filter((s: { is_backroom_tracked: boolean }) => s.is_backroom_tracked);
+      const distinctSuppliers = new Set((suppliersRes.data || []).map((r: { supplier_name: string }) => r.supplier_name));
+      const suppliersConfigured = distinctSuppliers.size;
 
       // Products missing cost
       const missingCost = trackedProducts.filter((p: { cost_price: number | null; cost_per_gram: number | null }) => !p.cost_price && !p.cost_per_gram);
