@@ -95,6 +95,10 @@ export function SupplierSettingsSection() {
   }, [groups, selected]);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<ContactForm>();
+  const [showSecondaryContact, setShowSecondaryContact] = useState(false);
+  const watchedSecondaryName = watch('secondary_contact_name');
+  const watchedSecondaryEmail = watch('secondary_contact_email');
+  const watchedSecondaryPhone = watch('secondary_contact_phone');
 
   // Sync form when selection changes
   useEffect(() => {

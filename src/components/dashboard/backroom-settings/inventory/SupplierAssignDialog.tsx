@@ -42,7 +42,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
   // Find existing supplier from any product in this brand
   const existingSupplier = products.find(p => p.supplier_name);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<SupplierForm>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<SupplierForm>({
     defaultValues: {
       supplier_name: '',
       supplier_email: '',
@@ -56,6 +56,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
       secondary_contact_phone: '',
     },
   });
+  const [showSecondaryContact, setShowSecondaryContact] = useState(false);
 
   useEffect(() => {
     if (open) {

@@ -292,6 +292,9 @@ function StepDetails({
   details: SupplierDetails;
   onChange: (d: SupplierDetails) => void;
 }) {
+  const [showSecondaryContact, setShowSecondaryContact] = useState(
+    !!(details.secondary_contact_name || details.secondary_contact_email || details.secondary_contact_phone)
+  );
   const update = (field: keyof SupplierDetails, value: string) =>
     onChange({ ...details, [field]: value });
 
