@@ -26,6 +26,7 @@ import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventory
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
 
 interface CountsTabProps {
