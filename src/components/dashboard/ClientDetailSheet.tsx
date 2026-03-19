@@ -63,6 +63,7 @@ import { BannedClientAlert } from './clients/BannedClientAlert';
 import { BannedClientBadge } from './clients/BannedClientBadge';
 import { BanClientToggle } from './clients/BanClientToggle';
 import { ClientRedoHistory } from './clients/ClientRedoHistory';
+import { ClientFormulaHistoryTab } from './clients/ClientFormulaHistoryTab';
 import { ArchiveClientToggle } from './clients/ArchiveClientToggle';
 import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
