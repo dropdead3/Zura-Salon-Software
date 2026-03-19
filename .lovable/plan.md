@@ -1,36 +1,22 @@
 
 
-# Fix: Reorder Method Select Stuck on "Other"
+# Toggle Secondary Contact with "+ Add another contact" Button
 
-## Root Cause
-When "Other" is selected, an `Input` is conditionally rendered (`{value === 'other' && <Input ... />}`). When the user opens the dropdown again and picks a different option, the state change causes the Input to unmount mid-interaction, which triggers a layout shift that interferes with Radix Select's internal close/commit cycle — the value reverts or doesn't apply.
+## Overview
+In all four files that render a "Secondary Contact" section, wrap the section in a collapsible toggle: hidden by default, revealed when the user clicks a "+ Add another contact" button. If any secondary contact field already has data (edit mode), show it expanded by default.
 
-## Fix
-In all four files that have this pattern, replace the conditional render (`{value === 'other' && <Input />}`) with an always-rendered Input that uses a `hidden` class when not needed. This prevents layout shifts during Select value changes.
+## Files to update (same pattern in each)
 
-### Files to update (same pattern in each)
+1. **`src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`** — Add `showSecondary` state to `SupplierDetailsStep`, default `false`. Replace the `<div className="border-t ...">` secondary block with: a `Button variant="ghost"` reading "+ Add another contact" (with a `Plus` icon) that sets `showSecondary = true`, and conditionally render the fields when true. Include a small "Remove" button to collapse back.
 
-1. **`src/components/dashboard/backroom-settings/AddSupplierWizard.tsx`** (~line 426)
-2. **`src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`** (~line 657)
-3. **`src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`** (~line 371)
-4. **`src/components/dashboard/settings/inventory/SupplierDialog.tsx`** (if same pattern)
+2. **`src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`** — Same pattern inside `SuppliersStep`: add local `showSecondary` state, default to `true` if any secondary field is non-empty, otherwise `false`.
 
-**Before:**
-```tsx
-{reorderMethod === 'other' && (
-  <Input value={...} onChange={...} placeholder="Specify method..." className="mt-1.5" />
-)}
-```
+3. **`src/components/dashboard/backroom-settings/SupplierSettingsSection.tsx`** — Same pattern in the contact form. Default expanded if existing data is present.
 
-**After:**
-```tsx
-<Input
-  value={...}
-  onChange={...}
-  placeholder="Specify method..."
-  className={cn("mt-1.5", reorderMethod !== 'other' && "hidden")}
-/>
-```
+4. **`src/components/dashboard/backroom-settings/inventory/SupplierAssignDialog.tsx`** — Same pattern.
 
-This keeps the Input in the DOM at all times, preventing the layout shift that breaks the Select.
+## UI detail
+- The toggle button sits where the "Secondary Contact" heading currently is, on the border-top divider line.
+- Button style: `variant="ghost" size="sm"` with `Plus` icon, text "+ Add another contact".
+- When expanded, a small `X` or "Remove" link appears next to the "Secondary Contact" heading to collapse (and optionally clear fields).
 
