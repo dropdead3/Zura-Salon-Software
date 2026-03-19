@@ -120,6 +120,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const orgId = useBackroomOrgId();
   const { effectiveOrganization } = useOrganizationContext();
   const createPO = useCreateMultiLinePO();
+  const batchCreatePOs = useBatchCreatePurchaseOrders();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -133,6 +134,7 @@ export function StockTab({ locationId }: StockTabProps) {
   const [severityFilter, setSeverityFilter] = useState<'all' | 'critical' | 'low' | 'needs_reorder'>('all');
   const [poItemIds, setPoItemIds] = useState<Set<string>>(new Set());
   const [poBuilderOpen, setPoBuilderOpen] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
 
   const toggleAddToPo = useCallback((productId: string) => {
     setPoItemIds(prev => {
