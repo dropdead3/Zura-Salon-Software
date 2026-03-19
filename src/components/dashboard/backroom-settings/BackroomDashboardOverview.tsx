@@ -18,8 +18,9 @@ import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet,
   ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Sparkles, Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
+  Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
 } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { BackroomInsightsSection } from './BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
@@ -102,7 +103,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center gap-3 text-left">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <ZuraZIcon className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="flex items-baseline gap-1.5">
