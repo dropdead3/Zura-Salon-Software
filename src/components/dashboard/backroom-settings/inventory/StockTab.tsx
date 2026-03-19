@@ -69,6 +69,8 @@ async function exportStockPdf(
   locationInfo?: ReportLocationInfo,
   /** Pass an existing jsPDF doc to append pages (combined mode) */
   existingDoc?: InstanceType<typeof import('jspdf').jsPDF>,
+  /** When true, return PDF bytes instead of triggering download */
+  returnBytes?: boolean,
 ) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
