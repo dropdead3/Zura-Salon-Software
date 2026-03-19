@@ -154,8 +154,11 @@ export function StockTab({ locationId }: StockTabProps) {
     }
     if (categoryFilter !== 'all') rows = rows.filter(r => r.category === categoryFilter);
     if (statusFilter !== 'all') rows = rows.filter(r => r.status === statusFilter);
+    if (severityFilter === 'critical') rows = rows.filter(r => r.severity === 'critical');
+    else if (severityFilter === 'low') rows = rows.filter(r => r.severity === 'low');
+    else if (severityFilter === 'needs_reorder') rows = rows.filter(r => r.recommended_order_qty > 0);
     return rows;
-  }, [inventory, search, categoryFilter, statusFilter]);
+  }, [inventory, search, categoryFilter, statusFilter, severityFilter]);
 
   // Group by supplier → category
   const supplierGroups = useMemo((): SupplierGroup[] => {
