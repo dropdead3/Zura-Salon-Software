@@ -1,130 +1,153 @@
 
 
-# Smart Inventory Command Center — System Architecture Plan
+## Timezone-Safe Scheduling (Implemented)
 
-## Current State Audit
+### Problem
+`new Date()` used browser-local timezone for "today", current-time indicators, and past-date validation. Users traveling to different timezones saw incorrect schedule state.
 
-**What exists:**
-- **StockTab** (819 lines): Brand-grouped table with columns: Checkbox, Product, Container, Stock, Reorder Pt, Par Level, Reorder Qty, PO History sparkline, Status (pill badge), Cost, Actions (audit + quick reorder). KPI cards, inline editing, PDF export, Auto Create POs, Auto-Set Pars, multi-select with bulk PO creation.
-- **ReorderTab** (610 lines): Supplier-grouped reorder queue with editable order quantities, bulk PO creation, email PO preview, AI recommendations.
-- **OrdersTab** (412 lines): PO lifecycle (draft/sent/received/cancelled), expandable line items, delivery date tracking, email actions.
-- **ReceiveTab**: Line-by-line PO receiving with discrepancy codes.
-- **CountsTab**: Physical inventory count entry.
-- **AuditLogTab**: Change history.
-- **ReorderAnalyticsTab**: 6-month analytics.
-- **Data layer** (`useBackroomInventoryTable`): Computes `effective_stock = stock + open_po_qty`, `recommended_order_qty = par - stock - open_po_qty`. Already handles multi-location via `location_product_settings`.
+### Solution
+- Created `src/lib/orgTime.ts` — pure helpers: `getOrgToday()`, `orgNowMinutes()`, `isOrgToday()`, `isOrgTomorrow()`, `getOrgTodayDate()`
+- Created `src/hooks/useOrgNow.ts` — reactive hook returning `todayStr`, `nowMinutes`, `todayDate`, `isToday()`, `isTomorrow()` with 60s refresh
+- No fake Date objects exposed — only primitives (string, number) to prevent accidental misuse with date-fns
 
-**Key findings:**
-- The suggested order logic already exists (`recommended_order_qty`) with pending PO integration
-- Supplier grouping exists in ReorderTab but not StockTab
-- Manual override exists in ReorderTab (`qtyOverrides`) but not in StockTab
-- Status system uses pill badges, not the dual-layer (state + severity) specified
-- No "days remaining" or usage intelligence in the stock view
-- StockTab and ReorderTab are separate — the spec wants them merged into one Command Center view
-- PO Builder panel (right-side) doesn't exist
-- Summary/control bar with clickable filters doesn't exist (KPI cards partially fill this role)
-- The table still shows Reorder Pt, Par Level, Reorder Qty, PO History as primary columns — spec says remove these
+### Files Updated
+- `ScheduleHeader.tsx` — today button, quick days, isToday checks
+- `DayView.tsx` — current-time indicator, late check-in detection, past-slot shading
+- `WeekView.tsx` — current-time indicator, today/tomorrow labels, past-slot shading
+- `MonthView.tsx` — today highlight
+- `AgendaView.tsx` — today/tomorrow labels, today border
+- `ScheduleActionBar.tsx` — payment queue timing
+- `booking/StylistStep.tsx` — quick dates, calendar disabled past-date check
+- `meetings/MeetingSchedulerWizard.tsx` — default date, calendar disabled check
+- `shifts/ShiftScheduleView.tsx` — today highlight, "This Week" button
+- `useHuddles.ts` — today's huddle query
 
----
+## Auto-Reorder with Supplier Communication (Implemented)
 
-## Phased Build Plan
+### What It Does
+Organizations can opt into automatic reorder — when stock dips below threshold, POs are calculated (using MOQ and par levels) and sent directly to the supplier via email.
 
-### Section 1 — Table Restructure
-**What:** Replace StockTab's column layout with the command center columns: Product, Stock, Suggested Order (primary), Status (dual-layer placeholder), Supplier, Cost, Actions. Move Reorder Pt, Par Level, PO History into an expandable detail row.
-**Dependencies:** None — pure UI restructure.
-**Files:** `StockTab.tsx`
+### Database Changes
+- `products.par_level` (INT, nullable) — desired stock level to reorder up to
+- `product_suppliers.moq` (INT, default 1) — minimum order quantity
+- `inventory_alert_settings.auto_reorder_enabled` (BOOL, default false)
+- `inventory_alert_settings.auto_reorder_mode` (TEXT, default 'to_par') — 'to_par' or 'moq_only'
+- `inventory_alert_settings.max_auto_reorder_value` (NUMERIC, nullable) — daily spend cap
+- `purchase_orders.supplier_confirmed_at` (TIMESTAMPTZ, nullable) — for tracking confirmations
 
-### Section 2 — Suggested Order Engine
-**What:** Make `recommended_order_qty` the dominant visual element. Bold when > 0, "—" when none. Add `effective_stock` display showing `(X on order)`. Integrate manual override (editable qty field with Auto/Edited indicator) into StockTab.
-**Dependencies:** Section 1 (column exists). Data layer already supports this.
-**Files:** `StockTab.tsx`, potentially `useBackroomInventoryTable.ts` (add effective_stock field)
+### Quantity Calculation
+```
+deficit = par_level - quantity_on_hand
+order_qty = max(moq, deficit)
+if moq > 1: round up to nearest MOQ multiple
+```
+Fallback: if par_level is null, uses `reorder_level * 2`.
 
-### Section 3 — Dual-Layer Status System
-**What:** Replace pill badges with stacked text (State: "Out of Stock" / "In Stock") + (Severity: Critical / Low / Healthy). Add left color bar for severity. Red only for critical.
-**Dependencies:** Section 1 (status column). Update `STOCK_STATUS_CONFIG`.
-**Files:** `StockTab.tsx`, `useBackroomInventoryTable.ts` (new severity computation)
+### Files Updated
+- Migration: Added columns to products, product_suppliers, inventory_alert_settings, purchase_orders
+- `check-reorder-levels/index.ts` — auto-send logic with MOQ/par calculation, spend cap, email invocation
+- `AlertSettingsCard.tsx` — auto-reorder toggle, mode selector, spend cap input
+- `useInventoryAlertSettings.ts` — updated interface
+- `useProducts.ts` — added par_level to Product interface
+- `useProductSuppliers.ts` — added moq to ProductSupplier interface
+- `ProductEditDialog.tsx` — added par level field
+- `RetailProductsSettingsContent.tsx` — added par level to product form
+- `SupplierDialog.tsx` — added MOQ field
 
-### Section 4 — Row Prioritization
-**What:** Subtle highlight for rows needing action. Stronger emphasis for critical. Elevated feel via border-left or background gradient.
-**Dependencies:** Section 3 (severity available).
-**Files:** `StockTab.tsx`
+### Safety Features
+- Spend cap: daily auto-reorder pauses when cumulative PO value exceeds cap
+- Audit trail: auto_reorder logged as stock_movement reason
+- Supplier confirmation tracking via supplier_confirmed_at timestamp
 
-### Section 5 — Supplier Grouping
-**What:** Group rows by supplier (collapsible). Header shows supplier name + estimated total. "Unassigned" group last.
-**Dependencies:** Section 1 (table structure). Replaces current brand grouping.
-**Files:** `StockTab.tsx`
+## Product Movement Rating Badges (Implemented)
 
-### Section 6 — Summary / Control Bar
-**What:** Top summary strip: total items needing reorder, critical count, estimated PO value. Clickable filters that scope the table.
-**Dependencies:** Section 3 (severity data).
-**Files:** `StockTab.tsx`
+### What It Does
+Every product gets a dynamic movement rating badge (Best Seller, Popular, Steady, Slow Mover, Stagnant, Dead Weight) computed from 90-day sales velocity data.
 
-### Section 7 — Action System
-**What:** Replace audit/cart icons with primary "Add to PO" action. Behavior: adds item using Suggested Order, toggles to "Added" state, allows inline edit of qty.
-**Dependencies:** Section 2 (suggested order visible).
-**Files:** `StockTab.tsx`
+### Rating Tiers
+- **Best Seller**: Top 10% velocity AND >0.5 units/day (emerald)
+- **Popular**: Top 25% velocity AND >0.2 units/day (blue)
+- **Steady**: Velocity >0.05/day (muted)
+- **Slow Mover**: Velocity >0 but ≤0.05/day (amber)
+- **Stagnant**: Zero velocity, sold within 180 days (orange)
+- **Dead Weight**: Zero velocity, 180+ days or never sold (red)
+- Products with zero stock excluded from negative ratings
 
-### Section 8 — Bulk Action System
-**What:** Sticky bottom bar on selection: "Add Selected to PO", "Auto Build PO", "Clear Selection". Est. cost summary.
-**Dependencies:** Section 7 (action system).
-**Files:** `StockTab.tsx`
+### Files Created
+- `src/lib/productMovementRating.ts` — pure rating logic + badge config
+- `src/hooks/useProductVelocity.ts` — lightweight 90-day POS velocity query
+- `src/components/ui/MovementBadge.tsx` — shared badge component with tooltip
 
-### Section 9 — PO Builder Panel
-**What:** Right-side slide panel. Groups items by supplier. Shows items, quantities, editable values, cost per item, total cost. States: Draft / Submitted. Can manage multiple POs.
-**Dependencies:** Sections 7 + 8 (items added to PO).
-**Files:** New `POBuilderPanel.tsx`, `StockTab.tsx` (layout split)
+### Files Updated
+- `RetailProductsSettingsContent.tsx` — Movement column + filter dropdown in products table
+- `RetailAnalyticsContent.tsx` — Movement badges on product performance table + Movement Distribution card (donut chart with actionable callouts)
+- `ProductCard.tsx` — Best Seller/Popular badges on public shop cards (positive only)
+- `ProductDetailModal.tsx` — Movement badge with velocity context
 
-### Section 10 — Auto Build PO
-**What:** "Auto Build PO" button groups all items with suggested orders by supplier, populates PO builder panel.
-**Dependencies:** Section 9 (PO panel exists).
-**Files:** `StockTab.tsx`, `POBuilderPanel.tsx`
+## Inventory Intelligence Suite v2 (Implemented)
 
-### Section 11 — Smart Inventory Intelligence
-**What:** Add secondary info per row: days remaining (from usage velocity), recent usage, optional trend. Display as subtle secondary text, not cluttered.
-**Dependencies:** Section 1 (table structure). May need usage data hook.
-**Files:** `StockTab.tsx`, possibly new `useInventoryIntelligence.ts`
+### 1. Dead Stock Auto-Clearance Pipeline
+- `DeadStockAlertCard.tsx` — Surfaces Dead Weight/Stagnant products not yet in clearance with suggested discount tiers (10%/25%/50% based on idle days)
+- One-click "Mark for Clearance" applies discount and sets clearance_status
 
-### Section 12 — Interaction + UX Polish
-**What:** Row hover states, button hover, smooth transitions, no layout shift, no overflow, stable rendering. No heavy animations.
-**Dependencies:** All sections complete.
-**Files:** All inventory components
+### 2. Supplier Lead Time Tracker
+- `usePurchaseOrders.ts` — `useMarkPurchaseOrderReceived` already computes actual delivery days and updates `product_suppliers.avg_delivery_days` via running average
+- `parLevelSuggestion.ts` — Updated to accept supplier-provided lead time instead of hardcoded 7-day default, with bounds clamping
 
-### Section 13 — Visual Design System
-**What:** Enforce consistent radii, spacing, right-aligned numbers, clean "—" placeholders, reduced visual noise. Stripe/Linear/Apple feel.
-**Dependencies:** Section 12.
-**Files:** All inventory components
+### 3. Inventory Valuation Dashboard Card
+- `InventoryValuationCard.tsx` — Shows total inventory at cost/retail, potential margin %, capital-at-risk (slow/stagnant/dead weight), with donut chart breakdown
 
----
+### 4. Reorder Approval Queue
+- `ReorderApprovalCard.tsx` — Surfaces draft POs from auto-reorder with one-click approve (→ sent) or reject (→ cancelled)
 
-## Dependency Graph
+### 5. Stock Transfer Between Locations
+- Migration: Created `stock_transfers` table with RLS (org member read, org admin manage)
+- `useStockTransfers.ts` — CRUD hooks for stock transfers with stock movement logging
+- `StockTransferDialog.tsx` — Dialog for creating transfers between locations
+- `RetailProductsSettingsContent.tsx` — "Transfer Stock" button added to Inventory tab (visible for multi-location orgs)
 
-```text
-Section 1 (Table Restructure)
-  ├── Section 2 (Suggested Order Engine)
-  │     └── Section 7 (Action System)
-  │           └── Section 8 (Bulk Actions)
-  │                 └── Section 9 (PO Builder Panel)
-  │                       └── Section 10 (Auto Build PO)
-  ├── Section 3 (Dual-Layer Status)
-  │     ├── Section 4 (Row Prioritization)
-  │     └── Section 6 (Summary/Control Bar)
-  ├── Section 5 (Supplier Grouping)
-  └── Section 11 (Intelligence)
+## Enhancement 1: Expiry Tracking (Implemented)
 
-Section 12 (UX Polish) — after all above
-Section 13 (Visual Design) — after Section 12
+### What It Does
+Products can have an optional expiration date (`expires_at`) and per-product alert threshold (`expiry_alert_days`, default 30). The system surfaces expiring inventory with color-coded badges in the product table and an analytics card with auto-clearance suggestions.
+
+### Database Changes
+- `products.expires_at` (DATE, nullable) — expiration date for perishable products
+- `products.expiry_alert_days` (INTEGER, default 30) — days before expiry to trigger alerts
+
+### Expiry Alert Buckets
+- **Expired** (red): past expiration → suggests 50% markdown
+- **Critical** (orange): within alert threshold → suggests 25% markdown
+- **Warning** (amber): within 2× alert threshold → suggests 10% markdown
+
+### Files Created
+- `src/components/dashboard/analytics/ExpiryAlertCard.tsx` — PinnableCard showing expiring products with one-click clearance actions
+
+### Files Updated
+- `src/hooks/useProducts.ts` — Added `expires_at`, `expiry_alert_days` to Product interface; added `expiringOnly` filter
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Expiry date + alert days in product form; color-coded Expiry column in product table
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ExpiryAlertCard into analytics hub
+
+## Enhancement 2: Shrinkage Detection (Implemented)
+
+### What It Does
+Physical stocktake workflow with variance reporting. Staff record actual counts via a Stocktake dialog, and the system compares against expected quantities (system records). A Shrinkage Report card in analytics surfaces products with negative variance (loss) ranked by estimated cost impact.
+
+### Database Changes
+- Created `stock_counts` table with computed `variance` column (counted - expected), RLS policies (org member read/insert, org admin update/delete), and indexes
+
+### Shrinkage Calculation
+```
+variance = counted_quantity - expected_quantity
+shrinkage_units = |variance| when variance < 0
+shrinkage_cost = shrinkage_units × cost_price
 ```
 
-## Risks & Conflicts
+### Files Created
+- `src/hooks/useStockCounts.ts` — CRUD hooks for stock counts + `useShrinkageSummary` for aggregated shrinkage data
+- `src/components/dashboard/settings/inventory/StocktakeDialog.tsx` — Full stocktake UI with search, inline count entry, real-time variance display
+- `src/components/dashboard/analytics/ShrinkageReportCard.tsx` — PinnableCard showing products with shrinkage, severity badges, estimated loss
 
-1. **StockTab vs ReorderTab overlap**: The spec merges reorder logic into the main stock view. The existing ReorderTab becomes partially redundant. Recommend keeping ReorderTab as a focused "reorder-only" filtered view but building the command center into StockTab.
-2. **Brand grouping → Supplier grouping**: Current StockTab groups by brand. Switching to supplier grouping changes the mental model. Some products may lack suppliers. Need robust "Unassigned" handling.
-3. **File size**: StockTab is already 819 lines. This restructure will require extracting sub-components to keep it manageable.
-4. **Data layer changes are minimal**: `useBackroomInventoryTable` already computes most needed fields. Adding `effective_stock` and severity is lightweight.
-
-## Recommended Build Sequence
-
-1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13
-
-One section at a time. Approval between each.
-
+### Files Updated
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` — Added "Stocktake" button to Inventory tab toolbar
+- `src/components/dashboard/analytics/RetailAnalyticsContent.tsx` — Wired ShrinkageReportCard into analytics hub

@@ -1,11 +1,11 @@
 /**
- * StockTab — Stock overview with KPI cards and enhanced inventory table.
- * Groups by brand → category with collapsible brand sections,
- * supplier chips, "Set Supplier" actions, inline editing, PDF export,
- * multi-select checkboxes, per-row reorder, and Auto Create POs.
+ * StockTab — Smart Inventory Command Center.
+ * Columns: Product, Stock, Suggested Order (primary), Status, Supplier, Cost, Actions.
+ * Expandable detail rows reveal Reorder Pt, Par Level, Container, PO History.
+ * Groups by brand with collapsible sections.
  */
 
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, Truck, UserPlus, FileDown, History, ShoppingCart, Zap, SlidersHorizontal, Pencil } from 'lucide-react';
+import { Loader2, Search, Package, AlertTriangle, XCircle, DollarSign, ChevronDown, ChevronRight, UserPlus, FileDown, ShoppingCart, Zap, SlidersHorizontal, Truck } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -28,8 +28,8 @@ import { SupplierAssignDialog } from './SupplierAssignDialog';
 import { InventoryAuditDialog } from './InventoryAuditDialog';
 import { AutoCreatePODialog } from './AutoCreatePODialog';
 import { AutoParDialog } from './AutoParDialog';
-import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { useProductPOHistory } from '@/hooks/backroom/useProductPOHistory';
+import { CommandCenterRow, stripSizeSuffix, formatCategoryLabel } from './CommandCenterRow';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, type ReportHeaderOptions } from '@/lib/reportPdfLayout';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -43,92 +43,6 @@ interface BrandGroup {
   products: BackroomInventoryRow[];
   supplierName: string | null;
   categories: Map<string, BackroomInventoryRow[]>;
-}
-
-// ─── Helpers ────────────────────────────────────────────
-
-function stripSizeSuffix(name: string): string {
-  return name.replace(/\s*[—–-]\s*\d+(\.\d+)?\s*(g|oz|ml|L)\s*$/i, '').trim();
-}
-
-function formatCategoryLabel(slug: string): string {
-  return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-// ─── Inline Edit Cell ──────────────────────────────────
-
-function InlineEditCell({
-  value,
-  placeholder = '—',
-  onSave,
-  className,
-}: {
-  value: number | null;
-  placeholder?: string;
-  onSave: (newValue: number | null) => void;
-  className?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [editing]);
-
-  const commit = () => {
-    setEditing(false);
-    const trimmed = draft.trim();
-    if (trimmed === '') {
-      onSave(null);
-      return;
-    }
-    const parsed = parseFloat(trimmed);
-    if (!isNaN(parsed) && parsed !== value) {
-      onSave(parsed);
-    }
-  };
-
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        type="number"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit();
-          if (e.key === 'Escape') setEditing(false);
-        }}
-        className={cn(
-          'w-16 h-7 px-1.5 text-right text-sm tabular-nums rounded border border-primary/40 bg-background focus:outline-none focus:ring-1 focus:ring-primary/40',
-          className,
-        )}
-        autoCapitalize="off"
-      />
-    );
-  }
-
-  return (
-    <span
-      className={cn(
-        'group/edit cursor-pointer border-b border-dashed border-muted-foreground/30 hover:border-primary/60 transition-colors tabular-nums inline-flex items-center gap-1',
-        className,
-      )}
-      onClick={() => {
-        setDraft(value != null ? String(value) : '');
-        setEditing(true);
-      }}
-      title="Click to edit"
-    >
-      {value != null ? value : placeholder}
-      <Pencil className="w-2.5 h-2.5 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors shrink-0" />
-    </span>
-  );
 }
 
 // ─── PDF Export ──────────────────────────────────────────
@@ -161,27 +75,23 @@ async function exportStockPdf(
   const tableData = rows.map((r) => [
     stripSizeSuffix(r.name),
     r.brand || '—',
-    r.category ? formatCategoryLabel(r.category) : '—',
     r.quantity_on_hand,
-    r.reorder_level ?? '—',
-    r.par_level ?? '—',
     r.recommended_order_qty > 0 ? r.recommended_order_qty : '—',
     STOCK_STATUS_CONFIG[r.status].label,
+    r.supplier_name || '—',
     r.cost_price != null ? formatCurrency(r.cost_price) : r.cost_per_gram != null ? `${formatCurrency(r.cost_per_gram)}/g` : '—',
   ]);
 
   autoTable(doc, {
     startY: 72,
-    head: [['Product', 'Brand', 'Category', 'Stock', 'Reorder Pt', 'Par Level', 'Reorder Qty', 'Status', 'Cost']],
+    head: [['Product', 'Brand', 'Stock', 'Suggested Order', 'Status', 'Supplier', 'Cost']],
     body: tableData,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [41, 41, 41], fontSize: 8, fontStyle: 'bold' },
     columnStyles: {
+      2: { halign: 'right' },
       3: { halign: 'right' },
-      4: { halign: 'right' },
-      5: { halign: 'right' },
       6: { halign: 'right' },
-      8: { halign: 'right' },
     },
     margin: { top: 72 },
     didDrawPage: () => { addReportHeader(doc, headerOpts); },
@@ -191,7 +101,7 @@ async function exportStockPdf(
   doc.save(`inventory-stock-${format(now, 'yyyy-MM-dd')}.pdf`);
 }
 
-// ─── Main Component ─────────────────────────────────────
+// ─── Main Component ─────────────────────────────────
 
 export function StockTab({ locationId }: StockTabProps) {
   const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
@@ -286,7 +196,6 @@ export function StockTab({ locationId }: StockTabProps) {
   const selectedProducts = filtered.filter(r => selectedIds.has(r.id));
   const selectedReorderProducts = selectedProducts.filter(r => r.recommended_order_qty > 0);
 
-  // Products for Auto PO — use selection if any, otherwise all needing reorder
   const autoPoProducts = selectedReorderProducts.length > 0
     ? selectedReorderProducts
     : inventory.filter(r => r.recommended_order_qty > 0);
@@ -443,7 +352,7 @@ export function StockTab({ locationId }: StockTabProps) {
         </div>
       )}
 
-      {/* Stock Table */}
+      {/* Command Center Table */}
       {filtered.length === 0 ? (
         <div className={tokens.empty.container}>
           <Package className={tokens.empty.icon} />
@@ -465,34 +374,21 @@ export function StockTab({ locationId }: StockTabProps) {
                     />
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Container</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 justify-end">
                       Stock
                       <MetricInfoTooltip description="Current quantity on hand. Click the number to adjust." />
                     </span>
                   </TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
                     <span className="inline-flex items-center gap-1 justify-end">
-                      Reorder Pt
-                      <MetricInfoTooltip description="When stock drops to this level, a reorder is triggered. Click to edit." />
+                      Suggested Order
+                      <MetricInfoTooltip description="Units needed to reach Par Level, minus any on open POs. The primary decision signal." />
                     </span>
                   </TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>
-                    <span className="inline-flex items-center gap-1 justify-end">
-                      Par Level
-                      <MetricInfoTooltip description="Your target stock level — the ideal quantity to have on hand. Click to edit." />
-                    </span>
-                  </TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>
-                    <span className="inline-flex items-center gap-1 justify-end">
-                      Reorder Qty
-                      <MetricInfoTooltip description="How many units to order to reach Par Level, minus any already on open POs." />
-                    </span>
-                  </TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell w-[72px]')}>PO History</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden xl:table-cell')}>Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Supplier</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Cost</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'w-20')} />
                 </TableRow>
               </TableHeader>
@@ -502,7 +398,6 @@ export function StockTab({ locationId }: StockTabProps) {
                     key={bg.brand}
                     group={bg}
                     formatCurrency={formatCurrency}
-                    formatNumber={formatNumber}
                     orgId={orgId}
                     locationId={locationId}
                     adjustStock={adjustStock}
@@ -581,10 +476,9 @@ function KpiCard({ icon, label, value, accent, onClick, tooltip }: {
   );
 }
 
-function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap }: {
+function BrandSection({ group, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onSetSupplier, onAudit, onQuickReorder, poHistoryMap }: {
   group: BrandGroup;
   formatCurrency: (n: number) => string;
-  formatNumber: (n: number) => string;
   orgId: string | undefined;
   locationId: string | undefined;
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
@@ -606,7 +500,7 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
         className="bg-muted/30 hover:bg-muted/40 cursor-pointer"
         onClick={() => setOpen(!open)}
       >
-        <TableCell colSpan={11} className="py-2">
+        <TableCell colSpan={8} className="py-2">
           <div className="flex items-center gap-2">
             {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             <span className={cn(tokens.label.tiny, 'text-foreground/80')}>{group.brand}</span>
@@ -647,7 +541,6 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
           category={category}
           rows={rows}
           formatCurrency={formatCurrency}
-          formatNumber={formatNumber}
           orgId={orgId}
           locationId={locationId}
           adjustStock={adjustStock}
@@ -663,11 +556,10 @@ function BrandSection({ group, formatCurrency, formatNumber, orgId, locationId, 
   );
 }
 
-function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap }: {
+function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap }: {
   category: string;
   rows: BackroomInventoryRow[];
   formatCurrency: (n: number) => string;
-  formatNumber: (n: number) => string;
   orgId: string | undefined;
   locationId: string | undefined;
   adjustStock: ReturnType<typeof useInlineStockEdit>['adjustStock'];
@@ -682,138 +574,27 @@ function CategoryGroup({ category, rows, formatCurrency, formatNumber, orgId, lo
     <>
       {/* Category sub-header */}
       <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={11} className="py-1 pl-10">
+        <TableCell colSpan={8} className="py-1 pl-10">
           <span className="text-muted-foreground text-[11px] tracking-wide">{formatCategoryLabel(category)}</span>
           <span className="text-muted-foreground/50 text-[10px] ml-1.5">({rows.length})</span>
         </TableCell>
       </TableRow>
-      {rows.map((row) => {
-        const statusCfg = STOCK_STATUS_CONFIG[row.status];
-        const needsReorder = row.recommended_order_qty > 0;
-        return (
-          <TableRow
-            key={row.id}
-            className={cn(needsReorder && 'bg-warning/[0.03] hover:bg-warning/[0.06]')}
-          >
-            <TableCell className="w-10">
-              <Checkbox
-                checked={selectedIds.has(row.id)}
-                onCheckedChange={() => onToggleSelect(row.id)}
-              />
-            </TableCell>
-            <TableCell className="pl-2">
-              <div>
-                <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
-                {row.sku && <span className="text-muted-foreground text-xs ml-2">{row.sku}</span>}
-              </div>
-            </TableCell>
-            <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{row.container_size || '—'}</TableCell>
-            <TableCell className="text-right">
-              <InlineEditCell
-                value={row.quantity_on_hand}
-                onSave={(newVal) => {
-                  if (!orgId || newVal == null) return;
-                  adjustStock.mutate({
-                    orgId,
-                    productId: row.id,
-                    currentQty: row.quantity_on_hand,
-                    newQty: newVal,
-                    locationId,
-                  });
-                }}
-                className="font-medium"
-              />
-            </TableCell>
-            <TableCell className="text-right hidden sm:table-cell">
-              <InlineEditCell
-                value={row.reorder_level}
-                onSave={(newVal) => {
-                  if (!orgId) return;
-                  updateMinMax.mutate({
-                    orgId,
-                    productId: row.id,
-                    field: 'reorder_level',
-                    value: newVal,
-                    oldValue: row.reorder_level,
-                    locationId,
-                  });
-                }}
-                className="text-muted-foreground"
-              />
-            </TableCell>
-            <TableCell className="text-right hidden sm:table-cell">
-              <InlineEditCell
-                value={row.par_level}
-                onSave={(newVal) => {
-                  if (!orgId) return;
-                  updateMinMax.mutate({
-                    orgId,
-                    productId: row.id,
-                    field: 'par_level',
-                    value: newVal,
-                    oldValue: row.par_level,
-                    locationId,
-                  });
-                }}
-                className="text-muted-foreground"
-              />
-            </TableCell>
-            <TableCell className="text-right hidden lg:table-cell tabular-nums">
-              {needsReorder ? (
-                <span className="text-warning font-medium">{row.recommended_order_qty}</span>
-              ) : (
-                <span className="text-muted-foreground/40">—</span>
-              )}
-              {row.open_po_qty > 0 && (
-                <span className="text-primary/60 text-[10px] ml-1" title={`${row.open_po_qty} on open POs`}>
-                  ({row.open_po_qty} pending)
-                </span>
-              )}
-            </TableCell>
-            <TableCell className="hidden xl:table-cell">
-              {(() => {
-                const history = poHistoryMap?.get(row.id);
-                if (!history || history.every(v => v === 0)) {
-                  return <span className="text-muted-foreground/40 text-xs">—</span>;
-                }
-                return <TrendSparkline data={history} variant="muted" width={64} height={20} />;
-              })()}
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline" className={cn('text-[10px] font-medium border', statusCfg.className)}>
-                {statusCfg.label}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right hidden xl:table-cell text-muted-foreground tabular-nums">
-              {row.cost_price != null ? formatCurrency(row.cost_price) : row.cost_per_gram != null ? `${formatCurrency(row.cost_per_gram)}/g` : '—'}
-            </TableCell>
-            <TableCell className="w-20">
-              <div className="flex items-center gap-0.5 justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                  onClick={() => onAudit(row.id, row.name)}
-                  title="View audit trail"
-                >
-                  <History className="w-3.5 h-3.5" />
-                </Button>
-                {needsReorder && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-warning hover:text-warning hover:bg-warning/10"
-                    onClick={() => onQuickReorder(row)}
-                    title={`Quick reorder ${row.recommended_order_qty} units`}
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
-        );
-      })}
+      {rows.map((row) => (
+        <CommandCenterRow
+          key={row.id}
+          row={row}
+          isSelected={selectedIds.has(row.id)}
+          onToggleSelect={onToggleSelect}
+          formatCurrency={formatCurrency}
+          orgId={orgId}
+          locationId={locationId}
+          adjustStock={adjustStock}
+          updateMinMax={updateMinMax}
+          onAudit={onAudit}
+          onQuickReorder={onQuickReorder}
+          poHistory={poHistoryMap?.get(row.id)}
+        />
+      ))}
     </>
   );
 }
