@@ -413,7 +413,7 @@ export function CommandCenterRow({
         {/* Actions — Point 6: Upgraded Add to PO */}
         <TableCell className="w-24">
           <div className="flex items-center gap-0.5 justify-end">
-            {(needsReorder || isOverridden) && (
+            {canAddToPo && (
               <Button
                 variant="ghost"
                 size="sm"
