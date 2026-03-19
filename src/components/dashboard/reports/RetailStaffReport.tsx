@@ -40,6 +40,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: businessSettings } = useBusinessSettings();
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
 
   const generatePDF = async () => {
