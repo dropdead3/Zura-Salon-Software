@@ -157,7 +157,7 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
           <ReceiveTab />
         </TabsContent>
         <TabsContent value="counts" className="mt-4">
-          <CountsTab locationId={effectiveLocationId} />
+          <CountsTab locationId={effectiveLocationId} pdfExportRef={pdfExportRef} />
         </TabsContent>
         <TabsContent value="audit" className="mt-4">
           <AuditLogTab locationId={effectiveLocationId} />
