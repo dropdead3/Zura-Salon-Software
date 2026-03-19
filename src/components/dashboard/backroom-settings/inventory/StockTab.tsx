@@ -38,10 +38,10 @@ interface StockTabProps {
   locationId?: string;
 }
 
-interface BrandGroup {
-  brand: string;
+interface SupplierGroup {
+  supplier: string;
   products: BackroomInventoryRow[];
-  supplierName: string | null;
+  estimatedTotal: number;
   categories: Map<string, BackroomInventoryRow[]>;
 }
 
