@@ -213,5 +213,8 @@ export async function generateCountSheetPdf({
 
   addReportFooter(doc);
 
+  if (returnBytes) {
+    return doc.output('arraybuffer');
+  }
   doc.save(buildReportFileName({ orgName, locationName, reportSlug: 'count-sheet', dateFrom: today }));
 }
