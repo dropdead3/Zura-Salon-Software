@@ -148,7 +148,7 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
         </TabsList>
 
         <TabsContent value="stock" className="mt-4">
-          <StockTab locationId={effectiveLocationId} />
+          <StockTab locationId={effectiveLocationId} pdfExportRef={pdfExportRef} />
         </TabsContent>
         <TabsContent value="orders" className="mt-4">
           <OrdersTab />
