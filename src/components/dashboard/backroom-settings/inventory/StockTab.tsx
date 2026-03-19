@@ -665,7 +665,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
     <>
       {/* Supplier header row */}
       <TableRow
-        className="bg-muted/30 hover:bg-muted/40 cursor-pointer transition-colors duration-150"
+        className="bg-muted/20 hover:bg-muted/30 cursor-pointer transition-colors duration-150"
         onClick={() => setOpen(!open)}
       >
         <TableCell colSpan={8} className="py-2">
