@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isPast } from 'date-fns';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useHighRiskInventory } from '@/hooks/inventory/useInventoryRiskProjection';
 import { useBackroomExceptions } from '@/hooks/backroom/useBackroomExceptions';
