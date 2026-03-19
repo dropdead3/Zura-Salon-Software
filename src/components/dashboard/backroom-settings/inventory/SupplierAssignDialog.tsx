@@ -139,7 +139,10 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
               <Input id="account_number" {...register('account_number')} placeholder="ACC-123" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lead_time_days">Lead Time (days)</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="lead_time_days">Lead Time (days)</Label>
+                <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
+              </div>
               <Input id="lead_time_days" type="number" {...register('lead_time_days')} placeholder="5" />
             </div>
             <div className="space-y-2">
