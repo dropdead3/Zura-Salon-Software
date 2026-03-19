@@ -2,6 +2,7 @@
  * useStaffComplianceSummary — Lightweight hook to fetch compliance stats
  * for a single staff member over a date range.
  * Used by Individual Staff Report and 1:1 Report Builder.
+ * Enhanced with waste metrics + overage attachment rate.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -21,6 +22,16 @@ export interface StaffComplianceSummary {
     serviceName: string;
     startTime: string;
   }[];
+  /** Total waste quantity (grams) */
+  wasteQty: number;
+  /** Waste as % of dispensed */
+  wastePct: number;
+  /** Estimated waste cost ($) */
+  wasteCost: number;
+  /** % of color appointments with overage charge */
+  overageAttachmentRate: number;
+  /** Total overage charges ($) */
+  overageChargeTotal: number;
 }
 
 /**
@@ -77,6 +88,11 @@ export function useStaffComplianceSummary(
           reweighRate: 100,
           manualOverrides: 0,
           missedAppointments: [],
+          wasteQty: 0,
+          wastePct: 0,
+          wasteCost: 0,
+          overageAttachmentRate: 0,
+          overageChargeTotal: 0,
         };
       }
 
@@ -111,6 +127,59 @@ export function useStaffComplianceSummary(
         reweighCount = reweighSessions.size;
       }
 
+      // --- Waste events for this staff's sessions ---
+      let totalWasteQty = 0;
+      if (sessionIds.length > 0) {
+        const { data: wasteData } = await supabase
+          .from('waste_events')
+          .select('quantity')
+          .in('mix_session_id', sessionIds);
+        for (const w of wasteData ?? []) {
+          totalWasteQty += (w as any).quantity ?? 0;
+        }
+      }
+
+      // Get dispensed weight from staff_backroom_performance for waste %
+      let totalDispensed = 0;
+      let totalCost = 0;
+      {
+        const { data: perfData } = await supabase
+          .from('staff_backroom_performance')
+          .select('total_dispensed_weight, total_product_cost')
+          .eq('organization_id', resolvedOrg)
+          .eq('staff_id', staffUserId)
+          .gte('period_start', dateFrom)
+          .lte('period_end', dateTo);
+        for (const p of perfData ?? []) {
+          totalDispensed += (p as any).total_dispensed_weight ?? 0;
+          totalCost += (p as any).total_product_cost ?? 0;
+        }
+      }
+
+      const wastePct = totalDispensed > 0
+        ? Math.round((totalWasteQty / totalDispensed) * 1000) / 10
+        : 0;
+      const costPerGram = totalDispensed > 0 ? totalCost / totalDispensed : 0;
+      const wasteCost = Math.round(totalWasteQty * costPerGram * 100) / 100;
+
+      // --- Overage charges for this staff's appointments ---
+      let overageChargeTotal = 0;
+      let appointmentsWithOverage = 0;
+      if (apptIds.length > 0) {
+        const { data: charges } = await supabase
+          .from('checkout_usage_charges')
+          .select('appointment_id, charge_amount')
+          .in('appointment_id', apptIds);
+        const seen = new Set<string>();
+        for (const c of charges ?? []) {
+          overageChargeTotal += (c as any).charge_amount ?? 0;
+          if (!seen.has((c as any).appointment_id)) {
+            seen.add((c as any).appointment_id);
+            appointmentsWithOverage++;
+          }
+        }
+      }
+
       const tracked = sessionApptSet.size;
       const missed = colorAppts.length - tracked;
 
@@ -132,6 +201,13 @@ export function useStaffComplianceSummary(
         reweighRate: tracked > 0 ? Math.round((reweighCount / tracked) * 100) : 100,
         manualOverrides,
         missedAppointments,
+        wasteQty: Math.round(totalWasteQty * 10) / 10,
+        wastePct,
+        wasteCost,
+        overageAttachmentRate: colorAppts.length > 0
+          ? Math.round((appointmentsWithOverage / colorAppts.length) * 100)
+          : 0,
+        overageChargeTotal: Math.round(overageChargeTotal * 100) / 100,
       };
     },
     enabled: !!staffUserId && !!dateFrom && !!dateTo,

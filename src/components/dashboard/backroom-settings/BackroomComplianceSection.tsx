@@ -1,5 +1,6 @@
 /**
- * BackroomComplianceSection — Compliance dashboard for Backroom Settings.
+ * BackroomComplianceSection — Reweigh Reports dashboard for Backroom Settings.
+ * Enhanced with waste metrics and overage attachment rate.
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,13 +12,15 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   ShieldCheck, ShieldAlert, ShieldX, RefreshCw, Loader2, Beaker, Users, TrendingUp, MapPin,
+  Trash2, DollarSign, Receipt,
 } from 'lucide-react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { format, subDays } from 'date-fns';
 import { useBackroomComplianceTracker } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/backroom/useEvaluateComplianceLog';
@@ -70,7 +73,7 @@ export function BackroomComplianceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-compliance-guide" title="Reweigh Reports" description="Track whether color/chemical appointments have bowls properly reweighed. Shows which stylists are weighing their bowls and which are skipping steps." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-compliance-guide" title="Reweigh Reports" description="Track reweigh accountability, product waste, and overage charges across color/chemical appointments." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
 
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -80,7 +83,7 @@ export function BackroomComplianceSection() {
           </div>
           <div>
             <h2 className={tokens.card.title}>Reweigh Reports</h2>
-            <p className="font-sans text-sm text-muted-foreground">Track which color appointments have bowls properly reweighed in Zura Backroom</p>
+            <p className="font-sans text-sm text-muted-foreground">Reweigh accountability, waste tracking, and overage attachment</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -119,14 +122,14 @@ export function BackroomComplianceSection() {
         </div>
       ) : (
         <>
-          {/* Stat Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Stat Cards — 7-card responsive grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-muted-foreground" />
-                   <p className={tokens.kpi.label}>Reweigh Rate</p>
-                   <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
+                  <p className={tokens.kpi.label}>Reweigh Rate</p>
+                  <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
                 </div>
                 <div className="flex items-end gap-2">
                   <span className={tokens.kpi.value}>{summary.complianceRate}%</span>
@@ -139,7 +142,7 @@ export function BackroomComplianceSection() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
                   <Beaker className="w-4 h-4 shrink-0 text-muted-foreground" />
-                  <p className={tokens.kpi.label}>Color Appointments</p>
+                  <p className={tokens.kpi.label}>Color Appts</p>
                 </div>
                 <span className={tokens.kpi.value}>{summary.totalColorAppointments}</span>
                 <p className="text-[10px] text-muted-foreground mt-1">{summary.compliant} tracked · {summary.missing} missing</p>
@@ -160,9 +163,49 @@ export function BackroomComplianceSection() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <Trash2 className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Waste Rate</p>
+                  <MetricInfoTooltip description="Percentage of dispensed product recorded as waste." />
+                </div>
+                <span className={cn(tokens.kpi.value, summary.wastePct > 15 && 'text-destructive')}>
+                  {summary.wastePct}%
+                </span>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <DollarSign className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Est. Waste Cost</p>
+                  <MetricInfoTooltip description="Estimated dollar value of wasted product based on average cost per gram." />
+                </div>
+                <AnimatedBlurredAmount value={summary.wasteCost} currency="USD" decimals={2} className={tokens.kpi.value} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
+                  <Receipt className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  <p className={tokens.kpi.label}>Overage Attach</p>
+                  <MetricInfoTooltip description="Percentage of color appointments that generated an overage/product charge at checkout." />
+                </div>
+                <span className={tokens.kpi.value}>{summary.overageAttachmentRate}%</span>
+                {summary.overageChargeTotal > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    <AnimatedBlurredAmount value={summary.overageChargeTotal} currency="USD" decimals={2} /> total
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
                   <Users className="w-4 h-4 shrink-0 text-muted-foreground" />
                   <p className={tokens.kpi.label}>Repeat Offenders</p>
-                  <MetricInfoTooltip description="Staff with compliance rate below 70%." />
+                  <MetricInfoTooltip description="Staff with reweigh rate below 70%." />
                 </div>
                 <span className={tokens.kpi.value}>
                   {data?.staffBreakdown.filter((s) => s.complianceRate < 70 && s.total >= 2).length ?? 0}
@@ -171,30 +214,39 @@ export function BackroomComplianceSection() {
             </Card>
           </div>
 
-          {/* Trend Chart */}
+          {/* Trend Chart — dual lines for Reweigh Rate + Waste % */}
           {(data?.trend.length ?? 0) >= 2 && (
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                   <CardTitle className={tokens.card.title}>Reweigh Trend</CardTitle>
-                   <MetricInfoTooltip description="Daily reweigh rate over the selected period." />
+                  <CardTitle className={tokens.card.title}>Reweigh & Waste Trend</CardTitle>
+                  <MetricInfoTooltip description="Daily reweigh rate and waste percentage over the selected period." />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px]">
+                <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data!.trend} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="complianceGrad" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="reweighGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="wasteGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
                       <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                      <Tooltip formatter={(v: number) => [`${v}%`, 'Reweigh Rate']} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
-                      <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#complianceGrad)" strokeWidth={2} />
+                      <Tooltip
+                        formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Reweigh Rate' : 'Waste %']}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                      />
+                      <Legend formatter={(value) => value === 'complianceRate' ? 'Reweigh Rate' : 'Waste %'} />
+                      <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#reweighGrad)" strokeWidth={2} />
+                      <Area type="monotone" dataKey="wastePct" stroke="hsl(var(--chart-5))" fill="url(#wasteGrad)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -207,8 +259,8 @@ export function BackroomComplianceSection() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                   <CardTitle className={tokens.card.title}>Staff Reweigh Rates</CardTitle>
-                   <MetricInfoTooltip description="Per-stylist reweigh rates, sorted worst to best." />
+                  <CardTitle className={tokens.card.title}>Staff Reweigh Rates</CardTitle>
+                  <MetricInfoTooltip description="Per-stylist reweigh rates with waste metrics, sorted worst to best." />
                 </div>
               </CardHeader>
               <CardContent>
@@ -218,10 +270,12 @@ export function BackroomComplianceSection() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Stylist</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                        <TableHead className="text-right">Missed</TableHead>
-                        <TableHead className="text-right">Rate</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Missed</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Rate</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Waste %</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Waste $</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -238,6 +292,12 @@ export function BackroomComplianceSection() {
                             <TableCell className="text-right tabular-nums">{s.missing}</TableCell>
                             <TableCell className="text-right">
                               <Badge variant={b.variant} className="text-xs">{s.complianceRate}%</Badge>
+                            </TableCell>
+                            <TableCell className={cn('text-right tabular-nums', s.wastePct > 15 && 'text-destructive')}>
+                              {s.wastePct}%
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              <AnimatedBlurredAmount value={s.wasteCost} currency="USD" decimals={2} />
                             </TableCell>
                           </TableRow>
                         );

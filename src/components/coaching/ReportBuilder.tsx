@@ -86,14 +86,29 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
       content += `## Additional Notes\n\n${additionalContent}\n\n`;
     }
 
-    // Backroom compliance section
+    // Backroom Performance section (renamed from Compliance)
     if (includeCompliance && complianceData && complianceData.totalColorAppointments > 0) {
-      content += `## Backroom Compliance (Last 30 Days)\n\n`;
-      content += `- **Compliance Rate:** ${complianceData.complianceRate}%\n`;
+      content += `## Backroom Performance (Last 30 Days)\n\n`;
+      content += `- **Reweigh Rate:** ${complianceData.complianceRate}%\n`;
       content += `- **Color Appointments:** ${complianceData.totalColorAppointments}\n`;
       content += `- **Tracked Sessions:** ${complianceData.tracked}\n`;
       content += `- **Missed Sessions:** ${complianceData.missed}\n`;
-      content += `- **Reweigh Rate:** ${complianceData.reweighRate}%\n`;
+      content += `- **Bowl Reweigh Rate:** ${complianceData.reweighRate}%\n`;
+
+      // Waste metrics
+      if (complianceData.wasteQty > 0 || complianceData.wasteCost > 0) {
+        content += `\n### Waste Metrics\n\n`;
+        content += `- **Waste Rate:** ${complianceData.wastePct}%\n`;
+        content += `- **Est. Waste Cost:** $${complianceData.wasteCost.toFixed(2)}\n`;
+        content += `- **Waste Quantity:** ${complianceData.wasteQty}g\n`;
+      }
+
+      // Overage attachment
+      if (complianceData.overageChargeTotal > 0 || complianceData.overageAttachmentRate > 0) {
+        content += `\n### Overage & Product Charges\n\n`;
+        content += `- **Overage Attachment Rate:** ${complianceData.overageAttachmentRate}%\n`;
+        content += `- **Total Overage Charges:** $${complianceData.overageChargeTotal.toFixed(2)}\n`;
+      }
 
       if (complianceData.missedAppointments.length > 0) {
         content += `\n### Recent Missed Sessions\n\n`;
@@ -102,8 +117,20 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
         });
       }
 
+      // Coaching callouts
+      const callouts: string[] = [];
       if (complianceData.complianceRate < 90) {
-        content += `\n> ⚠️ Compliance is below 90%. Review backroom habits and ensure all color services are tracked through Zura Backroom.\n`;
+        callouts.push('Reweigh rate is below 90%. Review backroom habits and ensure all color services are tracked through Zura Backroom.');
+      }
+      if (complianceData.wastePct > 15) {
+        callouts.push(`Waste rate is ${complianceData.wastePct}% — above the 15% threshold. Consider reviewing dispensing habits and mixing accuracy.`);
+      }
+
+      if (callouts.length > 0) {
+        content += `\n### Coaching Notes\n\n`;
+        callouts.forEach((c) => {
+          content += `> ⚠️ ${c}\n\n`;
+        });
       }
       content += '\n';
     }
@@ -134,6 +161,15 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   };
 
   const sentReports = reports?.filter(r => r.sent_at) || [];
+
+  // Build compliance summary line for the checkbox label
+  const complianceSummaryParts: string[] = [];
+  if (complianceData && complianceData.totalColorAppointments > 0) {
+    complianceSummaryParts.push(`${complianceData.complianceRate}% reweigh`);
+    if (complianceData.missed > 0) complianceSummaryParts.push(`${complianceData.missed} missed`);
+    if (complianceData.wastePct > 0) complianceSummaryParts.push(`${complianceData.wastePct}% waste`);
+    if (complianceData.overageChargeTotal > 0) complianceSummaryParts.push(`$${complianceData.overageChargeTotal.toFixed(2)} overages`);
+  }
 
   return (
     <Card>
@@ -213,7 +249,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
               )}
             </div>
 
-            {/* Backroom Compliance */}
+            {/* Backroom Performance */}
             {complianceData && complianceData.totalColorAppointments > 0 && (
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
@@ -223,9 +259,9 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                     onCheckedChange={(checked) => setIncludeCompliance(!!checked)}
                   />
                   <label htmlFor="include-compliance" className="text-sm cursor-pointer flex-1">
-                    <span className="font-medium">Include Backroom Compliance</span>
+                    <span className="font-medium">Include Backroom Performance</span>
                     <span className="text-muted-foreground ml-2">
-                      ({complianceData.complianceRate}% — {complianceData.missed} missed)
+                      ({complianceSummaryParts.join(' · ')})
                     </span>
                   </label>
                 </div>
