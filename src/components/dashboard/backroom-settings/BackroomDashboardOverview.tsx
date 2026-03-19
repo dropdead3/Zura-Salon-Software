@@ -189,7 +189,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
             <SelectItem value="90d">Last 90 Days</SelectItem>
           </SelectContent>
         </Select>
-        <span className="text-xs text-muted-foreground font-sans">{rangeLabel}</span>
+        
       </div>
 
       {/* ── KPI Strip ── */}
