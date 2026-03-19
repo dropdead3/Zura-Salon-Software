@@ -555,6 +555,9 @@ function SuppliersStep({
   brands, filteredProducts, selectedIds,
   onToggleProduct, onToggleBrand, brandCounts,
   search, onSearchChange,
+  secondaryName, onSecondaryNameChange,
+  secondaryEmail, onSecondaryEmailChange,
+  secondaryPhone, onSecondaryPhoneChange,
 }: {
   supplierName: string; onNameChange: (v: string) => void;
   supplierContactName: string; onContactNameChange: (v: string) => void;
@@ -573,6 +576,9 @@ function SuppliersStep({
   onToggleBrand: (prods: ProductRow[]) => void;
   brandCounts: Map<string, { total: number; selected: number }>;
   search: string; onSearchChange: (s: string) => void;
+  secondaryName: string; onSecondaryNameChange: (v: string) => void;
+  secondaryEmail: string; onSecondaryEmailChange: (v: string) => void;
+  secondaryPhone: string; onSecondaryPhoneChange: (v: string) => void;
 }) {
   return (
     <Card className={tokens.card.wrapper}>
