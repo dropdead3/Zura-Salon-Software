@@ -153,7 +153,7 @@ export function StockTab({ locationId }: StockTabProps) {
     if (!orgId) return;
     const lines = group.items.map(item => ({
       product_id: item.id,
-      quantity_ordered: qtyOverrides.get(item.id) ?? item.recommended_order_qty,
+      quantity_ordered: qtyOverrides.get(item.id) ?? (item.recommended_order_qty > 0 ? item.recommended_order_qty : 1),
       unit_cost: item.cost_price ?? item.cost_per_gram ?? undefined,
     }));
     createPO.mutate({
@@ -264,7 +264,7 @@ export function StockTab({ locationId }: StockTabProps) {
   };
 
   const selectedProducts = filtered.filter(r => selectedIds.has(r.id));
-  const selectedReorderProducts = selectedProducts.filter(r => r.recommended_order_qty > 0);
+  const selectedReorderProducts = selectedProducts.filter(r => r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock');
 
   const autoPoProducts = selectedReorderProducts.length > 0
     ? selectedReorderProducts
@@ -282,7 +282,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   // Single product quick reorder — respects override
   const handleQuickReorder = (row: BackroomInventoryRow, overrideQty?: number) => {
-    const qty = overrideQty ?? qtyOverrides.get(row.id) ?? row.recommended_order_qty;
+    const qty = overrideQty ?? qtyOverrides.get(row.id) ?? (row.recommended_order_qty > 0 ? row.recommended_order_qty : 1);
     if (!orgId || qty <= 0) return;
     createPO.mutate({
       organization_id: orgId,
@@ -313,7 +313,7 @@ export function StockTab({ locationId }: StockTabProps) {
 
   // Stage all supplier items into PO builder
   const stageSupplierToPo = useCallback((products: BackroomInventoryRow[]) => {
-    const reorderItems = products.filter(p => p.recommended_order_qty > 0);
+    const reorderItems = products.filter(p => p.recommended_order_qty > 0 || p.stock_state === 'out_of_stock');
     if (reorderItems.length === 0) return;
     setPoItemIds(prev => {
       const next = new Set(prev);
@@ -591,7 +591,7 @@ export function StockTab({ locationId }: StockTabProps) {
             className="font-sans h-7 gap-1"
             onClick={() => {
               selectedProducts.forEach(r => {
-                if (r.recommended_order_qty > 0 && !poItemIds.has(r.id)) {
+                if ((r.recommended_order_qty > 0 || r.stock_state === 'out_of_stock') && !poItemIds.has(r.id)) {
                   toggleAddToPo(r.id);
                 }
               });
@@ -894,7 +894,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   const [open, setOpen] = useState(true);
   const sortedCategories = Array.from(group.categories.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const isUnassigned = group.supplier === 'Unassigned';
-  const reorderCount = group.products.filter(p => p.recommended_order_qty > 0).length;
+  const reorderCount = group.products.filter(p => p.recommended_order_qty > 0 || p.stock_state === 'out_of_stock').length;
 
   return (
     <>

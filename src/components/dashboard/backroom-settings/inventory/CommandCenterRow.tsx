@@ -188,8 +188,10 @@ export function CommandCenterRow({
   const [qtyDraft, setQtyDraft] = useState('');
   const qtyInputRef = useRef<HTMLInputElement>(null);
   const needsReorder = row.recommended_order_qty > 0;
+  const isOutOfStock = row.stock_state === 'out_of_stock';
   const isOverridden = qtyOverride != null;
-  const displayOrderQty = isOverridden ? qtyOverride : row.recommended_order_qty;
+  const canAddToPo = needsReorder || isOverridden || isOutOfStock;
+  const displayOrderQty = isOverridden ? qtyOverride : (row.recommended_order_qty > 0 ? row.recommended_order_qty : (isOutOfStock ? 1 : 0));
   const effectiveStock = row.effective_stock;
   const severityCfg = SEVERITY_CONFIG[row.severity];
 
@@ -296,7 +298,7 @@ export function CommandCenterRow({
 
         {/* Suggested Order — PRIMARY DECISION SIGNAL (Point 2: Visual dominance) */}
         <TableCell className="text-right tabular-nums w-28">
-          {needsReorder || isOverridden ? (
+          {canAddToPo ? (
             <div className="flex flex-col items-end gap-0.5">
               <div className="flex items-center gap-1.5 justify-end">
                 {/* Editable quantity */}
@@ -411,7 +413,7 @@ export function CommandCenterRow({
         {/* Actions — Point 6: Upgraded Add to PO */}
         <TableCell className="w-24">
           <div className="flex items-center gap-0.5 justify-end">
-            {(needsReorder || isOverridden) && (
+            {canAddToPo && (
               <Button
                 variant="ghost"
                 size="sm"
