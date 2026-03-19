@@ -59,30 +59,50 @@ type BackroomSection =
   | 'multi-location'
   | 'compliance';
 
+type SectionGroup = 'operations' | 'configuration' | 'settings';
+
+const GROUP_LABELS: Record<SectionGroup, string> = {
+  operations: 'Operations',
+  configuration: 'Configuration',
+  settings: 'Settings',
+};
+
+const GROUP_ORDER: SectionGroup[] = ['operations', 'configuration', 'settings'];
+
 interface SectionMeta {
   id: BackroomSection;
   label: string;
   icon: typeof LayoutDashboard;
   tooltip: string;
+  group: SectionGroup;
   requires?: BackroomSection[];
   requiresLabel?: string;
 }
 
 const sections: SectionMeta[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard overview with analytics and AI intelligence.' },
-  { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.' },
-  { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products' },
-  { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services' },
-  { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services' },
-  { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.' },
-  { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.' },
-  { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.' },
-  { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Backroom.' },
-  { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell, tooltip: 'Automatic alerts for operational issues.' },
-  { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.' },
-  { id: 'compliance', label: 'Compliance', icon: ShieldCheck, tooltip: 'Color/chemical logging compliance tracking.' },
-  { id: 'multi-location', label: 'Multi-Location', icon: Building2, tooltip: 'Compare and copy settings between locations.' },
+  // Operations
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard overview with analytics and AI intelligence.', group: 'operations' },
+  { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
+  { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', group: 'operations' },
+  { id: 'compliance', label: 'Compliance', icon: ShieldCheck, tooltip: 'Color/chemical logging compliance tracking.', group: 'operations' },
+  // Configuration
+  { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
+  { id: 'services', label: 'Service Tracking', icon: Wrench, tooltip: 'Link services to the products they consume.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
+  { id: 'recipes', label: 'Recipe Baselines', icon: BarChart3, tooltip: 'Expected product quantities per service.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
+  { id: 'allowances', label: 'Allowances & Billing', icon: DollarSign, tooltip: 'Define included amounts and overage billing rules.', requires: ['products', 'services'], requiresLabel: 'Services', group: 'configuration' },
+  { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.', group: 'configuration' },
+  { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.', group: 'configuration' },
+  // Settings
+  { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Backroom.', group: 'settings' },
+  { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell, tooltip: 'Automatic alerts for operational issues.', group: 'settings' },
+  { id: 'multi-location', label: 'Multi-Location', icon: Building2, tooltip: 'Compare and copy settings between locations.', group: 'settings' },
 ];
+
+const sectionsByGroup = GROUP_ORDER.map(group => ({
+  group,
+  label: GROUP_LABELS[group],
+  items: sections.filter(s => s.group === group),
+}));
 
 function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof useBackroomSetupHealth>['data']): 'done' | 'warning' | 'none' {
   if (!health) return 'none';
@@ -221,57 +241,68 @@ export default function BackroomSettings() {
           {/* Sidebar nav */}
           <nav className="w-56 shrink-0 hidden lg:block">
             <TooltipProvider delayDuration={300}>
-              <div className="space-y-0.5 sticky top-24">
-                {sections.map((s) => {
-                  const Icon = s.icon;
-                  const isActive = activeSection === s.id;
-                  const status = getSectionStatus(s.id, health);
-                  const prereqOk = isPrereqMet(s, health);
+              <div className="sticky top-24 space-y-1">
+                {sectionsByGroup.map((group, gi) => (
+                  <div key={group.group}>
+                    {gi > 0 && <div className="mx-3 my-2 h-px bg-border/40" />}
+                    <p className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest font-display text-muted-foreground/60">
+                      {group.label}
+                    </p>
+                    <div className="space-y-0.5">
+                      {group.items.map((s) => {
+                        const Icon = s.icon;
+                        const isActive = activeSection === s.id;
+                        const status = getSectionStatus(s.id, health);
+                        const prereqOk = isPrereqMet(s, health);
 
-                  return (
-                    <Tooltip key={s.id}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => setActiveSection(s.id)}
-                          className={cn(
-                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
-                            isActive
-                              ? 'bg-muted text-foreground font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                            !prereqOk && !isActive && 'opacity-60'
-                          )}
-                        >
-                          {!prereqOk ? (
-                            <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
-                          ) : (
-                            <Icon className="w-4 h-4 shrink-0" />
-                          )}
-                          <span className="flex-1 truncate">{s.label}</span>
-                          {status === 'done' && (
-                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[220px]">
-                        <p className="text-xs font-sans">{s.tooltip}</p>
-                        {!prereqOk && s.requiresLabel && (
-                          <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-
-                {/* Subscription link */}
-                <div className="mt-4 pt-4 border-t border-border/40">
-                  <button
-                    onClick={() => navigate('/dashboard/admin/backroom-subscription')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
-                  >
-                    <CreditCard className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 truncate">Subscription</span>
-                  </button>
-                </div>
+                        return (
+                          <Tooltip key={s.id}>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => setActiveSection(s.id)}
+                                className={cn(
+                                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
+                                  isActive
+                                    ? 'bg-muted text-foreground font-medium'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                                  !prereqOk && !isActive && 'opacity-60'
+                                )}
+                              >
+                                {!prereqOk ? (
+                                  <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
+                                ) : (
+                                  <Icon className="w-4 h-4 shrink-0" />
+                                )}
+                                <span className="flex-1 truncate">{s.label}</span>
+                                {status === 'done' && (
+                                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-[220px]">
+                              <p className="text-xs font-sans">{s.tooltip}</p>
+                              {!prereqOk && s.requiresLabel && (
+                                <p className="text-xs text-muted-foreground mt-1">Requires {s.requiresLabel} first</p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                      {/* Subscription inside Settings group */}
+                      {group.group === 'settings' && (
+                        <div className="mt-2 pt-2 border-t border-border/40">
+                          <button
+                            onClick={() => navigate('/dashboard/admin/backroom-subscription')}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
+                          >
+                            <CreditCard className="w-4 h-4 shrink-0" />
+                            <span className="flex-1 truncate">Subscription</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </TooltipProvider>
           </nav>
@@ -283,8 +314,12 @@ export default function BackroomSettings() {
               onChange={(e) => setActiveSection(e.target.value as BackroomSection)}
               className="w-full rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm font-sans text-foreground"
             >
-              {sections.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+              {sectionsByGroup.map((group) => (
+                <optgroup key={group.group} label={group.label}>
+                  {group.items.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
