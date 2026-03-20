@@ -43,7 +43,8 @@ export function AttendeeAvailabilityOverlay({
         .select('stylist_user_id, start_time, end_time')
         .eq('appointment_date', date)
         .in('stylist_user_id', attendeeUserIds)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .eq('is_demo', false);
 
       for (const a of phorest || []) {
         if (!a.stylist_user_id) continue;

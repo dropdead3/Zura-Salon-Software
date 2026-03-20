@@ -21,6 +21,7 @@ export function useDraftAvailabilityCheck(draft: DraftBooking): AvailabilityResu
         .eq('stylist_user_id', draft.staff_user_id!)
         .eq('appointment_date', draft.appointment_date!)
         .neq('status', 'cancelled')
+        .eq('is_demo', false)
         .order('start_time');
 
       const existingAppts = appointments || [];

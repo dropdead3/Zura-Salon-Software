@@ -238,6 +238,7 @@ export function useTodayPrep() {
           .select('id, phorest_client_id')
           .in('phorest_client_id', phorestClientIds)
           .lt('appointment_date', today)
+          .eq('is_demo', false)
           .order('appointment_date', { ascending: false })
           .limit(100);
         
