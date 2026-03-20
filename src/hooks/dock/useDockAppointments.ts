@@ -70,7 +70,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             .select('user_id, display_name, full_name')
             .in('user_id', stylistIds);
           for (const p of (profiles || [])) {
-            stylistMap[p.user_id] = p.display_name || p.full_name || '';
+            stylistMap[p.user_id] = formatFirstLastInitial(p.display_name || p.full_name || '');
           }
         }
 
