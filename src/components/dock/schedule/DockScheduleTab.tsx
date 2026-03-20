@@ -7,6 +7,7 @@ import { Calendar, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockAppointmentCard } from './DockAppointmentCard';
 import { DockNewBookingSheet } from './DockNewBookingSheet';
 
