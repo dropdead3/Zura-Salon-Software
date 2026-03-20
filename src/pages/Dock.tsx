@@ -47,6 +47,10 @@ export default function Dock() {
     setView({ screen: 'tabs' });
   }, []);
 
+  const handleLocationChange = useCallback((locationId: string) => {
+    setStaff(prev => prev ? { ...prev, locationId } : prev);
+  }, []);
+
   if (!staff) {
     return <DockPinGate onSuccess={handlePinSuccess} />;
   }
