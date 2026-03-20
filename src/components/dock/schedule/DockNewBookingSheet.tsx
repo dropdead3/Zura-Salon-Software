@@ -443,6 +443,8 @@ function ServiceStepDock({
   onContinue: () => void;
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 200);
 
   // Deduplicate services per category by name (keep longest duration)
   const dedupedByCategory = useMemo(() => {
@@ -470,6 +472,15 @@ function ServiceStepDock({
     [allServices, selectedServices],
   );
 
+  // Filtered services for Level 2
+  const filteredServices = useMemo(() => {
+    if (!selectedCategory) return [];
+    const svcs = dedupedByCategory[selectedCategory] || [];
+    if (!debouncedSearch) return svcs;
+    const q = debouncedSearch.toLowerCase();
+    return svcs.filter(s => s.name.toLowerCase().includes(q));
+  }, [selectedCategory, dedupedByCategory, debouncedSearch]);
+
   // Category icon map
   const getCategoryIcon = (cat: string) => {
     if (/blond|highlight|foil|balayage/i.test(cat)) return '✨';
@@ -482,6 +493,8 @@ function ServiceStepDock({
     return '💈';
   };
 
+  const drillDownSpring = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
+
   return (
     <div className="flex flex-col">
       <div className="px-5 pb-4">
@@ -493,90 +506,127 @@ function ServiceStepDock({
           <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-8">
             No services available
           </p>
-        ) : selectedCategory === null ? (
-          /* ── Level 1: Category Grid ── */
-          <div className="grid grid-cols-2 gap-3">
-            {categories.map(([cat, svcs]) => {
-              const selectedInCat = svcs.filter(s => selectedServices.includes(s.phorest_service_id)).length;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className="relative flex flex-col items-start gap-2 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
-                >
-                  <span className="text-xl">{getCategoryIcon(cat)}</span>
-                  <div>
-                    <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
-                    <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                      {svcs.length} service{svcs.length !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  {selectedInCat > 0 && (
-                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
-                      <span className="text-[10px] text-white font-medium">{selectedInCat}</span>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
         ) : (
-          /* ── Level 2: Service List for Selected Category ── */
-          <div>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="flex items-center gap-2 mb-4 text-sm text-violet-400 hover:text-violet-300 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="font-sans">All Categories</span>
-            </button>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <span className="text-lg">{getCategoryIcon(selectedCategory)}</span>
-              <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-                {selectedCategory}
-              </h3>
-            </div>
-            <div className="space-y-1">
-              {(dedupedByCategory[selectedCategory] || []).map((s) => {
-                const isSelected = selectedServices.includes(s.phorest_service_id);
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => onToggleService(s.phorest_service_id)}
-                    className={cn(
-                      'w-full flex items-center justify-between p-3 rounded-xl text-left transition-all',
-                      isSelected
-                        ? 'bg-violet-600/15 ring-1 ring-violet-500/30'
-                        : 'hover:bg-[hsl(var(--platform-foreground)/0.06)]',
-                    )}
-                  >
-                    <div className="flex-1 min-w-0 mr-3">
-                      <div className="text-sm text-[hsl(var(--platform-foreground))] truncate">{s.name}</div>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <span className="flex items-center gap-1 text-xs text-[hsl(var(--platform-foreground-muted))]">
-                          <Clock className="w-3 h-3" />
-                          {s.duration_minutes}m
-                        </span>
-                        {s.price !== null && (
-                          <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                            ${s.price}
-                          </span>
+          <AnimatePresence mode="wait">
+            {selectedCategory === null ? (
+              /* ── Level 1: Category Grid ── */
+              <motion.div
+                key="category-grid"
+                initial={{ x: -40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -40, opacity: 0 }}
+                transition={drillDownSpring}
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  {categories.map(([cat, svcs]) => {
+                    const selectedInCat = svcs.filter(s => selectedServices.includes(s.phorest_service_id)).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className="relative flex flex-col items-start gap-2 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
+                      >
+                        <span className="text-xl">{getCategoryIcon(cat)}</span>
+                        <div>
+                          <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
+                          <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+                            {svcs.length} service{svcs.length !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                        {selectedInCat > 0 && (
+                          <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
+                            <span className="text-[10px] text-white font-medium">{selectedInCat}</span>
+                          </div>
                         )}
-                      </div>
-                    </div>
-                    <div className={cn(
-                      'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                      isSelected
-                        ? 'bg-violet-600 border-violet-600 text-white'
-                        : 'border-[hsl(var(--platform-foreground-muted)/0.3)]',
-                    )}>
-                      {isSelected && <Check className="h-3 w-3" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            ) : (
+              /* ── Level 2: Service List for Selected Category ── */
+              <motion.div
+                key={`service-list-${selectedCategory}`}
+                initial={{ x: 40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 40, opacity: 0 }}
+                transition={drillDownSpring}
+              >
+                <button
+                  onClick={() => { setSelectedCategory(null); setSearchQuery(''); }}
+                  className="flex items-center gap-2 mb-4 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="font-sans">All Categories</span>
+                </button>
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <span className="text-lg">{getCategoryIcon(selectedCategory)}</span>
+                  <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                    {selectedCategory}
+                  </h3>
+                </div>
+
+                {/* Search within category */}
+                {(dedupedByCategory[selectedCategory]?.length || 0) > 6 && (
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[hsl(var(--platform-foreground-muted))]" />
+                    <input
+                      type="text"
+                      placeholder="Filter services…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full h-9 pl-9 pr-4 rounded-lg bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border)/0.5)] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:border-violet-500/50"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  {filteredServices.length === 0 ? (
+                    <p className="text-center text-xs text-[hsl(var(--platform-foreground-muted))] py-6">
+                      No matching services
+                    </p>
+                  ) : filteredServices.map((s) => {
+                    const isSelected = selectedServices.includes(s.phorest_service_id);
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => onToggleService(s.phorest_service_id)}
+                        className={cn(
+                          'w-full flex items-center justify-between p-3 rounded-xl text-left transition-all',
+                          isSelected
+                            ? 'bg-violet-600/15 ring-1 ring-violet-500/30'
+                            : 'hover:bg-[hsl(var(--platform-foreground)/0.06)]',
+                        )}
+                      >
+                        <div className="flex-1 min-w-0 mr-3">
+                          <div className="text-sm text-[hsl(var(--platform-foreground))] truncate">{s.name}</div>
+                          <div className="flex items-center gap-3 mt-0.5">
+                            <span className="flex items-center gap-1 text-xs text-[hsl(var(--platform-foreground-muted))]">
+                              <Clock className="w-3 h-3" />
+                              {s.duration_minutes}m
+                            </span>
+                            {s.price !== null && (
+                              <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+                                ${s.price}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={cn(
+                          'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                          isSelected
+                            ? 'bg-violet-600 border-violet-600 text-white'
+                            : 'border-[hsl(var(--platform-foreground-muted)/0.3)]',
+                        )}>
+                          {isSelected && <Check className="h-3 w-3" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
 
