@@ -67,6 +67,7 @@ export function useTodayPrep() {
           .eq('appointment_date', today)
           .not('status', 'in', '("cancelled","no_show")')
           .is('deleted_at', null)
+          .eq('is_demo', false)
           .order('start_time'),
       ]);
 

@@ -54,6 +54,7 @@ export function useServicePairings(
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
+          .eq('is_demo', false)
           .range(offset, offset + PAGE_SIZE - 1);
 
         if (locationId) {

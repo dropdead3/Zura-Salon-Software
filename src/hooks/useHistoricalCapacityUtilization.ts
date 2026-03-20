@@ -141,7 +141,8 @@ export function useHistoricalCapacityUtilization(
         .select('appointment_date, start_time, end_time, total_price, service_name, location_id, status')
         .gte('appointment_date', startDateStr)
         .lte('appointment_date', endDateStr)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .eq('is_demo', false);
 
       if (locationId) {
         query = query.eq('location_id', locationId);
