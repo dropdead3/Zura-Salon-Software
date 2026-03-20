@@ -628,8 +628,12 @@ function ServiceStepDock({
                   <ArrowLeft className="w-4 h-4" />
                   <span className="font-sans">All Categories</span>
                 </button>
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <span className="text-lg">{getCategoryIcon(selectedCategory)}</span>
+                <div className="flex items-center gap-2.5 mb-3 px-1">
+                  {(() => { const Icon = getCategoryIcon(selectedCategory); return (
+                    <div className="w-8 h-8 rounded-lg bg-violet-600/10 flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-violet-400" />
+                    </div>
+                  ); })()}
                   <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
                     {selectedCategory}
                   </h3>
