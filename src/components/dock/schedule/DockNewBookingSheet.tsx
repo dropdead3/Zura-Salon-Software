@@ -292,7 +292,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
             appointment_date: selectedDate,
             start_time: `${selectedTime}:00`,
             end_time: `${endTime}:00`,
-            duration_minutes: totalDuration,
+            
             total_price: totalPrice,
             status: 'confirmed',
             notes: notes || null,
