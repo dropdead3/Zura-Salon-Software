@@ -36,7 +36,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         onChange={(v) => onChange(v as DockDevice)}
         size="sm"
         variant="glass"
-        className="!bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)]"
+        className="!bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)] [&_button]:text-white/60 [&_button:hover]:text-white/80"
       />
     </div>
   );
