@@ -4,7 +4,7 @@
  * Pre-selects the logged-in staff member as stylist.
  */
 
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useCallback, Fragment } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
