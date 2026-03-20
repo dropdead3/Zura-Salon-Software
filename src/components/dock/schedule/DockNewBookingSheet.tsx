@@ -49,11 +49,16 @@ type Step = 'client' | 'service' | 'confirm';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
 
-const TIME_SLOTS = Array.from({ length: 33 }, (_, i) => {
-  const hour = 6 + Math.floor(i / 2);
-  const minute = (i % 2) * 30;
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-});
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+function minutesToTime(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
 
 function formatTime12h(time: string) {
   const [h, m] = time.split(':');
