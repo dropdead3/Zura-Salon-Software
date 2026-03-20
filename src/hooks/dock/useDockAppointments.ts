@@ -161,8 +161,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           }
         }
 
-        // If no appointments today, fall back to faux data so demo isn't empty
-        return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;
+        return appointments;
       }
 
       // Normal (non-demo) mode — fetch by staff user
