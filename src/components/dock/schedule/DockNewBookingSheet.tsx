@@ -981,11 +981,6 @@ function ConfirmStepDock({
               </div>
             )}
           </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
           <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
         </div>
