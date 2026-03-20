@@ -302,7 +302,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     setSelectedServices([]);
     setSelectedAssistants([]);
     setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
-    setSelectedTime('09:00');
+    setSelectedTime(getDefaultTime());
     setNotes('');
     setShowNewClientSheet(false);
     onClose();
