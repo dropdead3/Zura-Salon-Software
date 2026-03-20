@@ -1,22 +1,34 @@
 
 
-## Inline Assistant Selection & Filter by Stylist Role
+## Make Assistant Selection Clearer with "+ Add Assistant" Label
 
-### Changes — single file: `src/components/dock/schedule/DockNewBookingSheet.tsx`
+### Single file: `src/components/dock/schedule/DockNewBookingSheet.tsx`
 
-**1. Filter team members to stylists only** (~line 156-162)
-- Join against `user_roles` to only include users with `role = 'stylist'`. Since the Supabase JS client can't join across tables easily here, add a secondary query to fetch `user_roles` with `role = 'stylist'` for the org, then filter the employee list against those user_ids.
+**Replace the inline chips on the Stylist row** (lines 955-982) with a dedicated "Assistant" row below the Stylist row (still inside the Details card). This new row will:
 
-**2. Make assistant chips inline, not collapsible below** (~lines 947-986)
-- Remove the `showAssistantPicker` toggle state and the separate collapsible `<div>` below the stylist row.
-- Instead, render the assistant chip buttons directly inside the right side of the stylist row (same flex line), replacing the "+ Add Assistant" button text with the actual selectable chips inline.
-- Layout: Stylist info on the left, chip buttons flowing on the right (using `flex flex-wrap gap-1.5 justify-end`).
+1. **Show a clear label**: An "ASSISTANT" label on the left (same style as "STYLIST", "LOCATION" etc.) with a `Users` icon
+2. **Show "+ Add an assistant" text** on the right when none selected — tapping it expands/reveals the chip picker
+3. **When expanded or when assistants are selected**: Show the selectable team member chips inline
+4. **When assistants are selected but picker collapsed**: Show selected names as summary text
 
 ### Layout
 ```text
-│ 👤 Stylist        [Alexis R.] [✓Kylie M.] [Sam T.]  │
-│    Demo Mode                                          │
+│ 👤 STYLIST                                           │
+│    Demo Mode                                         │
+├──────────────────────────────────────────────────────┤
+│ 👥 ASSISTANT                      + Add an assistant │
+│    (tap to expand)                                   │
+│    [Alexis R.] [✓ Eric D.] [Sam T.]  ← shown when   │
+│                                        expanded      │
+├──────────────────────────────────────────────────────┤
+│ 📅 DATE                                              │
 ```
 
-Each chip is tappable to toggle selection (violet highlight when selected, subtle bg when not) — same styling as current chips, just positioned inline on the right of the row instead of in a separate collapsible section below.
+### Implementation
+
+- Add `showAssistantPicker` state back to `ConfirmStepDock`
+- After the Stylist `DetailRow` (line 944–983), insert a new row with the `Users` icon and "Assistant" label
+- Right side: if no assistants selected, show "+ Add an assistant" button (violet text); if selected, show names + tap to edit
+- Below: conditionally render the chip list when `showAssistantPicker` is true
+- Restore the Stylist row to a simple `DetailRow` (remove the inline chips from it)
 
