@@ -220,7 +220,7 @@ export function DockNewClientSheet({
               if (info.offset.y > 120 || info.velocity.y > 500) handleClose();
             }}
             className="absolute inset-x-0 bottom-0 z-[71] flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl"
-            style={{ maxHeight: '88%' }}
+            style={{ maxHeight: '95%' }}
           >
             {/* Drag handle */}
             <div
