@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
-  ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
+  ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2, Users,
   Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote, Plus,
   Sparkles, Palette, Link, Wind, Droplets, ClipboardList, Paintbrush,
   type LucideIcon,
