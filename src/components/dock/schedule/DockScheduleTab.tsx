@@ -61,7 +61,7 @@ export function DockScheduleTab({ staff, onOpenAppointment }: DockScheduleTabPro
   const { active, scheduled, completed } = groupAppointments(all);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-6 pb-4">
         <div>
