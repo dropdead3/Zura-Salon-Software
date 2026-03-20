@@ -43,7 +43,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
     >
       {/* Content area */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto pb-20">
         {showingDetail ? (
           <DockAppointmentDetail
             appointment={view.appointment}
