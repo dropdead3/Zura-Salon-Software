@@ -23515,7 +23515,7 @@ export type Database = {
         Returns: boolean
       }
       validate_dock_pin: {
-        Args: { _pin: string }
+        Args: { _organization_id?: string; _pin: string }
         Returns: {
           display_name: string
           location_id: string
