@@ -913,6 +913,7 @@ function ConfirmStepDock({
   selectedAssistants: string[];
   onAssistantsChange: (ids: string[]) => void;
 }) {
+  const [showAssistantPicker, setShowAssistantPicker] = React.useState(false);
   return (
     <div className="flex flex-col">
       <div className="px-5 pb-4 space-y-4">
