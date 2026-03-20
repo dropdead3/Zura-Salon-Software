@@ -23514,6 +23514,14 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      validate_dock_pin: {
+        Args: { _pin: string }
+        Returns: {
+          display_name: string
+          photo_url: string
+          user_id: string
+        }[]
+      }
       validate_user_pin: {
         Args: { _organization_id: string; _pin: string }
         Returns: {
