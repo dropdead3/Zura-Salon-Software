@@ -302,7 +302,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     },
     onSuccess: async (data) => {
       // Insert assistant assignments if any selected
-      if (selectedAssistants.length > 0 && !isDemoMode && data?.appointment_id) {
+      if (selectedAssistants.length > 0 && data?.appointment_id) {
         try {
           const rows = selectedAssistants.map(uid => ({
             appointment_id: data.appointment_id,

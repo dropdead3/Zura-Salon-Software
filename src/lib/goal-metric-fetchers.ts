@@ -140,7 +140,8 @@ export async function fetchNewClientPct(
     .select('is_new_client')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")');
+    .not('status', 'in', '("cancelled","no_show")')
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
