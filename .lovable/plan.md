@@ -1,19 +1,18 @@
 
 
-## Make "Tap to start mixing" a Full-Screen Centered Prompt
+## Improve "Tap to Start Mixing" Empty State
 
-### Problem
-
-The empty state renders as a small dashed-border card in the top-left. It should fill the entire content area and act as one big invisible tap target with the icon and text centered.
-
-### Change
+### Changes
 
 **`src/components/dock/appointment/DockServicesTab.tsx`** — lines 239-253
 
-Replace the card-styled button with a borderless, full-area button that fills the remaining space:
+1. **Floating animation on icon** — wrap the icon container in a `motion.div` with a gentle `y` oscillation (0 → -6 → 0, 3s loop) for a breathing/floating feel instead of the flat pulse
 
-- Remove `rounded-2xl border border-dashed border-violet-500/30 bg-violet-600/5 hover:bg-violet-600/10 min-h-[200px]`
-- Use `flex-1 flex flex-col items-center justify-center` with no border, no background, no min-height — just the icon + text floating in the center of the available space
-- On hover/active: subtle opacity shift only (`hover:opacity-80 active:opacity-60`)
-- Keep the pulsing icon circle and text as-is, just centered in the full viewport area
+2. **Better text hierarchy** — split into two lines:
+   - Primary: **"Start Mixing"** in `text-lg font-semibold` with violet-300 color
+   - Subtitle: "Tap anywhere to add your first bowl" in `text-sm text-muted-foreground`
+
+3. **Replace pulse with a softer glow ring** — swap `animate-pulse` for a slower custom keyframe glow (`opacity 0.3 → 0.6`, 2.5s ease) so it feels premium rather than urgent
+
+4. **Larger icon circle** — bump from `w-20 h-20` / `w-10 h-10` to `w-24 h-24` / `w-12 h-12` for more visual presence on the iPad screen
 
