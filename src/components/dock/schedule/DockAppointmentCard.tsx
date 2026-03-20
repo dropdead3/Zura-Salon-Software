@@ -2,7 +2,7 @@
  * DockAppointmentCard — Appointment card with colored left border accent.
  */
 
-import { Clock, FlaskConical, MoreVertical } from 'lucide-react';
+import { Clock, FlaskConical, MoreVertical, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
