@@ -618,7 +618,8 @@ function ClientStepDock({
       </div>
 
       {/* Search results */}
-      <div className="flex-1 min-h-0">
+      {/* Scrollable results area */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {isSearching ? (
           isLoading ? (
             <div className="flex justify-center py-12">
@@ -645,7 +646,6 @@ function ClientStepDock({
             </div>
           )
         ) : !selectedClient ? (
-          /* Default empty state — only when no client selected */
           <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--platform-foreground)/0.06)] flex items-center justify-center">
               <Search className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)]" />
@@ -662,7 +662,6 @@ function ClientStepDock({
             </button>
           </div>
         ) : (
-          /* Client already selected, show helpful hint */
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)]">
               Search above to change client, or continue
@@ -671,9 +670,10 @@ function ClientStepDock({
         )}
       </div>
 
-      {/* Continue button when client is selected */}
+      {/* Sticky Continue button */}
       {selectedClient && (
-        <div className="pt-4 mt-auto">
+        <div className="shrink-0 pt-2">
+          <div className="h-6 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent -mt-8 pointer-events-none" />
           <button
             onClick={onContinue}
             className="w-full h-12 rounded-full bg-[hsl(var(--platform-accent))] text-white font-sans text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all"
