@@ -941,9 +941,9 @@ function ConfirmStepDock({
         {/* Details */}
         <div className="rounded-xl border border-[hsl(var(--platform-border))] divide-y divide-[hsl(var(--platform-border))]">
           <DetailRow icon={<MapPin className="w-4 h-4" />} label="Location" value={locationName} />
-          {/* Stylist row with inline Add Assistant */}
-          <div className="px-3 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          {/* Stylist row with inline assistant chips */}
+          <div className="px-3 py-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="w-7 h-7 rounded-full bg-[hsl(var(--platform-foreground)/0.08)] flex items-center justify-center">
                 <User className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
               </div>
@@ -953,41 +953,34 @@ function ConfirmStepDock({
               </div>
             </div>
             {teamMembers.length > 0 && (
-              <button
-                onClick={() => setShowAssistantPicker(prev => !prev)}
-                className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                <Users className="w-3.5 h-3.5" />
-                {selectedAssistants.length > 0
-                  ? teamMembers.filter(m => selectedAssistants.includes(m.userId)).map(m => m.name).join(', ')
-                  : '+ Add Assistant'}
-              </button>
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                {teamMembers.map(m => {
+                  const isSelected = selectedAssistants.includes(m.userId);
+                  return (
+                    <button
+                      key={m.userId}
+                      onClick={() => {
+                        onAssistantsChange(
+                          isSelected
+                            ? selectedAssistants.filter(id => id !== m.userId)
+                            : [...selectedAssistants, m.userId]
+                        );
+                      }}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-[11px] transition-colors flex items-center gap-1',
+                        isSelected
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                      )}
+                    >
+                      {isSelected && <Check className="w-3 h-3" />}
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
-          {/* Collapsible assistant chip picker */}
-          {showAssistantPicker && teamMembers.length > 0 && (
-            <div className="px-3 pb-2.5 flex flex-wrap gap-1.5">
-              {teamMembers.map(m => {
-                const isSelected = selectedAssistants.includes(m.userId);
-                return (
-                  <button
-                    key={m.userId}
-                    onClick={() => {
-                      onAssistantsChange(
-                        isSelected
-                          ? selectedAssistants.filter(id => id !== m.userId)
-                          : [...selectedAssistants, m.userId]
-                      );
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5',
-                      isSelected
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
-                    )}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    {m.name}
                   </button>
                 );
               })}
