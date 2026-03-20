@@ -36,7 +36,7 @@ export function DockDemoProvider({
   const value = useMemo<DockDemoContextValue>(
     () => ({
       isDemoMode,
-      device: isDemoMode ? device : 'full',
+      device,
       setDevice,
       orientation,
       setOrientation,

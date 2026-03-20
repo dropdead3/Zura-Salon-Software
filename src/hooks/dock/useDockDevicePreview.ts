@@ -11,7 +11,7 @@ function readInitialDevice(): DockDevice {
     const v = localStorage.getItem(DEVICE_KEY);
     if (v === 'phone' || v === 'tablet' || v === 'full') return v;
   } catch {}
-  return 'full';
+  return 'tablet';
 }
 
 function readInitialOrientation(): DockOrientation {

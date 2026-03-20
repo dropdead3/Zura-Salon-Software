@@ -34,7 +34,7 @@ const DEVICE_DIMENSIONS = {
 export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOpenAppointment, onBack }: DockLayoutProps) {
   const { isDemoMode, device, setDevice, orientation, setOrientation } = useDockDemo();
   const showingDetail = view.screen === 'appointment-detail';
-  const isConstrained = isDemoMode && device !== 'full';
+  const isConstrained = device !== 'full';
 
   const dockContent = (
     <div
@@ -76,7 +76,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
     return (
       <div className="platform-theme platform-dark fixed inset-0 flex items-center justify-center bg-[hsl(0_0%_8%)] bg-[image:radial-gradient(hsl(0_0%_15%)_1px,transparent_1px)] bg-[size:20px_20px]">
         <DockDemoBadge />
-        {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />}
+        <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />
         <div
           className="relative rounded-[2rem] border border-[hsl(0_0%_20%)] shadow-2xl overflow-hidden transition-all duration-300"
           style={{ width: dims.width, height: dims.height, maxHeight: '95vh', maxWidth: '95vw' }}
@@ -90,7 +90,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   return (
     <div className="platform-theme platform-dark fixed inset-0 flex flex-col">
       <DockDemoBadge />
-      {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />}
+      <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />
       {dockContent}
     </div>
   );
