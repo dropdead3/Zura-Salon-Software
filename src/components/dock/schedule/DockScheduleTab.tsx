@@ -48,6 +48,7 @@ function formatTime(time: string) {
 }
 
 export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFilter }: DockScheduleTabProps) {
+  const { isDemoMode } = useDockDemo();
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
