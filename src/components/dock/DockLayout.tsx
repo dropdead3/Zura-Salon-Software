@@ -5,6 +5,7 @@
 
 import { DockBottomNav } from './DockBottomNav';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
+import { DockDemoBadge } from './DockDemoBadge';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import type { DockTab, DockStaffSession, DockView } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
