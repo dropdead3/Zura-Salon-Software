@@ -4,7 +4,7 @@
  * Pre-selects the logged-in staff member as stylist.
  */
 
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useCallback, Fragment } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
@@ -18,6 +18,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory, type PhorestService } from '@/hooks/usePhorestServices';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -73,6 +74,15 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
   // Drag controls for pull-to-dismiss
   const dragControls = useDragControls();
+  const { nowMinutes } = useOrgNow();
+
+  const getDefaultTime = useCallback(() => {
+    const nearest = Math.ceil(nowMinutes / 30) * 30;
+    const clamped = Math.max(480, Math.min(nearest, 1200));
+    const h = String(Math.floor(clamped / 60)).padStart(2, '0');
+    const m = String(clamped % 60).padStart(2, '0');
+    return `${h}:${m}`;
+  }, [nowMinutes]);
 
   // Wizard state
   const [step, setStep] = useState<Step>('client');
@@ -81,7 +91,13 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedLocation, setSelectedLocation] = useState(locationId || '');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedTime, setSelectedTime] = useState('09:00');
+  const [selectedTime, setSelectedTime] = useState(() => {
+    const nearest = Math.ceil((new Date().getHours() * 60 + new Date().getMinutes()) / 30) * 30;
+    const clamped = Math.max(480, Math.min(nearest, 1200));
+    const h = String(Math.floor(clamped / 60)).padStart(2, '0');
+    const m = String(clamped % 60).padStart(2, '0');
+    return `${h}:${m}`;
+  });
   const [notes, setNotes] = useState('');
   const [selectedAssistants, setSelectedAssistants] = useState<string[]>([]);
   const [showNewClientSheet, setShowNewClientSheet] = useState(false);
@@ -286,7 +302,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     setSelectedServices([]);
     setSelectedAssistants([]);
     setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
-    setSelectedTime('09:00');
+    setSelectedTime(getDefaultTime());
     setNotes('');
     setShowNewClientSheet(false);
     onClose();
