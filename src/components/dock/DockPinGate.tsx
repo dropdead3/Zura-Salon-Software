@@ -9,6 +9,8 @@ import { Delete } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { PLATFORM_NAME } from '@/lib/brand';
 import type { DockStaffSession } from '@/pages/Dock';
 
 interface DockPinGateProps {
@@ -23,6 +25,10 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const showDemo = useDockDemoAccess();
+  const { data: settings } = useBusinessSettings();
+
+  const businessName = settings?.business_name || '';
+  const logoDarkUrl = settings?.logo_dark_url;
 
   const handleKey = useCallback(async (key: string) => {
     if (loading) return;
@@ -70,12 +76,20 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
 
   return (
     <div className="platform-theme platform-dark fixed inset-0 flex flex-col items-center justify-center bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]">
-      {/* Logo / Title */}
+      {/* Organization Logo / Name */}
       <div className="mb-8 text-center">
-        <h1 className="font-display text-2xl tracking-widest uppercase text-violet-400">
-          Zura Dock
-        </h1>
-        <p className="mt-2 text-sm text-[hsl(var(--platform-foreground-muted))]">
+        {logoDarkUrl ? (
+          <img
+            src={logoDarkUrl}
+            alt={businessName}
+            className="mx-auto max-h-10 w-auto object-contain"
+          />
+        ) : businessName ? (
+          <h1 className="font-display text-2xl tracking-widest uppercase text-[hsl(var(--platform-foreground))]">
+            {businessName}
+          </h1>
+        ) : null}
+        <p className="mt-3 text-sm text-[hsl(var(--platform-foreground-muted))]">
           Enter your PIN to begin
         </p>
       </div>
@@ -142,6 +156,13 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.25)]">Preview only</span>
         </div>
       )}
+
+      {/* Powered by footer */}
+      <div className="fixed bottom-4 left-0 right-0 text-center">
+        <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.3)]">
+          {businessName ? `${businessName} · ` : ''}powered by {PLATFORM_NAME}
+        </span>
+      </div>
     </div>
   );
 }
