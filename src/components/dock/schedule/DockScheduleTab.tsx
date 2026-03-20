@@ -109,6 +109,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, locationId }: DockSc
         open={showNewBooking}
         onClose={() => setShowNewBooking(false)}
         staff={staff}
+        locationId={locationId}
       />
     </div>
   );
