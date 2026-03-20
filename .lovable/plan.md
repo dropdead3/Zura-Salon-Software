@@ -1,64 +1,40 @@
 
 
-## Fix: Scope Dock PIN Validation to Prevent Cross-Org Access
+## Add "Launch Demo" from Platform Account Detail
 
-### The Problem
+### What This Does
+Adds a "Launch Demo" button to the **Apps in Use** card on the Platform Admin account detail page. Clicking it opens the Dock (`/dock`) in a new tab, pre-scoped to that organization, using their **real services and clients** but in read-only demo mode (no writes to scheduler/analytics).
 
-Two PIN validation functions exist:
-- **`validate_user_pin(_organization_id, _pin)`** — used by Kiosk and Dashboard lock. **Already org-scoped. Safe.**
-- **`validate_dock_pin(_pin)`** — used by Zura Dock. **Globally scoped. Unsafe.** A PIN collision across orgs could grant access to the wrong salon's data.
+### How It Works
 
-### Why the Dock Is Different
+**1. URL-based org scoping for demo mode**
+- The Dock route (`/dock`) will accept a query parameter: `?demo=<organizationId>`
+- When this param is present, `DockPinGate` skips the PIN screen entirely and boots directly into demo mode with that org's ID
+- This is gated behind `useDockDemoAccess()` (only works in preview/dev/Lovable contexts, not production)
 
-The Dock is a standalone device app — it doesn't know which organization it belongs to before a PIN is entered. That's why `validate_dock_pin` takes only a PIN, not an org ID.
+**2. Demo mode uses real org data (read-only)**
+- Currently demo mode uses hardcoded `DEMO_SERVICES` and `DEMO_CLIENTS`. We'll change this: when `isDemoMode && organizationId` is set, the booking sheet and schedule will **fetch real services and clients from the DB** for that org, but all **mutations** (create appointment, etc.) remain no-ops / mock responses
+- This gives sales demos a realistic view of the actual salon's catalog
 
-### Solution: Device-Level Org Binding
-
-The Dock already stores a `dock-location-id` in localStorage for device configuration. We extend this pattern to also store `dock-organization-id`. When a Dock device is first set up, it gets bound to an organization. All subsequent PIN lookups are scoped to that org.
-
-### Changes
-
-**1. Database migration — scope `validate_dock_pin` to accept optional org ID**
-
-```sql
-DROP FUNCTION IF EXISTS public.validate_dock_pin(text);
-
-CREATE FUNCTION public.validate_dock_pin(_pin text, _organization_id uuid DEFAULT NULL)
-RETURNS TABLE(user_id uuid, display_name text, photo_url text, location_id text, organization_id uuid)
-...
-WHERE ep.login_pin = _pin
-  AND ep.is_active = true AND ep.is_approved = true
-  AND (_organization_id IS NULL OR ep.organization_id = _organization_id)
-LIMIT 1
-```
-
-When `_organization_id` is provided, PIN lookup is scoped. When NULL (first-time setup), it falls back to global lookup but then the result's `organization_id` is stored on the device.
-
-**2. `DockPinGate.tsx` — read and write `dock-organization-id` from localStorage**
-
-- On mount, read `dock-organization-id` from localStorage
-- Pass it to `validate_dock_pin` RPC call
-- On successful first login (no stored org), persist the returned `organization_id` to localStorage
-- This makes subsequent PIN entries org-scoped
-
-**3. Dock Settings — add a "Reset Device" action**
-
-- In the Dock settings tab, add a button to clear `dock-organization-id` and `dock-location-id` from localStorage, allowing rebinding to a different org (admin-only action behind PIN confirmation)
+**3. "Launch Demo" button on AccountAppsCard**
+- Next to the Zura Backroom badge, add a `Play` icon button: "Launch Demo"
+- Opens `/dock?demo={organizationId}` in a new tab
+- Only visible to platform admins (already scoped by the page's access control)
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `supabase/migrations/` | Update `validate_dock_pin` to accept optional `_organization_id` |
-| `src/components/dock/DockPinGate.tsx` | Read/write `dock-organization-id` in localStorage; pass to RPC |
-| Dock settings (existing) | Add "Reset Device" button to unbind org |
+| `src/components/platform/account/AccountAppsCard.tsx` | Add "Launch Demo" button that opens `/dock?demo={orgId}` in new tab |
+| `src/pages/Dock.tsx` | Read `?demo=orgId` param; if present + `useDockDemoAccess()`, auto-boot into demo session for that org |
+| `src/components/dock/DockPinGate.tsx` | No changes needed — Dock.tsx bypasses PinGate entirely when demo param is present |
+| `src/components/dock/schedule/DockNewBookingSheet.tsx` | In demo mode with a real orgId, fetch real services/clients from DB instead of hardcoded mocks; keep mutations as no-ops |
+| `src/contexts/DockDemoContext.tsx` | Add a `usesRealData` flag so components know to query the DB but block writes |
 
-### Security Summary After Fix
-
-| Surface | Org-Scoped? |
-|---------|------------|
-| Dashboard Lock | ✅ Yes (`validate_user_pin`) |
-| Kiosk Settings | ✅ Yes (`validate_user_pin`) |
-| Zura Dock (first login) | ⚠️ Global (binds device to org) |
-| Zura Dock (subsequent) | ✅ Yes (device-bound org) |
+### Demo Data Strategy
+- **Services**: Query `phorest_services` filtered by the org's locations (real catalog)
+- **Clients**: Query `phorest_clients` filtered by org's branch IDs (real client names)
+- **Appointments**: Keep using mock `DEMO_APPOINTMENTS` (we don't want to show real schedule)
+- **Mix sessions / products**: Keep mock data (safe, no PII)
+- **All mutations**: Return mock success, never hit DB
 
