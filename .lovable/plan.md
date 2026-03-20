@@ -1,28 +1,23 @@
 
 
-## Plan: Enable Device Preview for All Dock Users (Not Just Demo Mode)
+## Plan: Fix Invisible Inactive Options in Device Switcher
 
 ### Problem
-The device switcher (iPad/Phone/Full toggle) and the constrained viewport rendering are currently gated behind `isDemoMode`, which only activates when `staff.userId === 'dev-bypass-000'`. Real PIN logins get the raw full-screen layout with no device frame — which is what the screenshot shows.
+The TogglePill's inactive options use `text-foreground/60` which resolves to near-invisible on the dark Dock background (`hsl(0 0% 14%)`). Only the selected option (white text on solid indicator) is visible.
 
-### Solution
-Since Dock is accessed via desktop browsers but designed for iPad, the device preview should always be available — not just in demo mode. We need to decouple the device preview from demo mode.
+### Fix
+Override the inactive text color in `DockDeviceSwitcher.tsx` by passing a custom class that targets unselected buttons. Since the TogglePill doesn't expose an `inactiveClassName` prop, we have two options:
+
+**Approach: CSS override on the container**
+In `DockDeviceSwitcher.tsx`, extend the `className` on the TogglePill to include a descendant selector that brightens inactive button text:
+
+Add a wrapper `<div>` with a utility class or use the existing className to apply `[&_button]:text-white/60` and `[&_button:hover]:text-white/80` — overriding the theme-relative `text-foreground/60` with absolute white-based opacity that's visible on the dark background.
 
 ### Changes
 
-**1. `src/contexts/DockDemoContext.tsx`**
-- Stop forcing `device: 'full'` when not in demo mode. Return the actual stored device value for all users so everyone gets the persisted device preference.
-
-**2. `src/components/dock/DockLayout.tsx`**
-- Change `isConstrained` from `isDemoMode && device !== 'full'` → just `device !== 'full'`
-- Show `DockDeviceSwitcher` always (remove the `isDemoMode &&` guard on both render paths)
-- Default device to `'tablet'` instead of `'full'` so first-time users see the iPad frame immediately
-
-**3. `src/hooks/dock/useDockDevicePreview.ts`**
-- Change the default device from `'full'` to `'tablet'` so the iPad viewport is the default experience
-
-### What stays the same
-- Demo mode badge still only shows for `dev-bypass-000`
-- Mock data hooks still only activate in demo mode
-- The device switcher UI component itself is unchanged
+**`src/components/dock/DockDeviceSwitcher.tsx`**
+- Update the TogglePill's `className` to add Tailwind arbitrary descendant selectors:
+  - `[&_button]:text-white/60` for inactive buttons
+  - `[&_button:hover]:text-white/80` for hover
+  - The selected button's `text-background` class (higher specificity via the component's `cn()`) will still win for the active state
 
