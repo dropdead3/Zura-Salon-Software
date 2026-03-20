@@ -95,10 +95,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState(() => {
-    const nearest = Math.ceil((new Date().getHours() * 60 + new Date().getMinutes()) / 30) * 30;
-    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
-    const m = String(nearest % 60).padStart(2, '0');
-    return `${h}:${m}`;
+    const nearest = Math.ceil((new Date().getHours() * 60 + new Date().getMinutes()) / 15) * 15;
+    return minutesToTime(nearest);
   });
   const [notes, setNotes] = useState('');
   const [selectedAssistants, setSelectedAssistants] = useState<string[]>([]);
