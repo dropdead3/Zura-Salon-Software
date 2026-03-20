@@ -937,6 +937,42 @@ function ConfirmStepDock({
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
         </div>
 
+        {/* Assistant selection */}
+        {teamMembers.length > 0 && (
+          <div>
+            <div className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2 flex items-center gap-1.5">
+              <Users className="w-3 h-3" />
+              Assistant (optional)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {teamMembers.map(m => {
+                const isSelected = selectedAssistants.includes(m.userId);
+                return (
+                  <button
+                    key={m.userId}
+                    onClick={() => {
+                      onAssistantsChange(
+                        isSelected
+                          ? selectedAssistants.filter(id => id !== m.userId)
+                          : [...selectedAssistants, m.userId]
+                      );
+                    }}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5',
+                      isSelected
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                    )}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Time selector */}
         <div>
           <div className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2">
