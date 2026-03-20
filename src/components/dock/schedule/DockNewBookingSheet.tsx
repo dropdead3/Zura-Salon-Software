@@ -1120,6 +1120,12 @@ function ConfirmStepDock({
               {client?.phone || client?.email || ''}
             </div>
           </div>
+          {clientHistory && clientHistory.visitCount === 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-violet-500/30 shrink-0">
+              <Sparkles className="w-3 h-3 text-violet-400" />
+              <span className="text-[10px] text-violet-400 whitespace-nowrap">New client — first visit</span>
+            </div>
+          )}
         </div>
 
         {/* Client Quick-View */}
@@ -1148,11 +1154,6 @@ function ConfirmStepDock({
             <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]">
               {clientHistory.visitCount} visit{clientHistory.visitCount !== 1 ? 's' : ''} total
             </div>
-          </div>
-        ) : clientHistory && clientHistory.visitCount === 0 ? (
-          <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-600/10 border border-violet-500/20">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            <span className="text-xs text-violet-300">New client — first visit</span>
           </div>
         ) : null}
 
