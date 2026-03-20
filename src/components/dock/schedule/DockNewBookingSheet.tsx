@@ -310,7 +310,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   const isCompleted = i < currentIndex;
                   const isCurrent = s === step;
                   const isFuture = i > currentIndex;
-                  const label = s === 'client' ? 'Client' : s === 'service' ? 'Service' : 'Confirm';
+                  const label = s === 'client' ? 'Client' : s === 'service' ? 'Services' : 'Confirm';
 
                   return (
                     <Fragment key={s}>
