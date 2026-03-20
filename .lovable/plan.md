@@ -1,42 +1,41 @@
 
 
-## Remove Time Clamping — Always Default to "Now"
+## Demo Bookings — Persist to DB, Isolate from Dashboard
 
-**Problem**: The current logic clamps the default time to operating hours (8 AM–8 PM). If a stylist takes a walk-in at 8:30 PM, the time defaults to 8:00 PM instead of the actual current time. The time picker also doesn't show slots past 7:30 PM.
+**Problem**: Demo-mode bookings fake success without inserting into `phorest_appointments`, so they never appear on the Dock schedule.
 
-### Changes — `src/components/dock/schedule/DockNewBookingSheet.tsx`
+**Solution**: Add an `is_demo` boolean column to `phorest_appointments`. In demo mode, insert real rows with `is_demo = true`. Filter them out from all non-Dock queries.
 
-**1. Extend TIME_SLOTS to cover a wider range** (lines 52-56)
-- Extend from `6:00 AM – 10:00 PM` to accommodate early/late walk-ins
-- Also add a "Now" indicator on the slot that matches the current rounded time
+### 1. Database Migration
 
-**2. Remove clamping from `getDefaultTime`** (lines 80-86)
-- Round `nowMinutes` to the nearest 30-min slot without clamping
-- If the result falls outside TIME_SLOTS, dynamically inject it as a "Now" option
-
-**3. Same for the `useState` initializer** (lines 95-100)
-- Use `getDefaultTime()` call instead of duplicated inline logic
-
-**4. Same for `handleClose` reset** (line 306) — already uses `getDefaultTime()`, no change needed
-
-### Updated logic
-
-```typescript
-// TIME_SLOTS: extend range from 6:00 AM to 10:00 PM
-const TIME_SLOTS = Array.from({ length: 33 }, (_, i) => {
-  const hour = 6 + Math.floor(i / 2);
-  const minute = (i % 2) * 30;
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-});
-
-// getDefaultTime: round to nearest 30m, NO clamping
-const getDefaultTime = useCallback(() => {
-  const nearest = Math.ceil(nowMinutes / 30) * 30;
-  const h = String(Math.floor(nearest / 60)).padStart(2, '0');
-  const m = String(nearest % 60).padStart(2, '0');
-  return `${h}:${m}`;
-}, [nowMinutes]);
+Add column:
+```sql
+ALTER TABLE public.phorest_appointments
+  ADD COLUMN is_demo boolean NOT NULL DEFAULT false;
 ```
 
-In the time grid rendering, if `selectedTime` isn't in `TIME_SLOTS` (e.g. 10:30 PM walk-in), prepend/append it with a "Now" label so it's always selectable.
+### 2. `DockNewBookingSheet.tsx` — Replace demo no-op with real insert
+
+Replace the fake `setTimeout` block (lines 245–248) with an actual `supabase.from('phorest_appointments').insert(...)` call that:
+- Sets `is_demo: true`
+- Uses `phorest_id: 'demo-' + crypto.randomUUID()`
+- Populates client_name, service_name, appointment_date, start_time, end_time, location_id, stylist_user_id, status (`'pending'`), and notes from the form state
+- Returns the inserted row's `id` so assistant assignments also work in demo mode
+
+### 3. `useDockAppointments.ts` — No changes needed
+
+The Dock query already fetches from `phorest_appointments` by location/date. Demo rows will surface automatically since they have valid location_id and appointment_date.
+
+### 4. Exclude demo rows from dashboard queries
+
+There are ~91 files querying `phorest_appointments`. The critical dashboard-facing ones need `.eq('is_demo', false)` added. These include:
+- `src/hooks/usePhorestCalendar.ts` (main dashboard schedule)
+- `src/lib/goal-metric-fetchers.ts` (KPI cards)
+- `src/hooks/useServiceCostsProfits.ts` (sales analytics)
+- `src/components/dashboard/sales/ServicePopularityChart.tsx`
+- `src/hooks/useStylistExperienceScore.ts`
+- `src/components/dashboard/clients/ClientRedoHistory.tsx`
+- Edge functions: `detect-anomalies`, `process-client-automations`
+
+Since `is_demo` defaults to `false`, existing rows are unaffected. Only demo-created rows will have `true`, so adding the filter is a safety net — but essential to prevent demo data from polluting analytics and the real schedule.
 
