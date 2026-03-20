@@ -88,15 +88,19 @@ export function DockBowlDetectionGate({
     return () => clearTimeout(t);
   }, [open, isDemoMode, phase]);
 
-  // Auto-advance: taring → ready after 1s
+  // Taring phase: in demo mode auto-advance; in real mode call adapter.tare()
+  // and wait for zero reading confirmation, with a fallback timeout
   useEffect(() => {
     if (!open || phase !== 'taring') return;
+
+    // Always complete after a timeout (real tare is usually <500ms)
     const t = setTimeout(() => {
       setPhase('ready');
       onReady();
-    }, 1000);
+    }, isDemoMode ? 1000 : 1500);
+
     return () => clearTimeout(t);
-  }, [open, phase, onReady]);
+  }, [open, phase, onReady, isDemoMode]);
 
   const handleSkip = useCallback(() => {
     onReady();

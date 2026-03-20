@@ -1,13 +1,14 @@
 /**
- * DockScaleTab — BLE scale connection management with simulation.
- * Phase 7: Interactive BLE pairing flow with state machine visualization.
+ * DockScaleTab — BLE scale connection management.
+ * Connects to Acaia Pearl via Capacitor BLE or falls back to manual mode.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Weight, Wifi, WifiOff, Bluetooth, BluetoothSearching, BluetoothConnected, RefreshCw, Zap, Radio } from 'lucide-react';
+import { Weight, WifiOff, Bluetooth, BluetoothSearching, BluetoothConnected, RefreshCw, Zap, Radio, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
-import { createScaleAdapter, BLEScaleAdapter, ManualScaleAdapter } from '@/lib/backroom/scale-adapter';
+import type { WeightEvent } from '@/lib/backroom/weight-event-schema';
+import { createScaleAdapter, BLEScaleAdapter } from '@/lib/backroom/scale-adapter';
 
 type ScaleMode = 'manual' | 'ble';
 
@@ -81,7 +82,6 @@ const CONNECTION_STATE_UI: Record<ConnectionState, {
   },
 };
 
-// State machine steps for visual progress
 const BLE_STEPS: ConnectionState[] = ['disconnected', 'scanning', 'pairing', 'connected'];
 
 export function DockScaleTab() {
@@ -89,11 +89,23 @@ export function DockScaleTab() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('manual_override');
   const [isConnecting, setIsConnecting] = useState(false);
   const [lastReading, setLastReading] = useState<number | null>(null);
+  const [lastUnit, setLastUnit] = useState<string>('g');
+  const [deviceName, setDeviceName] = useState<string | null>(null);
+  const [bleError, setBleError] = useState<string | null>(null);
   const adapterRef = useRef(createScaleAdapter('manual'));
 
-  // Cleanup on unmount
+  // Listen for readings from the adapter
   useEffect(() => {
+    const handler = (event: WeightEvent) => {
+      setConnectionState(event.connection_state);
+      if (event.confidence_score > 0) {
+        setLastReading(event.raw_weight);
+        setLastUnit(event.unit);
+      }
+    };
+    adapterRef.current.onReading(handler);
     return () => {
+      adapterRef.current.offReading(handler);
       adapterRef.current.disconnect();
     };
   }, []);
@@ -101,6 +113,8 @@ export function DockScaleTab() {
   const handleModeSwitch = useCallback((newMode: ScaleMode) => {
     adapterRef.current.disconnect();
     setLastReading(null);
+    setDeviceName(null);
+    setBleError(null);
 
     if (newMode === 'ble') {
       adapterRef.current = createScaleAdapter('ble');
@@ -110,24 +124,33 @@ export function DockScaleTab() {
       setConnectionState('manual_override');
     }
     setMode(newMode);
+
+    // Re-attach listener to new adapter
+    const handler = (event: WeightEvent) => {
+      setConnectionState(event.connection_state);
+      if (event.confidence_score > 0) {
+        setLastReading(event.raw_weight);
+        setLastUnit(event.unit);
+      }
+    };
+    adapterRef.current.onReading(handler);
   }, []);
 
   const handleConnect = useCallback(async () => {
     if (mode !== 'ble' || isConnecting) return;
     setIsConnecting(true);
-
-    const adapter = adapterRef.current as BLEScaleAdapter;
-
-    // Simulate state transitions visually
-    setConnectionState('scanning');
-    await new Promise((r) => setTimeout(r, 2000));
-    setConnectionState('pairing');
-    await new Promise((r) => setTimeout(r, 1500));
+    setBleError(null);
 
     try {
-      // The adapter's connect() also does timeouts, but we've already shown visual states
-      setConnectionState('connected');
-    } catch {
+      await adapterRef.current.connect();
+      const adapter = adapterRef.current as BLEScaleAdapter;
+      setDeviceName(adapter.getDeviceName());
+    } catch (err: any) {
+      if (err?.message === 'BLE_NOT_AVAILABLE') {
+        setBleError('Bluetooth requires the native Zura Dock app. BLE is not available in the browser.');
+      } else {
+        setBleError('Could not connect to scale. Make sure it\'s powered on and nearby.');
+      }
       setConnectionState('disconnected');
     } finally {
       setIsConnecting(false);
@@ -138,11 +161,17 @@ export function DockScaleTab() {
     await adapterRef.current.disconnect();
     setConnectionState('disconnected');
     setLastReading(null);
+    setDeviceName(null);
+  }, []);
+
+  const handleTare = useCallback(async () => {
+    await adapterRef.current.tare();
   }, []);
 
   const stateUI = CONNECTION_STATE_UI[connectionState];
   const StateIcon = stateUI.icon;
   const currentStepIdx = BLE_STEPS.indexOf(connectionState);
+  const isLiveReading = connectionState === 'stable_reading' || connectionState === 'unstable_reading';
 
   return (
     <div className="flex flex-col h-full px-5 py-6">
@@ -183,7 +212,7 @@ export function DockScaleTab() {
       )}>
         <div className={cn('relative inline-flex mb-4', stateUI.pulse && 'animate-pulse')}>
           <StateIcon className={cn('w-16 h-16', stateUI.color)} />
-          {connectionState === 'connected' && (
+          {(connectionState === 'connected' || isLiveReading) && (
             <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[hsl(var(--platform-bg))]" />
           )}
         </div>
@@ -193,6 +222,11 @@ export function DockScaleTab() {
         <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)]">
           {stateUI.description}
         </p>
+        {deviceName && (connectionState === 'connected' || isLiveReading) && (
+          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-2">
+            {deviceName}
+          </p>
+        )}
       </div>
 
       {/* BLE progress steps */}
@@ -220,12 +254,25 @@ export function DockScaleTab() {
         </div>
       )}
 
-      {/* Last reading */}
-      {lastReading !== null && (
+      {/* BLE Error */}
+      {bleError && (
+        <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 mb-6 text-center">
+          <p className="text-xs text-red-400">{bleError}</p>
+        </div>
+      )}
+
+      {/* Live reading */}
+      {lastReading !== null && (connectionState === 'connected' || isLiveReading) && (
         <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 mb-6 text-center">
-          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)] uppercase tracking-wide mb-1">Last Reading</p>
-          <p className="font-display text-2xl tracking-tight text-[hsl(var(--platform-foreground))]">
-            {lastReading}<span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)]">g</span>
+          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)] uppercase tracking-wide mb-1">
+            {connectionState === 'unstable_reading' ? 'Stabilizing...' : 'Live Weight'}
+          </p>
+          <p className={cn(
+            'font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]',
+            connectionState === 'unstable_reading' && 'opacity-60'
+          )}>
+            {lastReading.toFixed(1)}
+            <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)] ml-0.5">{lastUnit}</span>
           </p>
         </div>
       )}
@@ -239,17 +286,26 @@ export function DockScaleTab() {
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <BluetoothSearching className="w-4 h-4" />
-            {isConnecting ? 'Connecting...' : 'Scan for Scale'}
+            {isConnecting ? 'Connecting...' : 'Scan for Acaia Pearl'}
           </button>
         )}
-        {mode === 'ble' && connectionState === 'connected' && (
-          <button
-            onClick={handleDisconnect}
-            className="w-full h-12 rounded-xl border border-red-500/30 text-red-400 font-medium text-sm transition-colors flex items-center justify-center gap-2 hover:bg-red-500/10"
-          >
-            <WifiOff className="w-4 h-4" />
-            Disconnect
-          </button>
+        {mode === 'ble' && (connectionState === 'connected' || isLiveReading) && (
+          <div className="flex gap-3">
+            <button
+              onClick={handleTare}
+              className="flex-1 h-12 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 font-medium text-sm transition-colors flex items-center justify-center gap-2 hover:bg-violet-600/30"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Tare
+            </button>
+            <button
+              onClick={handleDisconnect}
+              className="flex-1 h-12 rounded-xl border border-red-500/30 text-red-400 font-medium text-sm transition-colors flex items-center justify-center gap-2 hover:bg-red-500/10"
+            >
+              <WifiOff className="w-4 h-4" />
+              Disconnect
+            </button>
+          </div>
         )}
         {mode === 'ble' && (connectionState === 'scanning' || connectionState === 'pairing') && (
           <div className="flex items-center justify-center gap-2 py-3">
@@ -259,13 +315,19 @@ export function DockScaleTab() {
             </span>
           </div>
         )}
+        {mode === 'ble' && connectionState === 'reconnecting' && (
+          <div className="flex items-center justify-center gap-2 py-3">
+            <RefreshCw className="w-4 h-4 text-amber-400 animate-spin" />
+            <span className="text-xs text-amber-400">Connection lost — attempting to reconnect...</span>
+          </div>
+        )}
         {mode === 'manual' && (
           <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 text-center">
             <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
               Manual mode active — weights are entered via the numpad during dispensing.
             </p>
             <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-2">
-              Switch to Bluetooth to connect a BLE scale
+              Switch to Bluetooth to connect an Acaia Pearl
             </p>
           </div>
         )}
