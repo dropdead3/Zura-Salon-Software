@@ -479,6 +479,10 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                     onNewClient={() => setShowNewClientSheet(true)}
                     selectedClient={selectedClient}
                     onContinue={() => setStep('service')}
+                    onDeselectClient={() => {
+                      setSelectedClient(null);
+                      setSelectedServices([]);
+                    }}
                   />
                   <DockNewClientSheet
                     open={showNewClientSheet}
@@ -551,6 +555,7 @@ function ClientStepDock({
   onNewClient,
   selectedClient,
   onContinue,
+  onDeselectClient,
 }: {
   clients: PhorestClient[];
   isLoading: boolean;
@@ -560,6 +565,7 @@ function ClientStepDock({
   onNewClient: () => void;
   selectedClient: PhorestClient | null;
   onContinue: () => void;
+  onDeselectClient: () => void;
 }) {
   const isSearching = searchQuery.length >= 2;
 
@@ -580,6 +586,13 @@ function ClientStepDock({
               {selectedClient.phone || selectedClient.email || 'No contact info'}
             </div>
           </div>
+          <button
+            onClick={onDeselectClient}
+            className="w-7 h-7 shrink-0 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center hover:bg-violet-600/40 active:scale-95 transition-all"
+            aria-label="Deselect client"
+          >
+            <X className="w-3.5 h-3.5 text-violet-400" />
+          </button>
         </div>
       )}
 
