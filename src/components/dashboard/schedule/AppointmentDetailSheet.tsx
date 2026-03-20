@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { useNavigate, Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { parseISO, differenceInDays } from 'date-fns';
@@ -1122,7 +1123,7 @@ export function AppointmentDetailSheet({
                         </div>
                         <div className="flex items-center gap-3">
                           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)} ({durationMinutes}min)</span>
+                          <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)} ({formatMinutesToDuration(durationMinutes)})</span>
                         </div>
                         {locationName && (
                           <div className="flex items-center gap-3">
@@ -1169,7 +1170,7 @@ export function AppointmentDetailSheet({
                               </div>
                               <div className="flex items-center gap-2 shrink-0 ml-2">
                                 {svc.duration && (
-                                  <span className="text-muted-foreground text-xs">{svc.duration}min</span>
+                                  <span className="text-muted-foreground text-xs">{formatMinutesToDuration(svc.duration)}</span>
                                 )}
                                 {svc.price != null && (
                                   <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
@@ -2048,7 +2049,7 @@ export function AppointmentDetailSheet({
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">{svc.name}</span>
                             {svc.category && <Badge variant="outline" className="text-[10px]">{svc.category}</Badge>}
-                            {svc.duration && <span className="text-xs text-muted-foreground">{svc.duration}min</span>}
+                            {svc.duration && <span className="text-xs text-muted-foreground">{formatMinutesToDuration(svc.duration)}</span>}
                           </div>
                           {isDefault && <Badge variant="secondary" className="text-[10px]">Default</Badge>}
                         </div>

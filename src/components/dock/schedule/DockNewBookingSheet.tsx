@@ -5,6 +5,7 @@
  */
 
 import { useState, useMemo, useCallback, Fragment } from 'react';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { useDebounce } from '@/hooks/use-debounce';
 import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
@@ -824,7 +825,7 @@ function ServiceStepDock({
                           <div className="flex items-center gap-3 mt-0.5">
                             <span className="flex items-center gap-1 text-xs text-[hsl(var(--platform-foreground-muted))]">
                               <Clock className="w-3 h-3" />
-                              {s.duration_minutes}m
+                              {formatMinutesToDuration(s.duration_minutes)}
                             </span>
                             {s.price !== null && (
                               <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
@@ -873,7 +874,7 @@ function ServiceStepDock({
             </div>
             <div className="flex items-center justify-between text-sm mb-3">
               <span className="text-[hsl(var(--platform-foreground-muted))]">
-                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {totalDuration}m
+                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {formatMinutesToDuration(totalDuration)}
               </span>
               <span className="text-[hsl(var(--platform-foreground))] font-medium">${totalPrice}</span>
             </div>
@@ -1013,7 +1014,7 @@ function ConfirmStepDock({
             </div>
           )}
           <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
-          <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
+          <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={formatMinutesToDuration(totalDuration)} />
         </div>
 
         {/* Time selector */}
@@ -1052,7 +1053,7 @@ function ConfirmStepDock({
                   <span className="text-sm text-[hsl(var(--platform-foreground))]">{s.name}</span>
                 </div>
                 <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                  {s.duration_minutes}m · ${s.price || 0}
+                  {formatMinutesToDuration(s.duration_minutes)} · ${s.price || 0}
                 </span>
               </div>
             ))}

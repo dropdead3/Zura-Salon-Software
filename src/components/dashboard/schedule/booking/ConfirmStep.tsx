@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
@@ -141,10 +142,7 @@ export function ConfirmStep({
                 <div>
                   <div className="text-xs text-muted-foreground">Duration</div>
                   <div className="font-medium text-sm">
-                    {totalDuration >= 60 
-                      ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60 > 0 ? `${totalDuration % 60}m` : ''}`
-                      : `${totalDuration}m`
-                    }
+                    {formatMinutesToDuration(totalDuration)}
                   </div>
                 </div>
               </div>

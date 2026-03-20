@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -672,7 +673,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                   <div className="flex-1 min-w-0">
                                     <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
                                     <div className={cn('flex items-center gap-3', tokens.body.muted)}>
-                                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
+                                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
                                       {svc.price != null && (
                                         <span className="flex items-center gap-1">
                                           <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
@@ -742,7 +743,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             {svc.category && (
                               <span className="text-[10px] text-muted-foreground/60 italic">was: {svc.category}</span>
                             )}
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
                             {svc.price != null && (
                               <span className="flex items-center gap-1">
                                 <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
@@ -814,7 +815,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{svc.name}</p>
                           <div className={cn('flex items-center gap-3', tokens.body.muted)}>
                             {svc.category && <span className="text-[10px] italic">was: {svc.category}</span>}
-                            {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>}
+                            {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>}
                             {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}</span>}
                           </div>
                         </div>
