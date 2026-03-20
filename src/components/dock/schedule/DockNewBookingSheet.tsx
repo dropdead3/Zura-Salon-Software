@@ -590,7 +590,7 @@ function ServiceStepDock({
                       <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className="relative flex flex-col items-start gap-2 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
+                        className="relative flex flex-row items-center gap-3 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
                       >
                         {(() => { const Icon = getCategoryIcon(cat); return (
                           <div className="w-8 h-8 rounded-lg bg-violet-600/10 flex items-center justify-center">
