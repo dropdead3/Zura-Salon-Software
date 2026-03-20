@@ -303,7 +303,7 @@ function ClientStepDock({
           placeholder="Search by name, phone, or email..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full h-11 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+          className="w-full h-11 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:border-violet-500/50"
         />
       </div>
 
@@ -559,7 +559,7 @@ function ConfirmStepDock({
             onChange={(e) => onNotesChange(e.target.value)}
             placeholder="Special requests..."
             rows={2}
-            className="w-full rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] p-3 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+            className="w-full rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] p-3 resize-none focus:outline-none focus:border-violet-500/50"
           />
         </div>
       </div>
