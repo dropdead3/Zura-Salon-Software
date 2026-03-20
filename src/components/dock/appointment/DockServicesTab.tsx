@@ -5,9 +5,9 @@
  * In demo mode, bowls are managed in local state (no DB writes).
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check } from 'lucide-react';
+import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
@@ -29,15 +29,22 @@ interface DockServicesTabProps {
   staff: DockStaffSession;
 }
 
-function getStatusDisplay(status: string) {
+type BowlStatusInfo = {
+  icon: typeof FlaskConical;
+  label: string;
+  color: string;
+  iconBg: string;
+};
+
+function getStatusDisplay(status: string): BowlStatusInfo {
   const normalized = normalizeSessionStatus(status as any);
-  if (normalized === 'completed') return { icon: CheckCircle2, label: 'Completed', color: 'text-emerald-400' };
-  if (isActiveSession(normalized)) return { icon: FlaskConical, label: 'Mixing', color: 'text-violet-400' };
-  if (requiresReweigh(normalized)) return { icon: AlertCircle, label: 'Reweigh', color: 'text-amber-400' };
-  if (normalized === 'cancelled') return { icon: Circle, label: 'Cancelled', color: 'text-[hsl(var(--platform-foreground-muted)/0.4)]' };
-  if (normalized === 'unresolved_exception') return { icon: AlertCircle, label: 'Exception', color: 'text-red-400' };
-  if (normalized === 'awaiting_stylist_approval') return { icon: AlertCircle, label: 'Approval', color: 'text-amber-400' };
-  return { icon: Circle, label: 'Draft', color: 'text-blue-400' };
+  if (normalized === 'completed') return { icon: CheckCircle2, label: 'Completed', color: 'text-emerald-400', iconBg: 'bg-emerald-500/15 border-emerald-500/20' };
+  if (isActiveSession(normalized)) return { icon: FlaskConical, label: 'In Progress', color: 'text-amber-400', iconBg: 'bg-amber-500/15 border-amber-500/20' };
+  if (requiresReweigh(normalized)) return { icon: Scale, label: 'Needs Reweigh', color: 'text-rose-400', iconBg: 'bg-rose-500/15 border-rose-500/20' };
+  if (normalized === 'cancelled') return { icon: Circle, label: 'Cancelled', color: 'text-[hsl(var(--platform-foreground-muted)/0.4)]', iconBg: 'bg-muted/20 border-border/20' };
+  if (normalized === 'unresolved_exception') return { icon: AlertCircle, label: 'Exception', color: 'text-red-400', iconBg: 'bg-red-500/15 border-red-500/20' };
+  if (normalized === 'awaiting_stylist_approval') return { icon: AlertCircle, label: 'Approval', color: 'text-amber-400', iconBg: 'bg-amber-500/15 border-amber-500/20' };
+  return { icon: Circle, label: 'Draft', color: 'text-blue-400', iconBg: 'bg-blue-500/15 border-blue-500/20' };
 }
 
 interface ActiveBowl {
@@ -79,7 +86,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
 
   const handleCreateBowl = useCallback((lines: FormulaLine[], _baseWeight: number) => {
     if (isDemoMode) {
-      // In demo mode, manage bowls locally — no DB writes
       const existingCount = (sessions?.length || 0) + demoBowls.length;
       const bowlNumber = existingCount + 1;
       const totalWeight = lines.reduce((sum, l) => sum + l.targetWeight * l.ratio, 0);
@@ -95,7 +101,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         createdAt: new Date().toISOString(),
       };
       setDemoBowls((prev) => [...prev, newBowl]);
-      // Auto-open the new bowl
       setActiveBowl({
         sessionId: newBowl.id,
         bowlId: newBowl.id,
@@ -204,7 +209,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const allBowlCount = remoteBowls.length + demoBowls.length;
   const hasActiveSessions = remoteBowls.some((s) => !isTerminalSessionStatus(s.status as any)) || demoBowls.length > 0;
 
-  // Use real stats from projections, fallback to basic counts
   const demoTotalDispensed = demoBowls.reduce((sum, b) => sum + b.totalWeight, 0);
   const demoTotalCost = demoBowls.reduce((sum, b) => sum + b.totalCost, 0);
 
@@ -217,73 +221,88 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     totalCost: demoTotalCost,
   };
 
+  // Derive contextual action bar state
+  const sessionState = deriveSessionState(remoteBowls, demoBowls);
+
   return (
-    <div className={`px-5 py-4 ${allBowlCount === 0 ? 'flex flex-col h-full' : 'space-y-4'}`}>
-      {/* Bowl grid */}
-      {allBowlCount > 0 ? (
-        <div className="grid grid-cols-2 gap-3">
-          {remoteBowls.map((session, idx) => (
-            <BowlCard
-              key={session.id}
-              session={session}
-              index={idx + 1}
-              onTap={() => handleBowlTap(session, idx + 1)}
+    <div className={`flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
+      <div className={`px-5 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
+        {/* Bowl grid */}
+        {allBowlCount > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {remoteBowls.map((session, idx) => (
+              <BowlCard
+                key={session.id}
+                session={session}
+                index={idx + 1}
+                onTap={() => handleBowlTap(session, idx + 1)}
+              />
+            ))}
+            {demoBowls.map((bowl) => (
+              <DemoBowlCard
+                key={bowl.id}
+                bowl={bowl}
+                onTap={() => handleDemoBowlTap(bowl)}
+              />
+            ))}
+            {/* Inline Add Bowl card */}
+            <AddBowlCard
+              onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
+              disabled={createBowl.isPending}
             />
-          ))}
-          {demoBowls.map((bowl) => (
-            <DemoBowlCard
-              key={bowl.id}
-              bowl={bowl}
-              onTap={() => handleDemoBowlTap(bowl)}
-            />
-          ))}
-        </div>
-      ) : (
-        <button
-          onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
-          disabled={createBowl.isPending}
-          className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
-        >
-          <motion.div
-            className="relative mb-6"
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          </div>
+        ) : (
+          <button
+            onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
+            disabled={createBowl.isPending}
+            className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
           >
-            <div className="absolute inset-0 rounded-full bg-violet-500/20 scale-150 animate-[glow_2.5s_ease-in-out_infinite]" />
-            <div className="relative flex items-center justify-center w-24 h-24 rounded-full border border-violet-500/30 bg-violet-600/10">
-              <FlaskConical className="w-12 h-12 text-violet-400" />
-            </div>
-          </motion.div>
-          <span className="font-display text-lg tracking-wide text-violet-300">
-            Start Mixing
-          </span>
-          <span className="text-sm text-[hsl(var(--platform-muted-foreground))] mt-1">
-            Tap anywhere to add your first bowl
-          </span>
-        </button>
-      )}
+            <motion.div
+              className="relative mb-6"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <div className="absolute inset-0 rounded-full bg-violet-500/20 scale-150 animate-[glow_2.5s_ease-in-out_infinite]" />
+              <div className="relative flex items-center justify-center w-24 h-24 rounded-full border border-violet-500/30 bg-violet-600/10">
+                <FlaskConical className="w-12 h-12 text-violet-400" />
+              </div>
+            </motion.div>
+            <span className="font-display text-lg tracking-wide text-violet-300">
+              Start Mixing
+            </span>
+            <span className="text-sm text-[hsl(var(--platform-muted-foreground))] mt-1">
+              Tap anywhere to add your first bowl
+            </span>
+          </button>
+        )}
+      </div>
 
-      {/* Add Bowl button — only when bowls already exist */}
+      {/* Contextual Action Bar */}
       {allBowlCount > 0 && (
-        <button
-          onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
-          disabled={createBowl.isPending}
-          className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium disabled:opacity-40"
-        >
-          <Plus className="w-4 h-4" />
-          {createBowl.isPending ? 'Creating...' : 'Add Bowl'}
-        </button>
-      )}
-
-      {/* Complete Session button — shown when bowls exist */}
-      {allBowlCount > 0 && (
-        <button
-          onClick={() => setShowComplete(true)}
-          className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-emerald-600/15 border border-emerald-500/20 text-emerald-400 text-sm font-medium transition-colors hover:bg-emerald-600/25"
-        >
-          <Check className="w-4 h-4" />
-          Complete Session
-        </button>
+        <ContextualActionBar
+          state={sessionState}
+          onContinueMixing={() => {
+            // Find first active bowl and open it
+            const activeRemote = remoteBowls.find(s => isActiveSession(normalizeSessionStatus(s.status as any)));
+            if (activeRemote) {
+              const idx = remoteBowls.indexOf(activeRemote);
+              handleBowlTap(activeRemote, idx + 1);
+            } else if (demoBowls.length > 0) {
+              const activeDemoBowl = demoBowls.find(b => b.status === 'in_progress') || demoBowls[demoBowls.length - 1];
+              handleDemoBowlTap(activeDemoBowl);
+            }
+          }}
+          onAddBowl={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
+          onReweigh={() => {
+            // Open first bowl needing reweigh
+            const reweighBowl = remoteBowls.find(s => requiresReweigh(normalizeSessionStatus(s.status as any)));
+            if (reweighBowl) {
+              const idx = remoteBowls.indexOf(reweighBowl);
+              handleBowlTap(reweighBowl, idx + 1);
+            }
+          }}
+          onCompleteSession={() => setShowComplete(true)}
+        />
       )}
 
       {/* Bowl detection gate */}
@@ -317,6 +336,105 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   );
 }
 
+// ─── Session State Derivation ─────────────────────────
+type SessionActionState = 'has_active' | 'needs_reweigh' | 'all_complete' | 'mixed';
+
+function deriveSessionState(remote: DockMixSession[], demo: DemoBowl[]): SessionActionState {
+  const hasActive = remote.some(s => isActiveSession(normalizeSessionStatus(s.status as any))) || demo.some(b => b.status === 'in_progress');
+  const hasReweigh = remote.some(s => requiresReweigh(normalizeSessionStatus(s.status as any)));
+  const allTerminal = remote.every(s => isTerminalSessionStatus(s.status as any)) && demo.every(b => b.status !== 'in_progress');
+
+  if (hasActive) return 'has_active';
+  if (hasReweigh) return 'needs_reweigh';
+  if (allTerminal && (remote.length + demo.length) > 0) return 'all_complete';
+  return 'mixed';
+}
+
+// ─── Contextual Action Bar ────────────────────────────
+function ContextualActionBar({
+  state,
+  onContinueMixing,
+  onAddBowl,
+  onReweigh,
+  onCompleteSession,
+}: {
+  state: SessionActionState;
+  onContinueMixing: () => void;
+  onAddBowl: () => void;
+  onReweigh: () => void;
+  onCompleteSession: () => void;
+}) {
+  const config = useMemo(() => {
+    switch (state) {
+      case 'has_active':
+        return {
+          primary: { label: 'Continue Mixing', onClick: onContinueMixing, className: 'bg-violet-600 hover:bg-violet-500 text-white' },
+          secondary: { label: 'Add Bowl', onClick: onAddBowl },
+        };
+      case 'needs_reweigh':
+        return {
+          primary: { label: 'Reweigh Bowl', onClick: onReweigh, className: 'bg-rose-600 hover:bg-rose-500 text-white' },
+          secondary: { label: 'Complete Session', onClick: onCompleteSession },
+        };
+      case 'all_complete':
+        return {
+          primary: { label: 'Complete Session', onClick: onCompleteSession, className: 'bg-emerald-600 hover:bg-emerald-500 text-white' },
+          secondary: { label: 'Mix More', onClick: onAddBowl },
+        };
+      default: // mixed
+        return {
+          primary: { label: 'Continue Mixing', onClick: onContinueMixing, className: 'bg-violet-600 hover:bg-violet-500 text-white' },
+          secondary: { label: 'Complete Session', onClick: onCompleteSession },
+        };
+    }
+  }, [state, onContinueMixing, onAddBowl, onReweigh, onCompleteSession]);
+
+  return (
+    <div className="sticky bottom-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg))/0.8] backdrop-blur-xl">
+      <div className="flex gap-3">
+        <button
+          onClick={config.secondary.onClick}
+          className="flex-1 h-11 rounded-xl border border-[hsl(var(--platform-border)/0.4)] text-[hsl(var(--platform-foreground-muted))] text-sm font-medium transition-colors hover:bg-[hsl(var(--platform-bg-hover))]"
+        >
+          {config.secondary.label}
+        </button>
+        <button
+          onClick={config.primary.onClick}
+          className={cn(
+            'flex-[1.5] h-11 rounded-xl text-sm font-medium transition-all active:scale-[0.98]',
+            config.primary.className
+          )}
+        >
+          {config.primary.label}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Inline Add Bowl Card ─────────────────────────────
+function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[140px]',
+        'border-violet-500/30 text-violet-400',
+        'hover:bg-violet-600/10 hover:border-violet-500/50',
+        'active:scale-[0.98] transition-all duration-150',
+        'disabled:opacity-40'
+      )}
+    >
+      <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+        <Plus className="w-5 h-5" />
+      </div>
+      <span className="text-xs font-medium">Add Bowl</span>
+    </button>
+  );
+}
+
+// ─── Bowl Card (DB sessions) ──────────────────────────
 function BowlCard({ session, index, onTap }: { session: DockMixSession; index: number; onTap: () => void }) {
   const status = getStatusDisplay(session.status);
   const StatusIcon = status.icon;
@@ -326,59 +444,109 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
     <button
       onClick={onTap}
       className={cn(
-        'w-full text-left rounded-xl p-4 border transition-all duration-150',
+        'w-full text-left rounded-xl p-4 border transition-all duration-150 min-h-[140px] flex flex-col',
         'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
         'hover:border-[hsl(var(--platform-border)/0.5)]',
         'active:scale-[0.98]',
         isTerminal && 'opacity-60'
       )}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
-          Bowl {index}
-        </span>
-        <StatusIcon className={cn('w-4 h-4', status.color)} />
+      {/* Header: icon + title + menu */}
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2.5">
+          <div className={cn('w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
+            <StatusIcon className={cn('w-4.5 h-4.5', status.color)} />
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+              Bowl {index}
+            </p>
+            <p className={cn('text-[11px] mt-0.5', status.color)}>
+              {status.label}
+            </p>
+          </div>
+        </div>
+        <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0 mt-0.5" />
       </div>
-      <p className={cn('text-xs', status.color)}>
-        {status.label}
-      </p>
-      {session.unresolved_flag && (
-        <p className="text-[10px] text-amber-400/70 mt-1">⚠ Flagged for review</p>
-      )}
-      {session.notes && (
-        <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] mt-1 truncate">
-          {session.notes}
-        </p>
-      )}
+
+      {/* Info area */}
+      <div className="flex-1 mt-1">
+        {session.unresolved_flag && (
+          <p className="text-[10px] text-amber-400/70 mb-1">⚠ Flagged for review</p>
+        )}
+        {session.notes && (
+          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)] truncate">
+            {session.notes}
+          </p>
+        )}
+      </div>
     </button>
   );
 }
 
 /** Demo-mode bowl card with ingredient summary */
 function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
+  const previewLines = bowl.lines.slice(0, 3);
+  const overflowCount = bowl.lines.length - 3;
+
   return (
     <button
       onClick={onTap}
       className={cn(
-        'w-full text-left rounded-xl p-4 border transition-all duration-150',
+        'w-full text-left rounded-xl p-4 border transition-all duration-150 min-h-[140px] flex flex-col',
         'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
         'hover:border-[hsl(var(--platform-border)/0.5)]',
         'active:scale-[0.98]',
       )}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
-          Bowl {bowl.bowlNumber}
-        </span>
-        <FlaskConical className="w-4 h-4 text-violet-400" />
+      {/* Header: icon + title + menu */}
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <FlaskConical className="w-4.5 h-4.5 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+              New Formula
+            </p>
+            <p className="text-[11px] mt-0.5 text-amber-400">
+              In Progress
+            </p>
+          </div>
+        </div>
+        <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0 mt-0.5" />
       </div>
-      <p className="text-xs text-violet-400 mb-1">Mixing</p>
-      <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)]">
-        {bowl.totalWeight.toFixed(0)}g · ${bowl.totalCost.toFixed(2)} est.
-      </p>
-      <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-0.5">
-        {bowl.lines.length} ingredient{bowl.lines.length !== 1 ? 's' : ''}
-      </p>
+
+      {/* Ingredient lines preview */}
+      <div className="flex-1 mt-1 space-y-1">
+        {previewLines.map((line, i) => (
+          <p key={i} className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
+            <span className="text-[hsl(var(--platform-foreground-muted)/0.8)]">{line.product.name}</span>
+            <span className="mx-1">·</span>
+            <span>{(line.targetWeight * line.ratio).toFixed(1)}g</span>
+          </p>
+        ))}
+        {overflowCount > 0 && (
+          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+            +{overflowCount} more
+          </p>
+        )}
+        {previewLines.length === 0 && (
+          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)] italic">
+            No ingredients yet
+          </p>
+        )}
+      </div>
+
+      {/* Footer stats */}
+      <div className="mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.15)] flex items-center justify-between">
+        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+          {bowl.totalWeight.toFixed(0)}g total
+        </span>
+        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+          ${bowl.totalCost.toFixed(2)}
+        </span>
+      </div>
     </button>
   );
 }
