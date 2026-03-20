@@ -44,7 +44,8 @@ export async function fetchAvgTicket(
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled","no_show")')
     .not('total_price', 'is', null)
-    .gt('total_price', 0);
+    .gt('total_price', 0)
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
