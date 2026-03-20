@@ -305,16 +305,30 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
             {/* Content */}
             <div className="flex-1 min-h-0 overflow-y-auto">
               {step === 'client' && (
-                <ClientStepDock
-                  clients={clients}
-                  isLoading={isLoadingClients}
-                  searchQuery={clientSearch}
-                  onSearchChange={setClientSearch}
-                  onSelectClient={(c) => {
-                    setSelectedClient(c);
-                    setStep('service');
-                  }}
-                />
+                <>
+                  <ClientStepDock
+                    clients={clients}
+                    isLoading={isLoadingClients}
+                    searchQuery={clientSearch}
+                    onSearchChange={setClientSearch}
+                    onSelectClient={(c) => {
+                      setSelectedClient(c);
+                      setStep('service');
+                    }}
+                    onNewClient={() => setShowNewClientSheet(true)}
+                  />
+                  <DockNewClientSheet
+                    open={showNewClientSheet}
+                    onClose={() => setShowNewClientSheet(false)}
+                    locationId={locationId}
+                    organizationId={organizationId}
+                    onClientCreated={(c) => {
+                      setSelectedClient(c);
+                      setStep('service');
+                      setShowNewClientSheet(false);
+                    }}
+                  />
+                </>
               )}
 
               {step === 'service' && (
