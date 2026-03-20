@@ -214,7 +214,7 @@ export function SuperAdminTopBar({
                   {isStylistAdmin
                     ? "This user is an admin who also performs services. Managed via the 'I also perform services' toggle in Profile Settings."
                     : roleBadges.length > 1
-                      ? `Roles: ${roleBadges.map(b => b.label).join(', ')}`
+                      ? `Roles: ${roleBadges.map(b => b.label).join(', `
                       : badge.label}
                 </TooltipContent>
               </Tooltip>

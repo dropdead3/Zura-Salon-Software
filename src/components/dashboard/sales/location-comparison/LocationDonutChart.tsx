@@ -61,7 +61,7 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
   // Build unique gradient defs per color
   const gradientDefs = useMemo(() => {
     const unique = [...new Set(colors.slice(0, locations.length))];
-    return unique.map(hex => ({ id: `donut-glass-${hex.replace('#', '')}`, hex }));
+    return unique.map(hex => ({ id: `donut-glass-${hex.replace('#', '`, hex }));
   }, [colors, locations.length]);
 
   return (
@@ -103,7 +103,7 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
           >
             {data.map((_, i) => {
               const hex = colors[i % colors.length];
-              const gradId = `donut-glass-${hex.replace('#', '')}`;
+              const gradId = `donut-glass-${hex.replace('#', '`;
               return <Cell key={i} fill={`url(#${gradId})`} />;
             })}
             <CenterLabel totalRevenue={totalRevenue} />

@@ -139,7 +139,7 @@ export default function AccountDetail() {
             <PlatformBadge variant={statusColors[organization.status || 'pending']} className="capitalize">
               {organization.status}
             </PlatformBadge>
-            <PlatformButton variant="secondary" onClick={() => navigate(`${dashPath('/platform/import?org=${organization.id}')}`)}>
+            <PlatformButton variant="secondary" onClick={() => navigate(dashPath(`/platform/import?org=${organization.id}`))}>
               <Upload className="h-4 w-4 mr-2" />
               Import Data
             </PlatformButton>
@@ -493,7 +493,7 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
         <PlatformButton 
           variant="secondary" 
           size="sm"
-          onClick={() => navigate(`${dashPath('/platform/accounts/${organizationId}?tab=billing')}`)}
+          onClick={() => navigate(dashPath(`/platform/accounts/${organizationId}?tab=billing`))}
 
         >
           <CreditCard className="h-4 w-4 mr-2" />

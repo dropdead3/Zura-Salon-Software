@@ -56,7 +56,7 @@ export function HelpArticleView({ article }: HelpArticleViewProps) {
 
   const handleBack = () => {
     if (article.category) {
-      navigate(`${dashPath('/help/${article.category.slug}')}`);
+      navigate(dashPath(`/help/${article.category.slug}`));
     } else {
       navigate(dashPath('/help'));
     }

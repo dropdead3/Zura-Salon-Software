@@ -110,7 +110,7 @@ export function ActiveChallengesWidget({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Link to={`${dashPath('/admin/challenges/${challenge.id}')}`}>
+              <Link to={dashPath(`/admin/challenges/${challenge.id}`)}>
                 <div className="group p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">

@@ -142,7 +142,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
           type: 'team',
           title: name,
           subtitle: member.roles?.[0] || 'Team Member',
-          path: `${dashPath('/directory?search=${encodeURIComponent(name)}')}`,
+          path: dashPath(`/directory?search=${encodeURIComponent(name)}`),
           icon: <Users className="w-4 h-4" />,
         });
       }

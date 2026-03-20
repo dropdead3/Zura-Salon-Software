@@ -492,7 +492,7 @@ function DrillHeader({ name, userId }: { name: string; userId: string | null }) 
       <h4 className={cn(tokens.heading.subsection, 'text-foreground')}>{name}</h4>
       {userId && (
         <Link
-          to={`${dashPath('/admin/team/${userId}')}`}
+          to={dashPath(`/admin/team/${userId}`)}
           className="text-xs text-primary hover:underline flex items-center gap-1"
         >
           View Profile <ChevronRight className="w-3 h-3" />

@@ -316,14 +316,14 @@ export function ExecutiveSummaryCard() {
   const collectionRate = rentData?.collectionRate ?? 0;
 
   // Pay period label
-  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d')}`;
+  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d`;
 
   const allKpis: KpiData[] = [
     {
       icon: DollarSign,
       label: 'Sales Revenue',
       value: <BlurredAmount>{formatCurrencyWhole(revenue)}</BlurredAmount>,
-      drillDown: '${dashPath('/admin/analytics?tab=sales',
+      drillDown: dashPath('/admin/analytics?tab=sales'),
       drillLabel: 'View Sales',
       change: revenueChange,
       tooltip: 'Total service and product revenue from completed appointments in the selected date range.',
@@ -336,7 +336,7 @@ export function ExecutiveSummaryCard() {
       drillLabel: 'View Renters',
       change: null,
       tooltip: 'Expected rent from active booth rental contracts, pro-rated to the selected date range. Collection rate shows how much has actually been paid.',
-      subtitle: rentData?.activeRenterCount ? ')}`${rentData.activeRenterCount} active renters` : undefined,
+      subtitle: rentData?.activeRenterCount ? `${rentData.activeRenterCount} active renters` : undefined,
       badge: expectedRent > 0 ? {
         label: `${collectionRate}% collected`,
         color: collectionRate >= 90 ? 'bg-chart-2/10 text-chart-2' : collectionRate >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-destructive/10 text-destructive',
@@ -346,17 +346,17 @@ export function ExecutiveSummaryCard() {
       icon: Wallet,
       label: 'Commission Liability',
       value: <BlurredAmount>{formatCurrencyWhole(Math.round(commissionLiability))}</BlurredAmount>,
-      drillDown: '${dashPath('/admin/payroll?tab=commissions',
+      drillDown: dashPath('/admin/payroll?tab=commissions'),
       drillLabel: 'View Payroll',
       change: null,
       tooltip: 'Estimated commission owed to all stylists for the current pay period, calculated from each stylist\'s revenue and their commission tier.',
-      subtitle: ')}`Pay period: ${payPeriodLabel}`,
+      subtitle: `Pay period: ${payPeriodLabel}`,
     },
     {
       icon: Users,
       label: 'Total Staff',
       value: staffCount.toLocaleString(),
-      drillDown: '${dashPath('/admin/team',
+      drillDown: dashPath('/admin/team'),
       drillLabel: 'View Team',
       change: null,
       tooltip: 'Count of active team members. Filtered by location when a specific location is selected.',
@@ -373,9 +373,9 @@ export function ExecutiveSummaryCard() {
     {
       icon: Activity,
       label: 'Utilization',
-      value: ')}`${utilization.toFixed(0)}%`,
+      value: `${utilization.toFixed(0)}%`,
       valueColor: utilization >= 60 ? 'text-chart-2' : utilization >= 30 ? 'text-amber-500' : 'text-destructive',
-      drillDown: '${dashPath('/admin/analytics?tab=operations&subtab=staff-utilization',
+      drillDown: dashPath('/admin/analytics?tab=operations&subtab=staff-utilization'),
       drillLabel: 'View Capacity',
       change: null,
       tooltip: 'Percentage of available appointment capacity that is booked, based on the last 30 days of scheduling data.',
@@ -388,7 +388,7 @@ export function ExecutiveSummaryCard() {
       drillDown: dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline'),
       drillLabel: 'View Pipeline',
       change: null,
-      subtitle: ')}`${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
+      subtitle: `${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
       tooltip: 'Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue.',
     },
   ];

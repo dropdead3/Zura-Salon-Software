@@ -192,7 +192,7 @@ export function useCreateRecurringShifts() {
 
       const dates = generateRecurringDates(input.shift_date, input.untilDate, input.pattern, input.customDays);
       const patternStr = input.pattern === 'custom' && input.customDays?.length
-        ? `custom:${input.customDays.map(d => ['sun','mon','tue','wed','thu','fri','sat'][d]).join(',')}`
+        ? `custom:${input.customDays.map(d => ['sun','mon','tue','wed','thu','fri','sat'][d]).join(',`
         : input.pattern;
 
       const rows = dates.map(date => ({

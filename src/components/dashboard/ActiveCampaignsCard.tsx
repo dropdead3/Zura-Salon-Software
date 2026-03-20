@@ -67,7 +67,7 @@ export function ActiveCampaignsCard() {
             const progress = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
 
             return (
-              <Link key={campaign.id} to={`${dashPath('/campaigns/${campaign.id}')}`}>
+              <Link key={campaign.id} to={dashPath(`/campaigns/${campaign.id}`)}>
                 <Card
                   className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300 group"
                 >

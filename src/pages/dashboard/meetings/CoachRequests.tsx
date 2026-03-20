@@ -79,7 +79,7 @@ export default function CoachRequests() {
                 <Card 
                   key={meeting.id} 
                   className="cursor-pointer hover:bg-muted/50 transition-colors" 
-                  onClick={() => navigate(`${dashPath('/meeting/${meeting.id}')}`)}
+                  onClick={() => navigate(dashPath(`/meeting/${meeting.id}`))}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
@@ -117,7 +117,7 @@ export default function CoachRequests() {
                         <Button
                           size={tokens.button.inline}
                           variant="ghost"
-                          onClick={(e) => { e.stopPropagation(); navigate(`${dashPath('/meeting/${meeting.id}')}`); }}
+                          onClick={(e) => { e.stopPropagation(); navigate(dashPath(`/meeting/${meeting.id}`)); }}
                         >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Open

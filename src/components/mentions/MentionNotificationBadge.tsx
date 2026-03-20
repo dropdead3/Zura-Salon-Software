@@ -46,7 +46,7 @@ export function MentionNotificationBadge() {
 
     // Navigate to source
     if (mention.source_type === 'chat' && mention.channel_id) {
-      navigate(`${dashPath('/team-chat?channel=${mention.channel_id}')}`);
+      navigate(dashPath(`/team-chat?channel=${mention.channel_id}`));
     } else if (mention.source_type === 'account_note') {
       navigate(dashPath('/account-notes'));
     }

@@ -5,33 +5,33 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 // Map hrefs to their labels for the preview
 const LINK_CONFIG: Record<string, { label: string }> = {
   // Main
-  dashPath('/'): { label: 'Command Center' },
-  dashPath('/schedule'): { label: 'Schedule' },
-  dashPath('/team-chat'): { label: 'Team Chat' },
+  '/': { label: 'Command Center' },
+  '/schedule': { label: 'Schedule' },
+  '/team-chat': { label: 'Team Chat' },
   // My Tools
-  dashPath('/today-prep'): { label: "Today's Prep" },
-  dashPath('/waitlist'): { label: 'Waitlist' },
-  dashPath('/stats'): { label: 'My Stats' },
-  dashPath('/my-pay'): { label: 'My Pay' },
-  dashPath('/training'): { label: 'Training' },
-  dashPath('/program'): { label: 'New-Client Engine Program' },
-  dashPath('/leaderboard'): { label: 'Team Leaderboard' },
-  dashPath('/shift-swaps'): { label: 'Shift Swaps' },
-  dashPath('/rewards'): { label: 'Rewards' },
-  dashPath('/ring-the-bell'): { label: 'Ring the Bell' },
-  dashPath('/my-graduation'): { label: 'My Graduation' },
+  '/today-prep': { label: "Today's Prep" },
+  '/waitlist': { label: 'Waitlist' },
+  '/stats': { label: 'My Stats' },
+  '/my-pay': { label: 'My Pay' },
+  '/training': { label: 'Training' },
+  '/program': { label: 'New-Client Engine Program' },
+  '/leaderboard': { label: 'Team Leaderboard' },
+  '/shift-swaps': { label: 'Shift Swaps' },
+  '/rewards': { label: 'Rewards' },
+  '/ring-the-bell': { label: 'Ring the Bell' },
+  '/my-graduation': { label: 'My Graduation' },
   // Manage (hub links)
-  dashPath('/admin/analytics'): { label: 'Analytics Hub' },
-  dashPath('/admin/team-hub'): { label: 'Operations Hub' },
-  dashPath('/admin/client-hub'): { label: 'Client Hub' },
-  dashPath('/admin/growth-hub'): { label: 'Growth Hub' },
-  dashPath('/admin/payroll'): { label: 'Hiring & Payroll Hub' },
-  dashPath('/admin/booth-renters'): { label: 'Renter Hub' },
+  '/admin/analytics': { label: 'Analytics Hub' },
+  '/admin/team-hub': { label: 'Operations Hub' },
+  '/admin/client-hub': { label: 'Client Hub' },
+  '/admin/growth-hub': { label: 'Growth Hub' },
+  '/admin/payroll': { label: 'Hiring & Payroll Hub' },
+  '/admin/booth-renters': { label: 'Renter Hub' },
   // System
-  dashPath('/admin/access-hub'): { label: 'Roles & Controls Hub' },
-  dashPath('/admin/settings'): { label: 'Settings' },
+  '/admin/access-hub': { label: 'Roles & Controls Hub' },
+  '/admin/settings': { label: 'Settings' },
   // Legacy / other
-  dashPath('/onboarding'): { label: 'Onboarding' },
+  '/onboarding': { label: 'Onboarding' },
 };
 
 interface SidebarPreviewProps {

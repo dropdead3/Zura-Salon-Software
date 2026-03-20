@@ -106,47 +106,47 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 // Map hrefs to their labels and icons
 const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
   // Main
-  dashPath('/'): { label: 'Command Center', icon: LayoutDashboard },
-  dashPath('/schedule'): { label: 'Schedule', icon: CalendarDays },
+  '/': { label: 'Command Center', icon: LayoutDashboard },
+  '/schedule': { label: 'Schedule', icon: CalendarDays },
   
   // Growth
-  dashPath('/training'): { label: 'Training', icon: Video },
-  dashPath('/program'): { label: 'New-Client Engine Program', icon: Target },
-  dashPath('/admin/team'): { label: 'Program Team Overview', icon: Users },
-  dashPath('/ring-the-bell'): { label: 'Ring the Bell', icon: Bell },
-  dashPath('/my-graduation'): { label: 'My Graduation', icon: GraduationCap },
+  '/training': { label: 'Training', icon: Video },
+  '/program': { label: 'New-Client Engine Program', icon: Target },
+  '/admin/team': { label: 'Program Team Overview', icon: Users },
+  '/ring-the-bell': { label: 'Ring the Bell', icon: Bell },
+  '/my-graduation': { label: 'My Graduation', icon: GraduationCap },
   
   // Stats
-  dashPath('/stats'): { label: 'Stats', icon: BarChart3 },
-  dashPath('/leaderboard'): { label: 'Team Leaderboard', icon: Trophy },
-  dashPath('/my-pay'): { label: 'My Pay', icon: Wallet },
+  '/stats': { label: 'Stats', icon: BarChart3 },
+  '/leaderboard': { label: 'Team Leaderboard', icon: Trophy },
+  '/my-pay': { label: 'My Pay', icon: Wallet },
   
   // Team Tools
-  dashPath('/shift-swaps'): { label: 'Shift Swaps', icon: ArrowLeftRight },
-  dashPath('/rewards'): { label: 'Rewards', icon: Gift },
-  dashPath('/assistant-schedule'): { label: 'Assistant Schedule', icon: Users },
-  dashPath('/schedule-meeting'): { label: 'Meetings & Accountability', icon: CalendarClock },
+  '/shift-swaps': { label: 'Shift Swaps', icon: ArrowLeftRight },
+  '/rewards': { label: 'Rewards', icon: Gift },
+  '/assistant-schedule': { label: 'Assistant Schedule', icon: Users },
+  '/schedule-meeting': { label: 'Meetings & Accountability', icon: CalendarClock },
   
   // Housekeeping
-  dashPath('/onboarding'): { label: 'Onboarding', icon: Users },
-  dashPath('/handbooks'): { label: 'Handbooks', icon: FileText },
-  dashPath('/changelog'): { label: "What's New", icon: Sparkles },
-  dashPath('/help'): { label: 'Help Center', icon: HelpCircle },
+  '/onboarding': { label: 'Onboarding', icon: Users },
+  '/handbooks': { label: 'Handbooks', icon: FileText },
+  '/changelog': { label: "What's New", icon: Sparkles },
+  '/help': { label: 'Help Center', icon: HelpCircle },
   
   // Management
-  dashPath('/admin/management'): { label: 'Management Hub', icon: LayoutGrid },
-  dashPath('/admin/analytics'): { label: 'Analytics Hub', icon: TrendingUp },
-  dashPath('/directory'): { label: 'Team Directory', icon: Contact },
-  dashPath('/clients'): { label: 'Client Directory', icon: Users },
-  dashPath('/admin/payroll'): { label: 'Hiring & Payroll Hub', icon: DollarSign },
-  dashPath('/admin/booth-renters'): { label: 'Renter Hub', icon: Store },
+  '/admin/management': { label: 'Management Hub', icon: LayoutGrid },
+  '/admin/analytics': { label: 'Analytics Hub', icon: TrendingUp },
+  '/directory': { label: 'Team Directory', icon: Contact },
+  '/clients': { label: 'Client Directory', icon: Users },
+  '/admin/payroll': { label: 'Hiring & Payroll Hub', icon: DollarSign },
+  '/admin/booth-renters': { label: 'Renter Hub', icon: Store },
   
   // Website
-  dashPath('/admin/website-sections'): { label: 'Website Editor', icon: LayoutGrid },
+  '/admin/website-sections': { label: 'Website Editor', icon: LayoutGrid },
   
   // Roles & Controls
-  dashPath('/admin/access-hub'): { label: 'Roles & Controls Hub', icon: Shield },
-  dashPath('/admin/settings'): { label: 'Settings', icon: Settings },
+  '/admin/access-hub': { label: 'Roles & Controls Hub', icon: Shield },
+  '/admin/settings': { label: 'Settings', icon: Settings },
   
   // Platform
   '/platform/overview': { label: 'Platform Overview', icon: Terminal },
@@ -157,25 +157,25 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/platform/settings': { label: 'Platform Settings', icon: Settings },
   
   // Legacy routes (kept for backward compatibility with saved layouts)
-  dashPath('/my-clients'): { label: 'My Clients', icon: Users },
-  dashPath('/admin/sales'): { label: 'Sales Dashboard', icon: DollarSign },
-  dashPath('/admin/operational-analytics'): { label: 'Operational Analytics', icon: BarChart3 },
-  dashPath('/admin/birthdays'): { label: 'Birthdays & Anniversaries', icon: Cake },
-  dashPath('/admin/onboarding-tracker'): { label: 'Onboarding Hub', icon: Layers },
-  dashPath('/admin/client-engine-tracker'): { label: 'Client Engine Tracker', icon: Target },
-  dashPath('/admin/recruiting'): { label: 'Recruiting Pipeline', icon: Briefcase },
-  dashPath('/admin/graduation-tracker'): { label: 'Graduation Tracker', icon: GraduationCap },
-  dashPath('/admin/assistant-requests'): { label: 'Assistant Requests', icon: HandHelping },
-  dashPath('/admin/strikes'): { label: 'Staff Strikes', icon: AlertTriangle },
-  dashPath('/admin/business-cards'): { label: 'Business Cards', icon: CreditCard },
-  dashPath('/admin/headshots'): { label: 'Headshots', icon: Camera },
-  dashPath('/admin/announcements'): { label: 'Create Announcement', icon: Bell },
-  dashPath('/admin/homepage-stylists'): { label: 'Homepage Stylists', icon: Globe },
-  dashPath('/admin/testimonials'): { label: 'Testimonials', icon: Quote },
-  dashPath('/admin/gallery'): { label: 'Gallery', icon: Images },
-  dashPath('/admin/services'): { label: 'Services', icon: Scissors },
-  dashPath('/admin/locations'): { label: 'Locations', icon: MapPin },
-  dashPath('/admin/challenges'): { label: 'Team Challenges', icon: Trophy },
+  '/my-clients': { label: 'My Clients', icon: Users },
+  '/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
+  '/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
+  '/admin/birthdays': { label: 'Birthdays & Anniversaries', icon: Cake },
+  '/admin/onboarding-tracker': { label: 'Onboarding Hub', icon: Layers },
+  '/admin/client-engine-tracker': { label: 'Client Engine Tracker', icon: Target },
+  '/admin/recruiting': { label: 'Recruiting Pipeline', icon: Briefcase },
+  '/admin/graduation-tracker': { label: 'Graduation Tracker', icon: GraduationCap },
+  '/admin/assistant-requests': { label: 'Assistant Requests', icon: HandHelping },
+  '/admin/strikes': { label: 'Staff Strikes', icon: AlertTriangle },
+  '/admin/business-cards': { label: 'Business Cards', icon: CreditCard },
+  '/admin/headshots': { label: 'Headshots', icon: Camera },
+  '/admin/announcements': { label: 'Create Announcement', icon: Bell },
+  '/admin/homepage-stylists': { label: 'Homepage Stylists', icon: Globe },
+  '/admin/testimonials': { label: 'Testimonials', icon: Quote },
+  '/admin/gallery': { label: 'Gallery', icon: Images },
+  '/admin/services': { label: 'Services', icon: Scissors },
+  '/admin/locations': { label: 'Locations', icon: MapPin },
+  '/admin/challenges': { label: 'Team Challenges', icon: Trophy },
 };
 
 // Sortable Link Component with cross-section drag support

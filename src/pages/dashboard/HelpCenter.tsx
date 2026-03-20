@@ -114,7 +114,7 @@ export default function HelpCenter() {
                   key={article.id}
                   className="cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() =>
-                    navigate(`${dashPath('/help/${article.category?.slug || 'uncategorized'}/${article.slug}')}`)
+                    navigate(dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`))
                   }
                 >
                   <CardHeader className="py-4">
@@ -143,7 +143,7 @@ export default function HelpCenter() {
                 key={article.id}
                 className="cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() =>
-                  navigate(`${dashPath('/help/${currentCategory.slug}/${article.slug}')}`)
+                  navigate(dashPath(`/help/${currentCategory.slug}/${article.slug}`))
                 }
               >
                 <CardHeader className="py-4">
@@ -184,7 +184,7 @@ export default function HelpCenter() {
                     className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5"
                     onClick={() =>
                       navigate(
-                        `${dashPath('/help/${article.category?.slug || 'uncategorized'}/${article.slug}')}`
+                        dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`)
                       )
                     }
                   >
@@ -219,7 +219,7 @@ export default function HelpCenter() {
                       'cursor-pointer hover:border-primary/50 transition-colors',
                       category.article_count === 0 && 'opacity-60'
                     )}
-                    onClick={() => navigate(`${dashPath('/help/${category.slug}')}`)}
+                    onClick={() => navigate(dashPath(`/help/${category.slug}`))}
                   >
                     <CardHeader>
                       <div className="flex items-center gap-3">

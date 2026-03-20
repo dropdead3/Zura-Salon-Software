@@ -417,7 +417,7 @@ export default function Stats() {
                               </Badge>
                               {s.redoRate > 5 && (
                                 <Link
-                                  to={`${dashPath('/meetings/schedule?staffId=${s.staffUserId}&topic=redo-review')}`}
+                                  to={dashPath(`/meetings/schedule?staffId=${s.staffUserId}&topic=redo-review`)}
                                   className="text-primary hover:text-primary/80 transition-colors"
                                   title="Schedule coaching conversation"
                                 >

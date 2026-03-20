@@ -80,7 +80,7 @@ export function ClientHealthSummaryCard() {
             return (
               <Link
                 key={m.key}
-                to={`${dashPath('/admin/client-health?segment=${m.key}')}`}
+                to={dashPath(`/admin/client-health?segment=${m.key}`)}
                 className="flex items-center gap-2 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
               >
                 <m.icon className={`h-4 w-4 ${m.color}`} />

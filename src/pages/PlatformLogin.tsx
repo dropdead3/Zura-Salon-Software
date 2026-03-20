@@ -291,7 +291,7 @@ export default function PlatformLogin() {
             </h1>
             <p className="text-slate-400">
               {isSignupMode 
-                ? `You've been invited as ${invitation?.role.replace('platform_', '').replace('_', ' ')}`
+                ? `You've been invited as ${invitation?.role.replace('platform_', '').replace('_', ' `
                 : 'Internal access for development and support teams'}
             </p>
           </div>

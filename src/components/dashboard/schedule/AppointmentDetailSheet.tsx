@@ -184,7 +184,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="font-medium truncate block">{client.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
-                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d')}`
+                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d`
                       : 'No visits yet'}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
@@ -904,7 +904,7 @@ export function AppointmentDetailSheet({
                         {resolvedClientId && (
                           <DropdownMenuItem onClick={() => {
                             handleClose();
-                            navigate(`${dashPath('/clients?clientId=${resolvedClientId}')}`);
+                            navigate(dashPath(`/clients?clientId=${resolvedClientId}`));
                           }}>
                             <ExternalLink className="h-3.5 w-3.5 mr-2" />
                             View in Client Directory

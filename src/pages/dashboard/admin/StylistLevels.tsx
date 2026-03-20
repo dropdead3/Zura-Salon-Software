@@ -595,7 +595,7 @@ export default function StylistLevels() {
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-primary/60 rounded-full transition-all duration-300"
-                              style={{ width: ')}`${percentage}%` }}
+                              style={{ width: `${percentage}%` }}
                             />
                           </div>
                         </div>

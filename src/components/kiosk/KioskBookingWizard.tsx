@@ -152,7 +152,7 @@ export function KioskBookingWizard() {
           const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30min buffer
           if (slotMinutes < currentMinutes) continue;
         }
-        slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+        slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0`);
       }
     }
     return slots;

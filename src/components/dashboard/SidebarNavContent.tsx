@@ -429,7 +429,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     className={cn(
                       "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
                       "transition-all duration-300 ease-out rounded-full",
-                      location.pathname === '${dashPath('/onboarding'
+                      location.pathname === dashPath('/onboarding')
                         ? "bg-foreground text-background shadow-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                     )}
@@ -438,7 +438,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  START HERE {onboardingProgress && ')}`(${onboardingProgress.percentage}%)`}
+                  START HERE {onboardingProgress && `(${onboardingProgress.percentage}%)`}
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -448,7 +448,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 mx-3 text-sm font-sans",
                   "transition-all duration-300 ease-out rounded-lg",
-                  location.pathname === '${dashPath('/onboarding'
+                  location.pathname === dashPath('/onboarding')
                     ? "bg-foreground text-background shadow-sm" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
@@ -460,7 +460,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-primary rounded-full transition-all duration-300"
-                        style={{ width: ')}`${onboardingProgress.percentage}%` }}
+                        style={{ width: `${onboardingProgress.percentage}%` }}
                       />
                     </div>
                     <span className="text-xs text-muted-foreground">

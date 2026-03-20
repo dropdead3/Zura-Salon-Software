@@ -154,7 +154,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                 >
                   {isLeadership && (
                     <Link 
-                      to={`${dashPath('/admin/announcements?edit=${announcement.id}')}`}
+                      to={dashPath(`/admin/announcements?edit=${announcement.id}`)}
                       className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="w-3.5 h-3.5" />

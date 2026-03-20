@@ -438,7 +438,7 @@ export default function MyProfile() {
             <Eye className="h-4 w-4" />
             <AlertDescription>
               You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' '}
-              <a href={`${dashPath('/admin/team/${impersonatedUser?.id}')}`} className="underline font-medium">
+              <a href={dashPath(`/admin/team/${impersonatedUser?.id}`)} className="underline font-medium">
                 View Profile
               </a>{' '}
               page from Team Overview.
@@ -603,7 +603,7 @@ export default function MyProfile() {
                         variant="outline" 
                         size="sm" 
                         className="shrink-0"
-                        onClick={() => window.location.href = '${dashPath('/onboarding'}
+                        onClick={() => window.location.href = dashPath('/onboarding')
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         Schedule Headshot
@@ -783,7 +783,7 @@ export default function MyProfile() {
                       value={formData.instagram.replace(/^@/, '')}
                       onChange={(e) => {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
-                        setFormData(prev => ({ ...prev, instagram: clean ? ')}`@${clean}` : '' }));
+                        setFormData(prev => ({ ...prev, instagram: clean ? `@${clean}` : '' }));
                       }}
                       className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-1"
                       placeholder="yourhandle"

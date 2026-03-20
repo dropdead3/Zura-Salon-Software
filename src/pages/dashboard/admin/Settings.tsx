@@ -756,7 +756,7 @@ export default function Settings() {
       );
       toast({
         title: 'Role Updated',
-        description: ')}`User role changed to ${newRole}.`,
+        description: `User role changed to ${newRole}.`,
       });
     }
 
