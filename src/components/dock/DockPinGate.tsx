@@ -42,10 +42,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       setLoading(true);
       try {
         const { data, error: dbError } = await supabase
-          .rpc('validate_user_pin', {
-            _organization_id: staff?.organizationId ?? '',
-            _pin: next,
-          })
+          .rpc('validate_dock_pin', { _pin: next })
           .maybeSingle();
 
         if (dbError || !data) {
@@ -55,7 +52,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         } else {
           onSuccess({
             userId: data.user_id,
-            displayName: data.display_name || data.full_name || 'Staff',
+            displayName: data.display_name || 'Staff',
             avatarUrl: data.photo_url,
           });
         }
