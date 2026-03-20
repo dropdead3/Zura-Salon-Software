@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useDockDemoAccess } from '@/hooks/dock/useDockDemoAccess';
 import { Delete } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const showDemo = useDockDemoAccess();
 
   const handleKey = useCallback(async (key: string) => {
     if (loading) return;
@@ -123,19 +125,22 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         })}
       </div>
 
-      {import.meta.env.DEV && (
-        <button
-          onClick={() =>
-            onSuccess({
-              userId: 'dev-bypass-000',
-              displayName: 'Dev Tester',
-              avatarUrl: null,
-            })
-          }
-          className="mt-8 text-xs text-[hsl(var(--platform-foreground-muted)/0.4)] hover:text-violet-400 transition-colors"
-        >
-          Demo Mode →
-        </button>
+      {showDemo && (
+        <div className="mt-8 flex flex-col items-center gap-1">
+          <button
+            onClick={() =>
+              onSuccess({
+                userId: 'dev-bypass-000',
+                displayName: 'Dev Tester',
+                avatarUrl: null,
+              })
+            }
+            className="text-xs text-[hsl(var(--platform-foreground-muted)/0.4)] hover:text-violet-400 transition-colors"
+          >
+            Demo Mode →
+          </button>
+          <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.25)]">Preview only</span>
+        </div>
       )}
     </div>
   );
