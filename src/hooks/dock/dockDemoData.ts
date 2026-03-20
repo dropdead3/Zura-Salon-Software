@@ -60,7 +60,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = [
     status: 'scheduled',
     location_id: null,
     client_id: 'demo-client-3',
-    assistant_names: ['Kylie Morgan', 'Alexis Rivera'],
+    assistant_names: ['Kylie M.', 'Alexis R.'],
     notes: 'New client — consultation needed',
     has_mix_session: false,
   },
