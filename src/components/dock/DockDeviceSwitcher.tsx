@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
-import { Monitor, Smartphone, Tablet, RotateCcw, MapPin } from 'lucide-react';
+import { Monitor, Smartphone, Tablet, RotateCcw, MapPin, User } from 'lucide-react';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { useLocations } from '@/hooks/useLocations';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { DockDevice, DockOrientation } from '@/hooks/dock/useDockDevicePreview';
 
 interface DockDeviceSwitcherProps {
@@ -12,6 +15,8 @@ interface DockDeviceSwitcherProps {
   locationId?: string;
   onLocationChange?: (locationId: string) => void;
   organizationId?: string;
+  staffFilter?: string;
+  onStaffFilterChange?: (staffId: string) => void;
 }
 
 const deviceOptions = [
@@ -20,9 +25,31 @@ const deviceOptions = [
   { value: 'full', label: 'Full', icon: <Monitor className="w-3.5 h-3.5" /> },
 ];
 
-export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange, organizationId }: DockDeviceSwitcherProps) {
+export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange, organizationId, staffFilter, onStaffFilterChange }: DockDeviceSwitcherProps) {
   const showRotate = device === 'tablet';
   const { data: locations = [] } = useLocations(organizationId);
+  const { usesRealData } = useDockDemo();
+
+  // Fetch team members for the org (demo mode only)
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['dock-team-members', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .eq('is_approved', true)
+        .order('display_name', { ascending: true });
+      return (data || []).map(p => ({
+        userId: p.user_id,
+        name: p.display_name || p.full_name || 'Unknown',
+      }));
+    },
+    enabled: usesRealData && !!organizationId,
+    staleTime: 300_000,
+  });
 
   // Auto-select first location if none configured
   useEffect(() => {
@@ -38,8 +65,6 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
     try { localStorage.setItem('dock-location-id', val); } catch {}
     onLocationChange?.(val);
   };
-
-  const selectedName = locations.find(l => l.id === locationId)?.name;
 
   return (
     <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
@@ -58,6 +83,27 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
             {locations.map(l => (
               <option key={l.id} value={l.id} className="bg-[hsl(0_0%_14%)] text-white">
                 {l.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Team member filter (demo mode with real data only) */}
+      {usesRealData && teamMembers.length > 0 && (
+        <div className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)] text-white/60">
+          <User className="w-3 h-3 shrink-0" />
+          <select
+            value={staffFilter || 'all'}
+            onChange={(e) => onStaffFilterChange?.(e.target.value)}
+            className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[120px] truncate"
+          >
+            <option value="all" className="bg-[hsl(0_0%_14%)] text-white">
+              All Team
+            </option>
+            {teamMembers.map(m => (
+              <option key={m.userId} value={m.userId} className="bg-[hsl(0_0%_14%)] text-white">
+                {m.name}
               </option>
             ))}
           </select>
