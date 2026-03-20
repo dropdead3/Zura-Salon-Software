@@ -188,7 +188,7 @@ export function searchDemoProducts(query: string): DockProduct[] {
   );
 }
 
-// ─── Mock Services (for demo booking flow) ───────────────────
+// ─── Mock Services (Drop Dead Salons catalog) ───────────────
 export interface DemoService {
   id: string;
   phorest_service_id: string;
@@ -204,17 +204,113 @@ export interface DemoService {
   same_day_restriction_reason: string | null;
 }
 
+let _svcIdx = 0;
+function svc(name: string, category: string, duration_minutes: number, price: number, opts?: { qual?: boolean; noSameDay?: boolean; lead?: number; reason?: string }): DemoService {
+  _svcIdx++;
+  const id = `demo-svc-${_svcIdx}`;
+  return {
+    id, phorest_service_id: id, phorest_branch_id: 'demo',
+    name, category, duration_minutes, price,
+    requires_qualification: opts?.qual ?? false,
+    is_active: true,
+    allow_same_day_booking: !(opts?.noSameDay),
+    lead_time_days: opts?.lead ?? 0,
+    same_day_restriction_reason: opts?.reason ?? null,
+  };
+}
+
 export const DEMO_SERVICES: DemoService[] = [
-  { id: 'demo-svc-1', phorest_service_id: 'demo-svc-1', phorest_branch_id: 'demo', name: 'Balayage', category: 'Color', duration_minutes: 120, price: 185, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-2', phorest_service_id: 'demo-svc-2', phorest_branch_id: 'demo', name: 'Root Touch-Up', category: 'Color', duration_minutes: 60, price: 95, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-3', phorest_service_id: 'demo-svc-3', phorest_branch_id: 'demo', name: 'Full Highlight', category: 'Color', duration_minutes: 150, price: 210, requires_qualification: false, is_active: true, allow_same_day_booking: false, lead_time_days: 1, same_day_restriction_reason: 'Requires consultation' },
-  { id: 'demo-svc-4', phorest_service_id: 'demo-svc-4', phorest_branch_id: 'demo', name: 'Toner Refresh', category: 'Color', duration_minutes: 30, price: 45, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-5', phorest_service_id: 'demo-svc-5', phorest_branch_id: 'demo', name: 'Color Correction', category: 'Color', duration_minutes: 240, price: 350, requires_qualification: true, is_active: true, allow_same_day_booking: false, lead_time_days: 2, same_day_restriction_reason: 'Senior stylist only' },
-  { id: 'demo-svc-6', phorest_service_id: 'demo-svc-6', phorest_branch_id: 'demo', name: 'Women\'s Cut & Style', category: 'Cut', duration_minutes: 45, price: 65, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-7', phorest_service_id: 'demo-svc-7', phorest_branch_id: 'demo', name: 'Men\'s Cut', category: 'Cut', duration_minutes: 30, price: 40, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-8', phorest_service_id: 'demo-svc-8', phorest_branch_id: 'demo', name: 'Blowout', category: 'Styling', duration_minutes: 30, price: 45, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-9', phorest_service_id: 'demo-svc-9', phorest_branch_id: 'demo', name: 'Deep Conditioning Treatment', category: 'Treatment', duration_minutes: 20, price: 35, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
-  { id: 'demo-svc-10', phorest_service_id: 'demo-svc-10', phorest_branch_id: 'demo', name: 'Keratin Smoothing', category: 'Treatment', duration_minutes: 120, price: 275, requires_qualification: true, is_active: true, allow_same_day_booking: false, lead_time_days: 1, same_day_restriction_reason: 'Requires patch test' },
+  // ── Blonding ──
+  svc('Full Balayage', 'Blonding', 270, 240),
+  svc('Partial Balayage', 'Blonding', 150, 185),
+  svc('Transformational Balayage', 'Blonding', 300, 265, { qual: true, noSameDay: true, lead: 1, reason: 'Requires consultation' }),
+  svc('Full Highlight', 'Blonding', 240, 240),
+  svc('Partial Highlight', 'Blonding', 150, 185),
+  svc('Chunky Highlight', 'Blonding', 150, 185),
+  svc('Mini Highlight', 'Blonding', 90, 135),
+  svc('Face Frame Highlight', 'Blonding', 90, 115),
+  svc('Transformational Highlight', 'Blonding', 300, 315, { qual: true, noSameDay: true, lead: 1, reason: 'Requires consultation' }),
+  svc('Lightener Retouch', 'Blonding', 120, 155),
+  svc('Transformational Lightener Retouch', 'Blonding', 120, 160),
+  svc('Split Lightener Retouch', 'Blonding', 90, 100),
+  svc('Split Lightener Transformation Retouch', 'Blonding', 120, 115),
+  svc('Global Blonding', 'Blonding', 270, 325, { qual: true }),
+  svc('3+ Color Blocks / Calico Placement', 'Blonding', 240, 250),
+  svc('Double Color Block', 'Blonding', 210, 185),
+  svc('Singular Color Block', 'Blonding', 150, 145),
+  svc('Initial Split Dye Bleach Out', 'Blonding', 150, 185),
+
+  // ── Color ──
+  svc('Single Process Color', 'Color', 90, 145),
+  svc('Root Smudge + Blowout', 'Color', 90, 120),
+  svc('Glaze + Blowout', 'Color', 60, 130),
+  svc('Natural Root Retouch', 'Color', 90, 100),
+  svc('Touch Up and Go', 'Color', 90, 86),
+  svc('Color Melt', 'Color', 90, 135),
+  svc('Tint Back', 'Color', 90, 160),
+  svc('Lowlight + Root Smudge', 'Color', 120, 165),
+  svc('Corrective Color - By The Hour', 'Color', 240, 85, { qual: true, noSameDay: true, lead: 2, reason: 'Senior stylist only' }),
+  svc('Glaze Add On', 'Color', 30, 50),
+  svc('Root Retouch Add On', 'Color', 60, 50),
+  svc('Root Smudge (Add On)', 'Color', 60, 50),
+  svc('Lowlight Add On', 'Color', 30, 50),
+
+  // ── Vivids ──
+  svc('Full Vivid', 'Vivids', 120, 130),
+  svc('Partial Vivid', 'Vivids', 60, 105),
+  svc('Mini Vivid', 'Vivids', 60, 95),
+  svc('Custom Vivid', 'Vivids', 120, 170),
+  svc('Specialty Vivid', 'Vivids', 90, 150),
+  svc('Vivid Toner', 'Vivids', 30, 25),
+
+  // ── Haircuts ──
+  svc('Signature Haircut', 'Haircuts', 60, 75),
+  svc('Combo Cut', 'Haircuts', 60, 60),
+  svc('Specialty Cut', 'Haircuts', 90, 85),
+  svc('Transformation Cut', 'Haircuts', 90, 85),
+  svc('Clipper Cut', 'Haircuts', 45, 40),
+  svc('Hair Cut - No Style', 'Haircuts', 45, 50),
+  svc('Buzz Cut', 'Haircuts', 30, 35),
+  svc('Haircut (Add On)', 'Haircuts', 30, 50),
+  svc('Undercut - No Designs', 'Haircuts', 30, 25),
+  svc('Maintenance Cut', 'Haircuts', 15, 15),
+
+  // ── Styling ──
+  svc('Blowout', 'Styling', 45, 50),
+  svc('Special Event Styling', 'Styling', 90, 85),
+  svc('Merm', 'Styling', 90, 85),
+  svc('Hot Tool Style Stand Alone', 'Styling', 30, 30),
+  svc('Hot Tool Style Add On', 'Styling', 15, 15),
+
+  // ── Extensions ──
+  svc('1 Row Initial Install', 'Extensions', 90, 150),
+  svc('1 Row Reinstall', 'Extensions', 90, 100),
+  svc('2 Row Initial Install', 'Extensions', 120, 250),
+  svc('2 Row Reinstall', 'Extensions', 120, 200),
+  svc('3 Row Initial Install', 'Extensions', 180, 350),
+  svc('3 Row Reinstall', 'Extensions', 180, 300),
+  svc('Tape In Install - Per Tab', 'Extensions', 30, 15),
+  svc('Tape Removal', 'Extensions', 45, 65),
+  svc('Weft Removal', 'Extensions', 30, 50),
+  svc('Extension Wash and Blowout', 'Extensions', 60, 65),
+  svc('Extension Glaze Add On', 'Extensions', 45, 50),
+  svc('Extension Root Smudge + Lowlight Add On', 'Extensions', 45, 50),
+  svc('Extension Vivid Add On', 'Extensions', 45, 75),
+
+  // ── Extras ──
+  svc('Deep Conditioning Treatment', 'Extras', 15, 25),
+  svc('CPR Treatment', 'Extras', 90, 50),
+  svc('Clear Gloss Add On', 'Extras', 30, 50),
+  svc('K18 Treatment Add-On', 'Extras', 20, 15),
+  svc('Scalp Treatment', 'Extras', 15, 25),
+  svc('Hard Water Detox Treatment', 'Extras', 30, 30),
+  svc('Color Remover', 'Extras', 45, 45),
+  svc('Extra Long Head Massage', 'Extras', 5, 10),
+  svc('Tinsel Add On', 'Extras', 30, 10),
+
+  // ── New Client Consultation ──
+  svc('New-Client Consultation', 'New Client Consultation', 15, 15),
+  svc('Extension Consultation', 'New Client Consultation', 30, 15),
 ];
 
 export const DEMO_SERVICES_BY_CATEGORY = (() => {

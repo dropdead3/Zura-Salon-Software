@@ -36,10 +36,11 @@ export default function Dock() {
   // If ?demo=<orgId> is present and we're in a dev/preview context, auto-boot
   const urlDemoSession = useMemo<DockStaffSession | null>(() => {
     if (!demoOrgId || !canAccessDemo) return null;
+    const isGenericPreview = demoOrgId === 'preview';
     return {
       userId: 'dev-bypass-000',
-      organizationId: demoOrgId,
-      displayName: 'Demo Mode',
+      organizationId: isGenericPreview ? 'demo-org-000' : demoOrgId,
+      displayName: isGenericPreview ? 'Preview Mode' : 'Demo Mode',
       avatarUrl: null,
       locationId: '',
     };
