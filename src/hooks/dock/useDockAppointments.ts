@@ -44,7 +44,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         // Fetch today's phorest appointments for this specific location
         let query = supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes, stylist_user_id')
           .eq('location_id', locationId)
           .eq('appointment_date', today)
           .is('deleted_at', null)
@@ -54,10 +54,24 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         const { data: phorestData, error: phorestErr } = await query;
         if (phorestErr) throw phorestErr;
 
+        // Resolve stylist names from employee_profiles
+        const stylistIds = [...new Set((phorestData || []).map(a => a.stylist_user_id).filter(Boolean))];
+        let stylistMap: Record<string, string> = {};
+        if (stylistIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('employee_profiles')
+            .select('user_id, display_name, full_name')
+            .in('user_id', stylistIds);
+          for (const p of (profiles || [])) {
+            stylistMap[p.user_id] = p.display_name || p.full_name || '';
+          }
+        }
+
         const appointments: DockAppointment[] = (phorestData || []).map((a) => ({
           id: a.id,
           source: 'phorest' as const,
           client_name: a.client_name,
+          stylist_name: a.stylist_user_id ? (stylistMap[a.stylist_user_id] || null) : null,
           service_name: a.service_name,
           appointment_date: a.appointment_date,
           start_time: a.start_time,
