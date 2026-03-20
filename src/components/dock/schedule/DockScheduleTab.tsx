@@ -2,11 +2,13 @@
  * DockScheduleTab — Today's appointments grouped by Active/Scheduled/Completed.
  */
 
+import { useState } from 'react';
 import { Calendar, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockAppointmentCard } from './DockAppointmentCard';
+import { DockNewBookingSheet } from './DockNewBookingSheet';
 
 interface DockScheduleTabProps {
   staff: DockStaffSession;
