@@ -42,10 +42,10 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       setLoading(true);
       try {
         const { data, error: dbError } = await supabase
-          .from('employee_profiles')
-          .select('user_id, full_name, display_name, photo_url')
-          .eq('login_pin', next)
-          .limit(1)
+          .rpc('validate_user_pin', {
+            _organization_id: staff?.organizationId ?? '',
+            _pin: next,
+          })
           .maybeSingle();
 
         if (dbError || !data) {
