@@ -239,7 +239,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         <button
           onClick={() => setShowNewBowl(true)}
           disabled={createBowl.isPending}
-          className="flex-1 flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-violet-500/30 bg-violet-600/5 hover:bg-violet-600/10 active:scale-[0.98] transition-all cursor-pointer min-h-[200px]"
+          className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
         >
           <div className="relative mb-5">
             <div className="absolute inset-0 rounded-full bg-violet-500/20 animate-pulse scale-150" />
