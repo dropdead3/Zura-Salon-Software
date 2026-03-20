@@ -12265,6 +12265,7 @@ export type Database = {
           deposit_stripe_payment_id: string | null
           end_time: string
           id: string
+          is_demo: boolean
           is_new_client: boolean | null
           is_redo: boolean
           location_id: string | null
@@ -12311,6 +12312,7 @@ export type Database = {
           deposit_stripe_payment_id?: string | null
           end_time: string
           id?: string
+          is_demo?: boolean
           is_new_client?: boolean | null
           is_redo?: boolean
           location_id?: string | null
@@ -12357,6 +12359,7 @@ export type Database = {
           deposit_stripe_payment_id?: string | null
           end_time?: string
           id?: string
+          is_demo?: boolean
           is_new_client?: boolean | null
           is_redo?: boolean
           location_id?: string | null
