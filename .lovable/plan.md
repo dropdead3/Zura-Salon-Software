@@ -1,14 +1,13 @@
 
 
-## Reformat Category Cards: Icon Left of Text
+## Make Bottom Action Buttons Fully Rounded
 
 ### Change
 
-In `src/components/dock/schedule/DockNewBookingSheet.tsx`, lines 593-605: change the category card layout from vertical (icon above text) to horizontal (icon left of text).
+In `src/components/dock/schedule/DockNewBookingSheet.tsx`, change `rounded-xl` to `rounded-full` on the bottom action buttons:
 
-- Change `flex flex-col items-start gap-2 p-4` to `flex flex-row items-center gap-3 p-4`
-- The icon box and text div stay the same, just flow horizontally now
-- The selected-count badge stays `absolute top-3 right-3`
+- **Line 738** — "Continue" button: `rounded-xl` → `rounded-full`
+- **Line 878** — "Confirm" button: `rounded-xl` → `rounded-full`
 
-Single file, single region edit.
+Two single-word replacements in the same file.
 
