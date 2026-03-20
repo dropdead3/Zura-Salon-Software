@@ -22,6 +22,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const showDemo = useDockDemoAccess();
 
   const handleKey = useCallback(async (key: string) => {
     if (loading) return;
