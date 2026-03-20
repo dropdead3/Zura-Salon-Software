@@ -236,26 +236,34 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center pt-12 text-center">
-          <FlaskConical className="w-10 h-10 text-violet-400/30 mb-3" />
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-            No bowls yet
-          </p>
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)] mt-1">
-            Tap + to start mixing
-          </p>
-        </div>
+        <button
+          onClick={() => setShowNewBowl(true)}
+          disabled={createBowl.isPending}
+          className="flex-1 flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-violet-500/30 bg-violet-600/5 hover:bg-violet-600/10 active:scale-[0.98] transition-all cursor-pointer min-h-[200px]"
+        >
+          <div className="relative mb-5">
+            <div className="absolute inset-0 rounded-full bg-violet-500/20 animate-pulse scale-150" />
+            <div className="relative flex items-center justify-center w-20 h-20 rounded-full border border-violet-500/30 bg-violet-600/10">
+              <FlaskConical className="w-10 h-10 text-violet-400" />
+            </div>
+          </div>
+          <span className="text-base text-[hsl(var(--platform-foreground))] font-medium">
+            Tap to start mixing your first bowl
+          </span>
+        </button>
       )}
 
-      {/* Add Bowl FAB */}
-      <button
-        onClick={() => setShowNewBowl(true)}
-        disabled={createBowl.isPending}
-        className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium disabled:opacity-40"
-      >
-        <Plus className="w-4 h-4" />
-        {createBowl.isPending ? 'Creating...' : 'Add Bowl'}
-      </button>
+      {/* Add Bowl button — only when bowls already exist */}
+      {allBowlCount > 0 && (
+        <button
+          onClick={() => setShowNewBowl(true)}
+          disabled={createBowl.isPending}
+          className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium disabled:opacity-40"
+        >
+          <Plus className="w-4 h-4" />
+          {createBowl.isPending ? 'Creating...' : 'Add Bowl'}
+        </button>
+      )}
 
       {/* Complete Session button — shown when bowls exist */}
       {allBowlCount > 0 && (
