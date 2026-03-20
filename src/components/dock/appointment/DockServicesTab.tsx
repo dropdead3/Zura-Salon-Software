@@ -2,9 +2,10 @@
  * DockServicesTab — Bowl cards grid + "Add Bowl" + session complete action.
  * Queries mix sessions for this appointment and displays bowl status.
  * Tapping a bowl opens DockLiveDispensing. Creating a bowl wires through command layer.
+ * In demo mode, bowls are managed in local state (no DB writes).
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
@@ -19,6 +20,7 @@ import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/do
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -43,7 +45,19 @@ interface ActiveBowl {
   status: string;
 }
 
+/** Local demo bowl with ingredient info */
+interface DemoBowl {
+  id: string;
+  bowlNumber: number;
+  status: string;
+  lines: FormulaLine[];
+  totalWeight: number;
+  totalCost: number;
+  createdAt: string;
+}
+
 export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
+  const { isDemoMode } = useDockDemo();
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
   const [showNewBowl, setShowNewBowl] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
@@ -53,11 +67,41 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const markUnresolved = useMarkDockSessionUnresolved();
   const { effectiveOrganization } = useOrganizationContext();
 
+  // Demo-mode local bowl state
+  const [demoBowls, setDemoBowls] = useState<DemoBowl[]>([]);
+
   // Get the first session ID for stats query
   const primarySessionId = sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);
 
-  const handleCreateBowl = (lines: FormulaLine[], _baseWeight: number) => {
+  const handleCreateBowl = useCallback((lines: FormulaLine[], _baseWeight: number) => {
+    if (isDemoMode) {
+      // In demo mode, manage bowls locally — no DB writes
+      const existingCount = (sessions?.length || 0) + demoBowls.length;
+      const bowlNumber = existingCount + 1;
+      const totalWeight = lines.reduce((sum, l) => sum + l.targetWeight * l.ratio, 0);
+      const totalCost = lines.reduce((sum, l) => sum + (l.targetWeight * l.ratio) * (l.product.wholesale_price || 0), 0);
+
+      const newBowl: DemoBowl = {
+        id: `demo-local-bowl-${Date.now()}`,
+        bowlNumber,
+        status: 'in_progress',
+        lines,
+        totalWeight,
+        totalCost,
+        createdAt: new Date().toISOString(),
+      };
+      setDemoBowls((prev) => [...prev, newBowl]);
+      // Auto-open the new bowl
+      setActiveBowl({
+        sessionId: newBowl.id,
+        bowlId: newBowl.id,
+        bowlNumber,
+        status: 'open',
+      });
+      return;
+    }
+
     if (!effectiveOrganization?.id) return;
 
     createBowl.mutate({
@@ -77,7 +121,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         });
       },
     });
-  };
+  }, [isDemoMode, sessions, demoBowls, effectiveOrganization, createBowl, appointment, staff]);
 
   const handleBowlTap = (session: DockMixSession, index: number) => {
     setActiveBowl({
@@ -88,7 +132,20 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     });
   };
 
+  const handleDemoBowlTap = (bowl: DemoBowl) => {
+    setActiveBowl({
+      sessionId: bowl.id,
+      bowlId: bowl.id,
+      bowlNumber: bowl.bowlNumber,
+      status: bowl.status,
+    });
+  };
+
   const handleCompleteSession = (notes?: string) => {
+    if (isDemoMode) {
+      setShowComplete(false);
+      return;
+    }
     const session = sessions?.[0];
     if (!session || !effectiveOrganization?.id) return;
     completeSession.mutate({
@@ -102,6 +159,10 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   };
 
   const handleMarkUnresolved = (reason: string) => {
+    if (isDemoMode) {
+      setShowComplete(false);
+      return;
+    }
     const session = sessions?.[0];
     if (!session || !effectiveOrganization?.id) return;
     markUnresolved.mutate({
@@ -136,30 +197,41 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     );
   }
 
-  const bowls = sessions || [];
-  const hasActiveSessions = bowls.some((s) => !isTerminalSessionStatus(s.status as any));
+  const remoteBowls = sessions || [];
+  const allBowlCount = remoteBowls.length + demoBowls.length;
+  const hasActiveSessions = remoteBowls.some((s) => !isTerminalSessionStatus(s.status as any)) || demoBowls.length > 0;
 
   // Use real stats from projections, fallback to basic counts
+  const demoTotalDispensed = demoBowls.reduce((sum, b) => sum + b.totalWeight, 0);
+  const demoTotalCost = demoBowls.reduce((sum, b) => sum + b.totalCost, 0);
+
   const completeStats = sessionStats || {
-    totalBowls: bowls.length,
-    reweighedBowls: bowls.filter((s) => s.status === 'completed').length,
-    totalDispensed: 0,
+    totalBowls: allBowlCount,
+    reweighedBowls: remoteBowls.filter((s) => s.status === 'completed').length,
+    totalDispensed: demoTotalDispensed,
     totalLeftover: 0,
-    totalNetUsage: 0,
-    totalCost: 0,
+    totalNetUsage: demoTotalDispensed,
+    totalCost: demoTotalCost,
   };
 
   return (
     <div className="px-5 py-4 space-y-4">
       {/* Bowl grid */}
-      {bowls.length > 0 ? (
+      {allBowlCount > 0 ? (
         <div className="grid grid-cols-2 gap-3">
-          {bowls.map((session, idx) => (
+          {remoteBowls.map((session, idx) => (
             <BowlCard
               key={session.id}
               session={session}
               index={idx + 1}
               onTap={() => handleBowlTap(session, idx + 1)}
+            />
+          ))}
+          {demoBowls.map((bowl) => (
+            <DemoBowlCard
+              key={bowl.id}
+              bowl={bowl}
+              onTap={() => handleDemoBowlTap(bowl)}
             />
           ))}
         </div>
@@ -186,7 +258,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       </button>
 
       {/* Complete Session button — shown when bowls exist */}
-      {bowls.length > 0 && (
+      {allBowlCount > 0 && (
         <button
           onClick={() => setShowComplete(true)}
           className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-emerald-600/15 border border-emerald-500/20 text-emerald-400 text-sm font-medium transition-colors hover:bg-emerald-600/25"
@@ -249,6 +321,35 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
           {session.notes}
         </p>
       )}
+    </button>
+  );
+}
+
+/** Demo-mode bowl card with ingredient summary */
+function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
+  return (
+    <button
+      onClick={onTap}
+      className={cn(
+        'w-full text-left rounded-xl p-4 border transition-all duration-150',
+        'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
+        'hover:border-[hsl(var(--platform-border)/0.5)]',
+        'active:scale-[0.98]',
+      )}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
+          Bowl {bowl.bowlNumber}
+        </span>
+        <FlaskConical className="w-4 h-4 text-violet-400" />
+      </div>
+      <p className="text-xs text-violet-400 mb-1">Mixing</p>
+      <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)]">
+        {bowl.totalWeight.toFixed(0)}g · ${bowl.totalCost.toFixed(2)} est.
+      </p>
+      <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-0.5">
+        {bowl.lines.length} ingredient{bowl.lines.length !== 1 ? 's' : ''}
+      </p>
     </button>
   );
 }
