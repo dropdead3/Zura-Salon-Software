@@ -118,7 +118,8 @@ export async function fetchRebookRate(
     .select('rebooked_at_checkout')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")');
+    .not('status', 'in', '("cancelled","no_show")')
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
