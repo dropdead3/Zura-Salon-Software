@@ -148,6 +148,31 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     enabled: !isDemoMode,
   });
 
+  // Team members at this location (for assistant selection)
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['dock-team-members-booking', staff.organizationId, locationId],
+    queryFn: async () => {
+      if (!staff.organizationId || !locationId) return [];
+      const { data } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
+        .eq('organization_id', staff.organizationId)
+        .eq('is_active', true)
+        .eq('is_approved', true)
+        .order('display_name', { ascending: true });
+      return (data || [])
+        .filter(p => p.user_id !== staff.userId) // exclude current stylist
+        .filter(p => p.location_id === locationId || (p.location_ids && p.location_ids.includes(locationId)))
+        .map(p => ({
+          userId: p.user_id,
+          name: formatFirstLastInitial(p.display_name || p.full_name || 'Unknown'),
+          photoUrl: p.photo_url,
+        }));
+    },
+    enabled: !!staff.organizationId && !!locationId,
+    staleTime: 300_000,
+  });
+
   // Client search — use real DB when usesRealData
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
     queryKey: ['dock-booking-clients', clientSearch, isDemoMode, usesRealData, organizationId],
