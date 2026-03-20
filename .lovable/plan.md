@@ -1,51 +1,59 @@
 
 
-## Bowl Detection Gate — Gaps and Enhancements
+## Enhance Bowl Cards & Action Bar — Matching Reference UI
 
-After reviewing the full mixing flow (empty state → bowl creation → live dispensing → session complete), here are the considerations beyond the core detection gate:
+### Analysis of Reference vs Current
 
-### 1. Subsequent Bowls Need the Gate Too
+The reference image reveals several UX gaps in the current Dock mixing view:
 
-The "Add Bowl" button (line 266) also calls `setShowNewBowl(true)`. The detection gate should trigger for **every** new bowl, not just the first. The gate validates that a fresh, empty, tared container is on the scale each time.
+| Feature | Reference | Current |
+|---------|-----------|---------|
+| Bowl cards show ingredients | Yes — name, category, weight inline | No — just "Bowl N" + status label |
+| "Add Bowl" as inline grid card | Dashed card in the 2-col grid | Separate full-width button below grid |
+| Bottom action bar | Contextual: Reweigh, Close, Mix More, Continue Mixing | Single "Complete Session" button |
+| Bowl naming | "New Formula" with "In Progress" subtitle | Generic "Bowl 1" |
+| Bowl icon with color | Yellow mortar-pestle icon on card | Small status icon only |
 
-### 2. Reconnection / Scale Disconnect Mid-Session
+### Changes
 
-If the scale disconnects while mixing (future BLE), there's no reconnection flow. The gate component should be reusable as a **reconnect overlay** that can appear mid-dispensing. For Phase 1 (manual adapter), this isn't blocking, but the component API should accept a `mode: 'initial' | 'reconnect'` prop so the UI can say "Scale disconnected — place bowl back on scale" vs the first-time flow.
+**1. Rich Bowl Cards with Ingredient Preview**
 
-### 3. Tare Confirmation Before Each Ingredient
+**`src/components/dock/appointment/DockServicesTab.tsx`**
 
-The reference image shows taring at bowl placement. But in real salon workflows, bowls aren't always re-tared between ingredients — the scale just tracks cumulative weight. The gate should tare **once per bowl** (at creation), not per ingredient. The current `DockLiveDispensing` doesn't have a tare step, which is correct — just making sure the gate doesn't imply repeated taring.
+- **`DemoBowlCard`**: Show a bowl icon (FlaskConical) with a yellow/violet tinted circle, bowl name ("New Formula" or "Bowl N"), status subtitle ("In Progress" / "Sealed"), and a list of up to 3 ingredient lines showing product name, category, and weight (e.g. "Powder Lightener with Bonding · Lighteners · 19.9g"). Overflow shows "+N more".
 
-### 4. Demo Mode Auto-Progression Timing
+- **`BowlCard`**: For real (non-demo) bowls, fetch ingredient data. Since we don't have lines in the session query, add a lightweight lines preview via a sub-query or pass lines data down. For now, show the existing stats (total weight, cost) in a more visual format matching the reference card style.
 
-In demo mode the gate auto-advances. But if a user rapidly taps "Start Mixing" and then taps "Skip", the gate and the bowl sheet could race. Need a simple guard: `if (showBowlDetection) return` before opening the sheet, and clear detection state before opening the sheet.
+- **Inline "Add Bowl" card**: Move the "Add Bowl" button into the grid as a dashed-border card (same height as bowl cards) with a mortar icon + "+ Add Bowl" text, instead of a separate full-width button below.
 
-### 5. Back Navigation from Detection Gate
+**2. Contextual Bottom Action Bar**
 
-If the user is in the detection gate and hits the appointment-level back button (top-left arrow), the gate should close cleanly. Currently `onBack` in the parent sets `view = 'tabs'` — need to also reset `showBowlDetection = false`.
+**`src/components/dock/appointment/DockServicesTab.tsx`**
 
-### 6. No Change Needed for Session Complete
+Replace the single "Complete Session" button with a sticky bottom bar showing contextual actions based on session state:
 
-The `DockSessionCompleteSheet` runs after all bowls are sealed/reweighed. The detection gate is only relevant at bowl creation time — session completion is unaffected.
+- **Has unsealed bowls**: Primary = "Continue Mixing" (violet, opens first open bowl), Secondary = "Add Bowl"
+- **All bowls sealed, needs reweigh**: Primary = "Reweigh" (pink/rose), Secondary = "Close"
+- **All reweighed**: Primary = "Complete Session" (emerald), Secondary = "Mix More" (adds another bowl)
+- **Mixed states**: Show the most relevant primary + secondary actions
 
----
+The bar uses a frosted/elevated background pinned to the bottom of the content area with `sticky bottom-0`.
 
-### Updated Plan (incorporating the above)
+**3. Bowl Card Visual Upgrade**
 
-**New file: `src/components/dock/mixing/DockBowlDetectionGate.tsx`**
-- Three phases: connecting (1.5s) → place bowl (waiting) → taring (1s) → `onReady()`
-- Props: `open`, `onReady()`, `onCancel()`, `isDemoMode`, `mode: 'initial' | 'reconnect'`
-- "Skip — Manual Entry" link at bottom
-- Uses `absolute inset-0 z-35` (below sheet z-40)
-- Framer-motion phase transitions with platform spring config
+- Add a colored icon circle (amber/yellow for in-progress, emerald for complete, violet for mixing) matching the reference's mortar-pestle badge
+- Three-dot menu icon on each card (future: rename, discard, duplicate)
+- Card min-height for visual consistency in the grid
 
-**Modified: `src/components/dock/appointment/DockServicesTab.tsx`**
-- New state: `showBowlDetection: boolean`
-- Both the empty-state tap **and** the "Add Bowl" button set `showBowlDetection = true`
-- `onReady` → close gate, open `DockNewBowlSheet`
-- `onCancel` → close gate, stay on current view
-- Guard against race conditions (clear detection before opening sheet)
-- Reset `showBowlDetection` when parent triggers `onBack`
+### Files Modified
 
-No schema changes. 2 files total (1 new, 1 modified).
+1. **`src/components/dock/appointment/DockServicesTab.tsx`** — Rich bowl cards, inline Add Bowl grid card, contextual bottom action bar
+2. No new files needed — all changes are within the existing component
+
+### Technical Detail
+
+- Demo bowl cards already have `lines: FormulaLine[]` available — just render them
+- Real bowl cards would need `mix_bowl_lines` data; for now show weight/cost summary (ingredient preview can be added later when the query is extended)
+- Bottom bar actions use existing handlers: `setActiveBowl()` for Continue Mixing, `setShowBowlDetection()` for Add Bowl, `setShowComplete()` for Complete Session
+- The three-dot menu is a placeholder button (no dropdown yet) — tapping the card still opens the bowl
 
