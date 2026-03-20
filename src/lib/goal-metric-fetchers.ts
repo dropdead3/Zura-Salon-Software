@@ -22,7 +22,8 @@ export async function fetchRevenue(
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled","no_show")')
-    .not('total_price', 'is', null);
+    .not('total_price', 'is', null)
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
