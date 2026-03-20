@@ -891,6 +891,9 @@ function ConfirmStepDock({
   onConfirm,
   isLoading,
   onAddService,
+  teamMembers,
+  selectedAssistants,
+  onAssistantsChange,
 }: {
   client: PhorestClient | null;
   services: PhorestService[];
@@ -906,6 +909,9 @@ function ConfirmStepDock({
   onConfirm: () => void;
   isLoading: boolean;
   onAddService: () => void;
+  teamMembers: { userId: string; name: string; photoUrl: string | null }[];
+  selectedAssistants: string[];
+  onAssistantsChange: (ids: string[]) => void;
 }) {
   return (
     <div className="flex flex-col">
