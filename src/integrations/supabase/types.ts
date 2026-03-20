@@ -23518,6 +23518,7 @@ export type Database = {
         Args: { _pin: string }
         Returns: {
           display_name: string
+          location_id: string
           photo_url: string
           user_id: string
         }[]
