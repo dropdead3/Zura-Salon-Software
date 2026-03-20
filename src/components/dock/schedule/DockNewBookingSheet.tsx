@@ -292,18 +292,51 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
             />
 
             {/* Header */}
-            <div className="flex items-center gap-3 px-5 pt-4 pb-3">
-              {step !== 'client' ? (
-                <button onClick={handleBack} className="p-1.5 -ml-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-                  <ArrowLeft className="w-5 h-5 text-[hsl(var(--platform-foreground))]" />
+            <div className="px-5 pt-4 pb-3">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                  {stepTitle}
+                </h2>
+                <button onClick={handleClose} className="p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
+                  <X className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
                 </button>
-              ) : null}
-              <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] flex-1">
-                {stepTitle}
-              </h2>
-              <button onClick={handleClose} className="p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-                <X className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
-              </button>
+              </div>
+
+              {/* Progress Tracker */}
+              <div className="flex items-center gap-2">
+                {(['client', 'service', 'confirm'] as const).map((s, i) => {
+                  const steps = ['client', 'service', 'confirm'] as const;
+                  const currentIndex = steps.indexOf(step);
+                  const isCompleted = i < currentIndex;
+                  const isCurrent = s === step;
+                  const isFuture = i > currentIndex;
+                  const label = s === 'client' ? 'Client' : s === 'service' ? 'Service' : 'Confirm';
+
+                  return (
+                    <React.Fragment key={s}>
+                      {i > 0 && (
+                        <div className={cn(
+                          'flex-1 h-px',
+                          isCompleted || isCurrent ? 'bg-violet-500' : 'bg-[hsl(var(--platform-foreground)/0.15)]'
+                        )} />
+                      )}
+                      <button
+                        onClick={() => isCompleted && setStep(s)}
+                        disabled={isFuture}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-display tracking-wide uppercase transition-all',
+                          isCompleted && 'bg-violet-600 text-white cursor-pointer hover:bg-violet-500',
+                          isCurrent && 'ring-2 ring-violet-500 text-[hsl(var(--platform-foreground))] bg-[hsl(var(--platform-foreground)/0.05)]',
+                          isFuture && 'text-[hsl(var(--platform-foreground-muted)/0.5)] cursor-default'
+                        )}
+                      >
+                        {isCompleted && <Check className="w-3 h-3" />}
+                        {label}
+                      </button>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Content */}
