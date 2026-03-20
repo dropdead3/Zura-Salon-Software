@@ -591,7 +591,11 @@ function ServiceStepDock({
                         onClick={() => setSelectedCategory(cat)}
                         className="relative flex flex-col items-start gap-2 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
                       >
-                        <span className="text-xl">{getCategoryIcon(cat)}</span>
+                        {(() => { const Icon = getCategoryIcon(cat); return (
+                          <div className="w-8 h-8 rounded-lg bg-violet-600/10 flex items-center justify-center">
+                            <Icon className="w-4 h-4 text-violet-400" />
+                          </div>
+                        ); })()}
                         <div>
                           <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
                           <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
