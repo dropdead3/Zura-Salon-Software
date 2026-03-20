@@ -875,7 +875,7 @@ function ConfirmStepDock({
         <button
           onClick={onConfirm}
           disabled={isLoading}
-          className="w-full h-12 rounded-xl bg-violet-600 text-white font-medium text-sm disabled:opacity-60 hover:bg-violet-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          className="w-full h-12 rounded-full bg-violet-600 text-white font-medium text-sm disabled:opacity-60 hover:bg-violet-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
