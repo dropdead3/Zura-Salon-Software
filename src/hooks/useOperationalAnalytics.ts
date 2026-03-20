@@ -305,7 +305,8 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
         .select('rebooked_at_checkout')
         .eq('status', 'completed')
         .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr);
+        .lte('appointment_date', endDateStr)
+        .eq('is_demo', false);
 
       if (locationId) {
         query = query.eq('location_id', locationId);
