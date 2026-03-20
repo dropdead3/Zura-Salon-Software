@@ -545,16 +545,17 @@ function ServiceStepDock({
     return svcs.filter(s => s.name.toLowerCase().includes(q));
   }, [selectedCategory, dedupedByCategory, debouncedSearch]);
 
-  // Category icon map
-  const getCategoryIcon = (cat: string) => {
-    if (/blond|highlight|foil|balayage/i.test(cat)) return '✨';
-    if (/color/i.test(cat)) return '🎨';
-    if (/cut|haircut/i.test(cat)) return '✂️';
-    if (/extension/i.test(cat)) return '💇‍♀️';
-    if (/style|blowout|updo/i.test(cat)) return '💫';
-    if (/extra|treatment/i.test(cat)) return '🧴';
-    if (/consult/i.test(cat)) return '📋';
-    return '💈';
+  // Category icon map — Lucide icons, no emojis
+  const getCategoryIcon = (cat: string): LucideIcon => {
+    if (/blond|highlight|foil|balayage/i.test(cat)) return Sparkles;
+    if (/vivid|fashion/i.test(cat)) return Paintbrush;
+    if (/color/i.test(cat)) return Palette;
+    if (/cut|haircut/i.test(cat)) return Scissors;
+    if (/extension/i.test(cat)) return Link;
+    if (/style|blowout|updo/i.test(cat)) return Wind;
+    if (/extra|treatment/i.test(cat)) return Droplets;
+    if (/consult/i.test(cat)) return ClipboardList;
+    return Scissors;
   };
 
   const drillDownSpring = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
