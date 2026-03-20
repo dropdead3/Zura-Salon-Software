@@ -1,41 +1,58 @@
 
 
-## Demo Bookings — Persist to DB, Isolate from Dashboard
+## 15-Minute Time Slots Wired to Location Operating Hours
 
-**Problem**: Demo-mode bookings fake success without inserting into `phorest_appointments`, so they never appear on the Dock schedule.
+### What changes
 
-**Solution**: Add an `is_demo` boolean column to `phorest_appointments`. In demo mode, insert real rows with `is_demo = true`. Filter them out from all non-Dock queries.
+**`src/components/dock/schedule/DockNewBookingSheet.tsx`**
 
-### 1. Database Migration
+1. **Fetch location hours**: Use the already-loaded `locations` array to extract `hours_json` for the selected location. Derive the open/close times for the selected day (e.g., `selectedDate` → day of week → `hours_json[day].open` / `hours_json[day].close`).
 
-Add column:
-```sql
-ALTER TABLE public.phorest_appointments
-  ADD COLUMN is_demo boolean NOT NULL DEFAULT false;
+2. **Replace static `TIME_SLOTS` with dynamic generation**:
+   - Generate 15-minute increment slots from the location's `open` time to its `close` time for the selected day.
+   - If the location is closed that day, show no slots (or a "Closed" message).
+   - Default range: `09:00`–`18:00` if no `hours_json` is available.
+
+3. **"Now" slot injection**: If `nowMinutes` rounded to the nearest 15 minutes falls outside the generated operating-hours slots, prepend/append it with the "Now · X:XX" label so walk-ins after hours still work.
+
+4. **Update `getDefaultTime` and `useState` initializer**: Round to nearest **15 minutes** instead of 30.
+
+### Technical details
+
+```typescript
+// Derive operating hours for the selected day
+const currentLocation = locations.find(l => l.id === selectedLocation);
+const dayName = format(new Date(selectedDate + 'T12:00:00'), 'EEEE').toLowerCase();
+const dayHours = (currentLocation?.hours_json as any)?.[dayName];
+const openTime = dayHours?.closed ? null : (dayHours?.open || '09:00');
+const closeTime = dayHours?.closed ? null : (dayHours?.close || '18:00');
+
+// Generate 15-min slots between open and close
+const operatingSlots = useMemo(() => {
+  if (!openTime || !closeTime) return [];
+  const startMins = timeToMinutes(openTime);
+  const endMins = timeToMinutes(closeTime);
+  const slots: string[] = [];
+  for (let m = startMins; m <= endMins; m += 15) {
+    slots.push(minutesToTime(m));
+  }
+  return slots;
+}, [openTime, closeTime]);
+
+// Inject "Now" if outside operating hours
+const timeSlots = useMemo(() => {
+  const nowRounded = Math.ceil(nowMinutes / 15) * 15;
+  const nowStr = minutesToTime(nowRounded);
+  if (operatingSlots.includes(nowStr)) return operatingSlots;
+  return [nowStr, ...operatingSlots].sort();
+}, [operatingSlots, nowMinutes]);
+
+// getDefaultTime: round to 15m
+const getDefaultTime = useCallback(() => {
+  const nearest = Math.ceil(nowMinutes / 15) * 15;
+  return minutesToTime(nearest);
+}, [nowMinutes]);
 ```
 
-### 2. `DockNewBookingSheet.tsx` — Replace demo no-op with real insert
-
-Replace the fake `setTimeout` block (lines 245–248) with an actual `supabase.from('phorest_appointments').insert(...)` call that:
-- Sets `is_demo: true`
-- Uses `phorest_id: 'demo-' + crypto.randomUUID()`
-- Populates client_name, service_name, appointment_date, start_time, end_time, location_id, stylist_user_id, status (`'pending'`), and notes from the form state
-- Returns the inserted row's `id` so assistant assignments also work in demo mode
-
-### 3. `useDockAppointments.ts` — No changes needed
-
-The Dock query already fetches from `phorest_appointments` by location/date. Demo rows will surface automatically since they have valid location_id and appointment_date.
-
-### 4. Exclude demo rows from dashboard queries
-
-There are ~91 files querying `phorest_appointments`. The critical dashboard-facing ones need `.eq('is_demo', false)` added. These include:
-- `src/hooks/usePhorestCalendar.ts` (main dashboard schedule)
-- `src/lib/goal-metric-fetchers.ts` (KPI cards)
-- `src/hooks/useServiceCostsProfits.ts` (sales analytics)
-- `src/components/dashboard/sales/ServicePopularityChart.tsx`
-- `src/hooks/useStylistExperienceScore.ts`
-- `src/components/dashboard/clients/ClientRedoHistory.tsx`
-- Edge functions: `detect-anomalies`, `process-client-automations`
-
-Since `is_demo` defaults to `false`, existing rows are unaffected. Only demo-created rows will have `true`, so adding the filter is a safety net — but essential to prevent demo data from polluting analytics and the real schedule.
+The time grid rendering already handles the "Now" label for slots not in the standard list — that logic stays.
 
