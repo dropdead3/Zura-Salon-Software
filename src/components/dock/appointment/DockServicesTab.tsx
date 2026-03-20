@@ -63,6 +63,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
   const [showNewBowl, setShowNewBowl] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
+  const [showBowlDetection, setShowBowlDetection] = useState(false);
   const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
