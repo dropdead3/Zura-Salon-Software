@@ -84,6 +84,7 @@ async function fetchAppointments(
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)
       .not('status', 'in', '("cancelled","no_show")')
+      .eq('is_demo', false)
       .range(from, from + PAGE_SIZE - 1);
 
     if (locationId) {

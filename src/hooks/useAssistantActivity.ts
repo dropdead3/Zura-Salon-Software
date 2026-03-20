@@ -27,7 +27,8 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
         .from('phorest_appointments')
         .select('id')
         .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+        .lte('appointment_date', dateTo)
+        .eq('is_demo', false);
 
       if (apptError) throw apptError;
       if (!apptIds || apptIds.length === 0) {

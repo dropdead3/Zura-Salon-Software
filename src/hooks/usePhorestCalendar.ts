@@ -139,6 +139,7 @@ export function usePhorestCalendar() {
           )
         `)
         .is('deleted_at', null)
+        .eq('is_demo', false)
         .gte('appointment_date', dateRange.start)
         .lte('appointment_date', dateRange.end)
         .order('appointment_date')
@@ -256,7 +257,8 @@ export function usePhorestCalendar() {
         .from('phorest_appointments')
         .select('id')
         .gte('appointment_date', dateRange.start)
-        .lte('appointment_date', dateRange.end);
+        .lte('appointment_date', dateRange.end)
+        .eq('is_demo', false);
 
       if (!apptIds || apptIds.length === 0) return new Set<string>();
 

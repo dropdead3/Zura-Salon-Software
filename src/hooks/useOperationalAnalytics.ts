@@ -114,6 +114,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
           .select('appointment_date, status')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
+          .eq('is_demo', false)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -154,6 +155,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
           .not('status', 'in', '("cancelled","no_show")')
+          .eq('is_demo', false)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -192,6 +194,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
           .select('status')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
+          .eq('is_demo', false)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -302,7 +305,8 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
         .select('rebooked_at_checkout')
         .eq('status', 'completed')
         .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr);
+        .lte('appointment_date', endDateStr)
+        .eq('is_demo', false);
 
       if (locationId) {
         query = query.eq('location_id', locationId);
@@ -352,7 +356,8 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
         .from('phorest_appointments')
         .select('status, phorest_client_id, appointment_date')
         .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+        .lte('appointment_date', dateTo)
+        .eq('is_demo', false);
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);

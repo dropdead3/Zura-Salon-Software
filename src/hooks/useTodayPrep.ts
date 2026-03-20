@@ -67,6 +67,7 @@ export function useTodayPrep() {
           .eq('appointment_date', today)
           .not('status', 'in', '("cancelled","no_show")')
           .is('deleted_at', null)
+          .eq('is_demo', false)
           .order('start_time'),
       ]);
 
@@ -237,6 +238,7 @@ export function useTodayPrep() {
           .select('id, phorest_client_id')
           .in('phorest_client_id', phorestClientIds)
           .lt('appointment_date', today)
+          .eq('is_demo', false)
           .order('appointment_date', { ascending: false })
           .limit(100);
         

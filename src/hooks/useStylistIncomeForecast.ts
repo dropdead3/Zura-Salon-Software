@@ -43,7 +43,8 @@ export function useStylistIncomeForecast() {
         .eq('stylist_user_id', userId)
         .gte('appointment_date', startStr)
         .lte('appointment_date', endStr)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .eq('is_demo', false);
 
       if (aptError) throw aptError;
 

@@ -22,7 +22,8 @@ export async function fetchRevenue(
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled","no_show")')
-    .not('total_price', 'is', null);
+    .not('total_price', 'is', null)
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
@@ -43,7 +44,8 @@ export async function fetchAvgTicket(
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled","no_show")')
     .not('total_price', 'is', null)
-    .gt('total_price', 0);
+    .gt('total_price', 0)
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
@@ -84,14 +86,16 @@ export async function fetchNoShowRate(
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled")');
+    .not('status', 'in', '("cancelled")')
+    .eq('is_demo', false);
 
   let noshowQ = supabase
     .from('phorest_appointments')
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .eq('status', 'no_show');
+    .eq('status', 'no_show')
+    .eq('is_demo', false);
 
   totalQ = applyLocationFilter(totalQ, locationId);
   noshowQ = applyLocationFilter(noshowQ, locationId);
@@ -114,7 +118,8 @@ export async function fetchRebookRate(
     .select('rebooked_at_checkout')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")');
+    .not('status', 'in', '("cancelled","no_show")')
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 
@@ -135,7 +140,8 @@ export async function fetchNewClientPct(
     .select('is_new_client')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")');
+    .not('status', 'in', '("cancelled","no_show")')
+    .eq('is_demo', false);
 
   query = applyLocationFilter(query, locationId);
 

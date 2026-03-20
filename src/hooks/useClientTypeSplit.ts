@@ -54,7 +54,8 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
         .select('phorest_client_id, is_new_client, total_price, rebooked_at_checkout, appointment_date')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .eq('is_demo', false);
 
       if (locationId && locationId !== 'all') {
         aptQuery = aptQuery.eq('location_id', locationId);
