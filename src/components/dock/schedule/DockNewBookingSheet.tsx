@@ -107,6 +107,33 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const { data: locations = [] } = useLocations(staff.organizationId || undefined);
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
+  // Dynamic time slots from location operating hours (15-min increments)
+  const timeSlots = useMemo(() => {
+    const currentLocation = locations.find(l => l.id === selectedLocation);
+    const dayName = format(new Date(selectedDate + 'T12:00:00'), 'EEEE').toLowerCase() as keyof import('@/hooks/useLocations').HoursJson;
+    const dayHours = currentLocation?.hours_json?.[dayName];
+    const isClosed = dayHours?.closed === true;
+    const openTime = isClosed ? null : (dayHours?.open || '09:00');
+    const closeTime = isClosed ? null : (dayHours?.close || '18:00');
+
+    // Generate operating-hours slots
+    const opSlots: string[] = [];
+    if (openTime && closeTime) {
+      const startMins = timeToMinutes(openTime);
+      const endMins = timeToMinutes(closeTime);
+      for (let m = startMins; m <= endMins; m += 15) {
+        opSlots.push(minutesToTime(m));
+      }
+    }
+
+    // Inject "Now" slot if outside operating hours
+    const nowRounded = Math.ceil(nowMinutes / 15) * 15;
+    const nowStr = minutesToTime(nowRounded);
+    if (opSlots.length === 0) return [nowStr];
+    if (!opSlots.includes(nowStr)) return [nowStr, ...opSlots];
+    return opSlots;
+  }, [locations, selectedLocation, selectedDate, nowMinutes]);
+
   // Real data queries for org-scoped demo mode
   const { data: realServicesByCategory, isLoading: isLoadingRealServices } = useQuery({
     queryKey: ['dock-demo-real-services', organizationId],
