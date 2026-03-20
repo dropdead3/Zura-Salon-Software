@@ -63,7 +63,7 @@ function getInitials(name: string) {
 
 export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
-  const { isDemoMode } = useDockDemo();
+  const { isDemoMode, usesRealData, organizationId } = useDockDemo();
 
   // Drag controls for pull-to-dismiss
   const dragControls = useDragControls();
@@ -82,9 +82,47 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const { data: locations = [] } = useLocations(staff.organizationId || undefined);
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
-  // Demo mode overrides
-  const effectiveServicesByCategory = isDemoMode ? DEMO_SERVICES_BY_CATEGORY : servicesByCategory;
-  const effectiveServices = isDemoMode ? (DEMO_SERVICES as unknown as PhorestService[]) : services;
+  // Real data queries for org-scoped demo mode
+  const { data: realServicesByCategory, isLoading: isLoadingRealServices } = useQuery({
+    queryKey: ['dock-demo-real-services', organizationId],
+    queryFn: async () => {
+      // Get locations for this org
+      const { data: orgLocations } = await supabase
+        .from('locations')
+        .select('phorest_branch_id')
+        .eq('organization_id', organizationId);
+      const branchIds = (orgLocations || []).map(l => l.phorest_branch_id).filter(Boolean) as string[];
+      if (branchIds.length === 0) return { grouped: {} as Record<string, PhorestService[]>, all: [] as PhorestService[] };
+
+      const { data: svcData } = await supabase
+        .from('phorest_services')
+        .select('*')
+        .eq('is_active', true)
+        .in('phorest_branch_id', branchIds)
+        .order('category')
+        .order('name');
+
+      const all = (svcData || []) as PhorestService[];
+      const grouped = all.reduce((acc, s) => {
+        const cat = s.category || 'Other';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(s);
+        return acc;
+      }, {} as Record<string, PhorestService[]>);
+
+      return { grouped, all };
+    },
+    enabled: isDemoMode && usesRealData && !!organizationId,
+  });
+
+  // Demo mode overrides — use real data if available, else static mocks
+  const effectiveServicesByCategory = usesRealData && realServicesByCategory
+    ? realServicesByCategory.grouped
+    : isDemoMode ? DEMO_SERVICES_BY_CATEGORY : servicesByCategory;
+  const effectiveServices = usesRealData && realServicesByCategory
+    ? realServicesByCategory.all
+    : isDemoMode ? (DEMO_SERVICES as unknown as PhorestService[]) : services;
+  const effectiveServicesLoading = usesRealData ? isLoadingRealServices : isLoadingServices;
 
   // Phorest staff mapping for this user
   const { data: staffMapping } = useQuery({
@@ -101,16 +139,17 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     enabled: !isDemoMode,
   });
 
-  // Client search
+  // Client search — use real DB when usesRealData
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ['dock-booking-clients', clientSearch, isDemoMode],
+    queryKey: ['dock-booking-clients', clientSearch, isDemoMode, usesRealData, organizationId],
     queryFn: async () => {
-      if (isDemoMode) {
+      if (isDemoMode && !usesRealData) {
         return clientSearch.length >= 2
           ? searchDemoClients(clientSearch) as unknown as PhorestClient[]
           : [];
       }
 
+      // Real query (both normal mode and usesRealData demo mode)
       let query = supabase
         .from('phorest_clients')
         .select('id, phorest_client_id, name, email, phone')
@@ -286,7 +325,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   }}
                   totalDuration={totalDuration}
                   totalPrice={totalPrice}
-                  isLoading={isLoadingServices}
+                  isLoading={effectiveServicesLoading}
                   onContinue={() => setStep('confirm')}
                 />
               )}
