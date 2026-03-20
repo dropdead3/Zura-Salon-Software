@@ -26,14 +26,58 @@ export interface DockAppointment {
 }
 
 export function useDockAppointments(staffUserId: string | null) {
-  const { isDemoMode } = useDockDemo();
+  const { isDemoMode, usesRealData, organizationId } = useDockDemo();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   return useQuery({
-    queryKey: ['dock-appointments', staffUserId, today],
+    queryKey: ['dock-appointments', staffUserId, today, isDemoMode, usesRealData, organizationId],
     queryFn: async (): Promise<DockAppointment[]> => {
-      if (isDemoMode) return DEMO_APPOINTMENTS;
-      // Fetch from both phorest_appointments and appointments in parallel
+      // Generic preview — pure faux data
+      if (isDemoMode && !usesRealData) return DEMO_APPOINTMENTS;
+
+      // Org-specific demo — fetch real appointments for that org's locations
+      if (isDemoMode && usesRealData && organizationId) {
+        // Get location IDs for this org
+        const { data: locations } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('organization_id', organizationId);
+
+        const locationIds = (locations || []).map((l) => l.id);
+        if (locationIds.length === 0) return DEMO_APPOINTMENTS;
+
+        // Fetch today's phorest appointments across all org locations
+        const { data: phorestData, error: phorestErr } = await supabase
+          .from('phorest_appointments')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes')
+          .in('location_id', locationIds)
+          .eq('appointment_date', today)
+          .is('deleted_at', null)
+          .order('start_time', { ascending: true })
+          .limit(30);
+
+        if (phorestErr) throw phorestErr;
+
+        const appointments: DockAppointment[] = (phorestData || []).map((a) => ({
+          id: a.id,
+          source: 'phorest' as const,
+          client_name: a.client_name,
+          service_name: a.service_name,
+          appointment_date: a.appointment_date,
+          start_time: a.start_time,
+          end_time: a.end_time,
+          status: a.status,
+          location_id: a.location_id,
+          phorest_client_id: a.phorest_client_id,
+          notes: a.notes,
+          has_mix_session: false,
+        }));
+
+        // If no appointments today, fall back to faux data so demo isn't empty
+        return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;
+      }
+
+      // Normal (non-demo) mode — fetch by staff user
       const [phorestResult, localResult] = await Promise.all([
         supabase
           .from('phorest_appointments')
@@ -101,7 +145,7 @@ export function useDockAppointments(staffUserId: string | null) {
 
       return [...phorest, ...local];
     },
-    enabled: !!staffUserId,
+    enabled: !!staffUserId || (isDemoMode && usesRealData),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });
