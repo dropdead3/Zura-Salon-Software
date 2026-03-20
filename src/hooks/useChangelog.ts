@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export interface ChangelogEntry {
   id: string;
@@ -43,6 +44,7 @@ export interface CreateChangelogEntry {
 
 // Fetch published changelog entries for users
 export function usePublishedChangelog() {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
 
   return useQuery({
@@ -240,7 +242,7 @@ export function usePublishChangelog() {
             type: 'changelog',
             title: entry.is_major ? `🎉 ${entry.title}` : entry.title,
             message: entry.content.substring(0, 150) + (entry.content.length > 150 ? '...' : ''),
-            link: '/dashboard/changelog',
+            link: dashPath('/changelog'),
             metadata: { changelog_id: entry.id, version: entry.version, entry_type: entry.entry_type },
           }));
 
@@ -262,7 +264,7 @@ export function usePublishChangelog() {
           priority: entry.is_major ? 'high' : 'normal',
           is_pinned: entry.is_major,
           author_id: user.id,
-          link_url: '/dashboard/changelog',
+          link_url: dashPath('/changelog'),
           link_label: 'View Details',
         });
       }

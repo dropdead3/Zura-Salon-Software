@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 // VAPID public key - the private key should be in edge function secrets
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
@@ -23,6 +24,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export function usePushNotifications() {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isSupported, setIsSupported] = useState(false);
@@ -168,7 +170,7 @@ export function usePushNotifications() {
         user_id: user.id,
         title: 'Test Notification 🔔',
         body: 'Push notifications are working!',
-        url: '/dashboard/notification-preferences',
+        url: dashPath('/notification-preferences'),
       },
     });
 
