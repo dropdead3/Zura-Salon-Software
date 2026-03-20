@@ -75,8 +75,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedTime, setSelectedTime] = useState('09:00');
   const [notes, setNotes] = useState('');
 
-  // Data
-  const { data: locations = [] } = useLocations();
+  // Data — scope queries by organization
+  const { data: locations = [] } = useLocations(staff.organizationId || undefined);
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
   // Phorest staff mapping for this user

@@ -151,12 +151,17 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           <button
             onClick={() => {
               const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
-              const resolvedLocId = deviceLocId || locations[0]?.id || '';
+              const resolvedLoc = deviceLocId
+                ? locations.find(l => l.id === deviceLocId)
+                : locations[0];
+              const resolvedLocId = resolvedLoc?.id || '';
+              const resolvedOrgId = (resolvedLoc as any)?.organization_id || '';
               if (!deviceLocId && resolvedLocId) {
                 try { localStorage.setItem('dock-location-id', resolvedLocId); } catch {}
               }
               onSuccess({
                 userId: 'dev-bypass-000',
+                organizationId: resolvedOrgId,
                 displayName: 'Dev Tester',
                 avatarUrl: null,
                 locationId: resolvedLocId,

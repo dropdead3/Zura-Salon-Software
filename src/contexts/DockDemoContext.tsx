@@ -1,6 +1,6 @@
 /**
  * DockDemoContext — Enables demo mode when staff.userId === 'dev-bypass-000'.
- * Also provides device preview state for demo mode.
+ * Also provides device preview state and organization scoping for demo mode.
  */
 
 import { createContext, useContext, useMemo } from 'react';
@@ -9,6 +9,7 @@ import { useDockDevicePreview, type DockDevice, type DockOrientation } from '@/h
 
 interface DockDemoContextValue {
   isDemoMode: boolean;
+  organizationId: string;
   device: DockDevice;
   setDevice: (d: DockDevice) => void;
   orientation: DockOrientation;
@@ -17,6 +18,7 @@ interface DockDemoContextValue {
 
 const DockDemoContext = createContext<DockDemoContextValue>({
   isDemoMode: false,
+  organizationId: '',
   device: 'full',
   setDevice: () => {},
   orientation: 'portrait',
@@ -36,12 +38,13 @@ export function DockDemoProvider({
   const value = useMemo<DockDemoContextValue>(
     () => ({
       isDemoMode,
+      organizationId: staff.organizationId,
       device,
       setDevice,
       orientation,
       setOrientation,
     }),
-    [isDemoMode, device, setDevice, orientation, setOrientation]
+    [isDemoMode, staff.organizationId, device, setDevice, orientation, setOrientation]
   );
 
   return <DockDemoContext.Provider value={value}>{children}</DockDemoContext.Provider>;
