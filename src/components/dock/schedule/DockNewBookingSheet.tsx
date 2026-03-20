@@ -148,11 +148,18 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     enabled: !isDemoMode,
   });
 
-  // Team members at this location (for assistant selection)
+  // Team members at this location (for assistant selection) — filtered to stylist roles only
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['dock-team-members-booking', staff.organizationId, locationId],
     queryFn: async () => {
       if (!staff.organizationId || !locationId) return [];
+      // Fetch stylist-role user IDs
+      const { data: stylistRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'assistant_stylist']);
+      const stylistUserIds = new Set((stylistRoles || []).map(r => r.user_id));
+
       const { data } = await supabase
         .from('employee_profiles')
         .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
@@ -162,6 +169,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
         .order('display_name', { ascending: true });
       return (data || [])
         .filter(p => p.user_id !== staff.userId) // exclude current stylist
+        .filter(p => stylistUserIds.has(p.user_id)) // only stylist / assistant_stylist roles
         .filter(p => p.location_id === locationId || (p.location_ids && p.location_ids.includes(locationId)))
         .map(p => ({
           userId: p.user_id,
