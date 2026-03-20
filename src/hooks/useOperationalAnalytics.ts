@@ -114,6 +114,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
           .select('appointment_date, status')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
+          .eq('is_demo', false)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;

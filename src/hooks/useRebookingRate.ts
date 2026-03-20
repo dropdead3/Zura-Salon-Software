@@ -37,6 +37,7 @@ export function useRebookingRate(dateFrom: string, dateTo: string, locationId?: 
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .eq('status', 'completed')
+          .eq('is_demo', false)
           .range(offset, offset + PAGE_SIZE - 1);
         q = buildLocationFilter(q);
         const { data, error } = await q;
