@@ -765,6 +765,14 @@ function ServiceStepDock({
             </div>
           </>
         )}
+        {selectedServices.length > 0 && (
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className="w-full h-10 rounded-full border border-dashed border-[hsl(var(--platform-accent))]/40 text-[hsl(var(--platform-accent))] font-sans text-sm font-medium hover:bg-[hsl(var(--platform-accent))]/10 active:scale-[0.98] transition-all mb-3"
+          >
+            + Add Another Service
+          </button>
+        )}
         <button
           onClick={onContinue}
           disabled={selectedServices.length === 0}
