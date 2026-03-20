@@ -1,30 +1,37 @@
 
 
-## Default Time Selection to "Now"
+## Add Hours Display to All Duration Values
 
-Currently the time defaults to `'09:00'` on line 84. It should default to the nearest 30-minute time slot based on the org's current time.
+Currently, durations like "330m" are hard to read. They should show hours too, e.g. "5h 30m". One file (`ConfirmStep.tsx`) already does this — we need a shared utility and apply it everywhere.
 
-### Changes — `src/components/dock/schedule/DockNewBookingSheet.tsx`
+### 1. Create shared `formatMinutesToDuration` utility
 
-1. **Import `useOrgNow`** and use `nowMinutes` to compute the nearest TIME_SLOT.
+New file: `src/lib/formatDuration.ts`
 
-2. **Replace hardcoded `'09:00'`** (line 84) with a computed default:
-   - Take `nowMinutes` from `useOrgNow()`, round up to the next 30-min boundary
-   - Clamp to the TIME_SLOTS range (08:00–20:00)
-   - Find the nearest matching slot string
-   - Use that as the initial `selectedTime` value
-
-3. **Also update the reset** (line 289) to use the same logic instead of `'09:00'`.
-
-### Example logic
 ```typescript
-const { nowMinutes } = useOrgNow();
-const nearestSlotMinutes = Math.ceil(nowMinutes / 30) * 30;
-const clamped = Math.max(8 * 60, Math.min(nearestSlotMinutes, 20 * 60));
-const h = String(Math.floor(clamped / 60)).padStart(2, '0');
-const m = String(clamped % 60).padStart(2, '0');
-const defaultTime = `${h}:${m}`;
+/** 330 → "5h 30m", 45 → "45m", 60 → "1h", 90 → "1h 30m" */
+export function formatMinutesToDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 ```
 
-The initial state will use a function initializer (`useState(() => computeDefault())`) so it only runs once on mount but uses the current org time.
+### 2. Update all duration display locations
+
+**Files to update** (replace raw `{x}m` with `formatMinutesToDuration(x)`):
+
+| File | What changes |
+|------|-------------|
+| `src/components/dock/schedule/DockNewBookingSheet.tsx` | 3 spots: line 827 (service chip), line 876 (summary bar), line 1016 (Duration detail row), line 1055 (confirm service list) |
+| `src/components/dashboard/schedule/booking/ServiceStep.tsx` | Line 120: individual service duration |
+| `src/components/dashboard/schedule/booking/ConfirmStep.tsx` | Lines 144-147: replace inline logic with the shared util |
+| `src/components/dashboard/schedule/ServiceAddonToast.tsx` | Line 69: addon duration |
+| `src/components/dashboard/schedule/meetings/MeetingCard.tsx` | Line 122: meeting duration |
+| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Lines 1125, 1172, 2051: appointment/service durations |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Lines 675, 745, 817: service list durations |
+| `src/components/dashboard/sales/RevPerHourByCategoryChart.tsx` | Line 255: avg duration column |
+
+Each change is mechanical: import the utility and replace `{value}m` / `{value}min` with `{formatMinutesToDuration(value)}`.
 
