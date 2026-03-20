@@ -1169,7 +1169,7 @@ export function AppointmentDetailSheet({
                               </div>
                               <div className="flex items-center gap-2 shrink-0 ml-2">
                                 {svc.duration && (
-                                  <span className="text-muted-foreground text-xs">{svc.duration}min</span>
+                                  <span className="text-muted-foreground text-xs">{formatMinutesToDuration(svc.duration)}</span>
                                 )}
                                 {svc.price != null && (
                                   <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
