@@ -4,9 +4,9 @@
  * Pre-selects the logged-in staff member as stylist.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
@@ -61,6 +61,9 @@ function getInitials(name: string) {
 
 export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
+
+  // Drag controls for pull-to-dismiss
+  const dragControls = useDragControls();
 
   // Wizard state
   const [step, setStep] = useState<Step>('client');
@@ -201,11 +204,24 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={SPRING}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.4 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 120 || info.velocity.y > 500) {
+                handleClose();
+              }
+            }}
             className="absolute inset-x-0 bottom-0 z-[61] flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl"
             style={{ maxHeight: '92%' }}
           >
             {/* Drag handle */}
-            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0" />
+            <div
+              onPointerDown={(e) => dragControls.start(e)}
+              className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            />
 
             {/* Header */}
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
