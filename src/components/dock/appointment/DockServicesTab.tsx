@@ -16,6 +16,7 @@ import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requi
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
 import { DockLiveDispensing } from '../mixing/DockLiveDispensing';
 import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
+import { DockBowlDetectionGate } from '../mixing/DockBowlDetectionGate';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
 import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
@@ -62,6 +63,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
   const [showNewBowl, setShowNewBowl] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
+  const [showBowlDetection, setShowBowlDetection] = useState(false);
   const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
@@ -238,7 +240,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         </div>
       ) : (
         <button
-          onClick={() => setShowNewBowl(true)}
+          onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
           disabled={createBowl.isPending}
           className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
         >
@@ -264,7 +266,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       {/* Add Bowl button — only when bowls already exist */}
       {allBowlCount > 0 && (
         <button
-          onClick={() => setShowNewBowl(true)}
+          onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
           disabled={createBowl.isPending}
           className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium disabled:opacity-40"
         >
@@ -283,6 +285,17 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           Complete Session
         </button>
       )}
+
+      {/* Bowl detection gate */}
+      <DockBowlDetectionGate
+        open={showBowlDetection}
+        isDemoMode={isDemoMode}
+        onReady={() => {
+          setShowBowlDetection(false);
+          setShowNewBowl(true);
+        }}
+        onCancel={() => setShowBowlDetection(false)}
+      />
 
       {/* New bowl sheet */}
       <DockNewBowlSheet
