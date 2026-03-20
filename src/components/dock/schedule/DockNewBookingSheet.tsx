@@ -1120,6 +1120,12 @@ function ConfirmStepDock({
               {client?.phone || client?.email || ''}
             </div>
           </div>
+          {clientHistory && clientHistory.visitCount === 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-violet-500/30 shrink-0">
+              <Sparkles className="w-3 h-3 text-violet-400" />
+              <span className="text-[10px] text-violet-400 whitespace-nowrap">New client — first visit</span>
+            </div>
+          )}
         </div>
 
         {/* Client Quick-View */}
