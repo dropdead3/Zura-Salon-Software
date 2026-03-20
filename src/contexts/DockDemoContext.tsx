@@ -5,18 +5,22 @@
 
 import { createContext, useContext, useMemo } from 'react';
 import type { DockStaffSession } from '@/pages/Dock';
-import { useDockDevicePreview, type DockDevice } from '@/hooks/dock/useDockDevicePreview';
+import { useDockDevicePreview, type DockDevice, type DockOrientation } from '@/hooks/dock/useDockDevicePreview';
 
 interface DockDemoContextValue {
   isDemoMode: boolean;
   device: DockDevice;
   setDevice: (d: DockDevice) => void;
+  orientation: DockOrientation;
+  setOrientation: (o: DockOrientation) => void;
 }
 
 const DockDemoContext = createContext<DockDemoContextValue>({
   isDemoMode: false,
   device: 'full',
   setDevice: () => {},
+  orientation: 'portrait',
+  setOrientation: () => {},
 });
 
 export function DockDemoProvider({
@@ -27,15 +31,17 @@ export function DockDemoProvider({
   children: React.ReactNode;
 }) {
   const isDemoMode = staff.userId === 'dev-bypass-000';
-  const { device, setDevice } = useDockDevicePreview();
+  const { device, setDevice, orientation, setOrientation } = useDockDevicePreview();
 
   const value = useMemo<DockDemoContextValue>(
     () => ({
       isDemoMode,
       device: isDemoMode ? device : 'full',
       setDevice,
+      orientation,
+      setOrientation,
     }),
-    [isDemoMode, device, setDevice]
+    [isDemoMode, device, setDevice, orientation, setOrientation]
   );
 
   return <DockDemoContext.Provider value={value}>{children}</DockDemoContext.Provider>;
