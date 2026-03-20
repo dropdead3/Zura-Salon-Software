@@ -55,7 +55,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
           />
         ) : (
           <>
-            {activeTab === 'schedule' && <DockScheduleTab staff={staff} onOpenAppointment={onOpenAppointment} locationId={staff.locationId} />}
+            {activeTab === 'schedule' && <DockScheduleTab staff={staff} onOpenAppointment={onOpenAppointment} locationId={staff.locationId} staffFilter={staffFilter} />}
             {activeTab === 'active' && <DockActiveTab staff={staff} />}
             {activeTab === 'clients' && <DockClientsTab staff={staff} />}
             {activeTab === 'scale' && <DockScaleTab />}
