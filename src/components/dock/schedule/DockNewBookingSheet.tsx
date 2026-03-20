@@ -6,7 +6,7 @@
 
 import { useState, useMemo } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
@@ -39,15 +39,6 @@ interface PhorestClient {
   phone: string | null;
 }
 
-interface RecentCheckIn {
-  clientId: string;
-  phorestClientId: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  checkedInAt: string;
-  method: string;
-}
 
 type Step = 'client' | 'service' | 'confirm';
 
@@ -91,76 +82,6 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [notes, setNotes] = useState('');
   const [showNewClientSheet, setShowNewClientSheet] = useState(false);
 
-  // Recent check-ins for today at this location
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { data: recentCheckIns = [], isLoading: isLoadingCheckIns } = useQuery({
-    queryKey: ['dock-recent-checkins', locationId, todayStr, organizationId],
-    queryFn: async () => {
-      // Query appointment_check_ins joined with phorest_clients
-      const startOfDay = `${todayStr}T00:00:00Z`;
-      const { data: checkIns } = await supabase
-        .from('appointment_check_ins')
-        .select('phorest_client_id, client_id, checked_in_at, check_in_method')
-        .eq('location_id', locationId)
-        .gte('checked_in_at', startOfDay)
-        .order('checked_in_at', { ascending: false })
-        .limit(30);
-
-      if (!checkIns || checkIns.length === 0) return [] as RecentCheckIn[];
-
-      // Collect unique phorest_client_ids and client_ids
-      const phorestIds = [...new Set(checkIns.map(c => c.phorest_client_id).filter(Boolean))] as string[];
-      const clientIds = [...new Set(checkIns.map(c => c.client_id).filter(Boolean))] as string[];
-
-      // Fetch phorest client names
-      const phorestMap = new Map<string, { id: string; name: string; email: string | null; phone: string | null }>();
-      if (phorestIds.length > 0) {
-        const { data: pClients } = await supabase
-          .from('phorest_clients')
-          .select('id, phorest_client_id, name, email, phone')
-          .in('phorest_client_id', phorestIds);
-        (pClients || []).forEach(pc => phorestMap.set(pc.phorest_client_id, { id: pc.id, name: pc.name, email: pc.email, phone: pc.phone }));
-      }
-
-      // Fetch local client names as fallback
-      const clientMap = new Map<string, { id: string; name: string; email: string | null; phone: string | null }>();
-      if (clientIds.length > 0) {
-        const { data: lClients } = await supabase
-          .from('clients')
-          .select('id, first_name, last_name, email, mobile')
-          .in('id', clientIds);
-        (lClients || []).forEach(lc => clientMap.set(lc.id, { id: lc.id, name: `${lc.first_name} ${lc.last_name}`.trim(), email: lc.email, phone: lc.mobile }));
-      }
-
-      // Deduplicate by phorest_client_id or client_id, keep most recent
-      const seen = new Set<string>();
-      const results: RecentCheckIn[] = [];
-      for (const ci of checkIns) {
-        const key = ci.phorest_client_id || ci.client_id || '';
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-
-        const pClient = ci.phorest_client_id ? phorestMap.get(ci.phorest_client_id) : null;
-        const lClient = ci.client_id ? clientMap.get(ci.client_id) : null;
-        const resolved = pClient || lClient;
-        if (!resolved) continue;
-
-        results.push({
-          clientId: resolved.id,
-          phorestClientId: ci.phorest_client_id || '',
-          name: resolved.name,
-          email: resolved.email,
-          phone: resolved.phone,
-          checkedInAt: ci.checked_in_at,
-          method: ci.check_in_method as 'kiosk' | 'front_desk' | 'manual' | string,
-        });
-      }
-      return results;
-    },
-    enabled: !!locationId,
-    staleTime: 30_000,
-    refetchInterval: 60_000, // Auto-refresh every minute
-  });
 
   // Data — scope queries by organization
   const { data: locations = [] } = useLocations(staff.organizationId || undefined);
@@ -397,8 +318,6 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                       setStep('service');
                     }}
                     onNewClient={() => setShowNewClientSheet(true)}
-                    recentCheckIns={recentCheckIns}
-                    isLoadingCheckIns={isLoadingCheckIns}
                   />
                   <DockNewClientSheet
                     open={showNewClientSheet}
@@ -464,8 +383,6 @@ function ClientStepDock({
   onSearchChange,
   onSelectClient,
   onNewClient,
-  recentCheckIns,
-  isLoadingCheckIns,
 }: {
   clients: PhorestClient[];
   isLoading: boolean;
@@ -473,31 +390,8 @@ function ClientStepDock({
   onSearchChange: (q: string) => void;
   onSelectClient: (c: PhorestClient) => void;
   onNewClient: () => void;
-  recentCheckIns: RecentCheckIn[];
-  isLoadingCheckIns: boolean;
 }) {
   const isSearching = searchQuery.length >= 2;
-
-  const handleSelectCheckIn = (ci: RecentCheckIn) => {
-    onSelectClient({
-      id: ci.clientId,
-      phorest_client_id: ci.phorestClientId,
-      name: ci.name,
-      email: ci.email,
-      phone: ci.phone,
-    });
-  };
-
-  const getMethodLabel = (method: string) => {
-    if (method === 'kiosk') return 'Kiosk';
-    if (method === 'front_desk' || method === 'manual') return 'Front Desk';
-    return method;
-  };
-
-  const getMethodClasses = (method: string) => {
-    if (method === 'kiosk') return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25';
-    return 'bg-blue-500/15 text-blue-400 border-blue-500/25';
-  };
 
   return (
     <div className="px-5 pb-6">
@@ -522,7 +416,7 @@ function ClientStepDock({
         </button>
       </div>
 
-      {/* Search results overlay */}
+      {/* Search results */}
       {isSearching ? (
         isLoading ? (
           <div className="flex justify-center py-12">
@@ -549,69 +443,22 @@ function ClientStepDock({
           </div>
         )
       ) : (
-        /* Default view: Recent Check-Ins */
-        <>
-          {isLoadingCheckIns ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
-            </div>
-          ) : recentCheckIns.length > 0 ? (
-            <>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wide">
-                  Today&apos;s Check-Ins
-                </span>
-              </div>
-              <div className="space-y-1 mb-4">
-                {recentCheckIns.map((ci) => (
-                  <button
-                    key={ci.clientId}
-                    onClick={() => handleSelectCheckIn(ci)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-[hsl(var(--platform-foreground)/0.06)] active:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors"
-                  >
-                    <div className="relative w-10 h-10 rounded-full bg-emerald-600/15 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-medium text-emerald-400">{getInitials(ci.name)}</span>
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[hsl(var(--platform-bg))]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{ci.name}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                          {formatDistanceToNowStrict(new Date(ci.checkedInAt), { addSuffix: true })}
-                        </span>
-                        <span className={cn(
-                          'inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium border',
-                          getMethodClasses(ci.method),
-                        )}>
-                          {getMethodLabel(ci.method)}
-                        </span>
-                      </div>
-                    </div>
-                    <Check className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0" />
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                No check-ins yet today
-              </p>
-            </div>
-          )}
-
-          {/* Bottom prompt */}
-          <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.3)]">
-            <button
-              onClick={onNewClient}
-              className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-violet-400 transition-colors"
-            >
-              <UserPlus className="w-4 h-4" />
-              Don&apos;t see them? Create new client
-            </button>
+        /* Default empty state */
+        <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--platform-foreground)/0.06)] flex items-center justify-center">
+            <Search className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)]" />
           </div>
-        </>
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            Search for a client or create a new one
+          </p>
+          <button
+            onClick={onNewClient}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            New Client
+          </button>
+        </div>
       )}
     </div>
   );
