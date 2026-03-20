@@ -1,9 +1,10 @@
 /**
- * DockSettingsTab — Staff profile and logout.
- * Placeholder for Phase 7 implementation.
+ * DockSettingsTab — Staff profile, device info, and logout.
  */
 
-import { LogOut, User } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut, User, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import type { DockStaffSession } from '@/pages/Dock';
 
 interface DockSettingsTabProps {
@@ -12,6 +13,22 @@ interface DockSettingsTabProps {
 }
 
 export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const handleResetDevice = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    try {
+      localStorage.removeItem('dock-organization-id');
+      localStorage.removeItem('dock-location-id');
+    } catch {}
+    toast.success('Device unbound — next login will re-bind');
+    setConfirmReset(false);
+    onLogout();
+  };
+
   return (
     <div className="flex flex-col h-full px-6 py-8">
       {/* Staff profile card */}
@@ -35,6 +52,17 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Reset Device */}
+      <button
+        onClick={handleResetDevice}
+        className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors mb-3"
+      >
+        <RotateCcw className="w-4 h-4" />
+        <span className="text-sm font-medium">
+          {confirmReset ? 'Tap again to confirm reset' : 'Reset Device Binding'}
+        </span>
+      </button>
 
       {/* Logout button */}
       <button

@@ -51,8 +51,14 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
     if (next.length === PIN_LENGTH) {
       setLoading(true);
       try {
+        // Read device-bound org from localStorage (scopes PIN after first login)
+        const storedOrgId = (() => { try { return localStorage.getItem('dock-organization-id') || null; } catch { return null; } })();
+
         const { data, error: dbError } = await supabase
-          .rpc('validate_dock_pin', { _pin: next })
+          .rpc('validate_dock_pin', {
+            _pin: next,
+            _organization_id: storedOrgId,
+          })
           .maybeSingle();
 
         if (dbError || !data) {
@@ -60,6 +66,10 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           setPin('');
           toast.error('Invalid PIN');
         } else {
+          // Bind device to org on first successful login
+          if (!storedOrgId && data.organization_id) {
+            try { localStorage.setItem('dock-organization-id', data.organization_id); } catch {}
+          }
           // Resolve location: explicit device config > staff profile
           const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
           const resolvedLocationId = deviceLocId || data.location_id || '';
