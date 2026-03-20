@@ -65,6 +65,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           const resolvedLocationId = deviceLocId || data.location_id || '';
           onSuccess({
             userId: data.user_id,
+            organizationId: data.organization_id || '',
             displayName: data.display_name || 'Staff',
             avatarUrl: data.photo_url,
             locationId: resolvedLocationId,
