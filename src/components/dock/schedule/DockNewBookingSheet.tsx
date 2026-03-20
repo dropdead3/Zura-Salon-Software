@@ -976,6 +976,7 @@ function ConfirmStepDock({
   teamMembers,
   selectedAssistants,
   onAssistantsChange,
+  timeSlots,
 }: {
   client: PhorestClient | null;
   services: PhorestService[];
