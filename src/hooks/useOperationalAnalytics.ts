@@ -356,7 +356,8 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
         .from('phorest_appointments')
         .select('status, phorest_client_id, appointment_date')
         .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+        .lte('appointment_date', dateTo)
+        .eq('is_demo', false);
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);
