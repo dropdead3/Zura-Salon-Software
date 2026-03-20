@@ -1,43 +1,19 @@
 
 
-## Add Pull-to-Dismiss and Tap-Outside-to-Close to All Dock Drawers
+## Make "Tap to start mixing" a Full-Screen Centered Prompt
 
-### Current State
+### Problem
 
-Some drawers already have proper gesture handling (DockNewBookingSheet, DockNewClientSheet use framer-motion drag + backdrop tap). Three drawers are missing these interactions:
+The empty state renders as a small dashed-border card in the top-left. It should fill the entire content area and act as one big invisible tap target with the icon and text centered.
 
-| Drawer | Tap Outside | Pull to Dismiss |
-|--------|------------|-----------------|
-| DockNewBowlSheet | ✅ (overlay click) | ❌ |
-| DockSessionCompleteSheet | ✅ (overlay click) | ❌ |
-| DockProductPicker | ❌ (full-screen, no overlay) | ❌ |
+### Change
 
-### Changes
+**`src/components/dock/appointment/DockServicesTab.tsx`** — lines 239-253
 
-**1. `src/components/dock/mixing/DockNewBowlSheet.tsx`**
+Replace the card-styled button with a borderless, full-area button that fills the remaining space:
 
-Convert from static div to framer-motion `AnimatePresence` + `motion.div` pattern matching DockNewBookingSheet:
-- Add `useDragControls()` from framer-motion
-- Wrap in `AnimatePresence`, add slide-up animation (`y: '100%'` → `y: 0`)
-- Add `drag="y"` with `dragConstraints` and `dragElastic` on the sheet panel
-- Add draggable handle bar (`onPointerDown` → `dragControls.start`)
-- `onDragEnd`: close if `offset.y > 120 || velocity.y > 500`
-- Backdrop gets animated opacity + `onClick={onClose}`
-
-**2. `src/components/dock/mixing/DockSessionCompleteSheet.tsx`**
-
-Same conversion — add framer-motion drag-to-dismiss and animated backdrop:
-- Add `useDragControls()`, `AnimatePresence`, slide-up animation
-- Draggable handle bar on the sheet
-- `onDragEnd` close threshold
-
-**3. `src/components/dock/mixing/DockProductPicker.tsx`**
-
-This is a full-screen picker (not a bottom sheet), so pull-to-dismiss works differently:
-- Add a drag handle bar at the top
-- Add `drag="y"` with constraints allowing only downward drag
-- `onDragEnd`: close if dragged down enough
-- Add a subtle backdrop behind it for tap-outside consistency (or keep the X button as primary since it's full-screen)
-
-All three files adopt the same spring config and drag thresholds already used in `DockNewBookingSheet` and `DockNewClientSheet` for consistency.
+- Remove `rounded-2xl border border-dashed border-violet-500/30 bg-violet-600/5 hover:bg-violet-600/10 min-h-[200px]`
+- Use `flex-1 flex flex-col items-center justify-center` with no border, no background, no min-height — just the icon + text floating in the center of the available space
+- On hover/active: subtle opacity shift only (`hover:opacity-80 active:opacity-60`)
+- Keep the pulsing icon circle and text as-is, just centered in the full viewport area
 
