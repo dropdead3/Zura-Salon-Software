@@ -30,7 +30,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'not_configured',
     category: 'payroll',
     features: ['Automated Taxes', 'Direct Deposit', 'W-2s', 'Benefits'],
-    configPath: '/dashboard/admin/payroll',
+    configPath: '/admin/payroll',
   },
   {
     id: 'quickbooks',
@@ -40,7 +40,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'not_configured',
     category: 'payroll',
     features: ['QuickBooks Sync', 'Direct Deposit', 'Tax Filing', 'Reports'],
-    configPath: '/dashboard/admin/payroll',
+    configPath: '/admin/payroll',
   },
   {
     id: 'stripe',
