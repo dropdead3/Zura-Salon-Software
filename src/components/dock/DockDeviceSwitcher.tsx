@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Monitor, Smartphone, Tablet, RotateCcw, MapPin } from 'lucide-react';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { useLocations } from '@/hooks/useLocations';
@@ -21,6 +22,15 @@ const deviceOptions = [
 export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange }: DockDeviceSwitcherProps) {
   const showRotate = device === 'tablet';
   const { data: locations = [] } = useLocations();
+
+  // Auto-select first location if none configured
+  useEffect(() => {
+    if (!locationId && locations.length > 0 && onLocationChange) {
+      const firstId = locations[0].id;
+      try { localStorage.setItem('dock-location-id', firstId); } catch {}
+      onLocationChange(firstId);
+    }
+  }, [locations, locationId, onLocationChange]);
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;

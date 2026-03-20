@@ -5,6 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDockDemoAccess } from '@/hooks/dock/useDockDemoAccess';
+import { useLocations } from '@/hooks/useLocations';
 import { Delete } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [loading, setLoading] = useState(false);
   const showDemo = useDockDemoAccess();
   const { data: settings } = useBusinessSettings();
+  const { data: locations = [] } = useLocations();
 
   const businessName = settings?.business_name || '';
   const logoDarkUrl = settings?.logo_dark_url;
@@ -148,11 +150,15 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           <button
             onClick={() => {
               const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
+              const resolvedLocId = deviceLocId || locations[0]?.id || '';
+              if (!deviceLocId && resolvedLocId) {
+                try { localStorage.setItem('dock-location-id', resolvedLocId); } catch {}
+              }
               onSuccess({
                 userId: 'dev-bypass-000',
                 displayName: 'Dev Tester',
                 avatarUrl: null,
-                locationId: deviceLocId,
+                locationId: resolvedLocId,
               });
             }
             }
