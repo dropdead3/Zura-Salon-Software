@@ -267,7 +267,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                 <Button variant="outline" size={tokens.button.card} className="gap-2 text-xs">
                   <CalendarRange className="h-3.5 w-3.5" />
                   {customRange.from
-                    ? `${format(customRange.from, 'MMM d')}${customRange.to ? ` – ${format(customRange.to, 'MMM d')}` : ''}`
+                    ? `${format(customRange.from, 'MMM d')}${customRange.to ? ` – ${format(customRange.to, 'MMM d` : ''}`
                     : 'Pick dates'}
                 </Button>
               </PopoverTrigger>

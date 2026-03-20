@@ -9,6 +9,7 @@ import {
   User,
   LayoutGrid,
 } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface NavItem {
   href: string;
@@ -17,20 +18,21 @@ interface NavItem {
 }
 
 const baseNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays },
-  { href: '/dashboard/team-chat', label: 'Chat', icon: MessageSquare },
+  { href: dashPath('/'), label: 'Home', icon: LayoutDashboard },
+  { href: dashPath('/schedule'), label: 'Schedule', icon: CalendarDays },
+  { href: dashPath('/team-chat'), label: 'Chat', icon: MessageSquare },
 ];
 
-const statsItem: NavItem = { href: '/dashboard/stats', label: 'Stats', icon: BarChart3 };
-const manageItem: NavItem = { href: '/dashboard/admin/team-hub', label: 'Manage', icon: LayoutGrid };
-const profileItem: NavItem = { href: '/dashboard/profile', label: 'Profile', icon: User };
+const statsItem: NavItem = { href: dashPath('/stats'), label: 'Stats', icon: BarChart3 };
+const manageItem: NavItem = { href: dashPath('/admin/team-hub'), label: 'Manage', icon: LayoutGrid };
+const profileItem: NavItem = { href: dashPath('/profile'), label: 'Profile', icon: User };
 
 interface MobileBottomNavProps {
   className?: string;
 }
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
+  const { dashPath } = useOrgDashboardPath();
   const location = useLocation();
   const { hasPermission } = useAuth();
 
@@ -43,8 +45,8 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') {
-      return location.pathname === '/dashboard';
+    if (href === dashPath('/')) {
+      return location.pathname === dashPath('/');
     }
     return location.pathname.startsWith(href);
   };

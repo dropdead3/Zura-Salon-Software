@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function isLikelyIdSegment(segment: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) || segment.length >= 18;
@@ -28,6 +29,7 @@ export type PageHeaderProps = {
 };
 
 export function PageHeader({ title, description, actions, showBreadcrumbs = true, className }: PageHeaderProps) {
+  const { dashPath } = useOrgDashboardPath();
   const location = useLocation();
 
   const breadcrumb = (() => {
@@ -35,8 +37,8 @@ export function PageHeader({ title, description, actions, showBreadcrumbs = true
     const parts = location.pathname.split('/').filter(Boolean);
     if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
 
-    const crumbs: Array<{ label: string; href?: string }> = [{ label: 'Dashboard', href: '/dashboard' }];
-    let href = '/dashboard';
+    const crumbs: Array<{ label: string; href?: string }> = [{ label: 'Dashboard', href: dashPath('/') }];
+    let href = dashPath('/');
     for (const seg of parts.slice(1)) {
       href += `/${seg}`;
       const label =

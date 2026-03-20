@@ -123,7 +123,7 @@ export function SystemHealthCard() {
 
       {/* View Details Link */}
       <Link 
-        to="/dashboard/platform/health"
+        to="/platform/health"
         className="mt-5 flex items-center justify-center gap-1 text-sm text-violet-400 hover:text-violet-300 transition-colors"
       >
         View Details

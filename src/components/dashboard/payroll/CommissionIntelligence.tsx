@@ -26,6 +26,7 @@ import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function formatPercent(rate: number | null | undefined): string {
   if (rate == null) return '—';
@@ -33,6 +34,7 @@ function formatPercent(rate: number | null | undefined): string {
 }
 
 export function CommissionIntelligence() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { projection, isLoading: forecastLoading } = usePayrollForecasting();
   const { resolveCommission, isLoading: resolveLoading } = useResolveCommission();
@@ -105,7 +107,7 @@ export function CommissionIntelligence() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/dashboard/admin/settings?category=levels')}
+            onClick={() => navigate(dashPath('/admin/settings?category=levels'))}
           >
             <Settings2 className="h-4 w-4 mr-1.5" />
             Configure Rates
@@ -202,7 +204,7 @@ export function CommissionIntelligence() {
                     <TableRow
                       key={row.id}
                       className="cursor-pointer"
-                      onClick={() => navigate('/dashboard/admin/settings?category=levels')}
+                      onClick={() => navigate(dashPath('/admin/settings?category=levels'))}
                     >
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell>

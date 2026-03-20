@@ -62,6 +62,7 @@ import { useDashboardVisibility, useRegisterVisibilityElement } from '@/hooks/us
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -183,6 +184,7 @@ interface DashboardCustomizeMenuProps {
 }
 
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   
   const SECTIONS = useMemo(() => {
@@ -582,7 +584,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                   ))}
                 </div>
                 <Button variant="ghost" size={tokens.button.card} className="w-full gap-2 mt-4" asChild>
-                  <Link to="/dashboard/admin/analytics" onClick={() => setIsOpen(false)}>
+                  <Link to={dashPath('/admin/analytics')} onClick={() => setIsOpen(false)}>
                     <BarChart3 className="w-4 h-4" />
                     View All in Analytics Hub
                   </Link>
@@ -610,7 +612,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                 className="w-full gap-2 text-muted-foreground"
                 asChild
               >
-                <Link to="/dashboard/admin/visibility" onClick={() => setIsOpen(false)}>
+                <Link to={dashPath('/admin/visibility')} onClick={() => setIsOpen(false)}>
                   <Settings2 className="w-4 h-4" />
                   Open Visibility Console
                 </Link>

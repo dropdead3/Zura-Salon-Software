@@ -23,6 +23,7 @@ import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 import type { Database } from '@/integrations/supabase/types';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -51,7 +52,7 @@ async function getUserRedirectPath(userId: string, fallback: string): Promise<st
     .limit(1);
 
   if (platformRoles && platformRoles.length > 0) {
-    return '/dashboard/platform/overview';
+    return '/platform/overview';
   }
 
   // Check for custom landing page
@@ -62,6 +63,7 @@ async function getUserRedirectPath(userId: string, fallback: string): Promise<st
 }
 
 export default function UnifiedLogin() {
+  const { dashPath } = useOrgDashboardPath();
   const [searchParams] = useSearchParams();
   const platformInvitationToken = searchParams.get('invitation');
 
@@ -95,7 +97,7 @@ export default function UnifiedLogin() {
   const { data: platformInvitation, isLoading: loadingPlatformInvitation } = useInvitationByToken(platformInvitationToken);
   const acceptPlatformInvitation = useAcceptPlatformInvitation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || dashPath('/');
 
   // Set signup mode if platform invitation
   useEffect(() => {
@@ -126,7 +128,7 @@ export default function UnifiedLogin() {
             userId: user.id,
           });
           sonnerToast.success('Welcome to the platform!');
-          navigate('/dashboard/platform/overview', { replace: true });
+          navigate('/platform/overview', { replace: true });
           return;
         } catch (error) {
           console.error('Failed to accept platform invitation:', error);
@@ -186,7 +188,7 @@ export default function UnifiedLogin() {
                   userId: loggedInUser.id,
                 });
                 sonnerToast.success('Welcome to the platform!');
-                navigate('/dashboard/platform/overview', { replace: true });
+                navigate('/platform/overview', { replace: true });
                 return;
               } catch (error) {
                 console.error('Failed to accept platform invitation:', error);
@@ -225,7 +227,7 @@ export default function UnifiedLogin() {
                 ? `Your account has been created with the ${roleOptions.find(r => r.value === staffInvitation.role)?.label} role.`
                 : `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
             });
-            navigate('/dashboard', { replace: true });
+            navigate(dashPath('/'), { replace: true });
           }
         }
       }
@@ -322,7 +324,7 @@ export default function UnifiedLogin() {
               {isForgotPassword
                 ? 'Enter your email to receive a reset link'
                 : isPlatformInviteSignup
-                ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' ')}`
+                ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' `
                 : isLogin
                 ? 'Sign in to access your dashboard'
                 : `Get started with ${PLATFORM_NAME}`}

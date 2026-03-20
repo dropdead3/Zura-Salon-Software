@@ -35,6 +35,7 @@ import { LandingPageSettings } from '@/components/dashboard/settings/LandingPage
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageCropModal } from '@/components/dashboard/ImageCropModal';
 import { Upload } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -63,6 +64,7 @@ const formatSocialHandle = (value: string) => {
 };
 
 export default function MyProfile() {
+  const { dashPath } = useOrgDashboardPath();
   const { user, refreshRoles } = useAuth();
   const roles = useEffectiveRoles();
   const { isImpersonating, impersonatedUser } = useEffectiveUserContext();
@@ -436,7 +438,7 @@ export default function MyProfile() {
             <Eye className="h-4 w-4" />
             <AlertDescription>
               You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' '}
-              <a href={`/dashboard/admin/team/${impersonatedUser?.id}`} className="underline font-medium">
+              <a href={dashPath(`/admin/team/${impersonatedUser?.id}`)} className="underline font-medium">
                 View Profile
               </a>{' '}
               page from Team Overview.
@@ -521,7 +523,7 @@ export default function MyProfile() {
           <Card className="mb-6">
             <CardContent className="p-4">
               <Link 
-                to="/dashboard/onboarding"
+                to={dashPath('/onboarding')}
                 className="flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
@@ -601,7 +603,7 @@ export default function MyProfile() {
                         variant="outline" 
                         size="sm" 
                         className="shrink-0"
-                        onClick={() => window.location.href = '/dashboard/onboarding'}
+                        onClick={() => window.location.href = dashPath('/onboarding')
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         Schedule Headshot
@@ -1120,7 +1122,7 @@ export default function MyProfile() {
                 <CardTitle className="text-lg">Professional Details</CardTitle>
                 {(roles.includes('super_admin') || roles.includes('admin')) && (
                   <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
-                    <Link to="/dashboard/admin/website-hub">
+                    <Link to={dashPath('/admin/website-hub')}>
                       Manage Specialties <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>

@@ -11,6 +11,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface TrendBadgeProps {
   value: number;
@@ -45,13 +46,14 @@ function formatDuration(seconds: number): string {
 }
 
 export function WebsiteAnalyticsWidget() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { formatNumber, formatPercent } = useFormatNumber();
   const navigate = useNavigate();
   const { summary, isLoading, refreshAnalytics, isRefreshing } = useWebsiteAnalytics();
 
   const handleViewDetails = () => {
-    navigate('/dashboard/admin/marketing');
+    navigate(dashPath('/admin/marketing'));
   };
 
   if (isLoading) {

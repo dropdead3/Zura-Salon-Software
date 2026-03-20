@@ -140,8 +140,8 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                   const SocialTag = isPreview ? 'span' : 'a';
                   const socialProps = isPreview ? {} : {
                     href: isInstagram 
-                      ? `https://instagram.com/${handle.replace('@', '')}` 
-                      : `https://tiktok.com/@${handle.replace('@', '')}`,
+                      ? `https://instagram.com/${handle.replace('@', '` 
+                      : `https://tiktok.com/@${handle.replace('@', '`,
                     target: "_blank",
                     rel: "noopener noreferrer",
                   };
@@ -232,7 +232,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                 
                 return isInstagram ? (
                   <a 
-                    href={`https://instagram.com/${handle.replace('@', '')}`}
+                    href={`https://instagram.com/${handle.replace('@', '`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200"
@@ -243,7 +243,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                   </a>
                 ) : (
                   <a 
-                    href={`https://tiktok.com/@${handle.replace('@', '')}`}
+                    href={`https://tiktok.com/@${handle.replace('@', '`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200"

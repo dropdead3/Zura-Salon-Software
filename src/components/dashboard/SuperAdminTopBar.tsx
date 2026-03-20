@@ -39,6 +39,7 @@ import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
 import type React from 'react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -124,6 +125,7 @@ export function SuperAdminTopBar({
   isViewingAsUser,
   viewAsUser,
 }: SuperAdminTopBarProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { user, signOut } = useAuth();
   const { data: employeeProfile } = useEmployeeProfile();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
@@ -163,7 +165,7 @@ export function SuperAdminTopBar({
         {/* ── LEFT ZONE: Nav + Search ── */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <NavHistoryArrows />
-          {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && (
+          {isPlatformUser && location.pathname.startsWith('/platform') && (
             <OrganizationSwitcher compact />
           )}
           <div className="min-w-0 w-full max-w-[280px] lg:max-w-md xl:max-w-lg 2xl:max-w-xl">
@@ -212,7 +214,7 @@ export function SuperAdminTopBar({
                   {isStylistAdmin
                     ? "This user is an admin who also performs services. Managed via the 'I also perform services' toggle in Profile Settings."
                     : roleBadges.length > 1
-                      ? `Roles: ${roleBadges.map(b => b.label).join(', ')}`
+                      ? `Roles: ${roleBadges.map(b => b.label).join(', `
                       : badge.label}
                 </TooltipContent>
               </Tooltip>
@@ -265,7 +267,7 @@ export function SuperAdminTopBar({
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
+                <Link to={dashPath('/profile')} className="flex items-center gap-2 cursor-pointer">
                   <UserCircle className="w-4 h-4" />
                   View/Edit Profile
                 </Link>

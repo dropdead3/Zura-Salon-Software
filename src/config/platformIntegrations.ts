@@ -20,7 +20,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'connected', // Dynamic based on stats in component
     category: 'documents',
     features: ['Contract Signing', 'Field Extraction', 'Billing Auto-populate'],
-    configPath: '/dashboard/platform/settings/integrations/pandadoc',
+    configPath: '/platform/settings/integrations/pandadoc',
   },
   {
     id: 'gusto',
@@ -30,7 +30,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'not_configured',
     category: 'payroll',
     features: ['Automated Taxes', 'Direct Deposit', 'W-2s', 'Benefits'],
-    configPath: '/dashboard/admin/payroll',
+    configPath: '/admin/payroll',
   },
   {
     id: 'quickbooks',
@@ -40,7 +40,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'not_configured',
     category: 'payroll',
     features: ['QuickBooks Sync', 'Direct Deposit', 'Tax Filing', 'Reports'],
-    configPath: '/dashboard/admin/payroll',
+    configPath: '/admin/payroll',
   },
   {
     id: 'stripe',
@@ -50,7 +50,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'coming_soon',
     category: 'payments',
     features: ['Payment Processing', 'Subscriptions', 'Invoicing'],
-    configPath: '/dashboard/platform/settings/integrations/stripe',
+    configPath: '/platform/settings/integrations/stripe',
   },
   {
     id: 'twilio',
@@ -60,7 +60,7 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'coming_soon',
     category: 'communication',
     features: ['SMS Alerts', 'Two-Factor Auth', 'Appointment Reminders'],
-    configPath: '/dashboard/platform/settings/integrations/twilio',
+    configPath: '/platform/settings/integrations/twilio',
   },
   {
     id: 'salon-interactive',
@@ -70,6 +70,6 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     status: 'coming_soon',
     category: 'supply_ordering',
     features: ['Supply Ordering', 'Inventory Sync', 'Auto-Reorder', 'Order Tracking'],
-    configPath: '/dashboard/platform/settings/integrations/salon-interactive',
+    configPath: '/platform/settings/integrations/salon-interactive',
   },
 ];

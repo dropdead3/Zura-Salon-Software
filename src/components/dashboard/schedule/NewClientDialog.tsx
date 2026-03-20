@@ -336,7 +336,7 @@ export function NewClientDialog({
                     const loc = locations.find(l => l.id === locationId);
                     if (!loc) return 'Selected location';
                     const parts = [loc.name, loc.address, loc.city].filter(Boolean);
-                    return loc.address ? `${loc.name} — ${[loc.address, loc.city].filter(Boolean).join(', ')}` : loc.name;
+                    return loc.address ? `${loc.name} — ${[loc.address, loc.city].filter(Boolean).join(', ` : loc.name;
                   })()}
                 </span>
               </div>
@@ -360,7 +360,7 @@ export function NewClientDialog({
                 <SelectContent>
                   {locations.map((loc) => {
                     const fullLabel = loc.address
-                      ? `${loc.name} — ${[loc.address, loc.city].filter(Boolean).join(', ')}`
+                      ? `${loc.name} — ${[loc.address, loc.city].filter(Boolean).join(', `
                       : loc.name;
                     return (
                       <SelectItem key={loc.id} value={loc.id}>

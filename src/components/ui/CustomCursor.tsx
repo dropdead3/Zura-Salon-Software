@@ -9,7 +9,7 @@ export function CustomCursor() {
   const location = useLocation();
 
   // Disable custom cursor on dashboard routes
-  const isDashboard = location.pathname.startsWith("/dashboard");
+  const isDashboard = location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/platform") || /^\/org\/[^/]+\/dashboard/.test(location.pathname);
 
   useEffect(() => {
     // Toggle body and html class for cursor + scrollbar styling

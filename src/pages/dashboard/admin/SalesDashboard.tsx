@@ -77,6 +77,7 @@ import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYea
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 import { PhorestStaffRow, PhorestStaffData } from '@/components/dashboard/sales/PhorestStaffRow';
 import { StaffMatchingSuggestions, MatchSuggestion } from '@/components/dashboard/sales/StaffMatchingSuggestions';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth';
 
@@ -89,6 +90,7 @@ const CHART_COLORS = [
 ];
 
 export default function SalesDashboard() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -230,7 +232,7 @@ export default function SalesDashboard() {
   // Handle quick link from Phorest Staff tab
   const handleStaffLink = (staff: PhorestStaffData) => {
     // Navigate to Phorest settings for manual linking
-    window.location.href = '/dashboard/admin/phorest-settings';
+    window.location.href = dashPath('/admin/phorest-settings');
   };
 
   // Handle suggestion link
@@ -825,7 +827,7 @@ export default function SalesDashboard() {
                   <Button 
                     variant="outline" 
                     className="gap-2"
-                    onClick={() => window.location.href = '/dashboard/admin/phorest-settings'}
+                    onClick={() => window.location.href = dashPath('/admin/phorest-settings')}
                   >
                     <Link2 className="w-4 h-4" />
                     Phorest Settings

@@ -20,6 +20,7 @@ import { useOrganizations, type Organization, logPlatformAction } from '@/hooks/
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformBadge } from './ui/PlatformBadge';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface OrganizationSwitcherProps {
   className?: string;
@@ -27,6 +28,7 @@ interface OrganizationSwitcherProps {
 }
 
 export function OrganizationSwitcher({ className, compact = false }: OrganizationSwitcherProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: organizations = [], isLoading } = useOrganizations();
@@ -38,7 +40,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
     
     if (org) {
       // Navigate to org dashboard
-      navigate('/dashboard');
+      navigate(dashPath('/'));
       
       logPlatformAction(org.id, 'org_viewed', 'organization', org.id, {
         organization_name: org.name,
@@ -47,7 +49,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
       });
     } else {
       // Navigate to platform overview
-      navigate('/dashboard/platform/overview');
+      navigate('/platform/overview');
     }
   };
 

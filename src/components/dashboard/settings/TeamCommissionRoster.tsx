@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface TeamCommissionRosterProps {
   orgId: string;
@@ -30,6 +31,7 @@ interface TeamCommissionRosterProps {
 
 
 export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeamDirectory(undefined, { organizationId: orgId });
   const { data: overrides } = useStylistCommissionOverrides(orgId);
@@ -169,7 +171,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
                 variant="ghost"
                 size="sm"
                 className="text-xs"
-                onClick={() => navigate('/dashboard/admin/payroll?tab=commissions')}
+                onClick={() => navigate(dashPath('/admin/payroll?tab=commissions'))}
               >
                 <BarChart3 className="h-3.5 w-3.5 mr-1" />
                 View Analytics

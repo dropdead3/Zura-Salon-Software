@@ -5,8 +5,10 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { usePayrollConnection, PayrollProvider } from '@/hooks/usePayrollConnection';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function PayrollCallback() {
+  const { dashPath } = useOrgDashboardPath();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { handleCallback, isHandlingCallback, connection } = usePayrollConnection();
@@ -43,7 +45,7 @@ export default function PayrollCallback() {
               <p className="text-muted-foreground mb-6">
                 Your payroll provider has been connected. You can now manage payroll for your team.
               </p>
-              <Button onClick={() => navigate('/dashboard/admin/payroll')}>
+              <Button onClick={() => navigate(dashPath('/admin/payroll'))}>
                 Go to Payroll
               </Button>
             </CardContent>
@@ -68,7 +70,7 @@ export default function PayrollCallback() {
               <p className="text-sm text-muted-foreground mb-6">
                 Error: {error}
               </p>
-              <Button onClick={() => navigate('/dashboard/admin/payroll')}>
+              <Button onClick={() => navigate(dashPath('/admin/payroll'))}>
                 Try Again
               </Button>
             </CardContent>

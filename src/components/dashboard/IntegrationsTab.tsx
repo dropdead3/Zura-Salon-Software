@@ -32,6 +32,7 @@ import {
 import { usePhorestConnection } from '@/hooks/usePhorestSync';
 import { CalendarSubscribeModal } from '@/components/dashboard/CalendarSubscribeModal';
 import { useCalendarFeedToken } from '@/hooks/useCalendarFeedToken';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface Integration {
   id: string;
@@ -45,6 +46,7 @@ interface Integration {
 }
 
 export function IntegrationsTab() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: phorestConnection } = usePhorestConnection();
   const { token: calFeedToken, loading: calFeedLoading } = useCalendarFeedToken();
@@ -64,7 +66,7 @@ export function IntegrationsTab() {
       description: 'Salon management software integration for appointments, staff, and sales data.',
       icon: Link2,
       status: getPhorestStatus(),
-      configPath: '/dashboard/admin/phorest',
+      configPath: dashPath('/admin/phorest'),
       features: ['Staff Sync', 'Appointments', 'Sales Data', 'Performance Reports'],
       available: true,
     },

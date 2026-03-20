@@ -25,8 +25,10 @@ import {
 } from '@/hooks/useLocations';
 import { LocationPreviewModal } from '@/components/dashboard/LocationPreviewModal';
 import { EditorCard } from './EditorCard';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function LocationsContent() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: locations = [], isLoading } = useLocations();
   const updateLocation = useUpdateLocation();
   const navigate = useNavigate();
@@ -87,7 +89,7 @@ export function LocationsContent() {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate('/dashboard/admin/settings')}
+            onClick={() => navigate(dashPath('/admin/settings'))}
             className="h-7 w-7 text-muted-foreground"
             title="Settings"
           >
@@ -130,7 +132,7 @@ export function LocationsContent() {
               variant="outline" 
               size="sm"
               className="mt-3"
-              onClick={() => navigate('/dashboard/admin/settings')}
+              onClick={() => navigate(dashPath('/admin/settings'))}
             >
               Go to Settings
             </Button>
@@ -218,7 +220,7 @@ export function LocationsContent() {
         <p className="text-xs text-muted-foreground text-center">
           Drag locations to reorder how they appear on the website. 
           Edit location details in <button 
-            onClick={() => navigate('/dashboard/admin/settings')}
+            onClick={() => navigate(dashPath('/admin/settings'))}
             className="underline hover:text-foreground transition-colors"
           >
             Settings → Locations

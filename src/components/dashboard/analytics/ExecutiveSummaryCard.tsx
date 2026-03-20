@@ -42,6 +42,7 @@ import { subDays, differenceInDays, parseISO, format, startOfMonth, startOfYear 
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type SummaryRange = 'today' | '7d' | '30d' | 'mtd' | 'ytd';
 
@@ -125,6 +126,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
 }
 
 export function ExecutiveSummaryCard() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatCurrencyWhole } = useFormatCurrency();
   const { data: hasRenters = false } = useHasRenters();
 
@@ -314,14 +316,14 @@ export function ExecutiveSummaryCard() {
   const collectionRate = rentData?.collectionRate ?? 0;
 
   // Pay period label
-  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d')}`;
+  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d`;
 
   const allKpis: KpiData[] = [
     {
       icon: DollarSign,
       label: 'Sales Revenue',
       value: <BlurredAmount>{formatCurrencyWhole(revenue)}</BlurredAmount>,
-      drillDown: '/dashboard/admin/analytics?tab=sales',
+      drillDown: dashPath('/admin/analytics?tab=sales'),
       drillLabel: 'View Sales',
       change: revenueChange,
       tooltip: 'Total service and product revenue from completed appointments in the selected date range.',
@@ -330,7 +332,7 @@ export function ExecutiveSummaryCard() {
       icon: Building2,
       label: 'Rent Revenue',
       value: <BlurredAmount>{formatCurrencyWhole(expectedRent)}</BlurredAmount>,
-      drillDown: '/dashboard/admin/booth-renters',
+      drillDown: dashPath('/admin/booth-renters'),
       drillLabel: 'View Renters',
       change: null,
       tooltip: 'Expected rent from active booth rental contracts, pro-rated to the selected date range. Collection rate shows how much has actually been paid.',
@@ -344,7 +346,7 @@ export function ExecutiveSummaryCard() {
       icon: Wallet,
       label: 'Commission Liability',
       value: <BlurredAmount>{formatCurrencyWhole(Math.round(commissionLiability))}</BlurredAmount>,
-      drillDown: '/dashboard/admin/payroll?tab=commissions',
+      drillDown: dashPath('/admin/payroll?tab=commissions'),
       drillLabel: 'View Payroll',
       change: null,
       tooltip: 'Estimated commission owed to all stylists for the current pay period, calculated from each stylist\'s revenue and their commission tier.',
@@ -354,7 +356,7 @@ export function ExecutiveSummaryCard() {
       icon: Users,
       label: 'Total Staff',
       value: staffCount.toLocaleString(),
-      drillDown: '/dashboard/admin/team',
+      drillDown: dashPath('/admin/team'),
       drillLabel: 'View Team',
       change: null,
       tooltip: 'Count of active team members. Filtered by location when a specific location is selected.',
@@ -363,7 +365,7 @@ export function ExecutiveSummaryCard() {
       icon: UserCheck,
       label: 'Total Clients',
       value: totalClients.toLocaleString(),
-      drillDown: '/dashboard/admin/analytics?tab=operations&subtab=clients',
+      drillDown: dashPath('/admin/analytics?tab=operations&subtab=clients'),
       drillLabel: 'View Clients',
       change: null,
       tooltip: 'Count of active client records. Includes all clients with at least one visit on file.',
@@ -373,7 +375,7 @@ export function ExecutiveSummaryCard() {
       label: 'Utilization',
       value: `${utilization.toFixed(0)}%`,
       valueColor: utilization >= 60 ? 'text-chart-2' : utilization >= 30 ? 'text-amber-500' : 'text-destructive',
-      drillDown: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization',
+      drillDown: dashPath('/admin/analytics?tab=operations&subtab=staff-utilization'),
       drillLabel: 'View Capacity',
       change: null,
       tooltip: 'Percentage of available appointment capacity that is booked, based on the last 30 days of scheduling data.',
@@ -383,7 +385,7 @@ export function ExecutiveSummaryCard() {
       label: 'Booking Pipeline',
       value: pipeline.label,
       valueColor: pipeline.status === 'healthy' ? 'text-chart-2' : pipeline.status === 'slowing' ? 'text-amber-500' : 'text-destructive',
-      drillDown: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline',
+      drillDown: dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline'),
       drillLabel: 'View Pipeline',
       change: null,
       subtitle: `${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
@@ -483,7 +485,7 @@ export function ExecutiveSummaryCard() {
               </div>
               {locations.length > 5 && (
                 <Link
-                  to="/dashboard/admin/analytics?tab=sales"
+                  to={dashPath('/admin/analytics?tab=sales')}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
                 >
                   View all

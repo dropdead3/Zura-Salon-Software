@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { normalizeGuidanceRoute, isValidGuidanceRoute } from '@/utils/guidanceRoutes';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const LINK_CLASS = 'text-primary underline decoration-primary/40 hover:decoration-primary underline-offset-2 font-medium';
 
@@ -45,6 +46,7 @@ export interface InsightDescriptionWithLinksProps {
  * as clickable hyperlinks (label only visible) and blurs dollar amounts in plain text.
  */
 export function InsightDescriptionWithLinks({ description, className }: InsightDescriptionWithLinksProps) {
+  const { dashPath } = useOrgDashboardPath();
   const segments: { type: 'text' | 'link'; key: string; content: React.ReactNode }[] = [];
   let lastIndex = 0;
   let matchCount = 0;
@@ -60,7 +62,7 @@ export function InsightDescriptionWithLinks({ description, className }: InsightD
       segments.push({ type: 'text', key: `text-${segments.length}`, content: renderBlurredText(blurred) });
     }
     if (label && href) {
-      const isInternal = href.startsWith('/dashboard');
+      const isInternal = href.startsWith(dashPath('/'));
       if (isInternal) {
         const normalized = normalizeGuidanceRoute(href);
         if (isValidGuidanceRoute(normalized)) {

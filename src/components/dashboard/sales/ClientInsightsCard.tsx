@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { useLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ClientInsightsCardProps {
   userId: string;
@@ -27,6 +28,7 @@ export function ClientInsightsCard({
   onLocationChange,
   showLocationFilter = true 
 }: ClientInsightsCardProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: locations } = useLocations();
   const { formatDate } = useFormatDate();
   const { formatCurrency } = useFormatCurrency();
@@ -130,7 +132,7 @@ export function ClientInsightsCard({
             <CardTitle className="font-display text-lg">Client Insights</CardTitle>
             <MetricInfoTooltip description="Highlights key client metrics including new vs returning breakdown, average ticket size, and visit frequency. Data is sourced from completed appointments." />
           </div>
-          <Link to="/dashboard/my-clients">
+          <Link to={dashPath('/my-clients')}>
             <Button variant="ghost" size={tokens.button.inline} className="text-xs">
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Button>

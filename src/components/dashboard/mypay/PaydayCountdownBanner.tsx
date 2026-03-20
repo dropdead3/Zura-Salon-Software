@@ -6,6 +6,7 @@ import { useMyPayData } from '@/hooks/useMyPayData';
 import { parseISO } from 'date-fns';
 import { Banknote } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -17,6 +18,7 @@ function formatCurrency(amount: number): string {
 }
 
 export function PaydayCountdownBanner() {
+  const { dashPath } = useOrgDashboardPath();
   const { settings, currentPeriod, estimatedCompensation, isLoading } = useMyPayData();
 
   // Self-gating: only render if user has payroll settings
@@ -33,7 +35,7 @@ export function PaydayCountdownBanner() {
       elementName="Payday Countdown"
       elementCategory="My Pay"
     >
-      <Link to="/dashboard/my-pay" className="block group">
+      <Link to={dashPath('/my-pay')} className="block group">
         <Card className={`border-border/40 transition-all duration-200 ${isNear ? 'ring-1 ring-primary/20' : ''}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">

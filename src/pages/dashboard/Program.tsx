@@ -55,8 +55,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useQuery } from '@tanstack/react-query';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function Program() {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const actualUserId = useActualUserId();
   
@@ -477,7 +479,7 @@ export default function Program() {
                   className="mt-4"
                   asChild
                 >
-                  <Link to="/dashboard/weekly-wins">
+                  <Link to={dashPath('/weekly-wins')}>
                     Submit Weekly Wins
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Link>
@@ -505,7 +507,7 @@ export default function Program() {
                   className="mt-4"
                   asChild
                 >
-                  <Link to="/dashboard/weekly-wins">
+                  <Link to={dashPath('/weekly-wins')}>
                     Submit Report
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Link>
@@ -527,7 +529,7 @@ export default function Program() {
               </p>
             </div>
             <Button variant="outline" size={tokens.button.card} asChild className="group flex-shrink-0 bg-white/50 hover:bg-white/70 border-[hsl(35,30%,70%)] hover-scale">
-              <Link to="/dashboard/ring-the-bell">
+              <Link to={dashPath('/ring-the-bell')}>
                 <Bell className="w-4 h-4 mr-2 origin-top group-hover:animate-swing" />
                 Ring It
               </Link>
@@ -617,7 +619,7 @@ export default function Program() {
                   className="w-full justify-start" 
                   asChild
                 >
-                  <Link to="/dashboard/stats">
+                  <Link to={dashPath('/stats')}>
                     <ChevronRight className="w-4 h-4 mr-2" />
                     Log Today's Metrics
                   </Link>
@@ -627,7 +629,7 @@ export default function Program() {
                   className="w-full justify-start"
                   asChild
                 >
-                  <Link to="/dashboard/training">
+                  <Link to={dashPath('/training')}>
                     <ChevronRight className="w-4 h-4 mr-2" />
                     See Content Ideas
                   </Link>

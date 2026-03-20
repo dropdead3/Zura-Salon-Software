@@ -31,6 +31,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface TodaysQueueSectionProps {
   locationId?: string;
@@ -43,6 +44,7 @@ export function TodaysQueueSection({
   onLocationChange,
   showLocationFilter = true,
 }: TodaysQueueSectionProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [internalLocationId, setInternalLocationId] = useState<string>('all');
   const [checkoutAppointment, setCheckoutAppointment] = useState<QueueAppointment | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -286,7 +288,7 @@ export function TodaysQueueSection({
             {/* View Full Schedule Link */}
             <div className="flex justify-center pt-2">
               <Button variant="ghost" asChild className="text-muted-foreground">
-                <Link to="/dashboard/schedule">
+                <Link to={dashPath('/schedule')}>
                   View Full Schedule
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>

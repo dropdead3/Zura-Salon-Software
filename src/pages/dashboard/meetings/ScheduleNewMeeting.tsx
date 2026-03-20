@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -32,6 +33,7 @@ const timeSlots = [
 ];
 
 export default function ScheduleNewMeeting() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -96,7 +98,7 @@ export default function ScheduleNewMeeting() {
           if (error) {
             console.error('Error creating meeting:', error);
           } else {
-            navigate('/dashboard/schedule-meeting');
+            navigate(dashPath('/schedule-meeting'));
           }
         });
 
@@ -135,7 +137,7 @@ export default function ScheduleNewMeeting() {
       <PlatformPageContainer maxWidth="narrow">
         <div className="space-y-6">
           <div>
-            <Link to="/dashboard/schedule-meeting">
+            <Link to={dashPath('/schedule-meeting')}>
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
@@ -149,7 +151,7 @@ export default function ScheduleNewMeeting() {
 
           <Card className="relative">
             <button
-              onClick={() => navigate('/dashboard/schedule-meeting')}
+              onClick={() => navigate(dashPath('/schedule-meeting'))}
               className="absolute top-4 right-4 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Close"
             >

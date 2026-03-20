@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
 
 import type { Database } from '@/integrations/supabase/types';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -44,6 +45,7 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
 }
 
 export default function StaffLogin() {
+  const { dashPath } = useOrgDashboardPath();
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -77,7 +79,7 @@ export default function StaffLogin() {
   }, [invitation, isLogin]);
 
   // Default landing page (can be overridden by location.state)
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || dashPath('/');
 
   const showPasswordMatchToast = useCallback((matches: boolean) => {
     // Only show toast if state changed
@@ -176,7 +178,7 @@ export default function StaffLogin() {
               ? `Your account has been created with the ${roleOptions.find(r => r.value === invitation.role)?.label} role.`
               : `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
           });
-          navigate('/dashboard', { replace: true });
+          navigate(dashPath('/'), { replace: true });
         }
       }
     } finally {

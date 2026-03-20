@@ -102,13 +102,13 @@ function formatDateRange(from: string, to: string): string {
   const t = parseISO(to);
   const sameMonth = f.getMonth() === t.getMonth() && f.getFullYear() === t.getFullYear();
   if (sameMonth) {
-    return `${format(f, 'MMM d')} \u2013 ${format(t, 'd, yyyy')}`;
+    return `${format(f, 'MMM d')} \u2013 ${format(t, 'd, yyyy`;
   }
   const sameYear = f.getFullYear() === t.getFullYear();
   if (sameYear) {
-    return `${format(f, 'MMM d')} \u2013 ${format(t, 'MMM d, yyyy')}`;
+    return `${format(f, 'MMM d')} \u2013 ${format(t, 'MMM d, yyyy`;
   }
-  return `${format(f, 'MMM d, yyyy')} \u2013 ${format(t, 'MMM d, yyyy')}`;
+  return `${format(f, 'MMM d, yyyy')} \u2013 ${format(t, 'MMM d, yyyy`;
 }
 
 export function ExecutiveTrendChart() {

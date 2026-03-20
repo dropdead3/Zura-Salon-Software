@@ -47,6 +47,7 @@ import {
   useSaveStylistLevels,
   StylistLevel 
 } from '@/hooks/useStylistLevels';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type LocalStylistLevel = {
   id: string;
@@ -59,6 +60,7 @@ type LocalStylistLevel = {
 
 
 export default function StylistLevels() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
   
@@ -292,7 +294,7 @@ export default function StylistLevels() {
             </a>
             . To adjust or edit level pricing, you can do so in the{' '}
             <a 
-              href="/dashboard/admin/services" 
+              href="${dashPath('/admin/services" 
               className="text-primary hover:underline"
             >
               Services editor

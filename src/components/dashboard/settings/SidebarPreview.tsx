@@ -1,36 +1,37 @@
 import { cn } from '@/lib/utils';
 import { SECTION_LABELS, isBuiltInSection, type CustomSectionConfig } from '@/hooks/useSidebarLayout';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 // Map hrefs to their labels for the preview
 const LINK_CONFIG: Record<string, { label: string }> = {
   // Main
-  '/dashboard': { label: 'Command Center' },
-  '/dashboard/schedule': { label: 'Schedule' },
-  '/dashboard/team-chat': { label: 'Team Chat' },
+  '/': { label: 'Command Center' },
+  '/schedule': { label: 'Schedule' },
+  '/team-chat': { label: 'Team Chat' },
   // My Tools
-  '/dashboard/today-prep': { label: "Today's Prep" },
-  '/dashboard/waitlist': { label: 'Waitlist' },
-  '/dashboard/stats': { label: 'My Stats' },
-  '/dashboard/my-pay': { label: 'My Pay' },
-  '/dashboard/training': { label: 'Training' },
-  '/dashboard/program': { label: 'New-Client Engine Program' },
-  '/dashboard/leaderboard': { label: 'Team Leaderboard' },
-  '/dashboard/shift-swaps': { label: 'Shift Swaps' },
-  '/dashboard/rewards': { label: 'Rewards' },
-  '/dashboard/ring-the-bell': { label: 'Ring the Bell' },
-  '/dashboard/my-graduation': { label: 'My Graduation' },
+  '/today-prep': { label: "Today's Prep" },
+  '/waitlist': { label: 'Waitlist' },
+  '/stats': { label: 'My Stats' },
+  '/my-pay': { label: 'My Pay' },
+  '/training': { label: 'Training' },
+  '/program': { label: 'New-Client Engine Program' },
+  '/leaderboard': { label: 'Team Leaderboard' },
+  '/shift-swaps': { label: 'Shift Swaps' },
+  '/rewards': { label: 'Rewards' },
+  '/ring-the-bell': { label: 'Ring the Bell' },
+  '/my-graduation': { label: 'My Graduation' },
   // Manage (hub links)
-  '/dashboard/admin/analytics': { label: 'Analytics Hub' },
-  '/dashboard/admin/team-hub': { label: 'Operations Hub' },
-  '/dashboard/admin/client-hub': { label: 'Client Hub' },
-  '/dashboard/admin/growth-hub': { label: 'Growth Hub' },
-  '/dashboard/admin/payroll': { label: 'Hiring & Payroll Hub' },
-  '/dashboard/admin/booth-renters': { label: 'Renter Hub' },
+  '/admin/analytics': { label: 'Analytics Hub' },
+  '/admin/team-hub': { label: 'Operations Hub' },
+  '/admin/client-hub': { label: 'Client Hub' },
+  '/admin/growth-hub': { label: 'Growth Hub' },
+  '/admin/payroll': { label: 'Hiring & Payroll Hub' },
+  '/admin/booth-renters': { label: 'Renter Hub' },
   // System
-  '/dashboard/admin/access-hub': { label: 'Roles & Controls Hub' },
-  '/dashboard/admin/settings': { label: 'Settings' },
+  '/admin/access-hub': { label: 'Roles & Controls Hub' },
+  '/admin/settings': { label: 'Settings' },
   // Legacy / other
-  '/dashboard/onboarding': { label: 'Onboarding' },
+  '/onboarding': { label: 'Onboarding' },
 };
 
 interface SidebarPreviewProps {
@@ -48,6 +49,7 @@ export function SidebarPreview({
   hiddenLinks,
   customSections,
 }: SidebarPreviewProps) {
+  const { dashPath } = useOrgDashboardPath();
   // Filter out hidden sections
   const visibleSections = sectionOrder.filter(s => !hiddenSections.includes(s));
 

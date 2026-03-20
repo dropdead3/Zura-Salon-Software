@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface HighFive {
   id: string;
@@ -16,6 +17,7 @@ interface HighFivesByEntry {
 }
 
 export function useBellHighFives(entryIds: string[]) {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const [highFives, setHighFives] = useState<HighFivesByEntry>({});
   const [loading, setLoading] = useState(true);
@@ -152,7 +154,7 @@ export function useBellHighFives(entryIds: string[]) {
             type: 'high_five',
             title: '🙌 High Five!',
             message: `${highFiverName} gave you a high five on your bell ring!`,
-            link: '/dashboard/ring-the-bell',
+            link: dashPath('/ring-the-bell'),
             metadata: { entry_id: entryId, from_user_id: user.id },
           });
         }
