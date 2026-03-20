@@ -1,40 +1,36 @@
 
 
-## Add "Launch Demo" from Platform Account Detail
+## Update "Launch Dock Preview" to Open Org-Less Demo with Real-Style Faux Data
 
-### What This Does
-Adds a "Launch Demo" button to the **Apps in Use** card on the Platform Admin account detail page. Clicking it opens the Dock (`/dock`) in a new tab, pre-scoped to that organization, using their **real services and clients** but in read-only demo mode (no writes to scheduler/analytics).
+### What Changes
 
-### How It Works
+**1. Update `DockAppTab.tsx` button to open `/dock?demo=preview`**
+- Change the "Launch Dock Preview" button from `/dock` to `/dock?demo=preview`
+- This uses the special sentinel value `preview` (not a UUID) to signal "generic demo, no org"
 
-**1. URL-based org scoping for demo mode**
-- The Dock route (`/dock`) will accept a query parameter: `?demo=<organizationId>`
-- When this param is present, `DockPinGate` skips the PIN screen entirely and boots directly into demo mode with that org's ID
-- This is gated behind `useDockDemoAccess()` (only works in preview/dev/Lovable contexts, not production)
+**2. Update `Dock.tsx` to handle `?demo=preview` as a pure-faux-data demo**
+- When `demoOrgId === 'preview'`, create a session with `organizationId: 'demo-org-000'` (the sentinel that triggers `usesRealData = false` in the context)
+- This ensures the Dock boots into full mock-data mode with no DB queries
 
-**2. Demo mode uses real org data (read-only)**
-- Currently demo mode uses hardcoded `DEMO_SERVICES` and `DEMO_CLIENTS`. We'll change this: when `isDemoMode && organizationId` is set, the booking sheet and schedule will **fetch real services and clients from the DB** for that org, but all **mutations** (create appointment, etc.) remain no-ops / mock responses
-- This gives sales demos a realistic view of the actual salon's catalog
-
-**3. "Launch Demo" button on AccountAppsCard**
-- Next to the Zura Backroom badge, add a `Play` icon button: "Launch Demo"
-- Opens `/dock?demo={organizationId}` in a new tab
-- Only visible to platform admins (already scoped by the page's access control)
+**3. Replace `DEMO_SERVICES` with Drop Dead Salons' real service catalog**
+- Replace the current 10 generic services in `dockDemoData.ts` with the actual Drop Dead Salons menu (~70 services across Blonding, Color, Vivids, Haircuts, Styling, Extensions, Extras, Consultation categories)
+- This gives the preview a realistic, rich service catalog that looks like a real salon
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/platform/account/AccountAppsCard.tsx` | Add "Launch Demo" button that opens `/dock?demo={orgId}` in new tab |
-| `src/pages/Dock.tsx` | Read `?demo=orgId` param; if present + `useDockDemoAccess()`, auto-boot into demo session for that org |
-| `src/components/dock/DockPinGate.tsx` | No changes needed — Dock.tsx bypasses PinGate entirely when demo param is present |
-| `src/components/dock/schedule/DockNewBookingSheet.tsx` | In demo mode with a real orgId, fetch real services/clients from DB instead of hardcoded mocks; keep mutations as no-ops |
-| `src/contexts/DockDemoContext.tsx` | Add a `usesRealData` flag so components know to query the DB but block writes |
+| `src/components/platform/backroom/DockAppTab.tsx` | Change button URL to `/dock?demo=preview` |
+| `src/pages/Dock.tsx` | Handle `demo=preview` sentinel → `organizationId: 'demo-org-000'` |
+| `src/hooks/dock/dockDemoData.ts` | Replace `DEMO_SERVICES` with full Drop Dead Salons catalog (~70 services across 8 categories) |
 
-### Demo Data Strategy
-- **Services**: Query `phorest_services` filtered by the org's locations (real catalog)
-- **Clients**: Query `phorest_clients` filtered by org's branch IDs (real client names)
-- **Appointments**: Keep using mock `DEMO_APPOINTMENTS` (we don't want to show real schedule)
-- **Mix sessions / products**: Keep mock data (safe, no PII)
-- **All mutations**: Return mock success, never hit DB
+### Data Preview (sample from each category)
+
+- **Blonding**: Full Balayage ($240, 270min), Full Highlight ($240, 240min), Lightener Retouch ($155, 120min), etc.
+- **Color**: Single Process Color ($145, 90min), Root Smudge + Blowout ($120, 90min), Glaze + Blowout ($130, 60min), etc.
+- **Vivids**: Full Vivid ($130, 120min), Custom Vivid ($170, 120min), Vivid Toner ($25, 30min), etc.
+- **Haircuts**: Signature Haircut ($75, 60min), Clipper Cut ($40, 45min), Buzz Cut ($35, 30min), etc.
+- **Styling**: Blowout ($50, 45min), Special Event Styling ($85, 90min), etc.
+- **Extensions**: 1-3 Row installs/reinstalls, tape-in, removal, etc.
+- **Extras**: Deep Conditioning ($25, 15min), CPR Treatment ($50, 90min), Clear Gloss ($50, 30min), etc.
 
