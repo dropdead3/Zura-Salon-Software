@@ -234,6 +234,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
     setSelectedTime('09:00');
     setNotes('');
+    setShowNewClientSheet(false);
     onClose();
   };
 
