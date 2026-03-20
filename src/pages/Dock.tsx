@@ -102,6 +102,8 @@ export default function Dock() {
         onOpenAppointment={handleOpenAppointment}
         onBack={handleBack}
         onLocationChange={handleLocationChange}
+        staffFilter={staffFilter}
+        onStaffFilterChange={setStaffFilter}
       />
     </DockDemoProvider>
   );

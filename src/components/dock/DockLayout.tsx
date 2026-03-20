@@ -93,7 +93,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   return (
     <div className="platform-theme platform-dark fixed inset-0 flex flex-col">
       <DockDemoBadge />
-      <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} locationId={staff.locationId} onLocationChange={onLocationChange} organizationId={staff.organizationId} />
+      <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} locationId={staff.locationId} onLocationChange={onLocationChange} organizationId={staff.organizationId} staffFilter={staffFilter} onStaffFilterChange={onStaffFilterChange} />
       {dockContent}
     </div>
   );

@@ -52,6 +52,11 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           .order('start_time', { ascending: true })
           .limit(50);
 
+        // Apply staff filter if set
+        if (staffFilter && staffFilter !== 'all') {
+          query = query.eq('stylist_user_id', staffFilter);
+        }
+
         const { data: phorestData, error: phorestErr } = await query;
         if (phorestErr) throw phorestErr;
 
@@ -68,11 +73,40 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           }
         }
 
+        // Resolve assistant names from appointment_assistants
+        const apptIds = (phorestData || []).map(a => a.id);
+        let assistantMap: Record<string, string[]> = {};
+        if (apptIds.length > 0) {
+          const { data: assistantData } = await supabase
+            .from('appointment_assistants')
+            .select('appointment_id, assistant_user_id')
+            .in('appointment_id', apptIds);
+          if (assistantData && assistantData.length > 0) {
+            const assistantUserIds = [...new Set(assistantData.map(a => a.assistant_user_id))];
+            const { data: assistantProfiles } = await supabase
+              .from('employee_profiles')
+              .select('user_id, display_name, full_name')
+              .in('user_id', assistantUserIds);
+            const nameMap: Record<string, string> = {};
+            for (const p of (assistantProfiles || [])) {
+              nameMap[p.user_id] = p.display_name || p.full_name || '';
+            }
+            for (const a of assistantData) {
+              const name = nameMap[a.assistant_user_id];
+              if (name) {
+                if (!assistantMap[a.appointment_id]) assistantMap[a.appointment_id] = [];
+                assistantMap[a.appointment_id].push(name);
+              }
+            }
+          }
+        }
+
         const appointments: DockAppointment[] = (phorestData || []).map((a) => ({
           id: a.id,
           source: 'phorest' as const,
           client_name: a.client_name,
           stylist_name: a.stylist_user_id ? (stylistMap[a.stylist_user_id] || null) : null,
+          assistant_names: assistantMap[a.id] || [],
           service_name: a.service_name,
           appointment_date: a.appointment_date,
           start_time: a.start_time,
@@ -83,6 +117,48 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           notes: a.notes,
           has_mix_session: false,
         }));
+
+        // Also include appointments where the filtered staff is an assistant
+        if (staffFilter && staffFilter !== 'all') {
+          const { data: assistedAppts } = await supabase
+            .from('appointment_assistants')
+            .select('appointment_id')
+            .eq('assistant_user_id', staffFilter);
+          if (assistedAppts && assistedAppts.length > 0) {
+            const assistedIds = assistedAppts.map(a => a.appointment_id);
+            const existingIds = new Set(appointments.map(a => a.id));
+            const missingIds = assistedIds.filter(id => !existingIds.has(id));
+            if (missingIds.length > 0) {
+              const { data: extraAppts } = await supabase
+                .from('phorest_appointments')
+                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes, stylist_user_id')
+                .in('id', missingIds)
+                .eq('location_id', locationId)
+                .eq('appointment_date', today)
+                .is('deleted_at', null)
+                .order('start_time', { ascending: true });
+              for (const a of (extraAppts || [])) {
+                appointments.push({
+                  id: a.id,
+                  source: 'phorest' as const,
+                  client_name: a.client_name,
+                  stylist_name: a.stylist_user_id ? (stylistMap[a.stylist_user_id] || null) : null,
+                  assistant_names: assistantMap[a.id] || [],
+                  service_name: a.service_name,
+                  appointment_date: a.appointment_date,
+                  start_time: a.start_time,
+                  end_time: a.end_time,
+                  status: a.status,
+                  location_id: a.location_id,
+                  phorest_client_id: a.phorest_client_id,
+                  notes: a.notes,
+                  has_mix_session: false,
+                });
+              }
+              appointments.sort((a, b) => a.start_time.localeCompare(b.start_time));
+            }
+          }
+        }
 
         // If no appointments today, fall back to faux data so demo isn't empty
         return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;

@@ -46,8 +46,8 @@ function formatTime(time: string) {
   return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-export function DockScheduleTab({ staff, onOpenAppointment, locationId }: DockScheduleTabProps) {
-  const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId);
+export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFilter }: DockScheduleTabProps) {
+  const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
 
