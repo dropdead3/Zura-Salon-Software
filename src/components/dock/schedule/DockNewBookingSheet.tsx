@@ -1225,7 +1225,8 @@ function ConfirmStepDock({
             {(() => {
               const slots = timeSlots.includes(time) ? timeSlots : [...timeSlots, time].sort();
               const isToday = date === format(new Date(), 'yyyy-MM-dd');
-              const nowRoundedStr = minutesToTime(Math.ceil(nowMinutes / 15) * 15);
+              const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+              const nowRoundedStr = minutesToTime(Math.ceil(nowMins / 15) * 15);
               return slots.map(t => {
                 const isNowSlot = isToday && t === nowRoundedStr;
                 return (
