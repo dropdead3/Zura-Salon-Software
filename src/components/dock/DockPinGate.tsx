@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useDockDemoAccess } from '@/hooks/dock/useDockDemoAccess';
 import { Delete } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
