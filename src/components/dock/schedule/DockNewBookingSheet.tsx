@@ -25,6 +25,7 @@ import type { DockStaffSession } from '@/pages/Dock';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockNewClientSheet } from './DockNewClientSheet';
 import { DEMO_SERVICES, DEMO_SERVICES_BY_CATEGORY, searchDemoClients, type DemoService } from '@/hooks/dock/dockDemoData';
+import { formatFirstLastInitial } from '@/lib/dock-utils';
 
 interface DockNewBookingSheetProps {
   open: boolean;
