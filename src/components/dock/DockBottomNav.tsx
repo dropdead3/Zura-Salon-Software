@@ -26,7 +26,7 @@ const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8
 export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
   return (
     <div className="flex-shrink-0 px-4 pb-3 pt-1">
-      <nav className="relative flex items-center justify-around rounded-2xl border border-white/[0.06] bg-[hsl(var(--platform-bg-elevated)/0.75)] backdrop-blur-xl px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+      <nav className="relative flex items-center justify-around rounded-full border border-white/[0.06] bg-[hsl(var(--platform-bg-elevated)/0.75)] backdrop-blur-xl px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         {TABS.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           return (
