@@ -139,6 +139,7 @@ export function usePhorestCalendar() {
           )
         `)
         .is('deleted_at', null)
+        .eq('is_demo', false)
         .gte('appointment_date', dateRange.start)
         .lte('appointment_date', dateRange.end)
         .order('appointment_date')
