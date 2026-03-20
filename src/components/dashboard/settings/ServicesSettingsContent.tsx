@@ -814,7 +814,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{svc.name}</p>
                           <div className={cn('flex items-center gap-3', tokens.body.muted)}>
                             {svc.category && <span className="text-[10px] italic">was: {svc.category}</span>}
-                            {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>}
+                            {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>}
                             {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}</span>}
                           </div>
                         </div>

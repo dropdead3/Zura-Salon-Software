@@ -66,7 +66,7 @@ export function ServiceAddonToast({
                     {addon.duration_minutes && (
                       <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
-                        {addon.duration_minutes}m
+                        {formatMinutesToDuration(addon.duration_minutes)}
                       </span>
                     )}
                     <span className={cn('text-[11px] text-muted-foreground')}>

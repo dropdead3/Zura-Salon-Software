@@ -117,7 +117,7 @@ export function ServiceStep({
                           <div className="flex items-center gap-3 mt-1">
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Clock className="h-3 w-3" />
-                              {service.duration_minutes}m
+                              {formatMinutesToDuration(service.duration_minutes)}
                             </span>
                             {service.price !== null && (
                               <span className="flex items-center gap-0.5 text-xs text-muted-foreground">

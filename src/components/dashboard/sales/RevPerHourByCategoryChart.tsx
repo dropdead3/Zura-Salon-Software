@@ -252,7 +252,7 @@ export function RevPerHourByCategoryChart({ dateFrom, dateTo, locationId, filter
                                   {cat.topServices.map(s => (
                                     <div key={s.name} className="flex items-center gap-2 text-sm">
                                       <span className="flex-1 truncate max-w-[200px]">{s.name}</span>
-                                      <span className="text-xs text-muted-foreground tabular-nums w-12 text-right">{s.avgDuration}m</span>
+                                      <span className="text-xs text-muted-foreground tabular-nums w-16 text-right">{formatMinutesToDuration(s.avgDuration)}</span>
                                       <span className="text-xs tabular-nums w-16 text-right"><BlurredAmount>{formatCurrency(s.avgRevenue)}</BlurredAmount></span>
                                       <span className="text-xs font-medium tabular-nums w-20 text-right text-primary"><BlurredAmount>{formatCurrency(s.revPerHour)}</BlurredAmount>/hr</span>
                                       <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">{s.bookings}×</span>

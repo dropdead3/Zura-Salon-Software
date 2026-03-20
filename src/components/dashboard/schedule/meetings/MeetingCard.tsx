@@ -119,7 +119,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
       <div className="text-center shrink-0 w-16">
         <div className="text-sm font-medium font-sans">{formatTime12h(meeting.start_time).replace(' ', '')}</div>
         <div className="text-xs text-muted-foreground font-sans">
-          {meeting.duration_minutes}m
+          {formatMinutesToDuration(meeting.duration_minutes)}
         </div>
       </div>
       <div className="w-1 self-stretch rounded-full bg-chart-1/40" />

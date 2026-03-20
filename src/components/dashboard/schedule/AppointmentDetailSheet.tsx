@@ -2048,7 +2048,7 @@ export function AppointmentDetailSheet({
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">{svc.name}</span>
                             {svc.category && <Badge variant="outline" className="text-[10px]">{svc.category}</Badge>}
-                            {svc.duration && <span className="text-xs text-muted-foreground">{svc.duration}min</span>}
+                            {svc.duration && <span className="text-xs text-muted-foreground">{formatMinutesToDuration(svc.duration)}</span>}
                           </div>
                           {isDefault && <Badge variant="secondary" className="text-[10px]">Default</Badge>}
                         </div>

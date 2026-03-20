@@ -1052,7 +1052,7 @@ function ConfirmStepDock({
                   <span className="text-sm text-[hsl(var(--platform-foreground))]">{s.name}</span>
                 </div>
                 <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                  {s.duration_minutes}m · ${s.price || 0}
+                  {formatMinutesToDuration(s.duration_minutes)} · ${s.price || 0}
                 </span>
               </div>
             ))}
