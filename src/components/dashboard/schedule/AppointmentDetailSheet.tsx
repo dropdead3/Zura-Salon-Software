@@ -1122,7 +1122,7 @@ export function AppointmentDetailSheet({
                         </div>
                         <div className="flex items-center gap-3">
                           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)} ({durationMinutes}min)</span>
+                          <span>{formatTime12h(appointment.start_time)} – {formatTime12h(appointment.end_time)} ({formatMinutesToDuration(durationMinutes)})</span>
                         </div>
                         {locationName && (
                           <div className="flex items-center gap-3">
