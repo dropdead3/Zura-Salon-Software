@@ -62,6 +62,9 @@ function getInitials(name: string) {
 export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
 
+  // Drag controls for pull-to-dismiss
+  const dragControls = useDragControls();
+
   // Wizard state
   const [step, setStep] = useState<Step>('client');
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
