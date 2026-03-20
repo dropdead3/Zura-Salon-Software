@@ -1,35 +1,32 @@
 
 
-## Fix "All Team" Filter to Only Show Registered Team Members' Appointments
+## Redesign Dock Service Selection to Match Scheduling Wizard
 
 ### Problem
-When "All Team" is selected, the query fetches every appointment at the location — including stylists like Jamie who aren't registered team members. Only Eric D. is a team member at this location, so "All Team" should only show his appointments.
-
-### Solution
-When `staffFilter === 'all'` in the org-specific demo path, fetch the list of registered team member `user_id`s for the location (same logic as `DockDeviceSwitcher`), then filter appointments to only those whose `stylist_user_id` is in that set.
+The Dock's "Choose Services" step shows a flat list with tiny category headers and duplicate services (same service name appearing multiple times from different branch variants). It feels unpolished compared to the dashboard's scheduling wizard which has clear category groupings, styled category headers, and deduped services.
 
 ### Changes
 
-**`src/hooks/dock/useDockAppointments.ts`**
+**1. Deduplicate services by name within each category**
+In `DockNewBookingSheet.tsx` `ServiceStepDock`, before rendering, deduplicate services per category — keep the first occurrence per `name` (or the one with the longest duration). This eliminates the "Chunky Highlight" × 2, "Double Color Block" × 2, etc.
 
-In the org-specific demo branch (line 42–165):
+**2. Add category-first drill-down navigation (like Kiosk wizard)**
+Replace the current flat list with a two-level view:
+- **Level 1**: Category cards showing category name + service count, styled as tappable cards with a `Scissors` icon and service count
+- **Level 2**: Tapping a category drills into its services list with a back-to-categories option
 
-1. Before building the main query, fetch registered team member IDs for the location:
-   ```ts
-   const { data: teamProfiles } = await supabase
-     .from('employee_profiles')
-     .select('user_id, location_id, location_ids')
-     .eq('organization_id', organizationId)
-     .eq('is_active', true)
-     .eq('is_approved', true);
-   const teamUserIds = (teamProfiles || [])
-     .filter(p => p.location_id === locationId || (p.location_ids && p.location_ids.includes(locationId)))
-     .map(p => p.user_id);
-   ```
+This matches the Kiosk's `selectedCategory` pattern and feels far more organized on mobile.
 
-2. When `staffFilter` is `'all'` (or unset), instead of no filter, add `.in('stylist_user_id', teamUserIds)` to the query. If `teamUserIds` is empty, return `[]` early.
+**3. Improve category header and service row styling**
+- Category headers: styled band (like dashboard's `bg-muted` strip with uppercase tracking)
+- Service rows: keep existing violet accent for selected state, but add the `Clock` icon for duration and proper currency formatting
 
-3. The specific-staff filter path (`staffFilter !== 'all'`) stays as-is — it already filters by `stylist_user_id`.
+**4. Add selected services summary chip bar**
+At the bottom, above the Continue button, show selected service names as small chips (matching dashboard's `Badge variant="outline"` pattern) so users can see what they've picked.
 
-This ensures "All Team" means "all registered team members at this location," not "every appointment at this location."
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/dock/schedule/DockNewBookingSheet.tsx` | Rewrite `ServiceStepDock` — add `selectedCategory` state, category card grid, drill-down service list, deduplication logic, improved styling, chip summary |
 
