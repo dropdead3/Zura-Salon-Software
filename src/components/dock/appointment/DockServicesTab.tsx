@@ -240,7 +240,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         </div>
       ) : (
         <button
-          onClick={() => setShowNewBowl(true)}
+          onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
           disabled={createBowl.isPending}
           className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
         >
