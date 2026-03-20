@@ -50,6 +50,7 @@ export default function Dock() {
   const [activeTab, setActiveTab] = useState<DockTab>('schedule');
   const [view, setView] = useState<DockView>({ screen: 'tabs' });
   const [demoLocationId, setDemoLocationId] = useState('');
+  const [staffFilter, setStaffFilter] = useState('all');
 
   const effectiveStaff = urlDemoSession
     ? { ...urlDemoSession, locationId: demoLocationId || urlDemoSession.locationId }
