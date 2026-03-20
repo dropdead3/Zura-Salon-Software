@@ -1082,8 +1082,10 @@ function ConfirmStepDock({
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(() => {
-              const slots = TIME_SLOTS.includes(time) ? TIME_SLOTS : [...TIME_SLOTS, time].sort();
-              return slots.map(t => (
+              const slots = timeSlots.includes(time) ? timeSlots : [...timeSlots, time].sort();
+              return slots.map(t => {
+                const isNowSlot = !timeSlots.includes(t) || (timeSlots.indexOf(t) === 0 && t === slots[0] && timeSlots[0] !== (timeSlots[1] || ''));
+                return (
                 <button
                   key={t}
                   onClick={() => onTimeChange(t)}
@@ -1094,9 +1096,10 @@ function ConfirmStepDock({
                       : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
                   )}
                 >
-                  {!TIME_SLOTS.includes(t) ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
+                  {formatTime12h(t)}
                 </button>
-              ));
+                );
+              });
             })()}
           </div>
         </div>
