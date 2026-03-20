@@ -127,11 +127,23 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       }
     }
 
-    // Inject "Now" slot if outside operating hours
+    // Only inject "Now" slot if today AND within operating hours
+    const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
     const nowRounded = Math.ceil(nowMinutes / 15) * 15;
     const nowStr = minutesToTime(nowRounded);
-    if (opSlots.length === 0) return [nowStr];
-    if (!opSlots.includes(nowStr)) return [nowStr, ...opSlots];
+
+    if (opSlots.length === 0) {
+      // Closed day — only offer "now" if today
+      return isToday ? [nowStr] : [];
+    }
+
+    if (isToday && !opSlots.includes(nowStr)) {
+      const startMins = timeToMinutes(openTime!);
+      const endMins = timeToMinutes(closeTime!);
+      if (nowRounded >= startMins && nowRounded <= endMins) {
+        return [nowStr, ...opSlots];
+      }
+    }
     return opSlots;
   }, [locations, selectedLocation, selectedDate, nowMinutes]);
 
@@ -1212,8 +1224,11 @@ function ConfirmStepDock({
           <div className="flex flex-wrap gap-1.5">
             {(() => {
               const slots = timeSlots.includes(time) ? timeSlots : [...timeSlots, time].sort();
+              const isToday = date === format(new Date(), 'yyyy-MM-dd');
+              const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+              const nowRoundedStr = minutesToTime(Math.ceil(nowMins / 15) * 15);
               return slots.map(t => {
-                const isNowSlot = !timeSlots.includes(t) || (timeSlots.indexOf(t) === 0 && t === slots[0] && timeSlots[0] !== (timeSlots[1] || ''));
+                const isNowSlot = isToday && t === nowRoundedStr;
                 return (
                 <button
                   key={t}
@@ -1225,7 +1240,7 @@ function ConfirmStepDock({
                       : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
                   )}
                 >
-                  {formatTime12h(t)}
+                  {isNowSlot ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
                 </button>
                 );
               });
