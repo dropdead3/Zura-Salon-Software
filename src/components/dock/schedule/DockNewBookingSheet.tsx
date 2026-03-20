@@ -12,6 +12,8 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
   Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote, Plus,
+  Sparkles, Palette, Link, Wind, Droplets, ClipboardList, Paintbrush,
+  type LucideIcon,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -543,16 +545,17 @@ function ServiceStepDock({
     return svcs.filter(s => s.name.toLowerCase().includes(q));
   }, [selectedCategory, dedupedByCategory, debouncedSearch]);
 
-  // Category icon map
-  const getCategoryIcon = (cat: string) => {
-    if (/blond|highlight|foil|balayage/i.test(cat)) return '✨';
-    if (/color/i.test(cat)) return '🎨';
-    if (/cut|haircut/i.test(cat)) return '✂️';
-    if (/extension/i.test(cat)) return '💇‍♀️';
-    if (/style|blowout|updo/i.test(cat)) return '💫';
-    if (/extra|treatment/i.test(cat)) return '🧴';
-    if (/consult/i.test(cat)) return '📋';
-    return '💈';
+  // Category icon map — Lucide icons, no emojis
+  const getCategoryIcon = (cat: string): LucideIcon => {
+    if (/blond|highlight|foil|balayage/i.test(cat)) return Sparkles;
+    if (/vivid|fashion/i.test(cat)) return Paintbrush;
+    if (/color/i.test(cat)) return Palette;
+    if (/cut|haircut/i.test(cat)) return Scissors;
+    if (/extension/i.test(cat)) return Link;
+    if (/style|blowout|updo/i.test(cat)) return Wind;
+    if (/extra|treatment/i.test(cat)) return Droplets;
+    if (/consult/i.test(cat)) return ClipboardList;
+    return Scissors;
   };
 
   const drillDownSpring = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
@@ -588,7 +591,11 @@ function ServiceStepDock({
                         onClick={() => setSelectedCategory(cat)}
                         className="relative flex flex-col items-start gap-2 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
                       >
-                        <span className="text-xl">{getCategoryIcon(cat)}</span>
+                        {(() => { const Icon = getCategoryIcon(cat); return (
+                          <div className="w-8 h-8 rounded-lg bg-violet-600/10 flex items-center justify-center">
+                            <Icon className="w-4 h-4 text-violet-400" />
+                          </div>
+                        ); })()}
                         <div>
                           <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
                           <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
@@ -621,8 +628,12 @@ function ServiceStepDock({
                   <ArrowLeft className="w-4 h-4" />
                   <span className="font-sans">All Categories</span>
                 </button>
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <span className="text-lg">{getCategoryIcon(selectedCategory)}</span>
+                <div className="flex items-center gap-2.5 mb-3 px-1">
+                  {(() => { const Icon = getCategoryIcon(selectedCategory); return (
+                    <div className="w-8 h-8 rounded-lg bg-violet-600/10 flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-violet-400" />
+                    </div>
+                  ); })()}
                   <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
                     {selectedCategory}
                   </h3>
