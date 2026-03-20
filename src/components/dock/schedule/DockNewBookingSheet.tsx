@@ -841,6 +841,14 @@ function ConfirmStepDock({
               </div>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={onAddService}
+            className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 border border-dashed border-[hsl(var(--platform-border))] rounded-xl text-xs font-sans font-medium text-violet-400 hover:bg-[hsl(var(--platform-foreground)/0.04)] transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Another Service
+          </button>
         </div>
 
         {/* Notes */}
