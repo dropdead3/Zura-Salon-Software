@@ -17,6 +17,7 @@ export type DockView =
 
 export interface DockStaffSession {
   userId: string;
+  organizationId: string;
   displayName: string;
   avatarUrl?: string | null;
   locationId: string;

@@ -65,6 +65,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           const resolvedLocationId = deviceLocId || data.location_id || '';
           onSuccess({
             userId: data.user_id,
+            organizationId: data.organization_id || '',
             displayName: data.display_name || 'Staff',
             avatarUrl: data.photo_url,
             locationId: resolvedLocationId,
@@ -150,12 +151,17 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           <button
             onClick={() => {
               const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
-              const resolvedLocId = deviceLocId || locations[0]?.id || '';
+              const resolvedLoc = deviceLocId
+                ? locations.find(l => l.id === deviceLocId)
+                : locations[0];
+              const resolvedLocId = resolvedLoc?.id || '';
+              const resolvedOrgId = (resolvedLoc as any)?.organization_id || '';
               if (!deviceLocId && resolvedLocId) {
                 try { localStorage.setItem('dock-location-id', resolvedLocId); } catch {}
               }
               onSuccess({
                 userId: 'dev-bypass-000',
+                organizationId: resolvedOrgId,
                 displayName: 'Dev Tester',
                 avatarUrl: null,
                 locationId: resolvedLocId,

@@ -19,6 +19,8 @@ import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_SERVICES, DEMO_SERVICES_BY_CATEGORY, searchDemoClients, type DemoService } from '@/hooks/dock/dockDemoData';
 
 interface DockNewBookingSheetProps {
   open: boolean;
@@ -61,6 +63,7 @@ function getInitials(name: string) {
 
 export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
+  const { isDemoMode } = useDockDemo();
 
   // Drag controls for pull-to-dismiss
   const dragControls = useDragControls();
@@ -75,9 +78,13 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedTime, setSelectedTime] = useState('09:00');
   const [notes, setNotes] = useState('');
 
-  // Data
-  const { data: locations = [] } = useLocations();
+  // Data — scope queries by organization
+  const { data: locations = [] } = useLocations(staff.organizationId || undefined);
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
+
+  // Demo mode overrides
+  const effectiveServicesByCategory = isDemoMode ? DEMO_SERVICES_BY_CATEGORY : servicesByCategory;
+  const effectiveServices = isDemoMode ? (DEMO_SERVICES as unknown as PhorestService[]) : services;
 
   // Phorest staff mapping for this user
   const { data: staffMapping } = useQuery({
@@ -91,12 +98,19 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
         .single();
       return data;
     },
+    enabled: !isDemoMode,
   });
 
   // Client search
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ['dock-booking-clients', clientSearch],
+    queryKey: ['dock-booking-clients', clientSearch, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode) {
+        return clientSearch.length >= 2
+          ? searchDemoClients(clientSearch) as unknown as PhorestClient[]
+          : [];
+      }
+
       let query = supabase
         .from('phorest_clients')
         .select('id, phorest_client_id, name, email, phone')
@@ -121,8 +135,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
   // Computed
   const selectedServiceDetails = useMemo(
-    () => services.filter(s => selectedServices.includes(s.phorest_service_id)),
-    [services, selectedServices],
+    () => effectiveServices.filter(s => selectedServices.includes(s.phorest_service_id)),
+    [effectiveServices, selectedServices],
   );
   const totalDuration = selectedServiceDetails.reduce((s, v) => s + v.duration_minutes, 0);
   const totalPrice = selectedServiceDetails.reduce((s, v) => s + (v.price || 0), 0);
@@ -131,6 +145,13 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const createBooking = useMutation({
     mutationFn: async () => {
       if (!selectedClient) throw new Error('No client selected');
+
+      if (isDemoMode) {
+        // Simulate booking in demo mode
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return { success: true, demo: true };
+      }
+
       const loc = locations.find(l => l.id === selectedLocation);
       const branchId = loc?.phorest_branch_id;
       if (!branchId) throw new Error('No branch ID for location');
@@ -155,7 +176,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
-      toast.success('Appointment booked');
+      toast.success(isDemoMode ? 'Demo booking created' : 'Appointment booked');
       handleClose();
     },
     onError: (error: Error) => {
@@ -255,8 +276,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
               {step === 'service' && (
                 <ServiceStepDock
-                  servicesByCategory={servicesByCategory}
-                  allServices={services}
+                  servicesByCategory={effectiveServicesByCategory}
+                  allServices={effectiveServices}
                   selectedServices={selectedServices}
                   onToggleService={(id) => {
                     setSelectedServices(prev =>

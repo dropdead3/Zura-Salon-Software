@@ -11,6 +11,7 @@ interface DockDeviceSwitcherProps {
   onOrientationChange: (orientation: DockOrientation) => void;
   locationId?: string;
   onLocationChange?: (locationId: string) => void;
+  organizationId?: string;
 }
 
 const deviceOptions = [
@@ -19,9 +20,9 @@ const deviceOptions = [
   { value: 'full', label: 'Full', icon: <Monitor className="w-3.5 h-3.5" /> },
 ];
 
-export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange }: DockDeviceSwitcherProps) {
+export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange, organizationId }: DockDeviceSwitcherProps) {
   const showRotate = device === 'tablet';
-  const { data: locations = [] } = useLocations();
+  const { data: locations = [] } = useLocations(organizationId);
 
   // Auto-select first location if none configured
   useEffect(() => {
