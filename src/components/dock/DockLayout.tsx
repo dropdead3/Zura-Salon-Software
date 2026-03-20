@@ -32,7 +32,7 @@ const DEVICE_DIMENSIONS = {
 } as const;
 
 export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOpenAppointment, onBack }: DockLayoutProps) {
-  const { isDemoMode, device, setDevice } = useDockDemo();
+  const { isDemoMode, device, setDevice, orientation, setOrientation } = useDockDemo();
   const showingDetail = view.screen === 'appointment-detail';
   const isConstrained = isDemoMode && device !== 'full';
 
@@ -69,13 +69,17 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   );
 
   if (isConstrained) {
-    const dims = DEVICE_DIMENSIONS[device as 'phone' | 'tablet'];
+    const baseDims = DEVICE_DIMENSIONS[device as 'phone' | 'tablet'];
+    const dims = device === 'tablet' && orientation === 'landscape'
+      ? { width: baseDims.height, height: baseDims.width }
+      : baseDims;
     return (
       <div className="platform-theme platform-dark fixed inset-0 flex items-center justify-center bg-[hsl(0_0%_8%)] bg-[image:radial-gradient(hsl(0_0%_15%)_1px,transparent_1px)] bg-[size:20px_20px]">
-        {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} />}
+        <DockDemoBadge />
+        {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />}
         <div
-          className="relative rounded-[2rem] border border-[hsl(0_0%_20%)] shadow-2xl overflow-hidden"
-          style={{ width: dims.width, height: dims.height, maxHeight: '95vh' }}
+          className="relative rounded-[2rem] border border-[hsl(0_0%_20%)] shadow-2xl overflow-hidden transition-all duration-300"
+          style={{ width: dims.width, height: dims.height, maxHeight: '95vh', maxWidth: '95vw' }}
         >
           {dockContent}
         </div>
@@ -85,7 +89,8 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   return (
     <div className="platform-theme platform-dark fixed inset-0 flex flex-col">
-      {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} />}
+      <DockDemoBadge />
+      {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />}
       {dockContent}
     </div>
   );
