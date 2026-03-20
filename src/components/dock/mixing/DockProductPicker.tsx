@@ -78,7 +78,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))] flex flex-col">
+    <div className="absolute inset-0 z-50 bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))] flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 px-5 pt-6 pb-3 space-y-3">
         <div className="flex items-center justify-between">

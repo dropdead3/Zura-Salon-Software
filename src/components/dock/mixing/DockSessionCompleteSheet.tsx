@@ -46,7 +46,7 @@ export function DockSessionCompleteSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col">
+    <div className="absolute inset-0 z-50 flex flex-col">
       <div className="flex-1 bg-black/50" onClick={onClose} />
 
       <div className="bg-[hsl(var(--platform-bg-elevated))] rounded-t-2xl border-t border-[hsl(var(--platform-border)/0.3)] max-h-[80vh] flex flex-col">

@@ -27,7 +27,7 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col">
+    <div className="absolute inset-0 z-40 flex flex-col">
       {/* Overlay */}
       <div className="flex-1" onClick={onClose} />
 
