@@ -30,24 +30,27 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
   const { data: locations = [] } = useLocations(organizationId);
   const { usesRealData } = useDockDemo();
 
-  // Fetch team members for the org (demo mode only)
+  // Fetch team members for the selected location (demo mode only)
   const { data: teamMembers = [] } = useQuery({
-    queryKey: ['dock-team-members', organizationId],
+    queryKey: ['dock-team-members', organizationId, locationId],
     queryFn: async () => {
-      if (!organizationId) return [];
+      if (!organizationId || !locationId) return [];
       const { data } = await supabase
         .from('employee_profiles')
-        .select('user_id, display_name, full_name')
+        .select('user_id, display_name, full_name, location_id, location_ids')
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .eq('is_approved', true)
         .order('display_name', { ascending: true });
-      return (data || []).map(p => ({
-        userId: p.user_id,
-        name: p.display_name || p.full_name || 'Unknown',
-      }));
+      // Filter to members whose location_id or location_ids includes the selected location
+      return (data || [])
+        .filter(p => p.location_id === locationId || (p.location_ids && p.location_ids.includes(locationId)))
+        .map(p => ({
+          userId: p.user_id,
+          name: formatFirstLastInitial(p.display_name || p.full_name || 'Unknown'),
+        }));
     },
-    enabled: usesRealData && !!organizationId,
+    enabled: usesRealData && !!organizationId && !!locationId,
     staleTime: 300_000,
   });
 
