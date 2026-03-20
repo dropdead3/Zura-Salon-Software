@@ -63,6 +63,7 @@ function getInitials(name: string) {
 
 export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
+  const { isDemoMode } = useDockDemo();
 
   // Drag controls for pull-to-dismiss
   const dragControls = useDragControls();
@@ -81,6 +82,10 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const { data: locations = [] } = useLocations(staff.organizationId || undefined);
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
+  // Demo mode overrides
+  const effectiveServicesByCategory = isDemoMode ? DEMO_SERVICES_BY_CATEGORY : servicesByCategory;
+  const effectiveServices = isDemoMode ? (DEMO_SERVICES as unknown as PhorestService[]) : services;
+
   // Phorest staff mapping for this user
   const { data: staffMapping } = useQuery({
     queryKey: ['dock-staff-mapping', staff.userId],
@@ -93,12 +98,19 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
         .single();
       return data;
     },
+    enabled: !isDemoMode,
   });
 
   // Client search
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ['dock-booking-clients', clientSearch],
+    queryKey: ['dock-booking-clients', clientSearch, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode) {
+        return clientSearch.length >= 2
+          ? searchDemoClients(clientSearch) as unknown as PhorestClient[]
+          : [];
+      }
+
       let query = supabase
         .from('phorest_clients')
         .select('id, phorest_client_id, name, email, phone')
