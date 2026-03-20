@@ -1,43 +1,22 @@
 
 
-## Plan: Add Appointment Configurator from Schedule "+" Button
+## Plan: Fix Booking Sheet Not Appearing
 
-### Problem
-The `+` button in the top-right of the Dock Schedule tab is non-functional — it renders but has no `onClick` handler.
+### Root Cause
+The `DockNewBookingSheet` uses `createPortal(…, document.body)` to render the overlay. When the Dock is in **device preview mode** (phone/tablet), the content sits inside a container with `overflow: hidden` and `border-radius: 2rem`. The portal escapes this container and renders at the `document.body` level — but the page's background and z-index stacking means it either renders invisibly behind the device frame, or is clipped/unreachable.
 
-### Approach
-Create a new `DockNewBookingSheet` component — a mobile-optimized, multi-step booking form adapted for the Dock context. It will be a bottom sheet (using the existing `PremiumFloatingPanel` or a simple slide-up panel) with a simplified flow compared to the full dashboard `NewBookingSheet`.
+Even in "full" mode, the fixed-inset parent might conflict with the portal z-index.
 
-### Steps
+### Fix
+Remove the `createPortal` wrapper entirely. Render the sheet **inline** within the component tree instead of portaling to `document.body`. Since the Dock already has a `fixed inset-0` parent, the sheet's `fixed inset-x-0 bottom-0` positioning will work correctly within the Dock context. For the constrained device preview, switch from `fixed` to `absolute` positioning so the sheet stays within the device frame.
 
-**1. Create `src/components/dock/schedule/DockNewBookingSheet.tsx`**
-A slide-up panel with a 4-step wizard:
-- **Client** — search existing clients by name/phone/email from `phorest_clients`
-- **Service** — pick service(s) from `useServicesByCategory`, filtered by the logged-in staff member's qualifications
-- **Date/Time** — date picker (defaults to today) + time slot selection
-- **Confirm** — summary with client, service, time, price; confirm button calls `create-booking` edge function
+### Changes
 
-Key details:
-- Pre-selects the logged-in staff member (`staff.userId`) as the stylist
-- Uses the same `create-booking` edge function that already exists
-- Dark-themed to match the Dock platform theme
-- Mobile-first layout with large touch targets
+**`src/components/dock/schedule/DockNewBookingSheet.tsx`**
+- Remove `createPortal` import and usage — return the `AnimatePresence` JSX directly
+- Change the backdrop and sheet from `fixed` to `absolute` positioning so they respect the device preview container
+- Ensure the parent in `DockScheduleTab` has `relative` positioning to anchor the absolute overlay
 
-**2. Update `src/components/dock/schedule/DockScheduleTab.tsx`**
-- Add `useState` for `showNewBooking` boolean
-- Wire the `+` button's `onClick` to `setShowNewBooking(true)`
-- Render `<DockNewBookingSheet>` conditionally
-- On booking success, close the sheet and refetch appointments
-
-### Data flow
-```text
-+ button → open sheet → client search (phorest_clients)
-  → service pick (useServicesByCategory)
-  → date/time select
-  → confirm → invoke create-booking edge function
-  → close sheet, invalidate dock-appointments query
-```
-
-### No database changes needed
-Reuses existing `phorest_clients`, `phorest_services`, and the `create-booking` edge function.
+**`src/components/dock/schedule/DockScheduleTab.tsx`**
+- Add `relative` class to the root `<div>` so the absolutely-positioned sheet anchors correctly
 
