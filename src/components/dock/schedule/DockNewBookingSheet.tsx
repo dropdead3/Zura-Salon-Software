@@ -11,7 +11,7 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
-  Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote,
+  Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote, Plus,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DockNewClientSheet } from './DockNewClientSheet';
 import { DEMO_SERVICES, DEMO_SERVICES_BY_CATEGORY, searchDemoClients, type DemoService } from '@/hooks/dock/dockDemoData';
 
 interface DockNewBookingSheetProps {
