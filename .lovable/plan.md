@@ -1,32 +1,24 @@
 
 
-## Redesign Dock Service Selection to Match Scheduling Wizard
+## Add Search Filter + Animated Drill-Down to Dock Service Selection
 
-### Problem
-The Dock's "Choose Services" step shows a flat list with tiny category headers and duplicate services (same service name appearing multiple times from different branch variants). It feels unpolished compared to the dashboard's scheduling wizard which has clear category groupings, styled category headers, and deduped services.
+### What changes
 
-### Changes
+**1. Search bar within the service list (Level 2)**
+When drilled into a category, add a small search input at the top that filters services by name. Uses the existing `useDebounce` hook for smooth filtering. With categories like Blonding having 36 services, this is valuable for power users.
 
-**1. Deduplicate services by name within each category**
-In `DockNewBookingSheet.tsx` `ServiceStepDock`, before rendering, deduplicate services per category — keep the first occurrence per `name` (or the one with the longest duration). This eliminates the "Chunky Highlight" × 2, "Double Color Block" × 2, etc.
+**2. Animated category↔service transition with framer-motion**
+Wrap the Level 1 (category grid) and Level 2 (service list) views in `AnimatePresence` with `motion.div`. When drilling into a category, the category grid slides out left while the service list slides in from the right. Going back reverses the animation. Uses the project's standardized spring physics (damping: 26, stiffness: 300, mass: 0.8) per motion standards.
 
-**2. Add category-first drill-down navigation (like Kiosk wizard)**
-Replace the current flat list with a two-level view:
-- **Level 1**: Category cards showing category name + service count, styled as tappable cards with a `Scissors` icon and service count
-- **Level 2**: Tapping a category drills into its services list with a back-to-categories option
+### Technical details
 
-This matches the Kiosk's `selectedCategory` pattern and feels far more organized on mobile.
+**File: `src/components/dock/schedule/DockNewBookingSheet.tsx`** — `ServiceStepDock` function
 
-**3. Improve category header and service row styling**
-- Category headers: styled band (like dashboard's `bg-muted` strip with uppercase tracking)
-- Service rows: keep existing violet accent for selected state, but add the `Clock` icon for duration and proper currency formatting
-
-**4. Add selected services summary chip bar**
-At the bottom, above the Continue button, show selected service names as small chips (matching dashboard's `Badge variant="outline"` pattern) so users can see what they've picked.
-
-### Files Changed
-
-| File | Change |
-|------|--------|
-| `src/components/dock/schedule/DockNewBookingSheet.tsx` | Rewrite `ServiceStepDock` — add `selectedCategory` state, category card grid, drill-down service list, deduplication logic, improved styling, chip summary |
+- Add `searchQuery` state and wire it to a `PlatformInput` with a `Search` icon placed above the service list in Level 2
+- Filter `dedupedByCategory[selectedCategory]` by `searchQuery` (case-insensitive substring match on `name`)
+- Wrap the conditional render (category grid vs service list) in `<AnimatePresence mode="wait">` with `motion.div` using `x` axis slide transitions:
+  - Category grid: `initial={{ x: -40, opacity: 0 }}`, `animate={{ x: 0, opacity: 1 }}`, `exit={{ x: -40, opacity: 0 }}`
+  - Service list: `initial={{ x: 40, opacity: 0 }}`, `animate={{ x: 0, opacity: 1 }}`, `exit={{ x: 40, opacity: 0 }}`
+  - Transition: `type: "spring", damping: 26, stiffness: 300, mass: 0.8`
+- Reset `searchQuery` to `''` when navigating back to categories
 
