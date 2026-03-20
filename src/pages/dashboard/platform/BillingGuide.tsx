@@ -101,7 +101,7 @@ export default function BillingGuide() {
             ? `Internal reference for how organizations are billed. Last updated: ${lastUpdated}`
             : 'Internal reference for how organizations are billed.'
         }
-        backTo="/dashboard/platform/accounts"
+        backTo="/platform/accounts"
       />
 
       {/* Sticky jump nav */}

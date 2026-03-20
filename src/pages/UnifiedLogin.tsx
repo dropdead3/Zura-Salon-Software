@@ -51,7 +51,7 @@ async function getUserRedirectPath(userId: string, fallback: string): Promise<st
     .limit(1);
 
   if (platformRoles && platformRoles.length > 0) {
-    return '/dashboard/platform/overview';
+    return '/platform/overview';
   }
 
   // Check for custom landing page
@@ -126,7 +126,7 @@ export default function UnifiedLogin() {
             userId: user.id,
           });
           sonnerToast.success('Welcome to the platform!');
-          navigate('/dashboard/platform/overview', { replace: true });
+          navigate('/platform/overview', { replace: true });
           return;
         } catch (error) {
           console.error('Failed to accept platform invitation:', error);
@@ -186,7 +186,7 @@ export default function UnifiedLogin() {
                   userId: loggedInUser.id,
                 });
                 sonnerToast.success('Welcome to the platform!');
-                navigate('/dashboard/platform/overview', { replace: true });
+                navigate('/platform/overview', { replace: true });
                 return;
               } catch (error) {
                 console.error('Failed to accept platform invitation:', error);

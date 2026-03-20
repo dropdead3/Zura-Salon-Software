@@ -47,7 +47,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
       });
     } else {
       // Navigate to platform overview
-      navigate('/dashboard/platform/overview');
+      navigate('/platform/overview');
     }
   };
 

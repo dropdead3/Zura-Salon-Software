@@ -108,7 +108,7 @@ export default function AccountDetail() {
           <p className="text-slate-500 mb-4">
             The organization you're looking for doesn't exist or you don't have access.
           </p>
-          <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-1.5">
+          <PlatformButton onClick={() => navigate('/platform/accounts')} className="gap-1.5">
             <ArrowLeft className="w-4 h-4" />
             Back to Accounts
           </PlatformButton>

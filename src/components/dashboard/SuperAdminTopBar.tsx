@@ -163,7 +163,7 @@ export function SuperAdminTopBar({
         {/* ── LEFT ZONE: Nav + Search ── */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <NavHistoryArrows />
-          {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && (
+          {isPlatformUser && location.pathname.startsWith('/platform') && (
             <OrganizationSwitcher compact />
           )}
           <div className="min-w-0 w-full max-w-[280px] lg:max-w-md xl:max-w-lg 2xl:max-w-xl">
