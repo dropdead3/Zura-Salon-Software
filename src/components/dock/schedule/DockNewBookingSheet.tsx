@@ -269,8 +269,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
               {step === 'service' && (
                 <ServiceStepDock
-                  servicesByCategory={servicesByCategory}
-                  allServices={services}
+                  servicesByCategory={effectiveServicesByCategory}
+                  allServices={effectiveServices}
                   selectedServices={selectedServices}
                   onToggleService={(id) => {
                     setSelectedServices(prev =>
