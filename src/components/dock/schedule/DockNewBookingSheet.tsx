@@ -49,11 +49,16 @@ type Step = 'client' | 'service' | 'confirm';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
 
-const TIME_SLOTS = Array.from({ length: 33 }, (_, i) => {
-  const hour = 6 + Math.floor(i / 2);
-  const minute = (i % 2) * 30;
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-});
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+function minutesToTime(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
 
 function formatTime12h(time: string) {
   const [h, m] = time.split(':');
@@ -78,10 +83,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const { nowMinutes } = useOrgNow();
 
   const getDefaultTime = useCallback(() => {
-    const nearest = Math.ceil(nowMinutes / 30) * 30;
-    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
-    const m = String(nearest % 60).padStart(2, '0');
-    return `${h}:${m}`;
+    const nearest = Math.ceil(nowMinutes / 15) * 15;
+    return minutesToTime(nearest);
   }, [nowMinutes]);
 
   // Wizard state
@@ -92,10 +95,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState(() => {
-    const nearest = Math.ceil((new Date().getHours() * 60 + new Date().getMinutes()) / 30) * 30;
-    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
-    const m = String(nearest % 60).padStart(2, '0');
-    return `${h}:${m}`;
+    const nearest = Math.ceil((new Date().getHours() * 60 + new Date().getMinutes()) / 15) * 15;
+    return minutesToTime(nearest);
   });
   const [notes, setNotes] = useState('');
   const [selectedAssistants, setSelectedAssistants] = useState<string[]>([]);
@@ -105,6 +106,33 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   // Data — scope queries by organization
   const { data: locations = [] } = useLocations(staff.organizationId || undefined);
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
+
+  // Dynamic time slots from location operating hours (15-min increments)
+  const timeSlots = useMemo(() => {
+    const currentLocation = locations.find(l => l.id === selectedLocation);
+    const dayName = format(new Date(selectedDate + 'T12:00:00'), 'EEEE').toLowerCase() as keyof import('@/hooks/useLocations').HoursJson;
+    const dayHours = currentLocation?.hours_json?.[dayName];
+    const isClosed = dayHours?.closed === true;
+    const openTime = isClosed ? null : (dayHours?.open || '09:00');
+    const closeTime = isClosed ? null : (dayHours?.close || '18:00');
+
+    // Generate operating-hours slots
+    const opSlots: string[] = [];
+    if (openTime && closeTime) {
+      const startMins = timeToMinutes(openTime);
+      const endMins = timeToMinutes(closeTime);
+      for (let m = startMins; m <= endMins; m += 15) {
+        opSlots.push(minutesToTime(m));
+      }
+    }
+
+    // Inject "Now" slot if outside operating hours
+    const nowRounded = Math.ceil(nowMinutes / 15) * 15;
+    const nowStr = minutesToTime(nowRounded);
+    if (opSlots.length === 0) return [nowStr];
+    if (!opSlots.includes(nowStr)) return [nowStr, ...opSlots];
+    return opSlots;
+  }, [locations, selectedLocation, selectedDate, nowMinutes]);
 
   // Real data queries for org-scoped demo mode
   const { data: realServicesByCategory, isLoading: isLoadingRealServices } = useQuery({
@@ -501,6 +529,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   teamMembers={teamMembers}
                   selectedAssistants={selectedAssistants}
                   onAssistantsChange={setSelectedAssistants}
+                  timeSlots={timeSlots}
                 />
               )}
             </div>
@@ -947,6 +976,7 @@ function ConfirmStepDock({
   teamMembers,
   selectedAssistants,
   onAssistantsChange,
+  timeSlots,
 }: {
   client: PhorestClient | null;
   services: PhorestService[];
@@ -965,6 +995,7 @@ function ConfirmStepDock({
   teamMembers: { userId: string; name: string; photoUrl: string | null }[];
   selectedAssistants: string[];
   onAssistantsChange: (ids: string[]) => void;
+  timeSlots: string[];
 }) {
   const [showAssistantPicker, setShowAssistantPicker] = useState(false);
   const selectedNames = teamMembers.filter(m => selectedAssistants.includes(m.userId)).map(m => m.name);
@@ -1052,8 +1083,10 @@ function ConfirmStepDock({
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(() => {
-              const slots = TIME_SLOTS.includes(time) ? TIME_SLOTS : [...TIME_SLOTS, time].sort();
-              return slots.map(t => (
+              const slots = timeSlots.includes(time) ? timeSlots : [...timeSlots, time].sort();
+              return slots.map(t => {
+                const isNowSlot = !timeSlots.includes(t) || (timeSlots.indexOf(t) === 0 && t === slots[0] && timeSlots[0] !== (timeSlots[1] || ''));
+                return (
                 <button
                   key={t}
                   onClick={() => onTimeChange(t)}
@@ -1064,9 +1097,10 @@ function ConfirmStepDock({
                       : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
                   )}
                 >
-                  {!TIME_SLOTS.includes(t) ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
+                  {formatTime12h(t)}
                 </button>
-              ));
+                );
+              });
             })()}
           </div>
         </div>
