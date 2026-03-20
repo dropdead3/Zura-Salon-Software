@@ -994,6 +994,7 @@ function ConfirmStepDock({
   teamMembers: { userId: string; name: string; photoUrl: string | null }[];
   selectedAssistants: string[];
   onAssistantsChange: (ids: string[]) => void;
+  timeSlots: string[];
 }) {
   const [showAssistantPicker, setShowAssistantPicker] = useState(false);
   const selectedNames = teamMembers.filter(m => selectedAssistants.includes(m.userId)).map(m => m.name);
