@@ -441,13 +441,49 @@ function ServiceStepDock({
   isLoading: boolean;
   onContinue: () => void;
 }) {
-  const hasServices = servicesByCategory && Object.keys(servicesByCategory).length > 0;
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Deduplicate services per category by name (keep longest duration)
+  const dedupedByCategory = useMemo(() => {
+    if (!servicesByCategory) return {};
+    const result: Record<string, PhorestService[]> = {};
+    for (const [cat, svcs] of Object.entries(servicesByCategory)) {
+      const nameMap = new Map<string, PhorestService>();
+      for (const s of svcs) {
+        const existing = nameMap.get(s.name);
+        if (!existing || s.duration_minutes > existing.duration_minutes) {
+          nameMap.set(s.name, s);
+        }
+      }
+      result[cat] = Array.from(nameMap.values());
+    }
+    return result;
+  }, [servicesByCategory]);
+
+  const categories = Object.entries(dedupedByCategory);
+  const hasServices = categories.length > 0;
+
+  // Selected service details for chip display
+  const selectedDetails = useMemo(
+    () => allServices.filter(s => selectedServices.includes(s.phorest_service_id)),
+    [allServices, selectedServices],
+  );
+
+  // Category icon map
+  const getCategoryIcon = (cat: string) => {
+    if (/blond|highlight|foil|balayage/i.test(cat)) return '✨';
+    if (/color/i.test(cat)) return '🎨';
+    if (/cut|haircut/i.test(cat)) return '✂️';
+    if (/extension/i.test(cat)) return '💇‍♀️';
+    if (/style|blowout|updo/i.test(cat)) return '💫';
+    if (/extra|treatment/i.test(cat)) return '🧴';
+    if (/consult/i.test(cat)) return '📋';
+    return '💈';
+  };
 
   return (
     <div className="flex flex-col">
-
-      {/* Services */}
-      <div className="px-5 pb-4 space-y-4">
+      <div className="px-5 pb-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
@@ -456,65 +492,120 @@ function ServiceStepDock({
           <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-8">
             No services available
           </p>
+        ) : selectedCategory === null ? (
+          /* ── Level 1: Category Grid ── */
+          <div className="grid grid-cols-2 gap-3">
+            {categories.map(([cat, svcs]) => {
+              const selectedInCat = svcs.filter(s => selectedServices.includes(s.phorest_service_id)).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className="relative flex flex-col items-start gap-2 p-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)] border border-[hsl(var(--platform-border)/0.5)] hover:bg-[hsl(var(--platform-foreground)/0.08)] active:scale-[0.97] transition-all text-left"
+                >
+                  <span className="text-xl">{getCategoryIcon(cat)}</span>
+                  <div>
+                    <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
+                    <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+                      {svcs.length} service{svcs.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  {selectedInCat > 0 && (
+                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
+                      <span className="text-[10px] text-white font-medium">{selectedInCat}</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         ) : (
-          Object.entries(servicesByCategory).map(([category, svc]) => (
-            <div key={category}>
-              <div className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2">
-                {category}
-              </div>
-              <div className="space-y-1">
-                {svc.map((s) => {
-                  const isSelected = selectedServices.includes(s.phorest_service_id);
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => onToggleService(s.phorest_service_id)}
-                      className={cn(
-                        'w-full flex items-center justify-between p-3 rounded-xl text-left transition-all',
-                        isSelected
-                          ? 'bg-violet-600/15 ring-1 ring-violet-500/30'
-                          : 'hover:bg-[hsl(var(--platform-foreground)/0.06)]',
-                      )}
-                    >
-                      <div className="flex-1 min-w-0 mr-3">
-                        <div className="text-sm text-[hsl(var(--platform-foreground))] truncate">{s.name}</div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                            {s.duration_minutes}m
-                          </span>
-                          {s.price !== null && (
-                            <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                              ${s.price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className={cn(
-                        'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                        isSelected
-                          ? 'bg-violet-600 border-violet-600 text-white'
-                          : 'border-[hsl(var(--platform-foreground-muted)/0.3)]',
-                      )}>
-                        {isSelected && <Check className="h-3 w-3" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+          /* ── Level 2: Service List for Selected Category ── */
+          <div>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="flex items-center gap-2 mb-4 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="font-sans">All Categories</span>
+            </button>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <span className="text-lg">{getCategoryIcon(selectedCategory)}</span>
+              <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                {selectedCategory}
+              </h3>
             </div>
-          ))
+            <div className="space-y-1">
+              {(dedupedByCategory[selectedCategory] || []).map((s) => {
+                const isSelected = selectedServices.includes(s.phorest_service_id);
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => onToggleService(s.phorest_service_id)}
+                    className={cn(
+                      'w-full flex items-center justify-between p-3 rounded-xl text-left transition-all',
+                      isSelected
+                        ? 'bg-violet-600/15 ring-1 ring-violet-500/30'
+                        : 'hover:bg-[hsl(var(--platform-foreground)/0.06)]',
+                    )}
+                  >
+                    <div className="flex-1 min-w-0 mr-3">
+                      <div className="text-sm text-[hsl(var(--platform-foreground))] truncate">{s.name}</div>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="flex items-center gap-1 text-xs text-[hsl(var(--platform-foreground-muted))]">
+                          <Clock className="w-3 h-3" />
+                          {s.duration_minutes}m
+                        </span>
+                        {s.price !== null && (
+                          <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+                            ${s.price}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className={cn(
+                      'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                      isSelected
+                        ? 'bg-violet-600 border-violet-600 text-white'
+                        : 'border-[hsl(var(--platform-foreground-muted)/0.3)]',
+                    )}>
+                      {isSelected && <Check className="h-3 w-3" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer with chip summary */}
       <div className="sticky bottom-0 px-5 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
-        {selectedServices.length > 0 && (
-          <div className="flex items-center justify-between text-sm mb-3">
-            <span className="text-[hsl(var(--platform-foreground-muted))]">
-              {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {totalDuration}m
-            </span>
-            <span className="text-[hsl(var(--platform-foreground))] font-medium">${totalPrice}</span>
-          </div>
+        {selectedDetails.length > 0 && (
+          <>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {selectedDetails.map((s) => (
+                <span
+                  key={s.phorest_service_id}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-sans bg-violet-600/15 text-violet-300 border border-violet-500/20"
+                >
+                  {s.name}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleService(s.phorest_service_id); }}
+                    className="ml-0.5 hover:text-violet-100 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center justify-between text-sm mb-3">
+              <span className="text-[hsl(var(--platform-foreground-muted))]">
+                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {totalDuration}m
+              </span>
+              <span className="text-[hsl(var(--platform-foreground))] font-medium">${totalPrice}</span>
+            </div>
+          </>
         )}
         <button
           onClick={onContinue}
