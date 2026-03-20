@@ -1155,11 +1155,6 @@ function ConfirmStepDock({
               {clientHistory.visitCount} visit{clientHistory.visitCount !== 1 ? 's' : ''} total
             </div>
           </div>
-        ) : clientHistory && clientHistory.visitCount === 0 ? (
-          <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-600/10 border border-violet-500/20">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            <span className="text-xs text-violet-300">New client — first visit</span>
-          </div>
         ) : null}
 
         {/* Details */}
