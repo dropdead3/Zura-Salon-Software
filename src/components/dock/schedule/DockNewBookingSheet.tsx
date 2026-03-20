@@ -1224,8 +1224,10 @@ function ConfirmStepDock({
           <div className="flex flex-wrap gap-1.5">
             {(() => {
               const slots = timeSlots.includes(time) ? timeSlots : [...timeSlots, time].sort();
+              const isToday = date === format(new Date(), 'yyyy-MM-dd');
+              const nowRoundedStr = minutesToTime(Math.ceil(nowMinutes / 15) * 15);
               return slots.map(t => {
-                const isNowSlot = !timeSlots.includes(t) || (timeSlots.indexOf(t) === 0 && t === slots[0] && timeSlots[0] !== (timeSlots[1] || ''));
+                const isNowSlot = isToday && t === nowRoundedStr;
                 return (
                 <button
                   key={t}
@@ -1237,7 +1239,7 @@ function ConfirmStepDock({
                       : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
                   )}
                 >
-                  {formatTime12h(t)}
+                  {isNowSlot ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
                 </button>
                 );
               });
