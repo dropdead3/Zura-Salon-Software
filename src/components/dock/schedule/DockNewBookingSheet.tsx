@@ -66,7 +66,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [step, setStep] = useState<Step>('client');
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
   const [clientSearch, setClientSearch] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState(locationId || '');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState('09:00');
