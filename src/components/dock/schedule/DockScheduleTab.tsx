@@ -13,6 +13,7 @@ import { DockNewBookingSheet } from './DockNewBookingSheet';
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
+  locationId: string;
 }
 
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
