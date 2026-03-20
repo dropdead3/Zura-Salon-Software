@@ -83,10 +83,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const { nowMinutes } = useOrgNow();
 
   const getDefaultTime = useCallback(() => {
-    const nearest = Math.ceil(nowMinutes / 30) * 30;
-    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
-    const m = String(nearest % 60).padStart(2, '0');
-    return `${h}:${m}`;
+    const nearest = Math.ceil(nowMinutes / 15) * 15;
+    return minutesToTime(nearest);
   }, [nowMinutes]);
 
   // Wizard state
