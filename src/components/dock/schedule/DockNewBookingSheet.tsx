@@ -239,9 +239,6 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
               {step === 'service' && (
                 <ServiceStepDock
-                  locations={locations}
-                  selectedLocation={selectedLocation}
-                  onLocationChange={setSelectedLocation}
                   servicesByCategory={servicesByCategory}
                   allServices={services}
                   selectedServices={selectedServices}
