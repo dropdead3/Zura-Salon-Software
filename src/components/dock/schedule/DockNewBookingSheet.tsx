@@ -421,6 +421,8 @@ function ClientStepDock({
   onSearchChange,
   onSelectClient,
   onNewClient,
+  selectedClient,
+  onContinue,
 }: {
   clients: PhorestClient[];
   isLoading: boolean;
@@ -428,11 +430,31 @@ function ClientStepDock({
   onSearchChange: (q: string) => void;
   onSelectClient: (c: PhorestClient) => void;
   onNewClient: () => void;
+  selectedClient: PhorestClient | null;
+  onContinue: () => void;
 }) {
   const isSearching = searchQuery.length >= 2;
 
   return (
-    <div className="px-5 pb-6">
+    <div className="px-5 pb-6 flex flex-col h-full">
+      {/* Selected client banner */}
+      {selectedClient && (
+        <div className="mb-4 p-3 rounded-xl border border-violet-500/40 bg-violet-600/10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-violet-600/20 ring-2 ring-violet-500/50 flex items-center justify-center shrink-0">
+            <span className="text-xs font-medium text-violet-400">{getInitials(selectedClient.name)}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+              <span className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{selectedClient.name}</span>
+            </div>
+            <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+              {selectedClient.phone || selectedClient.email || 'No contact info'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search + New Client row */}
       <div className="flex items-center gap-2 mb-4">
         <div className="relative flex-1">
@@ -455,46 +477,67 @@ function ClientStepDock({
       </div>
 
       {/* Search results */}
-      {isSearching ? (
-        isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="text-center py-12 space-y-3">
+      <div className="flex-1 min-h-0">
+        {isSearching ? (
+          isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+            </div>
+          ) : clients.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+                No clients found
+              </p>
+              <button
+                onClick={onNewClient}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
+              >
+                <UserPlus className="w-4 h-4" />
+                Create &ldquo;{searchQuery}&rdquo; as new client
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {clients.map((c) => (
+                <ClientRow key={c.id} client={c} onSelect={onSelectClient} />
+              ))}
+            </div>
+          )
+        ) : !selectedClient ? (
+          /* Default empty state — only when no client selected */
+          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--platform-foreground)/0.06)] flex items-center justify-center">
+              <Search className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)]" />
+            </div>
             <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-              No clients found
+              Search for a client or create a new one
             </p>
             <button
               onClick={onNewClient}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
             >
               <UserPlus className="w-4 h-4" />
-              Create &ldquo;{searchQuery}&rdquo; as new client
+              New Client
             </button>
           </div>
         ) : (
-          <div className="space-y-1">
-            {clients.map((c) => (
-              <ClientRow key={c.id} client={c} onSelect={onSelectClient} />
-            ))}
+          /* Client already selected, show helpful hint */
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)]">
+              Search above to change client, or continue
+            </p>
           </div>
-        )
-      ) : (
-        /* Default empty state */
-        <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--platform-foreground)/0.06)] flex items-center justify-center">
-            <Search className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)]" />
-          </div>
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-            Search for a client or create a new one
-          </p>
+        )}
+      </div>
+
+      {/* Continue button when client is selected */}
+      {selectedClient && (
+        <div className="pt-4 mt-auto">
           <button
-            onClick={onNewClient}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
+            onClick={onContinue}
+            className="w-full h-12 rounded-full bg-[hsl(var(--platform-accent))] text-white font-sans text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all"
           >
-            <UserPlus className="w-4 h-4" />
-            New Client
+            Continue
           </button>
         </div>
       )}
