@@ -178,10 +178,6 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
   const stepTitle = step === 'client' ? 'Select Client' : step === 'service' ? 'Choose Services' : 'Confirm Booking';
 
-  // Auto-set location when profile loads
-  if (staffProfile?.location_id && !selectedLocation) {
-    setSelectedLocation(staffProfile.location_id);
-  }
 
   return (
     <AnimatePresence>
