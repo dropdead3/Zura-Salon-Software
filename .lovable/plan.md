@@ -1,36 +1,44 @@
 
 
-## Update "Launch Dock Preview" to Open Org-Less Demo with Real-Style Faux Data
+## Show Assistant Names + Add Team Member Toggle in Demo Mode
 
-### What Changes
+### Problem
+1. Appointments only show stylist name (e.g., "Jamie") but not assigned assistants
+2. In demo mode, there's no way to switch between team members if one has no appointments today
 
-**1. Update `DockAppTab.tsx` button to open `/dock?demo=preview`**
-- Change the "Launch Dock Preview" button from `/dock` to `/dock?demo=preview`
-- This uses the special sentinel value `preview` (not a UUID) to signal "generic demo, no org"
+### Changes
 
-**2. Update `Dock.tsx` to handle `?demo=preview` as a pure-faux-data demo**
-- When `demoOrgId === 'preview'`, create a session with `organizationId: 'demo-org-000'` (the sentinel that triggers `usesRealData = false` in the context)
-- This ensures the Dock boots into full mock-data mode with no DB queries
+**1. Add `assistant_names` to `DockAppointment` interface and fetch them in `useDockAppointments.ts`**
+- Add `assistant_names?: string[]` field to the interface
+- In the org-specific demo path: after fetching appointments, batch-query `appointment_assistants` for all appointment IDs, resolve names via `employee_profiles`, and attach them
+- In the normal (non-demo) path: same batch query pattern
+- In faux data: add sample assistant names to `DEMO_APPOINTMENTS`
 
-**3. Replace `DEMO_SERVICES` with Drop Dead Salons' real service catalog**
-- Replace the current 10 generic services in `dockDemoData.ts` with the actual Drop Dead Salons menu (~70 services across Blonding, Color, Vivids, Haircuts, Styling, Extensions, Extras, Consultation categories)
-- This gives the preview a realistic, rich service catalog that looks like a real salon
+**2. Display assistant names on `DockAppointmentCard.tsx`**
+- Below the stylist name row, render assistant names with a `Users` icon (e.g., "w/ Alexis, Kylie")
+- Subtle styling matching the existing stylist name row
+
+**3. Add Team Member toggle to `DockDeviceSwitcher.tsx`**
+- Only visible in demo mode (`usesRealData`)
+- A `<select>` dropdown (styled like the location picker) with a `User` icon, placed to the right of the location selector
+- Fetches team members from `employee_profiles` filtered by `organization_id` (via the org's locations)
+- Default: "All" (current behavior — show all appointments for the location)
+- Selecting a specific stylist filters appointments by `stylist_user_id`
+
+**4. Wire the stylist filter through the component chain**
+- Add `staffFilter` state in `Dock.tsx`, pass through `DockLayout` → `DockScheduleTab` → `useDockAppointments`
+- `useDockAppointments`: when `staffFilter` is set (and not "all"), add `.eq('stylist_user_id', staffFilter)` to the query
+- Pass `onStaffFilterChange` callback to `DockDeviceSwitcher`
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/platform/backroom/DockAppTab.tsx` | Change button URL to `/dock?demo=preview` |
-| `src/pages/Dock.tsx` | Handle `demo=preview` sentinel → `organizationId: 'demo-org-000'` |
-| `src/hooks/dock/dockDemoData.ts` | Replace `DEMO_SERVICES` with full Drop Dead Salons catalog (~70 services across 8 categories) |
-
-### Data Preview (sample from each category)
-
-- **Blonding**: Full Balayage ($240, 270min), Full Highlight ($240, 240min), Lightener Retouch ($155, 120min), etc.
-- **Color**: Single Process Color ($145, 90min), Root Smudge + Blowout ($120, 90min), Glaze + Blowout ($130, 60min), etc.
-- **Vivids**: Full Vivid ($130, 120min), Custom Vivid ($170, 120min), Vivid Toner ($25, 30min), etc.
-- **Haircuts**: Signature Haircut ($75, 60min), Clipper Cut ($40, 45min), Buzz Cut ($35, 30min), etc.
-- **Styling**: Blowout ($50, 45min), Special Event Styling ($85, 90min), etc.
-- **Extensions**: 1-3 Row installs/reinstalls, tape-in, removal, etc.
-- **Extras**: Deep Conditioning ($25, 15min), CPR Treatment ($50, 90min), Clear Gloss ($50, 30min), etc.
+| `src/hooks/dock/useDockAppointments.ts` | Add `assistant_names` field, fetch from `appointment_assistants` + profiles; accept optional `staffFilter` param |
+| `src/hooks/dock/dockDemoData.ts` | Add `assistant_names` to faux appointments |
+| `src/components/dock/schedule/DockAppointmentCard.tsx` | Render assistant names below stylist |
+| `src/components/dock/DockDeviceSwitcher.tsx` | Add team member dropdown (demo mode only) |
+| `src/pages/Dock.tsx` | Add `staffFilter` state, pass through props |
+| `src/components/dock/DockLayout.tsx` | Thread `staffFilter` + `onStaffFilterChange` props |
+| `src/components/dock/schedule/DockScheduleTab.tsx` | Pass `staffFilter` to hook |
 
