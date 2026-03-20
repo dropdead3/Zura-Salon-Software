@@ -1,49 +1,24 @@
 
 
-## Fix Time Selector: Restore "Now" Label and Filter Out-of-Hours Slots
+## Move "New client — first visit" Badge Inline on Client Card
 
-### Problems
+### Change
 
-1. **"Now" label missing**: The time slot button renders `formatTime12h(t)` for all slots. The `isNowSlot` variable is computed (line 1216) but never used to show a "Now" label.
+**`src/components/dock/schedule/DockNewBookingSheet.tsx`** — Confirm step (lines 1113–1156)
 
-2. **Out-of-hours times (5:00 AM, 5:15 AM)**: Lines 130-134 always inject the current rounded time into the slot list, even when it falls outside operating hours. If a user opens the wizard at 5 AM, that time gets prepended. This should only happen for today's date, and even then it's debatable — but at minimum, times outside operating hours should not appear.
+1. **Remove the standalone banner** (lines 1152–1156): Delete the separate `New client — first visit` div that sits below the client card.
 
-### Changes
-
-**`src/components/dock/schedule/DockNewBookingSheet.tsx`**
-
-1. **Stop injecting out-of-hours "Now" slot** (lines 130-134): Only inject the now-slot if:
-   - The selected date is today, AND
-   - The now-rounded time falls within operating hours (between open and close)
-   
-   If outside hours, don't add it — let the user pick from valid operating-hour slots.
-
-2. **Restore "Now" label on the time button** (line 1228): When the slot matches the current rounded time and the selected date is today, render "Now" instead of (or alongside) the formatted time, e.g. `"Now"` or `"Now · 2:15 PM"`.
-
-### Technical detail
+2. **Badge the client card**: When `clientHistory?.visitCount === 0`, add a ghost-styled badge on the right side of the client card (line 1113–1123), vertically centered using `items-center`. The badge text: "New client — first visit" with Sparkles icon, styled ghost (no background fill, just subtle border/text):
 
 ```
-// Line 130-134 replacement:
-const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
-const nowRounded = Math.ceil(nowMinutes / 15) * 15;
-const nowStr = minutesToTime(nowRounded);
-if (isToday && opSlots.length > 0 && !opSlots.includes(nowStr)) {
-  // Only inject if within operating window
-  const startMins = timeToMinutes(openTime!);
-  const endMins = timeToMinutes(closeTime!);
-  if (nowRounded >= startMins && nowRounded <= endMins) {
-    return [nowStr, ...opSlots];
-  }
-}
-if (opSlots.length === 0) return [nowStr]; // fallback for closed days
-return opSlots;
+// Inside the client card div (line 1113), add after flex-1 block:
+{clientHistory && clientHistory.visitCount === 0 && (
+  <div className="flex items-center gap-1 px-2 py-1 rounded-full border border-violet-500/30 shrink-0">
+    <Sparkles className="w-3 h-3 text-violet-400" />
+    <span className="text-[10px] text-violet-400 whitespace-nowrap">New client — first visit</span>
+  </div>
+)}
 ```
 
-```
-// Line 1228 — add "Now" label:
-const isToday = date === format(new Date(), 'yyyy-MM-dd');
-const nowRounded = minutesToTime(Math.ceil(nowMinutes / 15) * 15);
-// In the button text:
-{isToday && t === nowRounded ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
-```
+This keeps the client card compact while surfacing the new-client indicator inline, right-aligned and vertically centered.
 
