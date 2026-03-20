@@ -11,7 +11,7 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
-  Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote,
+  Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote, Plus,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DockNewClientSheet } from './DockNewClientSheet';
 import { DEMO_SERVICES, DEMO_SERVICES_BY_CATEGORY, searchDemoClients, type DemoService } from '@/hooks/dock/dockDemoData';
 
 interface DockNewBookingSheetProps {
@@ -78,6 +79,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState('09:00');
   const [notes, setNotes] = useState('');
+  const [showNewClientSheet, setShowNewClientSheet] = useState(false);
 
   // Data — scope queries by organization
   const { data: locations = [] } = useLocations(staff.organizationId || undefined);
@@ -232,6 +234,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
     setSelectedTime('09:00');
     setNotes('');
+    setShowNewClientSheet(false);
     onClose();
   };
 
@@ -302,16 +305,30 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
             {/* Content */}
             <div className="flex-1 min-h-0 overflow-y-auto">
               {step === 'client' && (
-                <ClientStepDock
-                  clients={clients}
-                  isLoading={isLoadingClients}
-                  searchQuery={clientSearch}
-                  onSearchChange={setClientSearch}
-                  onSelectClient={(c) => {
-                    setSelectedClient(c);
-                    setStep('service');
-                  }}
-                />
+                <>
+                  <ClientStepDock
+                    clients={clients}
+                    isLoading={isLoadingClients}
+                    searchQuery={clientSearch}
+                    onSearchChange={setClientSearch}
+                    onSelectClient={(c) => {
+                      setSelectedClient(c);
+                      setStep('service');
+                    }}
+                    onNewClient={() => setShowNewClientSheet(true)}
+                  />
+                  <DockNewClientSheet
+                    open={showNewClientSheet}
+                    onClose={() => setShowNewClientSheet(false)}
+                    locationId={locationId}
+                    organizationId={organizationId}
+                    onClientCreated={(c) => {
+                      setSelectedClient(c);
+                      setStep('service');
+                      setShowNewClientSheet(false);
+                    }}
+                  />
+                </>
               )}
 
               {step === 'service' && (
@@ -363,40 +380,69 @@ function ClientStepDock({
   searchQuery,
   onSearchChange,
   onSelectClient,
+  onNewClient,
 }: {
   clients: PhorestClient[];
   isLoading: boolean;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onSelectClient: (c: PhorestClient) => void;
+  onNewClient: () => void;
 }) {
   return (
     <div className="px-5 pb-6">
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
-        <input
-          type="text"
-          placeholder="Search by name, phone, or email..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full h-11 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:border-violet-500/50"
-        />
+      {/* Search + New Client row */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
+          <input
+            type="text"
+            placeholder="Search by name, phone, or email..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:border-violet-500/50"
+          />
+        </div>
+        <button
+          onClick={onNewClient}
+          className="h-11 w-11 shrink-0 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center hover:bg-violet-600/30 active:scale-95 transition-all"
+          title="Create new client"
+        >
+          <Plus className="w-5 h-5 text-violet-400" />
+        </button>
       </div>
 
       {/* Results */}
       {searchQuery.length < 2 ? (
-        <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-12">
-          Type at least 2 characters to search
-        </p>
+        <div className="text-center py-12 space-y-3">
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            Type at least 2 characters to search
+          </p>
+          <button
+            onClick={onNewClient}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans text-violet-400 hover:text-violet-300 hover:bg-violet-600/10 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Or create a new client
+          </button>
+        </div>
       ) : isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
         </div>
       ) : clients.length === 0 ? (
-        <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-12">
-          No clients found
-        </p>
+        <div className="text-center py-12 space-y-3">
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            No clients found
+          </p>
+          <button
+            onClick={onNewClient}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Create "{searchQuery}" as new client
+          </button>
+        </div>
       ) : (
         <div className="space-y-1">
           {clients.map((c) => (
