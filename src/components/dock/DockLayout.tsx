@@ -34,7 +34,7 @@ const DEVICE_DIMENSIONS = {
 export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOpenAppointment, onBack }: DockLayoutProps) {
   const { isDemoMode, device, setDevice, orientation, setOrientation } = useDockDemo();
   const showingDetail = view.screen === 'appointment-detail';
-  const isConstrained = isDemoMode && device !== 'full';
+  const isConstrained = device !== 'full';
 
   const dockContent = (
     <div
