@@ -486,7 +486,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                     locationId={locationId}
                     organizationId={organizationId}
                     onClientCreated={(c) => {
-                      setSelectedClient(c);
+                      setSelectedClient({ ...c, client_since: null });
                       setStep('service');
                       setShowNewClientSheet(false);
                     }}
