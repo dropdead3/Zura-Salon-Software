@@ -1,58 +1,64 @@
 
 
-## Why Demo Mode Pulls from Drop Dead Salons Data
+## Fix: Scope Dock PIN Validation to Prevent Cross-Org Access
 
-### Root Cause
+### The Problem
 
-The Dock has **no concept of organization scoping**. The current architecture:
+Two PIN validation functions exist:
+- **`validate_user_pin(_organization_id, _pin)`** — used by Kiosk and Dashboard lock. **Already org-scoped. Safe.**
+- **`validate_dock_pin(_pin)`** — used by Zura Dock. **Globally scoped. Unsafe.** A PIN collision across orgs could grant access to the wrong salon's data.
 
-1. **`DockPinGate`** — The PIN gate calls `validate_dock_pin(_pin)` which searches **all** `employee_profiles` globally (no org filter). It returns a `location_id` but no `organization_id`.
+### Why the Dock Is Different
 
-2. **`DockStaffSession`** — The session object only carries `userId`, `displayName`, `avatarUrl`, and `locationId`. There is **no `organizationId` field**.
+The Dock is a standalone device app — it doesn't know which organization it belongs to before a PIN is entered. That's why `validate_dock_pin` takes only a PIN, not an org ID.
 
-3. **Demo Mode bypass** — When "Demo Mode →" is clicked, it creates a fake session with `userId: 'dev-bypass-000'` and grabs the first location from `useLocations()`, which returns locations for whatever org the RLS/query exposes (currently Drop Dead Salons since that's the only org with location data).
+### Solution: Device-Level Org Binding
 
-4. **Service/Client queries** — `DockNewBookingSheet` calls `useServicesByCategory(locationId)` and `usePhorestServices(locationId)`, which query `phorest_services` filtered by the location's `phorest_branch_id`. No org isolation.
+The Dock already stores a `dock-location-id` in localStorage for device configuration. We extend this pattern to also store `dock-organization-id`. When a Dock device is first set up, it gets bound to an organization. All subsequent PIN lookups are scoped to that org.
 
-5. **Demo data hooks** — `useDockAppointments`, `useDockProductCatalog`, and `useDockMixSessions` correctly return static mock data when `isDemoMode === true`. But the booking sheet and other real-data queries don't check `isDemoMode` — they hit the live DB.
+### Changes
 
-### The Vision
+**1. Database migration — scope `validate_dock_pin` to accept optional org ID**
 
-Yes — each organization should have its own demo/training mode, fully scoped to their own data. The Dock is a per-org tool, and demo mode should reflect that org's services, staff, and products.
+```sql
+DROP FUNCTION IF EXISTS public.validate_dock_pin(text);
 
-### Plan
+CREATE FUNCTION public.validate_dock_pin(_pin text, _organization_id uuid DEFAULT NULL)
+RETURNS TABLE(user_id uuid, display_name text, photo_url text, location_id text, organization_id uuid)
+...
+WHERE ep.login_pin = _pin
+  AND ep.is_active = true AND ep.is_approved = true
+  AND (_organization_id IS NULL OR ep.organization_id = _organization_id)
+LIMIT 1
+```
 
-**1. Add `organizationId` to `DockStaffSession`**
-- In `src/pages/Dock.tsx`, add `organizationId: string` to the `DockStaffSession` interface.
+When `_organization_id` is provided, PIN lookup is scoped. When NULL (first-time setup), it falls back to global lookup but then the result's `organization_id` is stored on the device.
 
-**2. Update `validate_dock_pin` to return `organization_id`**
-- SQL migration: alter the function to also return `ep.organization_id`.
+**2. `DockPinGate.tsx` — read and write `dock-organization-id` from localStorage**
 
-**3. Thread org through PIN gate success**
-- In `DockPinGate.tsx`, pass `organizationId` from the RPC result into `onSuccess`.
+- On mount, read `dock-organization-id` from localStorage
+- Pass it to `validate_dock_pin` RPC call
+- On successful first login (no stored org), persist the returned `organization_id` to localStorage
+- This makes subsequent PIN entries org-scoped
 
-**4. Scope Demo Mode to an org**
-- Add an `organizationId` to `DockDemoContext`.
-- In Demo Mode bypass (DockPinGate), resolve the org from the first location or prompt the user to pick one.
-- When `isDemoMode` is true, the `DockDemoProvider` carries the resolved org ID.
+**3. Dock Settings — add a "Reset Device" action**
 
-**5. Scope real-data queries with org ID**
-- `useLocations()` calls in Dock components should filter by `organizationId`.
-- `usePhorestServices` already filters by location → branch, which is implicitly org-scoped, so this is OK once locations are org-scoped.
-- Client search in `DockNewBookingSheet` should filter by org.
-
-**6. Extend demo data for booking flow**
-- Add `DEMO_SERVICES` to `dockDemoData.ts` so the booking sheet works in demo mode without hitting the DB.
-- Add `isDemoMode` checks to `DockNewBookingSheet` for services and client search, returning mock data.
+- In the Dock settings tab, add a button to clear `dock-organization-id` and `dock-location-id` from localStorage, allowing rebinding to a different org (admin-only action behind PIN confirmation)
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/Dock.tsx` | Add `organizationId` to `DockStaffSession` |
-| `supabase/migrations/` | New migration: update `validate_dock_pin` to return `organization_id` |
-| `src/components/dock/DockPinGate.tsx` | Pass `organizationId` from RPC result; resolve org for demo bypass |
-| `src/contexts/DockDemoContext.tsx` | Add `organizationId` to context value |
-| `src/hooks/dock/dockDemoData.ts` | Add `DEMO_SERVICES` and `DEMO_CLIENTS` mock data |
-| `src/components/dock/schedule/DockNewBookingSheet.tsx` | Add demo-mode checks for services and client search |
+| `supabase/migrations/` | Update `validate_dock_pin` to accept optional `_organization_id` |
+| `src/components/dock/DockPinGate.tsx` | Read/write `dock-organization-id` in localStorage; pass to RPC |
+| Dock settings (existing) | Add "Reset Device" button to unbind org |
+
+### Security Summary After Fix
+
+| Surface | Org-Scoped? |
+|---------|------------|
+| Dashboard Lock | ✅ Yes (`validate_user_pin`) |
+| Kiosk Settings | ✅ Yes (`validate_user_pin`) |
+| Zura Dock (first login) | ⚠️ Global (binds device to org) |
+| Zura Dock (subsequent) | ✅ Yes (device-bound org) |
 
