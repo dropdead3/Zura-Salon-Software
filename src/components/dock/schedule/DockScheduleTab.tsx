@@ -103,6 +103,12 @@ export function DockScheduleTab({ staff, onOpenAppointment }: DockScheduleTabPro
           </>
         )}
       </div>
+
+      <DockNewBookingSheet
+        open={showNewBooking}
+        onClose={() => setShowNewBooking(false)}
+        staff={staff}
+      />
     </div>
   );
 }
