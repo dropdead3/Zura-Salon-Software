@@ -932,19 +932,32 @@ function ConfirmStepDock({
         {/* Details */}
         <div className="rounded-xl border border-[hsl(var(--platform-border))] divide-y divide-[hsl(var(--platform-border))]">
           <DetailRow icon={<MapPin className="w-4 h-4" />} label="Location" value={locationName} />
-          <DetailRow icon={<User className="w-4 h-4" />} label="Stylist" value={stylistName} />
-          <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
-          <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
-        </div>
-
-        {/* Assistant selection */}
-        {teamMembers.length > 0 && (
-          <div>
-            <div className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2 flex items-center gap-1.5">
-              <Users className="w-3 h-3" />
-              Assistant (optional)
+          {/* Stylist row with inline Add Assistant */}
+          <div className="px-3 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-[hsl(var(--platform-foreground)/0.08)] flex items-center justify-center">
+                <User className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+              </div>
+              <div>
+                <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] font-display tracking-wider uppercase">Stylist</div>
+                <div className="text-sm text-[hsl(var(--platform-foreground))]">{stylistName}</div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
+            {teamMembers.length > 0 && (
+              <button
+                onClick={() => onAssistantsChange(selectedAssistants.length > 0 && showAssistantPicker ? [] : selectedAssistants, true)}
+                className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                <Users className="w-3.5 h-3.5" />
+                {selectedAssistants.length > 0
+                  ? teamMembers.filter(m => selectedAssistants.includes(m.userId)).map(m => m.name).join(', ')
+                  : '+ Add Assistant'}
+              </button>
+            )}
+          </div>
+          {/* Collapsible assistant chip picker */}
+          {showAssistantPicker && teamMembers.length > 0 && (
+            <div className="px-3 pb-2.5 flex flex-wrap gap-1.5">
               {teamMembers.map(m => {
                 const isSelected = selectedAssistants.includes(m.userId);
                 return (
@@ -970,8 +983,10 @@ function ConfirmStepDock({
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+          <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
+          <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
+        </div>
 
         {/* Time selector */}
         <div>
