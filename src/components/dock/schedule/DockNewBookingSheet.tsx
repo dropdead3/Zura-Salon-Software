@@ -1121,9 +1121,9 @@ function ConfirmStepDock({
             </div>
           </div>
           {clientHistory && clientHistory.visitCount === 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-violet-500/30 shrink-0">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-xs text-violet-400 whitespace-nowrap">New client — first visit</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 shrink-0">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-xs text-amber-400 whitespace-nowrap">New client — first visit</span>
             </div>
           )}
         </div>
