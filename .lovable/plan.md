@@ -1,107 +1,124 @@
 
 
-## Connect Acaia Pearl BLE Scale via Capacitor
+## Full URL Hierarchy Restructure
 
-### Acaia Pearl BLE Protocol (from reverse-engineered open-source libraries)
-
-The Acaia Pearl uses a **custom GATT service** (not the standard weight service):
-- **Service UUID**: `00001820-0000-1000-8000-00805f9b34fb` (or discovered via name prefix `ACAIA` / `PEARL`)
-- **Weight Characteristic**: `00002a80-0000-1000-8000-00805f9b34fb` — subscribe to notifications
-- **Command Characteristic**: same handle — write tare/start-weight-stream commands
-- **Packet format**: proprietary binary. Weight is encoded in a notification payload that needs decoding (header byte, event type, sign, weight bytes as little-endian, unit flag)
-- **Heartbeat**: the scale requires periodic "ident" packets (~3s) or it disconnects after ~5s of silence
-
-### Plan
-
-**1. Install Capacitor + BLE plugin** (npm packages)
-
-Add to `package.json`:
-- `@capacitor/core`
-- `@capacitor/cli` (dev)
-- `@capacitor/ios`
-- `@capacitor/android`
-- `@capacitor-community/bluetooth-le` — the standard Capacitor BLE plugin
-
-Create `capacitor.config.ts` with:
-- `appId`: `app.lovable.b06a574464b646299f76e0e2cb73ea52`
-- `appName`: `Zura Dock`
-- `server.url` pointing to the preview URL for hot-reload
-
-**2. New file: `src/lib/backroom/acaia-protocol.ts`** — Acaia Pearl packet codec
-
-Pure TypeScript, no native dependencies. Handles:
-- `encodeIdent()` — the heartbeat/identification packet the scale expects every ~3s
-- `encodeTare()` — tare command bytes
-- `encodeStartWeightNotifications()` — tells the scale to begin streaming weight
-- `decodeNotification(data: DataView): { weight: number; unit: string; stable: boolean } | null` — parses the proprietary binary notification into a weight reading
-- Constants: service UUID, characteristic UUIDs, device name prefix filter (`ACAIA`, `PROCHBT`)
-
-This is based on the open-source `btscale` and `pyacaia` reverse-engineering work.
-
-**3. Rewrite: `src/lib/backroom/scale-adapter.ts`** — Real BLE adapter
-
-Replace the `BLEScaleAdapter` stub with a real implementation using `@capacitor-community/bluetooth-le`:
+### Target Structure
 
 ```text
-connect():
-  1. BleClient.initialize()
-  2. BleClient.requestDevice({ namePrefix: ['ACAIA', 'PROCHBT'] })
-  3. BleClient.connect(deviceId, onDisconnect)
-  4. BleClient.startNotifications(deviceId, serviceUuid, charUuid, onNotification)
-  5. Start heartbeat interval (encodeIdent every 3s)
-  6. Update state: scanning → pairing → connected
-
-onNotification(data):
-  1. Parse via decodeNotification()
-  2. If valid weight → emit WeightEvent to all listeners
-  3. Update state to stable_reading or unstable_reading based on stable flag
-
-disconnect():
-  1. Clear heartbeat interval
-  2. BleClient.stopNotifications()
-  3. BleClient.disconnect()
-  
-tare():
-  1. BleClient.write(deviceId, serviceUuid, charUuid, encodeTare())
+/                              → Platform landing
+/login                         → Unified login
+/platform/*                    → Zura platform admin (was /dashboard/platform/*)
+/org/:orgSlug/*                → Public org pages (unchanged)
+/org/:orgSlug/dashboard/*      → Org dashboard (was /dashboard/*)
+/org/:orgSlug/dashboard/admin/* → Org admin pages (was /dashboard/admin/*)
+/dock                          → Standalone (unchanged)
+/kiosk/:locationId             → Standalone (unchanged)
 ```
 
-Add a `tare()` method to the `ScaleAdapter` interface (needed for bowl detection gate).
+### Scale
 
-**4. Update: `src/components/dock/scale/DockScaleTab.tsx`**
+- **~100 files** with hardcoded `/dashboard` paths (1900+ references)
+- **1 routing file** (App.tsx) with 150+ route definitions
+- **6 nav config files** (dashboardNav.ts, platformNav.ts, route-utils.ts, etc.)
+- **2 layout components** (DashboardLayout, PlatformLayout)
 
-- Remove simulated `setTimeout` state transitions
-- Use the real adapter's `connect()` which now drives actual BLE
-- Add "Tare" button when connected
-- Show live weight from adapter's `onReading` callback
-- Show device name after pairing (from `BleClient.requestDevice` result)
-- Graceful fallback: if `BleClient.initialize()` throws (running in browser, not Capacitor), show a message "BLE requires the native Zura Dock app"
+### Strategy: Centralized Path Builder + Systematic Migration
 
-**5. Update: `src/components/dock/mixing/DockBowlDetectionGate.tsx`**
+Rather than find-replacing 1900 strings, we create a **single path utility** that every component uses. This also future-proofs org switching (user navigates between orgs, URL updates automatically).
 
-- In "taring" phase, actually call `adapter.tare()` instead of just waiting
-- Listen for `onReading` to confirm zero weight after tare
-- Demo mode still auto-advances as before
+---
 
-### What the user needs to do locally
+### Phase 1 — Foundation (4 files)
 
-After these code changes are deployed:
-1. Export to GitHub, `git pull`
-2. `npm install`
-3. `npx cap init` (config file will already exist)
-4. `npx cap add ios`
-5. `npx cap sync`
-6. Open in Xcode: `npx cap open ios`
-7. Ensure Bluetooth permission keys are in `Info.plist` (`NSBluetoothAlwaysUsageDescription`)
-8. Build and run on a real iPad with the Acaia Pearl powered on
+**New: `src/lib/org-path.ts`** — Centralized path builder
 
-### Files
+```typescript
+// Build org-scoped dashboard paths
+export function orgDashboardPath(orgSlug: string, path: string = '') {
+  return `/org/${orgSlug}/dashboard${path.startsWith('/') ? path : `/${path}`}`;
+}
 
-| File | Action |
-|------|--------|
-| `package.json` | Add Capacitor + BLE deps |
-| `capacitor.config.ts` | Create — Capacitor config |
-| `src/lib/backroom/acaia-protocol.ts` | Create — Acaia packet codec |
-| `src/lib/backroom/scale-adapter.ts` | Rewrite BLEScaleAdapter with real BLE |
-| `src/components/dock/scale/DockScaleTab.tsx` | Update to use real adapter + live weight |
-| `src/components/dock/mixing/DockBowlDetectionGate.tsx` | Wire tare to real adapter |
+// Build platform paths  
+export function platformPath(path: string = '') {
+  return `/platform${path.startsWith('/') ? path : `/${path}`}`;
+}
+```
+
+**New: `src/hooks/useOrgDashboardPath.ts`** — React hook version
+
+Returns a `dashPath(subpath)` function that auto-injects the current org slug from either:
+- URL param `:orgSlug` (if already in org-scoped route)
+- `OrganizationContext.effectiveOrganization.slug` (fallback)
+
+This is the **single replacement** for every hardcoded `"/dashboard/..."` in the codebase.
+
+**Update: `src/lib/route-utils.ts`** — New zone detection
+
+```typescript
+getRouteZone('/platform/...') → 'platform'
+getRouteZone('/org/:slug/dashboard/...') → 'org-dashboard'  
+getRouteZone('/org/:slug/...') → 'public'
+```
+
+**Update: `src/config/platformNav.ts`** — Change all hrefs from `/dashboard/platform/*` to `/platform/*`
+
+---
+
+### Phase 2 — Routing (1 file)
+
+**Update: `src/App.tsx`** — Restructure all route definitions
+
+- Wrap all org dashboard routes inside `<Route path="/org/:orgSlug/dashboard">` with a new `OrgDashboardRoute` wrapper that resolves org from URL slug
+- Move platform routes from `/dashboard/platform/*` to `/platform/*`
+- Add redirect routes: `/dashboard/*` → `/org/:resolvedSlug/dashboard/*` (for bookmarks, muscle memory)
+- Add redirect: `/dashboard/platform/*` → `/platform/*`
+
+**New: `src/components/OrgDashboardRoute.tsx`** — Wrapper that reads `:orgSlug` from URL, validates it, and sets org context (similar to existing `OrgPublicRoute`)
+
+---
+
+### Phase 3 — Systematic Component Migration (~95 files)
+
+Every file with a hardcoded `/dashboard` link or navigate call gets updated:
+
+- `Link to="/dashboard/admin/analytics"` → `Link to={dashPath('/admin/analytics')}`
+- `navigate('/dashboard/schedule')` → `navigate(dashPath('/schedule'))`
+- `backTo="/dashboard/admin/team-hub"` → `backTo={dashPath('/admin/team-hub')}`
+
+Platform paths:
+- `"/dashboard/platform/accounts"` → `"/platform/accounts"` (simple string replace)
+
+The `dashPath` function comes from `useOrgDashboardPath()` hook, called once at the top of each component.
+
+**Nav configs**: `dashboardNav.ts` hrefs become functions that accept orgSlug, or the sidebar component builds paths dynamically.
+
+---
+
+### Phase 4 — Backward Compatibility Redirects
+
+A `<LegacyRedirects />` component in App.tsx that catches:
+- `/dashboard/*` → resolves user's org slug from auth context → redirects to `/org/:slug/dashboard/*`
+- `/dashboard/platform/*` → `/platform/*`
+
+This ensures existing bookmarks, shared links, and muscle memory still work.
+
+---
+
+### Key Technical Decisions
+
+1. **Org slug source**: URL param is primary (enables org switching via URL). Falls back to auth context for redirects only.
+2. **The `dashPath()` hook is the migration vehicle** — every component gets a one-line addition and all its paths become org-aware.
+3. **Platform paths are simple string changes** — no hook needed, just `/dashboard/platform` → `/platform`.
+4. **No database changes** — orgs already have `slug` field.
+
+### File Count Estimate
+
+| Phase | New | Modified | Total |
+|-------|-----|----------|-------|
+| 1 — Foundation | 2 | 2 | 4 |
+| 2 — Routing | 1 | 1 | 2 |
+| 3 — Components | 0 | ~95 | ~95 |
+| 4 — Redirects | 0 | 1 | 1 |
+
+This will need to be implemented across multiple messages given the file count. Phase 1+2 first, then Phase 3 in batches of ~15-20 files, then Phase 4.
 
