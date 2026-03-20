@@ -824,7 +824,7 @@ function ServiceStepDock({
                           <div className="flex items-center gap-3 mt-0.5">
                             <span className="flex items-center gap-1 text-xs text-[hsl(var(--platform-foreground-muted))]">
                               <Clock className="w-3 h-3" />
-                              {s.duration_minutes}m
+                              {formatMinutesToDuration(s.duration_minutes)}
                             </span>
                             {s.price !== null && (
                               <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
