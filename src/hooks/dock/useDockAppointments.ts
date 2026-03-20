@@ -90,7 +90,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
               .in('user_id', assistantUserIds);
             const nameMap: Record<string, string> = {};
             for (const p of (assistantProfiles || [])) {
-              nameMap[p.user_id] = p.display_name || p.full_name || '';
+              nameMap[p.user_id] = formatFirstLastInitial(p.display_name || p.full_name || '');
             }
             for (const a of assistantData) {
               const name = nameMap[a.assistant_user_id];

@@ -6,6 +6,7 @@ import { useDockDemo } from '@/contexts/DockDemoContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { DockDevice, DockOrientation } from '@/hooks/dock/useDockDevicePreview';
+import { formatFirstLastInitial } from '@/lib/dock-utils';
 
 interface DockDeviceSwitcherProps {
   device: DockDevice;
