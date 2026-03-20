@@ -187,3 +187,70 @@ export function searchDemoProducts(query: string): DockProduct[] {
     (p) => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)
   );
 }
+
+// ─── Mock Services (for demo booking flow) ───────────────────
+export interface DemoService {
+  id: string;
+  phorest_service_id: string;
+  phorest_branch_id: string;
+  name: string;
+  category: string;
+  duration_minutes: number;
+  price: number;
+  requires_qualification: boolean;
+  is_active: boolean;
+  allow_same_day_booking: boolean;
+  lead_time_days: number;
+  same_day_restriction_reason: string | null;
+}
+
+export const DEMO_SERVICES: DemoService[] = [
+  { id: 'demo-svc-1', phorest_service_id: 'demo-svc-1', phorest_branch_id: 'demo', name: 'Balayage', category: 'Color', duration_minutes: 120, price: 185, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-2', phorest_service_id: 'demo-svc-2', phorest_branch_id: 'demo', name: 'Root Touch-Up', category: 'Color', duration_minutes: 60, price: 95, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-3', phorest_service_id: 'demo-svc-3', phorest_branch_id: 'demo', name: 'Full Highlight', category: 'Color', duration_minutes: 150, price: 210, requires_qualification: false, is_active: true, allow_same_day_booking: false, lead_time_days: 1, same_day_restriction_reason: 'Requires consultation' },
+  { id: 'demo-svc-4', phorest_service_id: 'demo-svc-4', phorest_branch_id: 'demo', name: 'Toner Refresh', category: 'Color', duration_minutes: 30, price: 45, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-5', phorest_service_id: 'demo-svc-5', phorest_branch_id: 'demo', name: 'Color Correction', category: 'Color', duration_minutes: 240, price: 350, requires_qualification: true, is_active: true, allow_same_day_booking: false, lead_time_days: 2, same_day_restriction_reason: 'Senior stylist only' },
+  { id: 'demo-svc-6', phorest_service_id: 'demo-svc-6', phorest_branch_id: 'demo', name: 'Women\'s Cut & Style', category: 'Cut', duration_minutes: 45, price: 65, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-7', phorest_service_id: 'demo-svc-7', phorest_branch_id: 'demo', name: 'Men\'s Cut', category: 'Cut', duration_minutes: 30, price: 40, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-8', phorest_service_id: 'demo-svc-8', phorest_branch_id: 'demo', name: 'Blowout', category: 'Styling', duration_minutes: 30, price: 45, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-9', phorest_service_id: 'demo-svc-9', phorest_branch_id: 'demo', name: 'Deep Conditioning Treatment', category: 'Treatment', duration_minutes: 20, price: 35, requires_qualification: false, is_active: true, allow_same_day_booking: true, lead_time_days: 0, same_day_restriction_reason: null },
+  { id: 'demo-svc-10', phorest_service_id: 'demo-svc-10', phorest_branch_id: 'demo', name: 'Keratin Smoothing', category: 'Treatment', duration_minutes: 120, price: 275, requires_qualification: true, is_active: true, allow_same_day_booking: false, lead_time_days: 1, same_day_restriction_reason: 'Requires patch test' },
+];
+
+export const DEMO_SERVICES_BY_CATEGORY = (() => {
+  const grouped: Record<string, DemoService[]> = {};
+  for (const s of DEMO_SERVICES) {
+    if (!grouped[s.category]) grouped[s.category] = [];
+    grouped[s.category].push(s);
+  }
+  return grouped;
+})();
+
+// ─── Mock Clients (for demo booking flow) ────────────────────
+export interface DemoClient {
+  id: string;
+  phorest_client_id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+}
+
+export const DEMO_CLIENTS: DemoClient[] = [
+  { id: 'demo-client-1', phorest_client_id: 'demo-pc-1', name: 'Sarah Mitchell', email: 'sarah.m@example.com', phone: '(480) 555-0101' },
+  { id: 'demo-client-2', phorest_client_id: 'demo-pc-2', name: 'Jessica Chen', email: 'jchen@example.com', phone: '(480) 555-0102' },
+  { id: 'demo-client-3', phorest_client_id: 'demo-pc-3', name: 'Emily Rodriguez', email: 'emily.r@example.com', phone: '(602) 555-0103' },
+  { id: 'demo-client-4', phorest_client_id: 'demo-pc-4', name: 'Amanda Park', email: 'apark@example.com', phone: '(480) 555-0104' },
+  { id: 'demo-client-5', phorest_client_id: 'demo-pc-5', name: 'Lauren Taylor', email: 'ltaylor@example.com', phone: '(602) 555-0105' },
+  { id: 'demo-client-6', phorest_client_id: 'demo-pc-6', name: 'Maria Gonzalez', email: 'maria.g@example.com', phone: '(480) 555-0106' },
+  { id: 'demo-client-7', phorest_client_id: 'demo-pc-7', name: 'Rachel Kim', email: 'rkim@example.com', phone: '(602) 555-0107' },
+  { id: 'demo-client-8', phorest_client_id: 'demo-pc-8', name: 'Olivia Barnes', email: 'obarnes@example.com', phone: '(480) 555-0108' },
+];
+
+export function searchDemoClients(query: string): DemoClient[] {
+  const q = query.toLowerCase();
+  return DEMO_CLIENTS.filter(
+    (c) => c.name.toLowerCase().includes(q) ||
+      (c.email && c.email.toLowerCase().includes(q)) ||
+      (c.phone && c.phone.includes(q))
+  );
+}
