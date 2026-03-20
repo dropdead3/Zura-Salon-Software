@@ -202,7 +202,7 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
     setSelectedLocation(staffProfile.location_id);
   }
 
-  return createPortal(
+  return (
     <AnimatePresence>
       {open && (
         <>
@@ -213,7 +213,7 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm z-[60]"
             onClick={handleClose}
           />
 
@@ -224,8 +224,8 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={SPRING}
-            className="fixed inset-x-0 bottom-0 z-[61] flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl"
-            style={{ maxHeight: '92vh' }}
+            className="absolute inset-x-0 bottom-0 z-[61] flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl"
+            style={{ maxHeight: '92%' }}
           >
             {/* Drag handle */}
             <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0" />
@@ -301,8 +301,7 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
           </motion.div>
         </>
       )}
-    </AnimatePresence>,
-    document.body,
+    </AnimatePresence>
   );
 }
 
