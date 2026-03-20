@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DEMO_APPOINTMENTS } from './dockDemoData';
+import { formatFirstLastInitial } from '@/lib/dock-utils';
 
 export interface DockAppointment {
   id: string;
@@ -69,7 +70,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             .select('user_id, display_name, full_name')
             .in('user_id', stylistIds);
           for (const p of (profiles || [])) {
-            stylistMap[p.user_id] = p.display_name || p.full_name || '';
+            stylistMap[p.user_id] = formatFirstLastInitial(p.display_name || p.full_name || '');
           }
         }
 
@@ -89,7 +90,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
               .in('user_id', assistantUserIds);
             const nameMap: Record<string, string> = {};
             for (const p of (assistantProfiles || [])) {
-              nameMap[p.user_id] = p.display_name || p.full_name || '';
+              nameMap[p.user_id] = formatFirstLastInitial(p.display_name || p.full_name || '');
             }
             for (const a of assistantData) {
               const name = nameMap[a.assistant_user_id];
