@@ -25,6 +25,8 @@ interface DockLayoutProps {
   onOpenAppointment: (appointment: DockAppointment) => void;
   onBack: () => void;
   onLocationChange?: (locationId: string) => void;
+  staffFilter?: string;
+  onStaffFilterChange?: (staffId: string) => void;
 }
 
 const DEVICE_DIMENSIONS = {
