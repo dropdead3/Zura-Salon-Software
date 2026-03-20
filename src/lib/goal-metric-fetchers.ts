@@ -86,14 +86,16 @@ export async function fetchNoShowRate(
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled")');
+    .not('status', 'in', '("cancelled")')
+    .eq('is_demo', false);
 
   let noshowQ = supabase
     .from('phorest_appointments')
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .eq('status', 'no_show');
+    .eq('status', 'no_show')
+    .eq('is_demo', false);
 
   totalQ = applyLocationFilter(totalQ, locationId);
   noshowQ = applyLocationFilter(noshowQ, locationId);
