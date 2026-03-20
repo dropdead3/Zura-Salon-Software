@@ -666,7 +666,7 @@ function ServiceStepDock({
                         key={s.id}
                         onClick={() => onToggleService(s.phorest_service_id)}
                         className={cn(
-                          'w-full flex items-center justify-between p-3 rounded-xl text-left transition-all',
+                          'w-full flex items-center justify-between p-3 rounded-lg text-left transition-all',
                           isSelected
                             ? 'bg-violet-600/15 ring-1 ring-violet-500/30'
                             : 'hover:bg-[hsl(var(--platform-foreground)/0.06)]',
