@@ -957,7 +957,7 @@ function ConfirmStepDock({
                     <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
                   </div>
                   <div className="text-left">
-                    <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] font-display tracking-wider uppercase">Assistant</div>
+                    <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]">Assistant</div>
                     {selectedNames.length > 0 ? (
                       <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', ')}</div>
                     ) : (
