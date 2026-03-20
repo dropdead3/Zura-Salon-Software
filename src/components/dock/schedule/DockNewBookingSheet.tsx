@@ -135,8 +135,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
   // Computed
   const selectedServiceDetails = useMemo(
-    () => services.filter(s => selectedServices.includes(s.phorest_service_id)),
-    [services, selectedServices],
+    () => effectiveServices.filter(s => selectedServices.includes(s.phorest_service_id)),
+    [effectiveServices, selectedServices],
   );
   const totalDuration = selectedServiceDetails.reduce((s, v) => s + v.duration_minutes, 0);
   const totalPrice = selectedServiceDetails.reduce((s, v) => s + (v.price || 0), 0);
