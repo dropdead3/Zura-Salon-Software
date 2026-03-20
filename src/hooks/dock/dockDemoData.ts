@@ -51,6 +51,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = [
     id: 'demo-appt-3',
     source: 'local',
     client_name: 'Emily Rodriguez',
+    stylist_name: 'Jenna Brooks',
     service_name: 'Full Highlight + Cut',
     appointment_date: today,
     start_time: timeStr(addMinutes(now, 120)),
