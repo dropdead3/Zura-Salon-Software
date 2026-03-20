@@ -16,6 +16,7 @@ import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requi
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
 import { DockLiveDispensing } from '../mixing/DockLiveDispensing';
 import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
+import { DockBowlDetectionGate } from '../mixing/DockBowlDetectionGate';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
 import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
 import type { FormulaLine } from '../mixing/DockFormulaBuilder';
