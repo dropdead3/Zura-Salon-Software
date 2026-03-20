@@ -243,9 +243,39 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       if (!selectedClient) throw new Error('No client selected');
 
       if (isDemoMode) {
-        // Simulate booking in demo mode
-        await new Promise(resolve => setTimeout(resolve, 800));
-        return { success: true, demo: true };
+        // Insert a real row flagged as demo so it surfaces in Dock schedule
+        const endMinutes =
+          parseInt(selectedTime.split(':')[0]) * 60 +
+          parseInt(selectedTime.split(':')[1]) +
+          totalDuration;
+        const endH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
+        const endM = String(endMinutes % 60).padStart(2, '0');
+        const endTime = `${endH}:${endM}`;
+
+        const { data: inserted, error } = await supabase
+          .from('phorest_appointments')
+          .insert({
+            phorest_id: `demo-${crypto.randomUUID()}`,
+            phorest_branch_id: selectedLocation || 'demo-branch',
+            location_id: selectedLocation || locationId,
+            client_name: selectedClient.name,
+            phorest_client_id: selectedClient.phorest_client_id,
+            service_name: selectedServiceDetails.map(s => s.name).join(', '),
+            appointment_date: selectedDate,
+            start_time: `${selectedTime}:00`,
+            end_time: `${endTime}:00`,
+            duration_minutes: totalDuration,
+            total_price: totalPrice,
+            status: 'confirmed',
+            notes: notes || null,
+            stylist_user_id: staff.userId,
+            is_demo: true,
+          })
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        return { success: true, demo: true, appointment_id: inserted?.id };
       }
 
       const loc = locations.find(l => l.id === selectedLocation);
