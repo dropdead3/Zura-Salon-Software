@@ -2,7 +2,7 @@
  * DockAppointmentCard — Appointment card with colored left border accent.
  */
 
-import { Clock, FlaskConical, MoreVertical } from 'lucide-react';
+import { Clock, FlaskConical, MoreVertical, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
@@ -46,8 +46,18 @@ export function DockAppointmentCard({ appointment, accentColor, onTap }: DockApp
             </p>
           )}
 
+          {/* Stylist */}
+          {appointment.stylist_name && (
+            <div className="flex items-center gap-1 mt-1">
+              <User className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+              <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">
+                {appointment.stylist_name}
+              </span>
+            </div>
+          )}
+
           {/* Time */}
-          <div className="flex items-center gap-1.5 mt-2">
+          <div className="flex items-center gap-1.5 mt-1.5">
             <Clock className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
             <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
