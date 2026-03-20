@@ -1,43 +1,24 @@
 
 
-## Replace Back Arrow with Tappable Progress Tracker
+## Add Secondary "+ Add Another Service" Button to Confirm Footer
 
-### Problem
-The service step shows two back arrows (one in the header for step navigation, one for "All Categories" drill-down), which is confusing.
+### Change
 
-### Solution
-Replace the header back arrow with a horizontal step progress tracker (Client → Service → Confirm) that:
-- Shows all 3 steps as tappable segments
-- Highlights the current step and marks completed steps
-- Allows tapping a completed step to jump back to it
-- Removes the back arrow from the header entirely
+In `src/components/dock/schedule/DockNewBookingSheet.tsx`, add a secondary button in the confirm step footer (lines 902-922) above the "Confirm Booking" button.
 
-### Technical Changes
+- Add a `rounded-full` outline/ghost button styled with a dashed or transparent border and violet text: `+ Add Another Service`
+- On tap, calls `onAddService` (already wired) which navigates back to the service categories
+- Placed between the price summary and the "Confirm Booking" button
+- Style: full-width, `rounded-full`, transparent bg with violet text, matching the dock visual identity
 
-**File: `src/components/dock/schedule/DockNewBookingSheet.tsx`**
-
-1. **Header area (lines 294-307)**: Remove the conditional back arrow button. Replace with a tappable 3-step progress bar below the title.
-
-2. **Progress tracker markup**: Three pill segments labeled "Client", "Service", "Confirm" with:
-   - Completed steps: solid violet background, checkmark icon, tappable
-   - Current step: violet ring/outline, active label
-   - Future steps: muted/dim, not tappable
-   - Uses `font-display tracking-wide uppercase` to match existing Dock typography
-
-3. **Navigation logic**: Tapping a completed step calls `setStep()` directly (e.g., tapping "Client" when on "Service" resets back to client selection). Future steps remain non-interactive.
-
-4. **Remove `handleBack` usage from header** — the progress tracker replaces it entirely. The "All Categories" back link inside the service list remains unchanged.
-
-### Visual Layout
+### Layout
 ```text
-┌──────────────────────────────────┐
-│  CHOOSE SERVICES            ✕    │
-│  [✓ Client] ─ [● Service] ─ [ Confirm] │
-│  ← All Categories                │
-│  🔗 EXTENSIONS                   │
-│  ...                             │
-└──────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  Estimated Total              $85   │
+│  [ + Add Another Service ]  (outline)│
+│  [    Confirm Booking    ]  (violet) │
+└─────────────────────────────────────┘
 ```
 
-Each step segment is a small rounded-full pill, tappable when completed.
+Single file, single region edit (~lines 907-908).
 
