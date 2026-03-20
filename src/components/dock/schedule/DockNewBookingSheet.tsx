@@ -12,6 +12,8 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
   Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote, Plus,
+  Sparkles, Palette, Link, Wind, Droplets, ClipboardList, Paintbrush,
+  type LucideIcon,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
