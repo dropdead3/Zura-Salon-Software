@@ -1,30 +1,28 @@
 
 
-## Big Tappable Empty State for Bowl Mixing
+## Fix: Contain All Mixing Overlays Within the Device Viewer Frame
 
-### Change
+### Problem
 
-**`src/components/dock/appointment/DockServicesTab.tsx`** — lines 238-258
+Three mixing-related overlays use `fixed inset-0`, which positions them relative to the **browser viewport** instead of the device viewer frame. In demo/tablet mode, they break out of the rounded iPad container and cover the entire screen.
 
-Replace the empty state + separate "Add Bowl" button with a single large tappable area that fills the available space:
+Affected files:
+- `src/components/dock/mixing/DockNewBowlSheet.tsx` (line 30)
+- `src/components/dock/mixing/DockProductPicker.tsx` (line 81)
+- `src/components/dock/mixing/DockSessionCompleteSheet.tsx` (line 49)
 
-1. **Merge the empty state and Add Bowl button** into one full-area tap target when `allBowlCount === 0`
-2. **Large FlaskConical icon** (w-16 h-16) with a pulsing violet glow ring around it
-3. **Single line of text**: "Tap to start mixing your first bowl" in `text-base` weight
-4. **The entire area is clickable** — triggers `setShowNewBowl(true)`
-5. **Keep the separate "Add Bowl" button only when bowls already exist** (it's still needed for adding subsequent bowls)
+### Fix
 
-```text
-┌──────────────────────────────┐
-│                              │
-│                              │
-│         🧪 (large icon)      │
-│                              │
-│  Tap to start mixing your    │
-│        first bowl            │
-│                              │
-│                              │
-└──────────────────────────────┘
-  ↑ entire area is one big button
-```
+Change `fixed inset-0` → `absolute inset-0` in all three files. The parent container in `DockLayout` (line 84) already has `relative` + `overflow-hidden`, so absolute positioning will correctly contain these overlays within the device frame.
+
+**`DockNewBowlSheet.tsx`** — line 30
+- `fixed inset-0 z-40` → `absolute inset-0 z-40`
+
+**`DockProductPicker.tsx`** — line 81
+- `fixed inset-0 z-50` → `absolute inset-0 z-50`
+
+**`DockSessionCompleteSheet.tsx`** — line 49
+- `fixed inset-0 z-50` → `absolute inset-0 z-50`
+
+Three single-line changes. No structural or design changes needed — the sheets already render correctly once contained.
 
