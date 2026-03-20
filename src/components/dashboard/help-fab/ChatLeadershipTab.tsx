@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -91,6 +92,7 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
 }
 
 export function ChatLeadershipTab() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { isPlatformUser } = useAuth();
   const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
@@ -116,7 +118,7 @@ export function ChatLeadershipTab() {
   const handleSelectMember = async (userId: string) => {
     try {
       await createDM(userId);
-      navigate('/dashboard/team-chat');
+      navigate(dashPath('/team-chat'));
     } catch (error) {
       console.error('Failed to start chat:', error);
     }

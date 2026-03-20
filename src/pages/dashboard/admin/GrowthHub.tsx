@@ -9,6 +9,7 @@ import {
   Search,
   ChevronRight,
 } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface HubCardProps {
   href: string;
@@ -41,6 +42,7 @@ function HubCard({ href, icon: Icon, title, description }: HubCardProps) {
 }
 
 export default function GrowthHub() {
+  const { dashPath } = useOrgDashboardPath();
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
@@ -53,13 +55,13 @@ export default function GrowthHub() {
           <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">Marketing & Visibility</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <HubCard
-              href="/dashboard/campaigns"
+              href=dashPath('/campaigns')
               icon={Rocket}
               title="Campaigns"
               description="Create and manage marketing campaigns"
             />
             <HubCard
-              href="/dashboard/admin/seo-workshop"
+              href=dashPath('/admin/seo-workshop')
               icon={Search}
               title="SEO Workshop"
               description="Tasks and guides to improve local search visibility"

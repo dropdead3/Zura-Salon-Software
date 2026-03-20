@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectivePermissions } from '@/hooks/useEffectivePermissions';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -95,7 +96,7 @@ function renderProtectedRoute({
             </ProtectedRoute>
           }
         />
-        <Route path="/dashboard" element={<div>Dashboard Page</div>} />
+        <Route path=dashPath('/') element={<div>Dashboard Page</div>} />
         <Route path="/login" element={<div>Login Page</div>} />
       </Routes>
     </MemoryRouter>

@@ -12,6 +12,7 @@ import { format, parseISO } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -22,6 +23,7 @@ const meetingTypes = [
 ];
 
 export default function MyMeetings() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: meetings = [], isLoading } = useOneOnOneMeetings();
@@ -49,7 +51,7 @@ export default function MyMeetings() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <div>
-            <Link to="/dashboard/schedule-meeting">
+            <Link to={dashPath('/schedule-meeting')}>
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
@@ -74,7 +76,7 @@ export default function MyMeetings() {
                  title="No meetings scheduled"
                  description="Request a meeting to get started"
                  action={
-                   <Link to="/dashboard/schedule-meeting/new">
+                   <Link to={dashPath('/schedule-meeting/new')}>
                      <Button size={tokens.button.card}>Request a meeting</Button>
                    </Link>
                  }
@@ -84,7 +86,7 @@ export default function MyMeetings() {
                 <Card 
                   key={meeting.id} 
                   className="cursor-pointer hover:bg-muted/50 transition-colors" 
-                  onClick={() => navigate(`/dashboard/meeting/${meeting.id}`)}
+                  onClick={() => navigate(`${dashPath('/meeting/${meeting.id}')}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
@@ -122,7 +124,7 @@ export default function MyMeetings() {
                         <Button
                           size={tokens.button.inline}
                           variant="ghost"
-                          onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/meeting/${meeting.id}`); }}
+                          onClick={(e) => { e.stopPropagation(); navigate(`${dashPath('/meeting/${meeting.id}')}`); }}
                         >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Open

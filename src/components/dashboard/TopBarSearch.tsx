@@ -14,39 +14,40 @@ import {
   manageNavItems,
   systemNavItems,
 } from '@/config/dashboardNav';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 // Hub children: deep pages inside hubs that should be searchable
 const hubChildrenItems: Array<{ href: string; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   // Operations Hub children
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Users },
-  { href: '/dashboard/admin/performance-reviews', label: 'Performance Reviews', icon: Users },
-  { href: '/dashboard/admin/pto', label: 'PTO Balances', icon: Users },
-  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Users },
-  { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline', icon: Users },
-  { href: '/dashboard/admin/graduation-tracker', label: 'Graduation Tracker', icon: Users },
-  { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels', icon: Users },
-  { href: '/dashboard/admin/headshots', label: 'Headshot Requests', icon: Users },
-  { href: '/dashboard/admin/business-cards', label: 'Business Card Requests', icon: Users },
-  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1', icon: Users },
-  { href: '/dashboard/admin/training-hub', label: 'Training Hub', icon: Users },
+  { href: dashPath('/directory'), label: 'Team Directory', icon: Users },
+  { href: dashPath('/admin/performance-reviews'), label: 'Performance Reviews', icon: Users },
+  { href: dashPath('/admin/pto'), label: 'PTO Balances', icon: Users },
+  { href: dashPath('/admin/announcements'), label: 'Announcements', icon: Users },
+  { href: dashPath('/admin/recruiting'), label: 'Recruiting Pipeline', icon: Users },
+  { href: dashPath('/admin/graduation-tracker'), label: 'Graduation Tracker', icon: Users },
+  { href: dashPath('/admin/stylist-levels'), label: 'Stylist Levels', icon: Users },
+  { href: dashPath('/admin/headshots'), label: 'Headshot Requests', icon: Users },
+  { href: dashPath('/admin/business-cards'), label: 'Business Card Requests', icon: Users },
+  { href: dashPath('/schedule-meeting'), label: 'Schedule 1:1', icon: Users },
+  { href: dashPath('/admin/training-hub'), label: 'Training Hub', icon: Users },
   // Client Hub children
-  { href: '/dashboard/clients', label: 'Client Directory', icon: Users },
-  { href: '/dashboard/admin/client-health', label: 'Client Health', icon: Users },
-  { href: '/dashboard/admin/reengagement', label: 'Re-engagement', icon: Users },
-  { href: '/dashboard/admin/feedback', label: 'Client Feedback', icon: Users },
+  { href: dashPath('/clients'), label: 'Client Directory', icon: Users },
+  { href: dashPath('/admin/client-health'), label: 'Client Health', icon: Users },
+  { href: dashPath('/admin/reengagement'), label: 'Re-engagement', icon: Users },
+  { href: dashPath('/admin/feedback'), label: 'Client Feedback', icon: Users },
   // Growth Hub children
-  { href: '/dashboard/campaigns', label: 'Campaigns', icon: Users },
-  { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', icon: Users },
-  { href: '/dashboard/admin/leads', label: 'Lead Management', icon: Users },
+  { href: dashPath('/campaigns'), label: 'Campaigns', icon: Users },
+  { href: dashPath('/admin/seo-workshop'), label: 'SEO Workshop', icon: Users },
+  { href: dashPath('/admin/leads'), label: 'Lead Management', icon: Users },
   // Analytics Hub children
-  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', icon: Users },
-  { href: '/dashboard/admin/sales', label: 'Sales Analytics', icon: Users },
-  { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics', icon: Users },
-  { href: '/dashboard/admin/staff-utilization', label: 'Staff Utilization', icon: Users },
-  { href: '/dashboard/admin/reports', label: 'Reports', icon: Users },
+  { href: dashPath('/appointments-hub'), label: 'Appointments & Transactions', icon: Users },
+  { href: dashPath('/admin/sales'), label: 'Sales Analytics', icon: Users },
+  { href: dashPath('/admin/operational-analytics'), label: 'Operational Analytics', icon: Users },
+  { href: dashPath('/admin/staff-utilization'), label: 'Staff Utilization', icon: Users },
+  { href: dashPath('/admin/reports'), label: 'Reports', icon: Users },
   // Payroll Hub children
-  { href: '/dashboard/admin/day-rate-settings', label: 'Day Rate Settings', icon: Users },
-  { href: '/dashboard/admin/day-rate-calendar', label: 'Day Rate Calendar', icon: Users },
+  { href: dashPath('/admin/day-rate-settings'), label: 'Day Rate Settings', icon: Users },
+  { href: dashPath('/admin/day-rate-calendar'), label: 'Day Rate Calendar', icon: Users },
 ];
 
 interface NavItem {
@@ -79,6 +80,7 @@ function dedupeByPath(items: NavItem[]): NavItem[] {
 }
 
 export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
@@ -110,10 +112,10 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
 
     // Always-searchable essentials (not in the sidebar registry)
     results.push(
-      { type: 'navigation', title: 'Profile', path: '/dashboard/profile', icon: <UserCircle className="w-4 h-4" /> },
-      { type: 'help', title: 'Help Center', path: '/dashboard/help', icon: <BookOpen className="w-4 h-4" /> },
-      { type: 'help', title: 'Handbooks', subtitle: 'Employee guides & resources', path: '/dashboard/handbooks', icon: <BookOpen className="w-4 h-4" /> },
-      { type: 'help', title: "What's New", subtitle: 'Latest updates & features', path: '/dashboard/changelog', icon: <Sparkles className="w-4 h-4" /> }
+      { type: 'navigation', title: 'Profile', path: dashPath('/profile'), icon: <UserCircle className="w-4 h-4" /> },
+      { type: 'help', title: 'Help Center', path: dashPath('/help'), icon: <BookOpen className="w-4 h-4" /> },
+      { type: 'help', title: 'Handbooks', subtitle: 'Employee guides & resources', path: dashPath('/handbooks'), icon: <BookOpen className="w-4 h-4" /> },
+      { type: 'help', title: "What's New", subtitle: 'Latest updates & features', path: dashPath('/changelog'), icon: <Sparkles className="w-4 h-4" /> }
     );
 
     return results;
@@ -140,7 +142,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
           type: 'team',
           title: name,
           subtitle: member.roles?.[0] || 'Team Member',
-          path: `/dashboard/directory?search=${encodeURIComponent(name)}`,
+          path: `${dashPath('/directory?search=${encodeURIComponent(name)}')}`,
           icon: <Users className="w-4 h-4" />,
         });
       }

@@ -24,8 +24,10 @@ import {
 } from '@/hooks/useLocations';
 import { LocationPreviewModal } from '@/components/dashboard/LocationPreviewModal';
 import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function LocationsManager() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: locations = [], isLoading } = useLocations();
   const updateLocation = useUpdateLocation();
   const navigate = useNavigate();
@@ -89,7 +91,7 @@ export default function LocationsManager() {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => navigate('/dashboard/admin/settings')}
+              onClick={() => navigate(dashPath('/admin/settings'))}
               className="gap-2"
             >
               <Settings className="w-4 h-4" />
@@ -130,7 +132,7 @@ export default function LocationsManager() {
               <Button 
                 variant="outline" 
                 className="mt-4"
-                onClick={() => navigate('/dashboard/admin/settings')}
+                onClick={() => navigate(dashPath('/admin/settings'))}
               >
                 Go to Settings
               </Button>
@@ -221,7 +223,7 @@ export default function LocationsManager() {
           <p className="text-xs text-muted-foreground text-center">
             Drag locations to reorder how they appear on the website. 
             Edit location details in <button 
-              onClick={() => navigate('/dashboard/admin/settings')}
+              onClick={() => navigate(dashPath('/admin/settings'))}
               className="underline hover:text-foreground transition-colors"
             >
               Settings → Locations

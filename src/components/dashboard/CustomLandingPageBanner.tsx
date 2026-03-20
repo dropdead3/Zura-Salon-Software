@@ -5,12 +5,14 @@ import { X, Home, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLandingPagePreference, LANDING_PAGE_OPTIONS } from '@/hooks/useLandingPagePreference';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface CustomLandingPageBannerProps {
   sidebarCollapsed?: boolean;
 }
 
 export function CustomLandingPageBanner({ sidebarCollapsed }: CustomLandingPageBannerProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { hasCustomLandingPage, customLandingPage, resetToDefault, isUpdating } = useLandingPagePreference();
   const [dismissed, setDismissed] = useState(false);
 
@@ -40,7 +42,7 @@ export function CustomLandingPageBanner({ sidebarCollapsed }: CustomLandingPageB
           </div>
           
           <div className="flex items-center gap-2">
-            <Link to="/dashboard/profile">
+            <Link to={dashPath('/profile')}>
               <Button
                 variant="ghost"
                 size="sm"

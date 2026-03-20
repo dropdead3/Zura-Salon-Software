@@ -25,6 +25,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
 interface NavItem {
@@ -175,6 +176,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   
   // Logo/icon helpers — collapsed now follows theme like expanded
   const hasCustomLogo = (forCollapsed = false) => {
+  const { dashPath } = useOrgDashboardPath();
     if (forCollapsed) {
       return resolvedTheme === 'dark'
         ? !!businessSettings?.logo_dark_url
@@ -252,7 +254,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
   // Dynamic label: i18n when labelKey set, role-based for stats, else fallback to label
   const getNavLabel = (item: NavItem): string => {
-    if (item.href === '/dashboard/stats') {
+    if (item.href === dashPath('/stats')) {
       const isAdminUser = roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager');
       return isAdminUser ? t('nav.team_stats') : t('nav.my_stats');
     }
@@ -335,7 +337,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/40", isCollapsed ? "p-3" : "px-5 py-4")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col-reverse gap-2" : "justify-between")}>
-          <Link to="/dashboard" className="block min-w-0">
+          <Link to={dashPath('/')} className="block min-w-0">
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -422,12 +424,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    to="/dashboard/onboarding"
+                    to={dashPath('/onboarding')}
                     onClick={onNavClick}
                     className={cn(
                       "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
                       "transition-all duration-300 ease-out rounded-full",
-                      location.pathname === '/dashboard/onboarding'
+                      location.pathname === '${dashPath('/onboarding'
                         ? "bg-foreground text-background shadow-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                     )}
@@ -436,17 +438,17 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  START HERE {onboardingProgress && `(${onboardingProgress.percentage}%)`}
+                  START HERE {onboardingProgress && ')}`(${onboardingProgress.percentage}%)`}
                 </TooltipContent>
               </Tooltip>
             ) : (
               <Link
-                to="/dashboard/onboarding"
+                to={dashPath('/onboarding')}
                 onClick={onNavClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 mx-3 text-sm font-sans",
                   "transition-all duration-300 ease-out rounded-lg",
-                  location.pathname === '/dashboard/onboarding'
+                  location.pathname === '${dashPath('/onboarding'
                     ? "bg-foreground text-background shadow-sm" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
@@ -458,7 +460,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-primary rounded-full transition-all duration-300"
-                        style={{ width: `${onboardingProgress.percentage}%` }}
+                        style={{ width: ')}`${onboardingProgress.percentage}%` }}
                       />
                     </div>
                     <span className="text-xs text-muted-foreground">
@@ -537,7 +539,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             // Other roles see it here only when complete (otherwise it's in START HERE)
             if (isSuperAdmin || (!isOnboardingComplete && !roles.includes('admin'))) {
               filteredItems = filteredItems.filter(item => 
-                item.href !== '/dashboard/onboarding'
+                item.href !== dashPath('/onboarding')
               );
             }
             shouldShow = filteredItems.length > 0;
@@ -564,7 +566,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           
           // Get badge count for specific items
           const getBadgeCount = (href: string) => {
-            if (href === '/dashboard' && sectionId === 'main') return unreadCount;
+            if (href === dashPath('/') && sectionId === 'main') return unreadCount;
             return undefined;
           };
           

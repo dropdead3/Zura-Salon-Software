@@ -6,6 +6,7 @@ import { useTrialStatus, type UrgencyLevel } from '@/hooks/useTrialStatus';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const DISMISS_STORAGE_KEY = 'trial-banner-dismissed';
 
@@ -100,6 +101,7 @@ function formatCountdown(
 }
 
 export function TrialCountdownBanner() {
+  const { dashPath } = useOrgDashboardPath();
   const { isInTrial, daysRemaining, hoursRemaining, urgencyLevel, isExpired, isLoading } = useTrialStatus();
   const [isDismissed, setIsDismissed] = useState(false);
   const [countdownText, setCountdownText] = useState('');
@@ -211,7 +213,7 @@ export function TrialCountdownBanner() {
               size={tokens.button.card}
               className={cn('gap-1.5', buttonClasses)}
             >
-              <Link to="/dashboard/settings/billing">
+              <Link to={dashPath('/settings/billing')}>
                 {isExpired ? 'Contact Sales' : 'Upgrade Now'}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>

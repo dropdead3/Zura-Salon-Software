@@ -9,8 +9,10 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function DayRateWidget() {
+  const { dashPath } = useOrgDashboardPath();
   const today = new Date();
   const weekStart = format(startOfWeek(today), 'yyyy-MM-dd');
   const weekEnd = format(endOfWeek(today), 'yyyy-MM-dd');
@@ -146,7 +148,7 @@ export function DayRateWidget() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to="/dashboard/admin/day-rate-calendar"
+          to={dashPath('/admin/day-rate-calendar')}
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           View All <ChevronRight className="w-3 h-3" />

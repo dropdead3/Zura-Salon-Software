@@ -59,6 +59,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const taskStatusIcon: Record<string, typeof Circle> = {
   not_started: Circle,
@@ -182,6 +183,7 @@ function SortableTaskCard({
 }
 
 export default function CampaignDetail() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -252,7 +254,7 @@ export default function CampaignDetail() {
 
   const handleDelete = () => {
     deleteCampaign.mutate(campaign.id, {
-      onSuccess: () => navigate('/dashboard/campaigns'),
+      onSuccess: () => navigate(dashPath('/campaigns')),
     });
   };
 
@@ -305,7 +307,7 @@ export default function CampaignDetail() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/dashboard/campaigns')}
+            onClick={() => navigate(dashPath('/campaigns'))}
             className="mt-1 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />

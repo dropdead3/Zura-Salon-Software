@@ -8,8 +8,10 @@ import { usePublishedChangelog, useUnreadChangelogCount } from '@/hooks/useChang
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { tokens } from '@/lib/design-tokens';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function ChangelogWidget() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { data: entries = [], isLoading } = usePublishedChangelog();
   const { data: unreadCount = 0 } = useUnreadChangelogCount();
@@ -57,7 +59,7 @@ export function ChangelogWidget() {
             {recentUpdates.map(entry => (
               <Link
                 key={entry.id}
-                to="/dashboard/changelog"
+                to={dashPath('/changelog')}
                 className="block group"
               >
                 <div className="flex items-start gap-3 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
@@ -94,7 +96,7 @@ export function ChangelogWidget() {
                 {topComingSoon.map(entry => (
                   <Link
                     key={entry.id}
-                    to="/dashboard/changelog"
+                    to={dashPath('/changelog')}
                     className="block group"
                   >
                     <div className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
@@ -118,7 +120,7 @@ export function ChangelogWidget() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to="/dashboard/changelog"
+          to={dashPath('/changelog')}
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           View All Updates <ChevronRight className="w-3 h-3" />

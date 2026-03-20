@@ -70,40 +70,40 @@ export interface DashboardNavItem {
 // ─── SECTION: main (locked top 3 + daily execution) ─────────────────────────
 
 export const mainNavItems: DashboardNavItem[] = [
-  { href: '/dashboard', label: 'Command Center', labelKey: 'command_center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
-  { href: '/dashboard/team-chat', label: 'Team Chat', labelKey: 'team_chat', icon: MessageSquare },
+  { href: '/', label: 'Command Center', labelKey: 'command_center', icon: LayoutDashboard, permission: 'view_command_center' },
+  { href: '/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
+  { href: '/team-chat', label: 'Team Chat', labelKey: 'team_chat', icon: MessageSquare },
 ];
 
 // ─── SECTION: myTools (staff-facing, replaces growth + stats) ────────────────
 
 export const myToolsNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/today-prep', label: "Today's Prep", labelKey: 'todays_prep', icon: ClipboardCheck, permission: 'view_booking_calendar', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/mixing', label: 'My Mixing', labelKey: 'my_mixing', icon: Beaker, roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/waitlist', label: 'Waitlist', labelKey: 'waitlist', icon: ClipboardList, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'receptionist'] },
-  { href: '/dashboard/stats', label: 'My Stats', labelKey: 'my_stats', icon: BarChart3, permission: 'view_own_stats' },
-  { href: '/dashboard/my-pay', label: 'My Pay', labelKey: 'my_pay', icon: Wallet, permission: 'view_my_pay' },
-  { href: '/dashboard/training', label: 'Training', labelKey: 'training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
-  { href: '/dashboard/program', label: 'New-Client Engine Program', labelKey: 'new_client_engine_program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', labelKey: 'team_leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', labelKey: 'shift_swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/rewards', label: 'Rewards', labelKey: 'rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'] },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', labelKey: 'ring_the_bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
+  { href: '/today-prep', label: "Today's Prep", labelKey: 'todays_prep', icon: ClipboardCheck, permission: 'view_booking_calendar', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/mixing', label: 'My Mixing', labelKey: 'my_mixing', icon: Beaker, roles: ['stylist', 'stylist_assistant'] },
+  { href: '/waitlist', label: 'Waitlist', labelKey: 'waitlist', icon: ClipboardList, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'receptionist'] },
+  { href: '/stats', label: 'My Stats', labelKey: 'my_stats', icon: BarChart3, permission: 'view_own_stats' },
+  { href: '/my-pay', label: 'My Pay', labelKey: 'my_pay', icon: Wallet, permission: 'view_my_pay' },
+  { href: '/training', label: 'Training', labelKey: 'training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
+  { href: '/program', label: 'New-Client Engine Program', labelKey: 'new_client_engine_program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/leaderboard', label: 'Team Leaderboard', labelKey: 'team_leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
+  { href: '/shift-swaps', label: 'Shift Swaps', labelKey: 'shift_swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
+  { href: '/rewards', label: 'Rewards', labelKey: 'rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'] },
+  { href: '/ring-the-bell', label: 'Ring the Bell', labelKey: 'ring_the_bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
 ];
 
 // ─── SECTION: manage (admin hub-only links) ──────────────────────────────────
 
 export const manageNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
+  { href: '/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
 ];
 
 // ─── SECTION: system (admin config) ──────────────────────────────────────────
 
 export const systemNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/access-hub', label: 'Roles & Controls Hub', labelKey: 'roles_controls_hub', icon: Shield, permission: 'manage_settings' },
-  { href: '/dashboard/admin/settings', label: 'Settings', labelKey: 'settings', icon: Settings, permission: 'manage_settings' },
+  { href: '/admin/access-hub', label: 'Roles & Controls Hub', labelKey: 'roles_controls_hub', icon: Shield, permission: 'manage_settings' },
+  { href: '/admin/settings', label: 'Settings', labelKey: 'settings', icon: Settings, permission: 'manage_settings' },
 ];
 
 // ─── LEGACY EXPORTS (backward compatibility) ─────────────────────────────────
@@ -112,17 +112,17 @@ export const systemNavItems: DashboardNavItem[] = [
 
 /** @deprecated Use myToolsNavItems instead. Growth items merged into myTools. */
 export const growthNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/training', label: 'Training', labelKey: 'training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
-  { href: '/dashboard/program', label: 'New-Client Engine Program', labelKey: 'new_client_engine_program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', labelKey: 'ring_the_bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
+  { href: '/training', label: 'Training', labelKey: 'training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
+  { href: '/program', label: 'New-Client Engine Program', labelKey: 'new_client_engine_program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/ring-the-bell', label: 'Ring the Bell', labelKey: 'ring_the_bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
 ];
 
 /** @deprecated Use myToolsNavItems instead. Stats items merged into myTools. */
 export const statsNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', labelKey: 'my_stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', labelKey: 'team_leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/my-pay', label: 'My Pay', labelKey: 'my_pay', icon: Wallet, permission: 'view_my_pay' },
+  { href: '/stats', label: 'My Stats', labelKey: 'my_stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/leaderboard', label: 'Team Leaderboard', labelKey: 'team_leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
+  { href: '/my-pay', label: 'My Pay', labelKey: 'my_pay', icon: Wallet, permission: 'view_my_pay' },
 ];
 
 /** @deprecated Use manageNavItems instead. Manager items consolidated into hub links. */
@@ -136,7 +136,7 @@ export const adminOnlyNavItems: DashboardNavItem[] = systemNavItems;
  * It appears in the sidebar only when explicitly added to section order via the layout configurator or DB.
  */
 export const housekeepingNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/onboarding', label: 'Onboarding', labelKey: 'onboarding', icon: Users, permission: 'view_onboarding' },
+  { href: '/onboarding', label: 'Onboarding', labelKey: 'onboarding', icon: Users, permission: 'view_onboarding' },
 ];
 
 export const footerNavItems: DashboardNavItem[] = [];
@@ -152,13 +152,13 @@ export interface HubLinkConfig {
 }
 
 export const hubLinksConfig: HubLinkConfig[] = [
-  { href: '/dashboard/admin/analytics', icon: TrendingUp, label: 'Analytics Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', icon: Users, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
-  { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
+  { href: '/admin/analytics', icon: TrendingUp, label: 'Analytics Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
+  { href: '/admin/team-hub', icon: Users, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
+  { href: '/admin/access-hub', icon: Shield, label: 'Roles Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
 ];
 
 /** Canonical Analytics Hub base path. Use with ?tab= and &subtab= for drill-downs. */
-export const ANALYTICS_HUB_PATH = '/dashboard/admin/analytics';
+export const ANALYTICS_HUB_PATH = '/admin/analytics';
 
 /** Build Analytics Hub URL with tab and optional subtab. Use for summary-card drill-downs. */
 export function analyticsHubUrl(tab: string, subtab?: string): string {

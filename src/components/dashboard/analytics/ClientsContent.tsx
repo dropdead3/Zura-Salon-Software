@@ -18,6 +18,7 @@ import { RetentionMetrics } from '@/hooks/useOperationalAnalytics';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AtRiskClientsList } from './AtRiskClientsList';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ClientsContentProps {
   retention?: RetentionMetrics;
@@ -27,6 +28,7 @@ interface ClientsContentProps {
 }
 
 export function ClientsContent({ retention, isLoading, dateRange, locationName }: ClientsContentProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatNumber } = useFormatNumber();
   const navigate = useNavigate();
 
@@ -56,7 +58,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
           variant="outline"
           size="sm"
           className="h-9 px-4 rounded-full"
-          onClick={() => navigate('/dashboard/admin/client-directory')}
+          onClick={() => navigate(dashPath('/admin/client-directory'))}
         >
           <ExternalLink className="w-4 h-4 mr-1.5" />
           View Client Directory
@@ -75,7 +77,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
         <BentoGrid maxPerRow={5} gap="gap-4">
           <Card
             className="p-4 cursor-pointer hover:border-primary/30 transition-colors"
-            onClick={() => navigate('/dashboard/admin/client-directory')}
+            onClick={() => navigate(dashPath('/admin/client-directory'))}
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">

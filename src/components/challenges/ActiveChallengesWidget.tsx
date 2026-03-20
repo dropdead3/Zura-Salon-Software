@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useMyActiveChallenges } from '@/hooks/useChallenges';
 import { differenceInDays, isPast } from 'date-fns';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const metricIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   bells: Bell,
@@ -30,6 +31,7 @@ export function ActiveChallengesWidget({
   className, 
   maxItems = 3 
 }: ActiveChallengesWidgetProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: challenges = [], isLoading } = useMyActiveChallenges();
 
   const displayChallenges = challenges.slice(0, maxItems);
@@ -83,7 +85,7 @@ export function ActiveChallengesWidget({
             Active Challenges
           </CardTitle>
           {challenges.length > maxItems && (
-            <Link to="/dashboard/admin/challenges">
+            <Link to={dashPath('/admin/challenges')}>
               <Button variant="ghost" size={tokens.button.inline} className="text-xs">
                 View All
                 <ChevronRight className="w-3 h-3 ml-1" />
@@ -108,7 +110,7 @@ export function ActiveChallengesWidget({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Link to={`/dashboard/admin/challenges/${challenge.id}`}>
+              <Link to={`${dashPath('/admin/challenges/${challenge.id}')}`}>
                 <div className="group p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">

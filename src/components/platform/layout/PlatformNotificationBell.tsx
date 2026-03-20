@@ -32,6 +32,7 @@ import {
   type PlatformNotification
 } from '@/hooks/usePlatformNotifications';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const SEVERITY_CONFIG = {
   info: { icon: Info, color: 'text-blue-400', bg: 'bg-blue-500/20' },
@@ -50,6 +51,7 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 export function PlatformNotificationBell() {
+  const { dashPath } = useOrgDashboardPath();
   const [open, setOpen] = useState(false);
   const { data: notifications } = usePlatformNotifications(10);
   const { data: unreadCount } = useUnreadNotificationCount();
@@ -171,7 +173,7 @@ export function PlatformNotificationBell() {
         {/* Footer */}
         <div className="border-t border-slate-700/50 p-2 grid grid-cols-2 gap-1">
           <Link
-            to="/dashboard/notifications"
+            to={dashPath('/notifications')}
             onClick={() => setOpen(false)}
             className="flex items-center justify-center py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 rounded transition-colors"
           >

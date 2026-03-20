@@ -38,6 +38,7 @@ import {
   useSaveStylistLevels,
 } from '@/hooks/useStylistLevels';
 import { TeamCommissionRoster } from './TeamCommissionRoster';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type LocalStylistLevel = {
   id: string;
@@ -57,6 +58,7 @@ const formatRate = (rate: number | null | undefined): string => {
 };
 
 export function StylistLevelsContent() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
   
@@ -278,7 +280,7 @@ export function StylistLevelsContent() {
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-sm text-muted-foreground">
           Commission rates set here apply to all stylists at each level unless individually overridden below. Level-based service pricing is displayed on the client-facing website — adjust level pricing in the{' '}
-          <a href="/dashboard/admin/services" className="text-primary hover:underline">Services editor</a>.
+          <a href=dashPath('/admin/services') className="text-primary hover:underline">Services editor</a>.
         </p>
       </div>
 

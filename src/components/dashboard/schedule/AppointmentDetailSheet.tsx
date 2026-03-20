@@ -88,6 +88,7 @@ import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 // ─── Scheduled Coverage sub-component ───────────────────────────
 function ScheduledCoverageSection({
@@ -287,6 +288,7 @@ export function AppointmentDetailSheet({
   onOpenClientProfile,
   initialTab,
 }: AppointmentDetailSheetProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { user, hasPermission, roles } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { formatCurrency } = useFormatCurrency();
@@ -902,14 +904,14 @@ export function AppointmentDetailSheet({
                         {resolvedClientId && (
                           <DropdownMenuItem onClick={() => {
                             handleClose();
-                            navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
+                            navigate(`${dashPath('/clients?clientId=${resolvedClientId}')}`);
                           }}>
                             <ExternalLink className="h-3.5 w-3.5 mr-2" />
                             View in Client Directory
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link to="/dashboard/appointments-hub">
+                          <Link to={dashPath('/appointments-hub')}>
                             <Receipt className="h-3.5 w-3.5 mr-2" />
                             Transactions
                           </Link>

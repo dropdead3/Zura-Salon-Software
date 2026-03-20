@@ -8,6 +8,7 @@ import { KBArticle, useIncrementArticleViews } from '@/hooks/useKnowledgeBase';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { formatRelativeTime } from '@/lib/format';
 import { tokens } from '@/lib/design-tokens';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface HelpArticleViewProps {
   article: KBArticle;
@@ -43,6 +44,7 @@ function renderMarkdown(content: string) {
 }
 
 export function HelpArticleView({ article }: HelpArticleViewProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { formatNumber } = useFormatNumber();
   const incrementViews = useIncrementArticleViews();
@@ -54,9 +56,9 @@ export function HelpArticleView({ article }: HelpArticleViewProps) {
 
   const handleBack = () => {
     if (article.category) {
-      navigate(`/dashboard/help/${article.category.slug}`);
+      navigate(`${dashPath('/help/${article.category.slug}')}`);
     } else {
-      navigate('/dashboard/help');
+      navigate(dashPath('/help'));
     }
   };
 

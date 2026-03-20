@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { AvailableChair, AvailableStylist, ChairAssignment } from '@/hooks/useChairAssignments';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ChairGridProps {
   chairs: AvailableChair[];
@@ -15,6 +16,7 @@ interface ChairGridProps {
 }
 
 export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }: ChairGridProps) {
+  const { dashPath } = useOrgDashboardPath();
   const stylistMap = new Map(stylists.map(s => [s.user_id, s]));
   const assignmentByChair = new Map(assignments.map(a => [a.chair_id, a]));
 
@@ -27,7 +29,7 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
           Add stations in your location settings to enable chair assignments
         </p>
         <Button variant="outline" size="sm" asChild className="mt-4">
-          <Link to="/dashboard/admin/settings?category=locations">
+          <Link to={dashPath('/admin/settings?category=locations')}>
             Manage Location Stations
           </Link>
         </Button>
