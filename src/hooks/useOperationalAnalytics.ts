@@ -155,6 +155,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
           .not('status', 'in', '("cancelled","no_show")')
+          .eq('is_demo', false)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
