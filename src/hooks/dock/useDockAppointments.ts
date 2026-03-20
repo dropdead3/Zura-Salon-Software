@@ -32,7 +32,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
   const today = format(new Date(), 'yyyy-MM-dd');
 
   return useQuery({
-    queryKey: ['dock-appointments', staffUserId, today, isDemoMode, usesRealData, organizationId, locationId],
+    queryKey: ['dock-appointments', staffUserId, today, isDemoMode, usesRealData, organizationId, locationId, staffFilter],
     queryFn: async (): Promise<DockAppointment[]> => {
       // Generic preview — pure faux data
       if (isDemoMode && !usesRealData) return DEMO_APPOINTMENTS;
