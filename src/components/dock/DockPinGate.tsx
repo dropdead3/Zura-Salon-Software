@@ -58,10 +58,14 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           setPin('');
           toast.error('Invalid PIN');
         } else {
+          // Resolve location: explicit device config > staff profile
+          const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
+          const resolvedLocationId = deviceLocId || data.location_id || '';
           onSuccess({
             userId: data.user_id,
             displayName: data.display_name || 'Staff',
             avatarUrl: data.photo_url,
+            locationId: resolvedLocationId,
           });
         }
       } catch {
