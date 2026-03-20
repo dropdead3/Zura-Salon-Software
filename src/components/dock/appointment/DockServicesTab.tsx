@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
@@ -241,14 +242,21 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           disabled={createBowl.isPending}
           className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
         >
-          <div className="relative mb-5">
-            <div className="absolute inset-0 rounded-full bg-violet-500/20 animate-pulse scale-150" />
-            <div className="relative flex items-center justify-center w-20 h-20 rounded-full border border-violet-500/30 bg-violet-600/10">
-              <FlaskConical className="w-10 h-10 text-violet-400" />
+          <motion.div
+            className="relative mb-6"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div className="absolute inset-0 rounded-full bg-violet-500/20 scale-150 animate-[glow_2.5s_ease-in-out_infinite]" />
+            <div className="relative flex items-center justify-center w-24 h-24 rounded-full border border-violet-500/30 bg-violet-600/10">
+              <FlaskConical className="w-12 h-12 text-violet-400" />
             </div>
-          </div>
-          <span className="text-base text-[hsl(var(--platform-foreground))] font-medium">
-            Tap to start mixing your first bowl
+          </motion.div>
+          <span className="font-display text-lg tracking-wide text-violet-300">
+            Start Mixing
+          </span>
+          <span className="text-sm text-[hsl(var(--platform-muted-foreground))] mt-1">
+            Tap anywhere to add your first bowl
           </span>
         </button>
       )}
