@@ -49,11 +49,11 @@ type Step = 'client' | 'service' | 'confirm';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
 
-const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
-  const hour = 8 + Math.floor(i / 2);
+const TIME_SLOTS = Array.from({ length: 33 }, (_, i) => {
+  const hour = 6 + Math.floor(i / 2);
   const minute = (i % 2) * 30;
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-}).filter(t => parseInt(t.split(':')[0]) < 20);
+});
 
 function formatTime12h(time: string) {
   const [h, m] = time.split(':');
