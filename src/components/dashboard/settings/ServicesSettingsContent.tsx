@@ -742,7 +742,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             {svc.category && (
                               <span className="text-[10px] text-muted-foreground/60 italic">was: {svc.category}</span>
                             )}
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
                             {svc.price != null && (
                               <span className="flex items-center gap-1">
                                 <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
