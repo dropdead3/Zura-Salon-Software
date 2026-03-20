@@ -39,15 +39,6 @@ interface PhorestClient {
   phone: string | null;
 }
 
-interface RecentCheckIn {
-  clientId: string;
-  phorestClientId: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  checkedInAt: string;
-  method: string;
-}
 
 type Step = 'client' | 'service' | 'confirm';
 
