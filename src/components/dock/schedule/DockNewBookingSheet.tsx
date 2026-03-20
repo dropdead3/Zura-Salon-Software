@@ -5,6 +5,7 @@
  */
 
 import { useState, useMemo, useCallback, Fragment } from 'react';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { useDebounce } from '@/hooks/use-debounce';
 import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';

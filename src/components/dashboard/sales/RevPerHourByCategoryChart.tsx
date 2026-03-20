@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ChevronDown, Clock, Users } from 'lucide-react';

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { Sparkles, X, Plus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

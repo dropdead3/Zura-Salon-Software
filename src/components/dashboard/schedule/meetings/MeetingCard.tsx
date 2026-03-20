@@ -1,4 +1,5 @@
 import { format, parse } from 'date-fns';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

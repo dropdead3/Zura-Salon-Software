@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
