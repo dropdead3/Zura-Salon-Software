@@ -1,12 +1,14 @@
 
 
-## Reduce Corner Radius on Service Selection Highlights
+## Reformat Category Cards: Icon Left of Text
 
 ### Change
 
-In `src/components/dock/schedule/DockNewBookingSheet.tsx`, line 669: change `rounded-xl` to `rounded-lg` on the service item buttons. This brings the selection highlight radius from 20px down to 10px, matching the reference screenshot.
+In `src/components/dock/schedule/DockNewBookingSheet.tsx`, lines 593-605: change the category card layout from vertical (icon above text) to horizontal (icon left of text).
 
-### File: `src/components/dock/schedule/DockNewBookingSheet.tsx`
+- Change `flex flex-col items-start gap-2 p-4` to `flex flex-row items-center gap-3 p-4`
+- The icon box and text div stay the same, just flow horizontally now
+- The selected-count badge stays `absolute top-3 right-3`
 
-**Line 669** — change `rounded-xl` to `rounded-lg` in the service button className.
+Single file, single region edit.
 
