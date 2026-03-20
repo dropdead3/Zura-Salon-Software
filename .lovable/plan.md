@@ -1,37 +1,35 @@
 
 
-## Add "Create New Client" to Dock Booking Flow
+## Redesign Dock Client Step: Search-First + Recent Check-Ins
 
 ### Problem
-When a walk-in client is brand new, the stylist has no way to create them from the Dock. They can only search existing clients. Need a "New Client" option that creates the client in the directory and then selects them for the booking.
-
-### Approach
-Create a new `DockNewClientSheet` component — a platform-themed bottom sheet (matching the Dock's dark theme) that collects the essential fields for a walk-in: first name, last name, phone, email, and optional gender. It reuses the same backend logic as the dashboard's `NewClientDialog` (Phorest edge function when branch exists, direct `clients` table insert as fallback), plus duplicate detection.
+The current client step shows a blank "type 2 chars" prompt. In reality, walk-in clients have usually already been added by the front desk or checked themselves in at the kiosk. The stylist should see these recent check-ins immediately — no typing required — and only fall back to search or "Create New" for the rare truly-new client.
 
 ### Changes
 
-**1. New file: `src/components/dock/schedule/DockNewClientSheet.tsx`**
-- A bottom sheet (same `motion.div` pattern as `DockNewBookingSheet`) with platform-themed inputs
-- Minimal fields for a walk-in: First Name, Last Name, Phone, Email, Gender (pill toggles)
-- Uses `useDuplicateDetection` hook for real-time duplicate checking
-- On submit: calls `create-phorest-client` edge function (if location has `phorest_branch_id`) or inserts directly into `clients` table
-- On success: calls `onClientCreated` callback with the new client shaped as `PhorestClient` so it slots right into the booking wizard
-- Shows a simplified duplicate warning inline (not full modal) — "Possible match found: Jane Doe" with "Use Existing" / "Create Anyway" buttons
+**1. Add a "Recent Check-Ins" query to `DockNewBookingSheet.tsx`**
+New `useQuery` that fetches today's check-ins for the current location by joining `appointment_check_ins` → `phorest_clients` (via `phorest_client_id`). Ordered by `checked_in_at DESC`, limited to ~20. Also includes today's appointments with `status = 'checked_in'` from `phorest_appointments` as a fallback source. Returns client name, phone, email, check-in time, and method (kiosk/front-desk).
 
-**2. Update `DockNewBookingSheet.tsx` — `ClientStepDock`**
-- Add a `+ New Client` button below the search input (or in the empty/no-results state)
-- Wire it to open `DockNewClientSheet`
-- On client created, auto-select and advance to the service step
-- Add `onCreateNewClient` callback prop and state management in the parent
+**2. Redesign `ClientStepDock` layout**
+Replace the current "type 2 chars" empty state with a two-section layout:
+- **Search bar + New Client button** (stays at top, same as now)
+- **When no search query**: Show "Recent Check-Ins" section — a list of today's checked-in clients at this location, each with a green dot indicator, name, check-in time ("12m ago"), and method badge ("Kiosk" / "Front Desk"). Tapping selects them.
+- **When searching**: Show search results as before (overlays the check-ins list)
+- **"+ New Client" button** moves to a smaller inline prompt at the bottom of the check-ins list ("Don't see them? Create new client")
+
+**3. Wire the data flow**
+- Pass `recentCheckIns` and `isLoadingCheckIns` as new props to `ClientStepDock`
+- Each check-in row maps to a `PhorestClient` shape so `onSelectClient` works unchanged
+- For demo mode with real data, the same query runs scoped to `organizationId`
 
 ### Technical details
 
 | Aspect | Detail |
 |--------|--------|
-| Client creation | Same mutation as `NewClientDialog`: edge function `create-phorest-client` for Phorest branches, direct `clients` table insert otherwise |
-| Duplicate detection | `useDuplicateDetection(debouncedEmail, debouncedPhone)` — shows inline warning if matches found |
-| Location | Auto-set from `locationId` prop (Dock is location-locked) — no location selector needed |
-| Organization | From `staff.organizationId` via `DockDemoContext` |
-| Styling | Platform tokens (`--platform-input`, `--platform-border`, etc.), `PlatformInput` for fields |
-| Animation | Same spring physics as booking sheet for consistency |
+| Query | `appointment_check_ins` where `location_id = locationId` and `checked_in_at >= today`, joined to `phorest_clients` on `phorest_client_id` |
+| Fallback | Also query `phorest_appointments` with `status = 'checked_in'` and `appointment_date = today` for the same location |
+| Dedup | Deduplicate by `phorest_client_id` (same client may check in for multiple services) |
+| Time display | Relative time ("5m ago", "1h ago") using simple math on `checked_in_at` |
+| Method badge | Small pill: "Kiosk" (green) or "Front Desk" (blue) based on `check_in_method` |
+| File | `src/components/dock/schedule/DockNewBookingSheet.tsx` only |
 
