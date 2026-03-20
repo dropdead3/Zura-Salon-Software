@@ -1,42 +1,28 @@
 
 
-## Plan: Organization Logo & "Powered by Zura" on Dock PIN Gate
+## Plan: Enable Device Preview for All Dock Users (Not Just Demo Mode)
 
-### What
-Replace the hardcoded "Zura Dock" heading with the organization's logo, and add a subtle "Powered by Zura" footer at the bottom of the PIN gate screen.
+### Problem
+The device switcher (iPad/Phone/Full toggle) and the constrained viewport rendering are currently gated behind `isDemoMode`, which only activates when `staff.userId === 'dev-bypass-000'`. Real PIN logins get the raw full-screen layout with no device frame — which is what the screenshot shows.
 
-### How
+### Solution
+Since Dock is accessed via desktop browsers but designed for iPad, the device preview should always be available — not just in demo mode. We need to decouple the device preview from demo mode.
 
-#### 1. Update `src/components/dock/DockPinGate.tsx`
+### Changes
 
-- Import `useBusinessSettings` to fetch `logo_dark_url` and `business_name` (RLS allows anonymous reads)
-- **Top section**: Replace the `<h1>Zura Dock</h1>` with the org's dark logo (`logo_dark_url`) rendered as an `<img>` with a max-height constraint (~40px). Fall back to the business name as text if no logo exists
-- Keep "Enter your PIN to begin" subtitle below
-- **Bottom of screen**: Add a fixed-bottom subtle footer: `{business_name} · powered by Zura` using `PLATFORM_NAME` from `brand.ts`, styled in very muted text (~10-11px, low opacity)
+**1. `src/contexts/DockDemoContext.tsx`**
+- Stop forcing `device: 'full'` when not in demo mode. Return the actual stored device value for all users so everyone gets the persisted device preference.
 
-#### 2. No other files need changes
-- `useBusinessSettings` already exists and works without auth (RLS policy: "Anyone can view")
-- `brand.ts` already exports `PLATFORM_NAME`
-- No database or backend changes needed
+**2. `src/components/dock/DockLayout.tsx`**
+- Change `isConstrained` from `isDemoMode && device !== 'full'` → just `device !== 'full'`
+- Show `DockDeviceSwitcher` always (remove the `isDemoMode &&` guard on both render paths)
+- Default device to `'tablet'` instead of `'full'` so first-time users see the iPad frame immediately
 
-### Visual result
-```text
-┌─────────────────────────┐
-│                         │
-│      [Org Logo]         │
-│   Enter your PIN…       │
-│                         │
-│       ● ○ ○ ○           │
-│                         │
-│     1   2   3           │
-│     4   5   6           │
-│     7   8   9           │
-│         0   ⌫           │
-│                         │
-│     Demo Mode →         │
-│                         │
-│ Drop Dead · powered by  │
-│          Zura           │
-└─────────────────────────┘
-```
+**3. `src/hooks/dock/useDockDevicePreview.ts`**
+- Change the default device from `'full'` to `'tablet'` so the iPad viewport is the default experience
+
+### What stays the same
+- Demo mode badge still only shows for `dev-bypass-000`
+- Mock data hooks still only activate in demo mode
+- The device switcher UI component itself is unchanged
 
