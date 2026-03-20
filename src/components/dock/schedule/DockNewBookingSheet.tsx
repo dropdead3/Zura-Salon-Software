@@ -380,40 +380,69 @@ function ClientStepDock({
   searchQuery,
   onSearchChange,
   onSelectClient,
+  onNewClient,
 }: {
   clients: PhorestClient[];
   isLoading: boolean;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onSelectClient: (c: PhorestClient) => void;
+  onNewClient: () => void;
 }) {
   return (
     <div className="px-5 pb-6">
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
-        <input
-          type="text"
-          placeholder="Search by name, phone, or email..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full h-11 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:border-violet-500/50"
-        />
+      {/* Search + New Client row */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
+          <input
+            type="text"
+            placeholder="Search by name, phone, or email..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-foreground)/0.06)] border border-[hsl(var(--platform-border))] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:border-violet-500/50"
+          />
+        </div>
+        <button
+          onClick={onNewClient}
+          className="h-11 w-11 shrink-0 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center hover:bg-violet-600/30 active:scale-95 transition-all"
+          title="Create new client"
+        >
+          <Plus className="w-5 h-5 text-violet-400" />
+        </button>
       </div>
 
       {/* Results */}
       {searchQuery.length < 2 ? (
-        <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-12">
-          Type at least 2 characters to search
-        </p>
+        <div className="text-center py-12 space-y-3">
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            Type at least 2 characters to search
+          </p>
+          <button
+            onClick={onNewClient}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans text-violet-400 hover:text-violet-300 hover:bg-violet-600/10 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Or create a new client
+          </button>
+        </div>
       ) : isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
         </div>
       ) : clients.length === 0 ? (
-        <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-12">
-          No clients found
-        </p>
+        <div className="text-center py-12 space-y-3">
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            No clients found
+          </p>
+          <button
+            onClick={onNewClient}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Create "{searchQuery}" as new client
+          </button>
+        </div>
       ) : (
         <div className="space-y-1">
           {clients.map((c) => (
