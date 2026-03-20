@@ -50,6 +50,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           .order('start_time', { ascending: true })
           .limit(50);
 
+        const { data: phorestData, error: phorestErr } = await query;
         if (phorestErr) throw phorestErr;
 
         const appointments: DockAppointment[] = (phorestData || []).map((a) => ({
