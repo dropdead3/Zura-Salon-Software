@@ -19,6 +19,8 @@ import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_SERVICES, DEMO_SERVICES_BY_CATEGORY, searchDemoClients, type DemoService } from '@/hooks/dock/dockDemoData';
 
 interface DockNewBookingSheetProps {
   open: boolean;
