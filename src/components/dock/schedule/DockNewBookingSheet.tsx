@@ -6,7 +6,7 @@
 
 import { useState, useMemo } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
