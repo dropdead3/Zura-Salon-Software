@@ -157,7 +157,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       const { data: stylistRoles } = await supabase
         .from('user_roles')
         .select('user_id')
-        .in('role', ['stylist', 'assistant_stylist']);
+        .in('role', ['stylist', 'stylist_assistant']);
       const stylistUserIds = new Set((stylistRoles || []).map(r => r.user_id));
 
       const { data } = await supabase
