@@ -79,9 +79,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
   const getDefaultTime = useCallback(() => {
     const nearest = Math.ceil(nowMinutes / 30) * 30;
-    const clamped = Math.max(480, Math.min(nearest, 1200));
-    const h = String(Math.floor(clamped / 60)).padStart(2, '0');
-    const m = String(clamped % 60).padStart(2, '0');
+    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
+    const m = String(nearest % 60).padStart(2, '0');
     return `${h}:${m}`;
   }, [nowMinutes]);
 
