@@ -367,6 +367,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   onNotesChange={setNotes}
                   onConfirm={() => createBooking.mutate()}
                   isLoading={createBooking.isPending}
+                  onAddService={() => setStep('service')}
                 />
               )}
             </div>
