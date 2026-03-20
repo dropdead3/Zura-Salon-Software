@@ -92,7 +92,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   }, [pin, loading, onSuccess]);
 
   return (
-    <div className="platform-theme platform-dark fixed inset-0 flex flex-col items-center justify-center bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]">
+    <div className="platform-theme platform-dark absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]">
       {/* Organization Logo / Name */}
       <div className="mb-8 text-center">
         {logoDarkUrl ? (
