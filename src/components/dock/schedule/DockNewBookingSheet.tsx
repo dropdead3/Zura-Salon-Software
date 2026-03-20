@@ -76,26 +76,6 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
-  // Auto-select location from staff profile
-  const { data: staffProfile } = useQuery({
-    queryKey: ['dock-staff-profile', staff.userId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('employee_profiles')
-        .select('location_id, location_ids, organization_id')
-        .eq('user_id', staff.userId)
-        .single();
-      return data;
-    },
-  });
-
-  // Set default location on load
-  useState(() => {
-    if (staffProfile?.location_id && !selectedLocation) {
-      setSelectedLocation(staffProfile.location_id);
-    }
-  });
-
   // Phorest staff mapping for this user
   const { data: staffMapping } = useQuery({
     queryKey: ['dock-staff-mapping', staff.userId],
