@@ -7,6 +7,7 @@ import { Calendar, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockAppointmentCard } from './DockAppointmentCard';
 import { DockNewBookingSheet } from './DockNewBookingSheet';
 
@@ -47,6 +48,7 @@ function formatTime(time: string) {
 }
 
 export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFilter }: DockScheduleTabProps) {
+  const { isDemoMode } = useDockDemo();
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
@@ -74,12 +76,14 @@ export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFil
             {today}
           </p>
         </div>
-        <button
-          onClick={() => setShowNewBooking(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
+        {!isDemoMode && (
+          <button
+            onClick={() => setShowNewBooking(true)}
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Appointment list */}
