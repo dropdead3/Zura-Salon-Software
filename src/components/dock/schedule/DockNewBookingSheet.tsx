@@ -127,11 +127,23 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       }
     }
 
-    // Inject "Now" slot if outside operating hours
+    // Only inject "Now" slot if today AND within operating hours
+    const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
     const nowRounded = Math.ceil(nowMinutes / 15) * 15;
     const nowStr = minutesToTime(nowRounded);
-    if (opSlots.length === 0) return [nowStr];
-    if (!opSlots.includes(nowStr)) return [nowStr, ...opSlots];
+
+    if (opSlots.length === 0) {
+      // Closed day — only offer "now" if today
+      return isToday ? [nowStr] : [];
+    }
+
+    if (isToday && !opSlots.includes(nowStr)) {
+      const startMins = timeToMinutes(openTime!);
+      const endMins = timeToMinutes(closeTime!);
+      if (nowRounded >= startMins && nowRounded <= endMins) {
+        return [nowStr, ...opSlots];
+      }
+    }
     return opSlots;
   }, [locations, selectedLocation, selectedDate, nowMinutes]);
 
