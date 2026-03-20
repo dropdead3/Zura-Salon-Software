@@ -333,7 +333,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                         {isCompleted && <Check className="w-3 h-3" />}
                         {label}
                       </button>
-                    </React.Fragment>
+                    </Fragment>
                   );
                 })}
               </div>
