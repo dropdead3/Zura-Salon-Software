@@ -49,8 +49,11 @@ export default function Dock() {
   const [staff, setStaff] = useState<DockStaffSession | null>(null);
   const [activeTab, setActiveTab] = useState<DockTab>('schedule');
   const [view, setView] = useState<DockView>({ screen: 'tabs' });
+  const [demoLocationId, setDemoLocationId] = useState('');
 
-  const effectiveStaff = urlDemoSession || staff;
+  const effectiveStaff = urlDemoSession
+    ? { ...urlDemoSession, locationId: demoLocationId || urlDemoSession.locationId }
+    : staff;
 
   const handlePinSuccess = useCallback((session: DockStaffSession) => {
     setStaff(session);
@@ -73,8 +76,12 @@ export default function Dock() {
   }, []);
 
   const handleLocationChange = useCallback((locationId: string) => {
-    setStaff(prev => prev ? { ...prev, locationId } : prev);
-  }, []);
+    if (urlDemoSession) {
+      setDemoLocationId(locationId);
+    } else {
+      setStaff(prev => prev ? { ...prev, locationId } : prev);
+    }
+  }, [urlDemoSession]);
 
   if (!effectiveStaff) {
     return <DockPinGate onSuccess={handlePinSuccess} />;
