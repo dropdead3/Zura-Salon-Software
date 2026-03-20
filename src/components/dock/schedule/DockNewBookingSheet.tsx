@@ -921,7 +921,7 @@ function ConfirmStepDock({
   selectedAssistants: string[];
   onAssistantsChange: (ids: string[]) => void;
 }) {
-  const [showAssistantPicker, setShowAssistantPicker] = useState(false);
+  // Assistant chips are always inline — no toggle state needed
   return (
     <div className="flex flex-col">
       <div className="px-5 pb-4 space-y-4">
