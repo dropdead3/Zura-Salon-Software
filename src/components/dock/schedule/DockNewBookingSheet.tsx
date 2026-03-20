@@ -1021,20 +1021,23 @@ function ConfirmStepDock({
             Time
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {TIME_SLOTS.map(t => (
-              <button
-                key={t}
-                onClick={() => onTimeChange(t)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs transition-colors',
-                  time === t
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
-                )}
-              >
-                {formatTime12h(t)}
-              </button>
-            ))}
+            {(() => {
+              const slots = TIME_SLOTS.includes(time) ? TIME_SLOTS : [...TIME_SLOTS, time].sort();
+              return slots.map(t => (
+                <button
+                  key={t}
+                  onClick={() => onTimeChange(t)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs transition-colors',
+                    time === t
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                  )}
+                >
+                  {!TIME_SLOTS.includes(t) ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
+                </button>
+              ));
+            })()}
           </div>
         </div>
 
