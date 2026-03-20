@@ -247,8 +247,22 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       if (!response.data?.success) throw new Error(response.data?.error || 'Booking failed');
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      // Insert assistant assignments if any selected
+      if (selectedAssistants.length > 0 && !isDemoMode && data?.appointment_id) {
+        try {
+          const rows = selectedAssistants.map(uid => ({
+            appointment_id: data.appointment_id,
+            assistant_user_id: uid,
+            organization_id: staff.organizationId!,
+          }));
+          await supabase.from('appointment_assistants').insert(rows);
+        } catch (e) {
+          console.warn('[DockBooking] Failed to insert assistants:', e);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointment-assistants'] });
       toast.success(isDemoMode ? 'Demo booking created' : 'Appointment booked');
       handleClose();
     },
