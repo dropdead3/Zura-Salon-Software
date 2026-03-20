@@ -313,7 +313,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   const label = s === 'client' ? 'Client' : s === 'service' ? 'Service' : 'Confirm';
 
                   return (
-                    <React.Fragment key={s}>
+                    <Fragment key={s}>
                       {i > 0 && (
                         <div className={cn(
                           'flex-1 h-px',
