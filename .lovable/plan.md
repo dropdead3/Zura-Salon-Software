@@ -1,34 +1,22 @@
 
 
-## Make Assistant Selection Clearer with "+ Add Assistant" Label
+## Fix Assistant Label Font Inconsistency
 
-### Single file: `src/components/dock/schedule/DockNewBookingSheet.tsx`
+The "ASSISTANT" label on line 960 uses `font-display tracking-wider uppercase` (Termina), while all other detail row labels (Location, Stylist, Date, Duration) use the default font (Aeonik) via `DetailRow` on line 1102.
 
-**Replace the inline chips on the Stylist row** (lines 955-982) with a dedicated "Assistant" row below the Stylist row (still inside the Details card). This new row will:
+### Change
 
-1. **Show a clear label**: An "ASSISTANT" label on the left (same style as "STYLIST", "LOCATION" etc.) with a `Users` icon
-2. **Show "+ Add an assistant" text** on the right when none selected — tapping it expands/reveals the chip picker
-3. **When expanded or when assistants are selected**: Show the selectable team member chips inline
-4. **When assistants are selected but picker collapsed**: Show selected names as summary text
+In `src/components/dock/schedule/DockNewBookingSheet.tsx`, line 960:
 
-### Layout
-```text
-│ 👤 STYLIST                                           │
-│    Demo Mode                                         │
-├──────────────────────────────────────────────────────┤
-│ 👥 ASSISTANT                      + Add an assistant │
-│    (tap to expand)                                   │
-│    [Alexis R.] [✓ Eric D.] [Sam T.]  ← shown when   │
-│                                        expanded      │
-├──────────────────────────────────────────────────────┤
-│ 📅 DATE                                              │
+**Remove** `font-display tracking-wider uppercase` from the Assistant label's class string so it matches the `DetailRow` label style exactly:
+
+```
+// Before (line 960)
+"text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] font-display tracking-wider uppercase"
+
+// After
+"text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]"
 ```
 
-### Implementation
-
-- Add `showAssistantPicker` state back to `ConfirmStepDock`
-- After the Stylist `DetailRow` (line 944–983), insert a new row with the `Users` icon and "Assistant" label
-- Right side: if no assistants selected, show "+ Add an assistant" button (violet text); if selected, show names + tap to edit
-- Below: conditionally render the chip list when `showAssistantPicker` is true
-- Restore the Stylist row to a simple `DetailRow` (remove the inline chips from it)
+Single line change, single file.
 
