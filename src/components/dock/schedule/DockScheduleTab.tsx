@@ -76,12 +76,14 @@ export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFil
             {today}
           </p>
         </div>
-        <button
-          onClick={() => setShowNewBooking(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
+        {!isDemoMode && (
+          <button
+            onClick={() => setShowNewBooking(true)}
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Appointment list */}
