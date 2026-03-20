@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPortal } from 'react-dom';
+
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
   Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote,
