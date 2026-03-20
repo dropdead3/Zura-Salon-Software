@@ -1,26 +1,18 @@
 
 
-## Fix: No Services in Demo Mode
+## Fix: Purple Halo Partially Wrapping Input
 
-### Root Cause
-When entering demo mode via "Dev Tester" bypass, `locationId` is pulled from `localStorage('dock-location-id')`. If no location has been configured in the Device Switcher, this is an empty string. The services hook (`useServicesByCategory`) receives `undefined` and its query is disabled (`enabled: !!locationId`), resulting in "No services available."
+### Problem
+The client search input in `DockNewBookingSheet.tsx` (line 306) uses `focus:ring-1 focus:ring-violet-500/50` for its focus state. Tailwind's `ring` utility uses `box-shadow`, which can render inconsistently — especially on raw `<input>` elements inside scrollable containers, causing the halo to appear only partially around the pill shape.
 
 ### Fix
+In `src/components/dock/schedule/DockNewBookingSheet.tsx` line 306, replace the `focus:ring-1 focus:ring-violet-500/50` with a `focus:border` approach that follows the element's border-radius exactly:
 
-**1. `src/components/dock/DockPinGate.tsx`** (demo bypass button)
-- When `deviceLocId` is empty, fall back to the first available location from the `locations` table
-- Fetch locations and use `locations[0].id` as default, OR simply hard-code a sensible fallback behavior
+**Before:** `focus:outline-none focus:ring-1 focus:ring-violet-500/50`
+**After:** `focus:outline-none focus:border-violet-500/50`
 
-Better approach: make the Device Switcher auto-select the first location if none is configured.
+This uses the existing `border` property (already set via `border border-[hsl(var(--platform-border))]`) and simply changes its color on focus, which always follows the `rounded-xl` shape perfectly without any clipping issues.
 
-**2. `src/components/dock/DockDeviceSwitcher.tsx`**
-- On mount, if `localStorage('dock-location-id')` is empty and locations are loaded, auto-select the first location and persist it to localStorage
-- This ensures demo mode always has a valid location
-
-**3. `src/components/dock/DockPinGate.tsx`** (demo bypass)
-- After the auto-select in DeviceSwitcher, the demo bypass will naturally pick up the localStorage value
-- As a safety net, also fetch locations in the PinGate and use `locations[0]?.id` as fallback when `deviceLocId` is empty
-
-### Summary
-The fix ensures that when no explicit device location is configured, the system auto-selects the first available location. This makes demo mode functional out of the box without requiring manual location selection in the Device Switcher first.
+### Files Changed
+- `src/components/dock/schedule/DockNewBookingSheet.tsx` — one class change on the search input (line 306)
 
