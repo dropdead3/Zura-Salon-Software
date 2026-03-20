@@ -1,12 +1,16 @@
 /**
  * DockProductPicker — Full-screen modal: Brand grid → Product list with search.
  * Mobile-first, dark theme, optimized for iPad.
+ * Supports pull-to-dismiss via drag handle and tap-outside via backdrop.
  */
 
 import { useState, useMemo } from 'react';
 import { X, Search, ArrowLeft, Check } from 'lucide-react';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDockBrands, useDockBrandProducts, useDockProductSearch, type DockProduct } from '@/hooks/dock/useDockProductCatalog';
+
+const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
 export interface PickedProduct {
   product: DockProduct;
@@ -24,6 +28,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [picked, setPicked] = useState<Map<string, DockProduct>>(new Map());
+  const dragControls = useDragControls();
 
   const { data: brands } = useDockBrands();
   const { data: brandProducts, isLoading: loadingProducts } = useDockBrandProducts(selectedBrand);
@@ -75,149 +80,188 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
     onClose();
   };
 
-  if (!open) return null;
-
   return (
-    <div className="absolute inset-0 z-50 bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))] flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 px-5 pt-6 pb-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {selectedBrand && !isSearching ? (
-              <button
-                onClick={() => setSelectedBrand(null)}
-                className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))]"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-            ) : null}
-            <h1 className="font-display text-base tracking-wide uppercase">
-              {selectedBrand && !isSearching ? selectedBrand : 'Products'}
-            </h1>
-          </div>
-          <button
+    <AnimatePresence>
+      {open && (
+        <div className="absolute inset-0 z-50 flex flex-col">
+          {/* Backdrop for tap-outside */}
+          <motion.div
+            className="absolute inset-0 bg-black/30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))]"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Search bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-          <input
-            type="text"
-            placeholder="Search products…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] focus:outline-none focus:border-violet-500/50"
           />
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6">
-        {!selectedBrand && !isSearching ? (
-          /* Brand grid */
-          <div className="flex gap-2">
-            <div className="flex-1 grid grid-cols-2 gap-2">
-              {(brands || []).map(({ brand, count }) => (
-                <button
-                  key={brand}
-                  onClick={() => setSelectedBrand(brand)}
-                  className="text-left rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 hover:border-[hsl(var(--platform-border)/0.5)] active:scale-[0.98] transition-all duration-150"
-                >
-                  <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
-                    {brand}
-                  </p>
-                  <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] mt-1">
-                    {count} products
-                  </p>
-                </button>
-              ))}
+          {/* Full-screen sheet with pull-to-dismiss */}
+          <motion.div
+            className="absolute inset-0 bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))] flex flex-col"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={SPRING}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.6 }}
+            onDragEnd={(_e, info) => {
+              if (info.offset.y > 120 || info.velocity.y > 500) {
+                onClose();
+              }
+            }}
+          >
+            {/* Drag handle */}
+            <div
+              className="flex-shrink-0 flex items-center justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="w-10 h-1 rounded-full bg-[hsl(var(--platform-border)/0.4)]" />
             </div>
 
-            {/* A-Z scrubber */}
-            {brandLetters.length > 5 && (
-              <div className="flex flex-col items-center justify-center gap-0.5 w-5 flex-shrink-0">
-                {brandLetters.map((letter) => (
-                  <button
-                    key={letter}
-                    className="text-[9px] text-[hsl(var(--platform-foreground-muted)/0.5)] hover:text-violet-400 transition-colors"
-                  >
-                    {letter}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Product list grouped by category */
-          <div className="space-y-5">
-            {grouped.size === 0 && (
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] text-center pt-12">
-                {loadingProducts ? 'Loading…' : 'No products found'}
-              </p>
-            )}
-            {Array.from(grouped.entries()).map(([category, products]) => (
-              <div key={category}>
-                <p className="text-[10px] font-medium tracking-wide uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2">
-                  {category}
-                </p>
-                <div className="space-y-1">
-                  {products.map((product) => {
-                    const isSelected = picked.has(product.id) || selectedIds.has(product.id);
-                    return (
-                      <button
-                        key={product.id}
-                        onClick={() => toggleProduct(product)}
-                        disabled={selectedIds.has(product.id)}
-                        className={cn(
-                          'w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-150 text-left',
-                          isSelected
-                            ? 'bg-violet-600/20 border border-violet-500/40'
-                            : 'bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] hover:border-[hsl(var(--platform-border)/0.4)]',
-                          selectedIds.has(product.id) && 'opacity-40'
-                        )}
-                      >
-                        {/* Swatch */}
-                        <div
-                          className="w-7 h-7 rounded-full flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
-                          style={{
-                            backgroundColor: product.swatch_color || 'hsl(var(--platform-bg-elevated))',
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[hsl(var(--platform-foreground))] truncate">{product.name}</p>
-                          {isSearching && (
-                            <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">{product.brand}</p>
-                          )}
-                        </div>
-                        {isSelected && (
-                          <Check className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
+            {/* Header */}
+            <div className="flex-shrink-0 px-5 pt-2 pb-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {selectedBrand && !isSearching ? (
+                    <button
+                      onClick={() => setSelectedBrand(null)}
+                      className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))]"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
+                  ) : null}
+                  <h1 className="font-display text-base tracking-wide uppercase">
+                    {selectedBrand && !isSearching ? selectedBrand : 'Products'}
+                  </h1>
                 </div>
+                <button
+                  onClick={onClose}
+                  className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Bottom bar — selection count + Add button */}
-      {picked.size > 0 && (
-        <div className="flex-shrink-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-elevated))]">
-          <button
-            onClick={handleAdd}
-            className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            Add {picked.size} Product{picked.size > 1 ? 's' : ''} to Formula
-          </button>
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                <input
+                  type="text"
+                  placeholder="Search products…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-10 pl-10 pr-4 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] focus:outline-none focus:border-violet-500/50"
+                />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6">
+              {!selectedBrand && !isSearching ? (
+                /* Brand grid */
+                <div className="flex gap-2">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    {(brands || []).map(({ brand, count }) => (
+                      <button
+                        key={brand}
+                        onClick={() => setSelectedBrand(brand)}
+                        className="text-left rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 hover:border-[hsl(var(--platform-border)/0.5)] active:scale-[0.98] transition-all duration-150"
+                      >
+                        <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
+                          {brand}
+                        </p>
+                        <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] mt-1">
+                          {count} products
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* A-Z scrubber */}
+                  {brandLetters.length > 5 && (
+                    <div className="flex flex-col items-center justify-center gap-0.5 w-5 flex-shrink-0">
+                      {brandLetters.map((letter) => (
+                        <button
+                          key={letter}
+                          className="text-[9px] text-[hsl(var(--platform-foreground-muted)/0.5)] hover:text-violet-400 transition-colors"
+                        >
+                          {letter}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Product list grouped by category */
+                <div className="space-y-5">
+                  {grouped.size === 0 && (
+                    <p className="text-sm text-[hsl(var(--platform-foreground-muted))] text-center pt-12">
+                      {loadingProducts ? 'Loading…' : 'No products found'}
+                    </p>
+                  )}
+                  {Array.from(grouped.entries()).map(([category, products]) => (
+                    <div key={category}>
+                      <p className="text-[10px] font-medium tracking-wide uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2">
+                        {category}
+                      </p>
+                      <div className="space-y-1">
+                        {products.map((product) => {
+                          const isSelected = picked.has(product.id) || selectedIds.has(product.id);
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => toggleProduct(product)}
+                              disabled={selectedIds.has(product.id)}
+                              className={cn(
+                                'w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-150 text-left',
+                                isSelected
+                                  ? 'bg-violet-600/20 border border-violet-500/40'
+                                  : 'bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] hover:border-[hsl(var(--platform-border)/0.4)]',
+                                selectedIds.has(product.id) && 'opacity-40'
+                              )}
+                            >
+                              {/* Swatch */}
+                              <div
+                                className="w-7 h-7 rounded-full flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
+                                style={{
+                                  backgroundColor: product.swatch_color || 'hsl(var(--platform-bg-elevated))',
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-[hsl(var(--platform-foreground))] truncate">{product.name}</p>
+                                {isSearching && (
+                                  <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">{product.brand}</p>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-violet-400 flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom bar — selection count + Add button */}
+            {picked.size > 0 && (
+              <div className="flex-shrink-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-elevated))]">
+                <button
+                  onClick={handleAdd}
+                  className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  Add {picked.size} Product{picked.size > 1 ? 's' : ''} to Formula
+                </button>
+              </div>
+            )}
+          </motion.div>
         </div>
       )}
-    </div>
+    </AnimatePresence>
   );
 }
