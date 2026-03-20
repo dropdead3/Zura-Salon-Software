@@ -1,37 +1,33 @@
 
 
-## Plan: Add Pull-Down-to-Dismiss Gesture on Booking Sheet
+## Fix: No Services in Demo Mode — Wrong Default Location
 
-### Problem
-The `DockNewBookingSheet` has a visual drag handle but no actual swipe-down gesture to dismiss. On mobile, users expect to pull down on the handle to close bottom sheets.
+### Root Cause
+The previous fix correctly auto-selects the first location, but **"North Mesa" (the first location by display_order) has zero synced services** in `phorest_services`. Only "Val Vista Lakes" has 78 active services. So the query works fine — it just returns an empty set for the default location.
 
-### Approach
-Use `framer-motion`'s built-in drag gesture on the sheet's `motion.div`. This is the standard pattern for bottom-sheet dismiss and avoids custom touch handlers.
+### Two-Part Fix
 
-### Changes — `src/components/dock/schedule/DockNewBookingSheet.tsx`
+**1. Sync services for North Mesa** (data fix)
+- The `phorest_services` table only has records for branch `6YPlWL5os-Fnj0MmifbvVA` (Val Vista Lakes)
+- North Mesa's branch `hYztERWvOdMpLUcvRSNbSA` has no service records at all
+- Copy the 78 active services for North Mesa's branch so both locations have services. This is likely a sync gap — both locations should offer the same service catalog.
 
-**On the sheet `motion.div` (line 198–206):**
-- Add `drag="y"` with `dragConstraints={{ top: 0 }}` and `dragElastic={{ top: 0, bottom: 0.4 }}`
-- Add `onDragEnd` handler: if the user drags down past a threshold (~120px) or with enough velocity, call `handleClose()`; otherwise snap back to `y: 0`
-- Keep the existing spring animation for enter/exit
+**2. Smarter default location selection** (code fix)
+- In `DockPinGate.tsx` and `DockDeviceSwitcher.tsx`, instead of blindly picking `locations[0]`, prefer a location that actually has services
+- Alternatively, default to "Val Vista Lakes" specifically since it has data, or show a clear message when the selected location has no services with guidance to switch locations
 
-```tsx
-<motion.div
-  drag="y"
-  dragConstraints={{ top: 0, bottom: 0 }}
-  dragElastic={{ top: 0, bottom: 0.4 }}
-  onDragEnd={(_, info) => {
-    if (info.offset.y > 120 || info.velocity.y > 500) {
-      handleClose();
-    }
-  }}
-  // ...existing props
->
+### Recommended approach
+The cleanest fix is **option 1**: insert service records for North Mesa's branch so both locations work. This is a data completeness issue, not a code bug. The auto-select logic is correct.
+
+### Changes
+
+**Database migration** — Insert phorest_services for North Mesa's branch by duplicating the Val Vista Lakes services with the correct `phorest_branch_id`:
+```sql
+INSERT INTO phorest_services (phorest_service_id, phorest_branch_id, name, category, duration_minutes, price, requires_qualification, is_active, allow_same_day_booking, lead_time_days, same_day_restriction_reason)
+SELECT phorest_service_id, 'hYztERWvOdMpLUcvRSNbSA', name, category, duration_minutes, price, requires_qualification, is_active, allow_same_day_booking, lead_time_days, same_day_restriction_reason
+FROM phorest_services
+WHERE phorest_branch_id = '6YPlWL5os-Fnj0MmifbvVA' AND is_active = true;
 ```
 
-**Scroll conflict prevention:**
-- Add `dragListener={false}` on the sheet and attach drag only to the handle area using a `dragControls` ref from framer-motion, so scrolling inside the content area doesn't trigger the dismiss gesture
-- Alternatively, limit the drag-to-dismiss to only fire when the scroll container is at `scrollTop === 0`
-
-### No other files affected
+**No code changes needed** — the existing auto-select and service query logic will work once both locations have service data.
 
