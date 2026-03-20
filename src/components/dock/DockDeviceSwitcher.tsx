@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Monitor, Smartphone, Tablet, RotateCcw, MapPin } from 'lucide-react';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { useLocations } from '@/hooks/useLocations';
