@@ -1,51 +1,42 @@
 
 
-## Add Assistant Selection to Booking Confirmation Step
+## Split Stylist Row into 2 Columns with Assistant Button
 
-### Problem
-When creating a new booking in the Dock, there's no way to attach an assistant to the appointment. Assistants need to be linked at booking time so they can see and work on the appointment in the Dock app.
+### Change
 
-### Solution
-Add an "Assistant" section to the `ConfirmStepDock` component (below the Stylist detail row), allowing the user to optionally select one or more team members as assistants. After booking, insert records into the existing `appointment_assistants` table.
+In `src/components/dock/schedule/DockNewBookingSheet.tsx`, replace the standalone Stylist `DetailRow` (line 935) and the separate Assistant section (lines 940-974) with a single 2-column row inside the Details card:
 
-### Changes
+- **Column 1 (left):** Stylist detail (icon + label + name) — same as current `DetailRow`
+- **Column 2 (right):** An "Add Assistant" button that opens the assistant chip picker inline or toggles visibility of the assistant chips below
 
-**File: `src/components/dock/schedule/DockNewBookingSheet.tsx`**
+### Implementation
 
-1. **Add state for selected assistants** (~line 84): `const [selectedAssistants, setSelectedAssistants] = useState<string[]>([])` — stores user_ids of chosen assistants.
+1. **Replace line 935** (the Stylist DetailRow) with a 2-column layout using `grid grid-cols-2`:
+   - Left: existing Stylist icon/label/value
+   - Right: a tappable "Add Assistant" button (Users icon + text, violet accent styling). If assistants are already selected, show their names (e.g., "Kylie M., Sam") instead of "Add Assistant"
 
-2. **Fetch location team members** (~line 134): Add a query to fetch `employee_profiles` for the current location (same pattern used in `DockDeviceSwitcher`), filtering out the logged-in staff member (the stylist). Returns `{ userId, name, photoUrl }[]`.
+2. **Move the assistant chip picker** (lines 940-974) into a collapsible section that appears directly below the Stylist row (still inside the Details card), toggled by the "Add Assistant" button. This keeps the UI clean — chips only appear when the button is tapped.
 
-3. **Pass assistants data to `ConfirmStepDock`** (~line 346): Pass `selectedAssistants`, `onAssistantsChange`, and `teamMembers` list as props.
+3. Remove the separate "Assistant (optional)" block outside the card since it's now integrated.
 
-4. **Render assistant picker in `ConfirmStepDock`** (after the Details card, ~line 888): Add an "Assistant (optional)" section with tappable chips for each available team member. Selected assistants get a violet highlight + checkmark. Styled consistently with the time slot chips.
-
-5. **Insert `appointment_assistants` rows after booking** (~line 207): After the `create-phorest-booking` call succeeds, loop through `selectedAssistants` and insert into `appointment_assistants` with `appointment_id`, `assistant_user_id`, and `organization_id`.
-
-6. **Reset assistant state on close** (~line 237): Add `setSelectedAssistants([])` to `handleClose`.
-
-### UI Layout (Confirm Step)
+### Layout
 ```text
-┌──────────────────────────────────┐
-│ Eric Day · 14805430240           │
-├──────────────────────────────────┤
-│ Location: North Mesa             │
-│ Stylist:  Demo Mode              │
-│ Date:     Fri, Mar 20            │
-│ Duration: 450m                   │
-├──────────────────────────────────┤
-│ ASSISTANT (OPTIONAL)             │
-│ [Alexis R.] [✓ Kylie M.] [Sam]  │  ← tappable multi-select chips
-├──────────────────────────────────┤
-│ TIME                             │
-│ [8:00] [8:30] [●9:00] ...       │
-│ SERVICES                         │
-│ Full Balayage · Merm · Specialty │
-│ Estimated Total          $475    │
-│ [     Confirm Booking      ]     │
-└──────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ 📍 Location          │                   │
+│    North Mesa         │                   │
+├──────────────────────┼───────────────────┤
+│ 👤 Stylist           │  [+ Add Assistant]│
+│    Demo Mode         │   or "Kylie M."   │
+├──────────────────────┴───────────────────┤
+│ (if expanded) [Alexis R.] [✓Kylie] [Sam]│
+├──────────────────────────────────────────┤
+│ 📅 Date              │                   │
+│    Fri, Mar 20       │                   │
+├──────────────────────────────────────────┤
+│ ⏱ Duration           │                   │
+│    450m              │                   │
+└──────────────────────────────────────────┘
 ```
 
-### Demo Mode
-In demo mode, the team member query already works (same pattern as `DockDeviceSwitcher`). The `appointment_assistants` insert will be skipped (same as the booking mutation is a no-op in demo).
+Single file change: `src/components/dock/schedule/DockNewBookingSheet.tsx`
 
