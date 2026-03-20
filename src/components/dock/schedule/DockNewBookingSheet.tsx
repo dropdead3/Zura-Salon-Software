@@ -148,11 +148,18 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     enabled: !isDemoMode,
   });
 
-  // Team members at this location (for assistant selection)
+  // Team members at this location (for assistant selection) — filtered to stylist roles only
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['dock-team-members-booking', staff.organizationId, locationId],
     queryFn: async () => {
       if (!staff.organizationId || !locationId) return [];
+      // Fetch stylist-role user IDs
+      const { data: stylistRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant']);
+      const stylistUserIds = new Set((stylistRoles || []).map(r => r.user_id));
+
       const { data } = await supabase
         .from('employee_profiles')
         .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
@@ -162,6 +169,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
         .order('display_name', { ascending: true });
       return (data || [])
         .filter(p => p.user_id !== staff.userId) // exclude current stylist
+        .filter(p => stylistUserIds.has(p.user_id)) // only stylist / assistant_stylist roles
         .filter(p => p.location_id === locationId || (p.location_ids && p.location_ids.includes(locationId)))
         .map(p => ({
           userId: p.user_id,
@@ -913,7 +921,7 @@ function ConfirmStepDock({
   selectedAssistants: string[];
   onAssistantsChange: (ids: string[]) => void;
 }) {
-  const [showAssistantPicker, setShowAssistantPicker] = useState(false);
+  // Assistant chips are always inline — no toggle state needed
   return (
     <div className="flex flex-col">
       <div className="px-5 pb-4 space-y-4">
@@ -933,9 +941,9 @@ function ConfirmStepDock({
         {/* Details */}
         <div className="rounded-xl border border-[hsl(var(--platform-border))] divide-y divide-[hsl(var(--platform-border))]">
           <DetailRow icon={<MapPin className="w-4 h-4" />} label="Location" value={locationName} />
-          {/* Stylist row with inline Add Assistant */}
-          <div className="px-3 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          {/* Stylist row with inline assistant chips */}
+          <div className="px-3 py-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="w-7 h-7 rounded-full bg-[hsl(var(--platform-foreground)/0.08)] flex items-center justify-center">
                 <User className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
               </div>
@@ -945,46 +953,34 @@ function ConfirmStepDock({
               </div>
             </div>
             {teamMembers.length > 0 && (
-              <button
-                onClick={() => setShowAssistantPicker(prev => !prev)}
-                className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                <Users className="w-3.5 h-3.5" />
-                {selectedAssistants.length > 0
-                  ? teamMembers.filter(m => selectedAssistants.includes(m.userId)).map(m => m.name).join(', ')
-                  : '+ Add Assistant'}
-              </button>
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                {teamMembers.map(m => {
+                  const isSelected = selectedAssistants.includes(m.userId);
+                  return (
+                    <button
+                      key={m.userId}
+                      onClick={() => {
+                        onAssistantsChange(
+                          isSelected
+                            ? selectedAssistants.filter(id => id !== m.userId)
+                            : [...selectedAssistants, m.userId]
+                        );
+                      }}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-[11px] transition-colors flex items-center gap-1',
+                        isSelected
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                      )}
+                    >
+                      {isSelected && <Check className="w-3 h-3" />}
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
-          {/* Collapsible assistant chip picker */}
-          {showAssistantPicker && teamMembers.length > 0 && (
-            <div className="px-3 pb-2.5 flex flex-wrap gap-1.5">
-              {teamMembers.map(m => {
-                const isSelected = selectedAssistants.includes(m.userId);
-                return (
-                  <button
-                    key={m.userId}
-                    onClick={() => {
-                      onAssistantsChange(
-                        isSelected
-                          ? selectedAssistants.filter(id => id !== m.userId)
-                          : [...selectedAssistants, m.userId]
-                      );
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5',
-                      isSelected
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
-                    )}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    {m.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
           <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
         </div>
