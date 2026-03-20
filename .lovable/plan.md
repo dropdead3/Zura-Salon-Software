@@ -1,26 +1,49 @@
 
 
-## Make Continue Button Sticky at Bottom of Client Step
+## Fix Time Selector: Restore "Now" Label and Filter Out-of-Hours Slots
 
-### Change
+### Problems
 
-**`src/components/dock/schedule/DockNewBookingSheet.tsx`** — `ClientStepDock` component (lines 572–686)
+1. **"Now" label missing**: The time slot button renders `formatTime12h(t)` for all slots. The `isNowSlot` variable is computed (line 1216) but never used to show a "Now" label.
 
-1. **Restructure layout**: Change the outer container from a single `flex flex-col` to separate the scrollable content from the sticky footer. The search results area (`flex-1 min-h-0`) needs `overflow-y-auto` so it scrolls independently.
+2. **Out-of-hours times (5:00 AM, 5:15 AM)**: Lines 130-134 always inject the current rounded time into the slot list, even when it falls outside operating hours. If a user opens the wizard at 5 AM, that time gets prepended. This should only happen for today's date, and even then it's debatable — but at minimum, times outside operating hours should not appear.
 
-2. **Make Continue button sticky**: Move the Continue button div (lines 674–684) outside the scrollable area. Give it a sticky/fixed bottom position with a subtle top gradient fade so it doesn't abruptly clip content. Style it to match other action buttons in the wizard (full-width, `rounded-full`, violet accent).
+### Changes
+
+**`src/components/dock/schedule/DockNewBookingSheet.tsx`**
+
+1. **Stop injecting out-of-hours "Now" slot** (lines 130-134): Only inject the now-slot if:
+   - The selected date is today, AND
+   - The now-rounded time falls within operating hours (between open and close)
+   
+   If outside hours, don't add it — let the user pick from valid operating-hour slots.
+
+2. **Restore "Now" label on the time button** (line 1228): When the slot matches the current rounded time and the selected date is today, render "Now" instead of (or alongside) the formatted time, e.g. `"Now"` or `"Now · 2:15 PM"`.
 
 ### Technical detail
 
 ```
-Container (flex flex-col h-full)
-├── Selected client banner (fixed height)
-├── Search row (fixed height)
-├── Results area (flex-1 overflow-y-auto) ← scrolls
-└── Continue button (sticky bottom, bg gradient fade) ← always visible
+// Line 130-134 replacement:
+const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
+const nowRounded = Math.ceil(nowMinutes / 15) * 15;
+const nowStr = minutesToTime(nowRounded);
+if (isToday && opSlots.length > 0 && !opSlots.includes(nowStr)) {
+  // Only inject if within operating window
+  const startMins = timeToMinutes(openTime!);
+  const endMins = timeToMinutes(closeTime!);
+  if (nowRounded >= startMins && nowRounded <= endMins) {
+    return [nowStr, ...opSlots];
+  }
+}
+if (opSlots.length === 0) return [nowStr]; // fallback for closed days
+return opSlots;
 ```
 
-- Remove `mt-auto` from the Continue wrapper — it's no longer needed since the button sits outside the scroll area
-- Add `overflow-y-auto` to the search results div (line 621)
-- Add a top gradient overlay (`bg-gradient-to-t from-[hsl(var(--platform-bg))]`) on the Continue wrapper for a clean fade effect
+```
+// Line 1228 — add "Now" label:
+const isToday = date === format(new Date(), 'yyyy-MM-dd');
+const nowRounded = minutesToTime(Math.ceil(nowMinutes / 15) * 15);
+// In the button text:
+{isToday && t === nowRounded ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
+```
 
