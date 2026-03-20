@@ -1,14 +1,12 @@
 
 
-## Fix: Remove Non-Existent Column from Demo Booking Insert
+## Enlarge "New client — first visit" Badge
 
-### Problem
+**`src/components/dock/schedule/DockNewBookingSheet.tsx`** — lines 1124–1127
 
-The demo-mode booking insert (line 298-314 in `DockNewBookingSheet.tsx`) includes `phorest_branch_id` in the insert payload, but that column does not exist on the `phorest_appointments` table. This causes the schema cache error on confirm.
+Increase padding, icon size, and font size:
 
-### Change
-
-**`src/components/dock/schedule/DockNewBookingSheet.tsx`** — line 300
-
-Remove the `phorest_branch_id: selectedLocation || 'demo-branch',` line from the demo insert object. All other fields in the insert are valid columns on the table.
+- Container: `px-2 py-1` → `px-3 py-1.5`, `gap-1` → `gap-1.5`
+- Icon: `w-3 h-3` → `w-4 h-4`
+- Text: `text-[10px]` → `text-xs`
 
