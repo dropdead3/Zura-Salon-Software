@@ -24,6 +24,7 @@ interface DockNewBookingSheetProps {
   open: boolean;
   onClose: () => void;
   staff: DockStaffSession;
+  locationId: string;
 }
 
 interface PhorestClient {
