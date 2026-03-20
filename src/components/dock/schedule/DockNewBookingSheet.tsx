@@ -759,6 +759,7 @@ function ConfirmStepDock({
   onNotesChange,
   onConfirm,
   isLoading,
+  onAddService,
 }: {
   client: PhorestClient | null;
   services: PhorestService[];
@@ -773,6 +774,7 @@ function ConfirmStepDock({
   onNotesChange: (n: string) => void;
   onConfirm: () => void;
   isLoading: boolean;
+  onAddService: () => void;
 }) {
   return (
     <div className="flex flex-col">
