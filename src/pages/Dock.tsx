@@ -19,6 +19,7 @@ export interface DockStaffSession {
   userId: string;
   displayName: string;
   avatarUrl?: string | null;
+  locationId: string;
 }
 
 export default function Dock() {

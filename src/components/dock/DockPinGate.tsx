@@ -146,12 +146,15 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       {showDemo && (
         <div className="mt-8 flex flex-col items-center gap-1">
           <button
-            onClick={() =>
+            onClick={() => {
+              const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
               onSuccess({
                 userId: 'dev-bypass-000',
                 displayName: 'Dev Tester',
                 avatarUrl: null,
-              })
+                locationId: deviceLocId,
+              });
+            }
             }
             className="text-xs text-[hsl(var(--platform-foreground-muted)/0.4)] hover:text-violet-400 transition-colors"
           >
