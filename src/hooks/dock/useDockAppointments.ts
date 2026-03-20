@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DEMO_APPOINTMENTS } from './dockDemoData';
+import { formatFirstLastInitial } from '@/lib/dock-utils';
 
 export interface DockAppointment {
   id: string;
