@@ -445,6 +445,9 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   onConfirm={() => createBooking.mutate()}
                   isLoading={createBooking.isPending}
                   onAddService={() => setStep('service')}
+                  teamMembers={teamMembers}
+                  selectedAssistants={selectedAssistants}
+                  onAssistantsChange={setSelectedAssistants}
                 />
               )}
             </div>
