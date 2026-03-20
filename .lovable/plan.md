@@ -1,22 +1,52 @@
 
 
-## Plan: Fix Booking Sheet Not Appearing
+## Plan: Make Dock Location-Aware (Remove Location Picker from Booking)
 
-### Root Cause
-The `DockNewBookingSheet` uses `createPortal(…, document.body)` to render the overlay. When the Dock is in **device preview mode** (phone/tablet), the content sits inside a container with `overflow: hidden` and `border-radius: 2rem`. The portal escapes this container and renders at the `document.body` level — but the page's background and z-index stacking means it either renders invisibly behind the device frame, or is clipped/unreachable.
+### Problem
+The booking wizard asks the user to pick a location, but a Dock is inherently tied to a single physical location. The location should be configured once at the device level and used implicitly everywhere.
 
-Even in "full" mode, the fixed-inset parent might conflict with the portal z-index.
-
-### Fix
-Remove the `createPortal` wrapper entirely. Render the sheet **inline** within the component tree instead of portaling to `document.body`. Since the Dock already has a `fixed inset-0` parent, the sheet's `fixed inset-x-0 bottom-0` positioning will work correctly within the Dock context. For the constrained device preview, switch from `fixed` to `absolute` positioning so the sheet stays within the device frame.
+### Approach
+1. Add a `locationId` to the `DockStaffSession` so the entire Dock knows its location
+2. Add a location selector in the Device Configurator bar (next to phone/tablet/full toggle) for dev/demo mode
+3. Also resolve location from the staff member's profile as a fallback
+4. Remove the location picker from the booking wizard's service step — use the Dock's location automatically
 
 ### Changes
 
-**`src/components/dock/schedule/DockNewBookingSheet.tsx`**
-- Remove `createPortal` import and usage — return the `AnimatePresence` JSX directly
-- Change the backdrop and sheet from `fixed` to `absolute` positioning so they respect the device preview container
-- Ensure the parent in `DockScheduleTab` has `relative` positioning to anchor the absolute overlay
+**1. Expand `DockStaffSession` in `src/pages/Dock.tsx`**
+- Add `locationId: string` to the interface
+- Persist the dock location in localStorage (`dock-location-id`)
+- Pass it through to `DockLayout`
 
-**`src/components/dock/schedule/DockScheduleTab.tsx`**
-- Add `relative` class to the root `<div>` so the absolutely-positioned sheet anchors correctly
+**2. Add location selector to `src/components/dock/DockDeviceSwitcher.tsx`**
+- Add a small location dropdown/pill next to the device toggle (only visible in dev/demo mode)
+- Fetch locations via `useLocations()` and allow selection
+- Persist choice in localStorage (`dock-location-id`)
+- Emit changes up to the Dock page state
+
+**3. Resolve location on PIN login**
+- When a staff member logs in via PIN, auto-set the Dock location from their `employee_profiles.location_id` if no explicit device location is configured
+- Explicit device-level config takes priority over staff profile
+
+**4. Update `DockNewBookingSheet.tsx`**
+- Accept `locationId` as a prop (from the Dock session)
+- Remove the location selector UI from the service step entirely
+- Pass the location directly to `useServicesByCategory(locationId)`
+- Use the location's `phorest_branch_id` for the booking mutation
+
+**5. Thread `locationId` through `DockLayout` → `DockScheduleTab` → `DockNewBookingSheet`**
+- `DockLayout` receives `locationId` and passes it to tab components
+- `DockScheduleTab` passes it to the booking sheet
+
+### Data flow
+```text
+DockDeviceSwitcher (config) → localStorage → Dock page state
+  OR
+PIN login → employee_profiles.location_id → Dock page state
+  ↓
+DockLayout → DockScheduleTab → DockNewBookingSheet
+  (locationId used for services query + booking mutation)
+```
+
+### No database changes needed
 
