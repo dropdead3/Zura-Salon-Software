@@ -1,35 +1,27 @@
 
 
-## Client Quick-View Card on Confirm Step
+## Add "Client Since" and "Last Visit" to Client Search Cards
 
-Add a compact "last visit" summary card below the client name on the confirm step, showing key context at a glance before booking.
+### What changes
 
-### What it shows
-- **Last visit date** + time since (e.g., "Feb 14 · 5 weeks ago")
-- **Last stylist seen** (resolved from `phorest_staff_mapping` → `employee_profiles`)
-- **Last location visited**
-- **Last service** 
-- **Total visit count**
-- "New client" badge if no prior visits
+**`src/components/dock/schedule/DockNewBookingSheet.tsx`**
 
-### Implementation
+1. **Expand client query**: Add `client_since` to the select on the `phorest_clients` query (line 240) and update the `PhorestClient` interface to include `client_since: string | null`.
 
-**Single file: `src/components/dock/schedule/DockNewBookingSheet.tsx`**
+2. **Add a lightweight last-visit lookup**: Create a small React Query hook inside `ClientRow` (or a shared sub-query) that fetches the most recent `appointment_date` from `phorest_appointments` for the client's `phorest_client_id`, filtered to real visits (`is_demo = false`, completed/confirmed statuses). This avoids N+1 by only firing for visible rows.
 
-1. **Add a query inside `ConfirmStepDock`** that fetches the client's last completed appointment from `phorest_appointments` using `client.phorest_client_id`:
-   - Select `appointment_date`, `service_name`, `location_id`, `phorest_staff_id`, and count total visits
-   - Join to `phorest_staff_mapping` → `employee_profiles` for stylist name
-   - Join to `locations` for location name
-   - Filter `.eq('is_demo', false)` to exclude demo bookings, order by `appointment_date desc`, limit 1
+3. **Format durations as human-readable**: Use `formatDistanceToNow` (already imported) to render:
+   - **Client since**: e.g. "Client since · 2 years" or "Client since · 3 months" from `client_since`
+   - **Last visit**: e.g. "Last visit · 5 weeks ago" from the appointment query
+   - If `client_since` is null: "No history on record"
+   - If last visit is null: "No visits on record"
 
-2. **Render a compact card** between the client header and the details section:
-   - If loading: subtle skeleton
-   - If no visits: a small "New Client ✨" badge
-   - If visits exist: a small muted card with 2–3 lines: `"Last visit: Feb 14 (5w ago) · Balayage · with Sarah M. at North Mesa"` and `"12 visits total"`
+4. **Update `ClientRow` UI**: Below the name/phone line, add a subtle third line with the two data points separated by a dot, in muted text at `text-[10px]`.
 
-3. **Use `formatDistanceToNow`** from `date-fns` for relative time.
+### Technical details
 
-4. **Pass `phorest_client_id`** through the `client` prop (already available on the `PhorestClient` interface).
-
-No new files, no schema changes. One query + one UI card added to the existing confirm step component.
+- `PhorestClient` interface gets `client_since: string | null`
+- Client search select becomes `'id, phorest_client_id, name, email, phone, client_since'`
+- `ClientRow` gets an inline `useQuery` for last visit date (staleTime: 60s, enabled when `phorest_client_id` exists)
+- Duration formatting: `formatDistanceToNow(date, { addSuffix: false })` for clean output like "2 years", "3 months", "5 weeks"
 
