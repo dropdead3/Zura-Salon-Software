@@ -266,7 +266,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       {/* Add Bowl button — only when bowls already exist */}
       {allBowlCount > 0 && (
         <button
-          onClick={() => setShowNewBowl(true)}
+          onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
           disabled={createBowl.isPending}
           className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium disabled:opacity-40"
         >
