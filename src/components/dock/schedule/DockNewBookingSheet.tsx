@@ -906,6 +906,12 @@ function ConfirmStepDock({
           <span className="text-lg font-medium text-[hsl(var(--platform-foreground))]">${totalPrice}</span>
         </div>
         <button
+          onClick={onAddService}
+          className="w-full h-10 rounded-full border border-violet-400/40 text-violet-400 font-sans text-sm font-medium hover:bg-violet-500/10 active:scale-[0.98] transition-all mb-3"
+        >
+          + Add Another Service
+        </button>
+        <button
           onClick={onConfirm}
           disabled={isLoading}
           className="w-full h-12 rounded-full bg-violet-600 text-white font-medium text-sm disabled:opacity-60 hover:bg-violet-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
