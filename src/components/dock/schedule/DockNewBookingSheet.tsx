@@ -946,7 +946,7 @@ function ConfirmStepDock({
             </div>
             {teamMembers.length > 0 && (
               <button
-                onClick={() => onAssistantsChange(selectedAssistants.length > 0 && showAssistantPicker ? [] : selectedAssistants, true)}
+                onClick={() => setShowAssistantPicker(prev => !prev)}
                 className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
               >
                 <Users className="w-3.5 h-3.5" />
