@@ -30,31 +30,25 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
   const today = format(new Date(), 'yyyy-MM-dd');
 
   return useQuery({
-    queryKey: ['dock-appointments', staffUserId, today, isDemoMode, usesRealData, organizationId],
+    queryKey: ['dock-appointments', staffUserId, today, isDemoMode, usesRealData, organizationId, locationId],
     queryFn: async (): Promise<DockAppointment[]> => {
       // Generic preview — pure faux data
       if (isDemoMode && !usesRealData) return DEMO_APPOINTMENTS;
 
-      // Org-specific demo — fetch real appointments for that org's locations
+      // Org-specific demo — fetch real appointments for the selected location
       if (isDemoMode && usesRealData && organizationId) {
-        // Get location IDs for this org
-        const { data: locations } = await supabase
-          .from('locations')
-          .select('id')
-          .eq('organization_id', organizationId);
+        // If no location selected yet, wait for auto-select
+        if (!locationId) return [];
 
-        const locationIds = (locations || []).map((l) => l.id);
-        if (locationIds.length === 0) return DEMO_APPOINTMENTS;
-
-        // Fetch today's phorest appointments across all org locations
-        const { data: phorestData, error: phorestErr } = await supabase
+        // Fetch today's phorest appointments for this specific location
+        let query = supabase
           .from('phorest_appointments')
           .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes')
-          .in('location_id', locationIds)
+          .eq('location_id', locationId)
           .eq('appointment_date', today)
           .is('deleted_at', null)
           .order('start_time', { ascending: true })
-          .limit(30);
+          .limit(50);
 
         if (phorestErr) throw phorestErr;
 
