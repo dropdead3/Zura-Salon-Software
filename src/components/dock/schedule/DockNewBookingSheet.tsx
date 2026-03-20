@@ -42,6 +42,7 @@ interface PhorestClient {
   name: string;
   email: string | null;
   phone: string | null;
+  client_since: string | null;
 }
 
 
