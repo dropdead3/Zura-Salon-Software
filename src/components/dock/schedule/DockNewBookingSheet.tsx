@@ -921,7 +921,9 @@ function ConfirmStepDock({
   selectedAssistants: string[];
   onAssistantsChange: (ids: string[]) => void;
 }) {
-  // Assistant chips are always inline — no toggle state needed
+  const [showAssistantPicker, setShowAssistantPicker] = useState(false);
+  const selectedNames = teamMembers.filter(m => selectedAssistants.includes(m.userId)).map(m => m.name);
+
   return (
     <div className="flex flex-col">
       <div className="px-5 pb-4 space-y-4">
@@ -941,46 +943,59 @@ function ConfirmStepDock({
         {/* Details */}
         <div className="rounded-xl border border-[hsl(var(--platform-border))] divide-y divide-[hsl(var(--platform-border))]">
           <DetailRow icon={<MapPin className="w-4 h-4" />} label="Location" value={locationName} />
-          {/* Stylist row with inline assistant chips */}
-          <div className="px-3 py-2.5 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="w-7 h-7 rounded-full bg-[hsl(var(--platform-foreground)/0.08)] flex items-center justify-center">
-                <User className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
-              </div>
-              <div>
-                <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] font-display tracking-wider uppercase">Stylist</div>
-                <div className="text-sm text-[hsl(var(--platform-foreground))]">{stylistName}</div>
-              </div>
-            </div>
-            {teamMembers.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 justify-end">
-                {teamMembers.map(m => {
-                  const isSelected = selectedAssistants.includes(m.userId);
-                  return (
-                    <button
-                      key={m.userId}
-                      onClick={() => {
-                        onAssistantsChange(
+          <DetailRow icon={<User className="w-4 h-4" />} label="Stylist" value={stylistName} />
+          {/* Assistant row */}
+          {teamMembers.length > 0 && (
+            <div className="divide-y divide-[hsl(var(--platform-border))]">
+              <button
+                type="button"
+                onClick={() => setShowAssistantPicker(!showAssistantPicker)}
+                className="w-full px-3 py-2.5 flex items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-[hsl(var(--platform-foreground)/0.08)] flex items-center justify-center">
+                    <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] font-display tracking-wider uppercase">Assistant</div>
+                    {selectedNames.length > 0 ? (
+                      <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', ')}</div>
+                    ) : (
+                      <div className="text-sm text-violet-400">+ Add an assistant</div>
+                    )}
+                  </div>
+                </div>
+              </button>
+              {showAssistantPicker && (
+                <div className="px-3 py-2.5 flex flex-wrap gap-1.5">
+                  {teamMembers.map(m => {
+                    const isSelected = selectedAssistants.includes(m.userId);
+                    return (
+                      <button
+                        key={m.userId}
+                        onClick={() => {
+                          onAssistantsChange(
+                            isSelected
+                              ? selectedAssistants.filter(id => id !== m.userId)
+                              : [...selectedAssistants, m.userId]
+                          );
+                        }}
+                        className={cn(
+                          'px-2.5 py-1 rounded-lg text-[11px] transition-colors flex items-center gap-1',
                           isSelected
-                            ? selectedAssistants.filter(id => id !== m.userId)
-                            : [...selectedAssistants, m.userId]
-                        );
-                      }}
-                      className={cn(
-                        'px-2.5 py-1 rounded-lg text-[11px] transition-colors flex items-center gap-1',
-                        isSelected
-                          ? 'bg-violet-600 text-white'
-                          : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
-                      )}
-                    >
-                      {isSelected && <Check className="w-3 h-3" />}
-                      {m.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                            ? 'bg-violet-600 text-white'
+                            : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                        )}
+                      >
+                        {isSelected && <Check className="w-3 h-3" />}
+                        {m.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
           <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
         </div>
