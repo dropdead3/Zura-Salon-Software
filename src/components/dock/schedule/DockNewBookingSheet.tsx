@@ -297,7 +297,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
           .from('phorest_appointments')
           .insert({
             phorest_id: `demo-${crypto.randomUUID()}`,
-            phorest_branch_id: selectedLocation || 'demo-branch',
+            
             location_id: selectedLocation || locationId,
             client_name: selectedClient.name,
             phorest_client_id: selectedClient.phorest_client_id,
