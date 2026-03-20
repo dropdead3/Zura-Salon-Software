@@ -164,6 +164,10 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.94" },
         },
+        "glow": {
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "0.6" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
