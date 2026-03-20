@@ -1,12 +1,17 @@
 /**
  * Zura Dock — Standalone mixing station app.
  * Mobile-first, iPad-optimized. No dashboard layout.
+ *
+ * Supports `?demo=<organizationId>` to launch a read-only demo
+ * scoped to a real organization's services and clients.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DockLayout } from '@/components/dock/DockLayout';
 import { DockPinGate } from '@/components/dock/DockPinGate';
 import { DockDemoProvider } from '@/contexts/DockDemoContext';
+import { useDockDemoAccess } from '@/hooks/dock/useDockDemoAccess';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 
 export type DockTab = 'schedule' | 'active' | 'clients' | 'scale' | 'settings';
@@ -24,9 +29,27 @@ export interface DockStaffSession {
 }
 
 export default function Dock() {
+  const [searchParams] = useSearchParams();
+  const demoOrgId = searchParams.get('demo');
+  const canAccessDemo = useDockDemoAccess();
+
+  // If ?demo=<orgId> is present and we're in a dev/preview context, auto-boot
+  const urlDemoSession = useMemo<DockStaffSession | null>(() => {
+    if (!demoOrgId || !canAccessDemo) return null;
+    return {
+      userId: 'dev-bypass-000',
+      organizationId: demoOrgId,
+      displayName: 'Demo Mode',
+      avatarUrl: null,
+      locationId: '',
+    };
+  }, [demoOrgId, canAccessDemo]);
+
   const [staff, setStaff] = useState<DockStaffSession | null>(null);
   const [activeTab, setActiveTab] = useState<DockTab>('schedule');
   const [view, setView] = useState<DockView>({ screen: 'tabs' });
+
+  const effectiveStaff = urlDemoSession || staff;
 
   const handlePinSuccess = useCallback((session: DockStaffSession) => {
     setStaff(session);
@@ -52,19 +75,19 @@ export default function Dock() {
     setStaff(prev => prev ? { ...prev, locationId } : prev);
   }, []);
 
-  if (!staff) {
+  if (!effectiveStaff) {
     return <DockPinGate onSuccess={handlePinSuccess} />;
   }
 
   return (
-    <DockDemoProvider staff={staff}>
+    <DockDemoProvider staff={effectiveStaff}>
       <DockLayout
         activeTab={activeTab}
         onTabChange={(tab) => {
           setActiveTab(tab);
           setView({ screen: 'tabs' });
         }}
-        staff={staff}
+        staff={effectiveStaff}
         onLogout={handleLogout}
         view={view}
         onOpenAppointment={handleOpenAppointment}

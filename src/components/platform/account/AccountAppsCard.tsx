@@ -1,4 +1,4 @@
-import { Package } from 'lucide-react';
+import { Package, Play } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   PlatformCard,
@@ -19,6 +19,10 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
   const { entitlements, isLoading: entitlementsLoading } = useBackroomLocationEntitlements(organizationId);
 
   const isLoading = flagsLoading || entitlementsLoading;
+
+  const handleLaunchDemo = () => {
+    window.open(`/dock?demo=${organizationId}`, '_blank');
+  };
 
   if (isLoading) {
     return (
@@ -68,9 +72,18 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 </p>
               </div>
             </div>
-            <PlatformBadge variant={isBackroomEnabled ? 'success' : 'default'}>
-              {isBackroomEnabled ? 'Active' : 'Not Enabled'}
-            </PlatformBadge>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLaunchDemo}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-sans font-medium bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
+              >
+                <Play className="h-3 w-3" />
+                Launch Demo
+              </button>
+              <PlatformBadge variant={isBackroomEnabled ? 'success' : 'default'}>
+                {isBackroomEnabled ? 'Active' : 'Not Enabled'}
+              </PlatformBadge>
+            </div>
           </div>
         </div>
       </PlatformCardContent>

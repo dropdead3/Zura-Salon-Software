@@ -1,6 +1,7 @@
 /**
  * DockDemoContext — Enables demo mode when staff.userId === 'dev-bypass-000'.
  * Also provides device preview state and organization scoping for demo mode.
+ * `usesRealData` signals that the demo should fetch real services/clients from DB.
  */
 
 import { createContext, useContext, useMemo } from 'react';
@@ -9,6 +10,7 @@ import { useDockDevicePreview, type DockDevice, type DockOrientation } from '@/h
 
 interface DockDemoContextValue {
   isDemoMode: boolean;
+  usesRealData: boolean;
   organizationId: string;
   device: DockDevice;
   setDevice: (d: DockDevice) => void;
@@ -18,6 +20,7 @@ interface DockDemoContextValue {
 
 const DockDemoContext = createContext<DockDemoContextValue>({
   isDemoMode: false,
+  usesRealData: false,
   organizationId: '',
   device: 'full',
   setDevice: () => {},
@@ -33,18 +36,20 @@ export function DockDemoProvider({
   children: React.ReactNode;
 }) {
   const isDemoMode = staff.userId === 'dev-bypass-000';
+  const usesRealData = isDemoMode && !!staff.organizationId && staff.organizationId !== 'demo-org-000';
   const { device, setDevice, orientation, setOrientation } = useDockDevicePreview();
 
   const value = useMemo<DockDemoContextValue>(
     () => ({
       isDemoMode,
+      usesRealData,
       organizationId: staff.organizationId,
       device,
       setDevice,
       orientation,
       setOrientation,
     }),
-    [isDemoMode, staff.organizationId, device, setDevice, orientation, setOrientation]
+    [isDemoMode, usesRealData, staff.organizationId, device, setDevice, orientation, setOrientation]
   );
 
   return <DockDemoContext.Provider value={value}>{children}</DockDemoContext.Provider>;
