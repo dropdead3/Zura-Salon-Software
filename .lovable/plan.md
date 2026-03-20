@@ -1,42 +1,22 @@
 
 
-## Split Stylist Row into 2 Columns with Assistant Button
+## Inline Assistant Selection & Filter by Stylist Role
 
-### Change
+### Changes — single file: `src/components/dock/schedule/DockNewBookingSheet.tsx`
 
-In `src/components/dock/schedule/DockNewBookingSheet.tsx`, replace the standalone Stylist `DetailRow` (line 935) and the separate Assistant section (lines 940-974) with a single 2-column row inside the Details card:
+**1. Filter team members to stylists only** (~line 156-162)
+- Join against `user_roles` to only include users with `role = 'stylist'`. Since the Supabase JS client can't join across tables easily here, add a secondary query to fetch `user_roles` with `role = 'stylist'` for the org, then filter the employee list against those user_ids.
 
-- **Column 1 (left):** Stylist detail (icon + label + name) — same as current `DetailRow`
-- **Column 2 (right):** An "Add Assistant" button that opens the assistant chip picker inline or toggles visibility of the assistant chips below
-
-### Implementation
-
-1. **Replace line 935** (the Stylist DetailRow) with a 2-column layout using `grid grid-cols-2`:
-   - Left: existing Stylist icon/label/value
-   - Right: a tappable "Add Assistant" button (Users icon + text, violet accent styling). If assistants are already selected, show their names (e.g., "Kylie M., Sam") instead of "Add Assistant"
-
-2. **Move the assistant chip picker** (lines 940-974) into a collapsible section that appears directly below the Stylist row (still inside the Details card), toggled by the "Add Assistant" button. This keeps the UI clean — chips only appear when the button is tapped.
-
-3. Remove the separate "Assistant (optional)" block outside the card since it's now integrated.
+**2. Make assistant chips inline, not collapsible below** (~lines 947-986)
+- Remove the `showAssistantPicker` toggle state and the separate collapsible `<div>` below the stylist row.
+- Instead, render the assistant chip buttons directly inside the right side of the stylist row (same flex line), replacing the "+ Add Assistant" button text with the actual selectable chips inline.
+- Layout: Stylist info on the left, chip buttons flowing on the right (using `flex flex-wrap gap-1.5 justify-end`).
 
 ### Layout
 ```text
-┌──────────────────────────────────────────┐
-│ 📍 Location          │                   │
-│    North Mesa         │                   │
-├──────────────────────┼───────────────────┤
-│ 👤 Stylist           │  [+ Add Assistant]│
-│    Demo Mode         │   or "Kylie M."   │
-├──────────────────────┴───────────────────┤
-│ (if expanded) [Alexis R.] [✓Kylie] [Sam]│
-├──────────────────────────────────────────┤
-│ 📅 Date              │                   │
-│    Fri, Mar 20       │                   │
-├──────────────────────────────────────────┤
-│ ⏱ Duration           │                   │
-│    450m              │                   │
-└──────────────────────────────────────────┘
+│ 👤 Stylist        [Alexis R.] [✓Kylie M.] [Sam T.]  │
+│    Demo Mode                                          │
 ```
 
-Single file change: `src/components/dock/schedule/DockNewBookingSheet.tsx`
+Each chip is tappable to toggle selection (violet highlight when selected, subtle bg when not) — same styling as current chips, just positioned inline on the right of the row instead of in a separate collapsible section below.
 
