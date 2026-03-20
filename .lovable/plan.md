@@ -1,39 +1,51 @@
 
 
-## Show Selected Client & Continue Button When Returning to Client Step
+## Add Assistant Selection to Booking Confirmation Step
 
 ### Problem
-When a client is already selected and the user taps the "Client" progress bubble, they see the default search/empty state with no indication of their selection. They must re-search and re-select the client to proceed.
+When creating a new booking in the Dock, there's no way to attach an assistant to the appointment. Assistants need to be linked at booking time so they can see and work on the appointment in the Dock app.
 
 ### Solution
-Modify the `ClientStepDock` component to accept the currently selected client. When a client is already selected, show a "selected client" banner at the top (above the search bar) with the client's avatar, name, and contact info, plus a "Continue" button at the bottom. The user can still search/select a different client if they want.
+Add an "Assistant" section to the `ConfirmStepDock` component (below the Stylist detail row), allowing the user to optionally select one or more team members as assistants. After booking, insert records into the existing `appointment_assistants` table.
 
-### Changes — single file: `src/components/dock/schedule/DockNewBookingSheet.tsx`
+### Changes
 
-**1. Pass `selectedClient` and `onContinue` to `ClientStepDock`** (~line 346)
-- Add props: `selectedClient={selectedClient}` and `onContinue={() => setStep('service')}`
+**File: `src/components/dock/schedule/DockNewBookingSheet.tsx`**
 
-**2. Update `ClientStepDock` props interface** (~line 415-428)
-- Add `selectedClient: PhorestClient | null` and `onContinue: () => void`
+1. **Add state for selected assistants** (~line 84): `const [selectedAssistants, setSelectedAssistants] = useState<string[]>([])` — stores user_ids of chosen assistants.
 
-**3. Add selected client banner + continue button inside `ClientStepDock`** (~line 433)
-- When `selectedClient` is set, render a highlighted card at the top (before the search bar) showing the selected client with a checkmark, styled with a violet ring
-- Render a sticky "Continue" button at the bottom of the client step (after the search results area)
+2. **Fetch location team members** (~line 134): Add a query to fetch `employee_profiles` for the current location (same pattern used in `DockDeviceSwitcher`), filtering out the logged-in staff member (the stylist). Returns `{ userId, name, photoUrl }[]`.
 
-### Layout when client is selected
+3. **Pass assistants data to `ConfirmStepDock`** (~line 346): Pass `selectedAssistants`, `onAssistantsChange`, and `teamMembers` list as props.
+
+4. **Render assistant picker in `ConfirmStepDock`** (after the Details card, ~line 888): Add an "Assistant (optional)" section with tappable chips for each available team member. Selected assistants get a violet highlight + checkmark. Styled consistently with the time slot chips.
+
+5. **Insert `appointment_assistants` rows after booking** (~line 207): After the `create-phorest-booking` call succeeds, loop through `selectedAssistants` and insert into `appointment_assistants` with `appointment_id`, `assistant_user_id`, and `organization_id`.
+
+6. **Reset assistant state on close** (~line 237): Add `setSelectedAssistants([])` to `handleClose`.
+
+### UI Layout (Confirm Step)
 ```text
 ┌──────────────────────────────────┐
-│ ✓ Eric Day                       │  ← selected client banner (violet ring)
-│   14805430240                    │
-│                    [Change]      │
+│ Eric Day · 14805430240           │
 ├──────────────────────────────────┤
-│ 🔍 Search...              [+]   │
-│ (search results if typing)       │
-│                                  │
+│ Location: North Mesa             │
+│ Stylist:  Demo Mode              │
+│ Date:     Fri, Mar 20            │
+│ Duration: 450m                   │
 ├──────────────────────────────────┤
-│       [ Continue ]  (violet)     │  ← sticky footer button
+│ ASSISTANT (OPTIONAL)             │
+│ [Alexis R.] [✓ Kylie M.] [Sam]  │  ← tappable multi-select chips
+├──────────────────────────────────┤
+│ TIME                             │
+│ [8:00] [8:30] [●9:00] ...       │
+│ SERVICES                         │
+│ Full Balayage · Merm · Specialty │
+│ Estimated Total          $475    │
+│ [     Confirm Booking      ]     │
 └──────────────────────────────────┘
 ```
 
-Selecting a different client from search replaces the selection and auto-advances (existing behavior). The "Continue" button lets them proceed without re-selecting.
+### Demo Mode
+In demo mode, the team member query already works (same pattern as `DockDeviceSwitcher`). The `appointment_assistants` insert will be skipped (same as the booking mutation is a no-op in demo).
 
