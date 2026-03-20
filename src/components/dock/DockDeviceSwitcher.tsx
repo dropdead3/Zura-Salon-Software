@@ -11,6 +11,7 @@ interface DockDeviceSwitcherProps {
   onOrientationChange: (orientation: DockOrientation) => void;
   locationId?: string;
   onLocationChange?: (locationId: string) => void;
+  organizationId?: string;
 }
 
 const deviceOptions = [
