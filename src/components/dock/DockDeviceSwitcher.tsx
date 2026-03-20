@@ -19,7 +19,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
   const showRotate = device === 'tablet';
 
   return (
-    <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
+    <div className="fixed top-3 right-3 z-50 flex items-center gap-2 bg-[hsl(0_0%_12%)] rounded-full p-0.5">
       {showRotate && (
         <button
           type="button"
