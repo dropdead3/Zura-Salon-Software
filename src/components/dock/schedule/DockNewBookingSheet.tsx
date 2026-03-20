@@ -34,6 +34,7 @@ interface DockNewBookingSheetProps {
   onClose: () => void;
   staff: DockStaffSession;
   locationId: string;
+  staffFilter?: string;
 }
 
 interface PhorestClient {
@@ -75,7 +76,7 @@ function getInitials(name: string) {
     : name.slice(0, 2).toUpperCase();
 }
 
-export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
+export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFilter }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
   const { isDemoMode, usesRealData, organizationId } = useDockDemo();
 
@@ -237,6 +238,20 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     staleTime: 300_000,
   });
 
+  const effectiveStylistUserId = useMemo(() => {
+    if (!isDemoMode) return staff.userId;
+    if (staffFilter && staffFilter !== 'all') return staffFilter;
+    return teamMembers[0]?.userId ?? null;
+  }, [isDemoMode, staff.userId, staffFilter, teamMembers]);
+
+  const effectiveStylistName = useMemo(() => {
+    if (!isDemoMode) return staff.displayName;
+    if (staffFilter && staffFilter !== 'all') {
+      return teamMembers.find((member) => member.userId === staffFilter)?.name || staff.displayName;
+    }
+    return teamMembers[0]?.name || 'Team Member';
+  }, [isDemoMode, staff.displayName, staffFilter, teamMembers]);
+
   // Client search — use real DB when usesRealData
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
     queryKey: ['dock-booking-clients', clientSearch, isDemoMode, usesRealData, organizationId],
@@ -284,6 +299,10 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       if (!selectedClient) throw new Error('No client selected');
 
       if (isDemoMode) {
+        if (usesRealData && !effectiveStylistUserId) {
+          throw new Error('Select a team member before confirming the booking');
+        }
+
         // Insert a real row flagged as demo so it surfaces in Dock schedule
         const endMinutes =
           parseInt(selectedTime.split(':')[0]) * 60 +
@@ -309,7 +328,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
             total_price: totalPrice,
             status: 'confirmed',
             notes: notes || null,
-            stylist_user_id: staff.userId,
+            stylist_user_id: effectiveStylistUserId,
             is_demo: true,
           })
           .select('id')
@@ -531,7 +550,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                 <ConfirmStepDock
                   client={selectedClient}
                   services={selectedServiceDetails}
-                  stylistName={staff.displayName}
+                  stylistName={effectiveStylistName}
                   locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
                   date={selectedDate}
                   time={selectedTime}
