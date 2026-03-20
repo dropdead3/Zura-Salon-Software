@@ -735,7 +735,7 @@ function ServiceStepDock({
         <button
           onClick={onContinue}
           disabled={selectedServices.length === 0}
-          className="w-full h-12 rounded-xl bg-violet-600 text-white font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-violet-500 active:scale-[0.98] transition-all"
+          className="w-full h-12 rounded-full bg-violet-600 text-white font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-violet-500 active:scale-[0.98] transition-all"
         >
           Continue
         </button>
