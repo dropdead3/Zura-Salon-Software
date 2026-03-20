@@ -27,6 +27,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [loading, setLoading] = useState(false);
   const showDemo = useDockDemoAccess();
   const { data: settings } = useBusinessSettings();
+  const { data: locations = [] } = useLocations();
 
   const businessName = settings?.business_name || '';
   const logoDarkUrl = settings?.logo_dark_url;
