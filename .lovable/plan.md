@@ -1,28 +1,43 @@
 
 
-## Fix: Contain All Mixing Overlays Within the Device Viewer Frame
+## Add Pull-to-Dismiss and Tap-Outside-to-Close to All Dock Drawers
 
-### Problem
+### Current State
 
-Three mixing-related overlays use `fixed inset-0`, which positions them relative to the **browser viewport** instead of the device viewer frame. In demo/tablet mode, they break out of the rounded iPad container and cover the entire screen.
+Some drawers already have proper gesture handling (DockNewBookingSheet, DockNewClientSheet use framer-motion drag + backdrop tap). Three drawers are missing these interactions:
 
-Affected files:
-- `src/components/dock/mixing/DockNewBowlSheet.tsx` (line 30)
-- `src/components/dock/mixing/DockProductPicker.tsx` (line 81)
-- `src/components/dock/mixing/DockSessionCompleteSheet.tsx` (line 49)
+| Drawer | Tap Outside | Pull to Dismiss |
+|--------|------------|-----------------|
+| DockNewBowlSheet | ✅ (overlay click) | ❌ |
+| DockSessionCompleteSheet | ✅ (overlay click) | ❌ |
+| DockProductPicker | ❌ (full-screen, no overlay) | ❌ |
 
-### Fix
+### Changes
 
-Change `fixed inset-0` → `absolute inset-0` in all three files. The parent container in `DockLayout` (line 84) already has `relative` + `overflow-hidden`, so absolute positioning will correctly contain these overlays within the device frame.
+**1. `src/components/dock/mixing/DockNewBowlSheet.tsx`**
 
-**`DockNewBowlSheet.tsx`** — line 30
-- `fixed inset-0 z-40` → `absolute inset-0 z-40`
+Convert from static div to framer-motion `AnimatePresence` + `motion.div` pattern matching DockNewBookingSheet:
+- Add `useDragControls()` from framer-motion
+- Wrap in `AnimatePresence`, add slide-up animation (`y: '100%'` → `y: 0`)
+- Add `drag="y"` with `dragConstraints` and `dragElastic` on the sheet panel
+- Add draggable handle bar (`onPointerDown` → `dragControls.start`)
+- `onDragEnd`: close if `offset.y > 120 || velocity.y > 500`
+- Backdrop gets animated opacity + `onClick={onClose}`
 
-**`DockProductPicker.tsx`** — line 81
-- `fixed inset-0 z-50` → `absolute inset-0 z-50`
+**2. `src/components/dock/mixing/DockSessionCompleteSheet.tsx`**
 
-**`DockSessionCompleteSheet.tsx`** — line 49
-- `fixed inset-0 z-50` → `absolute inset-0 z-50`
+Same conversion — add framer-motion drag-to-dismiss and animated backdrop:
+- Add `useDragControls()`, `AnimatePresence`, slide-up animation
+- Draggable handle bar on the sheet
+- `onDragEnd` close threshold
 
-Three single-line changes. No structural or design changes needed — the sheets already render correctly once contained.
+**3. `src/components/dock/mixing/DockProductPicker.tsx`**
+
+This is a full-screen picker (not a bottom sheet), so pull-to-dismiss works differently:
+- Add a drag handle bar at the top
+- Add `drag="y"` with constraints allowing only downward drag
+- `onDragEnd`: close if dragged down enough
+- Add a subtle backdrop behind it for tap-outside consistency (or keep the X button as primary since it's full-screen)
+
+All three files adopt the same spring config and drag thresholds already used in `DockNewBookingSheet` and `DockNewClientSheet` for consistency.
 
