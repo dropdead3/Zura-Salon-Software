@@ -873,7 +873,7 @@ function ServiceStepDock({
             </div>
             <div className="flex items-center justify-between text-sm mb-3">
               <span className="text-[hsl(var(--platform-foreground-muted))]">
-                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {totalDuration}m
+                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {formatMinutesToDuration(totalDuration)}
               </span>
               <span className="text-[hsl(var(--platform-foreground))] font-medium">${totalPrice}</span>
             </div>
