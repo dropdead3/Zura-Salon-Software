@@ -24,6 +24,7 @@ interface DockLayoutProps {
   view: DockView;
   onOpenAppointment: (appointment: DockAppointment) => void;
   onBack: () => void;
+  onLocationChange?: (locationId: string) => void;
 }
 
 const DEVICE_DIMENSIONS = {
@@ -31,7 +32,7 @@ const DEVICE_DIMENSIONS = {
   tablet: { width: 820, height: 1180 },
 } as const;
 
-export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOpenAppointment, onBack }: DockLayoutProps) {
+export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOpenAppointment, onBack, onLocationChange }: DockLayoutProps) {
   const { isDemoMode, device, setDevice, orientation, setOrientation } = useDockDemo();
   const showingDetail = view.screen === 'appointment-detail';
   const isConstrained = device !== 'full';
@@ -52,7 +53,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
           />
         ) : (
           <>
-            {activeTab === 'schedule' && <DockScheduleTab staff={staff} onOpenAppointment={onOpenAppointment} />}
+            {activeTab === 'schedule' && <DockScheduleTab staff={staff} onOpenAppointment={onOpenAppointment} locationId={staff.locationId} />}
             {activeTab === 'active' && <DockActiveTab staff={staff} />}
             {activeTab === 'clients' && <DockClientsTab staff={staff} />}
             {activeTab === 'scale' && <DockScaleTab />}
@@ -76,7 +77,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
     return (
       <div className="platform-theme platform-dark fixed inset-0 flex items-center justify-center bg-[hsl(0_0%_8%)] bg-[image:radial-gradient(hsl(0_0%_15%)_1px,transparent_1px)] bg-[size:20px_20px]">
         <DockDemoBadge />
-        <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />
+        <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} locationId={staff.locationId} onLocationChange={onLocationChange} />
         <div
           className="relative rounded-[2rem] border border-[hsl(0_0%_20%)] shadow-2xl overflow-hidden transition-all duration-300"
           style={{ width: dims.width, height: dims.height, maxHeight: '95vh', maxWidth: '95vw' }}
@@ -90,7 +91,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   return (
     <div className="platform-theme platform-dark fixed inset-0 flex flex-col">
       <DockDemoBadge />
-      <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />
+      <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} locationId={staff.locationId} onLocationChange={onLocationChange} />
       {dockContent}
     </div>
   );

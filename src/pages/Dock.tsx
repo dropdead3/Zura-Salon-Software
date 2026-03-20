@@ -19,6 +19,7 @@ export interface DockStaffSession {
   userId: string;
   displayName: string;
   avatarUrl?: string | null;
+  locationId: string;
 }
 
 export default function Dock() {
@@ -46,6 +47,10 @@ export default function Dock() {
     setView({ screen: 'tabs' });
   }, []);
 
+  const handleLocationChange = useCallback((locationId: string) => {
+    setStaff(prev => prev ? { ...prev, locationId } : prev);
+  }, []);
+
   if (!staff) {
     return <DockPinGate onSuccess={handlePinSuccess} />;
   }
@@ -63,6 +68,7 @@ export default function Dock() {
         view={view}
         onOpenAppointment={handleOpenAppointment}
         onBack={handleBack}
+        onLocationChange={handleLocationChange}
       />
     </DockDemoProvider>
   );

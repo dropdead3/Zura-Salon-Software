@@ -13,6 +13,7 @@ import { DockNewBookingSheet } from './DockNewBookingSheet';
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
+  locationId: string;
 }
 
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
@@ -44,7 +45,7 @@ function formatTime(time: string) {
   return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-export function DockScheduleTab({ staff, onOpenAppointment }: DockScheduleTabProps) {
+export function DockScheduleTab({ staff, onOpenAppointment, locationId }: DockScheduleTabProps) {
   const { data: appointments, isLoading } = useDockAppointments(staff.userId);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
@@ -108,6 +109,7 @@ export function DockScheduleTab({ staff, onOpenAppointment }: DockScheduleTabPro
         open={showNewBooking}
         onClose={() => setShowNewBooking(false)}
         staff={staff}
+        locationId={locationId}
       />
     </div>
   );

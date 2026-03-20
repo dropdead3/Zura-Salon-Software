@@ -24,6 +24,7 @@ interface DockNewBookingSheetProps {
   open: boolean;
   onClose: () => void;
   staff: DockStaffSession;
+  locationId: string;
 }
 
 interface PhorestClient {
@@ -58,14 +59,14 @@ function getInitials(name: string) {
     : name.slice(0, 2).toUpperCase();
 }
 
-export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingSheetProps) {
+export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
 
   // Wizard state
   const [step, setStep] = useState<Step>('client');
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
   const [clientSearch, setClientSearch] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState(locationId || '');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState('09:00');
@@ -74,26 +75,6 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
   // Data
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
-
-  // Auto-select location from staff profile
-  const { data: staffProfile } = useQuery({
-    queryKey: ['dock-staff-profile', staff.userId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('employee_profiles')
-        .select('location_id, location_ids, organization_id')
-        .eq('user_id', staff.userId)
-        .single();
-      return data;
-    },
-  });
-
-  // Set default location on load
-  useState(() => {
-    if (staffProfile?.location_id && !selectedLocation) {
-      setSelectedLocation(staffProfile.location_id);
-    }
-  });
 
   // Phorest staff mapping for this user
   const { data: staffMapping } = useQuery({
@@ -197,10 +178,6 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
 
   const stepTitle = step === 'client' ? 'Select Client' : step === 'service' ? 'Choose Services' : 'Confirm Booking';
 
-  // Auto-set location when profile loads
-  if (staffProfile?.location_id && !selectedLocation) {
-    setSelectedLocation(staffProfile.location_id);
-  }
 
   return (
     <AnimatePresence>
@@ -262,9 +239,6 @@ export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingShee
 
               {step === 'service' && (
                 <ServiceStepDock
-                  locations={locations}
-                  selectedLocation={selectedLocation}
-                  onLocationChange={setSelectedLocation}
                   servicesByCategory={servicesByCategory}
                   allServices={services}
                   selectedServices={selectedServices}
@@ -373,9 +347,6 @@ function ClientStepDock({
 
 /* ─── Service Step ─── */
 function ServiceStepDock({
-  locations,
-  selectedLocation,
-  onLocationChange,
   servicesByCategory,
   allServices,
   selectedServices,
@@ -385,9 +356,6 @@ function ServiceStepDock({
   isLoading,
   onContinue,
 }: {
-  locations: { id: string; name: string }[];
-  selectedLocation: string;
-  onLocationChange: (id: string) => void;
   servicesByCategory: Record<string, PhorestService[]> | undefined;
   allServices: PhorestService[];
   selectedServices: string[];
@@ -401,31 +369,6 @@ function ServiceStepDock({
 
   return (
     <div className="flex flex-col">
-      {/* Location selector */}
-      {locations.length > 1 && (
-        <div className="px-5 pb-3">
-          <div className="flex items-center gap-2 mb-2">
-            <MapPin className="h-3.5 w-3.5 text-[hsl(var(--platform-foreground-muted))]" />
-            <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">Location</span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {locations.map(l => (
-              <button
-                key={l.id}
-                onClick={() => onLocationChange(l.id)}
-                className={cn(
-                  'shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                  selectedLocation === l.id
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
-                )}
-              >
-                {l.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Services */}
       <div className="px-5 pb-4 space-y-4">
@@ -435,7 +378,7 @@ function ServiceStepDock({
           </div>
         ) : !hasServices ? (
           <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-8">
-            {selectedLocation ? 'No services available' : 'Select a location'}
+            No services available
           </p>
         ) : (
           Object.entries(servicesByCategory).map(([category, svc]) => (
