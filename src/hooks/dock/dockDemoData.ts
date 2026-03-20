@@ -31,6 +31,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = [
     client_id: 'demo-client-1',
     notes: 'Wants warm caramel tones, avoid going too ashy',
     has_mix_session: true,
+    assistant_names: ['Alexis Rivera'],
   },
   {
     id: 'demo-appt-2',
