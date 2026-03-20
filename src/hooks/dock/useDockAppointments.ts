@@ -13,6 +13,7 @@ export interface DockAppointment {
   id: string;
   source: 'phorest' | 'local';
   client_name: string | null;
+  stylist_name: string | null;
   service_name: string | null;
   appointment_date: string;
   start_time: string;
