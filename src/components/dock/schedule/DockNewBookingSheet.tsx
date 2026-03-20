@@ -325,7 +325,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   }}
                   totalDuration={totalDuration}
                   totalPrice={totalPrice}
-                  isLoading={isLoadingServices}
+                  isLoading={effectiveServicesLoading}
                   onContinue={() => setStep('confirm')}
                 />
               )}
