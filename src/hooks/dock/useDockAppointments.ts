@@ -43,6 +43,17 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         // If no location selected yet, wait for auto-select
         if (!locationId) return [];
 
+        // Fetch registered team member IDs for this location
+        const { data: teamProfiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, location_id, location_ids')
+          .eq('organization_id', organizationId)
+          .eq('is_active', true)
+          .eq('is_approved', true);
+        const teamUserIds = (teamProfiles || [])
+          .filter(p => p.location_id === locationId || (p.location_ids && (p.location_ids as string[]).includes(locationId)))
+          .map(p => p.user_id);
+
         // Fetch today's phorest appointments for this specific location
         let query = supabase
           .from('phorest_appointments')
@@ -53,9 +64,13 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           .order('start_time', { ascending: true })
           .limit(50);
 
-        // Apply staff filter if set
+        // Apply staff filter
         if (staffFilter && staffFilter !== 'all') {
           query = query.eq('stylist_user_id', staffFilter);
+        } else {
+          // "All Team" — only show appointments for registered team members
+          if (teamUserIds.length === 0) return [];
+          query = query.in('stylist_user_id', teamUserIds);
         }
 
         const { data: phorestData, error: phorestErr } = await query;
