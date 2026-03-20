@@ -353,6 +353,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                       setStep('service');
                     }}
                     onNewClient={() => setShowNewClientSheet(true)}
+                    selectedClient={selectedClient}
+                    onContinue={() => setStep('service')}
                   />
                   <DockNewClientSheet
                     open={showNewClientSheet}
