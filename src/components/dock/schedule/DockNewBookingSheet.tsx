@@ -4,9 +4,9 @@
  * Pre-selects the logged-in staff member as stylist.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
