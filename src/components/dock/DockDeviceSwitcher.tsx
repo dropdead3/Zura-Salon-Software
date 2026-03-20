@@ -23,6 +23,15 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
   const showRotate = device === 'tablet';
   const { data: locations = [] } = useLocations();
 
+  // Auto-select first location if none configured
+  useEffect(() => {
+    if (!locationId && locations.length > 0 && onLocationChange) {
+      const firstId = locations[0].id;
+      try { localStorage.setItem('dock-location-id', firstId); } catch {}
+      onLocationChange(firstId);
+    }
+  }, [locations, locationId, onLocationChange]);
+
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     try { localStorage.setItem('dock-location-id', val); } catch {}

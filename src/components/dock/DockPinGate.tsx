@@ -150,11 +150,15 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           <button
             onClick={() => {
               const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
+              const resolvedLocId = deviceLocId || locations[0]?.id || '';
+              if (!deviceLocId && resolvedLocId) {
+                try { localStorage.setItem('dock-location-id', resolvedLocId); } catch {}
+              }
               onSuccess({
                 userId: 'dev-bypass-000',
                 displayName: 'Dev Tester',
                 avatarUrl: null,
-                locationId: deviceLocId,
+                locationId: resolvedLocId,
               });
             }
             }
