@@ -1,32 +1,78 @@
 
 
-## Redesign Settings Tab: "Move Zura Dock" Module + Confirmation Dialog
+## Two New Dock Features: Team Compliance (Admin-Locked) + Personal Stylist Analytics
 
-### What changes
+### Overview
 
-**`src/components/dock/settings/DockSettingsTab.tsx`**
+1. **Team Member Compliance** — A new section in the Dock Settings tab, locked behind an admin/manager PIN re-auth gate. Shows org-wide staff compliance metrics (reweigh rates, overages, waste, manual overrides) so managers don't need to switch to the full dashboard.
 
-1. **Accept `locationId` and `organizationId` props** from the parent `DockLayout` (already available on `staff`).
+2. **My Performance** — A personal analytics view for the logged-in stylist, visible in their own Dock experience (no PIN gate needed — it's their own data). Shows their reweigh compliance, waste rate, overage history, and mixing trends.
 
-2. **Add a location query** using `useLocations(organizationId)` to resolve the current location name from `staff.locationId`.
+---
 
-3. **Replace "Reset Device Binding" button** with a "Move Zura Dock to Another Location" module card:
-   - Card with `MapPin` icon, title "Station Location", and subtitle showing the current bound location name (e.g. "North Mesa")
-   - A "Move to Another Location" button below styled as a secondary action
-   - Descriptive helper text: "Reassign this device to a different salon location. The station will log out and rebind on next login."
+### 1. Team Member Compliance (Admin-Locked)
 
-4. **Add an AlertDialog confirmation** (using existing `PlatformAlertDialogContent` wrappers):
-   - Title: "Move Zura Dock?"
-   - Description: "This will unbind this device from **{locationName}**. On next PIN login, it will bind to the new staff member's location."
-   - Cancel + Confirm ("Move Station") buttons
-   - On confirm: clear localStorage keys, toast, and logout (same logic as before)
+**New file: `src/components/dock/settings/DockTeamCompliancePanel.tsx`**
 
-5. **Pass `staff.locationId` to the settings tab** — already available since `DockSettingsTab` receives the full `staff` object which includes `locationId` and `organizationId`.
+- A full-height panel that renders inside the Settings tab when unlocked
+- **PIN gate**: Reuses the existing numpad UI pattern from `DockPinGate`. On tap of "Team Compliance" card, shows a mini PIN overlay. Validates the entered PIN via the existing `validate_user_pin` RPC, then checks if the returned user has `is_super_admin`, `is_primary_owner`, or an `admin`/`manager` role in `user_roles`. If not authorized, shows "Admin PIN required" error.
+- **Data**: Fetches from `useBackroomAnalytics` and `useBackroomStaffMetrics` scoped to the Dock's `organizationId` and `locationId` for the last 30 days
+- **UI contents**:
+  - KPI strip: Reweigh Compliance %, Avg Waste %, Manual Override count, Total Sessions
+  - Staff leaderboard table: Name, Sessions, Reweigh %, Waste %, Overage (sorted by compliance)
+  - Each row tappable for a mini drill-down (optional future enhancement)
+- **Back button** returns to the normal settings view
 
-### Technical detail
+**Modified file: `src/components/dock/settings/DockSettingsTab.tsx`**
 
-- Import `useLocations` from `@/hooks/useLocations`
-- Import `AlertDialog`, `PlatformAlertDialogContent`, `PlatformAlertDialogTitle`, `PlatformAlertDialogDescription`, `PlatformAlertDialogCancel`, `AlertDialogAction`, `AlertDialogFooter` from `@/components/platform/ui/PlatformDialog`
-- Import `MapPin` from lucide
-- Single file change, no schema changes
+- Add a new "Team Compliance" card (with `ShieldCheck` icon) between the Station Location module and the logout button
+- Card shows a lock icon and "Admin PIN required" subtitle
+- On tap, shows the PIN gate overlay → unlocks the compliance panel
+- State: `complianceUnlocked: boolean` + `showCompliancePin: boolean`
+
+### 2. Personal Stylist Analytics ("My Stats")
+
+**New file: `src/components/dock/settings/DockMyStatsPanel.tsx`**
+
+- Always accessible in Settings (no PIN gate) — it's the logged-in user's own data
+- Fetches from `useBackroomStaffMetrics` filtered to `staff.userId` for last 30 days
+- Also fetches from `useStaffBackroomPerformance` for the same user/period
+- **UI contents**:
+  - Header: "My Performance · Last 30 Days"
+  - Stat cards: Reweigh Compliance %, Waste Rate %, Avg Cost/Service, Total Sessions
+  - If data exists: mini bar/progress indicators for each stat
+  - If no data: "No mixing activity in the last 30 days" empty state
+
+**Modified file: `src/components/dock/settings/DockSettingsTab.tsx`**
+
+- Add a "My Stats" card (with `BarChart3` icon) below the staff profile card
+- On tap, navigates to the stats panel (same pattern as compliance — inline panel swap)
+
+### 3. Settings Tab Layout (updated order)
+
+```text
+┌─────────────────────────┐
+│  Staff Profile Card     │
+├─────────────────────────┤
+│  📊 My Stats            │  ← tap → DockMyStatsPanel
+├─────────────────────────┤
+│  🛡 Team Compliance     │  ← tap → PIN gate → DockTeamCompliancePanel
+│  Admin PIN required     │
+├─────────────────────────┤
+│  📍 Station Location    │
+│  Move to Another...     │
+├─────────────────────────┤
+│        (spacer)         │
+├─────────────────────────┤
+│  🔴 Lock Station        │
+└─────────────────────────┘
+```
+
+### Technical Details
+
+- **No schema changes** — all data comes from existing tables (`mix_sessions`, `mix_bowls`, `backroom_analytics_snapshots`, `staff_backroom_performance`)
+- **No new hooks** — reuses `useBackroomAnalytics`, `useBackroomStaffMetrics`, `useStaffBackroomPerformance`
+- **Context workaround**: The Dock doesn't use `OrganizationContext`. The new hooks will receive `orgId` and `locationId` directly from `staff.organizationId` / `staff.locationId` via a lightweight wrapper or direct supabase queries
+- **PIN validation for admin gate**: Uses existing `validate_user_pin` RPC with the Dock's bound `organizationId`, then checks role via a follow-up query to `user_roles`
+- **3 new files**, 1 modified file
 
