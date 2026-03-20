@@ -68,6 +68,7 @@ export default function Dock() {
         view={view}
         onOpenAppointment={handleOpenAppointment}
         onBack={handleBack}
+        onLocationChange={handleLocationChange}
       />
     </DockDemoProvider>
   );
