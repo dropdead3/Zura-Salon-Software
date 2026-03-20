@@ -24,6 +24,7 @@ interface DockLayoutProps {
   view: DockView;
   onOpenAppointment: (appointment: DockAppointment) => void;
   onBack: () => void;
+  onLocationChange?: (locationId: string) => void;
 }
 
 const DEVICE_DIMENSIONS = {
