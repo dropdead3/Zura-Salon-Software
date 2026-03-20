@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
