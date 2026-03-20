@@ -378,7 +378,7 @@ function ServiceStepDock({
           </div>
         ) : !hasServices ? (
           <p className="text-center text-sm text-[hsl(var(--platform-foreground-muted))] py-8">
-            {selectedLocation ? 'No services available' : 'Select a location'}
+            No services available
           </p>
         ) : (
           Object.entries(servicesByCategory).map(([category, svc]) => (
