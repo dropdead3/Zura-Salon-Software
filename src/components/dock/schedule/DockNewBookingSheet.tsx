@@ -59,7 +59,7 @@ function getInitials(name: string) {
     : name.slice(0, 2).toUpperCase();
 }
 
-export function DockNewBookingSheet({ open, onClose, staff }: DockNewBookingSheetProps) {
+export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNewBookingSheetProps) {
   const queryClient = useQueryClient();
 
   // Wizard state
