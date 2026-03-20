@@ -14,6 +14,7 @@ interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
   locationId: string;
+  staffFilter?: string;
 }
 
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
