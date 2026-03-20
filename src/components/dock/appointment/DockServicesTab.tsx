@@ -286,6 +286,17 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         </button>
       )}
 
+      {/* Bowl detection gate */}
+      <DockBowlDetectionGate
+        open={showBowlDetection}
+        isDemoMode={isDemoMode}
+        onReady={() => {
+          setShowBowlDetection(false);
+          setShowNewBowl(true);
+        }}
+        onCancel={() => setShowBowlDetection(false)}
+      />
+
       {/* New bowl sheet */}
       <DockNewBowlSheet
         open={showNewBowl}
