@@ -1,12 +1,15 @@
 /**
- * DockSettingsTab — Staff profile, station location, and logout.
+ * DockSettingsTab — Staff profile, personal stats, team compliance,
+ * station location, and logout.
  */
 
 import { useState } from 'react';
-import { LogOut, User, MapPin } from 'lucide-react';
+import { LogOut, User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
+import { DockMyStatsPanel } from './DockMyStatsPanel';
+import { DockTeamCompliancePanel } from './DockTeamCompliancePanel';
 import {
   AlertDialog,
   PlatformAlertDialogContent,
@@ -24,7 +27,10 @@ interface DockSettingsTabProps {
   onLogout: () => void;
 }
 
+type SettingsView = 'main' | 'my-stats' | 'team-compliance';
+
 export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
+  const [view, setView] = useState<SettingsView>('main');
   const { data: locations } = useLocations(staff.organizationId);
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
 
@@ -36,6 +42,14 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
     toast.success('Station unbound — next login will bind to new location');
     onLogout();
   };
+
+  if (view === 'my-stats') {
+    return <DockMyStatsPanel staff={staff} onBack={() => setView('main')} />;
+  }
+
+  if (view === 'team-compliance') {
+    return <DockTeamCompliancePanel staff={staff} onBack={() => setView('main')} />;
+  }
 
   return (
     <div className="flex flex-col h-full px-6 py-8">
@@ -58,8 +72,47 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
         </div>
       </div>
 
+      {/* My Stats card */}
+      <button
+        onClick={() => setView('my-stats')}
+        className="mt-4 flex items-center gap-3 w-full p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors text-left"
+      >
+        <div className="w-10 h-10 rounded-xl bg-violet-600/15 flex items-center justify-center">
+          <BarChart3 className="w-5 h-5 text-violet-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[hsl(var(--platform-foreground))]">
+            My Performance
+          </p>
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+            Reweigh, waste & cost stats
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+      </button>
+
+      {/* Team Compliance card */}
+      <button
+        onClick={() => setView('team-compliance')}
+        className="mt-3 flex items-center gap-3 w-full p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors text-left"
+      >
+        <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+          <ShieldCheck className="w-5 h-5 text-amber-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[hsl(var(--platform-foreground))]">
+            Team Compliance
+          </p>
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] flex items-center gap-1">
+            <Lock className="w-3 h-3" />
+            Admin PIN required
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
+      </button>
+
       {/* Station Location module */}
-      <div className="mt-6 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
+      <div className="mt-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
             <MapPin className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
