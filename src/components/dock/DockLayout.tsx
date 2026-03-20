@@ -76,7 +76,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
     return (
       <div className="platform-theme platform-dark fixed inset-0 flex items-center justify-center bg-[hsl(0_0%_8%)] bg-[image:radial-gradient(hsl(0_0%_15%)_1px,transparent_1px)] bg-[size:20px_20px]">
         <DockDemoBadge />
-        {isDemoMode && <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />}
+        <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} />
         <div
           className="relative rounded-[2rem] border border-[hsl(0_0%_20%)] shadow-2xl overflow-hidden transition-all duration-300"
           style={{ width: dims.width, height: dims.height, maxHeight: '95vh', maxWidth: '95vw' }}
