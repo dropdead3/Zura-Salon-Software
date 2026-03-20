@@ -39,6 +39,16 @@ interface PhorestClient {
   phone: string | null;
 }
 
+interface RecentCheckIn {
+  clientId: string;
+  phorestClientId: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  checkedInAt: string;
+  method: string;
+}
+
 type Step = 'client' | 'service' | 'confirm';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
