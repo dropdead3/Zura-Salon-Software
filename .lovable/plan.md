@@ -1,39 +1,61 @@
 
+Goal: make the Dock demo bypass visible in Lovable preview/dev environments so the existing demo mode and device preview tools can actually be accessed.
 
-## Plan: Device Preview Switcher for Dock App
+Why it’s missing
+- The bypass button already exists in `src/components/dock/DockPinGate.tsx`.
+- It is currently wrapped in `import.meta.env.DEV`.
+- Lovable preview runs a production-style preview build, so `import.meta.env.DEV` is false there.
+- Result: demo mode infrastructure exists, but the entry point is hidden.
 
-### What
-Add a floating device-toggle toolbar to the Dock app that lets you switch between **Phone**, **Tablet**, and **Full** (native) layouts. This is a dev/demo tool — only visible in demo mode.
+Implementation plan
 
-### How
+1. Replace the current DEV-only gate with a safer “preview/dev only” check
+- Create a small utility/hook for Dock preview gating, e.g. `src/hooks/dock/useDockDemoAccess.ts`.
+- It should return `true` when the app is running in:
+  - local development, or
+  - Lovable preview/editor context
+- It should return `false` on normal published production usage.
 
-#### 1. Create `src/components/dock/DockDeviceSwitcher.tsx`
-A small floating pill (top-right corner) with three toggle buttons: Phone · Tablet · Full.
-- Phone: constrains the Dock to a `390×844` centered container with a device frame border
-- Tablet: constrains to `820×1180` centered container
-- Full: no constraint (current behavior, fills the viewport)
-- Persists choice to `localStorage('dock-device-preview')`
+2. Update `DockPinGate.tsx`
+- Replace `{import.meta.env.DEV && (...)}` with the new preview-access check.
+- Keep the existing bypass payload:
+  - `userId: 'dev-bypass-000'`
+  - `displayName: 'Dev Tester'`
+- Optionally rename the button copy to something slightly clearer like:
+  - `Open Demo Mode`
+  - or keep `Demo Mode →`
 
-#### 2. Create `src/hooks/dock/useDockDevicePreview.ts`
-Simple state hook returning `{ device, setDevice }` where device is `'phone' | 'tablet' | 'full'`. Reads initial value from localStorage.
+3. Keep demo internals unchanged
+- `DockDemoContext` should continue to derive demo state from `staff.userId === 'dev-bypass-000'`.
+- `DockLayout`, device switcher, badge, and mock-data hooks do not need architectural changes.
 
-#### 3. Update `DockDemoContext.tsx`
-Add `device` and `setDevice` to the context so it's accessible everywhere. Only exposed when `isDemoMode` is true.
+4. Add a small safety guard
+- Centralize the rule so future demo-only UI uses the same logic instead of sprinkling `import.meta.env.DEV` checks around the Dock.
+- This avoids the same issue recurring for the switcher/badge or future preview tools.
 
-#### 4. Update `DockLayout.tsx`
-- When device is `'phone'` or `'tablet'`, wrap the entire layout in a centered container with the fixed dimensions, rounded corners, and a subtle border to simulate the device frame
-- The outer wrapper fills the viewport with a dark grid background so the "device" floats visually
-- When `'full'`, keep current behavior (no wrapper)
+Recommended detection logic
+- Prefer a helper that checks, in order:
+  - `import.meta.env.DEV`
+  - known preview query params already used in the repo (`preview`, `mode`)
+  - optionally Lovable preview hostname patterns if needed
+- That fits existing project patterns better than hardcoding only DEV.
 
-#### 5. Provide `dockDevice` CSS class context
-Add a `data-dock-device="phone|tablet|full"` attribute to the layout root so child components can conditionally adjust layout via CSS or reading the context (e.g., tablet mode could show a 2-column schedule grid in the future).
+Files to update
+- New: `src/hooks/dock/useDockDemoAccess.ts`
+- Edit: `src/components/dock/DockPinGate.tsx`
 
-### Device dimensions
-- Phone: `390 × 844` (iPhone 14 Pro)
-- Tablet: `820 × 1180` (iPad Air portrait)
-- Full: viewport
+Technical notes
+- No backend changes are needed.
+- No auth or database changes are needed.
+- The `validate_dock_pin` function is unrelated to why the bypass is hidden; this is strictly a frontend environment-gating issue.
+- The preview screenshot matches this diagnosis: the PIN screen renders, but the DEV-only button is absent.
 
-### Visibility
-- Only rendered when `isDemoMode === true`
-- The switcher pill sits in `position: fixed; top: 12px; right: 12px; z-index: 50`
+Acceptance criteria
+- In Lovable preview, the Dock PIN screen shows the demo bypass button.
+- Clicking it enters demo mode immediately.
+- The DEMO badge appears after entry.
+- The phone/tablet/full preview switcher is accessible in demo mode.
+- On a published/live app, the demo bypass remains hidden.
 
+Optional follow-up
+- Add a tiny caption under the button like “Preview only” so team members know it’s a non-production shortcut.
