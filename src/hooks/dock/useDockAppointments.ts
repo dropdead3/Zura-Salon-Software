@@ -25,7 +25,7 @@ export interface DockAppointment {
   has_mix_session?: boolean;
 }
 
-export function useDockAppointments(staffUserId: string | null) {
+export function useDockAppointments(staffUserId: string | null, locationId?: string) {
   const { isDemoMode, usesRealData, organizationId } = useDockDemo();
   const today = format(new Date(), 'yyyy-MM-dd');
 
