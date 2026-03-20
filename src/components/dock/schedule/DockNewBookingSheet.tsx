@@ -145,6 +145,13 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const createBooking = useMutation({
     mutationFn: async () => {
       if (!selectedClient) throw new Error('No client selected');
+
+      if (isDemoMode) {
+        // Simulate booking in demo mode
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return { success: true, demo: true };
+      }
+
       const loc = locations.find(l => l.id === selectedLocation);
       const branchId = loc?.phorest_branch_id;
       if (!branchId) throw new Error('No branch ID for location');
@@ -169,7 +176,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
-      toast.success('Appointment booked');
+      toast.success(isDemoMode ? 'Demo booking created' : 'Appointment booked');
       handleClose();
     },
     onError: (error: Error) => {
