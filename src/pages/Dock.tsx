@@ -76,8 +76,12 @@ export default function Dock() {
   }, []);
 
   const handleLocationChange = useCallback((locationId: string) => {
-    setStaff(prev => prev ? { ...prev, locationId } : prev);
-  }, []);
+    if (urlDemoSession) {
+      setDemoLocationId(locationId);
+    } else {
+      setStaff(prev => prev ? { ...prev, locationId } : prev);
+    }
+  }, [urlDemoSession]);
 
   if (!effectiveStaff) {
     return <DockPinGate onSuccess={handlePinSuccess} />;
