@@ -49,8 +49,11 @@ export default function Dock() {
   const [staff, setStaff] = useState<DockStaffSession | null>(null);
   const [activeTab, setActiveTab] = useState<DockTab>('schedule');
   const [view, setView] = useState<DockView>({ screen: 'tabs' });
+  const [demoLocationId, setDemoLocationId] = useState('');
 
-  const effectiveStaff = urlDemoSession || staff;
+  const effectiveStaff = urlDemoSession
+    ? { ...urlDemoSession, locationId: demoLocationId || urlDemoSession.locationId }
+    : staff;
 
   const handlePinSuccess = useCallback((session: DockStaffSession) => {
     setStaff(session);
