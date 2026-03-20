@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 import {
-  ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2,
+  ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2, Users,
   Calendar as CalendarIcon, Scissors, User, MapPin, StickyNote, Plus,
   Sparkles, Palette, Link, Wind, Droplets, ClipboardList, Paintbrush,
   type LucideIcon,
@@ -25,6 +25,7 @@ import type { DockStaffSession } from '@/pages/Dock';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockNewClientSheet } from './DockNewClientSheet';
 import { DEMO_SERVICES, DEMO_SERVICES_BY_CATEGORY, searchDemoClients, type DemoService } from '@/hooks/dock/dockDemoData';
+import { formatFirstLastInitial } from '@/lib/dock-utils';
 
 interface DockNewBookingSheetProps {
   open: boolean;
@@ -82,6 +83,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState('09:00');
   const [notes, setNotes] = useState('');
+  const [selectedAssistants, setSelectedAssistants] = useState<string[]>([]);
   const [showNewClientSheet, setShowNewClientSheet] = useState(false);
 
 
@@ -144,6 +146,31 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       return data;
     },
     enabled: !isDemoMode,
+  });
+
+  // Team members at this location (for assistant selection)
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['dock-team-members-booking', staff.organizationId, locationId],
+    queryFn: async () => {
+      if (!staff.organizationId || !locationId) return [];
+      const { data } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
+        .eq('organization_id', staff.organizationId)
+        .eq('is_active', true)
+        .eq('is_approved', true)
+        .order('display_name', { ascending: true });
+      return (data || [])
+        .filter(p => p.user_id !== staff.userId) // exclude current stylist
+        .filter(p => p.location_id === locationId || (p.location_ids && p.location_ids.includes(locationId)))
+        .map(p => ({
+          userId: p.user_id,
+          name: formatFirstLastInitial(p.display_name || p.full_name || 'Unknown'),
+          photoUrl: p.photo_url,
+        }));
+    },
+    enabled: !!staff.organizationId && !!locationId,
+    staleTime: 300_000,
   });
 
   // Client search — use real DB when usesRealData
@@ -220,8 +247,22 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       if (!response.data?.success) throw new Error(response.data?.error || 'Booking failed');
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      // Insert assistant assignments if any selected
+      if (selectedAssistants.length > 0 && !isDemoMode && data?.appointment_id) {
+        try {
+          const rows = selectedAssistants.map(uid => ({
+            appointment_id: data.appointment_id,
+            assistant_user_id: uid,
+            organization_id: staff.organizationId!,
+          }));
+          await supabase.from('appointment_assistants').insert(rows);
+        } catch (e) {
+          console.warn('[DockBooking] Failed to insert assistants:', e);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointment-assistants'] });
       toast.success(isDemoMode ? 'Demo booking created' : 'Appointment booked');
       handleClose();
     },
@@ -235,6 +276,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
     setSelectedClient(null);
     setClientSearch('');
     setSelectedServices([]);
+    setSelectedAssistants([]);
     setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
     setSelectedTime('09:00');
     setNotes('');
@@ -403,6 +445,9 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   onConfirm={() => createBooking.mutate()}
                   isLoading={createBooking.isPending}
                   onAddService={() => setStep('service')}
+                  teamMembers={teamMembers}
+                  selectedAssistants={selectedAssistants}
+                  onAssistantsChange={setSelectedAssistants}
                 />
               )}
             </div>
@@ -846,6 +891,9 @@ function ConfirmStepDock({
   onConfirm,
   isLoading,
   onAddService,
+  teamMembers,
+  selectedAssistants,
+  onAssistantsChange,
 }: {
   client: PhorestClient | null;
   services: PhorestService[];
@@ -861,6 +909,9 @@ function ConfirmStepDock({
   onConfirm: () => void;
   isLoading: boolean;
   onAddService: () => void;
+  teamMembers: { userId: string; name: string; photoUrl: string | null }[];
+  selectedAssistants: string[];
+  onAssistantsChange: (ids: string[]) => void;
 }) {
   return (
     <div className="flex flex-col">
@@ -885,6 +936,42 @@ function ConfirmStepDock({
           <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={`${totalDuration}m`} />
         </div>
+
+        {/* Assistant selection */}
+        {teamMembers.length > 0 && (
+          <div>
+            <div className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--platform-foreground-muted)/0.6)] mb-2 flex items-center gap-1.5">
+              <Users className="w-3 h-3" />
+              Assistant (optional)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {teamMembers.map(m => {
+                const isSelected = selectedAssistants.includes(m.userId);
+                return (
+                  <button
+                    key={m.userId}
+                    onClick={() => {
+                      onAssistantsChange(
+                        isSelected
+                          ? selectedAssistants.filter(id => id !== m.userId)
+                          : [...selectedAssistants, m.userId]
+                      );
+                    }}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5',
+                      isSelected
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                    )}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Time selector */}
         <div>
