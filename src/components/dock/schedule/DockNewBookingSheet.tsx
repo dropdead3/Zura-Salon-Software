@@ -238,7 +238,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
       // Real query (both normal mode and usesRealData demo mode)
       let query = supabase
         .from('phorest_clients')
-        .select('id, phorest_client_id, name, email, phone')
+        .select('id, phorest_client_id, name, email, phone, client_since')
         .eq('is_duplicate', false)
         .order('name')
         .limit(30);
