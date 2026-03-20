@@ -675,6 +675,34 @@ function ClientStepDock({
 
 /* ─── Reusable client row ─── */
 function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: PhorestClient) => void }) {
+  const { data: lastVisitDate, isLoading: isLoadingVisit } = useQuery({
+    queryKey: ['dock-client-last-visit', client.phorest_client_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('phorest_appointments')
+        .select('appointment_date')
+        .eq('phorest_client_id', client.phorest_client_id)
+        .eq('is_demo', false)
+        .in('status', ['confirmed', 'completed', 'checked_in', 'arrived'])
+        .order('appointment_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data?.appointment_date ?? null;
+    },
+    enabled: !!client.phorest_client_id,
+    staleTime: 60_000,
+  });
+
+  const clientSinceLabel = client.client_since
+    ? `Client since · ${formatDistanceToNow(new Date(client.client_since), { addSuffix: false })}`
+    : null;
+
+  const lastVisitLabel = isLoadingVisit
+    ? '…'
+    : lastVisitDate
+      ? `Last visit · ${formatDistanceToNow(new Date(lastVisitDate), { addSuffix: true })}`
+      : 'No visits on record';
+
   return (
     <button
       onClick={() => onSelect(client)}
@@ -687,6 +715,9 @@ function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: 
         <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{client.name}</div>
         <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
           {client.phone || client.email || 'No contact info'}
+        </div>
+        <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.7)] truncate mt-0.5">
+          {clientSinceLabel ? `${clientSinceLabel} · ${lastVisitLabel}` : lastVisitLabel}
         </div>
       </div>
     </button>
