@@ -464,6 +464,8 @@ function ClientStepDock({
   onSearchChange,
   onSelectClient,
   onNewClient,
+  recentCheckIns,
+  isLoadingCheckIns,
 }: {
   clients: PhorestClient[];
   isLoading: boolean;
@@ -471,7 +473,32 @@ function ClientStepDock({
   onSearchChange: (q: string) => void;
   onSelectClient: (c: PhorestClient) => void;
   onNewClient: () => void;
+  recentCheckIns: RecentCheckIn[];
+  isLoadingCheckIns: boolean;
 }) {
+  const isSearching = searchQuery.length >= 2;
+
+  const handleSelectCheckIn = (ci: RecentCheckIn) => {
+    onSelectClient({
+      id: ci.clientId,
+      phorest_client_id: ci.phorestClientId,
+      name: ci.name,
+      email: ci.email,
+      phone: ci.phone,
+    });
+  };
+
+  const getMethodLabel = (method: string) => {
+    if (method === 'kiosk') return 'Kiosk';
+    if (method === 'front_desk' || method === 'manual') return 'Front Desk';
+    return method;
+  };
+
+  const getMethodClasses = (method: string) => {
+    if (method === 'kiosk') return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25';
+    return 'bg-blue-500/15 text-blue-400 border-blue-500/25';
+  };
+
   return (
     <div className="px-5 pb-6">
       {/* Search + New Client row */}
@@ -495,59 +522,118 @@ function ClientStepDock({
         </button>
       </div>
 
-      {/* Results */}
-      {searchQuery.length < 2 ? (
-        <div className="text-center py-12 space-y-3">
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-            Type at least 2 characters to search
-          </p>
-          <button
-            onClick={onNewClient}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans text-violet-400 hover:text-violet-300 hover:bg-violet-600/10 transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Or create a new client
-          </button>
-        </div>
-      ) : isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
-        </div>
-      ) : clients.length === 0 ? (
-        <div className="text-center py-12 space-y-3">
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-            No clients found
-          </p>
-          <button
-            onClick={onNewClient}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Create "{searchQuery}" as new client
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {clients.map((c) => (
+      {/* Search results overlay */}
+      {isSearching ? (
+        isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+          </div>
+        ) : clients.length === 0 ? (
+          <div className="text-center py-12 space-y-3">
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+              No clients found
+            </p>
             <button
-              key={c.id}
-              onClick={() => onSelectClient(c)}
-              className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-[hsl(var(--platform-foreground)/0.06)] active:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors"
+              onClick={onNewClient}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-violet-600/20 flex items-center justify-center shrink-0">
-                <span className="text-xs font-medium text-violet-400">{getInitials(c.name)}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{c.name}</div>
-                <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-                  {c.phone || c.email || 'No contact info'}
-                </div>
-              </div>
+              <UserPlus className="w-4 h-4" />
+              Create &ldquo;{searchQuery}&rdquo; as new client
             </button>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {clients.map((c) => (
+              <ClientRow key={c.id} client={c} onSelect={onSelectClient} />
+            ))}
+          </div>
+        )
+      ) : (
+        /* Default view: Recent Check-Ins */
+        <>
+          {isLoadingCheckIns ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+            </div>
+          ) : recentCheckIns.length > 0 ? (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))] uppercase tracking-wide">
+                  Today&apos;s Check-Ins
+                </span>
+              </div>
+              <div className="space-y-1 mb-4">
+                {recentCheckIns.map((ci) => (
+                  <button
+                    key={ci.clientId}
+                    onClick={() => handleSelectCheckIn(ci)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-[hsl(var(--platform-foreground)/0.06)] active:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors"
+                  >
+                    <div className="relative w-10 h-10 rounded-full bg-emerald-600/15 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-medium text-emerald-400">{getInitials(ci.name)}</span>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[hsl(var(--platform-bg))]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{ci.name}</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+                          {formatDistanceToNowStrict(new Date(ci.checkedInAt), { addSuffix: true })}
+                        </span>
+                        <span className={cn(
+                          'inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium border',
+                          getMethodClasses(ci.method),
+                        )}>
+                          {getMethodLabel(ci.method)}
+                        </span>
+                      </div>
+                    </div>
+                    <Check className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+                No check-ins yet today
+              </p>
+            </div>
+          )}
+
+          {/* Bottom prompt */}
+          <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.3)]">
+            <button
+              onClick={onNewClient}
+              className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-sans text-[hsl(var(--platform-foreground-muted))] hover:text-violet-400 transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Don&apos;t see them? Create new client
+            </button>
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+/* ─── Reusable client row ─── */
+function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: PhorestClient) => void }) {
+  return (
+    <button
+      onClick={() => onSelect(client)}
+      className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-[hsl(var(--platform-foreground)/0.06)] active:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors"
+    >
+      <div className="w-10 h-10 rounded-full bg-violet-600/20 flex items-center justify-center shrink-0">
+        <span className="text-xs font-medium text-violet-400">{getInitials(client.name)}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{client.name}</div>
+        <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+          {client.phone || client.email || 'No contact info'}
+        </div>
+      </div>
+    </button>
   );
 }
 
