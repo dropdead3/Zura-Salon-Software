@@ -529,6 +529,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
                   teamMembers={teamMembers}
                   selectedAssistants={selectedAssistants}
                   onAssistantsChange={setSelectedAssistants}
+                  timeSlots={timeSlots}
                 />
               )}
             </div>
