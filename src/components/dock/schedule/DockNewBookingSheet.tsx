@@ -49,11 +49,11 @@ type Step = 'client' | 'service' | 'confirm';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
 
-const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
-  const hour = 8 + Math.floor(i / 2);
+const TIME_SLOTS = Array.from({ length: 33 }, (_, i) => {
+  const hour = 6 + Math.floor(i / 2);
   const minute = (i % 2) * 30;
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-}).filter(t => parseInt(t.split(':')[0]) < 20);
+});
 
 function formatTime12h(time: string) {
   const [h, m] = time.split(':');
@@ -79,9 +79,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
 
   const getDefaultTime = useCallback(() => {
     const nearest = Math.ceil(nowMinutes / 30) * 30;
-    const clamped = Math.max(480, Math.min(nearest, 1200));
-    const h = String(Math.floor(clamped / 60)).padStart(2, '0');
-    const m = String(clamped % 60).padStart(2, '0');
+    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
+    const m = String(nearest % 60).padStart(2, '0');
     return `${h}:${m}`;
   }, [nowMinutes]);
 
@@ -94,9 +93,8 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId }: DockNe
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTime, setSelectedTime] = useState(() => {
     const nearest = Math.ceil((new Date().getHours() * 60 + new Date().getMinutes()) / 30) * 30;
-    const clamped = Math.max(480, Math.min(nearest, 1200));
-    const h = String(Math.floor(clamped / 60)).padStart(2, '0');
-    const m = String(clamped % 60).padStart(2, '0');
+    const h = String(Math.floor(nearest / 60)).padStart(2, '0');
+    const m = String(nearest % 60).padStart(2, '0');
     return `${h}:${m}`;
   });
   const [notes, setNotes] = useState('');
@@ -1023,20 +1021,23 @@ function ConfirmStepDock({
             Time
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {TIME_SLOTS.map(t => (
-              <button
-                key={t}
-                onClick={() => onTimeChange(t)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs transition-colors',
-                  time === t
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
-                )}
-              >
-                {formatTime12h(t)}
-              </button>
-            ))}
+            {(() => {
+              const slots = TIME_SLOTS.includes(time) ? TIME_SLOTS : [...TIME_SLOTS, time].sort();
+              return slots.map(t => (
+                <button
+                  key={t}
+                  onClick={() => onTimeChange(t)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs transition-colors',
+                    time === t
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-[hsl(var(--platform-foreground)/0.06)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.1)]',
+                  )}
+                >
+                  {!TIME_SLOTS.includes(t) ? `Now · ${formatTime12h(t)}` : formatTime12h(t)}
+                </button>
+              ));
+            })()}
           </div>
         </div>
 
