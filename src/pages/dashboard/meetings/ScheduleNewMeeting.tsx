@@ -151,7 +151,7 @@ export default function ScheduleNewMeeting() {
 
           <Card className="relative">
             <button
-              onClick={() => navigate(dashPath('/schedule-meeting')}
+              onClick={() => navigate(dashPath('/schedule-meeting'))}
               className="absolute top-4 right-4 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Close"
             >

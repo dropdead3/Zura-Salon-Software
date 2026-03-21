@@ -114,7 +114,7 @@ export default function HelpCenter() {
                   key={article.id}
                   className="cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() =>
-                    navigate(dashPath(`/help/${article.category?.slug || 'uncategorized')}/${article.slug}`))
+                    navigate(dashPath(`/help/${article.category?.slug || 'uncategorized'))}/${article.slug}`))
                   }
                 >
                   <CardHeader className="py-4">

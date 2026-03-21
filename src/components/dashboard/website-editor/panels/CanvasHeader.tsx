@@ -125,7 +125,7 @@ export function CanvasHeader({
               variant="ghost"
               size="icon"
               className="h-8 w-8 flex-shrink-0"
-              onClick={() => navigate(dashPath('/')}
+              onClick={() => navigate(dashPath('/'))}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>

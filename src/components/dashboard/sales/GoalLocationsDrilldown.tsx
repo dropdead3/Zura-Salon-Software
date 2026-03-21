@@ -133,7 +133,7 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
               </button>
             )}
             <button
-              onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=goals')}
+              onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=goals'))}
               className="flex items-center gap-1 text-xs text-primary hover:underline pt-2 w-full"
             >
               View full breakdown

@@ -87,7 +87,7 @@ export function ZuraStickyGuidance() {
             {/* Collapsed bar */}
             <div className="flex items-center gap-3 px-4 lg:px-6 h-12">
               <button
-                onClick={() => navigate(dashPath('/')}
+                onClick={() => navigate(dashPath('/'))}
                 className="flex items-center gap-2.5 min-w-0 flex-1 group"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 group-hover:text-foreground transition-colors" />

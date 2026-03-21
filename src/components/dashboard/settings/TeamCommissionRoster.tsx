@@ -171,7 +171,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
                 variant="ghost"
                 size="sm"
                 className="text-xs"
-                onClick={() => navigate(dashPath('/admin/payroll?tab=commissions')}
+                onClick={() => navigate(dashPath('/admin/payroll?tab=commissions'))}
               >
                 <BarChart3 className="h-3.5 w-3.5 mr-1" />
                 View Analytics
