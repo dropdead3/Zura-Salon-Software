@@ -96,7 +96,7 @@ function renderProtectedRoute({
             </ProtectedRoute>
           }
         />
-        <Route path=dashPath('/') element={<div>Dashboard Page</div>} />
+        <Route path="/" element={<div>Dashboard Page</div>} />
         <Route path="/login" element={<div>Login Page</div>} />
       </Routes>
     </MemoryRouter>
