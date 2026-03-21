@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { LogOut, User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
