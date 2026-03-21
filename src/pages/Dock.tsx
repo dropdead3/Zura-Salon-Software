@@ -92,6 +92,7 @@ export default function Dock() {
 
   const handleLogout = useCallback(() => {
     setStaff(null);
+    setUnlocked(false);
     setActiveTab('schedule');
     setView({ screen: 'tabs' });
   }, []);
