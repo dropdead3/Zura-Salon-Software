@@ -110,7 +110,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
           </p>
 
           {/* PIN dots */}
-          <div className="flex gap-4 mb-8">
+          <div className="flex gap-3 mb-6">
             {Array.from({ length: PIN_LENGTH }).map((_, i) => (
               <div
                 key={i}
