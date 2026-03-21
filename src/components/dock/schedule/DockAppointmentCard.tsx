@@ -75,7 +75,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
     <div className="relative overflow-hidden rounded-xl">
       {/* Action tray behind the card */}
       <motion.div
-        className="absolute inset-y-0 right-0 flex items-center gap-2 px-3"
+        className="absolute inset-y-0 right-0 flex items-center gap-2 px-2.5 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
         {!isTerminal && (
@@ -85,11 +85,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
               close();
               onComplete?.(appointment);
             }}
-            className="flex flex-col items-center justify-center w-12 h-14 rounded-2xl bg-emerald-600 text-white shadow-lg active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-95 transition-all"
             aria-label="Complete appointment"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="text-[9px] font-medium mt-0.5">Done</span>
+            <CheckCircle2 className="w-[18px] h-[18px]" />
+            <span className="text-[9px] tracking-wide uppercase font-display mt-0.5">Done</span>
           </button>
         )}
         <button
@@ -98,11 +98,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             close();
             onViewClient?.(appointment);
           }}
-          className="flex flex-col items-center justify-center w-12 h-14 rounded-2xl bg-blue-600 text-white shadow-lg active:scale-95 transition-transform"
+          className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 active:bg-violet-500/25 active:scale-95 transition-all"
           aria-label="View client"
         >
-          <UserCircle className="w-5 h-5" />
-          <span className="text-[9px] font-medium mt-0.5">Client</span>
+          <UserCircle className="w-[18px] h-[18px]" />
+          <span className="text-[9px] tracking-wide uppercase font-display mt-0.5">Client</span>
         </button>
       </motion.div>
 
