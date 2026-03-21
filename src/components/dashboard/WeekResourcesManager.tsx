@@ -283,7 +283,7 @@ export function WeekResourcesManager({ weekId, resources, assignments, onResourc
     setUploading(true);
 
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
-    const fileName = `program-resources/${weekId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_`;
+    const fileName = `program-resources/${weekId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')`;
 
     const { error: uploadError } = await supabase.storage
       .from('proof-uploads')

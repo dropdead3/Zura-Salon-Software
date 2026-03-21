@@ -99,7 +99,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
       if (failedSyncs.length === syncTypes.length) {
         toast.error('All syncs failed. The sync will retry automatically.');
       } else if (failedSyncs.length > 0) {
-        toast.warning(`Sync completed with errors in: ${failedSyncs.join(', `);
+        toast.warning(`Sync completed with errors in: ${failedSyncs.join(', ')}`);
       } else {
         toast.success('Full sync completed successfully');
       }
