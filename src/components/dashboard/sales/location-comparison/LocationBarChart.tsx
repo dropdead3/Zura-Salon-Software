@@ -119,7 +119,7 @@ export function LocationBarChart({ locations, colors, totalRevenue }: LocationBa
         <Bar dataKey="totalRevenue" radius={[0, 4, 4, 0]} shape={<AnimatedBar />} isAnimationActive={false}>
           {data.map((_, i) => {
             const hex = colors[i % colors.length];
-            const gradId = `loc-glass-${hex.replace('#', '`;
+            const gradId = `loc-glass-${hex.replace('#', '')`;
             return (
               <Cell key={i} fill={`url(#${gradId})`} stroke={`${hex}50`} strokeWidth={1} />
             );

@@ -141,7 +141,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
   const timeSlots = [];
   for (let hour = 8; hour <= 20; hour++) {
     for (let min = 0; min < 60; min += 15) {
-      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0`;
+      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')`;
       const displayTime = `${hour > 12 ? hour - 12 : hour}:${min.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
       timeSlots.push({ value: time, label: displayTime });
     }

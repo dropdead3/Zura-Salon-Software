@@ -103,7 +103,7 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
           >
             {data.map((_, i) => {
               const hex = colors[i % colors.length];
-              const gradId = `donut-glass-${hex.replace('#', '`;
+              const gradId = `donut-glass-${hex.replace('#', '')`;
               return <Cell key={i} fill={`url(#${gradId})`} />;
             })}
             <CenterLabel totalRevenue={totalRevenue} />
