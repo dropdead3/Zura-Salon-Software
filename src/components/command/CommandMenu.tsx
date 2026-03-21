@@ -66,7 +66,7 @@ export function CommandMenu() {
             return (
               <CommandItem
                 key={item.href}
-                value={[item.label, ...(item.keywords ?? [])].join(' '}
+                value={[item.label, ...(item.keywords ?? [])].join(' ')}
                 onSelect={() => run(item.href)}
               >
                 {Icon && <Icon className="mr-2 h-4 w-4 opacity-70" />}

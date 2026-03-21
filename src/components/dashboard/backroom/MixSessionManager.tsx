@@ -168,8 +168,8 @@ export function MixSessionManager({
       try {
         await Promise.all(sealPromises);
         const parts: string[] = [];
-        if (sealed.length) parts.push(`Sealed bowl${sealed.length > 1 ? 's' : '')} ${sealed.join(', '}`);
-        if (discarded.length) parts.push(`Discarded empty bowl${discarded.length > 1 ? 's' : '')} ${discarded.join(', '}`);
+        if (sealed.length) parts.push(`Sealed bowl${sealed.length > 1 ? 's' : '')} ${sealed.join(', ')}`);
+        if (discarded.length) parts.push(`Discarded empty bowl${discarded.length > 1 ? 's' : '')} ${discarded.join(', ')}`);
         if (parts.length) toast.info(parts.join('. '));
       } catch {
         toast.error('Failed to auto-finalize bowls');
