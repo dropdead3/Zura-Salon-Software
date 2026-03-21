@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Delete, ShieldCheck, Scale, Droplets, Wrench, Activity } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Scale, Droplets, Wrench, Activity } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
 
   const handleKey = useCallback(async (key: string) => {
     if (pinLoading) return;
-    if (key === 'delete') { setPin(p => p.slice(0, -1)); setPinError(false); return; }
+    if (key === 'delete') { setPin(''); setPinError(false); return; }
     if (key === '') return;
 
     const next = pin + key;
@@ -110,12 +110,12 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
           </p>
 
           {/* PIN dots */}
-          <div className="flex gap-4 mb-8">
+          <div className="flex gap-3 mb-6">
             {Array.from({ length: PIN_LENGTH }).map((_, i) => (
               <div
                 key={i}
                 className={cn(
-                  'w-3.5 h-3.5 rounded-full border-2 transition-all duration-150',
+                  'w-4 h-4 rounded-full border-2 transition-all duration-150',
                   i < pin.length
                     ? pinError
                       ? 'bg-red-500 border-red-500'
@@ -127,20 +127,20 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
           </div>
 
           {/* Numpad */}
-          <div className="grid grid-cols-3 gap-3 w-64">
+          <div className="grid grid-cols-3 gap-2 w-80">
             {KEYS.map((key, i) => {
               if (key === '') return <div key={i} />;
               if (key === 'delete') {
                 return (
                   <button key={i} onClick={() => handleKey('delete')}
-                    className="flex items-center justify-center h-14 rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors">
-                    <Delete className="w-5 h-5" />
+                    className="flex items-center justify-center h-[72px] rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors">
+                    <span className="text-sm font-medium tracking-wide">Clear</span>
                   </button>
                 );
               }
               return (
                 <button key={i} onClick={() => handleKey(key)} disabled={pinLoading}
-                  className="flex items-center justify-center h-14 rounded-2xl text-lg font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50">
+                  className="flex items-center justify-center h-[72px] rounded-2xl text-2xl font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50">
                   {key}
                 </button>
               );
