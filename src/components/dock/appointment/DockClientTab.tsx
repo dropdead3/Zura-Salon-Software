@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   User, FlaskConical, Clock, FileText, CalendarDays, Loader2, Star,
   AlertTriangle, ShoppingBag, Camera, AlertCircle, Pencil, Plus, Check, X,
-  Heart, History,
+  Heart, History, Copy, Sparkles,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
@@ -20,9 +20,11 @@ import { useClientMemory } from '@/hooks/useClientMemory';
 import { useClientProductAffinity } from '@/hooks/useClientProductAffinity';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
 import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { useCloneFormula } from '@/hooks/backroom/useCloneFormula';
 import { calculateCLV, assignCLVTier } from '@/lib/clv-calculator';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
+import { toast } from 'sonner';
 
 interface DockClientTabProps {
   appointment: DockAppointment;
