@@ -6,7 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useDockDemo } from '@/contexts/DockDemoContext';
-import { DEMO_BRANDS, getDemoProductsByBrand, searchDemoProducts, type DemoBrand } from './dockDemoData';
+import { DEMO_BRANDS, getDemoProductsByBrand, searchDemoProducts } from './dockDemoData';
 
 export interface DockProduct {
   id: string;
