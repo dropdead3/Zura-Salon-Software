@@ -6,7 +6,7 @@
  * scoped to a real organization's services and clients.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DockLayout } from '@/components/dock/DockLayout';
 import { DockPinGate } from '@/components/dock/DockPinGate';
