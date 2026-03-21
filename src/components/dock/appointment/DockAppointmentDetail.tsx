@@ -11,7 +11,7 @@ import { formatTime } from '../schedule/DockScheduleTab';
 import { DockServicesTab } from './DockServicesTab';
 import { DockNotesTab } from './DockNotesTab';
 import { DockSummaryTab } from './DockSummaryTab';
-import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 
 type DetailTab = 'services' | 'notes' | 'summary';
