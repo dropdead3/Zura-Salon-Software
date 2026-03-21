@@ -32,6 +32,8 @@ import {
 } from '@/hooks/useReengagementCampaigns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import {
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
   Dialog,
   DialogContent,
   DialogHeader,
@@ -187,6 +189,7 @@ function NewCampaignDialog({ organizationId }: { organizationId?: string }) {
 }
 
 export default function ReengagementHub() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
@@ -205,7 +208,7 @@ export default function ReengagementHub() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
+              <Link to={dashPath('/admin/management')}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>

@@ -43,6 +43,8 @@ import { useLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
 import { motion, useInView } from 'framer-motion';
 import { 
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
   BarChart, 
   Bar, 
   XAxis, 
@@ -438,6 +440,7 @@ function getForecastDays(period: ForecastPeriod): number {
 }
 
 export function ForecastingCard() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<ForecastPeriod>('7days');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
@@ -491,7 +494,7 @@ export function ForecastingCard() {
   };
 
   const handleViewDetails = () => {
-    navigate('/dashboard/admin/sales');
+    navigate(dashPath('/admin/sales'));
   };
 
   const handleStatCardClick = useCallback((mode: BreakdownMode) => {

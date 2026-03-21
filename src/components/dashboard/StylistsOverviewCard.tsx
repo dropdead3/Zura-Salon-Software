@@ -9,9 +9,12 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 
 export function StylistsOverviewCard() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   // Fetch stylists with their levels to show counts
   const { data: stylistsByLevel } = useQuery({
@@ -61,7 +64,7 @@ export function StylistsOverviewCard() {
           variant="outline"
           size="sm"
           className={tokens.button.cardAction}
-          onClick={() => navigate('/dashboard/admin/settings?category=levels')}
+          onClick={() => navigate(dashPath('/admin/settings?category=levels'))}
         >
           <Settings className="w-4 h-4" /> Configure
         </Button>

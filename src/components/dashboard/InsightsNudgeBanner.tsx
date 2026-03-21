@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface InsightsNudgeBannerProps {
   userId?: string;
@@ -15,7 +17,8 @@ interface InsightsNudgeBannerProps {
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
-export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBannerProps) {
+export function InsightsNudgeBanner({
+  const { dashPath } = useOrgDashboardPath(); userId, isLeadership }: InsightsNudgeBannerProps) {
   const [dismissed, setDismissed] = useState(false);
 
   const { data: daysSinceLastCheck } = useQuery({
@@ -102,7 +105,7 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
                 : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you — let's grow! 🌱`}
             </p>
           </div>
-          <Link to="/dashboard">
+          <Link to={dashPath('/')}>
             <Button size={tokens.button.card} variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
               View Insights
             </Button>

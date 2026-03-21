@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const statusIcon: Record<string, typeof Rocket> = {
   active: Rocket,
@@ -25,6 +27,7 @@ const statusBadge: Record<string, string> = {
 };
 
 export function CampaignsTabContent() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { data: campaigns, isLoading } = useActionCampaigns();
 
@@ -99,7 +102,7 @@ export function CampaignsTabContent() {
             <CardDescription>Created from {PLATFORM_NAME} AI insights</CardDescription>
           </div>
           <Button variant="outline" size={tokens.button.card} asChild>
-            <Link to="/dashboard/campaigns">View All</Link>
+            <Link to={dashPath('/campaigns')}>View All</Link>
           </Button>
         </CardHeader>
         <CardContent>

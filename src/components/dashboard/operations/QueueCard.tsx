@@ -32,6 +32,8 @@ import { cn } from '@/lib/utils';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
 import { toast } from 'sonner';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface QueueCardProps {
   appointment: QueueAppointment;
@@ -43,7 +45,8 @@ interface QueueCardProps {
   isUpdating?: boolean;
 }
 
-export function QueueCard({ 
+export function QueueCard({
+  const { dashPath } = useOrgDashboardPath(); 
   appointment, 
   variant,
   onCheckIn,
@@ -155,7 +158,7 @@ export function QueueCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover">
-                  <DropdownMenuItem onClick={() => navigate('/dashboard/schedule', { state: { focusDate: appointment.appointment_date, focusAppointmentId: appointment.id } })}>
+                  <DropdownMenuItem onClick={() => navigate(dashPath('/schedule'), { state: { focusDate: appointment.appointment_date, focusAppointmentId: appointment.id } })}>
                     <CalendarDays className="w-4 h-4 mr-2" />
                     View on Schedule
                   </DropdownMenuItem>

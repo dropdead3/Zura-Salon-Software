@@ -8,10 +8,13 @@ import { X, ArrowLeft, ChevronUp, ChevronDown, Sparkles, ExternalLink } from 'lu
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { normalizeGuidanceRoute } from '@/utils/guidanceRoutes';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
 export function ZuraStickyGuidance() {
+  const { dashPath } = useOrgDashboardPath();
   const ctx = useZuraNavigationSafe();
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,7 +88,7 @@ export function ZuraStickyGuidance() {
             {/* Collapsed bar */}
             <div className="flex items-center gap-3 px-4 lg:px-6 h-12">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(dashPath('/'))}
                 className="flex items-center gap-2.5 min-w-0 flex-1 group"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 group-hover:text-foreground transition-colors" />

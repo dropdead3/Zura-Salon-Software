@@ -66,6 +66,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface ProgramConfig {
   id: string;
@@ -285,6 +287,7 @@ function SortableRuleItem({
 }
 
 export default function ProgramEditor() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: profile } = useEmployeeProfile();
   const [loading, setLoading] = useState(true);
@@ -320,7 +323,7 @@ export default function ProgramEditor() {
   useEffect(() => {
     if (profile && !isSuperAdmin) {
       toast.error('Access denied. Super admin only.');
-      navigate('/dashboard');
+      navigate(dashPath('/'));
     }
   }, [profile, isSuperAdmin, navigate]);
 

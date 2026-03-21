@@ -12,12 +12,15 @@ import { Button } from '@/components/ui/button';
 import Logo from '@/assets/brand-logo-secondary.svg';
 import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
 import { tokens } from '@/lib/design-tokens';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface DashboardLockScreenProps {
   onUnlock: (user?: { user_id: string; display_name: string }) => void;
 }
 
-export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
+export function DashboardLockScreen({
+  const { dashPath } = useOrgDashboardPath(); onUnlock }: DashboardLockScreenProps) {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
@@ -79,7 +82,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
             // Intentional delay for premium feel (1.5 seconds)
             setTimeout(() => {
               onUnlock({ user_id: result.user_id, display_name: result.display_name });
-              navigate('/dashboard/schedule', { 
+              navigate(dashPath('/schedule'), { 
                 state: { 
                   quickLoginUserId: result.user_id,
                   quickLoginUserName: result.display_name 

@@ -14,6 +14,8 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { usePendingInvitations } from '@/hooks/useStaffInvitations';
 import { useInvitableRoles } from '@/hooks/useInvitableRoles';
 import {
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
   ClipboardList,
   GraduationCap,
   Target,
@@ -142,6 +144,7 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
 }
 
 export default function TeamHub() {
+  const { dashPath } = useOrgDashboardPath();
   const { canInvite } = useInvitableRoles();
   const { data: pendingInvitations } = usePendingInvitations();
   const pendingInvitationCount = pendingInvitations?.length || 0;
@@ -209,49 +212,49 @@ export default function TeamHub() {
         {/* Hub Gateway */}
         <CategorySection title="Hubs">
           <HubGatewayCard
-            href="/dashboard/admin/client-hub"
+            href={dashPath('/admin/client-hub')}
             icon={HeartPulse}
             title="Client Hub"
             description="Client management, retention, and engagement"
           />
           <HubGatewayCard
-            href="/dashboard/admin/growth-hub"
+            href={dashPath('/admin/growth-hub')}
             icon={Rocket}
             title="Growth Hub"
             description="Marketing, campaigns, and growth initiatives"
           />
           <HubGatewayCard
-            href="/dashboard/admin/payroll"
+            href={dashPath('/admin/payroll')}
             icon={DollarSign}
             title="Hiring & Payroll Hub"
             description="Compensation, commissions, and hiring pipeline"
           />
           <HubGatewayCard
-            href="/dashboard/admin/booth-renters"
+            href={dashPath('/admin/booth-renters')}
             icon={Store}
             title="Renter Hub"
             description="Booth renter contracts, billing, and compliance"
           />
           <HubGatewayCard
-            href="/dashboard/admin/onboarding-tracker"
+            href={dashPath('/admin/onboarding-tracker')}
             icon={ClipboardList}
             title="Onboarding Hub"
             description="New hire progress, invitations, and checklist completion"
           />
           <HubGatewayCard
-            href="/dashboard/admin/training-hub"
+            href={dashPath('/admin/training-hub')}
             icon={Video}
             title="Training Hub"
             description="Manage training library and track completions"
           />
           <HubGatewayCard
-            href="/dashboard/admin/website-hub"
+            href={dashPath('/admin/website-hub')}
             icon={Globe}
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
           />
           <HubGatewayCard
-            href="/dashboard/admin/backroom-settings"
+            href={dashPath('/admin/backroom-settings')}
             icon={Beaker}
             title="Zura Backroom Hub"
             description="Backroom color & supply management, formulas, and station tracking"
@@ -261,13 +264,13 @@ export default function TeamHub() {
         {/* People & Development */}
         <CategorySection title="People & Development">
           <ManagementCard
-            href="/dashboard/directory"
+            href={dashPath('/directory')}
             icon={Users}
             title="Team Directory"
             description="View and manage your team roster"
           />
           <ManagementCard
-            href="/dashboard/admin/graduation-tracker"
+            href={dashPath('/admin/graduation-tracker')}
             icon={GraduationCap}
             title="Graduation Tracker"
             description="Monitor assistant advancement and milestones"
@@ -275,26 +278,26 @@ export default function TeamHub() {
             statLabel="in progress"
           />
           <ManagementCard
-            href="/dashboard/admin/client-engine-tracker"
+            href={dashPath('/admin/client-engine-tracker')}
             icon={Target}
             title="Client Engine Tracker"
             description="Program enrollment and participation rates"
           />
           <ManagementCard
-            href="/dashboard/admin/challenges"
+            href={dashPath('/admin/challenges')}
             icon={Trophy}
             title="Team Challenges"
             description="Create and manage team competitions"
           />
           <ManagementCard
-            href="/dashboard/admin/team"
+            href={dashPath('/admin/team')}
             icon={Target}
             title="Program Team Overview"
             description="Track stylist program progress across the team"
           />
           {canInvite && (
             <ManagementCard
-              href="/dashboard/admin/onboarding-tracker?tab=invitations"
+              href={dashPath('/admin/onboarding-tracker?tab=invitations')}
               icon={ClipboardCheck}
               title="Manage Invitations"
               description="View and manage all pending invitations"
@@ -307,13 +310,13 @@ export default function TeamHub() {
         {/* Scheduling & Requests */}
         <CategorySection title="Scheduling & Requests">
           <ManagementCard
-            href="/dashboard/schedule-meeting"
+            href={dashPath('/schedule-meeting')}
             icon={CalendarClock}
             title="Meetings & Accountability"
             description="Schedule 1:1s and track commitments"
           />
           <ManagementCard
-            href="/dashboard/admin/assistant-requests"
+            href={dashPath('/admin/assistant-requests')}
             icon={HandHelping}
             title="Assistant Requests"
             description="Manage help requests from stylists"
@@ -321,25 +324,25 @@ export default function TeamHub() {
             statLabel="pending"
           />
           <ManagementCard
-            href="/dashboard/admin/schedule-requests"
+            href={dashPath('/admin/schedule-requests')}
             icon={CalendarClock}
             title="Schedule Requests"
             description="Time-off and schedule change approvals"
           />
           <ManagementCard
-            href="/dashboard/admin/shift-swaps"
+            href={dashPath('/admin/shift-swaps')}
             icon={ArrowLeftRight}
             title="Shift Swap Approvals"
             description="Review and approve shift swap requests"
           />
           <ManagementCard
-            href="/dashboard/assistant-schedule"
+            href={dashPath('/assistant-schedule')}
             icon={CalendarDays}
             title="Assistant Scheduling"
             description="Manage assistant assignments and coverage"
           />
           <ManagementCard
-            href="/dashboard/admin/daily-huddle"
+            href={dashPath('/admin/daily-huddle')}
             icon={MessageSquare}
             title="Daily Huddle"
             description="Create pre-shift notes and daily goals"
@@ -349,31 +352,31 @@ export default function TeamHub() {
         {/* Performance & Compliance */}
         <CategorySection title="Performance & Compliance">
           <ManagementCard
-            href="/dashboard/admin/performance-reviews"
+            href={dashPath('/admin/performance-reviews')}
             icon={Star}
             title="Performance Reviews"
             description="Structured reviews with ratings and goals"
           />
           <ManagementCard
-            href="/dashboard/admin/strikes"
+            href={dashPath('/admin/strikes')}
             icon={AlertTriangle}
             title="Staff Strikes"
             description="Track disciplinary actions and warnings"
           />
           <ManagementCard
-            href="/dashboard/admin/documents"
+            href={dashPath('/admin/documents')}
             icon={FileText}
             title="Document Tracker"
             description="Licenses, certifications, and compliance docs"
           />
           <ManagementCard
-            href="/dashboard/admin/incidents"
+            href={dashPath('/admin/incidents')}
             icon={ShieldAlert}
             title="Incident Reports"
             description="Workplace safety and incident documentation"
           />
           <ManagementCard
-            href="/dashboard/admin/pto"
+            href={dashPath('/admin/pto')}
             icon={CalendarDays}
             title="PTO Balances"
             description="Manage PTO policies and employee balances"
@@ -383,13 +386,13 @@ export default function TeamHub() {
         {/* Team Operations & Communications */}
         <CategorySection title="Team Operations & Communications">
           <ManagementCard
-            href="/dashboard/admin/chair-assignments"
+            href={dashPath('/admin/chair-assignments')}
             icon={Armchair}
             title="Chair Assignments"
             description="Station assignments and floor layout management"
           />
           <ManagementCard
-            href="/dashboard/admin/birthdays"
+            href={dashPath('/admin/birthdays')}
             icon={Cake}
             title="Birthdays & Anniversaries"
             description="Upcoming team celebrations and milestones"
@@ -397,7 +400,7 @@ export default function TeamHub() {
             statLabel="this week"
           />
           <ManagementCard
-            href="/dashboard/admin/business-cards"
+            href={dashPath('/admin/business-cards')}
             icon={CreditCard}
             title="Business Cards"
             description="Process business card requests"
@@ -405,7 +408,7 @@ export default function TeamHub() {
             statLabel="pending"
           />
           <ManagementCard
-            href="/dashboard/admin/headshots"
+            href={dashPath('/admin/headshots')}
             icon={Camera}
             title="Headshots"
             description="Schedule and track photo sessions"
@@ -413,13 +416,13 @@ export default function TeamHub() {
             statLabel="pending"
           />
           <ManagementCard
-            href="/dashboard/admin/announcements"
+            href={dashPath('/admin/announcements')}
             icon={Bell}
             title="Announcements"
             description="Send team-wide communications"
           />
           <ManagementCard
-            href="/dashboard/admin/points-config"
+            href={dashPath('/admin/points-config')}
             icon={Coins}
             title="Points & Rewards Config"
             description="Configure point rules and manage reward catalog"
@@ -429,7 +432,7 @@ export default function TeamHub() {
         {/* AI & Automation */}
         <CategorySection title="AI & Automation">
           <ManagementCard
-            href="/dashboard/admin/zura-config"
+            href={dashPath('/admin/zura-config')}
             icon={Brain}
             title={`${PLATFORM_NAME} Configuration`}
             description="Customize AI personality, knowledge base, and guardrails"

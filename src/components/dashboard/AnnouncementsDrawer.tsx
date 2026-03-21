@@ -11,6 +11,8 @@ import { useUnreadAnnouncementCount } from '@/hooks/useUnreadAnnouncementCount';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { LocationSelect } from '@/components/ui/location-select';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -66,6 +68,7 @@ interface AnnouncementsDrawerProps {
 }
 
 export function AnnouncementsDrawer({
+  const { dashPath } = useOrgDashboardPath();
   isLeadership,
   label,
   iconOnly,
@@ -272,12 +275,12 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
             {isLeadership && (
               <>
                 <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                  <Link to="/dashboard/announcements">
+                  <Link to={dashPath('/announcements')}>
                     <Settings className="w-3.5 h-3.5" />
                   </Link>
                 </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                  <Link to="/dashboard/announcements/create">
+                  <Link to={dashPath('/announcements/create')}>
                     <Plus className="w-3.5 h-3.5" />
                   </Link>
                 </Button>
@@ -346,7 +349,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
       {/* Footer */}
       <div className="px-4 pb-4 pt-1">
         <Button variant="ghost" className="w-full justify-center text-xs h-9 text-muted-foreground hover:text-foreground" asChild>
-          <Link to="/dashboard/announcements">
+          <Link to={dashPath('/announcements')}>
             View All Announcements
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Link>

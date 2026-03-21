@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useMyActiveChallenges } from '@/hooks/useChallenges';
 import { differenceInDays, isPast } from 'date-fns';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const metricIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   bells: Bell,
@@ -26,7 +28,8 @@ interface ActiveChallengesWidgetProps {
   maxItems?: number;
 }
 
-export function ActiveChallengesWidget({ 
+export function ActiveChallengesWidget({
+  const { dashPath } = useOrgDashboardPath(); 
   className, 
   maxItems = 3 
 }: ActiveChallengesWidgetProps) {
@@ -83,7 +86,7 @@ export function ActiveChallengesWidget({
             Active Challenges
           </CardTitle>
           {challenges.length > maxItems && (
-            <Link to="/dashboard/admin/challenges">
+            <Link to={dashPath('/admin/challenges')}>
               <Button variant="ghost" size={tokens.button.inline} className="text-xs">
                 View All
                 <ChevronRight className="w-3 h-3 ml-1" />

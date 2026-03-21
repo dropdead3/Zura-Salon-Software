@@ -13,6 +13,8 @@ import { useUnreadMentionCount, useMentions, useMarkMentionAsRead, useMarkAllMen
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const SOURCE_ICONS = {
   chat: MessageSquare,
@@ -29,6 +31,7 @@ const SOURCE_LABELS = {
 };
 
 export function MentionNotificationBadge() {
+  const { dashPath } = useOrgDashboardPath();
   const [open, setOpen] = useState(false);
   const unreadCount = useUnreadMentionCount();
   const { data: mentions = [], isLoading } = useMentions();
@@ -46,7 +49,7 @@ export function MentionNotificationBadge() {
     if (mention.source_type === 'chat' && mention.channel_id) {
       navigate(`/dashboard/team-chat?channel=${mention.channel_id}`);
     } else if (mention.source_type === 'account_note') {
-      navigate('/dashboard/account-notes');
+      navigate(dashPath('/account-notes'));
     }
     setOpen(false);
   };

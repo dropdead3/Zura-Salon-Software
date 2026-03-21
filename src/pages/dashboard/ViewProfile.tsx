@@ -27,6 +27,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AssistantRequestHistoryCard } from '@/components/dashboard/AssistantRequestHistoryCard';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -64,6 +66,7 @@ const formatSocialHandle = (value: string) => {
 };
 
 export default function ViewProfile() {
+  const { dashPath } = useOrgDashboardPath();
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   
@@ -335,7 +338,7 @@ export default function ViewProfile() {
               <p className="text-muted-foreground mb-4">
                 Only super admins can view and edit team member profiles.
               </p>
-              <Button onClick={() => navigate('/dashboard/directory')}>
+              <Button onClick={() => navigate(dashPath('/directory'))}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Directory
               </Button>
@@ -357,7 +360,7 @@ export default function ViewProfile() {
               <p className="text-muted-foreground mb-4">
                 The requested user profile could not be found.
               </p>
-              <Button onClick={() => navigate('/dashboard/directory')}>
+              <Button onClick={() => navigate(dashPath('/directory'))}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Directory
               </Button>

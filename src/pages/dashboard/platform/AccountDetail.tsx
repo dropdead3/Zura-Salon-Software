@@ -54,6 +54,8 @@ import { useOrganizationBilling, useSubscriptionPlans, type BillingStatus } from
 import { useLocations } from '@/hooks/useLocations';
 import { useOrganizationUsage, calculateCapacity, getUtilizationColor, getUtilizationBgColor } from '@/hooks/useOrganizationCapacity';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -80,6 +82,7 @@ const businessTypeLabels: Record<string, string> = {
 };
 
 export default function AccountDetail() {
+  const { dashPath } = useOrgDashboardPath();
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -149,7 +152,7 @@ export default function AccountDetail() {
                   organization_name: organization.name,
                   action: 'view_dashboard',
                 });
-                navigate('/dashboard');
+                navigate(dashPath('/'));
               }}
             >
               <LayoutDashboard className="h-4 w-4 mr-2" />

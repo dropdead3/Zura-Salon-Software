@@ -88,6 +88,8 @@ import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 // ─── Scheduled Coverage sub-component ───────────────────────────
 function ScheduledCoverageSection({
@@ -276,6 +278,7 @@ interface AppointmentDetailSheetProps {
 }
 
 export function AppointmentDetailSheet({
+  const { dashPath } = useOrgDashboardPath();
   appointment,
   open,
   onOpenChange,
@@ -909,7 +912,7 @@ export function AppointmentDetailSheet({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link to="/dashboard/appointments-hub">
+                          <Link to={dashPath('/appointments-hub')}>
                             <Receipt className="h-3.5 w-3.5 mr-2" />
                             Transactions
                           </Link>

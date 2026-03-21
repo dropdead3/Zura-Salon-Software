@@ -23,8 +23,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export default function RenterPayRent() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { formatCurrency } = useFormatCurrency();
@@ -235,7 +238,7 @@ export default function RenterPayRent() {
                 <div className="text-center py-4">
                   <p className="text-sm text-muted-foreground mb-3">No payment methods saved</p>
                   <Button variant="outline" size={tokens.button.card} asChild>
-                    <a href="/dashboard/renter/payment-methods">Add Card</a>
+                    <a href={dashPath('/renter/payment-methods')}>Add Card</a>
                   </Button>
                 </div>
               ) : (

@@ -11,8 +11,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export function ActiveCampaignsCard() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { data: campaigns, isLoading } = useActionCampaigns('active');
   const updateStatus = useUpdateCampaignStatus();
@@ -47,7 +50,7 @@ export function ActiveCampaignsCard() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-xs tracking-[0.15em]">ACTIVE CAMPAIGNS</h2>
-        <Link to="/dashboard/campaigns" className="text-[11px] text-primary hover:underline">
+        <Link to={dashPath('/campaigns')} className="text-[11px] text-primary hover:underline">
           {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all'}
         </Link>
       </div>

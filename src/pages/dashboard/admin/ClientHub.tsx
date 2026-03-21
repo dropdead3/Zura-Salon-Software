@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import {
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
   Users,
   Brain,
   MessageSquarePlus,
@@ -44,6 +46,7 @@ function HubCard({ href, icon: Icon, title, description }: HubCardProps) {
 }
 
 export default function ClientHub() {
+  const { dashPath } = useOrgDashboardPath();
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
@@ -56,31 +59,31 @@ export default function ClientHub() {
           <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">Client Management</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <HubCard
-              href="/dashboard/clients"
+              href={dashPath('/clients')}
               icon={Users}
               title="Client Directory"
               description="Browse, search, and manage all client profiles"
             />
             <HubCard
-              href="/dashboard/admin/client-health"
+              href={dashPath('/admin/client-health')}
               icon={Brain}
               title="Client Health Hub"
               description="At-risk clients, rebooking, win-back outreach, and more"
             />
             <HubCard
-              href="/dashboard/admin/feedback"
+              href={dashPath('/admin/feedback')}
               icon={MessageSquarePlus}
               title="Feedback Hub"
               description="Client surveys, reviews, and NPS tracking"
             />
             <HubCard
-              href="/dashboard/admin/reengagement"
+              href={dashPath('/admin/reengagement')}
               icon={UserCheck}
               title="Re-engagement"
               description="Win-back campaigns for inactive clients"
             />
             <HubCard
-              href="/dashboard/admin/merge-clients"
+              href={dashPath('/admin/merge-clients')}
               icon={GitMerge}
               title="Merge Clients"
               description="Deduplicate and consolidate client profiles safely"

@@ -10,6 +10,8 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { Clock, User, Scissors, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface DayAppointmentsPanelProps {
   day: DayForecast | null;
@@ -96,7 +98,8 @@ function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSum
   );
 }
 
-export function DayAppointmentsPanel({ day, open, onOpenChange }: DayAppointmentsPanelProps) {
+export function DayAppointmentsPanel({
+  const { dashPath } = useOrgDashboardPath(); day, open, onOpenChange }: DayAppointmentsPanelProps) {
   const { formatDate } = useFormatDate();
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const navigate = useNavigate();
@@ -104,7 +107,7 @@ export function DayAppointmentsPanel({ day, open, onOpenChange }: DayAppointment
 
   const handleAppointmentClick = (apt: AppointmentSummary) => {
     onOpenChange(false);
-    navigate('/dashboard/schedule', { 
+    navigate(dashPath('/schedule'), { 
       state: { focusDate: day.date, focusAppointmentId: apt.id } 
     });
   };

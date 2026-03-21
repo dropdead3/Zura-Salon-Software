@@ -29,6 +29,8 @@ import { ProgramLogoEditor } from './ProgramLogoEditor';
 import { ProgramConfig } from '@/hooks/useProgramConfig';
 import { useProgramOutcomes, useUpdateProgramOutcome } from '@/hooks/useProgramOutcomes';
 import { Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface LayoutConfig {
   showHighlights: boolean;
@@ -48,7 +50,8 @@ interface WelcomePagePreviewProps {
   onCtaTextChange?: (ctaText: string) => void;
 }
 
-export function WelcomePagePreview({ 
+export function WelcomePagePreview({
+  const { dashPath } = useOrgDashboardPath(); 
   previewConfig, 
   onLogoChange, 
   onLogoSizeChange, 
@@ -286,7 +289,7 @@ export function WelcomePagePreview({
                   <div className="bg-muted/30 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground mb-3">Tasks shown are pulled from your program configuration.</p>
                     <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
-                      <Link to="/dashboard/admin/program-editor?tab=tasks">
+                      <Link to={dashPath('/admin/program-editor?tab=tasks')}>
                         <ExternalLink className="w-3 h-3" />
                         Edit Daily Tasks
                       </Link>
@@ -318,7 +321,7 @@ export function WelcomePagePreview({
                   <div className="bg-muted/30 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground mb-3">Rules shown are pulled from your program configuration.</p>
                     <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
-                      <Link to="/dashboard/admin/program-editor?tab=rules">
+                      <Link to={dashPath('/admin/program-editor?tab=rules')}>
                         <ExternalLink className="w-3 h-3" />
                         Edit Program Rules
                       </Link>

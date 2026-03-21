@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export interface MatchSuggestion {
   employeeId: string;
@@ -58,7 +60,8 @@ function getMatchIcon(reason: MatchSuggestion['matchReason']) {
   }
 }
 
-export function StaffMatchingSuggestions({ 
+export function StaffMatchingSuggestions({
+  const { dashPath } = useOrgDashboardPath(); 
   suggestions, 
   onLink, 
   onDismiss,
@@ -107,7 +110,7 @@ export function StaffMatchingSuggestions({
             variant="ghost" 
             size={tokens.button.card} 
             className="gap-1 text-xs"
-            onClick={() => navigate('/dashboard/admin/phorest-settings')}
+            onClick={() => navigate(dashPath('/admin/phorest-settings'))}
           >
             See All
             <ChevronRight className="w-3 h-3" />
@@ -198,7 +201,7 @@ export function StaffMatchingSuggestions({
           <Button 
             variant="ghost" 
             className="w-full text-sm text-muted-foreground"
-            onClick={() => navigate('/dashboard/admin/phorest-settings')}
+            onClick={() => navigate(dashPath('/admin/phorest-settings'))}
           >
             +{moreCount} more suggestions
             <ChevronRight className="w-4 h-4 ml-1" />

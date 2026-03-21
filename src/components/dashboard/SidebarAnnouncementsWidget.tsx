@@ -7,6 +7,8 @@ import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { cn } from '@/lib/utils';
 import { Megaphone, ChevronRight, Pin, ExternalLink } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -41,7 +43,8 @@ interface SidebarAnnouncementsWidgetProps {
   onNavClick?: () => void;
 }
 
-export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsWidgetProps) {
+export function SidebarAnnouncementsWidget({
+  const { dashPath } = useOrgDashboardPath(); onNavClick }: SidebarAnnouncementsWidgetProps) {
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -188,7 +191,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
 
           {/* View all link */}
           <Link
-            to="/dashboard/admin/announcements"
+            to={dashPath('/admin/announcements')}
             onClick={onNavClick}
             className="block text-center text-xs text-muted-foreground hover:text-foreground py-2 transition-colors"
           >
