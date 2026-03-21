@@ -553,7 +553,31 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
         </div>
       )}
 
-      {/* ─── Transformation Photos ─── */}
+      {/* ─── Suggested Retail (Cross-Sell) ─── */}
+      {crossSellProducts && crossSellProducts.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+              Suggested Retail
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {crossSellProducts.map((p) => (
+              <div
+                key={p.name}
+                className="flex items-center justify-between rounded-xl bg-violet-500/5 border border-violet-500/15 px-3 py-2.5"
+              >
+                <span className="text-xs text-[hsl(var(--platform-foreground))]">{p.name}</span>
+                <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                  {p.buyerCount} similar clients
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {photos && photos.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
