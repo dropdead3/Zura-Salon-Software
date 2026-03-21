@@ -109,6 +109,13 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           borderClass
         )}
       >
+        {/* Mix session indicator — inside sliding layer so it moves with card */}
+        {appointment.has_mix_session && (
+          <div className="absolute top-4 right-4 z-10 flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600/20">
+            <FlaskConical className="w-3.5 h-3.5 text-violet-400" />
+          </div>
+        )}
+
         {/* Invisible spacer to maintain card height */}
         <div className="p-4 opacity-0 pointer-events-none" aria-hidden="true">
           <div className="flex items-start justify-between gap-3">
