@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { DockLocationPicker } from './DockLocationPicker';
 import type { DockStaffSession } from '@/pages/Dock';
 
 interface DockPinGateProps {
