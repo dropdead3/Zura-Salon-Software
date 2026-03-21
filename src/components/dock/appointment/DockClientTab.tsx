@@ -320,6 +320,65 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   const [showAllFormulas, setShowAllFormulas] = useState(false);
   const displayFormulas = showAllFormulas ? formulaHistory : formulaHistory.slice(0, 5);
 
+  // ─── Compute formula diffs ───
+  const formulaDiffs = new Map<string, FormulaDiff>();
+  for (let i = 0; i < formulaHistory.length - 1; i++) {
+    const newer = formulaHistory[i];
+    const older = formulaHistory[i + 1];
+    if (newer.formula_type === older.formula_type && newer.formula_data?.length && older.formula_data?.length) {
+      const diff = computeFormulaDiff(newer.formula_data, older.formula_data);
+      if (hasDiff(diff)) formulaDiffs.set(newer.id, diff);
+    }
+  }
+
+  // ─── Conversion rate for suggested retail ───
+  const { data: conversionRate } = useQuery({
+    queryKey: ['dock-cross-sell-conversion', staff.organizationId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('retail_recommendation_events' as any)
+        .select('converted_at')
+        .eq('organization_id', staff.organizationId) as { data: { converted_at: string | null }[] | null };
+      if (!data || data.length < 10) return null;
+      const converted = data.filter(r => r.converted_at).length;
+      return Math.round((converted / data.length) * 100);
+    },
+    enabled: !!staff.organizationId,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  // ─── Log recommendation events (debounced, once per mount) ───
+  const debouncedCrossSell = useDebounce(crossSellProducts, 2000);
+  useEffect(() => {
+    if (!debouncedCrossSell || debouncedCrossSell.length === 0 || recLoggedRef.current) return;
+    if (!phorestClientId || !staff.organizationId) return;
+    recLoggedRef.current = true;
+
+    const today = new Date().toISOString().split('T')[0];
+    const inserts = debouncedCrossSell.map(p => ({
+      organization_id: staff.organizationId,
+      client_id: phorestClientId,
+      recommended_product_name: p.name,
+      service_name: appointment.service_name || null,
+      recommended_by: staff.userId || null,
+    }));
+
+    // Deduplicate: don't log same product+client+day twice
+    supabase
+      .from('retail_recommendation_events' as any)
+      .select('recommended_product_name')
+      .eq('organization_id', staff.organizationId)
+      .eq('client_id', phorestClientId)
+      .gte('recommended_at', today)
+      .then(({ data: existing }) => {
+        const existingNames = new Set((existing || []).map((r: any) => r.recommended_product_name));
+        const newInserts = inserts.filter(i => !existingNames.has(i.recommended_product_name));
+        if (newInserts.length > 0) {
+          supabase.from('retail_recommendation_events' as any).insert(newInserts).then(() => {});
+        }
+      });
+  }, [debouncedCrossSell, phorestClientId, staff.organizationId, appointment.service_name, staff.userId]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
