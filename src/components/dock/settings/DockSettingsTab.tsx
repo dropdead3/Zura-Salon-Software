@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { LogOut, User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
@@ -35,6 +37,24 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   const { data: locations } = useLocations(staff.organizationId);
   const { isDemoMode } = useDockDemo();
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
+
+  const { data: stationCount } = useQuery({
+    queryKey: ['backroom-stations-count', staff.organizationId, staff.locationId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('backroom_stations')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', staff.organizationId!)
+        .eq('location_id', staff.locationId!)
+        .eq('is_active', true);
+      if (error) throw error;
+      return count ?? 1;
+    },
+    enabled: !!staff.organizationId && !!staff.locationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const totalStations = stationCount ?? 1;
 
   const handleMoveStation = () => {
     if (isDemoMode) {
@@ -73,7 +93,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
             {staff.displayName}
           </p>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Mixing Station
+            Zura Backroom Station 1 of {totalStations} at {locationName}
           </p>
         </div>
       </div>
