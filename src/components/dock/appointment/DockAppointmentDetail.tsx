@@ -11,6 +11,7 @@ import { formatTime } from '../schedule/DockScheduleTab';
 import { DockServicesTab } from './DockServicesTab';
 import { DockNotesTab } from './DockNotesTab';
 import { DockSummaryTab } from './DockSummaryTab';
+import { DockClientTab } from './DockClientTab';
 import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 
