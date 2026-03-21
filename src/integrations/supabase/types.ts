@@ -16611,6 +16611,50 @@ export type Database = {
           },
         ]
       }
+      retail_recommendation_events: {
+        Row: {
+          client_id: string
+          converted_at: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          recommended_at: string
+          recommended_by: string | null
+          recommended_product_name: string
+          service_name: string | null
+        }
+        Insert: {
+          client_id: string
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          recommended_at?: string
+          recommended_by?: string | null
+          recommended_product_name: string
+          service_name?: string | null
+        }
+        Update: {
+          client_id?: string
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          recommended_at?: string
+          recommended_by?: string | null
+          recommended_product_name?: string
+          service_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retail_recommendation_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       retail_sales_goals: {
         Row: {
           created_at: string
