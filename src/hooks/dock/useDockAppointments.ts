@@ -70,7 +70,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           query = query.eq('stylist_user_id', staffFilter);
         } else {
           // "All Team" — only show appointments for registered team members
-          if (teamUserIds.length === 0) return [];
+          if (teamUserIds.length === 0) return DEMO_APPOINTMENTS;
           query = query.in('stylist_user_id', teamUserIds);
         }
 
