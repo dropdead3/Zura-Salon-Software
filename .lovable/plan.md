@@ -1,19 +1,13 @@
 
 
-## Show PIN Gate First in Demo Mode
+## Fix Dock Tab Toggle Padding & Radius
 
-**Problem:** When `?demo=<orgId>` is present, `urlDemoSession` immediately populates `effectiveStaff`, bypassing the PIN entry screen.
+**File:** `src/components/dock/appointment/DockAppointmentDetail.tsx` (line 55)
 
-**Fix in `src/pages/Dock.tsx`:**
+The outer container uses `rounded-xl` (12px) with `p-1` (4px), but inner buttons use `rounded-lg` (8px). The visual gap between the inner button edge and outer container edge is uneven because the inner radius doesn't account for the padding offset.
 
-1. Stop using `urlDemoSession` to set `effectiveStaff` directly. Instead, only use it to enable the demo context (device switcher frame, demo badge).
-2. Change `effectiveStaff` to always rely on `staff` state (set only after PIN success).
-3. When PIN succeeds in demo mode, override the session with demo-specific fields (userId `dev-bypass-000`, the demo orgId) so `DockDemoProvider` still recognizes demo mode.
-4. The PIN gate already renders inside the device frame when `canAccessDemo` is true — that stays as-is.
-
-**Concrete change:** ~10 lines in `Dock.tsx`:
-- `effectiveStaff` becomes just `staff` (remove the `urlDemoSession` ternary)
-- `handlePinSuccess` in demo mode wraps the real PIN result with demo overrides (`userId: 'dev-bypass-000'`, `organizationId: demoOrgId`)
-- The `if (!effectiveStaff)` block uses `canAccessDemo` (already does) to show the device frame around the PIN gate
-- Remove the early-return `urlDemoSession` auto-boot logic
+**Fix:**
+- Outer container: `rounded-2xl p-1.5` — larger radius + more padding for breathing room
+- Inner buttons: `rounded-xl` — radius = outer radius minus padding, giving visually equal inset around corners
+- Increase button height from `h-9` to `h-10` for better proportion
 
