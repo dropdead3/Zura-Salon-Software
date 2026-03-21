@@ -1,10 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { differenceInDays, parseISO } from 'date-fns';
 
 export interface ClientProductAffinity {
   itemName: string;
   purchaseCount: number;
   lastPurchaseDate: string;
+  avgDaysBetween: number | null;
+  daysSinceLastPurchase: number | null;
+  mayNeedRestock: boolean;
 }
 
 export function useClientProductAffinity(phorestClientId: string | null | undefined) {
@@ -22,25 +26,55 @@ export function useClientProductAffinity(phorestClientId: string | null | undefi
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
-      // Group by item_name
-      const map = new Map<string, { count: number; lastDate: string }>();
+      // Group by item_name, collecting all dates
+      const map = new Map<string, { count: number; dates: string[] }>();
       for (const row of data) {
         const name = row.item_name!;
         const existing = map.get(name);
         if (existing) {
           existing.count++;
+          existing.dates.push(row.transaction_date ?? '');
         } else {
-          map.set(name, { count: 1, lastDate: row.transaction_date ?? '' });
+          map.set(name, { count: 1, dates: [row.transaction_date ?? ''] });
         }
       }
 
-      // Sort by frequency desc, take top 5
+      const now = new Date();
+
       const sorted: ClientProductAffinity[] = Array.from(map.entries())
-        .map(([itemName, { count, lastDate }]) => ({
-          itemName,
-          purchaseCount: count,
-          lastPurchaseDate: lastDate,
-        }))
+        .map(([itemName, { count, dates }]) => {
+          const validDates = dates.filter(Boolean).sort().reverse();
+          const lastDate = validDates[0] || '';
+          
+          let avgDaysBetween: number | null = null;
+          let daysSinceLastPurchase: number | null = null;
+          let mayNeedRestock = false;
+
+          if (validDates.length >= 2) {
+            // Compute average interval between purchases
+            const intervals: number[] = [];
+            for (let i = 0; i < validDates.length - 1; i++) {
+              intervals.push(differenceInDays(parseISO(validDates[i]), parseISO(validDates[i + 1])));
+            }
+            avgDaysBetween = Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length);
+            daysSinceLastPurchase = differenceInDays(now, parseISO(lastDate));
+            // Flag if last purchase exceeds 1.2× average interval
+            if (avgDaysBetween > 0 && daysSinceLastPurchase > avgDaysBetween * 1.2) {
+              mayNeedRestock = true;
+            }
+          } else if (lastDate) {
+            daysSinceLastPurchase = differenceInDays(now, parseISO(lastDate));
+          }
+
+          return {
+            itemName,
+            purchaseCount: count,
+            lastPurchaseDate: lastDate,
+            avgDaysBetween,
+            daysSinceLastPurchase,
+            mayNeedRestock,
+          };
+        })
         .sort((a, b) => b.purchaseCount - a.purchaseCount)
         .slice(0, 5);
 
