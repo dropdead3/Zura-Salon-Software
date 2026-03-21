@@ -1,17 +1,24 @@
 
 
-## Add Labels to Swipe Action Buttons
+## Restyle Swipe Action Buttons to Match Dock Theme
 
-**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+**Problem:** The emerald and blue circles look disconnected from the dark premium Dock aesthetic. They need to feel integrated with the `--platform-*` token system and violet accent language.
 
-Change each circular icon button into a vertical stack (icon + tiny label below) so the actions are self-explanatory at a glance.
+**New design direction — Glass pill buttons with subtle tints:**
 
-### Changes
+**File: `src/components/dock/schedule/DockAppointmentCard.tsx`**
 
-1. **Button layout:** Switch from plain icon circles to `flex-col` layout with icon on top and a `text-[9px] font-medium mt-0.5` label below ("Done" / "Client")
-2. **Button size:** Increase from `w-11 h-11` to `w-12 h-14` (pill shape via `rounded-2xl`) to accommodate the label
-3. **Tray width:** Increase from 140px to 152px (and terminal from 64 to 72) to give breathing room
-4. **Open offset:** Adjust from -140 to -152 (terminal -72) to match
+Replace the solid-color circles with translucent, glass-morphic pills that use the Dock's color language:
 
-Labels keep it concise: **"Done"** for complete, **"Client"** for view client.
+- **"Done" button:** `bg-emerald-500/15 border border-emerald-500/30 text-emerald-400` — subtle green tint, not a solid blob
+- **"Client" button:** `bg-violet-500/15 border border-violet-500/30 text-violet-400` — uses the Dock's violet accent instead of blue
+
+Both buttons:
+- Shape: `rounded-xl` (softer pill, not full circle) at `w-14 h-14`
+- Icon: `w-4.5 h-4.5` with matching tint color
+- Label: `text-[9px] tracking-wide uppercase font-display` (matches Dock typography rules)
+- Hover/active: `active:bg-emerald-500/25` / `active:bg-violet-500/25`
+- Drop the `shadow-lg` (glass doesn't cast hard shadows in dark UI)
+
+**Tray background:** Add a subtle gradient fade from transparent to `hsl(var(--platform-bg))/80` so the buttons don't float against raw dark space.
 
