@@ -53,7 +53,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
         <PlatformButton
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/dashboard/platform/accounts?status=past_due')}
+          onClick={() => navigate('/platform/accounts?status=past_due')}
         >
           View All
         </PlatformButton>
@@ -64,7 +64,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
           <div 
             key={org.id}
             className="px-4 py-3 flex items-center justify-between hover:bg-slate-700/20 transition-colors cursor-pointer"
-            onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
+            onClick={() => navigate(`/platform/accounts/${org.id}`)}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2 rounded-lg bg-amber-500/20 shrink-0">

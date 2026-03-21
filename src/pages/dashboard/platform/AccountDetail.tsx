@@ -108,7 +108,7 @@ export default function AccountDetail() {
           <p className="text-slate-500 mb-4">
             The organization you're looking for doesn't exist or you don't have access.
           </p>
-          <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-1.5">
+          <PlatformButton onClick={() => navigate('/platform/accounts')} className="gap-1.5">
             <ArrowLeft className="w-4 h-4" />
             Back to Accounts
           </PlatformButton>
@@ -137,7 +137,7 @@ export default function AccountDetail() {
             <PlatformBadge variant={statusColors[organization.status || 'pending']} className="capitalize">
               {organization.status}
             </PlatformBadge>
-            <PlatformButton variant="secondary" onClick={() => navigate(`/dashboard/platform/import?org=${organization.id}`)}>
+            <PlatformButton variant="secondary" onClick={() => navigate(`/platform/import?org=${organization.id}`)}>
               <Upload className="h-4 w-4 mr-2" />
               Import Data
             </PlatformButton>
@@ -491,7 +491,7 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
         <PlatformButton 
           variant="secondary" 
           size="sm"
-          onClick={() => navigate(`/dashboard/platform/accounts/${organizationId}?tab=billing`)}
+          onClick={() => navigate(`/platform/accounts/${organizationId}?tab=billing`)}
 
         >
           <CreditCard className="h-4 w-4 mr-2" />

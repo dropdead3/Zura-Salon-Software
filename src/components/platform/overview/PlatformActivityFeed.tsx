@@ -145,7 +145,7 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
   };
 
   const linkPath = log.organization_id 
-    ? `/dashboard/platform/accounts/${log.organization_id}`
+    ? `/platform/accounts/${log.organization_id}`
     : '#';
 
   return (

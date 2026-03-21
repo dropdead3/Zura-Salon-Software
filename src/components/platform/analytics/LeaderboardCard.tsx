@@ -113,7 +113,7 @@ export function LeaderboardCard({ title, icon, entries, valueLabel, emptyMessage
           {entries.map((entry) => (
             <button
               key={entry.organization.id}
-              onClick={() => navigate(`/dashboard/platform/accounts/${entry.organization.slug}`)}
+              onClick={() => navigate(`/platform/accounts/${entry.organization.slug}`)}
               className={cn(
                 'w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 text-left',
                 getRankStyle(entry.rank),

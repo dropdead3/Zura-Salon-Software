@@ -58,7 +58,7 @@ export function PlatformHeader() {
   };
 
   const handleViewProfile = () => {
-    navigate('/dashboard/platform/settings');
+    navigate('/platform/settings');
   };
   return (
     <header

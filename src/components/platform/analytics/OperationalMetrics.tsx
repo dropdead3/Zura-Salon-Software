@@ -187,7 +187,7 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
                       ? 'border-slate-700/50 hover:bg-slate-700/30' 
                       : 'border-slate-100 hover:bg-slate-50'
                   )}
-                  onClick={() => navigate(`/dashboard/platform/accounts/${org.slug}`)}
+                  onClick={() => navigate(`/platform/accounts/${org.slug}`)}
                 >
                   <td className="p-3">
                     <div>

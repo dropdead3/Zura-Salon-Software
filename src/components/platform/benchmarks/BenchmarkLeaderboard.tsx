@@ -36,7 +36,7 @@ export function BenchmarkLeaderboard({ leaderboard, className }: BenchmarkLeader
           {leaderboard.leaders.map((leader, index) => (
             <button
               key={leader.organization_id}
-              onClick={() => navigate(`/dashboard/platform/accounts/${leader.organization_id}?tab=health`)}
+              onClick={() => navigate(`/platform/accounts/${leader.organization_id}?tab=health`)}
               className={cn(
                 'w-full flex items-center justify-between p-2 rounded-lg transition-colors',
                 'hover:bg-slate-700/50',

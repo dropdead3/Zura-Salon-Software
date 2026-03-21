@@ -344,7 +344,7 @@ const App = () => (
                       <Route path="/dashboard/admin/program-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=program" replace />} />
                       <Route path="/dashboard/admin/reports" element={<Navigate to="/dashboard/admin/analytics?tab=reports" replace />} />
                       <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
-                      <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/platform/feature-flags" replace />} />
+                      <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/platform/feature-flags" replace />} />
                       
                       <Route path="/dashboard/admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSettings /></ProtectedRoute>} />
@@ -399,7 +399,7 @@ const App = () => (
                       <Route path="/dashboard/renter/tax-documents" element={<ProtectedRoute><RenterTaxDocuments /></ProtectedRoute>} />
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
-                      <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
+                      <Route path="/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
                         <Route index element={<Navigate to="overview" replace />} />
                         <Route path="overview" element={<PlatformOverview />} />
                         <Route path="accounts" element={<PlatformAccounts />} />

@@ -54,7 +54,7 @@ export function ProtectedRoute({
   }
 
   if (requirePlatformRole && !hasPlatformRoleOrHigher(requirePlatformRole)) {
-    return <Navigate to="/dashboard/platform/overview" replace />;
+    return <Navigate to="/platform/overview" replace />;
   }
 
   // Check super admin access

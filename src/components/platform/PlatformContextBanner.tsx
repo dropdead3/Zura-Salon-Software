@@ -14,7 +14,7 @@ export function PlatformContextBanner() {
   }
 
   const handleViewDetails = () => {
-    navigate(`/dashboard/platform/accounts/${selectedOrganization.id}`);
+    navigate(`/platform/accounts/${selectedOrganization.id}`);
   };
 
   return (
@@ -46,7 +46,7 @@ export function PlatformContextBanner() {
             size={tokens.button.inline}
             onClick={() => {
               clearSelection();
-              navigate('/dashboard/platform/overview');
+              navigate('/platform/overview');
             }}
             className="h-7 text-xs gap-1 hover:bg-red-500/20 hover:text-red-400"
           >

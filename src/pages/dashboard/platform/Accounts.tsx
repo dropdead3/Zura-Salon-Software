@@ -301,7 +301,7 @@ export default function PlatformAccounts() {
                     <TableRow 
                       key={org.id}
                       className="cursor-pointer border-slate-700/50 hover:bg-slate-800/50 transition-colors"
-                      onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
+                      onClick={() => navigate(`/platform/accounts/${org.id}`)}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -407,7 +407,7 @@ export default function PlatformAccounts() {
                               className="text-slate-300 focus:bg-slate-700 focus:text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/dashboard/platform/accounts/${org.id}`);
+                                navigate(`/platform/accounts/${org.id}`);
                               }}
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
@@ -427,7 +427,7 @@ export default function PlatformAccounts() {
                               className="text-slate-300 focus:bg-slate-700 focus:text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/dashboard/platform/import?org=${org.id}`);
+                                navigate(`/platform/import?org=${org.id}`);
                               }}
                             >
                               <Upload className="h-4 w-4 mr-2" />

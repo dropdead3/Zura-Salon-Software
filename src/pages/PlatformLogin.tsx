@@ -24,9 +24,9 @@ export default function PlatformLogin() {
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTarget = location.state?.from?.pathname?.startsWith('/dashboard/platform')
+  const redirectTarget = location.state?.from?.pathname?.startsWith('/platform')
     ? location.state.from.pathname
-    : '/dashboard/platform/overview';
+    : '/platform/overview';
   
   const { data: invitation, isLoading: loadingInvitation } = useInvitationByToken(invitationToken);
   const acceptInvitationMutation = useAcceptPlatformInvitation();

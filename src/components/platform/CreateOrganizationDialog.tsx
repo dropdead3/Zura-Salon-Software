@@ -117,7 +117,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
       onOpenChange(false);
       form.reset();
       if (result?.id) {
-        navigate(`/dashboard/platform/accounts/${result.id}`);
+        navigate(`/platform/accounts/${result.id}`);
       }
     } catch (error) {
       // Error is handled by the mutation

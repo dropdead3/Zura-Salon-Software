@@ -95,7 +95,7 @@ export function AccountImportHistoryTab({ organizationId }: AccountImportHistory
               ))}
             </SelectContent>
           </Select>
-          <PlatformButton size={tokens.button.card} onClick={() => navigate(`/dashboard/platform/import?org=${organizationId}`)}>
+          <PlatformButton size={tokens.button.card} onClick={() => navigate(`/platform/import?org=${organizationId}`)}>
             <Upload className="h-4 w-4 mr-2" />
             New Import
           </PlatformButton>
@@ -119,7 +119,7 @@ export function AccountImportHistoryTab({ organizationId }: AccountImportHistory
             <PlatformButton 
               variant="secondary" 
               className="mt-4"
-              onClick={() => navigate(`/dashboard/platform/import?org=${organizationId}`)}
+              onClick={() => navigate(`/platform/import?org=${organizationId}`)}
             >
               Start First Import
             </PlatformButton>

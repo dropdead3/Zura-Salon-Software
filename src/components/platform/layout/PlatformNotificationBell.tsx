@@ -179,7 +179,7 @@ export function PlatformNotificationBell() {
             Preferences
           </Link>
           <Link
-            to="/dashboard/platform/notifications"
+            to="/platform/notifications"
             onClick={() => setOpen(false)}
             className="flex items-center justify-center py-2 text-sm text-violet-400 hover:text-violet-300 hover:bg-slate-800/50 rounded transition-colors"
           >

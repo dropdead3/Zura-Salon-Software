@@ -63,7 +63,7 @@ export function LocationIssuesTable({ locations, isLoading }: LocationIssuesTabl
         <PlatformButton
           variant="ghost"
           size={tokens.button.inline}
-          onClick={() => navigate('/dashboard/platform/accounts')}
+          onClick={() => navigate('/platform/accounts')}
         >
           View All
         </PlatformButton>
@@ -77,7 +77,7 @@ export function LocationIssuesTable({ locations, isLoading }: LocationIssuesTabl
             <div 
               key={loc.id}
               className="px-4 py-3 flex items-center justify-between hover:bg-slate-700/20 transition-colors cursor-pointer"
-              onClick={() => navigate(`/dashboard/platform/accounts/${loc.organization_id}`)}
+              onClick={() => navigate(`/platform/accounts/${loc.organization_id}`)}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-amber-500/20 shrink-0">

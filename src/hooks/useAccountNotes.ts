@@ -184,7 +184,7 @@ export function useCreateAccountNote() {
           type: 'account_mention',
           title: 'Mentioned in account note',
           message: `${authorName} mentioned you on ${organizationName}`,
-          link: `/dashboard/platform/accounts/${organizationId}?tab=notes`,
+          link: `/platform/accounts/${organizationId}?tab=notes`,
           metadata: {
             note_id: note.id,
             organization_id: organizationId,

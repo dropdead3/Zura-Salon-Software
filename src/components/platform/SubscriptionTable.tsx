@@ -85,7 +85,7 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
               <TableRow 
                 key={subscription.id}
                 className="border-slate-700/50 hover:bg-slate-800/50 cursor-pointer"
-                onClick={() => navigate(`/dashboard/platform/accounts/${subscription.id}`)}
+                onClick={() => navigate(`/platform/accounts/${subscription.id}`)}
               >
                 <TableCell>
                   <div>
@@ -152,7 +152,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
               <TableRow 
                 key={invoice.id}
                 className="border-slate-700/50 hover:bg-slate-800/50 cursor-pointer"
-                onClick={() => invoice.organization && navigate(`/dashboard/platform/accounts/${invoice.organization_id}`)}
+                onClick={() => invoice.organization && navigate(`/platform/accounts/${invoice.organization_id}`)}
               >
                 <TableCell>
                   <div>
@@ -228,7 +228,7 @@ export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
             <TableRow 
               key={subscription.id}
               className="border-slate-700/50 hover:bg-slate-800/50 cursor-pointer"
-              onClick={() => navigate(`/dashboard/platform/accounts/${subscription.id}`)}
+              onClick={() => navigate(`/platform/accounts/${subscription.id}`)}
             >
               <TableCell>
                 <div>

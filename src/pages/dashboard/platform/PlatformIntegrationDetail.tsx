@@ -10,7 +10,7 @@ export default function PlatformIntegrationDetail() {
   const integration = PLATFORM_INTEGRATIONS.find(i => i.id === integrationId);
   
   if (!integration) {
-    return <Navigate to="/dashboard/platform/settings" replace />;
+    return <Navigate to="/platform/settings" replace />;
   }
 
   // Route to specific integration page
@@ -20,7 +20,7 @@ export default function PlatformIntegrationDetail() {
         return <PandaDocIntegrationPage />;
       default:
         // Coming soon integrations redirect back
-        return <Navigate to="/dashboard/platform/settings" replace />;
+        return <Navigate to="/platform/settings" replace />;
     }
   };
 

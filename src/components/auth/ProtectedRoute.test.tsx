@@ -138,8 +138,8 @@ describe('ProtectedRoute', () => {
     );
 
     renderProtectedRoute({
-      initialPath: '/dashboard/platform/settings',
-      routePath: '/dashboard/platform/settings',
+      initialPath: '/platform/settings',
+      routePath: '/platform/settings',
       requiredPermission: undefined,
     });
 

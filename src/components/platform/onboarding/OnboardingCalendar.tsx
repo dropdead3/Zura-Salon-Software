@@ -321,7 +321,7 @@ export function OnboardingCalendar({ organizations, billingData }: OnboardingCal
                     return (
                       <button
                         key={event.id}
-                        onClick={() => navigate(`/dashboard/platform/accounts/${event.organizationId}`)}
+                        onClick={() => navigate(`/platform/accounts/${event.organizationId}`)}
                         className="w-full flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors text-left group"
                       >
                         <div className={cn('p-2 rounded-lg shrink-0', config.bgColor)}>

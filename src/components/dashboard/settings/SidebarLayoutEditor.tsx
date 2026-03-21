@@ -148,12 +148,12 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
   
   // Platform
-  '/dashboard/platform/overview': { label: 'Platform Overview', icon: Terminal },
-  '/dashboard/platform/accounts': { label: 'Accounts', icon: Building2 },
-  '/dashboard/platform/import': { label: 'Migrations', icon: Upload },
-  '/dashboard/platform/revenue': { label: 'Revenue', icon: DollarSign },
-  '/dashboard/platform/permissions': { label: 'Permissions', icon: Shield },
-  '/dashboard/platform/settings': { label: 'Platform Settings', icon: Settings },
+  '/platform/overview': { label: 'Platform Overview', icon: Terminal },
+  '/platform/accounts': { label: 'Accounts', icon: Building2 },
+  '/platform/import': { label: 'Migrations', icon: Upload },
+  '/platform/revenue': { label: 'Revenue', icon: DollarSign },
+  '/platform/permissions': { label: 'Permissions', icon: Shield },
+  '/platform/settings': { label: 'Platform Settings', icon: Settings },
   
   // Legacy routes (kept for backward compatibility with saved layouts)
   '/dashboard/my-clients': { label: 'My Clients', icon: Users },

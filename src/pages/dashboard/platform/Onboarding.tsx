@@ -157,7 +157,7 @@ function OrganizationCard({ org }: { org: OnboardingOrganization }) {
           <PlatformButton
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
+            onClick={() => navigate(`/platform/accounts/${org.id}`)}
           >
             View
             <ChevronRight className="h-4 w-4 ml-1" />
@@ -191,7 +191,7 @@ function TimelineItem({ org }: { org: OnboardingOrganization }) {
   
   return (
     <button
-      onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
+      onClick={() => navigate(`/platform/accounts/${org.id}`)}
       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800/50 transition-colors text-left group"
     >
       <div className={cn(
@@ -304,7 +304,7 @@ export default function PlatformOnboarding() {
         title="Onboarding" 
         description="Track accounts through their go-live journey"
         actions={
-          <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
+          <PlatformButton onClick={() => navigate('/platform/accounts')}>
             <Building2 className="h-4 w-4 mr-2" />
             All Accounts
           </PlatformButton>
@@ -443,7 +443,7 @@ export default function PlatformOnboarding() {
                 <Rocket className="h-12 w-12 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-300 mb-2">No accounts onboarding</h3>
                 <p className="text-sm text-slate-500 mb-6">All accounts have completed their go-live journey</p>
-                <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
+                <PlatformButton onClick={() => navigate('/platform/accounts')}>
                   View All Accounts
                 </PlatformButton>
               </div>
