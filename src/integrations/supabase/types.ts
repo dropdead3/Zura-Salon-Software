@@ -23572,6 +23572,7 @@ export type Database = {
         Returns: {
           display_name: string
           location_id: string
+          location_ids: string[]
           organization_id: string
           photo_url: string
           user_id: string
