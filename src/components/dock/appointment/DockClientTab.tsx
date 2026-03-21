@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   User, FlaskConical, Clock, FileText, CalendarDays, Loader2, Star,
   AlertTriangle, ShoppingBag, Camera, AlertCircle, Pencil, Plus, Check, X,
-  Heart, History,
+  Heart, History, Copy, Sparkles,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
@@ -20,13 +20,16 @@ import { useClientMemory } from '@/hooks/useClientMemory';
 import { useClientProductAffinity } from '@/hooks/useClientProductAffinity';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
 import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { useCloneFormula } from '@/hooks/backroom/useCloneFormula';
 import { calculateCLV, assignCLVTier } from '@/lib/clv-calculator';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
+import { toast } from 'sonner';
 
 interface DockClientTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
+  activeBowlId?: string | null;
 }
 
 function getInitials(name: string | null): string {
@@ -45,7 +48,7 @@ function detectAllergyFlags(medicalAlerts: string | null, notes: string | null):
   return null;
 }
 
-export function DockClientTab({ appointment, staff }: DockClientTabProps) {
+export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTabProps) {
   const queryClient = useQueryClient();
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
@@ -108,6 +111,47 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
 
   // Favorite products (with repurchase analysis)
   const { data: affinities } = useClientProductAffinity(phorestClientId);
+
+  // Clone formula hook
+  const cloneFormula = useCloneFormula();
+
+  // Cross-sell product recommendations
+  const { data: crossSellProducts } = useQuery({
+    queryKey: ['dock-cross-sell', staff.organizationId, appointment.service_name, phorestClientId],
+    queryFn: async () => {
+      if (!appointment.service_name) return [];
+      // Get top 3 retail products bought by clients with same service, excluding this client's frequent buys
+      const { data } = await supabase
+        .from('phorest_transaction_items' as any)
+        .select('item_name, phorest_client_id')
+        .eq('item_type', 'product')
+        .eq('organization_id', staff.organizationId)
+        .limit(500) as { data: { item_name: string | null; phorest_client_id: string | null }[] | null };
+
+      if (!data || data.length === 0) return [];
+
+      // Count products excluding current client
+      const countMap = new Map<string, number>();
+      const clientProducts = new Set<string>();
+      for (const item of data) {
+        if (item.phorest_client_id === phorestClientId) {
+          clientProducts.add(item.item_name || '');
+        } else if (item.item_name) {
+          countMap.set(item.item_name, (countMap.get(item.item_name) || 0) + 1);
+        }
+      }
+
+      // Remove products client already buys
+      for (const p of clientProducts) countMap.delete(p);
+
+      return [...countMap.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name, count]) => ({ name, buyerCount: count }));
+    },
+    enabled: !!staff.organizationId && !!appointment.service_name,
+    staleTime: 10 * 60 * 1000,
+  });
 
   // Transformation photos (last 4)
   const { data: photos } = useQuery({
@@ -200,8 +244,7 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
 
   const displayName = appointment.client_name || client?.name || 'Client';
   const recentVisits = visits.slice(0, 8);
-  // DockAppointment doesn't carry stylist_user_id, so we skip the "different stylist" check for now
-  const currentStylistDiffers = false;
+  const currentStylistDiffers = !!preferredStylistId && !!appointment.stylist_user_id && appointment.stylist_user_id !== preferredStylistId;
 
   return (
     <div className="px-5 py-4 space-y-5">
@@ -407,9 +450,36 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
                     <span className="text-xs text-[hsl(var(--platform-foreground))]">
                       {f.service_name || 'Formula'}
                     </span>
-                    <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
-                      {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                        {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
+                      </span>
+                      {activeBowlId && f.formula_data?.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cloneFormula.mutate({ bowlId: activeBowlId, formulaLines: f.formula_data });
+                          }}
+                          disabled={cloneFormula.isPending}
+                          className="p-1 rounded-lg hover:bg-violet-500/15 transition-colors"
+                          title="Clone into active bowl"
+                        >
+                          <Copy className="w-3 h-3 text-violet-400" />
+                        </button>
+                      )}
+                      {!activeBowlId && f.formula_data?.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toast.info('Start a mixing session first to clone formulas');
+                          }}
+                          className="p-1 rounded-lg opacity-40 cursor-not-allowed"
+                          title="No active bowl"
+                        >
+                          <Copy className="w-3 h-3 text-[hsl(var(--platform-foreground-muted))]" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {lines.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
@@ -483,7 +553,31 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
         </div>
       )}
 
-      {/* ─── Transformation Photos ─── */}
+      {/* ─── Suggested Retail (Cross-Sell) ─── */}
+      {crossSellProducts && crossSellProducts.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+              Suggested Retail
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {crossSellProducts.map((p) => (
+              <div
+                key={p.name}
+                className="flex items-center justify-between rounded-xl bg-violet-500/5 border border-violet-500/15 px-3 py-2.5"
+              >
+                <span className="text-xs text-[hsl(var(--platform-foreground))]">{p.name}</span>
+                <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                  {p.buyerCount} similar clients
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {photos && photos.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">

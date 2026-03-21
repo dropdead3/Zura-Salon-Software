@@ -15,6 +15,7 @@ export interface DockAppointment {
   source: 'phorest' | 'local';
   client_name: string | null;
   stylist_name: string | null;
+  stylist_user_id?: string | null;
   assistant_names?: string[];
   service_name: string | null;
   appointment_date: string;
@@ -122,6 +123,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           source: 'phorest' as const,
           client_name: a.client_name,
           stylist_name: a.stylist_user_id ? (stylistMap[a.stylist_user_id] || null) : null,
+          stylist_user_id: a.stylist_user_id || null,
           assistant_names: assistantMap[a.id] || [],
           service_name: a.service_name,
           appointment_date: a.appointment_date,
@@ -159,6 +161,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                   source: 'phorest' as const,
                   client_name: a.client_name,
                   stylist_name: a.stylist_user_id ? (stylistMap[a.stylist_user_id] || null) : null,
+                  stylist_user_id: a.stylist_user_id || null,
                   assistant_names: assistantMap[a.id] || [],
                   service_name: a.service_name,
                   appointment_date: a.appointment_date,
@@ -183,7 +186,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       const [phorestResult, localResult] = await Promise.all([
         supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes, stylist_user_id')
           .eq('stylist_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
@@ -206,6 +209,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         source: 'phorest' as const,
         client_name: a.client_name,
         stylist_name: null,
+        stylist_user_id: a.stylist_user_id || null,
         service_name: a.service_name,
         appointment_date: a.appointment_date,
         start_time: a.start_time,

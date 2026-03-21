@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
@@ -14,6 +15,8 @@ import { DockSummaryTab } from './DockSummaryTab';
 import { DockClientTab } from './DockClientTab';
 import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
+import { useDockMixSessions } from '@/hooks/dock/useDockMixSessions';
+import { supabase } from '@/integrations/supabase/client';
 
 type DetailTab = 'services' | 'notes' | 'summary' | 'client';
 
@@ -34,6 +37,27 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
   const [tab, setTab] = useState<DetailTab>('services');
   const [editServicesOpen, setEditServicesOpen] = useState(false);
   const updateServicesMutation = useUpdateAppointmentServices();
+  const { data: mixSessions } = useDockMixSessions(appointment.id);
+
+  // Find active bowl ID from any open session
+  const activeSessionId = mixSessions?.find(s => s.status === 'active')?.id;
+  const { data: activeBowl } = useQuery({
+    queryKey: ['dock-active-bowl', activeSessionId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mix_bowls')
+        .select('id')
+        .eq('mix_session_id', activeSessionId!)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data?.id ?? null;
+    },
+    enabled: !!activeSessionId,
+    staleTime: 15_000,
+  });
+  const activeBowlId = activeBowl ?? null;
 
   const currentServices = appointment.service_name
     ? appointment.service_name.split(',').map(s => s.trim()).filter(Boolean)
@@ -98,7 +122,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         {tab === 'services' && <DockServicesTab appointment={appointment} staff={staff} />}
         {tab === 'notes' && <DockNotesTab appointment={appointment} />}
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
-        {tab === 'client' && <DockClientTab appointment={appointment} staff={staff} />}
+        {tab === 'client' && <DockClientTab appointment={appointment} staff={staff} activeBowlId={activeBowlId} />}
       </div>
 
       <DockEditServicesSheet
