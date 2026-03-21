@@ -42,7 +42,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       // Org-specific demo — fetch real appointments for the selected location
       if (isDemoMode && usesRealData && organizationId) {
         // If no location selected yet, wait for auto-select
-        if (!locationId) return [];
+        if (!locationId) return DEMO_APPOINTMENTS;
 
         // Fetch registered team member IDs for this location
         const { data: teamProfiles } = await supabase
@@ -70,7 +70,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           query = query.eq('stylist_user_id', staffFilter);
         } else {
           // "All Team" — only show appointments for registered team members
-          if (teamUserIds.length === 0) return [];
+          if (teamUserIds.length === 0) return DEMO_APPOINTMENTS;
           query = query.in('stylist_user_id', teamUserIds);
         }
 

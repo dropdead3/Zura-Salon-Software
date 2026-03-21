@@ -60,7 +60,11 @@ export default function Dock() {
   const [demoLocationId, setDemoLocationId] = useState('');
   const [staffFilter, setStaffFilter] = useState('all');
 
-  const effectiveStaff = staff;
+  const effectiveStaff = staff
+    ? (demoOrgId && canAccessDemo && demoLocationId)
+      ? { ...staff, locationId: demoLocationId }
+      : staff
+    : null;
 
   const handlePinSuccess = useCallback((session: DockStaffSession) => {
     // In demo mode, override with demo identifiers so DockDemoProvider recognizes it
