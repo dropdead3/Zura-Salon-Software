@@ -1,124 +1,52 @@
 
 
-## Full URL Hierarchy Restructure
+## Fix Remaining Template Literal Corruptions
 
-### Target Structure
+### Root Cause
 
-```text
-/                              → Platform landing
-/login                         → Unified login
-/platform/*                    → Zura platform admin (was /dashboard/platform/*)
-/org/:orgSlug/*                → Public org pages (unchanged)
-/org/:orgSlug/dashboard/*      → Org dashboard (was /dashboard/*)
-/org/:orgSlug/dashboard/admin/* → Org admin pages (was /dashboard/admin/*)
-/dock                          → Standalone (unchanged)
-/kiosk/:locationId             → Standalone (unchanged)
-```
+The previous state-machine repair script over-corrected in two ways:
 
-### Scale
+1. **Inserted spurious `}` before nested backticks** — 142 occurrences across 12 files. Pattern: `${expr ? }\`nested\` : ''}` should be `${expr ? \`nested\` : ''}`. The fix removed the closing `}` of the `${}` expression and placed it before the nested backtick.
 
-- **~100 files** with hardcoded `/dashboard` paths (1900+ references)
-- **1 routing file** (App.tsx) with 150+ route definitions
-- **6 nav config files** (dashboardNav.ts, platformNav.ts, route-utils.ts, etc.)
-- **2 layout components** (DashboardLayout, PlatformLayout)
+2. **A few individual corruption cases** — missing closing backticks or extra `}` characters.
 
-### Strategy: Centralized Path Builder + Systematic Migration
+### Fix Strategy
 
-Rather than find-replacing 1900 strings, we create a **single path utility** that every component uses. This also future-proofs org switching (user navigates between orgs, URL updates automatically).
+Run a single targeted find-and-replace operation that removes the errant `}` before nested backticks in ternary expressions. The regex pattern is simple and safe:
 
----
+- **Find**: `? }\`` (question mark, space, closing brace, backtick)
+- **Replace**: `? \`` (question mark, space, backtick)
 
-### Phase 1 — Foundation (4 files)
+This covers 142 of the matches. Then fix 2-3 individual cases manually:
 
-**New: `src/lib/org-path.ts`** — Centralized path builder
+### Individual Fixes
 
-```typescript
-// Build org-scoped dashboard paths
-export function orgDashboardPath(orgSlug: string, path: string = '') {
-  return `/org/${orgSlug}/dashboard${path.startsWith('/') ? path : `/${path}`}`;
-}
+| File | Line | Issue | Fix |
+|------|------|-------|-----|
+| `BirthdayExportButton.tsx` | 89 | Missing closing backtick — `` `Generated on ${...}` `` runs into `, 14, 28)` | Close the template literal: `` `Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')}` `` then `, 14, 28)` |
+| `PendingMeetingRequests.tsx` | 133 | Double `}}` at end of template literal | Remove extra `}`: `` `Schedule by ${formatDate(parseISO(request.expires_at), 'MMM d')}` `` |
+| `ClientDetailSheet.tsx` | ~945 | Check for similar ternary corruption | Verify and fix if needed |
 
-// Build platform paths  
-export function platformPath(path: string = '') {
-  return `/platform${path.startsWith('/') ? path : `/${path}`}`;
-}
-```
+### Execution
 
-**New: `src/hooks/useOrgDashboardPath.ts`** — React hook version
+1. Python script to do the bulk `? }\`` → `? \`` replacement across all 12 files
+2. Manual fixes for the 2-3 individual cases above
+3. Verify with `npx vite build`
 
-Returns a `dashPath(subpath)` function that auto-injects the current org slug from either:
-- URL param `:orgSlug` (if already in org-scoped route)
-- `OrganizationContext.effectiveOrganization.slug` (fallback)
+### Files affected (~15 total)
 
-This is the **single replacement** for every hardcoded `"/dashboard/..."` in the codebase.
-
-**Update: `src/lib/route-utils.ts`** — New zone detection
-
-```typescript
-getRouteZone('/platform/...') → 'platform'
-getRouteZone('/org/:slug/dashboard/...') → 'org-dashboard'  
-getRouteZone('/org/:slug/...') → 'public'
-```
-
-**Update: `src/config/platformNav.ts`** — Change all hrefs from `/dashboard/platform/*` to `/platform/*`
-
----
-
-### Phase 2 — Routing (1 file)
-
-**Update: `src/App.tsx`** — Restructure all route definitions
-
-- Wrap all org dashboard routes inside `<Route path="/org/:orgSlug/dashboard">` with a new `OrgDashboardRoute` wrapper that resolves org from URL slug
-- Move platform routes from `/dashboard/platform/*` to `/platform/*`
-- Add redirect routes: `/dashboard/*` → `/org/:resolvedSlug/dashboard/*` (for bookmarks, muscle memory)
-- Add redirect: `/dashboard/platform/*` → `/platform/*`
-
-**New: `src/components/OrgDashboardRoute.tsx`** — Wrapper that reads `:orgSlug` from URL, validates it, and sets org context (similar to existing `OrgPublicRoute`)
-
----
-
-### Phase 3 — Systematic Component Migration (~95 files)
-
-Every file with a hardcoded `/dashboard` link or navigate call gets updated:
-
-- `Link to="/dashboard/admin/analytics"` → `Link to={dashPath('/admin/analytics')}`
-- `navigate('/dashboard/schedule')` → `navigate(dashPath('/schedule'))`
-- `backTo="/dashboard/admin/team-hub"` → `backTo={dashPath('/admin/team-hub')}`
-
-Platform paths:
-- `"/dashboard/platform/accounts"` → `"/platform/accounts"` (simple string replace)
-
-The `dashPath` function comes from `useOrgDashboardPath()` hook, called once at the top of each component.
-
-**Nav configs**: `dashboardNav.ts` hrefs become functions that accept orgSlug, or the sidebar component builds paths dynamically.
-
----
-
-### Phase 4 — Backward Compatibility Redirects
-
-A `<LegacyRedirects />` component in App.tsx that catches:
-- `/dashboard/*` → resolves user's org slug from auth context → redirects to `/org/:slug/dashboard/*`
-- `/dashboard/platform/*` → `/platform/*`
-
-This ensures existing bookmarks, shared links, and muscle memory still work.
-
----
-
-### Key Technical Decisions
-
-1. **Org slug source**: URL param is primary (enables org switching via URL). Falls back to auth context for redirects only.
-2. **The `dashPath()` hook is the migration vehicle** — every component gets a one-line addition and all its paths become org-aware.
-3. **Platform paths are simple string changes** — no hook needed, just `/dashboard/platform` → `/platform`.
-4. **No database changes** — orgs already have `slug` field.
-
-### File Count Estimate
-
-| Phase | New | Modified | Total |
-|-------|-----|----------|-------|
-| 1 — Foundation | 2 | 2 | 4 |
-| 2 — Routing | 1 | 1 | 2 |
-| 3 — Components | 0 | ~95 | ~95 |
-| 4 — Redirects | 0 | 1 | 1 |
-
-This will need to be implemented across multiple messages given the file count. Phase 1+2 first, then Phase 3 in batches of ~15-20 files, then Phase 4.
+- `src/components/dashboard/EmailTemplateEditor.tsx` (heaviest — ~20 occurrences)
+- `src/components/dashboard/backroom-settings/inventory/StockTab.tsx`
+- `src/components/dashboard/promotions/VoucherQRCode.tsx`
+- `src/components/dashboard/operations/WalkInDialog.tsx`
+- `src/components/dashboard/schedule/shifts/ShiftScheduleView.tsx`
+- `src/components/dashboard/schedule/ClosedDayWarningDialog.tsx`
+- `src/components/dashboard/sales/ImplementPlanDialog.tsx`
+- `src/components/dashboard/backroom/InstantFormulaCard.tsx`
+- `src/components/platform/backroom/CSVImportDialog.tsx`
+- `src/contexts/SmartActionContext.tsx`
+- `src/components/dashboard/BirthdayExportButton.tsx`
+- `src/components/coaching/PendingMeetingRequests.tsx`
+- `src/components/dashboard/ClientDetailSheet.tsx`
+- `src/components/dashboard/appointments-hub/AppointmentsList.tsx`
 
