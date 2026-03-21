@@ -40,10 +40,10 @@ export function DockUnlockTransition({ unlocked, gate, children }: DockUnlockTra
             key="pulse"
             className="absolute inset-0 z-50 pointer-events-none"
             style={{
-              background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.25) 0%, rgba(59,130,246,0.08) 40%, transparent 70%)',
+              background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.10) 0%, rgba(59,130,246,0.03) 40%, transparent 70%)',
             }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 0.7 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
           />
