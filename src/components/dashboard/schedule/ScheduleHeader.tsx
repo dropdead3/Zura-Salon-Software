@@ -76,7 +76,6 @@ interface ScheduleHeaderProps {
 }
 
 export function ScheduleHeader({
-  const { dashPath } = useOrgDashboardPath();
   currentDate,
   setCurrentDate,
   view,
@@ -102,6 +101,7 @@ export function ScheduleHeader({
   showShiftsView = false,
   onToggleShiftsView,
 }: ScheduleHeaderProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);

@@ -31,7 +31,6 @@ export function SidebarSyncStatusWidget({
   isCollapsed = false,
   onNavClick,
 }: { 
-  const { dashPath } = useOrgDashboardPath();
   isCollapsed?: boolean;
   onNavClick?: () => void;
 }) {

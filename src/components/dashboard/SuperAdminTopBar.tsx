@@ -111,7 +111,6 @@ function NavHistoryArrows() {
 
 // ─── SuperAdminTopBar ───────────────────────────────────────
 export function SuperAdminTopBar({
-  const { dashPath } = useOrgDashboardPath();
   sidebarCollapsed,
   hideFooter,
   headerHovered,
@@ -127,6 +126,7 @@ export function SuperAdminTopBar({
   isViewingAsUser,
   viewAsUser,
 }: SuperAdminTopBarProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { user, signOut } = useAuth();
   const { data: employeeProfile } = useEmployeeProfile();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();

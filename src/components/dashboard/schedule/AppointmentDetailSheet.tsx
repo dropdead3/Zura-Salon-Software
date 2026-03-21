@@ -278,7 +278,6 @@ interface AppointmentDetailSheetProps {
 }
 
 export function AppointmentDetailSheet({
-  const { dashPath } = useOrgDashboardPath();
   appointment,
   open,
   onOpenChange,
@@ -290,6 +289,7 @@ export function AppointmentDetailSheet({
   onOpenClientProfile,
   initialTab,
 }: AppointmentDetailSheetProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { user, hasPermission, roles } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { formatCurrency } = useFormatCurrency();

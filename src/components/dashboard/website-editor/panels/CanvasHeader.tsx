@@ -54,7 +54,6 @@ interface CanvasHeaderProps {
 }
 
 export function CanvasHeader({
-  const { dashPath } = useOrgDashboardPath();
   siteName = 'Website',
   isDirty,
   isSaving,
@@ -71,6 +70,7 @@ export function CanvasHeader({
   onSave,
   onPreview,
 }: CanvasHeaderProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
 
   // Auto-save "Saved" indicator
