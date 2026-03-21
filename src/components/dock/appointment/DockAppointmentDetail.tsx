@@ -98,13 +98,12 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
       </div>
 
-      <EditServicesDialog
+      <DockEditServicesSheet
         open={editServicesOpen}
-        onOpenChange={setEditServicesOpen}
+        onClose={() => setEditServicesOpen(false)}
         currentServices={currentServices}
         locationId={appointment.location_id}
         isSaving={updateServicesMutation.isPending}
-        variant="dock"
         onSave={(newServices: ServiceEntry[]) => {
           updateServicesMutation.mutate({
             appointmentId: appointment.id,
