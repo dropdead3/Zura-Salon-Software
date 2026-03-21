@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil } from 'lucide-react';
+import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
@@ -11,10 +11,11 @@ import { formatTime } from '../schedule/DockScheduleTab';
 import { DockServicesTab } from './DockServicesTab';
 import { DockNotesTab } from './DockNotesTab';
 import { DockSummaryTab } from './DockSummaryTab';
+import { DockClientTab } from './DockClientTab';
 import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 
-type DetailTab = 'services' | 'notes' | 'summary';
+type DetailTab = 'services' | 'notes' | 'summary' | 'client';
 
 interface DockAppointmentDetailProps {
   appointment: DockAppointment;
@@ -26,6 +27,7 @@ const TABS: { id: DetailTab; label: string; icon: typeof FlaskConical }[] = [
   { id: 'services', label: 'Services', icon: FlaskConical },
   { id: 'notes', label: 'Notes', icon: StickyNote },
   { id: 'summary', label: 'Summary', icon: Receipt },
+  { id: 'client', label: 'Client', icon: User },
 ];
 
 export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppointmentDetailProps) {
@@ -96,6 +98,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         {tab === 'services' && <DockServicesTab appointment={appointment} staff={staff} />}
         {tab === 'notes' && <DockNotesTab appointment={appointment} />}
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
+        {tab === 'client' && <DockClientTab appointment={appointment} staff={staff} />}
       </div>
 
       <DockEditServicesSheet
