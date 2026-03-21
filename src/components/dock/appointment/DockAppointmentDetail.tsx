@@ -15,6 +15,8 @@ import { DockSummaryTab } from './DockSummaryTab';
 import { DockClientTab } from './DockClientTab';
 import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
+import { useDockMixSessions } from '@/hooks/dock/useDockMixSessions';
+import { supabase } from '@/integrations/supabase/client';
 
 type DetailTab = 'services' | 'notes' | 'summary' | 'client';
 
