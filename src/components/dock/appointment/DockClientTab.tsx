@@ -1,16 +1,18 @@
 /**
  * DockClientTab — Client intelligence panel for the Dock appointment detail.
- * Surfaces identity, last formula, visit history, notes, and processing time.
+ * Surfaces identity, last formula, visit history, notes, processing time,
+ * allergy flags, favorite products, photo timeline, and no-show rate.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { User, FlaskConical, Clock, FileText, CalendarDays, Loader2, Star } from 'lucide-react';
+import { User, FlaskConical, Clock, FileText, CalendarDays, Loader2, Star, AlertTriangle, ShoppingBag, Camera, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { useClientMemory } from '@/hooks/useClientMemory';
-import { calculateCLV, assignCLVTier, CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
+import { useClientProductAffinity } from '@/hooks/useClientProductAffinity';
+import { calculateCLV, assignCLVTier } from '@/lib/clv-calculator';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
 
@@ -24,18 +26,29 @@ function getInitials(name: string | null): string {
   return name.split(' ').map(w => w[0]).filter(Boolean).join('').toUpperCase().slice(0, 2);
 }
 
+const ALLERGY_KEYWORDS = ['allergy', 'allergic', 'sensitive', 'sensitivity', 'reaction', 'irritation', 'dermatitis', 'rash'];
+
+function detectAllergyFlags(medicalAlerts: string | null, notes: string | null): string | null {
+  if (medicalAlerts && medicalAlerts.trim()) return medicalAlerts.trim();
+  if (!notes) return null;
+  const lower = notes.toLowerCase();
+  const hasKeyword = ALLERGY_KEYWORDS.some(kw => lower.includes(kw));
+  if (hasKeyword) return notes;
+  return null;
+}
+
 export function DockClientTab({ appointment, staff }: DockClientTabProps) {
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
 
-  // Client profile
+  // Client profile (now includes medical_alerts)
   const { data: client, isLoading: loadingClient } = useQuery({
     queryKey: ['dock-client-profile', phorestClientId, clientId],
     queryFn: async () => {
       if (phorestClientId) {
         const { data } = await supabase
           .from('phorest_clients')
-          .select('id, name, email, phone, notes, created_at')
+          .select('id, name, email, phone, notes, medical_alerts, created_at')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();
         return data;
@@ -43,7 +56,7 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
       if (clientId) {
         const { data } = await supabase
           .from('clients')
-          .select('id, first_name, last_name, email, phone, notes, created_at')
+          .select('id, first_name, last_name, email, phone, notes, medical_alerts, created_at')
           .eq('id', clientId)
           .maybeSingle();
         if (data) {
@@ -59,7 +72,7 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
   const { data: visits = [], isLoading: visitsLoading } = useClientVisitHistory(phorestClientId);
 
   // Formula memory
-  const { data: formulaMemory, isLoading: formulaLoading } = useInstantFormulaMemory(
+  const { data: formulaMemory } = useInstantFormulaMemory(
     phorestClientId || clientId,
     appointment.service_name,
   );
@@ -70,6 +83,27 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
     appointment.service_name,
     staff.organizationId,
   );
+
+  // Favorite products
+  const { data: affinities } = useClientProductAffinity(phorestClientId);
+
+  // Transformation photos (last 4)
+  const { data: photos } = useQuery({
+    queryKey: ['dock-client-photos', phorestClientId, clientId],
+    queryFn: async () => {
+      const cid = phorestClientId || clientId;
+      if (!cid) return [];
+      const { data } = await supabase
+        .from('client_transformation_photos')
+        .select('id, before_url, after_url, service_name, taken_at')
+        .eq('client_id', cid)
+        .order('taken_at', { ascending: false })
+        .limit(4);
+      return data || [];
+    },
+    enabled: !!(phorestClientId || clientId),
+    staleTime: 5 * 60 * 1000,
+  });
 
   // CLV calculation
   const completedVisits = visits.filter(v => v.status === 'completed');
@@ -84,6 +118,16 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
   const clvTier = clvResult.isReliable
     ? assignCLVTier(clvResult.lifetimeValue, completedVisits.map(v => v.total_price || 0))
     : null;
+
+  // No-show rate
+  const noShowCount = visits.filter(v => v.status === 'cancelled' || v.status === 'no_show').length;
+  const noShowRate = visits.length > 0 ? Math.round((noShowCount / visits.length) * 100) : 0;
+
+  // Allergy detection
+  const allergyText = detectAllergyFlags(
+    (client as any)?.medical_alerts ?? null,
+    client?.notes ?? null,
+  );
 
   const isLoading = loadingClient || visitsLoading;
 
@@ -109,6 +153,19 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
 
   return (
     <div className="px-5 py-4 space-y-5">
+      {/* ─── Allergy / Sensitivity Alert ─── */}
+      {allergyText && (
+        <div className="flex items-start gap-2.5 px-3 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-display text-[10px] tracking-wider uppercase text-rose-400">
+              Allergy / Sensitivity
+            </span>
+            <p className="text-xs text-rose-300/90 mt-0.5 leading-relaxed">{allergyText}</p>
+          </div>
+        </div>
+      )}
+
       {/* ─── Identity Card ─── */}
       <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4">
         <div className="flex items-center gap-3">
@@ -157,6 +214,12 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
           {memory?.isFirstVisit && (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-display tracking-wide uppercase text-emerald-400">
               First Visit
+            </span>
+          )}
+          {noShowRate > 10 && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-display tracking-wide uppercase text-rose-400">
+              <AlertCircle className="w-3 h-3" />
+              {noShowRate}% No-Show
             </span>
           )}
         </div>
@@ -215,6 +278,68 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
           <span className="text-xs text-[hsl(var(--platform-foreground))]">
             Avg. {memory.lastProcessingTimeMinutes} min processing
           </span>
+        </div>
+      )}
+
+      {/* ─── Favorite Products ─── */}
+      {affinities && affinities.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <ShoppingBag className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+              Frequently Purchased
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {affinities.map((a) => (
+              <span
+                key={a.itemName}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] text-xs text-[hsl(var(--platform-foreground))]"
+              >
+                {a.itemName}
+                <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">×{a.purchaseCount}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Transformation Photos ─── */}
+      {photos && photos.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Camera className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+              Transformations
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            {photos.map((photo) => (
+              <div key={photo.id} className="flex-shrink-0 space-y-1">
+                <div className="flex gap-1">
+                  {photo.before_url && (
+                    <img
+                      src={photo.before_url}
+                      alt="Before"
+                      className="w-16 h-16 rounded-lg object-cover border border-[hsl(var(--platform-border)/0.2)]"
+                    />
+                  )}
+                  {photo.after_url && (
+                    <img
+                      src={photo.after_url}
+                      alt="After"
+                      className="w-16 h-16 rounded-lg object-cover border border-[hsl(var(--platform-border)/0.2)]"
+                    />
+                  )}
+                </div>
+                <div className="text-center">
+                  <span className="text-[9px] text-[hsl(var(--platform-foreground-muted))]">
+                    {photo.taken_at ? format(parseISO(photo.taken_at), 'MMM d') : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
