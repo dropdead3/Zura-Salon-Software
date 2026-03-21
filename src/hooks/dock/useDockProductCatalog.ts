@@ -25,7 +25,7 @@ export function useDockBrands() {
   return useQuery({
     queryKey: ['dock-brands', isDemoMode, usesRealData],
     queryFn: async () => {
-      if (isDemoMode) return DEMO_BRANDS;
+      if (isDemoMode && !usesRealData) return DEMO_BRANDS;
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('brand')
