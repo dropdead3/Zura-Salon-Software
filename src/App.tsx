@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
-import { CustomCursor } from "./components/ui/CustomCursor";
+
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { HideNumbersProvider } from "./contexts/HideNumbersContext";
@@ -376,7 +376,7 @@ const App = () => (
                         <TooltipProvider delayDuration={0}>
                           <Toaster />
                           <Sonner />
-                          <CustomCursor />
+                          
                           <ScrollToTop />
                           {import.meta.env.DEV && <DevContextBridge />}
                           <CommandMenu />

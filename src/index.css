@@ -13,49 +13,6 @@ html, body, #root {
    All colors MUST be HSL.
 */
 
-/* Hide default cursor on desktop - custom cursor component handles this */
-/* Only apply on public-facing pages, not dashboard */
-@media (pointer: fine) {
-  body:not(.dashboard-cursor) * {
-    cursor: none !important;
-  }
-  
-  /* Dashboard: use default arrow cursor for everything */
-  body.dashboard-cursor,
-  body.dashboard-cursor *,
-  body.dashboard-cursor a,
-  body.dashboard-cursor button,
-  body.dashboard-cursor [role="button"],
-  body.dashboard-cursor input,
-  body.dashboard-cursor textarea,
-  body.dashboard-cursor select {
-    cursor: default !important;
-  }
-  
-  /* Text inputs should allow text selection cursor */
-  body.dashboard-cursor input[type="text"],
-  body.dashboard-cursor input[type="email"],
-  body.dashboard-cursor input[type="password"],
-  body.dashboard-cursor input[type="search"],
-  body.dashboard-cursor input[type="url"],
-  body.dashboard-cursor input[type="number"],
-  body.dashboard-cursor textarea,
-  body.dashboard-cursor [contenteditable="true"] {
-    cursor: text !important;
-  }
-  
-  /* Grab cursor for drag handles */
-  body.dashboard-cursor .cursor-grab,
-  body.dashboard-cursor [class*="cursor-grab"] {
-    cursor: grab !important;
-  }
-  
-  body.dashboard-cursor .cursor-grab:active,
-  body.dashboard-cursor [class*="cursor-grab"]:active,
-  body.dashboard-cursor .active\:cursor-grabbing:active {
-    cursor: grabbing !important;
-  }
-}
 
 /* Custom Font Faces */
 @font-face {
