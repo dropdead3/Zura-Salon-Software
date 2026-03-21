@@ -131,7 +131,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       </div>
 
       {/* Numpad */}
-      <div className="grid grid-cols-3 gap-3 w-80">
+      <div className="grid grid-cols-3 gap-2 w-80">
         {KEYS.map((key, i) => {
           if (key === '') return <div key={i} />;
           if (key === 'delete') {
