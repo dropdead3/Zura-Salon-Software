@@ -11,7 +11,7 @@ import { formatTime } from '../schedule/DockScheduleTab';
 import { DockServicesTab } from './DockServicesTab';
 import { DockNotesTab } from './DockNotesTab';
 import { DockSummaryTab } from './DockSummaryTab';
-import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 
 type DetailTab = 'services' | 'notes' | 'summary';
@@ -98,13 +98,12 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
       </div>
 
-      <EditServicesDialog
+      <DockEditServicesSheet
         open={editServicesOpen}
-        onOpenChange={setEditServicesOpen}
+        onClose={() => setEditServicesOpen(false)}
         currentServices={currentServices}
         locationId={appointment.location_id}
         isSaving={updateServicesMutation.isPending}
-        variant="dock"
         onSave={(newServices: ServiceEntry[]) => {
           updateServicesMutation.mutate({
             appointmentId: appointment.id,

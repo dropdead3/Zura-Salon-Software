@@ -1,0 +1,31 @@
+/**
+ * Dock UI Tokens — Shared design constants for all Dock bottom sheets and overlays.
+ * Every Dock sheet/overlay MUST use these tokens for consistency.
+ */
+
+export const DOCK_SHEET = {
+  backdrop: 'absolute inset-0 bg-black/40 backdrop-blur-sm',
+  panel: 'absolute inset-x-0 bottom-0 flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl',
+  dragHandle: 'mx-auto mt-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none',
+  maxHeight: '92%',
+  spring: { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 },
+  dismissThreshold: { offset: 120, velocity: 500 },
+} as const;
+
+export const DOCK_TEXT = {
+  title: 'font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]',
+  subtitle: 'text-sm text-[hsl(var(--platform-foreground-muted))]',
+  category: 'text-xs font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]',
+  body: 'text-sm text-[hsl(var(--platform-foreground))]',
+  muted: 'text-xs text-[hsl(var(--platform-foreground-muted))]',
+} as const;
+
+export const DOCK_INPUT = {
+  search: 'w-full h-10 pl-10 pr-3 text-sm rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:ring-1 focus:ring-violet-500/50',
+} as const;
+
+export const DOCK_BUTTON = {
+  primary: 'bg-violet-500 hover:bg-violet-600 text-white rounded-full',
+  close: 'p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors',
+  iconColor: 'text-[hsl(var(--platform-foreground-muted))]',
+} as const;
