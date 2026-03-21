@@ -8,22 +8,12 @@ import { LogOut, User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockMyStatsPanel } from './DockMyStatsPanel';
 import { DockTeamCompliancePanel } from './DockTeamCompliancePanel';
-import {
-  AlertDialog,
-  PlatformAlertDialogContent,
-  PlatformAlertDialogTitle,
-  PlatformAlertDialogDescription,
-  PlatformAlertDialogCancel,
-  AlertDialogAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTrigger,
-} from '@/components/platform/ui/PlatformDialog';
 
 interface DockSettingsTabProps {
   staff: DockStaffSession;
@@ -34,6 +24,7 @@ type SettingsView = 'main' | 'my-stats' | 'team-compliance';
 
 export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   const [view, setView] = useState<SettingsView>('main');
+  const [showMoveConfirm, setShowMoveConfirm] = useState(false);
   const { data: locations } = useLocations(staff.organizationId);
   const { isDemoMode } = useDockDemo();
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
@@ -78,7 +69,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   }
 
   return (
-    <div className="flex flex-col h-full px-6 py-8">
+    <div className="relative flex flex-col h-full px-6 py-8">
       {/* Staff profile card */}
       <div className="flex items-center gap-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="w-12 h-12 rounded-full bg-violet-600/20 flex items-center justify-center">
@@ -157,30 +148,12 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
           Reassign this device to a different salon location. The station will log out and rebind on next PIN login.
         </p>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-[hsl(var(--platform-bg-hover))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors text-sm">
-              Move to Another Location
-            </button>
-          </AlertDialogTrigger>
-          <PlatformAlertDialogContent>
-            <AlertDialogHeader>
-              <PlatformAlertDialogTitle>Move Zura Dock?</PlatformAlertDialogTitle>
-              <PlatformAlertDialogDescription>
-                This will unbind this device from <strong className="text-[hsl(var(--platform-foreground))]">{locationName}</strong>. On next PIN login, it will bind to the new staff member's location.
-              </PlatformAlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <PlatformAlertDialogCancel>Cancel</PlatformAlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleMoveStation}
-                className="bg-violet-600 hover:bg-violet-700 text-white"
-              >
-                Move Station
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </PlatformAlertDialogContent>
-        </AlertDialog>
+        <button
+          onClick={() => setShowMoveConfirm(true)}
+          className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-[hsl(var(--platform-bg-hover))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors text-sm"
+        >
+          Move to Another Location
+        </button>
       </div>
 
       {/* Spacer */}
@@ -194,6 +167,54 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
         <LogOut className="w-4 h-4" />
         <span className="text-sm font-medium">Lock Station</span>
       </button>
+
+      {/* Move Dock confirmation overlay — absolute, not portal */}
+      <AnimatePresence>
+        {showMoveConfirm && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowMoveConfirm(false)}
+          >
+            <motion.div
+              className="w-full max-w-sm rounded-2xl border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-card))] p-6"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] mb-2">
+                Move Zura Dock?
+              </h2>
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] leading-relaxed mb-6">
+                This will unbind this device from{' '}
+                <strong className="text-[hsl(var(--platform-foreground))]">{locationName}</strong>.
+                On next PIN login, it will bind to the new staff member's location.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowMoveConfirm(false)}
+                  className="h-10 px-5 rounded-full border border-[hsl(var(--platform-border)/0.4)] text-sm text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMoveConfirm(false);
+                    handleMoveStation();
+                  }}
+                  className="h-10 px-5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors"
+                >
+                  Move Station
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
