@@ -744,7 +744,11 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
             <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
               Suggested Retail
             </span>
-          </div>
+            {conversionRate !== null && conversionRate !== undefined && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-display tracking-wide uppercase text-emerald-400">
+                {conversionRate}% conversion
+              </span>
+            )}
           <div className="space-y-1.5">
             {crossSellProducts.map((p) => (
               <div
