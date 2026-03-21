@@ -24,6 +24,7 @@ type SettingsView = 'main' | 'my-stats' | 'team-compliance';
 
 export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   const [view, setView] = useState<SettingsView>('main');
+  const [showMoveConfirm, setShowMoveConfirm] = useState(false);
   const { data: locations } = useLocations(staff.organizationId);
   const { isDemoMode } = useDockDemo();
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
