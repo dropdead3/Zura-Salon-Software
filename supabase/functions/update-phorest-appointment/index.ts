@@ -104,25 +104,10 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Build an authenticated Supabase client.
-    // In Lovable Cloud the service-role key may not be a JWT, so we fall back
-    // to forwarding the caller's auth token with the anon key.
-    const authHeader = req.headers.get("Authorization");
-    let supabase;
-
-    if (supabaseServiceKey.startsWith("eyJ")) {
-      supabase = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-    } else {
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || supabaseServiceKey;
-      supabase = createClient(supabaseUrl, anonKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-        global: {
-          headers: authHeader ? { Authorization: authHeader } : {},
-        },
-      });
-    }
+    // Use service-role client for admin-level writes (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const updateData: UpdateRequest = await req.json();
     const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason, services } = updateData;
