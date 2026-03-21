@@ -1,63 +1,63 @@
 
 
-## Enrich Dock Appointment Detail with Client Intelligence
+## Enhance DockClientTab with 4 Intelligence Sections
 
-### Current State
-When tapping into an appointment card, the detail screen shows 3 tabs: **Services** (mixing bowls), **Notes** (appointment notes only), and **Summary** (bowl stats). No client history, past formulas, visit count, or preferences are surfaced. A basic `DockClientQuickView` bottom sheet exists separately but only shows name, email, notes, and 5 recent visits.
+### Overview
 
-### Proposed Enhancement — Add a "Client" Tab
+Add allergy/sensitivity flags, favorite products, photo timeline, and no-show rate to the existing `DockClientTab`. Since there's no dedicated allergy column on client tables, we'll parse the `notes` field for allergy/sensitivity keywords and add a new `medical_alerts` text column to `clients` and `phorest_clients` for structured storage.
 
-Add a **4th tab** ("Client") to `DockAppointmentDetail` that serves as the stylist's memory panel — everything they need to know about this client before and during the appointment.
+### Changes
 
-#### Client Tab Content (top to bottom)
+#### 1. Database Migration — Add `medical_alerts` Column
 
-1. **Client Identity Card**
-   - Avatar circle with initials, name, phone, email
-   - Visit count badge ("12 visits") and first-visit date
-   - CLV tier pill (Platinum/Gold/Silver/Bronze) if available
+Add a nullable `medical_alerts` text column to both `phorest_clients` and `clients` tables. This gives a dedicated field for allergy/sensitivity data rather than relying on free-text notes parsing.
 
-2. **Last Formula Section**
-   - Service name + date of last formula
-   - Product lines with weights (e.g., "Koleston 7/0 — 30g, 6% Developer — 60g")
-   - Ratio display (e.g., "1:2")
-   - Source label ("Client's Last Visit")
-   - Uses existing `useInstantFormulaMemory` hook
+```sql
+ALTER TABLE phorest_clients ADD COLUMN medical_alerts text;
+ALTER TABLE clients ADD COLUMN medical_alerts text;
+```
 
-3. **Visit History Timeline** (last 5-8 visits)
-   - Date, service name, stylist name, status
-   - Compact card rows, same styling as `DockClientQuickView`
-   - Uses existing `useClientVisitHistory` hook
+#### 2. Modify `DockClientTab.tsx`
 
-4. **Client Notes**
-   - Notes from client profile record (not appointment notes — those are on the Notes tab)
-   - Read-only display
+Add 4 new sections between the Identity Card and Last Formula sections:
 
-5. **Processing Time Hint**
-   - Average processing time from past completed visits
-   - "Avg. 45 min processing" — helps with scheduling awareness
+**a. Allergy/Sensitivity Flags (top priority — warning banner)**
+- Check `client.medical_alerts` field first; fallback: scan `client.notes` for keywords (`allergy`, `allergic`, `sensitive`, `sensitivity`, `reaction`, `irritation`)
+- Render as a prominent amber/rose-tinted banner with `AlertTriangle` icon at the very top of the tab (before identity card) so it's impossible to miss
+- Styled: `bg-rose-500/10 border-rose-500/30 text-rose-400`
 
-### Files to Create/Modify
+**b. Favorite Products (after processing time)**
+- Use existing `useClientProductAffinity(phorestClientId)` hook
+- Render top 5 products as compact pill badges with purchase count
+- Section header: "Frequently Purchased" with `ShoppingBag` icon
+- Each pill: `bg-[hsl(var(--platform-bg-card))]` with purchase count badge
 
-| Action | File | Change |
-|--------|------|--------|
-| Create | `src/components/dock/appointment/DockClientTab.tsx` | New tab component with all 5 sections above |
-| Modify | `src/components/dock/appointment/DockAppointmentDetail.tsx` | Add 4th "Client" tab with `User` icon to the tab bar |
+**c. Photo Timeline (after favorite products)**
+- Query `client_transformation_photos` directly (lightweight query — just last 4 entries with `before_url`, `after_url`, `service_name`, `taken_at`)
+- Render as a horizontal scrollable row of thumbnail pairs (before/after)
+- Section header: "Transformations" with `Camera` icon
+- Each thumbnail: `w-16 h-16 rounded-lg object-cover`
+- If no photos: section hidden entirely
 
-### Data Sources (all existing — no new DB queries needed)
+**d. No-Show Rate (badge in Identity Card badges row)**
+- Computed from existing `visits` data already fetched: count visits with `status === 'cancelled'` or `status === 'no_show'` divided by total visits
+- Only show if rate > 10% (to avoid noise)
+- Render as a rose-tinted pill badge: "15% No-Show" with `AlertCircle` icon
+- Placed in the badges row alongside visit count and CLV tier
 
-- **Client profile**: Query `phorest_clients` or `clients` by `phorest_client_id` / `client_id` from the appointment (same pattern as `DockClientQuickView`)
-- **Last formula**: `useInstantFormulaMemory(clientId, serviceName)` — already resolves the 3-priority hierarchy
-- **Visit history**: `useClientVisitHistory(phorestClientId)` — already fetches all past appointments with stylist names
-- **Processing time**: Computed from visit history start/end times (same as `useClientMemory`)
+#### 3. Data Sources
 
-### Design
+| Feature | Source | New Query? |
+|---------|--------|-----------|
+| Allergy flags | `client.medical_alerts` + `client.notes` keyword scan | No — already fetched |
+| Favorite products | `useClientProductAffinity` hook | Yes — new hook call |
+| Photo timeline | `client_transformation_photos` table | Yes — lightweight query (last 4) |
+| No-show rate | Computed from `visits` array | No — already fetched |
 
-All sections use platform dark tokens (`--platform-bg-card`, `--platform-border`, `--platform-foreground`, etc.), `font-display` for headers, `rounded-xl` cards. Formula lines displayed in a compact table with product name and weight columns. The tab icon is `User` from lucide-react.
+### Files
 
-### Suggestions for Future Enhancement
-
-- **Allergy/sensitivity flags** — surface any noted allergies or sensitivities prominently at the top with a warning tint
-- **Favorite products** — show retail products the client has purchased before (from checkout data)
-- **Photo timeline** — link to before/after transformation photos from `client_transformation_photos`
-- **No-show rate** — subtle indicator if client has a history of cancellations/no-shows
+| Action | File |
+|--------|------|
+| Migration | Add `medical_alerts` column to `phorest_clients` and `clients` |
+| Modify | `src/components/dock/appointment/DockClientTab.tsx` — add all 4 sections |
 
