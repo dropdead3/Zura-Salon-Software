@@ -19,6 +19,12 @@ export function useDockCompleteAppointment() {
 
   return useMutation({
     mutationFn: async ({ appointmentId, organizationId, source }: CompleteAppointmentParams) => {
+      // Demo guard — don't hit edge function or DB for faux appointments
+      if (appointmentId.startsWith('demo-')) {
+        toast.success('Demo: Appointment completed');
+        return { success: true, demo: true };
+      }
+
       // 1. Update appointment status via edge function
       const { data, error } = await supabase.functions.invoke('update-phorest-appointment', {
         body: { appointment_id: appointmentId, status: 'COMPLETED' },

@@ -21,11 +21,11 @@ export interface DockProduct {
 
 /** Fetch distinct brands with product counts */
 export function useDockBrands() {
-  const { isDemoMode } = useDockDemo();
+  const { isDemoMode, usesRealData } = useDockDemo();
   return useQuery({
-    queryKey: ['dock-brands', isDemoMode],
+    queryKey: ['dock-brands', isDemoMode, usesRealData],
     queryFn: async () => {
-      if (isDemoMode) return DEMO_BRANDS;
+      if (isDemoMode && !usesRealData) return DEMO_BRANDS;
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('brand')
@@ -49,11 +49,11 @@ export function useDockBrands() {
 
 /** Fetch products for a specific brand, grouped by category */
 export function useDockBrandProducts(brand: string | null) {
-  const { isDemoMode } = useDockDemo();
+  const { isDemoMode, usesRealData } = useDockDemo();
   return useQuery({
-    queryKey: ['dock-brand-products', brand, isDemoMode],
+    queryKey: ['dock-brand-products', brand, isDemoMode, usesRealData],
     queryFn: async (): Promise<DockProduct[]> => {
-      if (isDemoMode) return getDemoProductsByBrand(brand!);
+      if (isDemoMode && !usesRealData) return getDemoProductsByBrand(brand!);
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('id, brand, name, category, product_line, swatch_color, wholesale_price, default_unit')
@@ -72,12 +72,12 @@ export function useDockBrandProducts(brand: string | null) {
 
 /** Search products across all brands */
 export function useDockProductSearch(query: string) {
-  const { isDemoMode } = useDockDemo();
+  const { isDemoMode, usesRealData } = useDockDemo();
   const trimmed = query.trim();
   return useQuery({
-    queryKey: ['dock-product-search', trimmed, isDemoMode],
+    queryKey: ['dock-product-search', trimmed, isDemoMode, usesRealData],
     queryFn: async (): Promise<DockProduct[]> => {
-      if (isDemoMode) return searchDemoProducts(trimmed);
+      if (isDemoMode && !usesRealData) return searchDemoProducts(trimmed);
       const { data, error } = await supabase
         .from('supply_library_products')
         .select('id, brand, name, category, product_line, swatch_color, wholesale_price, default_unit')
