@@ -48,7 +48,7 @@ function detectAllergyFlags(medicalAlerts: string | null, notes: string | null):
   return null;
 }
 
-export function DockClientTab({ appointment, staff }: DockClientTabProps) {
+export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTabProps) {
   const queryClient = useQueryClient();
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
