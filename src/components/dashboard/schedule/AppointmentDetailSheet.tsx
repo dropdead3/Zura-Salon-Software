@@ -89,6 +89,9 @@ import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
+import { Pencil } from 'lucide-react';
 
 
 // ─── Scheduled Coverage sub-component ───────────────────────────
