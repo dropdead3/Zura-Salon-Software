@@ -1,6 +1,6 @@
 /**
  * DockAppointmentCard — Appointment card with iOS Mail–style swipe-left
- * to reveal "Complete" and "View Client" action buttons.
+ * to reveal a "Finish Appt" action button.
  */
 
 import { useRef, useState } from 'react';
@@ -32,7 +32,6 @@ const SNAP_THRESHOLD = 50;
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
-  const canDrag = !isTerminal;
   const trayWidth = isTerminal ? 0 : 88;
   const openOffset = isTerminal ? 0 : OPEN_OFFSET;
 
@@ -76,44 +75,28 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
     <div className="relative overflow-hidden rounded-xl">
       {/* Action tray behind the card */}
       <motion.div
-        className="absolute inset-y-0 right-0 flex items-center gap-2 px-2.5 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
+        className="absolute inset-y-0 right-0 flex items-center px-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
         {!isTerminal && (
-          <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                close();
-                onComplete?.(appointment);
-              }}
-              className="flex items-center justify-center w-11 h-11 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-95 transition-all"
-              aria-label="Complete appointment"
-            >
-              <CheckCircle2 className="w-[18px] h-[18px]" />
-            </button>
-            <span className="text-[8px] tracking-wide uppercase font-display text-emerald-400">Finish Appt</span>
-          </div>
-        )}
-        <div className="flex flex-col items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               close();
-              onViewClient?.(appointment);
+              onComplete?.(appointment);
             }}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-400 active:bg-violet-500/25 active:scale-95 transition-all"
-            aria-label="View client"
+            className="flex flex-col items-center justify-center gap-1 w-[80px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
+            aria-label="Complete appointment"
           >
-            <UserCircle className="w-[18px] h-[18px]" />
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="text-[9px] tracking-wide uppercase font-display text-emerald-400 leading-tight">Finish Appt</span>
           </button>
-          <span className="text-[8px] tracking-wide uppercase font-display text-violet-400">Client Info</span>
-        </div>
+        )}
       </motion.div>
 
       {/* Swipeable card content */}
       <motion.div
-        drag="x"
+        drag={isTerminal ? false : 'x'}
         dragConstraints={{ left: openOffset, right: 0 }}
         dragElastic={0.1}
         dragMomentum={false}
