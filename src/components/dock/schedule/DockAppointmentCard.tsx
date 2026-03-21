@@ -32,7 +32,7 @@ const SNAP_THRESHOLD = 50;
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
-  const trayWidth = isTerminal ? 0 : 88;
+  const trayWidth = isTerminal ? 0 : 96;
   const openOffset = isTerminal ? 0 : OPEN_OFFSET;
 
   const x = useMotionValue(0);
