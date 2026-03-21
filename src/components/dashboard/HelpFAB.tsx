@@ -9,16 +9,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AIHelpTab } from './help-fab/AIHelpTab';
 import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function HelpFAB() {
-  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('ai-help');
   const [bookingOpen, setBookingOpen] = useState(false);
   const location = useLocation();
   
-  const isSchedulePage = location.pathname === dashPath('/schedule');
+  const isSchedulePage = location.pathname === '/dashboard/schedule';
 
   // Listen for booking popover open/close to hide FAB
   useEffect(() => {
@@ -36,7 +34,7 @@ export function HelpFAB() {
   }, [isSchedulePage]);
   
   // Hide on Team Chat page since it has its own AI panel
-  if (location.pathname === dashPath('/team-chat')) {
+  if (location.pathname === '/dashboard/team-chat') {
     return null;
   }
 

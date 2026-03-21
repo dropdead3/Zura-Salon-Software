@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ReplenishmentTimelineCardProps {
   products: Product[];
@@ -34,7 +33,6 @@ interface ForecastRow {
 const MAX_BAR_DAYS = 60;
 
 export function ReplenishmentTimelineCard({ products, velocityMap, filterContext, onCreatePO }: ReplenishmentTimelineCardProps) {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const rows = useMemo(() => {
     if (!products || !velocityMap) return [];
@@ -85,7 +83,7 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                   variant="outline"
                   size={tokens.button.inline}
                   className="gap-1.5 text-xs"
-                  onClick={() => navigate(dashPath('/admin/settings?category=retail-products&tab=inventory'))}
+                  onClick={() => navigate('/dashboard/admin/settings?category=retail-products&tab=inventory')}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" /> Reorder
                 </Button>

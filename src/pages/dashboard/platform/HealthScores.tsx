@@ -261,7 +261,7 @@ export default function HealthScores() {
                   <TableRow 
                     key={score.id}
                     className="border-slate-700/50 cursor-pointer hover:bg-slate-800/50"
-                    onClick={() => navigate(`/dashboard/platform/accounts/${score.organization_id}?tab=health`)}
+                    onClick={() => navigate(`/platform/accounts/${score.organization_id}?tab=health`)}
                   >
                     <TableCell className="font-medium text-white">
                       {score.organization?.name || 'Unknown'}

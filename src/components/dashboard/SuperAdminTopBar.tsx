@@ -39,7 +39,6 @@ import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
 import type React from 'react';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -125,7 +124,6 @@ export function SuperAdminTopBar({
   isViewingAsUser,
   viewAsUser,
 }: SuperAdminTopBarProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { user, signOut } = useAuth();
   const { data: employeeProfile } = useEmployeeProfile();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
@@ -267,7 +265,7 @@ export function SuperAdminTopBar({
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to={dashPath('/profile')} className="flex items-center gap-2 cursor-pointer">
+                <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
                   <UserCircle className="w-4 h-4" />
                   View/Edit Profile
                 </Link>

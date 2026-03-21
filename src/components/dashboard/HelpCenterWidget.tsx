@@ -5,10 +5,8 @@ import { useFeaturedKBArticles, useKBCategoriesWithCounts } from '@/hooks/useKno
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function HelpCenterWidget() {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: featuredArticles } = useFeaturedKBArticles();
   const { data: categories } = useKBCategoriesWithCounts();
@@ -33,7 +31,7 @@ export function HelpCenterWidget() {
                 key={article.id}
                 onClick={() =>
                   navigate(
-                    dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`)
+                    `/dashboard/help/${article.category?.slug || 'uncategorized'}/${article.slug}`
                   )
                 }
                 className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors group"
@@ -66,7 +64,7 @@ export function HelpCenterWidget() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to={dashPath('/help')}
+          to="/dashboard/help"
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           Browse Help Center <ChevronRight className="w-3 h-3" />

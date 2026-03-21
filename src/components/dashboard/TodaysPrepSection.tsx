@@ -11,7 +11,6 @@ import { useTodayPrep } from '@/hooks/useTodayPrep';
 import { CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const NEEDS_CONFIRM = new Set(['booked', 'pending']);
 
@@ -73,7 +72,6 @@ function hasNotes(appt: { clientDirectoryNotes: any[]; previousAppointmentNotes:
 }
 
 export function TodaysPrepSection() {
-  const { dashPath } = useOrgDashboardPath();
   const { data: appointments, isLoading } = useTodayPrep();
   const navigate = useNavigate();
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -134,7 +132,7 @@ export function TodaysPrepSection() {
                 return (
                   <div
                     key={appt.id}
-                    onClick={() => navigate(dashPath('/schedule'), { state: { focusDate: today, focusAppointmentId: appt.id } })}
+                    onClick={() => navigate('/dashboard/schedule', { state: { focusDate: today, focusAppointmentId: appt.id } })}
                     className={cn(
                       'flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group',
                       tag === 'now' && 'border-l-2 border-primary bg-primary/5',
@@ -238,7 +236,7 @@ export function TodaysPrepSection() {
               className={tokens.button.cardFooter}
               asChild
             >
-              <Link to={dashPath('/today-prep')}>
+              <Link to="/dashboard/today-prep">
                 View Full Prep <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>

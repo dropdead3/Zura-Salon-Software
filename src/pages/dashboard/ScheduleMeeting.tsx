@@ -25,7 +25,6 @@ import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingReque
 import { TeamMeetingOverview } from '@/components/coaching/TeamMeetingOverview';
 import { tokens } from '@/lib/design-tokens';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -98,7 +97,6 @@ interface CommitmentWithMember {
 }
 
 export default function ScheduleMeeting() {
-  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const roles = useEffectiveRoles();
   const { formatDate } = useFormatDate();
@@ -227,14 +225,14 @@ export default function ScheduleMeeting() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3 sm:shrink-0">
-              <Link to={dashPath('/schedule-meeting/new')}>
+              <Link to="/dashboard/schedule-meeting/new">
                 <Button className="gap-2">
                   <CalendarPlus className="w-4 h-4" />
                   Schedule Meeting
                 </Button>
               </Link>
               {isCoach && <ManagerMeetingRequest />}
-              <Link to={dashPath('/schedule-meeting/inbox')}>
+              <Link to="/dashboard/schedule-meeting/inbox">
                 <Button variant="outline" className="gap-2">
                   <MessageSquareMore className="w-4 h-4" />
                   Meeting Inbox
@@ -323,7 +321,7 @@ export default function ScheduleMeeting() {
                    description="Schedule a 1:1 to get started"
                  />
               )}
-              <Link to={dashPath('/schedule-meeting/my-meetings')}>
+              <Link to="/dashboard/schedule-meeting/my-meetings">
                 <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                   View All Meetings <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -374,7 +372,7 @@ export default function ScheduleMeeting() {
                        description="All meeting requests have been addressed"
                      />
                   )}
-                  <Link to={dashPath('/schedule-meeting/requests')}>
+                  <Link to="/dashboard/schedule-meeting/requests">
                     <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Requests <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
@@ -433,7 +431,7 @@ export default function ScheduleMeeting() {
                        description="Commitments from coaching sessions will appear here"
                      />
                   )}
-                  <Link to={dashPath('/schedule-meeting/commitments')}>
+                  <Link to="/dashboard/schedule-meeting/commitments">
                     <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Commitments <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>

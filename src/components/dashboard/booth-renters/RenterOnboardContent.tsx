@@ -31,7 +31,6 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type RentalModel = 'monthly' | 'weekly' | 'daily';
 
@@ -78,7 +77,6 @@ interface RenterOnboardContentProps {
 }
 
 export function RenterOnboardContent({ organizationId }: RenterOnboardContentProps) {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { effectiveOrganization: organization } = useOrganizationContext();
   const { formatCurrency, currency } = useFormatCurrency();
@@ -834,7 +832,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={() => navigate(dashPath('/admin/booth-renters?tab=renters'))} className="flex-1">
+                <Button onClick={() => navigate('/dashboard/admin/booth-renters?tab=renters')} className="flex-1">
                   Back to Renter Hub
                 </Button>
                 <Button variant="outline" onClick={resetForm}>

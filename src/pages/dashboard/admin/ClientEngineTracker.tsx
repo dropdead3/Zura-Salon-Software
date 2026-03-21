@@ -71,7 +71,6 @@ import { differenceInDays, formatDistanceToNow } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Database } from '@/integrations/supabase/types';
 import { CoachNotesSection } from '@/components/dashboard/CoachNotesSection';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
@@ -129,7 +128,6 @@ const STATUS_CONFIG: Record<ProgramStatus, { label: string; color: string; icon:
 };
 
 export default function ClientEngineTracker() {
-  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -352,7 +350,7 @@ export default function ClientEngineTracker() {
         {/* Header */}
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to={dashPath('/admin/management')}>
+            <Link to="/dashboard/admin/management">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>

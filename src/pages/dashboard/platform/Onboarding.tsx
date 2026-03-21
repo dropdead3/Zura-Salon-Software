@@ -157,7 +157,7 @@ function OrganizationCard({ org }: { org: OnboardingOrganization }) {
           <PlatformButton
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
+            onClick={() => navigate(`/platform/accounts/${org.id}`)}
           >
             View
             <ChevronRight className="h-4 w-4 ml-1" />
@@ -191,7 +191,7 @@ function TimelineItem({ org }: { org: OnboardingOrganization }) {
   
   return (
     <button
-      onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
+      onClick={() => navigate(`/platform/accounts/${org.id}`)}
       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800/50 transition-colors text-left group"
     >
       <div className={cn(

@@ -24,7 +24,6 @@ import { Link } from 'react-router-dom';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -159,7 +158,6 @@ function ScoreBreakdownTooltip({ breakdown, children }: { breakdown: ScoreBreakd
 }
 
 export function LeaderboardContent() {
-  const { dashPath } = useOrgDashboardPath();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -414,7 +412,7 @@ export function LeaderboardContent() {
                   <History className="w-4 h-4 mr-2" />
                   History
                 </Button>
-                <Link to={dashPath('/admin/phorest')}>
+                <Link to="/dashboard/admin/phorest">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -468,7 +466,7 @@ export function LeaderboardContent() {
           ) : (
             <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
               <p className="text-xs text-muted-foreground font-sans text-center">
-                📊 Showing sample data • <Link to={dashPath('/admin/phorest')} className="underline hover:text-foreground">Connect {providerLabel}</Link> to see live rankings
+                📊 Showing sample data • <Link to="/dashboard/admin/phorest" className="underline hover:text-foreground">Connect {providerLabel}</Link> to see live rankings
               </p>
             </div>
           )}

@@ -35,14 +35,12 @@ import { useTeamPinStatus, useAdminSetUserPin, usePinChangelog } from '@/hooks/u
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface TeamPinManagementTabProps {
   canManage: boolean;
 }
 
 export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { data: teamMembers = [], isLoading } = useTeamPinStatus();
@@ -150,7 +148,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                   <strong>Your PIN:</strong> As the Account Owner, you can manage your own PIN in your personal settings.
                 </p>
                 <Link 
-                  to={dashPath('/admin/settings?category=system')}
+                  to="/dashboard/admin/settings?category=system"
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
                 >
                   Go to PIN Settings

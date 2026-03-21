@@ -13,7 +13,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useClientEngagement, type ClientEngagementData } from '@/hooks/useClientEngagement';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type EngagementView = 'visits' | 'retention' | 'rebooking';
 
@@ -112,7 +111,6 @@ function getChartData(data: ClientEngagementData, view: EngagementView): ChartIt
 }
 
 export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterContext, activeView, onViewChange }: ClientEngagementCardProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { data, isLoading } = useClientEngagement(dateFrom, dateTo, locationId);
   const [internalView, setInternalView] = useState<EngagementView>('visits');
   const view = activeView ?? internalView;
@@ -277,7 +275,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
                 <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <p className="text-xs text-muted-foreground">
                   Staff names unavailable —{' '}
-                  <Link to={dashPath('/admin/settings/staff-mapping')} className="text-primary hover:underline">
+                  <Link to="/dashboard/admin/settings/staff-mapping" className="text-primary hover:underline">
                     connect staff profiles in Settings
                   </Link>
                 </p>
@@ -492,7 +490,7 @@ function DrillHeader({ name, userId }: { name: string; userId: string | null }) 
       <h4 className={cn(tokens.heading.subsection, 'text-foreground')}>{name}</h4>
       {userId && (
         <Link
-          to={dashPath(`/admin/team/${userId}`)}
+          to={`/dashboard/admin/team/${userId}`}
           className="text-xs text-primary hover:underline flex items-center gap-1"
         >
           View Profile <ChevronRight className="w-3 h-3" />

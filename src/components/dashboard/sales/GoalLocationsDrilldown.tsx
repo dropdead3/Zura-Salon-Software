@@ -11,7 +11,6 @@ import { differenceInDays } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const MAX_VISIBLE = 5;
 
@@ -78,7 +77,6 @@ function LocationMiniRow({ locationId, locationName, target, period, closedReaso
 }
 
 export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldownProps) {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const { locationScaffold } = useGoalTrackerData(period);
@@ -133,7 +131,7 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
               </button>
             )}
             <button
-              onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=goals'))}
+              onClick={() => navigate('/dashboard/admin/analytics?tab=sales&subtab=goals')}
               className="flex items-center gap-1 text-xs text-primary hover:underline pt-2 w-full"
             >
               View full breakdown

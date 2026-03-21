@@ -23,7 +23,6 @@ import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 import type { Database } from '@/integrations/supabase/types';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -63,7 +62,6 @@ async function getUserRedirectPath(userId: string, fallback: string): Promise<st
 }
 
 export default function UnifiedLogin() {
-  const { dashPath } = useOrgDashboardPath();
   const [searchParams] = useSearchParams();
   const platformInvitationToken = searchParams.get('invitation');
 
@@ -97,7 +95,7 @@ export default function UnifiedLogin() {
   const { data: platformInvitation, isLoading: loadingPlatformInvitation } = useInvitationByToken(platformInvitationToken);
   const acceptPlatformInvitation = useAcceptPlatformInvitation();
 
-  const from = location.state?.from?.pathname || dashPath('/');
+  const from = location.state?.from?.pathname || '/dashboard';
 
   // Set signup mode if platform invitation
   useEffect(() => {
@@ -227,7 +225,7 @@ export default function UnifiedLogin() {
                 ? `Your account has been created with the ${roleOptions.find(r => r.value === staffInvitation.role)?.label} role.`
                 : `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
             });
-            navigate(dashPath('/'), { replace: true });
+            navigate('/dashboard', { replace: true });
           }
         }
       }

@@ -1,5 +1,4 @@
 import { useOrganizationFeature } from '@/hooks/useOrganizationFeature';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 /**
  * Enforcement Gate Hook
@@ -29,33 +28,32 @@ export const ENFORCEMENT_GATES: Record<string, EnforcementGateConfig> = {
     label: 'Commission Structure',
     description: 'Before you scale, we\'ll define your commission structure. This ensures accurate payroll and transparent earnings for your team.',
     ctaLabel: 'Define Commission Model',
-    ctaPath: dashPath('/admin/settings'),
+    ctaPath: '/dashboard/admin/settings',
   },
   gate_baselines: {
     key: 'gate_baselines',
     label: 'Operational Baselines',
     description: 'Before forecasting begins, we\'ll establish your operational baselines — utilization targets, margin floors, and labor cost thresholds.',
     ctaLabel: 'Set Baselines',
-    ctaPath: dashPath('/admin/settings'),
+    ctaPath: '/dashboard/admin/settings',
   },
   gate_kpi_architecture: {
     key: 'gate_kpi_architecture',
     label: 'KPI Architecture',
     description: 'Before monitoring begins, we\'ll architect your KPIs — the metrics that matter, the thresholds that trigger alerts, and the cadence of review.',
     ctaLabel: 'Build KPI Architecture',
-    ctaPath: dashPath('/admin/kpi-builder'),
+    ctaPath: '/dashboard/admin/kpi-builder',
   },
   gate_margin_baselines: {
     key: 'gate_margin_baselines',
     label: 'Margin Baselines',
     description: 'Before expansion analytics activate, we\'ll encode your margin baselines — the financial guardrails that protect growth.',
     ctaLabel: 'Set Margin Baselines',
-    ctaPath: dashPath('/admin/settings'),
+    ctaPath: '/dashboard/admin/settings',
   },
 };
 
 export function useEnforcementGate(gateKey: string) {
-  const { dashPath } = useOrgDashboardPath();
   const { isEnabled, isLoading, error } = useOrganizationFeature(gateKey);
   const config = ENFORCEMENT_GATES[gateKey];
 

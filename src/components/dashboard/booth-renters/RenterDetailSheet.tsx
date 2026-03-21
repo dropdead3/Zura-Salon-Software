@@ -336,7 +336,7 @@ export function RenterDetailSheet({
                           <p className="font-medium">{contract.contract_name}</p>
                           <p className="text-sm text-muted-foreground">
                             {formatDate(new Date(contract.start_date), 'MMM d, yyyy')}
-                            {contract.end_date && ` - ${formatDate(new Date(contract.end_date), 'MMM d, yyyy}`}
+                            {contract.end_date && ` - ${formatDate(new Date(contract.end_date), 'MMM d, yyyy')}`}
                           </p>
                         </div>
                         <Badge variant="outline" className={statusColors[contract.status] || statusColors.pending}>

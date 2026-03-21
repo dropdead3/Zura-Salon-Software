@@ -108,7 +108,7 @@ export function RecoveryPlanActions({
       });
       if (error) throw error;
       setReminderSet(true);
-      toast.success(`Reminder set for ${formatDate(date, 'MMM d, yyyy')});
+      toast.success(`Reminder set for ${formatDate(date, 'MMM d, yyyy')}`);
     } catch (err) {
       console.error('Reminder error:', err);
       toast.error('Failed to set reminder');

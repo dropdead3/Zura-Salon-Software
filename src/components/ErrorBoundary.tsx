@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { PixelZMark } from '@/components/ui/PixelZMark';
 import { PLATFORM_NAME } from '@/lib/brand';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
@@ -76,7 +75,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   private handleGoHome = () => {
-    window.location.assign(dashPath('/'));
+    window.location.assign('/dashboard');
   };
 
   render() {

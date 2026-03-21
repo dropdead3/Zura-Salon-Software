@@ -190,7 +190,7 @@ export function usePlatformRevenue() {
       const monthlyRevenueMap: Record<string, number> = {};
       invoices?.filter(inv => inv.status === 'paid').forEach(invoice => {
         const date = new Date(invoice.paid_at || invoice.created_at);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0}`;
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         monthlyRevenueMap[monthKey] = (monthlyRevenueMap[monthKey] || 0) + invoice.amount;
       });
 
@@ -199,7 +199,7 @@ export function usePlatformRevenue() {
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0}`;
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
         monthlyRevenue.push({
           month: monthName,

@@ -9,7 +9,6 @@ import { RecoveryPlanActions } from '@/components/dashboard/sales/RecoveryPlanAc
 import type { SuggestedTask } from '@/hooks/useAIInsights';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { normalizeGuidanceRoute, isValidGuidanceRoute } from '@/utils/guidanceRoutes';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface GuidancePanelProps {
   title: string;
@@ -22,7 +21,6 @@ interface GuidancePanelProps {
 }
 
 export function GuidancePanel({ title, type, guidance, isLoading, onBack, suggestedTasks, onAddTask }: GuidancePanelProps) {
-  const { dashPath } = useOrgDashboardPath();
   const zuraNav = useZuraNavigationSafe();
 
   return (
@@ -72,7 +70,7 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                     ol: ({ children }) => <ol className="mb-4 pl-5 space-y-1.5 list-decimal marker:text-muted-foreground/50">{children}</ol>,
                     li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                     a: ({ href, children }) => {
-                      const isInternal = href?.startsWith(dashPath('/'));
+                      const isInternal = href?.startsWith('/dashboard');
                       if (isInternal && href) {
                         const normalizedHref = normalizeGuidanceRoute(href);
                         // If the route isn't in our whitelist, render as plain text

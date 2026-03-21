@@ -18,10 +18,8 @@ import {
   getWeekRange,
 } from '@/hooks/useChairAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function ChairAssignments() {
-  const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const [weekDate, setWeekDate] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [modalOpen, setModalOpen] = useState(false);
@@ -50,7 +48,7 @@ export default function ChairAssignments() {
         <DashboardPageHeader
           title="Chair Assignments"
           description="Assign stylists to chairs weekly. Randomize or carry over from previous weeks."
-          backTo={dashPath('/admin/team-hub')}
+          backTo="/dashboard/admin/team-hub"
           actions={
             <Button
               onClick={() => setModalOpen(true)}

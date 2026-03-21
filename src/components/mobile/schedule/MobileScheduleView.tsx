@@ -265,7 +265,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
               <p className="text-sm text-muted-foreground/70 mt-1">
                 {isToday(selectedDate)
                   ? "You're all clear for today"
-                  : `No appointments scheduled for ${formatDate(selectedDate, 'MMM d')}}
+                  : `No appointments scheduled for ${formatDate(selectedDate, 'MMM d')}`}
               </p>
             </div>
           )}

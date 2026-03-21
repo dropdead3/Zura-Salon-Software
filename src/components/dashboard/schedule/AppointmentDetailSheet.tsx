@@ -88,7 +88,6 @@ import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 // ─── Scheduled Coverage sub-component ───────────────────────────
 function ScheduledCoverageSection({
@@ -184,8 +183,8 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="font-medium truncate block">{client.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
-                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d}`
-                      : 'No visits yet')}
+                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d')}`
+                      : 'No visits yet'}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
                 </div>
@@ -288,7 +287,6 @@ export function AppointmentDetailSheet({
   onOpenClientProfile,
   initialTab,
 }: AppointmentDetailSheetProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { user, hasPermission, roles } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { formatCurrency } = useFormatCurrency();
@@ -904,14 +902,14 @@ export function AppointmentDetailSheet({
                         {resolvedClientId && (
                           <DropdownMenuItem onClick={() => {
                             handleClose();
-                            navigate(dashPath(`/clients?clientId=${resolvedClientId}`));
+                            navigate(`/dashboard/clients?clientId=${resolvedClientId}`);
                           }}>
                             <ExternalLink className="h-3.5 w-3.5 mr-2" />
                             View in Client Directory
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link to={dashPath('/appointments-hub')}>
+                          <Link to="/dashboard/appointments-hub">
                             <Receipt className="h-3.5 w-3.5 mr-2" />
                             Transactions
                           </Link>

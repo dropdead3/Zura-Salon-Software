@@ -18,7 +18,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { AssistantBlockNotificationItem } from '@/components/dashboard/schedule/AssistantBlockNotificationItem';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface Announcement {
   id: string;
@@ -56,7 +55,6 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -307,7 +305,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
 
   // Handle click on changelog entry - navigate to changelog page
   const handleChangelogClick = (entry: ChangelogEntry) => {
-    navigate(dashPath('/changelog'));
+    navigate('/dashboard/changelog');
   };
 
   // Handle dismiss changelog
@@ -591,13 +589,13 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
         </Tabs>
 
         <div className="p-2 border-t border-border grid grid-cols-2 gap-1">
-          <Link to={dashPath('/notifications')}>
+          <Link to="/dashboard/notifications">
             <Button variant="ghost" size={tokens.button.inline} className="w-full justify-start text-xs h-8">
               <Settings className="w-3 h-3 mr-1" />
               Preferences
             </Button>
           </Link>
-          <Link to={dashPath('/changelog')}>
+          <Link to="/dashboard/changelog">
             <Button variant="ghost" size={tokens.button.inline} className="w-full justify-end text-xs h-8">
               View updates
               <ExternalLink className="w-3 h-3 ml-1" />

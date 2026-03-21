@@ -2,9 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
-const DEFAULT_LANDING_PAGE = dashPath('/');
+const DEFAULT_LANDING_PAGE = '/dashboard';
 
 export interface LandingPageOption {
   path: string;
@@ -15,12 +14,11 @@ export interface LandingPageOption {
 
 // Available landing pages - filtered by user permissions
 export const LANDING_PAGE_OPTIONS: LandingPageOption[] = [
-  { path: dashPath('/'), label: 'Command Center', permission: 'view_command_center' },
-  { path: dashPath('/schedule'), label: 'Schedule', permission: 'view_booking_calendar' },
+  { path: '/dashboard', label: 'Command Center', permission: 'view_command_center' },
+  { path: '/dashboard/schedule', label: 'Schedule', permission: 'view_booking_calendar' },
 ];
 
 export function useLandingPagePreference() {
-  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 

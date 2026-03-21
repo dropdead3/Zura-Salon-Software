@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useRoles } from '@/hooks/useRoles';
 import type { Database } from '@/integrations/supabase/types';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -16,7 +15,6 @@ interface AccessDeniedViewProps {
 }
 
 export function AccessDeniedView({ role, permission, onExitViewAs }: AccessDeniedViewProps) {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: roles = [] } = useRoles();
   
@@ -64,7 +62,7 @@ export function AccessDeniedView({ role, permission, onExitViewAs }: AccessDenie
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => navigate(dashPath('/'))}
+              onClick={() => navigate('/dashboard')}
               className="w-full"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />

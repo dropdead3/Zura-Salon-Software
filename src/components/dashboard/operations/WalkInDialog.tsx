@@ -146,7 +146,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
       const endMinutes = hours * 60 + mins + totalDuration;
       const endHour = Math.floor(endMinutes / 60);
       const endMin = endMinutes % 60;
-      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0}`;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
       const effectiveRedoReason = redoReason === 'Other' ? redoCustomReason : redoReason;
       const status = isRedo && redoPolicy?.redo_requires_approval && !isManagerOrAdmin ? 'pending' : 'checked_in';
 
@@ -344,7 +344,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center pt-1">
-                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price'}` : 'Estimated price, not including overages'}
+                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? `${redoPolicy.redo_pricing_percentage}% of price` : 'Full price'}` : 'Estimated price, not including overages'}
               </p>
             </div>
           )}

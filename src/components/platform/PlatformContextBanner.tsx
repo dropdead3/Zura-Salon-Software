@@ -14,7 +14,7 @@ export function PlatformContextBanner() {
   }
 
   const handleViewDetails = () => {
-    navigate(`/dashboard/platform/accounts/${selectedOrganization.id}`);
+    navigate(`/platform/accounts/${selectedOrganization.id}`);
   };
 
   return (

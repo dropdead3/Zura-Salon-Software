@@ -51,7 +51,6 @@ import {
 type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToPayday' | 'lastMonth';
 
 import { DATE_RANGE_LABELS, getDateRangeSubtitle } from '@/lib/dateRangeLabels';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const CC_DATE_RANGE_KEYS: DateRangeType[] = [
   'today', 'yesterday', '7d', '30d', 'thisWeek', 'thisMonth', 'todayToPayday', 'lastMonth',
@@ -133,7 +132,6 @@ const CARD_COMPONENTS: Record<string, string> = {
  * Empty state shows when no cards are pinned.
  */
 export function CommandCenterAnalytics() {
-  const { dashPath } = useOrgDashboardPath();
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const { layout } = useDashboardLayout();
   
@@ -217,7 +215,7 @@ export function CommandCenterAnalytics() {
         </p>
         <p className="text-xs text-muted-foreground/70">
           Visit the{' '}
-          <Link to={dashPath('/admin/analytics')} className="underline hover:text-foreground transition-colors">
+          <Link to="/dashboard/admin/analytics" className="underline hover:text-foreground transition-colors">
             Analytics Hub
           </Link>{' '}
           and use the gear icon (⚙) to pin cards here.

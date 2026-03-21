@@ -14,7 +14,6 @@ import { Link } from 'react-router-dom';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Booked Today',
@@ -33,7 +32,6 @@ interface NewBookingsCardProps {
 }
 
 export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
-  const { dashPath } = useOrgDashboardPath();
   const dateRange = (filterContext?.dateRange ?? 'today') as DateRangeType;
   const locationIdForPipeline = filterContext?.locationId === 'all' ? undefined : filterContext?.locationId;
   const { data, isLoading } = useNewBookings(filterContext?.locationId, dateRange);
@@ -89,7 +87,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
 
       {/* Booking Pipeline Health */}
       <Link
-        to={dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline')}
+        to="/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline"
         className="block p-3 bg-card-inner rounded-lg border border-border/50 mb-4 hover:bg-muted/50 transition-colors"
       >
         {pipeline.isLoading ? (

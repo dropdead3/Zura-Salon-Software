@@ -204,7 +204,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
               ) : (
                 userIds.map(uid => {
                   const hours = weeklyHours[uid] || 0;
-                  const hoursDisplay = `${Math.floor(hours / 60)}h${hours % 60 > 0 ? }` ${hours % 60}m` : ''}`;
+                  const hoursDisplay = `${Math.floor(hours / 60)}h${hours % 60 > 0 ? ` ${hours % 60}m` : ''}`;
 
                   return (
                     <div key={uid} className="grid grid-cols-[160px_repeat(7,1fr)] border-b border-border last:border-b-0">

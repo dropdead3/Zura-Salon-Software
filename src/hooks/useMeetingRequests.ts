@@ -3,7 +3,6 @@ import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export interface MeetingRequest {
   id: string;
@@ -30,7 +29,6 @@ export interface MeetingRequest {
 
 // Fetch meeting requests for current user (as manager or team member)
 export function useMeetingRequests() {
-  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
 
   return useQuery({
@@ -106,7 +104,7 @@ export function useCreateMeetingRequest() {
         type: 'meeting_request',
         title: `${managerName} has requested a meeting`,
         message: data.reason,
-        link: dashPath('/schedule-meeting?tab=meeting-requests'),
+        link: '/dashboard/schedule-meeting?tab=meeting-requests',
       });
 
       return request;

@@ -42,7 +42,6 @@ import {
   Search,
   GitMerge,
 } from 'lucide-react';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ManagementCardProps {
   href: string;
@@ -101,7 +100,6 @@ function CategorySection({ title, children }: CategorySectionProps) {
 }
 
 export default function ManagementHub() {
-  const { dashPath } = useOrgDashboardPath();
 
   // Fetch stats for badges
   const { data: stats } = useQuery({
@@ -169,7 +167,7 @@ export default function ManagementHub() {
         {/* Team Development */}
         <CategorySection title="Team Development">
           <ManagementCard
-            href={dashPath('/admin/onboarding-tracker')}
+            href="/dashboard/admin/onboarding-tracker"
             icon={ClipboardList}
             title="Onboarding Hub"
             description="New hire progress, invitations, and checklist completion"
@@ -178,7 +176,7 @@ export default function ManagementHub() {
             colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
           />
           <ManagementCard
-            href={dashPath('/admin/graduation-tracker')}
+            href="/dashboard/admin/graduation-tracker"
             icon={GraduationCap}
             title="Graduation Tracker"
             description="Monitor assistant advancement and milestones"
@@ -187,21 +185,21 @@ export default function ManagementHub() {
             colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
           />
           <ManagementCard
-            href={dashPath('/admin/client-engine-tracker')}
+            href="/dashboard/admin/client-engine-tracker"
             icon={Target}
             title="Client Engine Tracker"
             description="Program enrollment and participation rates"
             colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
           />
           <ManagementCard
-            href={dashPath('/admin/training-hub')}
+            href="/dashboard/admin/training-hub"
             icon={Video}
             title="Training Hub"
             description="Manage training library and track completions"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
           <ManagementCard
-            href={dashPath('/admin/challenges')}
+            href="/dashboard/admin/challenges"
             icon={Trophy}
             title="Team Challenges"
             description="Create and manage team competitions"
@@ -212,7 +210,7 @@ export default function ManagementHub() {
         {/* Scheduling & Requests */}
         <CategorySection title="Scheduling & Requests">
           <ManagementCard
-            href={dashPath('/admin/assistant-requests')}
+            href="/dashboard/admin/assistant-requests"
             icon={HandHelping}
             title="Assistant Requests"
             description="Manage help requests from stylists"
@@ -221,7 +219,7 @@ export default function ManagementHub() {
             colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
           />
           <ManagementCard
-            href={dashPath('/admin/schedule-requests')}
+            href="/dashboard/admin/schedule-requests"
             icon={CalendarClock}
             title="Schedule Requests"
             description="Time-off and schedule change approvals"
@@ -230,7 +228,7 @@ export default function ManagementHub() {
             colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
           <ManagementCard
-            href={dashPath('/admin/shift-swaps')}
+            href="/dashboard/admin/shift-swaps"
             icon={ArrowLeftRight}
             title="Shift Swap Approvals"
             description="Review and approve shift swap requests"
@@ -241,7 +239,7 @@ export default function ManagementHub() {
         {/* Performance & Compliance */}
         <CategorySection title="Performance & Compliance">
           <ManagementCard
-            href={dashPath('/admin/strikes')}
+            href="/dashboard/admin/strikes"
             icon={AlertTriangle}
             title="Staff Strikes"
             description="Track disciplinary actions and warnings"
@@ -250,21 +248,21 @@ export default function ManagementHub() {
             colorClass="bg-red-500/10 text-red-600 dark:text-red-400"
           />
           <ManagementCard
-            href={dashPath('/admin/performance-reviews')}
+            href="/dashboard/admin/performance-reviews"
             icon={Star}
             title="Performance Reviews"
             description="Structured reviews with ratings and goals"
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
           <ManagementCard
-            href={dashPath('/admin/documents')}
+            href="/dashboard/admin/documents"
             icon={FileText}
             title="Document Tracker"
             description="Licenses, certifications, and compliance docs"
             colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
           />
           <ManagementCard
-            href={dashPath('/admin/incidents')}
+            href="/dashboard/admin/incidents"
             icon={ShieldAlert}
             title="Incident Reports"
             description="Workplace safety and incident documentation"
@@ -275,14 +273,14 @@ export default function ManagementHub() {
         {/* PTO & Leave */}
         <CategorySection title="PTO & Leave">
           <ManagementCard
-            href={dashPath('/admin/pto')}
+            href="/dashboard/admin/pto"
             icon={CalendarDays}
             title="PTO Balances"
             description="Manage PTO policies and employee balances"
             colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
           />
           <ManagementCard
-            href={dashPath('/admin/schedule-requests')}
+            href="/dashboard/admin/schedule-requests"
             icon={CalendarClock}
             title="Time-Off Requests"
             description="View and approve time-off requests"
@@ -294,28 +292,28 @@ export default function ManagementHub() {
         {/* Recruiting & Hiring */}
         <CategorySection title="Recruiting & Hiring">
           <ManagementCard
-            href={dashPath('/admin/leads')}
+            href="/dashboard/admin/leads"
             icon={UserPlus}
             title="Lead Management"
             description="Track and follow up with potential hires"
             colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
           />
           <ManagementCard
-            href={dashPath('/admin/recruiting')}
+            href="/dashboard/admin/recruiting"
             icon={Briefcase}
             title="Recruiting Pipeline"
             description="Manage hiring funnel and interview stages"
             colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           />
           <ManagementCard
-            href={dashPath('/admin/payroll?tab=hire')}
+            href="/dashboard/admin/payroll?tab=hire"
             icon={UserCheck}
             title="New Hire Wizard"
             description="Onboard a new team member with account creation and docs"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
           />
           <ManagementCard
-            href={dashPath('/admin/booth-renters?tab=onboarding')}
+            href="/dashboard/admin/booth-renters?tab=onboarding"
             icon={Store}
             title="Renter Onboard Wizard"
             description="Set up a new booth renter with contract, station, and docs"
@@ -326,7 +324,7 @@ export default function ManagementHub() {
         {/* Team Operations */}
         <CategorySection title="Team Operations">
           <ManagementCard
-            href={dashPath('/admin/birthdays')}
+            href="/dashboard/admin/birthdays"
             icon={Cake}
             title="Birthdays & Anniversaries"
             description="Upcoming team celebrations and milestones"
@@ -335,7 +333,7 @@ export default function ManagementHub() {
             colorClass="bg-pink-500/10 text-pink-600 dark:text-pink-400"
           />
           <ManagementCard
-            href={dashPath('/admin/business-cards')}
+            href="/dashboard/admin/business-cards"
             icon={CreditCard}
             title="Business Cards"
             description="Process business card requests"
@@ -344,7 +342,7 @@ export default function ManagementHub() {
             colorClass="bg-slate-500/10 text-slate-600 dark:text-slate-400"
           />
           <ManagementCard
-            href={dashPath('/admin/headshots')}
+            href="/dashboard/admin/headshots"
             icon={Camera}
             title="Headshots"
             description="Schedule and track photo sessions"
@@ -357,14 +355,14 @@ export default function ManagementHub() {
         {/* Marketing & Visibility */}
         <CategorySection title="Marketing & Visibility">
           <ManagementCard
-            href={dashPath('/admin/website-sections')}
+            href="/dashboard/admin/website-sections"
             icon={Globe}
             title="Website Editor"
             description="Edit homepage sections, stylists, testimonials, and locations"
             colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
           />
           <ManagementCard
-            href={dashPath('/admin/seo-workshop')}
+            href="/dashboard/admin/seo-workshop"
             icon={Search}
             title="SEO Workshop"
             description="Tasks and guides to improve local search visibility"
@@ -375,14 +373,14 @@ export default function ManagementHub() {
         {/* Communications */}
         <CategorySection title="Communications">
           <ManagementCard
-            href={dashPath('/admin/announcements')}
+            href="/dashboard/admin/announcements"
             icon={Bell}
             title="Create Announcement"
             description="Send team-wide communications"
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
           <ManagementCard
-            href={dashPath('/admin/daily-huddle')}
+            href="/dashboard/admin/daily-huddle"
             icon={MessageSquare}
             title="Daily Huddle"
             description="Create pre-shift notes and daily goals"
@@ -393,7 +391,7 @@ export default function ManagementHub() {
         {/* AI & Automation */}
         <CategorySection title="AI & Automation">
           <ManagementCard
-            href={dashPath('/admin/zura-config')}
+            href="/dashboard/admin/zura-config"
             icon={Brain}
             title={`${PLATFORM_NAME} Configuration`}
             description="Customize AI personality, knowledge base, and guardrails"
@@ -404,7 +402,7 @@ export default function ManagementHub() {
         {/* Points & Rewards */}
         <CategorySection title="Points & Rewards">
           <ManagementCard
-            href={dashPath('/admin/points-config')}
+            href="/dashboard/admin/points-config"
             icon={Coins}
             title="Points & Rewards"
             description="Configure point rules and manage reward catalog"
@@ -415,28 +413,28 @@ export default function ManagementHub() {
         {/* Client Experience */}
         <CategorySection title="Client Experience">
           <ManagementCard
-            href={dashPath('/admin/client-health')}
+            href="/dashboard/admin/client-health"
             icon={Brain}
             title="Client Health Hub"
             description="At-risk clients, rebooking, win-back outreach, and more"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
           <ManagementCard
-            href={dashPath('/admin/feedback')}
+            href="/dashboard/admin/feedback"
             icon={MessageSquarePlus}
             title="Feedback Hub"
             description="Client surveys, reviews, and NPS tracking"
             colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           />
           <ManagementCard
-            href={dashPath('/admin/reengagement')}
+            href="/dashboard/admin/reengagement"
             icon={UserCheck}
             title="Re-engagement"
             description="Win-back campaigns for inactive clients"
             colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
           />
           <ManagementCard
-            href={dashPath('/admin/merge-clients')}
+            href="/dashboard/admin/merge-clients"
             icon={GitMerge}
             title="Merge Clients"
             description="Deduplicate and consolidate client profiles safely"

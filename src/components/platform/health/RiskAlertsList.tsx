@@ -60,7 +60,7 @@ export function RiskAlertsList({
         return (
           <button
             key={score.id}
-            onClick={() => navigate(`/dashboard/platform/accounts/${score.organization_id}?tab=health`)}
+            onClick={() => navigate(`/platform/accounts/${score.organization_id}?tab=health`)}
             className={cn(
               'w-full text-left rounded-lg border p-4 transition-all hover:border-violet-500/50',
               isCritical 

@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ChartSkeleton } from '@/components/ui/chart-skeleton';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 interface HiringCapacityCardProps {
@@ -141,7 +140,6 @@ function LocationRow({ location }: { location: LocationCapacity }) {
 }
 
 export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const {
     locations,
@@ -184,7 +182,7 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
   const hasAnyCapacity = locations.some(loc => loc.stylistCapacity !== null);
 
   const handleConfigure = () => {
-    navigate(dashPath('/admin/settings'), { 
+    navigate('/dashboard/admin/settings', { 
       state: { navTimestamp: Date.now(), category: 'locations' } 
     });
   };

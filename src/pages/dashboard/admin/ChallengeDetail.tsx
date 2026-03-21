@@ -38,7 +38,6 @@ import {
   useDeleteChallenge 
 } from '@/hooks/useChallenges';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const metricIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   bells: Bell,
@@ -72,7 +71,6 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ChallengeDetail() {
-  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { formatNumber } = useFormatNumber();
   const { challengeId } = useParams<{ challengeId: string }>();
@@ -101,7 +99,7 @@ export default function ChallengeDetail() {
         <div className="p-8 text-center">
           <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-medium mb-2">Challenge not found</h2>
-          <Button onClick={() => navigate(dashPath('/admin/challenges'))}>Back to Challenges</Button>
+          <Button onClick={() => navigate('/dashboard/admin/challenges')}>Back to Challenges</Button>
         </div>
       </DashboardLayout>
     );
@@ -121,7 +119,7 @@ export default function ChallengeDetail() {
 
   const handleDelete = async () => {
     await deleteChallenge.mutateAsync(challenge.id);
-    navigate(dashPath('/admin/challenges'));
+    navigate('/dashboard/admin/challenges');
   };
 
   // Calculate totals

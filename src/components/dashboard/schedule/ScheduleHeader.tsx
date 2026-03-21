@@ -45,7 +45,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
@@ -100,7 +99,6 @@ export function ScheduleHeader({
   showShiftsView = false,
   onToggleShiftsView,
 }: ScheduleHeaderProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -390,7 +388,7 @@ export function ScheduleHeader({
                   variant="ghost"
                   size="icon"
                   className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                  onClick={() => navigate(dashPath('/today-prep'))}
+                  onClick={() => navigate('/dashboard/today-prep')}
                 >
                   <ClipboardCheck className="h-4 w-4" />
                 </Button>
@@ -406,7 +404,7 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="icon"
                 className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                onClick={() => navigate(dashPath('/admin/settings?category=services'))}
+                onClick={() => navigate('/dashboard/admin/settings?category=services')}
               >
                 <Settings className="h-4 w-4" />
               </Button>

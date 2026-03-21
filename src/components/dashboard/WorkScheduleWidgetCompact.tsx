@@ -7,12 +7,10 @@ import { useLocationSchedules } from '@/hooks/useLocationSchedules';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function WorkScheduleWidgetCompact() {
-  const { dashPath } = useOrgDashboardPath();
   const { data: profile } = useEmployeeProfile();
   const { data: locations } = useLocations();
   const { data: allSchedules } = useLocationSchedules();
@@ -112,7 +110,7 @@ export function WorkScheduleWidgetCompact() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to={dashPath('/profile')}
+          to="/dashboard/profile"
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           Manage <ChevronRight className="w-3 h-3" />
