@@ -68,6 +68,25 @@ export function useCreateMixBowl() {
       purpose?: string;
       location_id?: string;
     }) => {
+      // Guard demo sessions — return mock data without DB writes
+      if (params.mix_session_id.startsWith('demo-')) {
+        return {
+          id: `demo-bowl-${Date.now()}`,
+          mix_session_id: params.mix_session_id,
+          bowl_number: params.bowl_number,
+          bowl_name: params.bowl_name || null,
+          purpose: params.purpose || null,
+          started_at: new Date().toISOString(),
+          completed_at: null,
+          status: 'open' as const,
+          total_dispensed_weight: 0,
+          total_dispensed_cost: 0,
+          leftover_weight: null,
+          net_usage_weight: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as MixBowl;
+      }
       const meta = await buildCommandMeta('ui');
 
       // 1. Emit event via command layer (source of truth)
