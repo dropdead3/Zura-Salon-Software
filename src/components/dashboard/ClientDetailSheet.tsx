@@ -929,8 +929,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <Cake className="w-4 h-4 text-muted-foreground" />
                     <span>
                       {client.birthday 
-                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')`
-                        : 'No birthday on file'}
+                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
+                        : 'No birthday on file')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

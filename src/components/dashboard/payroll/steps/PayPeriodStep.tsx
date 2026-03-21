@@ -145,7 +145,7 @@ export function PayPeriodStep({
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {payPeriodStart
                   ? formatDate(new Date(payPeriodStart), 'PPP')
-                  : 'Select start date'}
+                  : 'Select start date')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -177,7 +177,7 @@ export function PayPeriodStep({
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {payPeriodEnd
                   ? formatDate(new Date(payPeriodEnd), 'PPP')
-                  : 'Select end date'}
+                  : 'Select end date')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -212,7 +212,7 @@ export function PayPeriodStep({
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {checkDate
                   ? formatDate(new Date(checkDate), 'PPP')
-                  : 'Select check date'}
+                  : 'Select check date')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">

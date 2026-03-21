@@ -233,7 +233,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className={tokens.body.emphasis}>
-                    {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
+                    {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : 'No date')}
                   </span>
                   {t.service_name && (
                     <Badge variant="secondary" className="text-[10px]">{t.service_name}</Badge>

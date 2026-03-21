@@ -209,7 +209,7 @@ function TimelineItem({ org }: { org: OnboardingOrganization }) {
           {org.name}
         </p>
         <p className="text-xs text-slate-500">
-          {org.go_live_date ? format(parseISO(org.go_live_date), 'MMMM yyyy') : 'No date set'}
+          {org.go_live_date ? format(parseISO(org.go_live_date), 'MMMM yyyy') : 'No date set')}
         </p>
       </div>
       {org.account_number && (

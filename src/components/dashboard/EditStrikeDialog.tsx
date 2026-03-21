@@ -189,7 +189,7 @@ export function EditStrikeDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Select a date'}
+                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Select a date')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

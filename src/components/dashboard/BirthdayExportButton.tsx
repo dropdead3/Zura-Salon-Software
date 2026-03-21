@@ -86,7 +86,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
       // Subtitle with date
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')`, 14, 28);
+      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')}, 14, 28);
       doc.text(`Total Team Members: ${data.length}`, 14, 34);
 
       // Group by month for summary

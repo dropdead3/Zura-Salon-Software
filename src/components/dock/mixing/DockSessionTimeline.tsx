@@ -130,7 +130,7 @@ export function DockSessionTimeline({ sessionId }: DockSessionTimelineProps) {
               >
                 {/* Timeline dot + line */}
                 <div className="flex flex-col items-center w-5 flex-shrink-0">
-                  <div className={cn('w-2 h-2 rounded-full', display.color.replace('text-', 'bg-'))} />
+                  <div className={cn('w-2 h-2 rounded-full', display.color.replace('text-', 'bg-')} />
                   {!isLast && <div className="w-px flex-1 min-h-[12px] bg-[hsl(var(--platform-border)/0.15)]" />}
                 </div>
 

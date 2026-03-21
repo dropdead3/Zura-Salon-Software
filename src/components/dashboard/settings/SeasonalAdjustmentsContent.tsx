@@ -135,7 +135,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formStartDate && 'text-muted-foreground')}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formStartDate ? format(formStartDate, 'MMM d, yyyy') : 'Pick date'}
+                    {formStartDate ? format(formStartDate, 'MMM d, yyyy') : 'Pick date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -149,7 +149,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formEndDate && 'text-muted-foreground')}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formEndDate ? format(formEndDate, 'MMM d, yyyy') : 'Pick date'}
+                    {formEndDate ? format(formEndDate, 'MMM d, yyyy') : 'Pick date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

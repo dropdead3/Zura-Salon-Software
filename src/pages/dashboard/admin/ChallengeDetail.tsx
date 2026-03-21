@@ -101,7 +101,7 @@ export default function ChallengeDetail() {
         <div className="p-8 text-center">
           <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-medium mb-2">Challenge not found</h2>
-          <Button onClick={() => navigate(dashPath('/admin/challenges'))}>Back to Challenges</Button>
+          <Button onClick={() => navigate(dashPath('/admin/challenges')}>Back to Challenges</Button>
         </div>
       </DashboardLayout>
     );

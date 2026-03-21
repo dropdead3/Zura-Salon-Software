@@ -185,7 +185,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
                       ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d`
-                      : 'No visits yet'}
+                      : 'No visits yet')}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
                 </div>

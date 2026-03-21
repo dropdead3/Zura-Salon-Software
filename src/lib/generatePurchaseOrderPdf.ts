@@ -68,7 +68,7 @@ export function generatePurchaseOrderPdf(options: GeneratePOPdfOptions): POPdfRe
     doc.text(`PO #: ${poNumber}`, 14, startY);
     startY += 5;
   }
-  doc.text(`Date: ${format(new Date(), 'MMMM d, yyyy`, 14, startY);
+  doc.text(`Date: ${format(new Date(), 'MMMM d, yyyy')}, 14, startY);
   startY += 8;
 
   // Table

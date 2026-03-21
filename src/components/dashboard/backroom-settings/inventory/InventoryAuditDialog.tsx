@@ -167,7 +167,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-normal">
                   <CalendarIcon className="w-3 h-3" />
-                  {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
+                  {dateFrom ? format(dateFrom, 'MMM d') : 'From')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -185,7 +185,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-normal">
                   <CalendarIcon className="w-3 h-3" />
-                  {dateTo ? format(dateTo, 'MMM d') : 'To'}
+                  {dateTo ? format(dateTo, 'MMM d') : 'To')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

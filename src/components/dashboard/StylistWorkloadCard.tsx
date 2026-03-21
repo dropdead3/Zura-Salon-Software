@@ -110,7 +110,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             <Button
               variant="ghost"
               size={tokens.button.card}
-              onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'))}
+              onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization')}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
               View Full Report
@@ -172,7 +172,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           <Button
             variant="ghost"
             size={tokens.button.card}
-            onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'))}
+            onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization')}
             className="gap-1 text-muted-foreground hover:text-foreground"
           >
             View Full Report

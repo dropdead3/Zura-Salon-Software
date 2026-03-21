@@ -936,7 +936,7 @@ export default function PhorestSettings() {
                         <TableCell>
                           {log.completed_at 
                             ? formatDate(new Date(log.completed_at), 'MMM d, HH:mm')
-                            : '-'}
+                            : '-')}
                         </TableCell>
                         <TableCell>
                           {log.error_message ? (

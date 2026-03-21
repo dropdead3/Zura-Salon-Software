@@ -214,7 +214,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="brands" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -420,7 +420,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="deadstock" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -1627,7 +1627,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Set Goals
                   </Button>
                 </div>
@@ -1825,7 +1825,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                        <Download className="w-3.5 h-3.5" /> Export Movements
                      </Button>
                    )}
-                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                      <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
                    </Button>
                 </div>
@@ -1908,7 +1908,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportCommissionsCSV(staffCommissions)}>
                     <Download className="w-3.5 h-3.5" /> Export
                   </Button>
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -1981,7 +1981,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
