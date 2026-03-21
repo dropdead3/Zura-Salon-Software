@@ -35,7 +35,7 @@ interface ForecastRow {
 const MAX_BAR_DAYS = 60;
 
 export function ReplenishmentTimelineCard({
-  const { dashPath } = useOrgDashboardPath(); products, velocityMap, filterContext, onCreatePO }: ReplenishmentTimelineCardProps) {
+  products, velocityMap, filterContext, onCreatePO }: ReplenishmentTimelineCardProps) {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const rows = useMemo(() => {

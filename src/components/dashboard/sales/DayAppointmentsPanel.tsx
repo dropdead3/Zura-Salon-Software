@@ -99,7 +99,7 @@ function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSum
 }
 
 export function DayAppointmentsPanel({
-  const { dashPath } = useOrgDashboardPath(); day, open, onOpenChange }: DayAppointmentsPanelProps) {
+  day, open, onOpenChange }: DayAppointmentsPanelProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();

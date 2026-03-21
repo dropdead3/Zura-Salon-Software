@@ -29,7 +29,7 @@ interface OrganizationSwitcherProps {
 }
 
 export function OrganizationSwitcher({
-  const { dashPath } = useOrgDashboardPath(); className, compact = false }: OrganizationSwitcherProps) {
+  className, compact = false }: OrganizationSwitcherProps) {
   const { dashPath } = useOrgDashboardPath();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();

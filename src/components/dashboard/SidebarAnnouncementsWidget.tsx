@@ -44,7 +44,7 @@ interface SidebarAnnouncementsWidgetProps {
 }
 
 export function SidebarAnnouncementsWidget({
-  const { dashPath } = useOrgDashboardPath(); onNavClick }: SidebarAnnouncementsWidgetProps) {
+  onNavClick }: SidebarAnnouncementsWidgetProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { user } = useAuth();

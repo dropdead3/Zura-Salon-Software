@@ -13,7 +13,7 @@ interface CustomLandingPageBannerProps {
 }
 
 export function CustomLandingPageBanner({
-  const { dashPath } = useOrgDashboardPath(); sidebarCollapsed }: CustomLandingPageBannerProps) {
+  sidebarCollapsed }: CustomLandingPageBannerProps) {
   const { dashPath } = useOrgDashboardPath();
   const { hasCustomLandingPage, customLandingPage, resetToDefault, isUpdating } = useLandingPagePreference();
   const [dismissed, setDismissed] = useState(false);

@@ -32,7 +32,7 @@ interface TeamCommissionRosterProps {
 
 
 export function TeamCommissionRoster({
-  const { dashPath } = useOrgDashboardPath(); orgId, levels }: TeamCommissionRosterProps) {
+  orgId, levels }: TeamCommissionRosterProps) {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeamDirectory(undefined, { organizationId: orgId });

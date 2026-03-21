@@ -113,7 +113,7 @@ function getChartData(data: ClientEngagementData, view: EngagementView): ChartIt
 }
 
 export function ClientEngagementCard({
-  const { dashPath } = useOrgDashboardPath(); dateFrom, dateTo, locationId, filterContext, activeView, onViewChange }: ClientEngagementCardProps) {
+  dateFrom, dateTo, locationId, filterContext, activeView, onViewChange }: ClientEngagementCardProps) {
   const { dashPath } = useOrgDashboardPath();
   const { data, isLoading } = useClientEngagement(dateFrom, dateTo, locationId);
   const [internalView, setInternalView] = useState<EngagementView>('visits');

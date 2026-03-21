@@ -142,7 +142,7 @@ function LocationRow({ location }: { location: LocationCapacity }) {
 }
 
 export function HiringCapacityCard({
-  const { dashPath } = useOrgDashboardPath(); className }: HiringCapacityCardProps) {
+  className }: HiringCapacityCardProps) {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const {

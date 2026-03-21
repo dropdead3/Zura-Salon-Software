@@ -29,7 +29,7 @@ interface ClientsContentProps {
 }
 
 export function ClientsContent({
-  const { dashPath } = useOrgDashboardPath(); retention, isLoading, dateRange, locationName }: ClientsContentProps) {
+  retention, isLoading, dateRange, locationName }: ClientsContentProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatNumber } = useFormatNumber();
   const navigate = useNavigate();

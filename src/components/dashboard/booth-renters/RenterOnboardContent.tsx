@@ -79,7 +79,7 @@ interface RenterOnboardContentProps {
 }
 
 export function RenterOnboardContent({
-  const { dashPath } = useOrgDashboardPath(); organizationId }: RenterOnboardContentProps) {
+  organizationId }: RenterOnboardContentProps) {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { effectiveOrganization: organization } = useOrganizationContext();

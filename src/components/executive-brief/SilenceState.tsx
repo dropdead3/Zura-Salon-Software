@@ -19,7 +19,7 @@ interface SilenceStateProps {
  * When KPIs exist but no high-confidence lever is found, it confirms operations are healthy.
  */
 export function SilenceState({
-  const { dashPath } = useOrgDashboardPath(); compact = false }: SilenceStateProps) {
+  compact = false }: SilenceStateProps) {
   const { dashPath } = useOrgDashboardPath();
   const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
   const navigate = useNavigate();

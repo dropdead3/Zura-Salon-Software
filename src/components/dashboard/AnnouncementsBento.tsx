@@ -61,7 +61,7 @@ const normalizeUrl = (url: string): string => {
 };
 
 export function AnnouncementsBento({
-  const { dashPath } = useOrgDashboardPath(); announcements, isLeadership }: AnnouncementsBentoProps) {
+  announcements, isLeadership }: AnnouncementsBentoProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(true);

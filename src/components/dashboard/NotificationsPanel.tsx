@@ -57,7 +57,7 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({
-  const { dashPath } = useOrgDashboardPath(); unreadCount }: NotificationsPanelProps) {
+  unreadCount }: NotificationsPanelProps) {
   const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const queryClient = useQueryClient();
