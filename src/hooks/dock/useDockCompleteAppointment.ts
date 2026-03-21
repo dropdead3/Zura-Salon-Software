@@ -80,9 +80,9 @@ export function useDockCompleteAppointment() {
               appointment_id: appointmentId,
               mix_session_id: session.id,
               service_name: appt?.service_name || 'Unknown',
-              included_allowance_qty: policy.default_allowance_grams || 0,
+              included_allowance_qty: policy.included_allowance_qty || 0,
               actual_usage_qty: projection.running_dispensed_weight || 0,
-              overage_qty: Math.max(0, (projection.running_dispensed_weight || 0) - (policy.default_allowance_grams || 0)),
+              overage_qty: Math.max(0, (projection.running_dispensed_weight || 0) - (policy.included_allowance_qty || 0)),
               charge_amount: 0, // Will be refined by full billing calc
               status: 'pending',
             } as any);
