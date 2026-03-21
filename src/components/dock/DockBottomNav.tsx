@@ -33,24 +33,22 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className="relative flex items-center justify-center flex-1 h-12 z-10"
+              className="relative flex-1 h-12"
             >
-              {/* Icon wrapper — serves as anchor for indicator */}
-              <div className="relative flex h-11 w-11 items-center justify-center">
-                {/* Sliding circle indicator — centered on icon */}
-                {isActive && (
-                  <motion.div
-                    layoutId="dock-indicator"
-                    transition={SPRING}
-                    className="absolute inset-0 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
-                  />
-                )}
+              {/* Full-width pill indicator */}
+              {isActive && (
+                <motion.div
+                  layoutId="dock-indicator"
+                  transition={SPRING}
+                  className="absolute inset-y-0 inset-x-1 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                />
+              )}
 
-                {/* Icon with scale morph */}
+              {/* Centered content stack */}
+              <div className="relative z-10 flex h-full flex-col items-center justify-center gap-0.5">
                 <motion.div
                   animate={{ scale: isActive ? 1.15 : 1 }}
                   transition={SPRING}
-                  className="relative z-10 flex items-center justify-center"
                 >
                   <Icon
                     className={cn(
@@ -61,22 +59,21 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
                     )}
                   />
                 </motion.div>
-              </div>
 
-              {/* Label — absolutely positioned below icon */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] font-medium tracking-wide text-violet-300 whitespace-nowrap"
-                  >
-                    {label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="text-[9px] font-medium tracking-wide text-violet-300 whitespace-nowrap"
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
             </button>
           );
         })}
