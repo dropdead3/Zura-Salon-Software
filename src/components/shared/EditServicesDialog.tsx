@@ -42,7 +42,7 @@ export function EditServicesDialog({
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, PhorestService>>(new Map());
   const { data: grouped, isLoading } = useServicesByCategory(locationId);
-  const formatCurrency = useFormatCurrency();
+  const { formatCurrency } = useFormatCurrency();
 
   // Initialize selected from currentServices when dialog opens
   const [initialized, setInitialized] = useState(false);
