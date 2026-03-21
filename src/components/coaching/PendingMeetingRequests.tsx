@@ -130,7 +130,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
                   <div className={`flex items-center gap-1 ${isExpired ? 'text-destructive' : ''}`}>
                     <Calendar className="h-3 w-3" />
                     <span>
-                      {isExpired ? 'Expired' : `Schedule by ${formatDate(parseISO(request.expires_at), 'MMM d')`}
+                      {isExpired ? 'Expired' : `Schedule by ${formatDate(parseISO(request.expires_at), 'MMM d'))}}
                     </span>
                   </div>
                 )}

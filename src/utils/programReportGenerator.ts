@@ -48,7 +48,7 @@ export function generateProgressReport(data: ReportData): void {
   // Participant info
   doc.setFontSize(12);
   doc.text(`Participant: ${data.userName}`, 20, 50);
-  doc.text(`Generated: ${format(new Date(), 'MMMM d, yyyy')`, 20, 58);
+  doc.text(`Generated: ${format(new Date(), 'MMMM d, yyyy'))}, 20, 58);
   doc.text(`Start Date: ${format(new Date(data.enrollment.start_date), 'MMMM d, yyyy`, 20, 66);
   
   // Status badge
