@@ -37,6 +37,27 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
   const [tab, setTab] = useState<DetailTab>('services');
   const [editServicesOpen, setEditServicesOpen] = useState(false);
   const updateServicesMutation = useUpdateAppointmentServices();
+  const { data: mixSessions } = useDockMixSessions(appointment.id);
+
+  // Find active bowl ID from any open session
+  const activeSessionId = mixSessions?.find(s => s.status === 'active')?.id;
+  const { data: activeBowl } = useQuery({
+    queryKey: ['dock-active-bowl', activeSessionId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mix_bowls')
+        .select('id')
+        .eq('mix_session_id', activeSessionId!)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data?.id ?? null;
+    },
+    enabled: !!activeSessionId,
+    staleTime: 15_000,
+  });
+  const activeBowlId = activeBowl ?? null;
 
   const currentServices = appointment.service_name
     ? appointment.service_name.split(',').map(s => s.trim()).filter(Boolean)
