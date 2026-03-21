@@ -26,14 +26,14 @@ const BORDER_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
-const OPEN_OFFSET = -140;
+const OPEN_OFFSET = -152;
 const SNAP_THRESHOLD = 60;
 
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
-  const trayWidth = isTerminal ? 64 : 140;
-  const openOffset = isTerminal ? -64 : OPEN_OFFSET;
+  const trayWidth = isTerminal ? 72 : 152;
+  const openOffset = isTerminal ? -72 : OPEN_OFFSET;
 
   const x = useMotionValue(0);
   const [isOpen, setIsOpen] = useState(false);
