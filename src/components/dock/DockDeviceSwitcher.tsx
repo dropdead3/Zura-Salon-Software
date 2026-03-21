@@ -30,7 +30,18 @@ const deviceOptions = [
 export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange, organizationId, staffFilter, onStaffFilterChange }: DockDeviceSwitcherProps) {
   const showRotate = device === 'tablet';
   const { data: locations = [] } = useLocations(organizationId);
-  const { usesRealData } = useDockDemo();
+  const { isDemoMode, usesRealData } = useDockDemo();
+  const queryClient = useQueryClient();
+
+  const handleDemoReset = () => {
+    try { localStorage.removeItem('dock-location-id'); } catch {}
+    try { localStorage.removeItem('dock-staff-filter'); } catch {}
+    queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+    queryClient.invalidateQueries({ queryKey: ['dock-mix-sessions'] });
+    queryClient.invalidateQueries({ queryKey: ['dock-client-profile'] });
+    window.dispatchEvent(new CustomEvent('dock-demo-reset'));
+    toast.success('Demo reset');
+  };
 
   // Fetch team members for the selected location (demo mode only)
   const { data: teamMembers = [] } = useQuery({
