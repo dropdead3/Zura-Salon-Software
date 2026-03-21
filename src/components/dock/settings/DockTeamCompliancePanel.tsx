@@ -29,7 +29,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
 
   const handleKey = useCallback(async (key: string) => {
     if (pinLoading) return;
-    if (key === 'delete') { setPin(p => p.slice(0, -1)); setPinError(false); return; }
+    if (key === 'delete') { setPin(''); setPinError(false); return; }
     if (key === '') return;
 
     const next = pin + key;
