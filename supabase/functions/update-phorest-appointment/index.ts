@@ -125,14 +125,14 @@ serve(async (req) => {
     }
 
     const updateData: UpdateRequest = await req.json();
-    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason } = updateData;
+    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason, services } = updateData;
 
     if (!appointment_id) {
       throw new Error("Missing required field: appointment_id");
     }
 
-    if (!status && notes === undefined && rebooked_at_checkout === undefined && tip_amount === undefined) {
-      throw new Error("At least one of status, notes, rebooked_at_checkout, or tip_amount must be provided");
+    if (!status && notes === undefined && rebooked_at_checkout === undefined && tip_amount === undefined && !services) {
+      throw new Error("At least one of status, notes, rebooked_at_checkout, tip_amount, or services must be provided");
     }
 
     console.log(`Updating appointment ${appointment_id}: status=${status}, notes=${notes ? 'yes' : 'no'}`);
