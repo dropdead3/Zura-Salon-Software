@@ -42,7 +42,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       // Org-specific demo — fetch real appointments for the selected location
       if (isDemoMode && usesRealData && organizationId) {
         // If no location selected yet, wait for auto-select
-        if (!locationId) return [];
+        if (!locationId) return DEMO_APPOINTMENTS;
 
         // Fetch registered team member IDs for this location
         const { data: teamProfiles } = await supabase
