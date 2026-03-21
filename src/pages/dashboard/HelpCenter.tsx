@@ -70,7 +70,7 @@ export default function HelpCenter() {
           <Button
             variant="ghost"
             size={tokens.button.inline}
-            onClick={() => navigate(currentCategory ? dashPath('/help') : dashPath('/')}
+            onClick={() => navigate(currentCategory ? dashPath('/help') : dashPath('/'))}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
