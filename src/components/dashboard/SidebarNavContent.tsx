@@ -99,6 +99,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     subtitle,
     firstName,
   }, ref) => {
+  const { dashPath } = useOrgDashboardPath();
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation('dashboard');

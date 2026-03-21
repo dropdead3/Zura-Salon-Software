@@ -347,6 +347,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
 
 // ─── Dead Stock Card ───
 function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: { deadStock: RetailAnalyticsResult['deadStock']; formatCurrencyWhole: (n: number) => string; data: RetailAnalyticsResult; filterContext?: FilterContext }) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   
   // Phase B: Filter out products created within last 7 days (new product grace period)

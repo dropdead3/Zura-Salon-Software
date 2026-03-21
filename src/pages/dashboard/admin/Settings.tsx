@@ -483,6 +483,7 @@ function NotificationsCard() {
 
 // Service Communication Flows Card
 function ServiceCommunicationFlowsCard() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: servicesWithFlowsCount, isLoading } = useServicesWithFlowsCount();
   
   return (

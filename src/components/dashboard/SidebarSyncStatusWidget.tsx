@@ -34,6 +34,7 @@ export function SidebarSyncStatusWidget({
   isCollapsed?: boolean;
   onNavClick?: () => void;
 }) {
+  const { dashPath } = useOrgDashboardPath();
   const { syncLabel } = usePOSProviderLabel();
 
   // Fetch latest sync status for each type
