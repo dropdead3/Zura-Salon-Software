@@ -159,7 +159,8 @@ export function useRecordDispensedWeight() {
       lineId: string;
       actualWeight: number;
     }) => {
-      // Update the line item's dispensed quantity
+      if (params.sessionId.startsWith('demo-') || params.bowlId.startsWith('demo-')) return;
+
       const { error } = await supabase
         .from('mix_bowl_lines')
         .update({ dispensed_quantity: params.actualWeight })
@@ -167,7 +168,6 @@ export function useRecordDispensedWeight() {
 
       if (error) throw error;
 
-      // Emit weight capture event
       await emitSessionEvent({
         mix_session_id: params.sessionId,
         organization_id: params.organizationId,
