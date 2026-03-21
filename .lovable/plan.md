@@ -1,17 +1,16 @@
 
 
-## Fix Flask Icon Z-Index to Slide Visibly
+## Update "Move to Another Location" Button Text
 
-**Problem:** The flask icon is correctly placed inside the sliding `motion.div` (z-10), but the static text overlay sits at `z-20` on top of it — visually hiding the icon's movement and making it appear stationary.
+**File:** `src/components/dock/settings/DockSettingsTab.tsx`
 
-**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+**Changes:**
 
-**Fix:** Change the flask icon container's z-index from `z-10` to `z-30` so it renders above the static text overlay (z-20) and its sliding motion is visible.
+1. **Import `useOrganization`** from `@/hooks/useOrganizations` to fetch the org name using `staff.organizationId`.
 
-**Line 114** — Change `z-10` to `z-30`:
-```tsx
-<div className="absolute top-4 right-4 z-30 flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600/20">
-```
+2. **Add org query** inside the component: `const { data: org } = useOrganization(staff.organizationId);`
 
-Single class change on one line.
+3. **Update button text** (line 143): Change from `Move to Another Location` to `Move Zura Dock to Another {orgName} Location`, where `orgName` falls back to `'Organization'` if the query hasn't loaded.
+
+Three small edits in one file.
 
