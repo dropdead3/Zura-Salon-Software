@@ -603,7 +603,7 @@ export default function MyProfile() {
                         variant="outline" 
                         size="sm" 
                         className="shrink-0"
-                        onClick={() => window.location.href = dashPath('/onboarding')
+                        onClick={() => window.location.href = dashPath('/onboarding')}
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         Schedule Headshot
