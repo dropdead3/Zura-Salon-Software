@@ -12,10 +12,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-const useCurrencyFormatter = () => {
-  const fc = useFormatCurrency();
-  return fc.formatCurrency;
-};
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
 import type { PhorestService } from '@/hooks/usePhorestServices';
 import type { ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
