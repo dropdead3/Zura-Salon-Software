@@ -415,7 +415,7 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                       {lines.map((line, i) => (
                         <span key={i} className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
-                          {line.product_name} {line.weight_g ? `${line.weight_g}g` : ''}
+                          {line.product_name} {line.quantity ? `${line.quantity}${line.unit || 'g'}` : ''}
                         </span>
                       ))}
                       {(f.formula_data || []).length > 2 && (
