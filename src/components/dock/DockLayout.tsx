@@ -47,6 +47,11 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   const completeAppointment = useDockCompleteAppointment();
   const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
 
+  const { containerRef, progress: lockProgress } = useDockLockGesture({
+    onLock: onLogout,
+    enabled: !showingDetail,
+  });
+
   const handleComplete = (appointment: DockAppointment) => {
     completeAppointment.mutate({
       appointmentId: appointment.id,
@@ -57,7 +62,8 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const dockContent = (
     <div
-      className="flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
+      ref={containerRef}
+      className="relative flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
       data-dock-device={device}
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
     >
