@@ -145,7 +145,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
         </div>
 
         <p className="text-[11px] text-[hsl(var(--platform-foreground-muted))] mb-3 leading-relaxed">
-          Reassign this device to a different salon location. The station will log out and rebind on next PIN login.
+          Reassign this device to a different salon location. The station will log out and prompt for location selection on next PIN login.
         </p>
 
         <button

@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { DockLocationPicker } from './DockLocationPicker';
 import type { DockStaffSession } from '@/pages/Dock';
 
 interface DockPinGateProps {
@@ -25,12 +26,31 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{
+    userId: string;
+    organizationId: string;
+    displayName: string;
+    avatarUrl: string | null;
+    locationIds: string[];
+  } | null>(null);
   const showDemo = useDockDemoAccess();
   const { data: settings } = useBusinessSettings();
   const { data: locations = [] } = useLocations();
 
   const businessName = settings?.business_name || '';
   const logoDarkUrl = settings?.logo_dark_url;
+
+  const completeSession = useCallback((userId: string, organizationId: string, displayName: string, avatarUrl: string | null, locationId: string) => {
+    // Persist location binding
+    try { localStorage.setItem('dock-location-id', locationId); } catch {}
+    onSuccess({
+      userId,
+      organizationId,
+      displayName,
+      avatarUrl,
+      locationId,
+    });
+  }, [onSuccess]);
 
   const handleKey = useCallback(async (key: string) => {
     if (loading) return;
@@ -51,7 +71,6 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
     if (next.length === PIN_LENGTH) {
       setLoading(true);
       try {
-        // Read device-bound org from localStorage (scopes PIN after first login)
         const storedOrgId = (() => { try { return localStorage.getItem('dock-organization-id') || null; } catch { return null; } })();
 
         const { data, error: dbError } = await supabase
@@ -70,16 +89,34 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           if (!storedOrgId && data.organization_id) {
             try { localStorage.setItem('dock-organization-id', data.organization_id); } catch {}
           }
-          // Resolve location: explicit device config > staff profile
+
           const deviceLocId = (() => { try { return localStorage.getItem('dock-location-id') || ''; } catch { return ''; } })();
-          const resolvedLocationId = deviceLocId || data.location_id || '';
-          onSuccess({
-            userId: data.user_id,
-            organizationId: data.organization_id || '',
-            displayName: data.display_name || 'Staff',
-            avatarUrl: data.photo_url,
-            locationId: resolvedLocationId,
-          });
+
+          // If device already bound to a location, use it directly
+          if (deviceLocId) {
+            completeSession(data.user_id, data.organization_id || '', data.display_name || 'Staff', data.photo_url, deviceLocId);
+            return;
+          }
+
+          // Build effective location list: location_ids array, falling back to single location_id
+          const staffLocationIds: string[] = (data.location_ids && data.location_ids.length > 0)
+            ? data.location_ids
+            : data.location_id ? [data.location_id] : [];
+
+          // If multiple locations and no device binding, show picker
+          if (staffLocationIds.length > 1) {
+            setPendingSession({
+              userId: data.user_id,
+              organizationId: data.organization_id || '',
+              displayName: data.display_name || 'Staff',
+              avatarUrl: data.photo_url,
+              locationIds: staffLocationIds,
+            });
+          } else {
+            // Single location — auto-bind
+            const locId = staffLocationIds[0] || '';
+            completeSession(data.user_id, data.organization_id || '', data.display_name || 'Staff', data.photo_url, locId);
+          }
         }
       } catch {
         setError(true);
@@ -89,7 +126,27 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         setLoading(false);
       }
     }
-  }, [pin, loading, onSuccess]);
+  }, [pin, loading, completeSession]);
+
+  // Show location picker if multi-location staff needs to choose
+  if (pendingSession) {
+    return (
+      <DockLocationPicker
+        organizationId={pendingSession.organizationId}
+        locationIds={pendingSession.locationIds}
+        staffName={pendingSession.displayName}
+        onSelect={(locId) => {
+          completeSession(
+            pendingSession.userId,
+            pendingSession.organizationId,
+            pendingSession.displayName,
+            pendingSession.avatarUrl,
+            locId,
+          );
+        }}
+      />
+    );
+  }
 
   return (
     <div className="platform-theme platform-dark absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]">
