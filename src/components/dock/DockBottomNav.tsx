@@ -33,14 +33,14 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className="relative flex-1 h-12"
+              className="relative flex h-14 flex-1 items-center justify-center px-1"
             >
-              {/* Full-width pill indicator */}
+              {/* Full-slot pill indicator */}
               {isActive && (
                 <motion.div
                   layoutId="dock-indicator"
                   transition={SPRING}
-                  className="absolute inset-y-0 inset-x-1 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                  className="absolute inset-0 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
                 />
               )}
 
@@ -52,7 +52,7 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
                 >
                   <Icon
                     className={cn(
-                      'w-5 h-5 transition-colors duration-150',
+                      'h-5 w-5 transition-colors duration-150',
                       isActive
                         ? 'text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]'
                         : 'text-white/40 hover:text-white/60'
@@ -67,7 +67,7 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="text-[9px] font-medium tracking-wide text-violet-300 whitespace-nowrap"
+                      className="whitespace-nowrap text-[9px] font-medium tracking-wide text-violet-300"
                     >
                       {label}
                     </motion.span>
