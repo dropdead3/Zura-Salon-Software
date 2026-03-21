@@ -585,7 +585,7 @@ export default function ClientEngineTracker() {
                           <p className="text-sm font-medium">
                             {participant.enrollment.last_completion_date 
                               ? formatDate(new Date(participant.enrollment.last_completion_date), 'MMM d, yyyy')
-                              : 'Never'}}
+                              : 'Never'}
                           </p>
                         </div>
                         <div>
