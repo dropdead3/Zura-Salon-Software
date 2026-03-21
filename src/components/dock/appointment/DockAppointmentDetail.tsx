@@ -104,6 +104,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         currentServices={currentServices}
         locationId={appointment.location_id}
         isSaving={updateServicesMutation.isPending}
+        variant="dock"
         onSave={(newServices: ServiceEntry[]) => {
           updateServicesMutation.mutate({
             appointmentId: appointment.id,
