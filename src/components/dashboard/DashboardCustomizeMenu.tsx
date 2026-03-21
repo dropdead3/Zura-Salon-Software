@@ -185,6 +185,7 @@ interface DashboardCustomizeMenuProps {
 }
 
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   
   const SECTIONS = useMemo(() => {
