@@ -200,6 +200,10 @@ export function useSealDockBowl() {
       organizationId: string;
       bowlId: string;
     }) => {
+      if (params.sessionId.startsWith('demo-') || params.bowlId.startsWith('demo-')) {
+        return { success: true };
+      }
+
       const meta = await buildCommandMeta('ui');
       const result = await executeSealBowl({
         meta,
@@ -212,7 +216,6 @@ export function useSealDockBowl() {
         throw new Error(result.errors?.[0]?.message || 'Failed to seal bowl');
       }
 
-      // Update projection
       await supabase
         .from('mix_bowls')
         .update({ status: 'sealed', completed_at: new Date().toISOString() })
