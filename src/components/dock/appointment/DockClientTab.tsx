@@ -200,7 +200,8 @@ export function DockClientTab({ appointment, staff }: DockClientTabProps) {
 
   const displayName = appointment.client_name || client?.name || 'Client';
   const recentVisits = visits.slice(0, 8);
-  const currentStylistDiffers = preferredStylistId && appointment.stylist_user_id && preferredStylistId !== appointment.stylist_user_id;
+  // DockAppointment doesn't carry stylist_user_id, so we skip the "different stylist" check for now
+  const currentStylistDiffers = false;
 
   return (
     <div className="px-5 py-4 space-y-5">
