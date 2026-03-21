@@ -1,35 +1,43 @@
 
-Fix the active dock tab so the glow becomes a true full-width rounded pill for the whole tab slot, not a small circle behind just the icon.
 
-1. Re-anchor the active background to the button, not the icon
-- File: `src/components/dock/DockBottomNav.tsx`
-- Remove the active `motion.div` from the `h-11 w-11` icon wrapper.
-- Render the active background as a button-level layer so it can span the full clickable area.
-- Use a fully rounded pill shape such as `absolute inset-y-0 inset-x-1 rounded-full` so it fills the tab slot cleanly with even side padding.
+## Cool Entrance Animation After PIN Success
 
-2. Center the content independently above that pill
-- Wrap icon + label in a `relative z-10 flex h-full flex-col items-center justify-center` content stack.
-- This keeps the visual center tied to the whole selected tab area instead of the icon wrapper.
-- The icon stays centered inside the widened glow, and the label is visually contained within the active button.
+### Concept
 
-3. Stop offsetting the label outside the selected area
-- The current absolute label positioning is part of why the selected state feels misaligned.
-- Move the label into the centered content stack for the active tab instead of using `absolute -bottom-0.5`.
-- Add a tiny vertical gap so icon and label feel balanced inside the pill.
+After the PIN is validated, play a brief "unlock" transition before revealing the Dock UI. The PIN screen fades and scales out while the Dock content fades and scales in — a satisfying "portal opening" effect that feels premium.
 
-4. Keep the visual language subtle and on-brand
-- Preserve the existing violet fill/shadow treatment, just widen it to the full tab.
-- Keep `rounded-full` on the active background so the ends stay fully round.
-- Keep the current spring motion so the pill still slides smoothly between tabs.
+### Implementation
 
-Technical implementation shape
-- Button remains the positioning container: `relative flex-1`
-- Active layer becomes button-sized: `motion.div` on the button, not inside the icon wrapper
-- Content becomes a centered stack above it
-- If needed, slightly increase button height from `h-12` so both icon and label sit comfortably inside the rounded pill without clipping
+**New file: `src/components/dock/DockUnlockTransition.tsx`**
 
-Expected result
-- The selected state reads as one full rounded button.
-- The glow/fill covers the full intended tap target.
-- The icon is centered within that active area.
-- The label no longer makes the highlight feel off-center or incorrectly shaped.
+A wrapper component that orchestrates a two-phase animation:
+
+1. **Phase 1 — PIN screen exit (0–400ms):** The PIN gate content scales up slightly (1.02) and fades out, with the violet gradient intensifying briefly (a "flash" of the brand color).
+
+2. **Phase 2 — Dock entrance (400–900ms):** The Dock layout fades in from a subtle scale-down (0.97→1) with a soft opacity ramp.
+
+Uses `framer-motion` `AnimatePresence` with custom exit/enter variants. A brief violet radial pulse (opacity 0→0.15→0) overlays during the handoff for a "glow unlock" feel.
+
+**Modify: `src/pages/Dock.tsx`**
+
+- Add an `unlocked` state (`useState(false)`) that starts false.
+- On `handlePinSuccess`, set staff as before but keep `unlocked = false` for ~500ms, then flip to `true`.
+- Wrap the PIN gate and Dock layout in `AnimatePresence` keyed on the unlock state.
+- The PIN gate gets exit animation (scale up + fade out).
+- The Dock layout gets enter animation (scale up from 0.97 + fade in).
+
+### Animation Spec (respecting motion standards)
+
+Per project standards — no bouncy/elastic physics. Use smooth easing:
+
+- **PIN exit:** `opacity: 1→0`, `scale: 1→1.03`, duration 350ms, ease `[0.4, 0, 0.2, 1]`
+- **Violet pulse overlay:** `opacity: 0→0.2→0`, duration 500ms, centered radial gradient
+- **Dock enter:** `opacity: 0→1`, `scale: 0.97→1`, duration 400ms, ease `[0, 0, 0.2, 1]`, delay 200ms after PIN exit starts
+
+### Files
+
+| Action | File |
+|--------|------|
+| Create | `src/components/dock/DockUnlockTransition.tsx` |
+| Modify | `src/pages/Dock.tsx` — add unlock state + wrap in AnimatePresence |
+
