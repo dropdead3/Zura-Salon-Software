@@ -622,7 +622,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         {/* Hours */}
         <CopyableField 
           icon={<Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
-          value={`${hoursDisplay || location.hours || 'Hours not set'}${closedDays ? }` (${closedDays})` : ''}`}
+          value={`${hoursDisplay || location.hours || 'Hours not set'}${closedDays ? ` (${closedDays})` : ''}`}
           label="hours"
         >
           <div className="text-sm space-y-1">
@@ -987,7 +987,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <a 
-                        href={`https://instagram.com/${member.instagram.replace('@', '')}`
+                        href={`https://instagram.com/${member.instagram.replace('@', '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"

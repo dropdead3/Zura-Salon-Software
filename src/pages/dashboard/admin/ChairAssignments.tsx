@@ -40,7 +40,7 @@ export default function ChairAssignments() {
   const deleteMutation = useDeleteChairAssignment();
 
   const { weekStart, weekEnd } = getWeekRange(weekDate);
-  const weekLabel = `${format(new Date(weekStart), 'MMM d')} – ${format(new Date(weekEnd), 'MMM d, yyyy}`;
+  const weekLabel = `${format(new Date(weekStart), 'MMM d')} – ${format(new Date(weekEnd), 'MMM d, yyyy')}`;
 
   const isLoading = loadingAssignments || loadingChairs;
 

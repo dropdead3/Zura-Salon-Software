@@ -58,31 +58,31 @@ export default function ClientHub() {
           <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">Client Management</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <HubCard
-              href=dashPath('/clients')
+              href={dashPath('/clients')}
               icon={Users}
               title="Client Directory"
               description="Browse, search, and manage all client profiles"
             />
             <HubCard
-              href=dashPath('/admin/client-health')
+              href={dashPath('/admin/client-health')}
               icon={Brain}
               title="Client Health Hub"
               description="At-risk clients, rebooking, win-back outreach, and more"
             />
             <HubCard
-              href=dashPath('/admin/feedback')
+              href={dashPath('/admin/feedback')}
               icon={MessageSquarePlus}
               title="Feedback Hub"
               description="Client surveys, reviews, and NPS tracking"
             />
             <HubCard
-              href=dashPath('/admin/reengagement')
+              href={dashPath('/admin/reengagement')}
               icon={UserCheck}
               title="Re-engagement"
               description="Win-back campaigns for inactive clients"
             />
             <HubCard
-              href=dashPath('/admin/merge-clients')
+              href={dashPath('/admin/merge-clients')}
               icon={GitMerge}
               title="Merge Clients"
               description="Deduplicate and consolidate client profiles safely"
