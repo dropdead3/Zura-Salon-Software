@@ -24,12 +24,12 @@ interface ClientInsightsCardProps {
 }
 
 export function ClientInsightsCard({
-  const { dashPath } = useOrgDashboardPath(); 
   userId, 
   locationId,
   onLocationChange,
   showLocationFilter = true 
 }: ClientInsightsCardProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: locations } = useLocations();
   const { formatDate } = useFormatDate();
   const { formatCurrency } = useFormatCurrency();

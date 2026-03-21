@@ -46,6 +46,7 @@ function renderMarkdown(content: string) {
 
 export function HelpArticleView({
   const { dashPath } = useOrgDashboardPath(); article }: HelpArticleViewProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { formatNumber } = useFormatNumber();
   const incrementViews = useIncrementArticleViews();

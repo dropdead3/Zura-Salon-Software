@@ -21,6 +21,7 @@ interface DashboardLockScreenProps {
 
 export function DashboardLockScreen({
   const { dashPath } = useOrgDashboardPath(); onUnlock }: DashboardLockScreenProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();

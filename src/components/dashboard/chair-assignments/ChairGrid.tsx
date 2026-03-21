@@ -18,6 +18,7 @@ interface ChairGridProps {
 
 export function ChairGrid({
   const { dashPath } = useOrgDashboardPath(); chairs, assignments, stylists, onRemoveAssignment }: ChairGridProps) {
+  const { dashPath } = useOrgDashboardPath();
   const stylistMap = new Map(stylists.map(s => [s.user_id, s]));
   const assignmentByChair = new Map(assignments.map(a => [a.chair_id, a]));
 

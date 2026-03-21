@@ -41,11 +41,11 @@ interface TodaysQueueSectionProps {
 }
 
 export function TodaysQueueSection({
-  const { dashPath } = useOrgDashboardPath(); 
   locationId: externalLocationId,
   onLocationChange,
   showLocationFilter = true,
 }: TodaysQueueSectionProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [internalLocationId, setInternalLocationId] = useState<string>('all');
   const [checkoutAppointment, setCheckoutAppointment] = useState<QueueAppointment | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);

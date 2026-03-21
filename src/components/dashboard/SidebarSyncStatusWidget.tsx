@@ -28,10 +28,10 @@ interface SyncStatus {
 }
 
 export function SidebarSyncStatusWidget({
-  const { dashPath } = useOrgDashboardPath(); 
   isCollapsed = false,
   onNavClick,
 }: { 
+  const { dashPath } = useOrgDashboardPath();
   isCollapsed?: boolean;
   onNavClick?: () => void;
 }) {

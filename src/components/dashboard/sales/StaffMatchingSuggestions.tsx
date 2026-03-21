@@ -61,7 +61,6 @@ function getMatchIcon(reason: MatchSuggestion['matchReason']) {
 }
 
 export function StaffMatchingSuggestions({
-  const { dashPath } = useOrgDashboardPath(); 
   suggestions, 
   onLink, 
   onDismiss,
@@ -69,6 +68,7 @@ export function StaffMatchingSuggestions({
   linkingId,
   unmappedCount = 0,
 }: StaffMatchingSuggestionsProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const { providerLabel } = usePOSProviderLabel();

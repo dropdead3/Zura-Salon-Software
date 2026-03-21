@@ -545,6 +545,7 @@ function InventoryTurnoverCard({ brands, filterContext }: { brands: BrandRow[]; 
 
 export function RetailAnalyticsContent({
   const { dashPath } = useOrgDashboardPath(); dateFrom, dateTo, locationId, filterContext }: RetailAnalyticsContentProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
   const { data: retailAttachment, isLoading: retailAttachmentLoading } = useServiceRetailAttachment({ dateFrom, dateTo, locationId });
   const { formatCurrencyWhole } = useFormatCurrency();

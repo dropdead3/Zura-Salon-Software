@@ -40,7 +40,6 @@ interface StylistCommissionDrilldownProps {
 }
 
 export function StylistCommissionDrilldown({
-  const { dashPath } = useOrgDashboardPath();
   open,
   onOpenChange,
   member,
@@ -49,6 +48,7 @@ export function StylistCommissionDrilldown({
   override,
   
 }: StylistCommissionDrilldownProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const assignLevel = useAssignStylistLevel();
   const upsertOverride = useUpsertCommissionOverride();

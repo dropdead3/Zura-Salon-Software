@@ -35,6 +35,7 @@ interface NewBookingsCardProps {
 
 export function NewBookingsCard({
   const { dashPath } = useOrgDashboardPath(); filterContext }: NewBookingsCardProps) {
+  const { dashPath } = useOrgDashboardPath();
   const dateRange = (filterContext?.dateRange ?? 'today') as DateRangeType;
   const locationIdForPipeline = filterContext?.locationId === 'all' ? undefined : filterContext?.locationId;
   const { data, isLoading } = useNewBookings(filterContext?.locationId, dateRange);

@@ -59,11 +59,11 @@ function buildPaymentQueue(appointments: PhorestAppointment[], nowMinutes: numbe
 }
 
 export function ScheduleActionBar({
-  const { dashPath } = useOrgDashboardPath();
   appointments,
   onSelectAppointment,
   todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
 
   const queue = useMemo(() => buildPaymentQueue(appointments, nowMinutes), [appointments, nowMinutes]);

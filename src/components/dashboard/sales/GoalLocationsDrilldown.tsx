@@ -80,6 +80,7 @@ function LocationMiniRow({ locationId, locationName, target, period, closedReaso
 
 export function GoalLocationsDrilldown({
   const { dashPath } = useOrgDashboardPath(); isOpen, period }: GoalLocationsDrilldownProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const { locationScaffold } = useGoalTrackerData(period);

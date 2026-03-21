@@ -20,6 +20,7 @@ interface SilenceStateProps {
  */
 export function SilenceState({
   const { dashPath } = useOrgDashboardPath(); compact = false }: SilenceStateProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: kpiDefinitions, isLoading } = useKpiDefinitions();
   const navigate = useNavigate();
 

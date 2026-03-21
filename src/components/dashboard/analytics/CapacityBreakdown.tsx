@@ -21,7 +21,6 @@ interface CapacityBreakdownProps {
 }
 
 export function CapacityBreakdown({
-  const { dashPath } = useOrgDashboardPath();
   grossHoursPerStylist: initialGrossHours,
   breakMinutes: initialBreakMinutes,
   lunchMinutes: initialLunchMinutes,
@@ -30,6 +29,7 @@ export function CapacityBreakdown({
   daysInPeriod,
   className,
 }: CapacityBreakdownProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   
   // Editable state with sensible defaults

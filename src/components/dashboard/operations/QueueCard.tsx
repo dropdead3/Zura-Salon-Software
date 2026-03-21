@@ -46,7 +46,6 @@ interface QueueCardProps {
 }
 
 export function QueueCard({
-  const { dashPath } = useOrgDashboardPath(); 
   appointment, 
   variant,
   onCheckIn,
@@ -55,6 +54,7 @@ export function QueueCard({
   onDelete,
   isUpdating = false,
 }: QueueCardProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { formatCurrencyWhole } = useFormatCurrency();
   const navigate = useNavigate();

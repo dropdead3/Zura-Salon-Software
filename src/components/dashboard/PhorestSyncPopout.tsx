@@ -39,6 +39,7 @@ interface SyncStatus {
 
 export function PhorestSyncPopout({
   const { dashPath } = useOrgDashboardPath(); asMenuItem = false }: { asMenuItem?: boolean }) {
+  const { dashPath } = useOrgDashboardPath();
   const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
   const { syncLabel } = usePOSProviderLabel();

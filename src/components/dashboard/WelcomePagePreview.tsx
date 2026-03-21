@@ -51,7 +51,6 @@ interface WelcomePagePreviewProps {
 }
 
 export function WelcomePagePreview({
-  const { dashPath } = useOrgDashboardPath(); 
   previewConfig, 
   onLogoChange, 
   onLogoSizeChange, 
@@ -61,6 +60,7 @@ export function WelcomePagePreview({
   onSubheadlineChange,
   onCtaTextChange
 }: WelcomePagePreviewProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: outcomes = [], isLoading: outcomesLoading } = useProgramOutcomes();
   const updateOutcome = useUpdateProgramOutcome();
   const [editingOutcome, setEditingOutcome] = useState<string | null>(null);

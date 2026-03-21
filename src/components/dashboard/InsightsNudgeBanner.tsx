@@ -19,6 +19,7 @@ const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
 export function InsightsNudgeBanner({
   const { dashPath } = useOrgDashboardPath(); userId, isLeadership }: InsightsNudgeBannerProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [dismissed, setDismissed] = useState(false);
 
   const { data: daysSinceLastCheck } = useQuery({

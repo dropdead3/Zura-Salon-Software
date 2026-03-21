@@ -29,10 +29,10 @@ interface ActiveChallengesWidgetProps {
 }
 
 export function ActiveChallengesWidget({
-  const { dashPath } = useOrgDashboardPath(); 
   className, 
   maxItems = 3 
 }: ActiveChallengesWidgetProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: challenges = [], isLoading } = useMyActiveChallenges();
 
   const displayChallenges = challenges.slice(0, maxItems);

@@ -86,6 +86,7 @@ interface SalesTabContentProps {
 
 export function SalesTabContent({
   const { dashPath } = useOrgDashboardPath(); filters, subTab = 'overview', onSubTabChange }: SalesTabContentProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { formatDate } = useFormatDate();
   const engagementRef = useRef<HTMLDivElement>(null);

@@ -20,7 +20,6 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({
-  const { dashPath } = useOrgDashboardPath(); 
   children, 
   requireCoach = false, 
   requiredPermission, 
@@ -28,6 +27,7 @@ export function ProtectedRoute({
   requirePlatformRole,
   requireAnyPlatformRole = false,
 }: ProtectedRouteProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
   const { isViewingAs, viewAsRole, clearViewAs } = useViewAs();
   const { permissions: effectivePermissions, isLoading: effectivePermissionsLoading } = useEffectivePermissions();

@@ -28,6 +28,7 @@ interface RentersTabContentProps {
 
 export function RentersTabContent({
   const { dashPath } = useOrgDashboardPath(); organizationId }: RentersTabContentProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');

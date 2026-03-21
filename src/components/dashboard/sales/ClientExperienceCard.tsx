@@ -103,6 +103,7 @@ function StatusBadge({ status }: { status: ExperienceStatus }) {
 
 export function ClientExperienceCard({
   const { dashPath } = useOrgDashboardPath(); dateFrom, dateTo, locationId, filterContext }: ClientExperienceCardProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data, isLoading } = useClientExperience(dateFrom, dateTo, locationId);
   const { formatCurrency } = useFormatCurrency();
   const [activeMetric, setActiveMetric] = useState<ExperienceMetric>('composite');

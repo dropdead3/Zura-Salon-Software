@@ -44,6 +44,7 @@ interface TeamPinManagementTabProps {
 
 export function TeamPinManagementTab({
   const { dashPath } = useOrgDashboardPath(); canManage }: TeamPinManagementTabProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { data: teamMembers = [], isLoading } = useTeamPinStatus();

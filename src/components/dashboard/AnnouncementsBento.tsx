@@ -62,6 +62,7 @@ const normalizeUrl = (url: string): string => {
 
 export function AnnouncementsBento({
   const { dashPath } = useOrgDashboardPath(); announcements, isLeadership }: AnnouncementsBentoProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(true);
   const [locationFilter, setLocationFilter] = useState<string>('all');

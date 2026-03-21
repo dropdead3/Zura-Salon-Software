@@ -68,13 +68,13 @@ interface AnnouncementsDrawerProps {
 }
 
 export function AnnouncementsDrawer({
-  const { dashPath } = useOrgDashboardPath();
   isLeadership,
   label,
   iconOnly,
   expanded: controlledExpanded,
   onToggle,
 }: AnnouncementsDrawerProps) {
+  const { dashPath } = useOrgDashboardPath();
   const isControlled = typeof onToggle === 'function';
   const [internalExpanded, setInternalExpanded] = useState(false);
   const isOpen = isControlled ? !!controlledExpanded : internalExpanded;

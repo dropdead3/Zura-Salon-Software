@@ -18,6 +18,7 @@ interface AccessDeniedViewProps {
 
 export function AccessDeniedView({
   const { dashPath } = useOrgDashboardPath(); role, permission, onExitViewAs }: AccessDeniedViewProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: roles = [] } = useRoles();
   

@@ -52,9 +52,9 @@ interface StylistLevelsEditorProps {
 }
 
 export function StylistLevelsEditor({
-  const { dashPath } = useOrgDashboardPath(); 
   trigger 
 }: StylistLevelsEditorProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: dbLevels, isLoading } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
   

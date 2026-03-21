@@ -15,6 +15,7 @@ interface SidebarFeedbackButtonsProps {
 
 export function SidebarFeedbackButtons({
   const { dashPath } = useOrgDashboardPath(); isCollapsed = false }: SidebarFeedbackButtonsProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<FeedbackType>('feature_request');
 
