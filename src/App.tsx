@@ -376,7 +376,7 @@ const App = () => (
                         <TooltipProvider delayDuration={0}>
                           <Toaster />
                           <Sonner />
-                          <CustomCursor />
+                          
                           <ScrollToTop />
                           {import.meta.env.DEV && <DevContextBridge />}
                           <CommandMenu />
