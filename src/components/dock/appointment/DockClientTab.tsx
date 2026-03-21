@@ -51,7 +51,51 @@ function detectAllergyFlags(medicalAlerts: string | null, notes: string | null):
   return null;
 }
 
-export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTabProps) {
+// ─── Smart Formula Diffing ───
+interface FormulaDiff {
+  added: string[];
+  removed: string[];
+  changed: { name: string; oldQty: number; newQty: number; unit: string }[];
+  ratioShift: { oldRatio: string; newRatio: string } | null;
+}
+
+function computeFormulaDiff(newer: FormulaLine[], older: FormulaLine[]): FormulaDiff {
+  const keyOf = (l: FormulaLine) => l.product_id || l.product_name;
+  const olderMap = new Map(older.map(l => [keyOf(l), l]));
+  const newerMap = new Map(newer.map(l => [keyOf(l), l]));
+
+  const added: string[] = [];
+  const removed: string[] = [];
+  const changed: FormulaDiff['changed'] = [];
+
+  for (const [key, line] of newerMap) {
+    const old = olderMap.get(key);
+    if (!old) {
+      added.push(line.product_name);
+    } else if (Math.abs(line.quantity - old.quantity) > 0.1) {
+      changed.push({ name: line.product_name, oldQty: old.quantity, newQty: line.quantity, unit: line.unit || 'g' });
+    }
+  }
+  for (const [key, line] of olderMap) {
+    if (!newerMap.has(key)) removed.push(line.product_name);
+  }
+
+  // Ratio shift: compute total weight ratio between the two largest components
+  let ratioShift: FormulaDiff['ratioShift'] = null;
+  if (newer.length >= 2 && older.length >= 2) {
+    const sortedNew = [...newer].sort((a, b) => b.quantity - a.quantity);
+    const sortedOld = [...older].sort((a, b) => b.quantity - a.quantity);
+    const newR = sortedNew[0].quantity > 0 ? `1:${Math.round(sortedNew[1].quantity / sortedNew[0].quantity * 10) / 10}` : null;
+    const oldR = sortedOld[0].quantity > 0 ? `1:${Math.round(sortedOld[1].quantity / sortedOld[0].quantity * 10) / 10}` : null;
+    if (newR && oldR && newR !== oldR) ratioShift = { oldRatio: oldR, newRatio: newR };
+  }
+
+  return { added, removed, changed, ratioShift };
+}
+
+function hasDiff(diff: FormulaDiff): boolean {
+  return diff.added.length > 0 || diff.removed.length > 0 || diff.changed.length > 0 || diff.ratioShift !== null;
+}
   const queryClient = useQueryClient();
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
