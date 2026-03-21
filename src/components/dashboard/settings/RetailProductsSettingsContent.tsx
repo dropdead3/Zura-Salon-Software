@@ -1694,7 +1694,7 @@ export function RetailProductsSettingsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div />
-        <Button variant="outline" size={tokens.button.card} className="gap-1.5" onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=retail'))}>
+        <Button variant="outline" size={tokens.button.card} className="gap-1.5" onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=retail')}>
           <BarChart3 className="w-4 h-4" /> View Retail Analytics
         </Button>
       </div>
@@ -1712,7 +1712,7 @@ export function RetailProductsSettingsContent() {
                 — {onlineCount} of {totalCount} products visible online
               </span>
             </div>
-            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub'))}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub')}>
               Manage Store Settings <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -1724,7 +1724,7 @@ export function RetailProductsSettingsContent() {
                 Online Store is not active. Clients cannot browse or purchase products online.
               </span>
             </div>
-            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub'))}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub')}>
               Activate Online Store <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>

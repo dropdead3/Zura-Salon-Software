@@ -307,7 +307,7 @@ export default function CampaignDetail() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(dashPath('/campaigns'))}
+            onClick={() => navigate(dashPath('/campaigns')}
             className="mt-1 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />

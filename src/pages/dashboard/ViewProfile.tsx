@@ -337,7 +337,7 @@ export default function ViewProfile() {
               <p className="text-muted-foreground mb-4">
                 Only super admins can view and edit team member profiles.
               </p>
-              <Button onClick={() => navigate(dashPath('/directory'))}>
+              <Button onClick={() => navigate(dashPath('/directory')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Directory
               </Button>
@@ -359,7 +359,7 @@ export default function ViewProfile() {
               <p className="text-muted-foreground mb-4">
                 The requested user profile could not be found.
               </p>
-              <Button onClick={() => navigate(dashPath('/directory'))}>
+              <Button onClick={() => navigate(dashPath('/directory')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Directory
               </Button>

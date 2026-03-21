@@ -45,7 +45,7 @@ export default function PayrollCallback() {
               <p className="text-muted-foreground mb-6">
                 Your payroll provider has been connected. You can now manage payroll for your team.
               </p>
-              <Button onClick={() => navigate(dashPath('/admin/payroll'))}>
+              <Button onClick={() => navigate(dashPath('/admin/payroll')}>
                 Go to Payroll
               </Button>
             </CardContent>
@@ -70,7 +70,7 @@ export default function PayrollCallback() {
               <p className="text-sm text-muted-foreground mb-6">
                 Error: {error}
               </p>
-              <Button onClick={() => navigate(dashPath('/admin/payroll'))}>
+              <Button onClick={() => navigate(dashPath('/admin/payroll')}>
                 Try Again
               </Button>
             </CardContent>

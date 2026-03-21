@@ -63,7 +63,7 @@ export function StylistsOverviewCard() {
           variant="outline"
           size="sm"
           className={tokens.button.cardAction}
-          onClick={() => navigate(dashPath('/admin/settings?category=levels'))}
+          onClick={() => navigate(dashPath('/admin/settings?category=levels')}
         >
           <Settings className="w-4 h-4" /> Configure
         </Button>

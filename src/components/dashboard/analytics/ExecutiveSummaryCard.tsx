@@ -316,7 +316,7 @@ export function ExecutiveSummaryCard() {
   const collectionRate = rentData?.collectionRate ?? 0;
 
   // Pay period label
-  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d'))};
+  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d')};
 
   const allKpis: KpiData[] = [
     {

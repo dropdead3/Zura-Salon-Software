@@ -85,7 +85,7 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                   variant="outline"
                   size={tokens.button.inline}
                   className="gap-1.5 text-xs"
-                  onClick={() => navigate(dashPath('/admin/settings?category=retail-products&tab=inventory'))}
+                  onClick={() => navigate(dashPath('/admin/settings?category=retail-products&tab=inventory')}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" /> Reorder
                 </Button>

@@ -215,7 +215,7 @@ export function IssueContractDialog({
                 <div className="space-y-2">
                   <Label>Due Day of Month</Label>
                   <Select
-                    value={String(form.watch('due_day_of_month'))}
+                    value={String(form.watch('due_day_of_month')}
                     onValueChange={(value) => form.setValue('due_day_of_month', Number(value))}
                   >
                     <SelectTrigger>
@@ -234,7 +234,7 @@ export function IssueContractDialog({
                 <div className="space-y-2">
                   <Label>Due Day of Week</Label>
                   <Select
-                    value={String(form.watch('due_day_of_week'))}
+                    value={String(form.watch('due_day_of_week')}
                     onValueChange={(value) => form.setValue('due_day_of_week', Number(value))}
                   >
                     <SelectTrigger>

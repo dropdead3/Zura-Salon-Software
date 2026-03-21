@@ -112,7 +112,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
                 <span className="text-xs text-muted-foreground">/org/your-salon/</span>
                 <Input
                   value={local.slug}
-                  onChange={e => update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  onChange={e => update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')}
                   className="flex-1"
                 />
               </div>
