@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { Monitor, Smartphone, Tablet, RotateCcw, MapPin, User } from 'lucide-react';
+import { Monitor, Smartphone, Tablet, RotateCcw, RotateCw, MapPin, User } from 'lucide-react';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { DockDevice, DockOrientation } from '@/hooks/dock/useDockDevicePreview';
 import { formatFirstLastInitial } from '@/lib/dock-utils';
+import { toast } from 'sonner';
 
 interface DockDeviceSwitcherProps {
   device: DockDevice;
