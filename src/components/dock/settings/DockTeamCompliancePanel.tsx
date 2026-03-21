@@ -140,7 +140,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
               }
               return (
                 <button key={i} onClick={() => handleKey(key)} disabled={pinLoading}
-                  className="flex items-center justify-center h-14 rounded-2xl text-lg font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50">
+                  className="flex items-center justify-center h-[72px] rounded-2xl text-2xl font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50">
                   {key}
                 </button>
               );
