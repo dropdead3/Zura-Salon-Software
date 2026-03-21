@@ -90,6 +90,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BookingVisibilityCard } from './BookingVisibilityCard';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
@@ -1063,6 +1065,7 @@ function SeoLegalTab() {
 
 // ─── Main Export ───
 export function WebsiteSettingsContent() {
+  const { dashPath } = useOrgDashboardPath();
   return (
     <Tabs defaultValue="general" className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1090,7 +1093,7 @@ export function WebsiteSettingsContent() {
         </TabsList>
         <div className="flex items-center gap-2">
           <Button variant="outline" size={tokens.button.card} asChild>
-            <a href="/dashboard/admin/website-sections">
+            <a href={dashPath('/admin/website-sections')}>
               <ExternalLink className="w-4 h-4 mr-1.5" />
               Editor
             </a>

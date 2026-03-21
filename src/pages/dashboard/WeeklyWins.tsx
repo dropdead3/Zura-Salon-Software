@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface Enrollment {
   id: string;
@@ -36,6 +38,7 @@ interface WeeklyReport {
 }
 
 export default function WeeklyWins() {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
@@ -159,7 +162,7 @@ export default function WeeklyWins() {
       if (updateError) throw updateError;
 
       toast.success('Weekly Wins submitted successfully!');
-      navigate('/dashboard');
+      navigate(dashPath('/'));
     } catch (error) {
       console.error('Error submitting weekly wins:', error);
       toast.error('Failed to submit. Please try again.');

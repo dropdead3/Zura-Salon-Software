@@ -18,6 +18,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface SyncStatus {
   sync_type: string;
@@ -25,7 +27,7 @@ interface SyncStatus {
   completed_at: string | null;
 }
 
-export function SidebarSyncStatusWidget({ 
+export function SidebarSyncStatusWidget({
   isCollapsed = false,
   onNavClick,
 }: { 
@@ -113,7 +115,7 @@ export function SidebarSyncStatusWidget({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to="/dashboard/admin/phorest-settings"
+            to={dashPath('/admin/phorest-settings')}
             onClick={onNavClick}
             className="flex items-center justify-center py-2 px-2 mx-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
           >
@@ -135,7 +137,7 @@ export function SidebarSyncStatusWidget({
 
   return (
     <Link
-      to="/dashboard/admin/phorest-settings"
+      to={dashPath('/admin/phorest-settings')}
       onClick={onNavClick}
       className="mx-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors block"
     >

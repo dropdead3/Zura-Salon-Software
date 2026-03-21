@@ -75,6 +75,8 @@ import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailA
 import { ServicesContent } from '@/components/dashboard/analytics/ServicesContent';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface SalesTabContentProps {
   filters: AnalyticsFilters;
@@ -82,7 +84,9 @@ interface SalesTabContentProps {
   onSubTabChange: (value: string) => void;
 }
 
-export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }: SalesTabContentProps) {
+export function SalesTabContent({
+  filters, subTab = 'overview', onSubTabChange }: SalesTabContentProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { formatDate } = useFormatDate();
   const engagementRef = useRef<HTMLDivElement>(null);
@@ -542,7 +546,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               variant="outline"
               size={tokens.button.inline}
               className="shrink-0 text-xs gap-1.5"
-              onClick={() => navigate('/dashboard/admin/payroll?tab=commissions')}
+              onClick={() => navigate(dashPath('/admin/payroll?tab=commissions'))}
             >
               Manage Tiers
               <ArrowRight className="w-3.5 h-3.5" />

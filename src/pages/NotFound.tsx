@@ -2,8 +2,11 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PixelZMark } from '@/components/ui/PixelZMark';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export default function NotFound() {
+  const { dashPath } = useOrgDashboardPath();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -31,12 +34,12 @@ export default function NotFound() {
             variant="outline"
             onClick={() => {
               if (window.history.length > 1) navigate(-1);
-              else navigate('/dashboard');
+              else navigate(dashPath('/'));
             }}
           >
             Go back
           </Button>
-          <Button onClick={() => navigate('/dashboard')}>Go home</Button>
+          <Button onClick={() => navigate(dashPath('/'))}>Go home</Button>
         </div>
       </div>
     </div>

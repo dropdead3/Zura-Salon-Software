@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlatformFeedbackDialog } from './PlatformFeedbackDialog';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type FeedbackType = 'feature_request' | 'bug_report';
 
@@ -11,7 +13,9 @@ interface SidebarFeedbackButtonsProps {
   isCollapsed?: boolean;
 }
 
-export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackButtonsProps) {
+export function SidebarFeedbackButtons({
+  isCollapsed = false }: SidebarFeedbackButtonsProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<FeedbackType>('feature_request');
 
@@ -50,7 +54,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
-              to="/dashboard/help"
+              to={dashPath('/help')}
               className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200 ease-out"
             >
               <HelpCircle className="h-4 w-4" />

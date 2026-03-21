@@ -11,8 +11,11 @@ import { MergeWizard } from '@/components/dashboard/clients/merge/MergeWizard';
 import { useMergeAuditLog, useUndoMerge } from '@/hooks/useClientMerge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format } from 'date-fns';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export default function MergeClients() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedIds = searchParams.get('clientIds')?.split(',').filter(Boolean);
@@ -50,7 +53,7 @@ export default function MergeClients() {
             <MergeWizard
               preselectedClientIds={preselectedIds}
               onComplete={() => setActiveTab('history')}
-              onCancel={() => navigate('/dashboard/clients')}
+              onCancel={() => navigate(dashPath('/clients'))}
             />
           </TabsContent>
 

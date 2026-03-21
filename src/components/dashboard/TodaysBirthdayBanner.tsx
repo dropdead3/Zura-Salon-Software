@@ -7,8 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDMChannels } from '@/hooks/team-chat/useDMChannels';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export function TodaysBirthdayBanner() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: todaysBirthdays, isLoading } = useTodaysBirthdays();
   const { isViewingAsUser } = useViewAs();
   const { user } = useAuth();
@@ -19,7 +22,7 @@ export function TodaysBirthdayBanner() {
     if (isCreating) return;
     try {
       const channel = await createDM(userId);
-      navigate('/dashboard/team-chat', { state: { openChannelId: channel.id } });
+      navigate(dashPath('/team-chat'), { state: { openChannelId: channel.id } });
     } catch {
       // error handled by useDMChannels toast
     }

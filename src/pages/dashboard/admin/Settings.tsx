@@ -135,6 +135,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DragFeedback } from '@/components/dnd/DragFeedback';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface UserWithRole {
   user_id: string;
@@ -503,7 +505,7 @@ function ServiceCommunicationFlowsCard() {
             </div>
           </div>
           <Button asChild variant="outline" className="w-full">
-            <a href="/dashboard/admin/services">
+            <a href={dashPath('/admin/services')}>
               <Settings2 className="w-4 h-4 mr-2" />
               Configure Service Flows
             </a>
@@ -618,6 +620,7 @@ function UserCard({
 }
 
 export default function Settings() {
+  const { dashPath } = useOrgDashboardPath();
   const { user, roles } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme, resolvedTheme } = useDashboardTheme();
@@ -1573,11 +1576,11 @@ export default function Settings() {
                             onColorChange={(color) => handleColorChange(category.id, color)}
                             onClick={() => {
                               if (category.id === 'my-profile') {
-                                navigate('/dashboard/profile');
+                                navigate(dashPath('/profile'));
                               } else if (category.id === 'business') {
                                 setBusinessDialogOpen(true);
                               } else if (category.id === 'access-hub') {
-                                navigate('/dashboard/admin/access-hub');
+                                navigate(dashPath('/admin/access-hub'));
                               } else {
                                 setActiveCategory(category.id as SettingsCategory);
                               }

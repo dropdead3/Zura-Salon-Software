@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useStylistLevels, useSaveStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
 import { Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export type StylistLevelSimple = {
   id: string;
@@ -49,9 +51,10 @@ interface StylistLevelsEditorProps {
   trigger?: React.ReactNode;
 }
 
-export function StylistLevelsEditor({ 
+export function StylistLevelsEditor({
   trigger 
 }: StylistLevelsEditorProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data: dbLevels, isLoading } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
   
@@ -350,7 +353,7 @@ export function StylistLevelsEditor({
               {hasChanges && <span className="text-amber-600 ml-2">• Unsaved changes</span>}
             </p>
             <Link 
-              to="/dashboard/admin/stylist-levels" 
+              to={dashPath('/admin/stylist-levels')} 
               className="text-xs text-primary hover:underline flex items-center gap-1"
               onClick={() => setIsOpen(false)}
             >

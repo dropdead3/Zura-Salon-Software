@@ -10,6 +10,8 @@ import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOneOnOneMeetings, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
 import { format, parseISO } from 'date-fns';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -20,6 +22,7 @@ const meetingTypes = [
 ];
 
 export default function CoachRequests() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: meetings = [], isLoading } = useOneOnOneMeetings();
@@ -47,7 +50,7 @@ export default function CoachRequests() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <div>
-            <Link to="/dashboard/schedule-meeting">
+            <Link to={dashPath('/schedule-meeting')}>
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub

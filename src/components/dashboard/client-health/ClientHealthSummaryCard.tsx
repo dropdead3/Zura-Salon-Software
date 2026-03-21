@@ -9,8 +9,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { calculateCLV } from '@/lib/clv-calculator';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export function ClientHealthSummaryCard() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: segments, isLoading } = useClientHealthSegments();
   const { formatCurrencyWhole } = useFormatCurrency();
 
@@ -54,7 +57,7 @@ export function ClientHealthSummaryCard() {
             </div>
           </div>
           <Button variant="ghost" size={tokens.button.card} asChild className="gap-1 text-xs">
-            <Link to="/dashboard/admin/client-health">
+            <Link to={dashPath('/admin/client-health')}>
               View Hub <ChevronRight className="h-3 w-3" />
             </Link>
           </Button>

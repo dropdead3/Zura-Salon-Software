@@ -12,6 +12,8 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type ExperienceMetric = 'avgTip' | 'tipRate' | 'feedbackRate' | 'rebookRate' | 'composite';
 
@@ -99,7 +101,9 @@ function StatusBadge({ status }: { status: ExperienceStatus }) {
   );
 }
 
-export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterContext }: ClientExperienceCardProps) {
+export function ClientExperienceCard({
+  dateFrom, dateTo, locationId, filterContext }: ClientExperienceCardProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { data, isLoading } = useClientExperience(dateFrom, dateTo, locationId);
   const { formatCurrency } = useFormatCurrency();
   const [activeMetric, setActiveMetric] = useState<ExperienceMetric>('composite');
@@ -312,7 +316,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <p className="text-xs text-muted-foreground">
               Staff names unavailable —{' '}
-              <Link to="/dashboard/admin/settings/staff-mapping" className="text-primary hover:underline">
+              <Link to={dashPath('/admin/settings/staff-mapping')} className="text-primary hover:underline">
                 connect staff profiles in Settings
               </Link>
             </p>

@@ -23,6 +23,8 @@ import {
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -58,7 +60,9 @@ const normalizeUrl = (url: string): string => {
   return `https://${url}`;
 };
 
-export function AnnouncementsBento({ announcements, isLeadership }: AnnouncementsBentoProps) {
+export function AnnouncementsBento({
+  announcements, isLeadership }: AnnouncementsBentoProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(true);
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -114,14 +118,14 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             {isLeadership && (
               <>
                 <Link 
-                  to="/dashboard/admin/announcements" 
+                  to={dashPath('/admin/announcements')} 
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Manage announcements"
                 >
                   <Pencil className="w-4 h-4" />
                 </Link>
                 <Link 
-                  to="/dashboard/admin/announcements?create=true" 
+                  to={dashPath('/admin/announcements?create=true')} 
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Create new announcement"
                 >
@@ -131,7 +135,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             )}
             {totalCount > 3 && (
               <Button variant="ghost" size={tokens.button.card} asChild className="text-xs h-7">
-                <Link to="/dashboard/admin/announcements">
+                <Link to={dashPath('/admin/announcements')}>
                   View All ({totalCount})
                 </Link>
               </Button>

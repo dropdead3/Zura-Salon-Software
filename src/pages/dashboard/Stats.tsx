@@ -37,7 +37,10 @@ import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
 import { exportRedoCsv } from '@/lib/exportRedoCsv';
 import { Button } from '@/components/ui/button';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 export default function Stats() {
+  const { dashPath } = useOrgDashboardPath();
   const { user, roles } = useAuth();
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -191,7 +194,7 @@ export default function Stats() {
             {!isLinkedToPhorest && phorestConnection?.connected && (
               <Card className="p-4 bg-muted/50 border-dashed">
                 <p className="text-sm text-muted-foreground text-center">
-                  Your account isn't linked to {providerLabel} yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
+                  Your account isn't linked to {providerLabel} yet. <Link to={dashPath('/admin/phorest')} className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
                 </p>
               </Card>
             )}

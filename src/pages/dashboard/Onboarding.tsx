@@ -47,6 +47,8 @@ import { Database } from '@/integrations/supabase/types';
 import businessCardClassic from '@/assets/onboarding/business-card-classic.jpg';
 import businessCardModern from '@/assets/onboarding/business-card-modern.jpg';
 import headshotSessionPreview from '@/assets/onboarding/headshot-session.jpg';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -112,6 +114,7 @@ const BUSINESS_CARD_STYLES = [
 ];
 
 export default function Onboarding() {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const roles = useEffectiveRoles();
   const { toast } = useToast();
@@ -866,7 +869,7 @@ export default function Onboarding() {
             <p className="text-muted-foreground font-sans mb-6">
               You've completed all onboarding steps. You're ready to start!
             </p>
-            <Button onClick={() => navigate('/dashboard')} size={tokens.button.hero} className="font-display">
+            <Button onClick={() => navigate(dashPath('/'))} size={tokens.button.hero} className="font-display">
               <Sparkles className="w-4 h-4 mr-2" />
               GO TO DASHBOARD
             </Button>

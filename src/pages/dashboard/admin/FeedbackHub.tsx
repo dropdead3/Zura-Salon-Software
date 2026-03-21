@@ -13,8 +13,11 @@ import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 export default function FeedbackHub() {
+  const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
   const [activeTab, setActiveTab] = useState('overview');
@@ -31,7 +34,7 @@ export default function FeedbackHub() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
+              <Link to={dashPath('/admin/management')}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>

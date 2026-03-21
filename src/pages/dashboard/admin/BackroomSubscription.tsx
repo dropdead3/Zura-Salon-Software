@@ -15,6 +15,8 @@ import { Loader2, CreditCard, Weight, Settings, Plus, Beaker } from 'lucide-reac
 import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
 import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
 import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -30,6 +32,7 @@ interface SubscriptionData {
 }
 
 export default function BackroomSubscription() {
+  const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const [portalLoading, setPortalLoading] = useState(false);
   const [addScalesOpen, setAddScalesOpen] = useState(false);
@@ -81,7 +84,7 @@ export default function BackroomSubscription() {
           <DashboardPageHeader
             title="Backroom Subscription"
             description="You don't have an active Backroom subscription."
-            backTo="/dashboard/admin/backroom-settings"
+            backTo={dashPath('/admin/backroom-settings')}
           />
           <Card className="bg-card/60 border-border/40 max-w-lg">
             <CardContent className="p-6 text-center space-y-4">
@@ -115,7 +118,7 @@ export default function BackroomSubscription() {
         <DashboardPageHeader
           title="Backroom Subscription"
           description="Manage your Backroom subscription, scale licenses, and billing."
-          backTo="/dashboard/admin/backroom-settings"
+          backTo={dashPath('/admin/backroom-settings')}
           actions={
             <Button
               variant="outline"

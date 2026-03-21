@@ -42,6 +42,8 @@ import { subDays, differenceInDays, parseISO, format, startOfMonth, startOfYear 
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type SummaryRange = 'today' | '7d' | '30d' | 'mtd' | 'ytd';
 
@@ -125,6 +127,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
 }
 
 export function ExecutiveSummaryCard() {
+  const { dashPath } = useOrgDashboardPath();
   const { formatCurrencyWhole } = useFormatCurrency();
   const { data: hasRenters = false } = useHasRenters();
 
@@ -483,7 +486,7 @@ export function ExecutiveSummaryCard() {
               </div>
               {locations.length > 5 && (
                 <Link
-                  to="/dashboard/admin/analytics?tab=sales"
+                  to={dashPath('/admin/analytics?tab=sales')}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
                 >
                   View all

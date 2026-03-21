@@ -5,6 +5,8 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectivePermissions } from '@/hooks/useEffectivePermissions';
 import { AccessDeniedView } from './AccessDeniedView';
 import { Loader2 } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
@@ -17,7 +19,7 @@ interface ProtectedRouteProps {
   requireAnyPlatformRole?: boolean;
 }
 
-export function ProtectedRoute({ 
+export function ProtectedRoute({
   children, 
   requireCoach = false, 
   requiredPermission, 
@@ -25,6 +27,7 @@ export function ProtectedRoute({
   requirePlatformRole,
   requireAnyPlatformRole = false,
 }: ProtectedRouteProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
   const { isViewingAs, viewAsRole, clearViewAs } = useViewAs();
   const { permissions: effectivePermissions, isLoading: effectivePermissionsLoading } = useEffectivePermissions();
@@ -59,7 +62,7 @@ export function ProtectedRoute({
 
   // Check super admin access
   if (requireSuperAdmin && !profile?.is_super_admin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={dashPath('/')} replace />;
   }
 
   // Permission-based access: deny-by-default when permission required and data known
@@ -77,7 +80,7 @@ export function ProtectedRoute({
           />
         );
       }
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={dashPath('/')} replace />;
     }
 
     const hasEffectivePermission = effectivePermissions.includes(requiredPermission);
@@ -95,13 +98,13 @@ export function ProtectedRoute({
     
     // For real users (not in View As mode), redirect if no permission
     if (!isViewingAs && !hasPermission(requiredPermission)) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={dashPath('/')} replace />;
     }
   }
 
   // Legacy coach check (fallback for routes without specific permissions)
   if (requireCoach && !isCoach) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={dashPath('/')} replace />;
   }
 
   return <>{children}</>;

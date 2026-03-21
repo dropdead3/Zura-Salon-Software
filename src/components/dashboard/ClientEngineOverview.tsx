@@ -22,6 +22,8 @@ import { useNavigate } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
 
@@ -37,6 +39,7 @@ interface ClientEngineStats {
 }
 
 export function ClientEngineOverview() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { formatCurrencyWhole } = useFormatCurrency();
   const [loading, setLoading] = useState(true);
@@ -127,7 +130,7 @@ export function ClientEngineOverview() {
                 variant="ghost" 
                 size="icon" 
                 className="h-7 w-7 rounded-full hover:bg-primary/10"
-                onClick={() => navigate('/dashboard/admin/client-engine-tracker')}
+                onClick={() => navigate(dashPath('/admin/client-engine-tracker'))}
               >
                 <Info className="w-4 h-4 text-primary" />
               </Button>

@@ -28,6 +28,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface SyncStatus {
   sync_type: string;
@@ -35,7 +37,9 @@ interface SyncStatus {
   completed_at: string | null;
 }
 
-export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean }) {
+export function PhorestSyncPopout({
+  asMenuItem = false }: { asMenuItem?: boolean }) {
+  const { dashPath } = useOrgDashboardPath();
   const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
   const { syncLabel } = usePOSProviderLabel();
@@ -222,7 +226,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
             {syncLabel}
           </h4>
           <Link 
-            to="/dashboard/admin/phorest-settings" 
+            to={dashPath('/admin/phorest-settings')} 
             className="flex items-center gap-1 font-display text-[10px] uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
           >
             Settings

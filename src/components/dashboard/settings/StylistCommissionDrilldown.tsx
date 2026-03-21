@@ -21,6 +21,8 @@ import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from '@/compo
 import type { StylistLevel } from '@/hooks/useStylistLevels';
 import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
 import { toast } from 'sonner';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 interface StylistCommissionDrilldownProps {
   open: boolean;
@@ -46,6 +48,7 @@ export function StylistCommissionDrilldown({
   override,
   
 }: StylistCommissionDrilldownProps) {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const assignLevel = useAssignStylistLevel();
   const upsertOverride = useUpsertCommissionOverride();
@@ -301,7 +304,7 @@ export function StylistCommissionDrilldown({
             className="w-full text-xs text-muted-foreground hover:text-foreground"
             onClick={() => {
               onOpenChange(false);
-              navigate('/dashboard/admin/settings?category=services');
+              navigate(dashPath('/admin/settings?category=services'));
             }}
           >
             <ExternalLink className="w-3.5 h-3.5 mr-1.5" />

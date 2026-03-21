@@ -52,6 +52,8 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { StripeStatusIndicator } from '@/components/platform/ui/StripeStatusIndicator';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -78,6 +80,7 @@ const planLabels: Record<string, string> = {
 };
 
 export default function PlatformAccounts() {
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { setSelectedOrganization } = useOrganizationContext();
   const { data: organizations, isLoading } = useOrganizationsWithStats();
@@ -443,7 +446,7 @@ export default function PlatformAccounts() {
                                   organization_name: org.name,
                                   action: 'view_dashboard',
                                 });
-                                navigate('/dashboard');
+                                navigate(dashPath('/'));
                               }}
                             >
                               <LayoutDashboard className="h-4 w-4 mr-2" />

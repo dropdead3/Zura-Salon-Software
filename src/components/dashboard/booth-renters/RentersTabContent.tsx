@@ -12,6 +12,8 @@ import { Plus, Search, Building2, DollarSign, Calendar } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { RenterDetailSheet } from './RenterDetailSheet';
 import { IssueContractDialog } from './IssueContractDialog';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+
 
 const statusColors: Record<string, string> = {
   active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -24,7 +26,9 @@ interface RentersTabContentProps {
   organizationId: string;
 }
 
-export function RentersTabContent({ organizationId }: RentersTabContentProps) {
+export function RentersTabContent({
+  organizationId }: RentersTabContentProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,7 +107,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
             <SelectItem value="terminated">Terminated</SelectItem>
           </SelectContent>
         </Select>
-        <Button className="gap-2" onClick={() => navigate('/dashboard/admin/onboard-renter')}>
+        <Button className="gap-2" onClick={() => navigate(dashPath('/admin/onboard-renter'))}>
           <Plus className="h-4 w-4" />
           Onboard Renter
         </Button>
