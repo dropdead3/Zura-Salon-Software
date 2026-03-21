@@ -159,7 +159,8 @@ export function useRecordDispensedWeight() {
       lineId: string;
       actualWeight: number;
     }) => {
-      // Update the line item's dispensed quantity
+      if (params.sessionId.startsWith('demo-') || params.bowlId.startsWith('demo-')) return;
+
       const { error } = await supabase
         .from('mix_bowl_lines')
         .update({ dispensed_quantity: params.actualWeight })
@@ -167,7 +168,6 @@ export function useRecordDispensedWeight() {
 
       if (error) throw error;
 
-      // Emit weight capture event
       await emitSessionEvent({
         mix_session_id: params.sessionId,
         organization_id: params.organizationId,
@@ -200,6 +200,10 @@ export function useSealDockBowl() {
       organizationId: string;
       bowlId: string;
     }) => {
+      if (params.sessionId.startsWith('demo-') || params.bowlId.startsWith('demo-')) {
+        return { success: true };
+      }
+
       const meta = await buildCommandMeta('ui');
       const result = await executeSealBowl({
         meta,
@@ -212,7 +216,6 @@ export function useSealDockBowl() {
         throw new Error(result.errors?.[0]?.message || 'Failed to seal bowl');
       }
 
-      // Update projection
       await supabase
         .from('mix_bowls')
         .update({ status: 'sealed', completed_at: new Date().toISOString() })
@@ -244,6 +247,10 @@ export function useReweighDockBowl() {
       bowlId: string;
       leftoverWeight: number;
     }) => {
+      if (params.sessionId.startsWith('demo-') || params.bowlId.startsWith('demo-')) {
+        return { success: true };
+      }
+
       const meta = await buildCommandMeta('ui');
       const result = await executeCaptureReweigh({
         meta,
@@ -257,7 +264,6 @@ export function useReweighDockBowl() {
         throw new Error(result.errors?.[0]?.message || 'Failed to capture reweigh');
       }
 
-      // Update projection
       await supabase
         .from('mix_bowls')
         .update({

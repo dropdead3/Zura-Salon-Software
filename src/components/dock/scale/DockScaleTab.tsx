@@ -6,6 +6,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Weight, WifiOff, Bluetooth, BluetoothSearching, BluetoothConnected, RefreshCw, Zap, Radio, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
 import type { WeightEvent } from '@/lib/backroom/weight-event-schema';
 import { createScaleAdapter, BLEScaleAdapter } from '@/lib/backroom/scale-adapter';
@@ -85,14 +86,28 @@ const CONNECTION_STATE_UI: Record<ConnectionState, {
 const BLE_STEPS: ConnectionState[] = ['disconnected', 'scanning', 'pairing', 'connected'];
 
 export function DockScaleTab() {
-  const [mode, setMode] = useState<ScaleMode>('manual');
-  const [connectionState, setConnectionState] = useState<ConnectionState>('manual_override');
+  const { isDemoMode } = useDockDemo();
+  const [mode, setMode] = useState<ScaleMode>(isDemoMode ? 'ble' : 'manual');
+  const [connectionState, setConnectionState] = useState<ConnectionState>(isDemoMode ? 'connected' : 'manual_override');
   const [isConnecting, setIsConnecting] = useState(false);
-  const [lastReading, setLastReading] = useState<number | null>(null);
+  const [lastReading, setLastReading] = useState<number | null>(isDemoMode ? 0.0 : null);
   const [lastUnit, setLastUnit] = useState<string>('g');
-  const [deviceName, setDeviceName] = useState<string | null>(null);
+  const [deviceName, setDeviceName] = useState<string | null>(isDemoMode ? 'Acaia Pearl (Demo)' : null);
   const [bleError, setBleError] = useState<string | null>(null);
   const adapterRef = useRef(createScaleAdapter('manual'));
+
+  // Demo mode: simulate weight fluctuation
+  useEffect(() => {
+    if (!isDemoMode) return;
+    const interval = setInterval(() => {
+      setLastReading(prev => {
+        const base = prev ?? 0;
+        const fluctuation = (Math.random() - 0.5) * 0.4;
+        return Math.max(0, parseFloat((base + fluctuation).toFixed(1)));
+      });
+    }, 800);
+    return () => clearInterval(interval);
+  }, [isDemoMode]);
 
   // Listen for readings from the adapter
   useEffect(() => {
