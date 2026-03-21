@@ -2157,6 +2157,26 @@ export function AppointmentDetailSheet({
           )}
         </DialogContent>
       </Dialog>
+
+      {appointment && (
+        <EditServicesDialog
+          open={editServicesOpen}
+          onOpenChange={setEditServicesOpen}
+          currentServices={services.map(s => s.name)}
+          locationId={appointment.location_id}
+          isSaving={updateServicesMutation.isPending}
+          onSave={(newServices: ServiceEntry[]) => {
+            updateServicesMutation.mutate({
+              appointmentId: appointment.id,
+              organizationId: resolvedOrgId || '',
+              services: newServices,
+              previousServiceName: appointment.service_name,
+            }, {
+              onSuccess: () => setEditServicesOpen(false),
+            });
+          }}
+        />
+      )}
     </>
   );
 }
