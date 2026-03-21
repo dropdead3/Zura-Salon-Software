@@ -87,7 +87,7 @@ export default function BackroomAdmin() {
 
       <div className="flex gap-6 min-h-[calc(100vh-220px)]">
         {/* Left sidebar nav */}
-        <nav className="w-[200px] shrink-0 rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.5)] backdrop-blur-xl p-3 space-y-4 self-start sticky top-6">
+        <nav className="w-[200px] shrink-0 p-3 space-y-4 self-start sticky top-6">
           {navGroups.map((group) => (
             <div key={group.label} className="space-y-1">
               <span className="font-display text-[10px] tracking-[0.08em] uppercase text-[hsl(var(--platform-foreground-muted)/0.5)] px-2">
