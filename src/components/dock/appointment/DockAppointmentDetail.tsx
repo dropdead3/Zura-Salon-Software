@@ -59,12 +59,14 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
                 {appointment.service_name && <span>{appointment.service_name} · </span>}
                 {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
               </p>
-              <button
-                onClick={() => setEditServicesOpen(true)}
-                className="shrink-0 p-0.5 rounded text-[hsl(var(--platform-foreground-muted)/0.6)] hover:text-[hsl(var(--platform-foreground))] transition-colors"
-              >
-                <Pencil className="w-3 h-3" />
-              </button>
+              {!isTerminal && (
+                <button
+                  onClick={() => setEditServicesOpen(true)}
+                  className="shrink-0 p-0.5 rounded text-[hsl(var(--platform-foreground-muted)/0.6)] hover:text-[hsl(var(--platform-foreground))] transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
             </div>
           </div>
         </div>
