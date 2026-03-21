@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
 import { DockBottomNav } from './DockBottomNav';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
 import { DockDemoBadge } from './DockDemoBadge';
@@ -18,6 +19,7 @@ import { DockSettingsTab } from './settings/DockSettingsTab';
 import { DockAppointmentDetail } from './appointment/DockAppointmentDetail';
 import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
+import { useDockLockGesture } from '@/hooks/dock/useDockLockGesture';
 
 interface DockLayoutProps {
   activeTab: DockTab;
