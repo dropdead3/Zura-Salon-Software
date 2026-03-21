@@ -987,7 +987,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <a 
-                        href={`https://instagram.com/${member.instagram.replace('@', '')}`
+                        href={`https://instagram.com/${member.instagram.replace('@', '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
