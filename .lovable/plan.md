@@ -1,43 +1,49 @@
 
 
-## Demo Mode — Remaining Gaps and Enhancements
+## Demo Mode Hardening — 3 Enhancements
 
-### Gap 1: `useDockCompleteAppointment` Has No Demo Guard
+### 1. Demo Bowl Persistence Guard
 
-**Problem:** When a stylist swipes "Finish Appt" on a demo appointment (IDs like `demo-appt-1`), the mutation calls the `update-phorest-appointment` edge function with a fake appointment ID. This will fail with an error toast ("Failed to complete").
+**Problem:** `useCompleteDockSession` and `useMarkDockSessionUnresolved` in `useDockSessionComplete.ts` hit the DB with `demo-session-*` IDs, causing errors. The `useCreateMixBowl` and `useUpdateBowlStatus` mutations in `useMixBowls.ts` also write to `mix_bowls` and `mix_session_events` with demo IDs. Similarly, `useDepleteMixSession` would attempt inventory depletion on fake sessions.
 
-**Fix:** `src/hooks/dock/useDockCompleteAppointment.ts` — check if `appointmentId` starts with `demo-` and short-circuit with a success toast ("Demo: Appointment completed") without hitting the edge function or database.
+**Note:** `DockServicesTab` already handles bowl creation locally via `demoBowls` state — so the main risk is the session-level mutations (complete, unresolved) and any edge path where `useMixBowls` mutations get called with demo IDs.
 
-### Gap 2: Product Catalog Doesn't Leverage `usesRealData`
+**Fix:**
+- **`src/hooks/dock/useDockSessionComplete.ts`** — Add `demo-` ID guard at the top of both `useCompleteDockSession` and `useMarkDockSessionUnresolved` mutation functions. Short-circuit with success toast.
+- **`src/hooks/backroom/useMixBowls.ts`** — Add `demo-` guard in `useCreateMixBowl` and `useUpdateBowlStatus`. Return mock data without DB writes.
+- **`src/hooks/backroom/useDepleteMixSession.ts`** — Add `demo-` guard to skip inventory depletion.
 
-**Problem:** `useDockProductCatalog.ts` checks `isDemoMode` but not `usesRealData`. When entering demo mode with a real org (`?demo=<orgId>`), it returns the static demo products (Wella, Redken, Schwarzkopf) instead of the org's actual supply library. This breaks the illusion of a real demo.
+### 2. Demo Analytics Exclusion
 
-**Fix:** `src/hooks/dock/useDockProductCatalog.ts` — in all 3 hooks (`useDockBrands`, `useDockBrandProducts`, `useDockProductSearch`), change the early return to `if (isDemoMode && !usesRealData)` so org-specific demos fetch real products. Add `usesRealData` from `useDockDemo()`.
+**Problem:** If demo sessions ever get written to `mix_sessions` (e.g. via real-data demo path), the analytics snapshots could include them.
 
-### Gap 3: Mix Sessions Don't Leverage `usesRealData`
+**Current state:** The analytics queries in `analytics-service.ts`, `useChemicalCostTrend.ts`, `useBackroomROI.ts`, and `useBackroomComplianceTracker.ts` all query `backroom_analytics_snapshots` which is populated by a scheduled snapshot job. The snapshot job queries `mix_sessions` — need to verify it filters demo data.
 
-**Problem:** `useDockMixSessions.ts` returns static `DEMO_MIX_SESSIONS` for all demo modes, even org-specific ones. If the org has real mix session data for today's appointments, it's never shown.
+**Fix:**
+- **`src/lib/backroom/services/analytics-service.ts`** — In the `getLatestSnapshot` and any snapshot-writing functions, add a `is_demo` filter or exclude sessions where `appointment_id` starts with `demo-`.
+- **`supabase/functions/supply-intelligence/index.ts`** — The waste query already reads from `backroom_analytics_snapshots`. If the snapshot generation excludes demo data, this is clean. Add a safety `.neq('is_demo', true)` filter if the column exists, or document that demo sessions never persist to `mix_sessions` (which is true for pure demo mode since `DockServicesTab` uses local state).
 
-**Fix:** `src/hooks/dock/useDockMixSessions.ts` — change to `if (isDemoMode && !usesRealData)` and let the real query run for org-specific demos. Fall back to demo sessions if the real query returns empty.
+**Pragmatic approach:** Since pure demo mode uses local state and never writes to `mix_sessions`, and real-data demo mode uses actual org data (which is valid analytics), the main risk is minimal. Add a comment documenting this invariant and add the `demo-` session guards (from point 1) as the primary defense.
 
-### Gap 4: `DockClientTab` Queries Will Fail on Demo Appointments
+### 3. Demo Reset Button
 
-**Problem:** The Client tab queries `phorest_clients`/`clients` by `phorest_client_id` or `client_id` from demo appointments. Demo appointments use fake IDs (`demo-client-1`, `demo-phorest-1`) that don't exist in the DB. Every section silently fails and shows empty state.
+**Problem:** No way to reset demo state without refreshing the page. Accumulated demo bowls, location selection, and staff filter persist across tab switches.
 
-**Fix:** `src/components/dock/appointment/DockClientTab.tsx` — detect demo client IDs (prefix `demo-`) and return mock client data inline (name, fake email, placeholder visit count, etc.) so the Client tab is populated during demos. This only affects the generic preview path; org-specific demos with real appointments already have valid client IDs.
-
-### Gap 5: `urlDemoSession` Is Computed But Never Auto-Applied
-
-**Problem:** `Dock.tsx` creates `urlDemoSession` via `useMemo` when `?demo=<orgId>` is present, but it's only used in `handleLocationChange`. The user still has to go through the PIN gate manually. For a seamless demo experience, the session should auto-apply.
-
-**Fix:** This is intentional behavior (PIN gate validates device binding), so no change needed. But worth noting: if a "skip PIN in demo" flow is ever desired, `urlDemoSession` is already wired — just needs to be set as initial `staff` state.
+**Fix:**
+- **`src/components/dock/DockDeviceSwitcher.tsx`** — Add a `RotateCw` (reset) icon button visible only in demo mode (`isDemoMode` from `useDockDemo()`). On tap:
+  - Clear `localStorage` keys: `dock-location-id`, `dock-staff-filter`
+  - Emit a custom event (`dock-demo-reset`) that `DockServicesTab` listens to for clearing `demoBowls` state
+  - Invalidate all dock-related query caches (`dock-appointments`, `dock-mix-sessions`, `dock-client-profile`)
+  - Show toast: "Demo reset"
+- **`src/components/dock/appointment/DockServicesTab.tsx`** — Add `useEffect` listener for the `dock-demo-reset` event that calls `setDemoBowls([])`.
 
 ### Files Summary
 
 | Action | File | Change |
 |--------|------|--------|
-| Modify | `src/hooks/dock/useDockCompleteAppointment.ts` | Guard demo appointment IDs |
-| Modify | `src/hooks/dock/useDockProductCatalog.ts` | Respect `usesRealData` in all 3 hooks |
-| Modify | `src/hooks/dock/useDockMixSessions.ts` | Respect `usesRealData`, fallback to demo data |
-| Modify | `src/components/dock/appointment/DockClientTab.tsx` | Mock client data for demo IDs |
+| Modify | `src/hooks/dock/useDockSessionComplete.ts` | Guard `demo-` session IDs |
+| Modify | `src/hooks/backroom/useMixBowls.ts` | Guard `demo-` session IDs |
+| Modify | `src/hooks/backroom/useDepleteMixSession.ts` | Guard `demo-` session IDs |
+| Modify | `src/components/dock/DockDeviceSwitcher.tsx` | Add Reset Demo button |
+| Modify | `src/components/dock/appointment/DockServicesTab.tsx` | Listen for reset event |
 
