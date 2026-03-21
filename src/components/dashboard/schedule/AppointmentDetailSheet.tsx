@@ -1154,7 +1154,17 @@ export function AppointmentDetailSheet({
 
                     {/* Services Breakdown -- with per-service price (#5) */}
                     <motion.div variants={staggerItem} className="space-y-2">
-                      <h4 className={tokens.heading.subsection}>Services</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className={tokens.heading.subsection}>Services</h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => setEditServicesOpen(true)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
                       <div className="space-y-1.5">
                         {services.map((svc, i) => {
                           const override = assignmentMap.get(svc.name);
