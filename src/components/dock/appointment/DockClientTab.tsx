@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 interface DockClientTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
+  activeBowlId?: string | null;
 }
 
 function getInitials(name: string | null): string {
