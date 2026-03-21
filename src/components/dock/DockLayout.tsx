@@ -108,6 +108,19 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
         clientId={clientViewAppt?.client_id}
         clientName={clientViewAppt?.client_name}
       />
+
+      {/* Lock gesture affordance — bottom-right corner */}
+      {!showingDetail && (
+        <div
+          className="absolute bottom-24 right-4 pointer-events-none transition-all duration-150"
+          style={{
+            opacity: lockProgress > 0 ? 0.15 + lockProgress * 0.6 : 0.12,
+            transform: `scale(${0.8 + lockProgress * 0.4})`,
+          }}
+        >
+          <Lock className="w-4 h-4 text-[hsl(var(--platform-foreground))]" />
+        </div>
+      )}
     </div>
   );
 
