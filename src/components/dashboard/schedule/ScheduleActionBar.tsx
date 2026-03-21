@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { ScheduleLegend } from './ScheduleLegend';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type UrgencyLevel = 'overdue' | 'nearing';
 
@@ -62,7 +61,6 @@ export function ScheduleActionBar({
   onSelectAppointment,
   todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
 
   const queue = useMemo(() => buildPaymentQueue(appointments, nowMinutes), [appointments, nowMinutes]);
@@ -133,7 +131,7 @@ export function ScheduleActionBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to={dashPath('/appointments-hub')}
+            to="/dashboard/appointments-hub"
             className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
           >
             <Receipt className="h-4 w-4 text-muted-foreground" />

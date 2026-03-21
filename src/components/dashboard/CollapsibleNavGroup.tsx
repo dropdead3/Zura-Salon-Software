@@ -13,7 +13,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface NavItem {
   href: string;
@@ -58,7 +57,7 @@ export function CollapsibleNavGroup({
   getNavLabel,
   hiddenLinks = [],
   groupedFavorites = [],
-  analyticsHubHref = dashPath('/admin/analytics'),
+  analyticsHubHref = '/dashboard/admin/analytics',
   onRemoveSubLink,
 }: CollapsibleNavGroupProps) {
   const location = useLocation();
@@ -90,7 +89,6 @@ export function CollapsibleNavGroup({
   }, [openGroups]);
 
   const toggleGroup = (groupId: string) => {
-  const { dashPath } = useOrgDashboardPath();
     setOpenGroups(prev => ({
       ...prev,
       [groupId]: !prev[groupId],

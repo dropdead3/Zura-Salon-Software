@@ -245,7 +245,7 @@ export function PlatformSidebar() {
         {/* Profile divider */}
         <div className="h-px mx-1 mb-3 bg-gradient-to-r from-transparent via-[hsl(var(--platform-border)/0.6)] to-transparent" />
         <button
-          onClick={() => navigate('/platform/settings')}
+          onClick={() => navigate('/dashboard/platform/settings')}
           className={cn(
             'w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200 active:scale-[0.98]',
             collapsed && 'justify-center',

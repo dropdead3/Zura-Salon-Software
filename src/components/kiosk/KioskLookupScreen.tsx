@@ -187,7 +187,7 @@ export function KioskLookupScreen() {
           className="mb-10 px-10 py-6 rounded-3xl min-w-[340px] text-center backdrop-blur-md"
           style={{ 
             backgroundColor: `${textColor}05`,
-            border: `1.5px solid ${phoneNumber ? accentColor : }`${textColor}20`}`,
+            border: `1.5px solid ${phoneNumber ? accentColor : `${textColor}20`}`,
             transition: 'all 0.3s ease',
           }}
           initial={{ scale: 0.95, opacity: 0 }}

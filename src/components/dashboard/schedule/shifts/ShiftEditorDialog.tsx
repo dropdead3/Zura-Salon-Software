@@ -38,7 +38,7 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const TIME_SLOTS: string[] = [];
 for (let h = 6; h < 22; h++) {
   for (let m = 0; m < 60; m += 30) {
-    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`);
+    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
   }
 }
 

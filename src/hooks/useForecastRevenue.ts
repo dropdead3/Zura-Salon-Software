@@ -271,7 +271,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
             weeks.push({
               weekStart: weekStartStr,
               weekEnd: format(weekEndDate, 'yyyy-MM-dd'),
-              weekLabel: `Week of ${format(weekStartDate, 'MMM d}`,
+              weekLabel: `Week of ${format(weekStartDate, 'MMM d')}`,
               revenue: weekDays.reduce((sum, d) => sum + d.revenue, 0),
               confirmedRevenue: weekDays.reduce((sum, d) => sum + d.confirmedRevenue, 0),
               unconfirmedRevenue: weekDays.reduce((sum, d) => sum + d.unconfirmedRevenue, 0),

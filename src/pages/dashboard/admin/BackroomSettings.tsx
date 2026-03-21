@@ -43,7 +43,6 @@ import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settin
 import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type BackroomSection =
   | 'overview'
@@ -124,7 +123,6 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 }
 
 export default function BackroomSettings() {
-  const { dashPath } = useOrgDashboardPath();
   const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useBackroomSetupHealth();
@@ -226,7 +224,7 @@ export default function BackroomSettings() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(dashPath('/admin/team-hub'))}
+              onClick={() => navigate('/dashboard/admin/team-hub')}
               aria-label="Go back"
               className="mt-1 shrink-0"
             >
@@ -281,7 +279,7 @@ export default function BackroomSettings() {
                       {group.group === 'settings' && (
                         <div className="mt-2 pt-2 border-t border-border/40">
                           <button
-                            onClick={() => navigate(dashPath('/admin/backroom-subscription'))}
+                            onClick={() => navigate('/dashboard/admin/backroom-subscription')}
                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
                           >
                             <CreditCard className="w-4 h-4 shrink-0" />

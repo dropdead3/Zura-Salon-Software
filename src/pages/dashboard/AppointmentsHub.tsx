@@ -30,7 +30,6 @@ import { CreditCard, RefreshCw, Download, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -284,7 +283,6 @@ function TransactionsTab({ search }: { search: string }) {
 }
 
 export default function AppointmentsHub() {
-  const { dashPath } = useOrgDashboardPath();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'appointments';
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -321,10 +319,10 @@ export default function AppointmentsHub() {
             <CollapsibleContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-4 pb-4">
                 {[
-                  { label: 'Appointment Analytics', to: dashPath('/admin/analytics?tab=operations&subtab=appointments'), icon: Calendar },
-                  { label: 'Booking Pipeline', to: dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline'), icon: Tag },
-                  { label: 'Sales Overview', to: dashPath('/admin/analytics?tab=sales'), icon: CreditCard },
-                  { label: 'Staff Utilization', to: dashPath('/admin/analytics?tab=operations&subtab=staff-utilization'), icon: Receipt },
+                  { label: 'Appointment Analytics', to: '/dashboard/admin/analytics?tab=operations&subtab=appointments', icon: Calendar },
+                  { label: 'Booking Pipeline', to: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline', icon: Tag },
+                  { label: 'Sales Overview', to: '/dashboard/admin/analytics?tab=sales', icon: CreditCard },
+                  { label: 'Staff Utilization', to: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization', icon: Receipt },
                 ].map((link) => (
                   <Link
                     key={link.label}

@@ -68,7 +68,7 @@ export function generatePurchaseOrderPdf(options: GeneratePOPdfOptions): POPdfRe
     doc.text(`PO #: ${poNumber}`, 14, startY);
     startY += 5;
   }
-  doc.text(`Date: ${format(new Date(), 'MMMM d, yyyy')}, 14, startY);
+  doc.text(`Date: ${format(new Date(), 'MMMM d, yyyy')}`, 14, startY);
   startY += 8;
 
   // Table
@@ -140,7 +140,7 @@ export function generatePurchaseOrderPdf(options: GeneratePOPdfOptions): POPdfRe
 
   addReportFooter(doc);
 
-  const fileName = buildReportFileName({ orgName, reportSlug: `PO-${supplierName.replace(/\s+/g, '-}`, dateFrom: today });
+  const fileName = buildReportFileName({ orgName, reportSlug: `PO-${supplierName.replace(/\s+/g, '-')}`, dateFrom: today });
   const base64 = doc.output('datauristring').split(',')[1];
 
   return { base64, fileName };
@@ -163,7 +163,7 @@ export function downloadPurchaseOrderPdf(options: GeneratePOPdfOptions): void {
   // Re-use same layout logic
   const result = generatePurchaseOrderPdf(options);
   // For download, just regenerate and save
-  const fileName = buildReportFileName({ orgName: options.orgName, reportSlug: `PO-${options.supplierName.replace(/\s+/g, '-}`, dateFrom: today });
+  const fileName = buildReportFileName({ orgName: options.orgName, reportSlug: `PO-${options.supplierName.replace(/\s+/g, '-')}`, dateFrom: today });
   
   // Convert base64 back to blob and save
   const byteCharacters = atob(result.base64);

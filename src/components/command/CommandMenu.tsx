@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useCommandMenu } from '@/hooks/useCommandMenu';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type CommandLink = {
   label: string;
@@ -32,16 +31,15 @@ type CommandLink = {
 };
 
 const NAVIGATION: CommandLink[] = [
-  { label: 'Command Center', href: dashPath('/'), icon: LayoutDashboard, keywords: ['home'] },
-  { label: 'Schedule', href: dashPath('/schedule'), icon: CalendarDays, keywords: ['calendar'] },
-  { label: 'Team Directory', href: dashPath('/directory'), icon: Users, keywords: ['team', 'staff'] },
-  { label: 'Analytics Hub', href: dashPath('/admin/analytics'), icon: BarChart3, keywords: ['reports'] },
-  { label: 'Settings', href: dashPath('/admin/settings'), icon: Settings, keywords: ['admin'] },
-  { label: 'Clients', href: dashPath('/clients'), icon: Search, keywords: ['client', 'directory'] },
+  { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard, keywords: ['home'] },
+  { label: 'Schedule', href: '/dashboard/schedule', icon: CalendarDays, keywords: ['calendar'] },
+  { label: 'Team Directory', href: '/dashboard/directory', icon: Users, keywords: ['team', 'staff'] },
+  { label: 'Analytics Hub', href: '/dashboard/admin/analytics', icon: BarChart3, keywords: ['reports'] },
+  { label: 'Settings', href: '/dashboard/admin/settings', icon: Settings, keywords: ['admin'] },
+  { label: 'Clients', href: '/dashboard/clients', icon: Search, keywords: ['client', 'directory'] },
 ];
 
 export function CommandMenu() {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { open, setOpen } = useCommandMenu();
   const { theme, setTheme } = useDashboardTheme();

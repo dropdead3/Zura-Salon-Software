@@ -10,7 +10,6 @@ import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOneOnOneMeetings, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
 import { format, parseISO } from 'date-fns';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -21,7 +20,6 @@ const meetingTypes = [
 ];
 
 export default function CoachRequests() {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: meetings = [], isLoading } = useOneOnOneMeetings();
@@ -49,7 +47,7 @@ export default function CoachRequests() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <div>
-            <Link to={dashPath('/schedule-meeting')}>
+            <Link to="/dashboard/schedule-meeting">
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
@@ -79,7 +77,7 @@ export default function CoachRequests() {
                 <Card 
                   key={meeting.id} 
                   className="cursor-pointer hover:bg-muted/50 transition-colors" 
-                  onClick={() => navigate(dashPath(`/meeting/${meeting.id}`))}
+                  onClick={() => navigate(`/dashboard/meeting/${meeting.id}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
@@ -117,7 +115,7 @@ export default function CoachRequests() {
                         <Button
                           size={tokens.button.inline}
                           variant="ghost"
-                          onClick={(e) => { e.stopPropagation(); navigate(dashPath(`/meeting/${meeting.id}`)); }}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/meeting/${meeting.id}`); }}
                         >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Open

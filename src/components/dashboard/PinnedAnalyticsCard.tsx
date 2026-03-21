@@ -55,7 +55,6 @@ import { useHiringCapacity } from '@/hooks/useHiringCapacity';
 import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
 import { useWeekAheadRevenue } from '@/hooks/useWeekAheadRevenue';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
 
@@ -240,27 +239,27 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
 
 // Link mapping for compact bento tiles
 const CARD_LINKS: Record<string, { label: string; href: string }> = {
-  executive_summary: { label: 'Brief', href: dashPath('/admin/analytics?tab=leadership') },
-  sales_overview: { label: 'Sales', href: dashPath('/admin/analytics?tab=sales') },
-  top_performers: { label: 'Team', href: dashPath('/admin/analytics?tab=sales&subtab=team') },
-  capacity_utilization: { label: 'Capacity', href: dashPath('/admin/analytics?tab=operations&subtab=capacity') },
-  client_funnel: { label: 'Clients', href: dashPath('/admin/analytics?tab=marketing') },
-  goal_tracker: { label: 'Goals', href: dashPath('/admin/analytics?tab=sales&subtab=goals') },
-  new_bookings: { label: 'Pipeline', href: dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline') },
-  client_health: { label: 'Health', href: dashPath('/admin/analytics?tab=operations') },
-  service_mix: { label: 'Mix', href: dashPath('/admin/analytics?tab=sales') },
-  rebooking: { label: 'Rebooking', href: dashPath('/admin/analytics?tab=operations') },
-  retail_effectiveness: { label: 'Retail', href: dashPath('/admin/analytics?tab=sales') },
-  staffing_trends: { label: 'Staff', href: dashPath('/admin/analytics?tab=operations') },
-  stylist_workload: { label: 'Workload', href: dashPath('/admin/analytics?tab=operations&subtab=capacity') },
-  operational_health: { label: 'Health', href: dashPath('/admin/analytics?tab=operations') },
-  week_ahead_forecast: { label: 'Forecast', href: dashPath('/admin/analytics?tab=sales') },
-  daily_brief: { label: 'Brief', href: dashPath('/admin/analytics?tab=leadership') },
-  revenue_breakdown: { label: 'Revenue', href: dashPath('/admin/analytics?tab=sales') },
-  locations_rollup: { label: 'Locations', href: dashPath('/admin/analytics?tab=sales') },
-  hiring_capacity: { label: 'Hiring', href: dashPath('/admin/analytics?tab=operations') },
-  operations_stats: { label: 'Queue', href: dashPath('/admin/analytics?tab=operations') },
-  client_experience_staff: { label: 'Experience', href: dashPath('/admin/analytics?tab=sales') },
+  executive_summary: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
+  sales_overview: { label: 'Sales', href: '/dashboard/admin/analytics?tab=sales' },
+  top_performers: { label: 'Team', href: '/dashboard/admin/analytics?tab=sales&subtab=team' },
+  capacity_utilization: { label: 'Capacity', href: '/dashboard/admin/analytics?tab=operations&subtab=capacity' },
+  client_funnel: { label: 'Clients', href: '/dashboard/admin/analytics?tab=marketing' },
+  goal_tracker: { label: 'Goals', href: '/dashboard/admin/analytics?tab=sales&subtab=goals' },
+  new_bookings: { label: 'Pipeline', href: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline' },
+  client_health: { label: 'Health', href: '/dashboard/admin/analytics?tab=operations' },
+  service_mix: { label: 'Mix', href: '/dashboard/admin/analytics?tab=sales' },
+  rebooking: { label: 'Rebooking', href: '/dashboard/admin/analytics?tab=operations' },
+  retail_effectiveness: { label: 'Retail', href: '/dashboard/admin/analytics?tab=sales' },
+  staffing_trends: { label: 'Staff', href: '/dashboard/admin/analytics?tab=operations' },
+  stylist_workload: { label: 'Workload', href: '/dashboard/admin/analytics?tab=operations&subtab=capacity' },
+  operational_health: { label: 'Health', href: '/dashboard/admin/analytics?tab=operations' },
+  week_ahead_forecast: { label: 'Forecast', href: '/dashboard/admin/analytics?tab=sales' },
+  daily_brief: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
+  revenue_breakdown: { label: 'Revenue', href: '/dashboard/admin/analytics?tab=sales' },
+  locations_rollup: { label: 'Locations', href: '/dashboard/admin/analytics?tab=sales' },
+  hiring_capacity: { label: 'Hiring', href: '/dashboard/admin/analytics?tab=operations' },
+  operations_stats: { label: 'Queue', href: '/dashboard/admin/analytics?tab=operations' },
+  client_experience_staff: { label: 'Experience', href: '/dashboard/admin/analytics?tab=sales' },
 };
 
 /**
@@ -269,7 +268,6 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
  * that have been placed inline with other dashboard sections.
  */
 export function PinnedAnalyticsCard({ cardId, filters, compact = false }: PinnedAnalyticsCardProps) {
-  const { dashPath } = useOrgDashboardPath();
   // Check if parent tab is visible - if not, hide this card
   const parentTabKey = CARD_TO_TAB_MAP[cardId];
   const parentTabVisible = useElementVisibility(parentTabKey || '');

@@ -23,7 +23,6 @@ import {
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -60,7 +59,6 @@ const normalizeUrl = (url: string): string => {
 };
 
 export function AnnouncementsBento({ announcements, isLeadership }: AnnouncementsBentoProps) {
-  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(true);
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -116,14 +114,14 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             {isLeadership && (
               <>
                 <Link 
-                  to={dashPath('/admin/announcements')} 
+                  to="/dashboard/admin/announcements" 
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Manage announcements"
                 >
                   <Pencil className="w-4 h-4" />
                 </Link>
                 <Link 
-                  to={dashPath('/admin/announcements?create=true')} 
+                  to="/dashboard/admin/announcements?create=true" 
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Create new announcement"
                 >
@@ -133,7 +131,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             )}
             {totalCount > 3 && (
               <Button variant="ghost" size={tokens.button.card} asChild className="text-xs h-7">
-                <Link to={dashPath('/admin/announcements')}>
+                <Link to="/dashboard/admin/announcements">
                   View All ({totalCount})
                 </Link>
               </Button>
@@ -154,7 +152,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                 >
                   {isLeadership && (
                     <Link 
-                      to={dashPath(`/admin/announcements?edit=${announcement.id}`)}
+                      to={`/dashboard/admin/announcements?edit=${announcement.id}`}
                       className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="w-3.5 h-3.5" />

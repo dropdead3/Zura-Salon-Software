@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface CapacityBreakdownProps {
   grossHoursPerStylist: number;
@@ -28,7 +27,6 @@ export function CapacityBreakdown({
   daysInPeriod,
   className,
 }: CapacityBreakdownProps) {
-  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   
   // Editable state with sensible defaults
@@ -128,7 +126,7 @@ export function CapacityBreakdown({
                   From your location settings
                 </span>
                 <Link 
-                  to={dashPath('/admin/settings?category=locations')}
+                  to="/dashboard/admin/settings?category=locations"
                   className="text-xs text-primary hover:underline flex items-center gap-1"
                 >
                   Edit Settings

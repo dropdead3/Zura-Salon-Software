@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { platformNavGroups } from '@/config/platformNav';
 import { LayoutDashboard, Wrench, BarChart3, Settings, Terminal, Users, Rocket, HeartPulse } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 // Section icon mapping for collapsed sidebar popovers
 export const SECTION_ICONS: Record<string, LucideIcon> = {
@@ -65,34 +64,34 @@ export const MANAGEMENT_SUB_GROUPS = {
 // Default link order for each section
 export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   main: [
-    dashPath('/'),
-    dashPath('/schedule'),
-    dashPath('/team-chat'),
+    '/dashboard',
+    '/dashboard/schedule',
+    '/dashboard/team-chat',
   ],
   myTools: [
-    dashPath('/today-prep'),
-    dashPath('/waitlist'),
-    dashPath('/stats'),
-    dashPath('/my-pay'),
-    dashPath('/training'),
-    dashPath('/program'),
-    dashPath('/leaderboard'),
-    dashPath('/shift-swaps'),
-    dashPath('/rewards'),
-    dashPath('/ring-the-bell'),
-    dashPath('/my-graduation'),
+    '/dashboard/today-prep',
+    '/dashboard/waitlist',
+    '/dashboard/stats',
+    '/dashboard/my-pay',
+    '/dashboard/training',
+    '/dashboard/program',
+    '/dashboard/leaderboard',
+    '/dashboard/shift-swaps',
+    '/dashboard/rewards',
+    '/dashboard/ring-the-bell',
+    '/dashboard/my-graduation',
   ],
   manage: [
-    dashPath('/admin/analytics'),
-    dashPath('/admin/team-hub'),
-    dashPath('/admin/client-hub'),
-    dashPath('/admin/growth-hub'),
-    dashPath('/admin/payroll'),
-    dashPath('/admin/booth-renters'),
+    '/dashboard/admin/analytics',
+    '/dashboard/admin/team-hub',
+    '/dashboard/admin/client-hub',
+    '/dashboard/admin/growth-hub',
+    '/dashboard/admin/payroll',
+    '/dashboard/admin/booth-renters',
   ],
   system: [
-    dashPath('/admin/access-hub'),
-    dashPath('/admin/settings'),
+    '/dashboard/admin/access-hub',
+    '/dashboard/admin/settings',
   ],
   platform: DEFAULT_PLATFORM_LINK_ORDER,
 };
@@ -299,7 +298,6 @@ function migrateLegacySections(stored: SidebarLayoutConfig): SidebarLayoutConfig
 }
 
 export function useSidebarLayout() {
-  const { dashPath } = useOrgDashboardPath();
   return useQuery({
     queryKey: ['sidebar-layout'],
     queryFn: async () => {

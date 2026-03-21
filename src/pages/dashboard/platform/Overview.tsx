@@ -118,7 +118,7 @@ export default function PlatformOverview() {
           </div>
           <div className="flex items-center gap-3">
             <PlatformOrgQuickSwitch />
-            <PlatformButton onClick={() => navigate('/platform/accounts')} className="gap-2">
+            <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
               <Plus className="h-4 w-4" />
               New Account
             </PlatformButton>
@@ -132,7 +132,7 @@ export default function PlatformOverview() {
             value={stats?.totalOrganizations || 0}
             icon={Building2}
             description="Active accounts"
-            href="/platform/accounts"
+            href="/dashboard/platform/accounts"
             sparkData={[2, 4, 3, 6, 5, 8, 7, 10]}
             index={0}
           />
@@ -142,7 +142,7 @@ export default function PlatformOverview() {
             icon={Clock}
             description="Accounts being set up"
             variant="warning"
-            href="/platform/accounts?status=onboarding"
+            href="/dashboard/platform/accounts?status=onboarding"
             sparkData={[1, 2, 1, 3, 2, 2, 3, 2]}
             index={1}
           />
@@ -152,7 +152,7 @@ export default function PlatformOverview() {
             icon={Upload}
             description="Data imports in progress"
             variant={stats?.pendingMigrations ? 'warning' : 'default'}
-            href="/platform/import"
+            href="/dashboard/platform/import"
             sparkData={[3, 2, 4, 1, 2, 1, 0, 1]}
             index={2}
           />
@@ -161,7 +161,7 @@ export default function PlatformOverview() {
             value={stats?.totalLocations || 0}
             icon={MapPin}
             description="Across all accounts"
-            href="/platform/accounts"
+            href="/dashboard/platform/accounts"
             sparkData={[5, 6, 8, 9, 10, 12, 14, 16]}
             index={3}
           />
@@ -204,19 +204,19 @@ export default function PlatformOverview() {
             <QuickActionButton 
               icon={Building2}
               label="View All Accounts"
-              onClick={() => navigate('/platform/accounts')}
+              onClick={() => navigate('/dashboard/platform/accounts')}
               hoverAnimation="group-hover/action:scale-110"
             />
             <QuickActionButton 
               icon={Upload}
               label="Start Migration"
-              onClick={() => navigate('/platform/import')}
+              onClick={() => navigate('/dashboard/platform/import')}
               hoverAnimation="group-hover/action:-translate-y-0.5"
             />
             <QuickActionButton 
               icon={Settings}
               label="Platform Settings"
-              onClick={() => navigate('/platform/settings')}
+              onClick={() => navigate('/dashboard/platform/settings')}
               hoverAnimation="group-hover/action:rotate-45"
             />
           </div>

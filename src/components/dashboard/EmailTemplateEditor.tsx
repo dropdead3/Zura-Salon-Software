@@ -865,7 +865,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         let contentHtml = '';
         if (config.layout === 'stacked') {
           contentHtml = imageHtml 
-            ? `<div style="text-align: ${textAlign}; margin-bottom: 12px;">${imageHtml.replace('display: block;', }`display: inline-block;`)}</div>${textHtml}`
+            ? `<div style="text-align: ${textAlign}; margin-bottom: 12px;">${imageHtml.replace('display: block;', `display: inline-block;`)}</div>${textHtml}`
             : textHtml;
         } else if (config.layout === 'horizontal-right') {
           contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">

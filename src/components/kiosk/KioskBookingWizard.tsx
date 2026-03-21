@@ -152,7 +152,7 @@ export function KioskBookingWizard() {
           const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30min buffer
           if (slotMinutes < currentMinutes) continue;
         }
-        slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`);
+        slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
       }
     }
     return slots;
@@ -376,7 +376,7 @@ export function KioskBookingWizard() {
                         className="w-full p-5 rounded-2xl text-left backdrop-blur-md transition-all flex items-center justify-between"
                         style={{
                           backgroundColor: isSelected ? `${accentColor}15` : `${textColor}08`,
-                          border: `1.5px solid ${isSelected ? accentColor : }`${textColor}20`}`,
+                          border: `1.5px solid ${isSelected ? accentColor : `${textColor}20`}`,
                         }}
                         onClick={() => {
                           if (isSelected) {
@@ -431,7 +431,7 @@ export function KioskBookingWizard() {
                   className="p-6 rounded-3xl text-center backdrop-blur-md transition-all"
                   style={{
                     backgroundColor: !selectedStylist ? `${accentColor}15` : `${textColor}08`,
-                    border: `1.5px solid ${!selectedStylist ? accentColor : }`${textColor}20`}`,
+                    border: `1.5px solid ${!selectedStylist ? accentColor : `${textColor}20`}`,
                   }}
                   onClick={() => setSelectedStylist(null)}
                   whileTap={{ scale: 0.98 }}
@@ -451,12 +451,12 @@ export function KioskBookingWizard() {
                       className="p-6 rounded-3xl text-center backdrop-blur-md transition-all"
                       style={{
                         backgroundColor: isSelected ? `${accentColor}15` : `${textColor}08`,
-                        border: `1.5px solid ${isSelected ? accentColor : }`${textColor}20`}`,
+                        border: `1.5px solid ${isSelected ? accentColor : `${textColor}20`}`,
                       }}
                       onClick={() => setSelectedStylist(stylist)}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden" style={{ border: `2px solid ${isSelected ? accentColor : }`${textColor}20`}` }}>
+                      <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden" style={{ border: `2px solid ${isSelected ? accentColor : `${textColor}20`}` }}>
                         {stylist.photo_url ? (
                           <img src={stylist.photo_url} alt={stylist.name} className="w-full h-full object-cover" />
                         ) : (
@@ -492,7 +492,7 @@ export function KioskBookingWizard() {
                         className="flex-shrink-0 w-20 py-4 rounded-2xl text-center backdrop-blur-md transition-all"
                         style={{
                           backgroundColor: isSelected ? `${accentColor}15` : `${textColor}08`,
-                          border: `1.5px solid ${isSelected ? accentColor : }`${textColor}20`}`,
+                          border: `1.5px solid ${isSelected ? accentColor : `${textColor}20`}`,
                         }}
                         onClick={() => { setSelectedDate(date); setSelectedTime(null); }}
                         whileTap={{ scale: 0.98 }}
@@ -516,7 +516,7 @@ export function KioskBookingWizard() {
                       className="py-4 rounded-2xl text-center backdrop-blur-md transition-all"
                       style={{
                         backgroundColor: isSelected ? `${accentColor}15` : `${textColor}08`,
-                        border: `1.5px solid ${isSelected ? accentColor : }`${textColor}20`}`,
+                        border: `1.5px solid ${isSelected ? accentColor : `${textColor}20`}`,
                       }}
                       onClick={() => setSelectedTime(time)}
                       whileTap={{ scale: 0.98 }}
@@ -553,7 +553,7 @@ export function KioskBookingWizard() {
                     className="w-full px-6 py-5 rounded-2xl text-xl backdrop-blur-md focus:outline-none transition-all"
                     style={{
                       backgroundColor: `${textColor}08`,
-                      border: `1.5px solid ${clientName ? accentColor : }`${textColor}20`}`,
+                      border: `1.5px solid ${clientName ? accentColor : `${textColor}20`}`,
                       color: textColor,
                     }}
                     autoFocus
@@ -567,7 +567,7 @@ export function KioskBookingWizard() {
                     className="w-full px-6 py-5 rounded-2xl text-xl backdrop-blur-md cursor-text"
                     style={{
                       backgroundColor: `${textColor}08`,
-                      border: `1.5px solid ${clientPhone.length >= 7 ? accentColor : }`${textColor}20`}`,
+                      border: `1.5px solid ${clientPhone.length >= 7 ? accentColor : `${textColor}20`}`,
                       color: clientPhone ? textColor : `${textColor}40`,
                     }}
                     onClick={() => setPhoneInputActive(true)}
@@ -710,7 +710,7 @@ export function KioskBookingWizard() {
               className="flex items-center gap-2 px-8 py-4 rounded-2xl text-lg font-medium backdrop-blur-md transition-all disabled:opacity-40"
               style={{
                 backgroundColor: canProceed() ? `${accentColor}20` : `${textColor}08`,
-                border: `1.5px solid ${canProceed() ? accentColor : }`${textColor}20`}`,
+                border: `1.5px solid ${canProceed() ? accentColor : `${textColor}20`}`,
                 color: textColor,
               }}
               onClick={handleNext}

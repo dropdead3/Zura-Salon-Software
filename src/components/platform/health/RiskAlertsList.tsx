@@ -127,7 +127,7 @@ export function RiskAlertsList({
 
       {showViewAll && atRiskScores.length >= maxItems && (
         <button
-          onClick={() => navigate('/platform/health-scores')}
+          onClick={() => navigate('/dashboard/platform/health-scores')}
           className="w-full text-center py-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
         >
           View All At-Risk Organizations →

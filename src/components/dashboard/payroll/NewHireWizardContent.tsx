@@ -19,7 +19,6 @@ import { ArrowLeft, ArrowRight, Check, User, DollarSign, ClipboardList, FileSign
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const STEPS = [
   { id: 'info', label: 'Basic Info', icon: User },
@@ -29,7 +28,6 @@ const STEPS = [
 ];
 
 export function NewHireWizardContent() {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { effectiveOrganization: organization } = useOrganizationContext();
@@ -436,7 +434,7 @@ export function NewHireWizardContent() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={() => navigate(dashPath('/admin/payroll?tab=overview'))} className="flex-1">
+                <Button onClick={() => navigate('/dashboard/admin/payroll?tab=overview')} className="flex-1">
                   Back to Hiring & Payroll Hub
                 </Button>
                 <Button variant="outline" onClick={() => {

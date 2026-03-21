@@ -63,7 +63,7 @@ export function LocationIssuesTable({ locations, isLoading }: LocationIssuesTabl
         <PlatformButton
           variant="ghost"
           size={tokens.button.inline}
-          onClick={() => navigate('/platform/accounts')}
+          onClick={() => navigate('/dashboard/platform/accounts')}
         >
           View All
         </PlatformButton>

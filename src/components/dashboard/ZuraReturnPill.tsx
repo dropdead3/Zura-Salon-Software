@@ -3,16 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { X, ArrowLeft } from 'lucide-react';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function ZuraReturnPill() {
-  const { dashPath } = useOrgDashboardPath();
   const ctx = useZuraNavigationSafe();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Only show when there's saved state AND we're not on the main dashboard
-  const isVisible = ctx?.savedState && location.pathname !== dashPath('/');
+  const isVisible = ctx?.savedState && location.pathname !== '/dashboard';
 
   return (
     <AnimatePresence>
@@ -26,7 +24,7 @@ export function ZuraReturnPill() {
         >
           <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card shadow-lg pl-1.5 pr-1 py-1">
             <button
-              onClick={() => navigate(dashPath('/'))}
+              onClick={() => navigate('/dashboard')}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-full hover:bg-muted/50 transition-colors"
             >
               <ArrowLeft className="w-3 h-3 text-muted-foreground" />

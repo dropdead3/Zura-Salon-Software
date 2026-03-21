@@ -155,7 +155,6 @@ import { ViewAsPopover } from '@/components/dashboard/ViewAsPopover';
 
 import { ChaChingHistoryProvider } from '@/hooks/useChaChingHistory';
 import { useChaChingDetector } from '@/hooks/useChaChingDetector';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 /** Mounts the cha-ching detector exactly once inside the ChaChingHistoryProvider */
@@ -260,7 +259,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const { data: employeeProfile } = useEmployeeProfile();
   const location = useLocation();
   const reduceMotion = useReducedMotion();
-  const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== dashPath('/'));
+  const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== '/dashboard');
   const navigate = useNavigate();
   const { resolvedTheme } = useDashboardTheme();
   const { data: businessSettings } = useBusinessSettings();
@@ -545,7 +544,6 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
 }
 
 export function DashboardLayout(props: DashboardLayoutProps) {
-  const { dashPath } = useOrgDashboardPath();
   return (
     <DashboardLockProvider>
       <ZuraNavigationProvider>

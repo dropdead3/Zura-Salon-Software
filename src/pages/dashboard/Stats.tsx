@@ -37,9 +37,7 @@ import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
 import { exportRedoCsv } from '@/lib/exportRedoCsv';
 import { Button } from '@/components/ui/button';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 export default function Stats() {
-  const { dashPath } = useOrgDashboardPath();
   const { user, roles } = useAuth();
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -193,7 +191,7 @@ export default function Stats() {
             {!isLinkedToPhorest && phorestConnection?.connected && (
               <Card className="p-4 bg-muted/50 border-dashed">
                 <p className="text-sm text-muted-foreground text-center">
-                  Your account isn't linked to {providerLabel} yet. <Link to={dashPath('/admin/phorest')} className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
+                  Your account isn't linked to {providerLabel} yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
                 </p>
               </Card>
             )}
@@ -417,7 +415,7 @@ export default function Stats() {
                               </Badge>
                               {s.redoRate > 5 && (
                                 <Link
-                                  to={dashPath(`/meetings/schedule?staffId=${s.staffUserId}&topic=redo-review`)}
+                                  to={`/dashboard/meetings/schedule?staffId=${s.staffUserId}&topic=redo-review`}
                                   className="text-primary hover:text-primary/80 transition-colors"
                                   title="Schedule coaching conversation"
                                 >

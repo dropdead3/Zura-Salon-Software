@@ -4,10 +4,8 @@ import { tokens } from '@/lib/design-tokens';
 import { Coins, TrendingUp, Gift, Loader2 } from 'lucide-react';
 import { usePointsBalance, usePointsHistory } from '@/hooks/usePoints';
 import { Link } from 'react-router-dom';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export function PointsBalanceCard() {
-  const { dashPath } = useOrgDashboardPath();
   const { data: balance = 0, isLoading: balanceLoading } = usePointsBalance();
   const { data: history = [], isLoading: historyLoading } = usePointsHistory(5);
 
@@ -34,7 +32,7 @@ export function PointsBalanceCard() {
           </div>
         </div>
         <Button variant="outline" size={tokens.button.card} asChild>
-          <Link to={dashPath('/rewards')}>
+          <Link to="/dashboard/rewards">
             <Gift className="w-4 h-4 mr-1" />
             Shop
           </Link>

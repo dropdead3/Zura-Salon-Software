@@ -208,7 +208,7 @@ export function PayScheduleCard() {
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {biWeeklyAnchor 
                       ? formatDate(biWeeklyAnchor, 'PPP') 
-                      : 'Select a pay week Friday')}
+                      : 'Select a pay week Friday'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

@@ -2,10 +2,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, BarChart3, Users, Calendar, Shield, Zap, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PLATFORM_NAME, PLATFORM_NAME_FULL } from '@/lib/brand';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function PlatformLanding() {
-  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
 
   return (
@@ -35,7 +33,7 @@ export default function PlatformLanding() {
         <nav className="flex items-center gap-6">
           {user ? (
             <Link
-              to={dashPath('/')}
+              to="/dashboard"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium transition-colors"
             >
               Go to Dashboard

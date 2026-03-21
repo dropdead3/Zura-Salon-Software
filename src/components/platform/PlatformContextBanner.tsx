@@ -46,7 +46,7 @@ export function PlatformContextBanner() {
             size={tokens.button.inline}
             onClick={() => {
               clearSelection();
-              navigate('/platform/overview');
+              navigate('/dashboard/platform/overview');
             }}
             className="h-7 text-xs gap-1 hover:bg-red-500/20 hover:text-red-400"
           >

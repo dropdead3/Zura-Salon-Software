@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils';
 import { editorTokens } from '../editor-tokens';
 import { SavedIndicator } from '../EditorMotion';
 import { PublishChangesButton } from '../PublishChangelog';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export type ViewportMode = 'desktop' | 'tablet' | 'mobile';
 export type ZoomLevel = 'fit' | '100' | '75';
@@ -69,7 +68,6 @@ export function CanvasHeader({
   onSave,
   onPreview,
 }: CanvasHeaderProps) {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
 
   // Auto-save "Saved" indicator
@@ -97,7 +95,7 @@ export function CanvasHeader({
           target.closest('[role="dialog"]'))
       ) return;
       e.preventDefault();
-      navigate(dashPath('/'));
+      navigate('/dashboard');
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -125,7 +123,7 @@ export function CanvasHeader({
               variant="ghost"
               size="icon"
               className="h-8 w-8 flex-shrink-0"
-              onClick={() => navigate(dashPath('/'))}
+              onClick={() => navigate('/dashboard')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>

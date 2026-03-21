@@ -19,7 +19,6 @@ import { I18nLocaleSync } from "./components/I18nLocaleSync";
 import { DevContextBridge } from "./dev/DevContextBridge";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { CommandMenu } from "./components/command/CommandMenu";
-import { OrgDashboardRoute, LegacyDashboardRedirect } from "./components/OrgDashboardRoute";
 
 // Platform pages
 import PlatformLanding from "./pages/PlatformLanding";
@@ -52,6 +51,7 @@ import Handbooks from "./pages/dashboard/admin/Handbooks";
 import AdminSettings from "./pages/dashboard/admin/Settings";
 import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
 import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
+// ManageRoles removed - consolidated into AccessHub
 import AccountManagement from "./pages/dashboard/admin/AccountManagement";
 import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
@@ -257,11 +257,149 @@ const App = () => (
                       <Route path="/kiosk/:locationId" element={<Kiosk />} />
                       <Route path="/dock" element={<Dock />} />
 
-                      {/* ═══════════════════════════════════════════════════════════
-                          PLATFORM ADMIN — /platform/*
-                          (was /dashboard/platform/*)
-                         ═══════════════════════════════════════════════════════════ */}
-                      <Route path="/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
+                      {/* Protected dashboard routes */}
+                      <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
+                      <Route path="/dashboard/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+                      <Route path="/dashboard/notifications" element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} />
+                      <Route path="/dashboard/notifications/all" element={<ProtectedRoute><AllNotifications /></ProtectedRoute>} />
+                      <Route path="/dashboard/profile/:userId" element={<ProtectedRoute requiredPermission="view_any_profile"><ViewProfile /></ProtectedRoute>} />
+                      <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
+                      <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
+                      <Route path="/dashboard/progress" element={<ProtectedRoute requiredPermission="access_client_engine"><Progress /></ProtectedRoute>} />
+<Route path="/dashboard/stats" element={<ProtectedRoute requiredPermission="view_own_stats"><Stats /></ProtectedRoute>} />
+                      <Route path="/dashboard/leaderboard" element={<ProtectedRoute requiredPermission="view_leaderboard"><Leaderboard /></ProtectedRoute>} />
+                      <Route path="/dashboard/ring-the-bell" element={<ProtectedRoute requiredPermission="ring_the_bell"><RingTheBell /></ProtectedRoute>} />
+                      <Route path="/dashboard/training" element={<ProtectedRoute requiredPermission="view_training"><Training /></ProtectedRoute>} />
+                      <Route path="/dashboard/weekly-wins" element={<ProtectedRoute requiredPermission="access_client_engine"><WeeklyWins /></ProtectedRoute>} />
+                      <Route path="/dashboard/handbooks" element={<ProtectedRoute requiredPermission="view_handbooks"><MyHandbooks /></ProtectedRoute>} />
+                      <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
+                      <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/new" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleNewMeeting /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/my-meetings" element={<ProtectedRoute requiredPermission="schedule_meetings"><MyMeetings /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/requests" element={<ProtectedRoute requiredPermission="schedule_meetings"><CoachRequests /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/commitments" element={<ProtectedRoute requiredPermission="schedule_meetings"><Commitments /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/inbox" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingInbox /></ProtectedRoute>} />
+                      <Route path="/dashboard/meeting/:id" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingDetails /></ProtectedRoute>} />
+                      <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
+                      <Route path="/dashboard/clients" element={<ProtectedRoute requiredPermission="view_clients"><ClientDirectory /></ProtectedRoute>} />
+                      <Route path="/dashboard/my-clients" element={<Navigate to="/dashboard/clients" replace />} />
+                      <Route path="/dashboard/my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
+                      <Route path="/dashboard/today-prep" element={<ProtectedRoute requiredPermission="view_booking_calendar"><TodayPrep /></ProtectedRoute>} />
+                      <Route path="/dashboard/waitlist" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Waitlist /></ProtectedRoute>} />
+                      <Route path="/dashboard/mixing" element={<ProtectedRoute><StylistMixingDashboard /></ProtectedRoute>} />
+                      <Route path="/dashboard/team-chat" element={<ProtectedRoute><TeamChat /></ProtectedRoute>} />
+                      <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
+                      <Route path="/dashboard/campaigns" element={<ProtectedRoute requiredPermission="view_team_overview"><Campaigns /></ProtectedRoute>} />
+                      <Route path="/dashboard/campaigns/:id" element={<ProtectedRoute requiredPermission="view_team_overview"><CampaignDetail /></ProtectedRoute>} />
+                      <Route path="/dashboard/metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
+                      <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
+                      <Route path="/dashboard/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/help/:categorySlug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/help/:categorySlug/:articleSlug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+                      
+                      {/* Admin routes */}
+                      <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/strikes" element={<ProtectedRoute requiredPermission="manage_user_roles"><StaffStrikes /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/birthdays" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamBirthdays /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/onboarding-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><OnboardingTracker /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/account-management" element={<Navigate to="/dashboard/admin/onboarding-tracker?tab=invitations" replace />} />
+                      <Route path="/dashboard/admin/client-engine-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientEngineTracker /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/assistant-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><AssistantRequestsOverview /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/website-hub" element={<ProtectedRoute requiredPermission="manage_settings"><WebsiteHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/homepage-stylists" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/testimonials" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/gallery" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/services" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/website-sections" element={<Navigate to="/dashboard/admin/website-hub" replace />} />
+                      <Route path="/dashboard/admin/roles" element={<Navigate to="/dashboard/admin/access-hub?tab=user-roles" replace />} />
+                      <Route path="/dashboard/admin/accounts" element={<Navigate to="/dashboard/admin/access-hub?tab=invitations" replace />} />
+                      <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/build" element={<ProtectedRoute requiredPermission="view_dashboard_build"><DashboardBuild /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/day-rate-settings" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateSettings /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/day-rate-calendar" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateCalendar /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><AnalyticsHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/management" element={<Navigate to="/dashboard/admin/team-hub" replace />} />
+                      <Route path="/dashboard/admin/training-hub" element={<ProtectedRoute requiredPermission="manage_handbooks"><TrainingHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/team-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/client-hub" element={<ProtectedRoute requiredPermission="view_clients"><ClientHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/growth-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><GrowthHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/sales" element={<Navigate to="/dashboard/admin/analytics?tab=sales" replace />} />
+                      <Route path="/dashboard/admin/operational-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=operations" replace />} />
+                      <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/analytics?tab=operations&subtab=staff-utilization" replace />} />
+                      <Route path="/dashboard/admin/marketing" element={<Navigate to="/dashboard/admin/analytics?tab=marketing" replace />} />
+                      <Route path="/dashboard/admin/program-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=program" replace />} />
+                      <Route path="/dashboard/admin/reports" element={<Navigate to="/dashboard/admin/analytics?tab=reports" replace />} />
+                      <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/platform/feature-flags" replace />} />
+                      
+                      <Route path="/dashboard/admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSettings /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSubscription /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/decision-history" element={<ProtectedRoute requiredPermission="manage_settings"><DecisionHistoryPage /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
+                      <Route path="/dashboard/transactions" element={<Navigate to="/dashboard/appointments-hub?tab=transactions" replace />} />
+                      <Route path="/dashboard/appointments-hub" element={<ProtectedRoute requiredPermission="view_transactions"><AppointmentsHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/inventory" element={<ProtectedRoute requiredPermission="manage_inventory"><Inventory /></ProtectedRoute>} />
+                      <Route path="/dashboard/register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
+                      <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/seo-workshop" element={<ProtectedRoute requiredPermission="view_team_overview"><SEOWorkshopHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/client-health" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientHealthHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
+                      
+                      {/* Team Challenges routes */}
+                      <Route path="/dashboard/admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/challenges/:challengeId" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengeDetail /></ProtectedRoute>} />
+                      
+                      {/* Shift Swap routes */}
+                      <Route path="/dashboard/shift-swaps" element={<ProtectedRoute><ShiftSwapMarketplace /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/shift-swaps" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ShiftSwapApprovals /></ProtectedRoute>} />
+                      
+                      {/* HR Tools Suite */}
+                      <Route path="/dashboard/admin/documents" element={<ProtectedRoute requiredPermission="view_team_overview"><DocumentTracker /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/performance-reviews" element={<ProtectedRoute requiredPermission="view_team_overview"><PerformanceReviews /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/pto" element={<ProtectedRoute requiredPermission="view_team_overview"><PTOManager /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/incidents" element={<ProtectedRoute requiredPermission="view_team_overview"><IncidentReports /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/new-hire" element={<ProtectedRoute requiredPermission="view_team_overview"><NewHireWizard /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/onboard-renter" element={<ProtectedRoute requiredPermission="manage_booth_renters"><RenterOnboardWizard /></ProtectedRoute>} />
+                      
+                      {/* Phase 3: Points Economy, Daily Huddle routes */}
+                      <Route path="/dashboard/rewards" element={<ProtectedRoute><RewardShop /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/points-config" element={<ProtectedRoute requiredPermission="manage_settings"><PointsConfig /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/daily-huddle" element={<ProtectedRoute requiredPermission="manage_announcements"><DailyHuddle /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/chair-assignments" element={<ProtectedRoute requiredPermission="view_team_overview"><ChairAssignments /></ProtectedRoute>} />
+
+                      {/* Renter Portal routes - booth_renter role users can access */}
+                      <Route path="/dashboard/renter/portal" element={<ProtectedRoute><RenterPortal /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/pay-rent" element={<ProtectedRoute><RenterPayRent /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/payment-methods" element={<ProtectedRoute><RenterPaymentMethods /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/commissions" element={<ProtectedRoute><RenterCommissions /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/tax-documents" element={<ProtectedRoute><RenterTaxDocuments /></ProtectedRoute>} />
+
+                      {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
+                      <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
                         <Route index element={<Navigate to="overview" replace />} />
                         <Route path="overview" element={<PlatformOverview />} />
                         <Route path="accounts" element={<PlatformAccounts />} />
@@ -287,157 +425,6 @@ const App = () => (
                         <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
                         <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
                       </Route>
-
-                      {/* ═══════════════════════════════════════════════════════════
-                          ORG DASHBOARD — /org/:orgSlug/dashboard/*
-                          (was /dashboard/*)
-                         ═══════════════════════════════════════════════════════════ */}
-                      <Route path="/org/:orgSlug/dashboard" element={<ProtectedRoute><OrgDashboardRoute /></ProtectedRoute>}>
-                        <Route index element={<DashboardHome />} />
-                        <Route path="profile" element={<MyProfile />} />
-                        <Route path="notifications" element={<NotificationPreferences />} />
-                        <Route path="notifications/all" element={<AllNotifications />} />
-                        <Route path="profile/:userId" element={<ProtectedRoute requiredPermission="view_any_profile"><ViewProfile /></ProtectedRoute>} />
-                        <Route path="directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
-                        <Route path="program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
-                        <Route path="progress" element={<ProtectedRoute requiredPermission="access_client_engine"><Progress /></ProtectedRoute>} />
-                        <Route path="stats" element={<ProtectedRoute requiredPermission="view_own_stats"><Stats /></ProtectedRoute>} />
-                        <Route path="leaderboard" element={<ProtectedRoute requiredPermission="view_leaderboard"><Leaderboard /></ProtectedRoute>} />
-                        <Route path="ring-the-bell" element={<ProtectedRoute requiredPermission="ring_the_bell"><RingTheBell /></ProtectedRoute>} />
-                        <Route path="training" element={<ProtectedRoute requiredPermission="view_training"><Training /></ProtectedRoute>} />
-                        <Route path="weekly-wins" element={<ProtectedRoute requiredPermission="access_client_engine"><WeeklyWins /></ProtectedRoute>} />
-                        <Route path="handbooks" element={<ProtectedRoute requiredPermission="view_handbooks"><MyHandbooks /></ProtectedRoute>} />
-                        <Route path="onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
-                        <Route path="assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
-                        <Route path="schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
-                        <Route path="schedule-meeting/new" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleNewMeeting /></ProtectedRoute>} />
-                        <Route path="schedule-meeting/my-meetings" element={<ProtectedRoute requiredPermission="schedule_meetings"><MyMeetings /></ProtectedRoute>} />
-                        <Route path="schedule-meeting/requests" element={<ProtectedRoute requiredPermission="schedule_meetings"><CoachRequests /></ProtectedRoute>} />
-                        <Route path="schedule-meeting/commitments" element={<ProtectedRoute requiredPermission="schedule_meetings"><Commitments /></ProtectedRoute>} />
-                        <Route path="schedule-meeting/inbox" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingInbox /></ProtectedRoute>} />
-                        <Route path="meeting/:id" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingDetails /></ProtectedRoute>} />
-                        <Route path="my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
-                        <Route path="clients" element={<ProtectedRoute requiredPermission="view_clients"><ClientDirectory /></ProtectedRoute>} />
-                        <Route path="my-clients" element={<Navigate to="clients" replace />} />
-                        <Route path="my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
-                        <Route path="schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
-                        <Route path="today-prep" element={<ProtectedRoute requiredPermission="view_booking_calendar"><TodayPrep /></ProtectedRoute>} />
-                        <Route path="waitlist" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Waitlist /></ProtectedRoute>} />
-                        <Route path="mixing" element={<ProtectedRoute><StylistMixingDashboard /></ProtectedRoute>} />
-                        <Route path="team-chat" element={<ProtectedRoute><TeamChat /></ProtectedRoute>} />
-                        <Route path="changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
-                        <Route path="campaigns" element={<ProtectedRoute requiredPermission="view_team_overview"><Campaigns /></ProtectedRoute>} />
-                        <Route path="campaigns/:id" element={<ProtectedRoute requiredPermission="view_team_overview"><CampaignDetail /></ProtectedRoute>} />
-                        <Route path="metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
-                        <Route path="design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
-                        <Route path="help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
-                        <Route path="help/:categorySlug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
-                        <Route path="help/:categorySlug/:articleSlug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
-
-                        {/* Admin routes */}
-                        <Route path="admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
-                        <Route path="admin/strikes" element={<ProtectedRoute requiredPermission="manage_user_roles"><StaffStrikes /></ProtectedRoute>} />
-                        <Route path="admin/birthdays" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamBirthdays /></ProtectedRoute>} />
-                        <Route path="admin/onboarding-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><OnboardingTracker /></ProtectedRoute>} />
-                        <Route path="admin/account-management" element={<Navigate to="admin/onboarding-tracker?tab=invitations" replace />} />
-                        <Route path="admin/client-engine-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientEngineTracker /></ProtectedRoute>} />
-                        <Route path="admin/assistant-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><AssistantRequestsOverview /></ProtectedRoute>} />
-                        <Route path="admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
-                        <Route path="admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
-                        <Route path="admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
-                        <Route path="admin/website-hub" element={<ProtectedRoute requiredPermission="manage_settings"><WebsiteHub /></ProtectedRoute>} />
-                        <Route path="admin/homepage-stylists" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/testimonials" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/gallery" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/services" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/announcement-bar" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/locations" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/website-sections" element={<Navigate to="admin/website-hub" replace />} />
-                        <Route path="admin/roles" element={<Navigate to="admin/access-hub?tab=user-roles" replace />} />
-                        <Route path="admin/accounts" element={<Navigate to="admin/access-hub?tab=invitations" replace />} />
-                        <Route path="admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
-                        <Route path="admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
-                        <Route path="admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
-                        <Route path="admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
-                        <Route path="admin/build" element={<ProtectedRoute requiredPermission="view_dashboard_build"><DashboardBuild /></ProtectedRoute>} />
-                        <Route path="admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
-                        <Route path="admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
-                        <Route path="admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
-                        <Route path="admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
-                        <Route path="admin/day-rate-settings" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateSettings /></ProtectedRoute>} />
-                        <Route path="admin/day-rate-calendar" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateCalendar /></ProtectedRoute>} />
-                        <Route path="admin/analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><AnalyticsHub /></ProtectedRoute>} />
-                        <Route path="admin/management" element={<Navigate to="admin/team-hub" replace />} />
-                        <Route path="admin/training-hub" element={<ProtectedRoute requiredPermission="manage_handbooks"><TrainingHub /></ProtectedRoute>} />
-                        <Route path="admin/team-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamHub /></ProtectedRoute>} />
-                        <Route path="admin/client-hub" element={<ProtectedRoute requiredPermission="view_clients"><ClientHub /></ProtectedRoute>} />
-                        <Route path="admin/growth-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><GrowthHub /></ProtectedRoute>} />
-                        <Route path="admin/sales" element={<Navigate to="admin/analytics?tab=sales" replace />} />
-                        <Route path="admin/operational-analytics" element={<Navigate to="admin/analytics?tab=operations" replace />} />
-                        <Route path="admin/staff-utilization" element={<Navigate to="admin/analytics?tab=operations&subtab=staff-utilization" replace />} />
-                        <Route path="admin/marketing" element={<Navigate to="admin/analytics?tab=marketing" replace />} />
-                        <Route path="admin/program-analytics" element={<Navigate to="admin/analytics?tab=program" replace />} />
-                        <Route path="admin/reports" element={<Navigate to="admin/analytics?tab=reports" replace />} />
-                        <Route path="admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
-                        <Route path="admin/feature-flags" element={<Navigate to="/platform/feature-flags" replace />} />
-
-                        <Route path="admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
-                        <Route path="admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSettings /></ProtectedRoute>} />
-                        <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSubscription /></ProtectedRoute>} />
-                        <Route path="admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
-                        <Route path="admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />
-                        <Route path="admin/decision-history" element={<ProtectedRoute requiredPermission="manage_settings"><DecisionHistoryPage /></ProtectedRoute>} />
-                        <Route path="admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
-                        <Route path="admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
-                        <Route path="admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
-                        <Route path="transactions" element={<Navigate to="appointments-hub?tab=transactions" replace />} />
-                        <Route path="appointments-hub" element={<ProtectedRoute requiredPermission="view_transactions"><AppointmentsHub /></ProtectedRoute>} />
-                        <Route path="inventory" element={<ProtectedRoute requiredPermission="manage_inventory"><Inventory /></ProtectedRoute>} />
-                        <Route path="register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
-                        <Route path="settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
-                        <Route path="admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
-                        <Route path="admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
-                        <Route path="admin/seo-workshop" element={<ProtectedRoute requiredPermission="view_team_overview"><SEOWorkshopHub /></ProtectedRoute>} />
-                        <Route path="admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
-                        <Route path="admin/client-health" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientHealthHub /></ProtectedRoute>} />
-                        <Route path="admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
-                        <Route path="admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
-                        <Route path="admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
-
-                        {/* Team Challenges routes */}
-                        <Route path="admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
-                        <Route path="admin/challenges/:challengeId" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengeDetail /></ProtectedRoute>} />
-
-                        {/* Shift Swap routes */}
-                        <Route path="shift-swaps" element={<ProtectedRoute><ShiftSwapMarketplace /></ProtectedRoute>} />
-                        <Route path="admin/shift-swaps" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ShiftSwapApprovals /></ProtectedRoute>} />
-
-                        {/* HR Tools Suite */}
-                        <Route path="admin/documents" element={<ProtectedRoute requiredPermission="view_team_overview"><DocumentTracker /></ProtectedRoute>} />
-                        <Route path="admin/performance-reviews" element={<ProtectedRoute requiredPermission="view_team_overview"><PerformanceReviews /></ProtectedRoute>} />
-                        <Route path="admin/pto" element={<ProtectedRoute requiredPermission="view_team_overview"><PTOManager /></ProtectedRoute>} />
-                        <Route path="admin/incidents" element={<ProtectedRoute requiredPermission="view_team_overview"><IncidentReports /></ProtectedRoute>} />
-                        <Route path="admin/new-hire" element={<ProtectedRoute requiredPermission="view_team_overview"><NewHireWizard /></ProtectedRoute>} />
-                        <Route path="admin/onboard-renter" element={<ProtectedRoute requiredPermission="manage_booth_renters"><RenterOnboardWizard /></ProtectedRoute>} />
-
-                        {/* Phase 3: Points Economy, Daily Huddle routes */}
-                        <Route path="rewards" element={<ProtectedRoute><RewardShop /></ProtectedRoute>} />
-                        <Route path="admin/points-config" element={<ProtectedRoute requiredPermission="manage_settings"><PointsConfig /></ProtectedRoute>} />
-                        <Route path="admin/daily-huddle" element={<ProtectedRoute requiredPermission="manage_announcements"><DailyHuddle /></ProtectedRoute>} />
-                        <Route path="admin/chair-assignments" element={<ProtectedRoute requiredPermission="view_team_overview"><ChairAssignments /></ProtectedRoute>} />
-
-                        {/* Renter Portal routes */}
-                        <Route path="renter/portal" element={<ProtectedRoute><RenterPortal /></ProtectedRoute>} />
-                        <Route path="renter/pay-rent" element={<ProtectedRoute><RenterPayRent /></ProtectedRoute>} />
-                        <Route path="renter/payment-methods" element={<ProtectedRoute><RenterPaymentMethods /></ProtectedRoute>} />
-                        <Route path="renter/commissions" element={<ProtectedRoute><RenterCommissions /></ProtectedRoute>} />
-                        <Route path="renter/tax-documents" element={<ProtectedRoute><RenterTaxDocuments /></ProtectedRoute>} />
-                      </Route>
-
-                      {/* ═══════════════════════════════════════════════════════════
-                          LEGACY REDIRECTS — /dashboard/* → /org/:slug/dashboard/*
-                         ═══════════════════════════════════════════════════════════ */}
-                      <Route path="/dashboard/*" element={<ProtectedRoute><LegacyDashboardRedirect /></ProtectedRoute>} />
 
                         <Route path="*" element={<NotFound />} />
                         </Routes>

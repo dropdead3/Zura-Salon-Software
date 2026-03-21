@@ -53,7 +53,6 @@ import {
   LabelList,
   Customized 
 } from 'recharts';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function toLocalDateStr(d: Date): string {
   const year = d.getFullYear();
@@ -439,7 +438,6 @@ function getForecastDays(period: ForecastPeriod): number {
 }
 
 export function ForecastingCard() {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<ForecastPeriod>('7days');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
@@ -493,7 +491,7 @@ export function ForecastingCard() {
   };
 
   const handleViewDetails = () => {
-    navigate(dashPath('/admin/sales'));
+    navigate('/dashboard/admin/sales');
   };
 
   const handleStatCardClick = useCallback((mode: BreakdownMode) => {

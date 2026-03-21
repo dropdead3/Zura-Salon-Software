@@ -24,9 +24,9 @@ export default function PlatformLogin() {
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTarget = location.state?.from?.pathname?.startsWith('/platform')
+  const redirectTarget = location.state?.from?.pathname?.startsWith('/dashboard/platform')
     ? location.state.from.pathname
-    : '/platform/overview';
+    : '/dashboard/platform/overview';
   
   const { data: invitation, isLoading: loadingInvitation } = useInvitationByToken(invitationToken);
   const acceptInvitationMutation = useAcceptPlatformInvitation();
@@ -291,7 +291,7 @@ export default function PlatformLogin() {
             </h1>
             <p className="text-slate-400">
               {isSignupMode 
-                ? `You've been invited as ${invitation?.role.replace('platform_', '').replace('_', ' }`
+                ? `You've been invited as ${invitation?.role.replace('platform_', '').replace('_', ' ')}`
                 : 'Internal access for development and support teams'}
             </p>
           </div>

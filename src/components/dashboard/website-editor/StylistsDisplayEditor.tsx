@@ -2,7 +2,6 @@ import { Users, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStylistsDisplayConfig } from '@/hooks/useSectionConfig';
 import { SectionDisplayEditor } from './SectionDisplayEditor';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const FIELDS = [
   { key: 'show_eyebrow', label: 'Show Eyebrow', type: 'toggle' as const, description: 'Display the small text above the title' },
@@ -22,7 +21,6 @@ const FIELDS = [
 ];
 
 export function StylistsDisplayEditor() {
-  const { dashPath } = useOrgDashboardPath();
   const { data, isLoading, isSaving, update } = useStylistsDisplayConfig();
 
   return (
@@ -42,7 +40,7 @@ export function StylistsDisplayEditor() {
           To manage which stylists appear on the homepage — approve requests, hide or show individuals — visit the Homepage Stylists manager.
         </p>
         <Link
-          to={dashPath('/admin/website-sections?tab=stylists')}
+          to="/dashboard/admin/website-sections?tab=stylists"
           className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline font-sans"
         >
           Manage Homepage Stylists

@@ -124,7 +124,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       doc.setTextColor(100);
       const profileLine = [
         data.profile.role ? `Role: ${data.profile.role}` : '',
-        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy}` : '',
+        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy')}` : '',
         data.profile.locationName ? `Location: ${data.profile.locationName}` : '',
         `Experience Score: ${data.experienceScore.composite}/100`,
         data.commission.tierName ? `Commission Tier: ${data.commission.tierName}` : '',

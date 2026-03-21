@@ -18,7 +18,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface SyncStatus {
   sync_type: string;
@@ -63,7 +62,6 @@ export function SidebarSyncStatusWidget({
 
   // Calculate overall health
   const getOverallHealth = () => {
-  const { dashPath } = useOrgDashboardPath();
     if (!syncStatuses) return 'unknown';
     
     const appointmentSync = syncStatuses.appointments;
@@ -115,7 +113,7 @@ export function SidebarSyncStatusWidget({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to={dashPath('/admin/phorest-settings')}
+            to="/dashboard/admin/phorest-settings"
             onClick={onNavClick}
             className="flex items-center justify-center py-2 px-2 mx-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
           >
@@ -137,7 +135,7 @@ export function SidebarSyncStatusWidget({
 
   return (
     <Link
-      to={dashPath('/admin/phorest-settings')}
+      to="/dashboard/admin/phorest-settings"
       onClick={onNavClick}
       className="mx-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors block"
     >

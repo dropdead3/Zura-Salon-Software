@@ -127,7 +127,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
 
             {/* Address */}
             <a
-              href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(}`${location.address}, ${location.city}`)}`}
+              href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -142,7 +142,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
 
             {/* Phone */}
             <a
-              href={`tel:${location.phone.replace(/[^0-9]/g, '')}`
+              href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center justify-center gap-2 text-foreground/60 hover:text-foreground transition-colors duration-300 mb-8 relative z-10"
             >

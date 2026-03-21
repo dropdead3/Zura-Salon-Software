@@ -13,7 +13,6 @@ import { AlertTriangle, CheckCircle2, ChevronRight, DollarSign, Settings, X, Zap
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type UrgencyLevel = 'calm' | 'urgent' | 'critical';
 
@@ -42,7 +41,6 @@ const urgencyStyles: Record<UrgencyLevel, { card: string; icon: string; iconBg: 
 };
 
 export function PayrollDeadlineCard() {
-  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { t } = useTranslation('dashboard');
   const { t: tc } = useTranslation('common');
@@ -86,7 +84,7 @@ export function PayrollDeadlineCard() {
                 <p className="text-xs">{t('payroll.setup_pay_schedule_desc')}</p>
               </div>
               <Button variant="ghost" size={tokens.button.inline} asChild>
-                <Link to={dashPath('/admin/payroll?tab=settings')}>
+                <Link to="/dashboard/admin/payroll?tab=settings">
                   {tc('configure')} <ChevronRight className="h-3 w-3 ml-1" />
                 </Link>
               </Button>
@@ -224,7 +222,7 @@ export function PayrollDeadlineCard() {
             className="w-full"
             asChild
           >
-            <Link to={dashPath('/admin/payroll')}>
+            <Link to="/dashboard/admin/payroll">
               {isAutomatic
                 ? t('payroll.view_payroll')
                 : isPastDeadline

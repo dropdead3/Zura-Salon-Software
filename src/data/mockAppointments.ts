@@ -60,7 +60,7 @@ const generateTimeSlots = (hoursStart: number, hoursEnd: number): string[] => {
   const slots: string[] = [];
   for (let hour = hoursStart; hour < hoursEnd; hour++) {
     for (let min = 0; min < 60; min += 15) {
-      slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0}`);
+      slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
     }
   }
   return slots;

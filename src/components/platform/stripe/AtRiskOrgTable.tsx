@@ -53,7 +53,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
         <PlatformButton
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/platform/accounts?status=past_due')}
+          onClick={() => navigate('/dashboard/platform/accounts?status=past_due')}
         >
           View All
         </PlatformButton>

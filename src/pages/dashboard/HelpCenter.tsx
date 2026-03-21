@@ -15,7 +15,6 @@ import {
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { HelpArticleView } from '@/components/dashboard/help/HelpArticleView';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function getIcon(iconName: string) {
   const icons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -39,7 +38,6 @@ function getIcon(iconName: string) {
 }
 
 export default function HelpCenter() {
-  const { dashPath } = useOrgDashboardPath();
   const { categorySlug, articleSlug } = useParams();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +68,7 @@ export default function HelpCenter() {
           <Button
             variant="ghost"
             size={tokens.button.inline}
-            onClick={() => navigate(currentCategory ? dashPath('/help') : dashPath('/'))}
+            onClick={() => navigate(currentCategory ? '/dashboard/help' : '/dashboard')}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -114,7 +112,7 @@ export default function HelpCenter() {
                   key={article.id}
                   className="cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() =>
-                    navigate(dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`))
+                    navigate(`/dashboard/help/${article.category?.slug || 'uncategorized'}/${article.slug}`)
                   }
                 >
                   <CardHeader className="py-4">
@@ -143,7 +141,7 @@ export default function HelpCenter() {
                 key={article.id}
                 className="cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() =>
-                  navigate(dashPath(`/help/${currentCategory.slug}/${article.slug}`))
+                  navigate(`/dashboard/help/${currentCategory.slug}/${article.slug}`)
                 }
               >
                 <CardHeader className="py-4">
@@ -184,7 +182,7 @@ export default function HelpCenter() {
                     className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5"
                     onClick={() =>
                       navigate(
-                        dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`)
+                        `/dashboard/help/${article.category?.slug || 'uncategorized'}/${article.slug}`
                       )
                     }
                   >
@@ -219,7 +217,7 @@ export default function HelpCenter() {
                       'cursor-pointer hover:border-primary/50 transition-colors',
                       category.article_count === 0 && 'opacity-60'
                     )}
-                    onClick={() => navigate(dashPath(`/help/${category.slug}`))}
+                    onClick={() => navigate(`/dashboard/help/${category.slug}`)}
                   >
                     <CardHeader>
                       <div className="flex items-center gap-3">

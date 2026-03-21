@@ -106,7 +106,7 @@ export function Footer() {
                       </div>
                     )}
                     <a 
-                      href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(}`${location.address}, ${location.city}`)}`}
+                      href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-col md:flex-row items-center md:items-start gap-2.5 group"
@@ -120,7 +120,7 @@ export function Footer() {
                     </a>
                     <div className="md:pl-[26px] pl-0 space-y-0.5 flex flex-col items-center md:items-start">
                       <a 
-                        href={`tel:${location.phone.replace(/[^0-9]/g, '')}`
+                        href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
                         className="flex items-center gap-1.5 text-sm font-sans font-light text-foreground/50 hover:text-foreground transition-colors"
                       >
                         <Phone className="w-3.5 h-3.5" />

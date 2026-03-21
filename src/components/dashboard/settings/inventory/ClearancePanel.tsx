@@ -240,7 +240,7 @@ export function ClearancePanel({ organizationId }: ClearancePanelProps) {
                         <Button
                           size={tokens.button.inline}
                           variant="outline"
-                          onClick={() => handleApplyDiscount(p, parseInt(discountInputs[p.id] || '30')}
+                          onClick={() => handleApplyDiscount(p, parseInt(discountInputs[p.id] || '30'))}
                           className="text-xs"
                         >
                           Apply

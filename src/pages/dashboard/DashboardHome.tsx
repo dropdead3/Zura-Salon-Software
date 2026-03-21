@@ -70,7 +70,6 @@ import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountd
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
 import { ActiveCampaignsCard } from '@/components/dashboard/ActiveCampaignsCard';
 import { InventoryManagerDashboardCard } from '@/components/dashboard/InventoryManagerDashboardCard';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 const ROLE_MESSAGES = {
   leadership: {
     greetings: ["Welcome back,", "Ready to lead,", "Let's build momentum,", "Great things ahead,", "Another strong day,", "Let's make it count,"],
@@ -127,7 +126,6 @@ const normalizeUrl = (url: string): string => {
 };
 
 export default function DashboardHome() {
-  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const roles = useEffectiveRoles();
   const { enrollment } = useDailyCompletion(user?.id);
@@ -442,7 +440,7 @@ function DashboardSections({
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <VisibilityGate elementKey="ring_the_bell_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/ring-the-bell')}>
+                <Link to="/dashboard/ring-the-bell">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <Bell className="w-4 h-4 text-primary" />
                   </div>
@@ -452,7 +450,7 @@ function DashboardSections({
             </VisibilityGate>
             <VisibilityGate elementKey="log_metrics_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/stats')}>
+                <Link to="/dashboard/stats">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <TrendingUp className="w-4 h-4 text-primary" />
                   </div>
@@ -461,7 +459,7 @@ function DashboardSections({
               </Button>
             </VisibilityGate>
             <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-              <Link to={dashPath('/my-clients')}>
+              <Link to="/dashboard/my-clients">
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                   <Users className="w-4 h-4 text-primary" />
                 </div>
@@ -470,7 +468,7 @@ function DashboardSections({
             </Button>
             {roles.includes('stylist') && (
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/assistant-schedule')}>
+                <Link to="/dashboard/assistant-schedule">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <HandHelping className="w-4 h-4 text-primary" />
                   </div>
@@ -480,7 +478,7 @@ function DashboardSections({
             )}
             <VisibilityGate elementKey="training_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/training')}>
+                <Link to="/dashboard/training">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <Target className="w-4 h-4 text-primary" />
                   </div>
@@ -648,7 +646,7 @@ function DashboardSections({
                 asChild
                 className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8 shrink-0"
               >
-                <Link to={dashPath('/program')}>
+                <Link to="/dashboard/program">
                   {enrollment ? t('home.continue_today') : t('home.start_program')}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>

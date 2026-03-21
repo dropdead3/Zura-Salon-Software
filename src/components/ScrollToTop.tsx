@@ -18,8 +18,8 @@ const ScrollToTop = () => {
 
   // Use useLayoutEffect to capture scroll position BEFORE React updates the DOM
   useLayoutEffect(() => {
-    const wasDashboard = prevPathname.current.startsWith('/dashboard') || prevPathname.current.match(/^\/org\/[^/]+\/dashboard/);
-    const isDashboard = pathname.startsWith('/dashboard') || pathname.match(/^\/org\/[^/]+\/dashboard/);
+    const wasDashboard = prevPathname.current.startsWith('/dashboard');
+    const isDashboard = pathname.startsWith('/dashboard');
     
     // Save the scroll position of the previous route before anything changes
     if (wasDashboard && prevPathname.current !== pathname) {

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface Enrollment {
   id: string;
@@ -36,7 +35,6 @@ interface TasksState {
 }
 
 export function useDailyCompletion(userId: string | undefined) {
-  const { dashPath } = useOrgDashboardPath();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [todayCompletion, setTodayCompletion] = useState<DailyCompletion | null>(null);
   const [tasks, setTasks] = useState<TasksState>({
@@ -345,7 +343,7 @@ export function useDailyCompletion(userId: string | undefined) {
         type: 'pass_used',
         title: 'Life Happens Pass Used',
         message: `A team member used a Life Happens Pass on Day ${enrollment.current_day}`,
-        link: dashPath('/admin/client-engine'),
+        link: '/dashboard/admin/client-engine',
       }));
 
       await supabase.from('notifications').insert(notifications);

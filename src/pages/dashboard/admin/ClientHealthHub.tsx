@@ -9,7 +9,6 @@ import { ArrowLeft, HeartPulse, CalendarX, AlertTriangle, UserX, UserPlus, Cake,
 import { useClientHealthSegments, SEGMENTS, type SegmentKey } from '@/hooks/useClientHealthSegments';
 import { ClientSegmentTable } from '@/components/dashboard/client-health/ClientSegmentTable';
 import { BulkOutreachBar } from '@/components/dashboard/client-health/BulkOutreachBar';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const SEGMENT_ICONS: Record<SegmentKey, React.ComponentType<{ className?: string }>> = {
   'needs-rebooking': CalendarX,
@@ -30,7 +29,6 @@ const SEGMENT_COLORS: Record<SegmentKey, string> = {
 };
 
 export default function ClientHealthHub() {
-  const { dashPath } = useOrgDashboardPath();
   const [searchParams] = useSearchParams();
   const initialSegment = (searchParams.get('segment') as SegmentKey) || 'needs-rebooking';
   const [activeSegment, setActiveSegment] = useState<SegmentKey>(initialSegment);
@@ -52,7 +50,7 @@ export default function ClientHealthHub() {
         {/* Header */}
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to={dashPath('/admin/management')}>
+            <Link to="/dashboard/admin/management">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>

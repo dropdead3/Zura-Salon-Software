@@ -52,7 +52,6 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { StripeStatusIndicator } from '@/components/platform/ui/StripeStatusIndicator';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -79,7 +78,6 @@ const planLabels: Record<string, string> = {
 };
 
 export default function PlatformAccounts() {
-  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { setSelectedOrganization } = useOrganizationContext();
   const { data: organizations, isLoading } = useOrganizationsWithStats();
@@ -303,7 +301,7 @@ export default function PlatformAccounts() {
                     <TableRow 
                       key={org.id}
                       className="cursor-pointer border-slate-700/50 hover:bg-slate-800/50 transition-colors"
-                      onClick={() => navigate(dashPath(`/platform/accounts/${org.id}`))}
+                      onClick={() => navigate(`/dashboard/platform/accounts/${org.id}`)}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -409,7 +407,7 @@ export default function PlatformAccounts() {
                               className="text-slate-300 focus:bg-slate-700 focus:text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(dashPath(`/platform/accounts/${org.id}`));
+                                navigate(`/dashboard/platform/accounts/${org.id}`);
                               }}
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
@@ -429,7 +427,7 @@ export default function PlatformAccounts() {
                               className="text-slate-300 focus:bg-slate-700 focus:text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(dashPath(`/platform/import?org=${org.id}`));
+                                navigate(`/dashboard/platform/import?org=${org.id}`);
                               }}
                             >
                               <Upload className="h-4 w-4 mr-2" />
@@ -445,7 +443,7 @@ export default function PlatformAccounts() {
                                   organization_name: org.name,
                                   action: 'view_dashboard',
                                 });
-                                navigate(dashPath('/'));
+                                navigate('/dashboard');
                               }}
                             >
                               <LayoutDashboard className="h-4 w-4 mr-2" />
