@@ -72,10 +72,10 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-xl" onClick={handleTap}>
       {/* Action tray behind the card */}
       <motion.div
-        className="absolute inset-y-0 right-0 flex items-center px-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
+        className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
         {!isTerminal && (
@@ -94,7 +94,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         )}
       </motion.div>
 
-      {/* Swipeable card content */}
+      {/* Sliding card background — drags left to reveal tray */}
       <motion.div
         drag={isTerminal ? false : 'x'}
         dragConstraints={{ left: openOffset, right: 0 }}
@@ -103,13 +103,29 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         style={{ x }}
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
-        onClick={handleTap}
         className={cn(
-          'relative z-10 w-full text-left border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 rounded-xl cursor-grab active:cursor-grabbing',
+          'relative z-10 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
           borderClass
         )}
       >
+        {/* Invisible spacer to maintain card height */}
+        <div className="p-4 opacity-0 pointer-events-none" aria-hidden="true">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{appointment.client_name || 'Walk-in'}</p>
+              {appointment.service_name && <p className="text-xs mt-0.5">{appointment.service_name}</p>}
+              {appointment.stylist_name && <div className="flex items-center gap-1 mt-1"><span className="text-[11px]">{appointment.stylist_name}</span></div>}
+              {appointment.assistant_names && appointment.assistant_names.length > 0 && <div className="flex items-center gap-1 mt-0.5"><span className="text-[11px]">w/ {appointment.assistant_names.join(', ')}</span></div>}
+              <div className="flex items-center gap-1.5 mt-1.5"><span className="text-[11px]">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span></div>
+            </div>
+            {appointment.has_mix_session && <div className="w-7 h-7" />}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Static text overlay — does NOT move */}
+      <div className="absolute inset-0 z-20 p-4 pointer-events-none">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Client name */}
@@ -162,7 +178,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
