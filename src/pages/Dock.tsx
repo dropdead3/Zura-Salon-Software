@@ -60,6 +60,8 @@ export default function Dock() {
   const [view, setView] = useState<DockView>({ screen: 'tabs' });
   const [demoLocationId, setDemoLocationId] = useState('');
   const [staffFilter, setStaffFilter] = useState('all');
+  const [unlocked, setUnlocked] = useState(false);
+  const unlockTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const effectiveStaff = staff
     ? (demoOrgId && canAccessDemo && demoLocationId)
