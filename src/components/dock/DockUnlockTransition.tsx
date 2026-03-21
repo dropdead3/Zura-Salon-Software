@@ -17,8 +17,8 @@ interface DockUnlockTransitionProps {
   children: ReactNode;
 }
 
-const EXIT_EASE = [0.4, 0, 0.2, 1] as const;
-const ENTER_EASE = [0, 0, 0.2, 1] as const;
+const EXIT_EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+const ENTER_EASE: [number, number, number, number] = [0, 0, 0.2, 1];
 
 export function DockUnlockTransition({ unlocked, gate, children }: DockUnlockTransitionProps) {
   const [showPulse, setShowPulse] = useState(false);
