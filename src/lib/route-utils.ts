@@ -11,7 +11,8 @@ export type RouteZone = 'platform' | 'org-dashboard' | 'public';
 /** Determine the route zone from a pathname string. */
 export function getRouteZone(pathname: string): RouteZone {
   if (pathname.startsWith('/platform')) return 'platform';
-  if (pathname.startsWith('/dashboard')) return 'org-dashboard';
+  // Match both legacy /dashboard and new /org/:slug/dashboard
+  if (pathname.startsWith('/dashboard') || /^\/org\/[^/]+\/dashboard/.test(pathname)) return 'org-dashboard';
   return 'public';
 }
 
