@@ -178,7 +178,7 @@ export function VoucherFormDialog({
                           type="number"
                           placeholder="25"
                           {...field}
-                          value={field.value ?? '')}
+                          value={field.value ?? ''}
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         />
                       </FormControl>

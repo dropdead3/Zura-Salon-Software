@@ -312,7 +312,7 @@ export function AIInsightsCard() {
                 </div>
                 <Button variant="ghost" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
                   <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
-                  {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh')}
+                  {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
                 </Button>
               </div>
             </CardHeader>

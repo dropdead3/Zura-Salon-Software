@@ -88,7 +88,7 @@ export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizat
           <CardDescription>
             {isLoading
               ? 'Loading service provider metrics...'
-              : `Tracking ${workload.length} service provider${workload.length !== 1 ? 's' : '')} for the selected period`}
+              : `Tracking ${workload.length} service provider${workload.length !== 1 ? 's' : ''} for the selected period`}
           </CardDescription>
         </CardHeader>
         <CardContent>

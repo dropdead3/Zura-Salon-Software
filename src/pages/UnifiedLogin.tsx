@@ -242,7 +242,7 @@ export default function UnifiedLogin() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
           <p className="text-slate-400 text-sm">
-            {loadingPlatformInvitation ? 'Loading invitation...' : 'Checking access...')}
+            {loadingPlatformInvitation ? 'Loading invitation...' : 'Checking access...'}
           </p>
         </div>
       </div>
@@ -258,7 +258,7 @@ export default function UnifiedLogin() {
             <Mail className="w-8 h-8 text-red-400" />
           </div>
           <h2 className="text-xl font-medium text-white mb-2">
-            {platformInvitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired')}
+            {platformInvitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired'}
           </h2>
           <p className="text-slate-400 mb-6">
             {platformInvitation.status === 'accepted'
@@ -401,7 +401,7 @@ export default function UnifiedLogin() {
                     placeholder="you@company.com"
                     required
                     disabled={isPlatformInviteSignup}
-                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-10 ${emailError ? 'border-red-500' : '')} ${staffInvitation && !isLogin ? 'border-green-500/50' : '')}`}
+                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-10 ${emailError ? 'border-red-500' : '')} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
                   />
                   {!isLogin && checkingStaffInvitation && debouncedEmail.includes('@') && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -432,7 +432,7 @@ export default function UnifiedLogin() {
                   <div className="relative">
                     <Input
                       id="password"
-                      type={showPassword ? 'text' : 'password')}
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
@@ -460,7 +460,7 @@ export default function UnifiedLogin() {
                   <div className="relative">
                     <Input
                       id="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password')}
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => {
                         const newValue = e.target.value;
@@ -477,7 +477,7 @@ export default function UnifiedLogin() {
                       placeholder="••••••••"
                       required
                       minLength={6}
-                      className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500/50' : 'border-red-500') : '')}`}
+                      className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500/50' : 'border-red-500') : ''}`}
                     />
                     <button
                       type="button"
@@ -488,8 +488,8 @@ export default function UnifiedLogin() {
                     </button>
                   </div>
                   {confirmPassword.length >= 6 && (
-                    <p className={`text-xs ${confirmPassword === password ? 'text-green-400' : 'text-red-400')}`}>
-                      {confirmPassword === password ? 'Passwords match' : 'Passwords do not match')}
+                    <p className={`text-xs ${confirmPassword === password ? 'text-green-400' : 'text-red-400'}`}>
+                      {confirmPassword === password ? 'Passwords match' : 'Passwords do not match'}
                     </p>
                   )}
                 </div>

@@ -54,7 +54,7 @@ export function ShrinkageReportCard({ filterContext }: ShrinkageReportCardProps)
                   <MetricInfoTooltip description="Shrinkage is the difference between expected inventory (based on system records) and actual physical counts. Negative variance indicates potential loss from theft, damage, miscount, or admin errors." />
                 </div>
                 <CardDescription className="text-xs">
-                  {summaries.length} product{summaries.length !== 1 ? 's' : '')} with variance
+                  {summaries.length} product{summaries.length !== 1 ? 's' : ''} with variance
                   {' · ')}{totalShrinkageUnits} units
                   {' · ')}<BlurredAmount>{formatCurrency(totalShrinkageCost)}</BlurredAmount> estimated loss
                 </CardDescription>

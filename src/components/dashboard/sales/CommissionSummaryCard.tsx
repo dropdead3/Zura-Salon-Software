@@ -125,7 +125,7 @@ export function CommissionSummaryCard({ stylistData, isLoading }: CommissionSumm
                   <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                   <p className="text-[11px] text-muted-foreground">{m.label}</p>
                 </div>
-                <BlurredAmount className={m.accent ? 'text-2xl font-display' : 'text-lg font-display')}>
+                <BlurredAmount className={m.accent ? 'text-2xl font-display' : 'text-lg font-display'}>
                   {m.value}
                 </BlurredAmount>
                 {m.subtitle && (

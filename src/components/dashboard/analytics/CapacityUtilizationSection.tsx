@@ -115,7 +115,7 @@ function DayXAxisTick({ x, y, payload, days }: any) {
         textAnchor="middle" 
         className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}
       >
-        {day.gapHours > 0 ? `${Math.round(day.gapHours)}h open` : 'Full')}
+        {day.gapHours > 0 ? `${Math.round(day.gapHours)}h open` : 'Full'}
       </text>
     </g>
   );
@@ -381,8 +381,8 @@ export function CapacityUtilizationSection({
                     {chartData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
-                        fill={entry.isClosed ? 'transparent' : 'url(#capacity-glass-analytics)')}
-                        stroke={entry.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)')}
+                        fill={entry.isClosed ? 'transparent' : 'url(#capacity-glass-analytics)'}
+                        stroke={entry.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)'}
                       />
                     ))}
                   </Bar>

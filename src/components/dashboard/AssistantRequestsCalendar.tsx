@@ -136,7 +136,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
               Visual overview of scheduled requests
               {(conflicts.length > 0 || hasPhorestConflicts) && (
                 <span className="text-destructive ml-2">
-                  • {conflicts.length + phorestConflicts.length} conflict{(conflicts.length + phorestConflicts.length) !== 1 ? 's' : '')} detected
+                  • {conflicts.length + phorestConflicts.length} conflict{(conflicts.length + phorestConflicts.length) !== 1 ? 's' : ''} detected
                 </span>
               )}
             </CardDescription>
@@ -243,7 +243,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                   <div className="p-3 border-b">
                     <h4 className="font-medium">{formatDate(day, 'EEEE, MMMM d')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {dayRequests.length} request{dayRequests.length !== 1 ? 's' : '')}
+                      {dayRequests.length} request{dayRequests.length !== 1 ? 's' : ''}
                     </p>
                   </div>
                   

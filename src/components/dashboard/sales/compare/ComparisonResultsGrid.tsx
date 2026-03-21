@@ -96,7 +96,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
             'text-lg font-display tabular-nums',
             isNeutral ? 'text-muted-foreground' : isPositive ? 'text-chart-2' : 'text-destructive'
           )}>
-            {isPositive ? '+' : '')}{changePct.toFixed(1)}%
+            {isPositive ? '+' : ''}{changePct.toFixed(1)}%
           </span>
           <span className="text-xs text-muted-foreground">change</span>
         </div>
@@ -108,7 +108,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
             'text-sm font-display tabular-nums',
             isNeutral ? 'text-muted-foreground' : isPositive ? 'text-chart-2' : 'text-destructive'
           )}>
-            {diffVal >= 0 ? '+' : '-')}{formatCurrencyWhole(Math.abs(diffVal))}
+            {diffVal >= 0 ? '+' : '-'}{formatCurrencyWhole(Math.abs(diffVal))}
           </span>
           <span className="text-xs text-muted-foreground">difference</span>
         </div>
@@ -121,7 +121,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
             data.changes.totalTransactions === 0 ? 'text-muted-foreground'
               : data.changes.totalTransactions > 0 ? 'text-chart-2' : 'text-destructive'
           )}>
-            {data.changes.totalTransactions > 0 ? '+' : '')}{data.changes.totalTransactions.toFixed(1)}%
+            {data.changes.totalTransactions > 0 ? '+' : ''}{data.changes.totalTransactions.toFixed(1)}%
           </span>
         </div>
 
@@ -133,7 +133,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
             data.changes.averageTicket === 0 ? 'text-muted-foreground'
               : data.changes.averageTicket > 0 ? 'text-chart-2' : 'text-destructive'
           )}>
-            {data.changes.averageTicket > 0 ? '+' : '')}{data.changes.averageTicket.toFixed(1)}%
+            {data.changes.averageTicket > 0 ? '+' : ''}{data.changes.averageTicket.toFixed(1)}%
           </span>
         </div>
       </div>

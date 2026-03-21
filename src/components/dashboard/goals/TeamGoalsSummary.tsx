@@ -93,7 +93,7 @@ export function TeamGoalsSummary() {
         <Progress
           value={participationPct}
           className="h-2"
-          indicatorClassName={participationPct >= 80 ? 'bg-emerald-500' : participationPct >= 50 ? 'bg-amber-500' : 'bg-destructive')}
+          indicatorClassName={participationPct >= 80 ? 'bg-emerald-500' : participationPct >= 50 ? 'bg-amber-500' : 'bg-destructive'}
         />
 
         {staffWithGoals.length > 0 && (

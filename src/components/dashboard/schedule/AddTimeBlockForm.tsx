@@ -200,7 +200,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
         {reasons.map(r => (
           <Badge
             key={r.value}
-            variant={reason === r.value ? 'default' : 'outline')}
+            variant={reason === r.value ? 'default' : 'outline'}
             className={cn(
               'cursor-pointer text-xs px-2.5 py-1 transition-colors',
               reason === r.value
@@ -221,7 +221,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
           {durationPresets.map(preset => (
             <Badge
               key={preset.label}
-              variant={selectedDuration === preset.minutes ? 'default' : 'outline')}
+              variant={selectedDuration === preset.minutes ? 'default' : 'outline'}
               className={cn(
                 'cursor-pointer text-xs px-2.5 py-1 transition-colors',
                 selectedDuration === preset.minutes
@@ -271,7 +271,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
                           setStaffSearchOpen(false);
                         }}
                       >
-                        <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
+                        <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0'} />
                         {member.display_name || member.full_name}
                       </CommandItem>
                     ))}

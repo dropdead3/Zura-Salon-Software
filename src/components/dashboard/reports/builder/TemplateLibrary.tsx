@@ -157,7 +157,7 @@ export function TemplateLibrary({ onSelectTemplate, onCreateNew }: TemplateLibra
                     <Badge variant="secondary" className="text-xs">Shared</Badge>
                   )}
                   <Badge variant="outline" className="text-xs capitalize">
-                    {template.config.visualization?.replace('_', ' ') || 'table')}
+                    {template.config.visualization?.replace('_', ' ') || 'table'}
                   </Badge>
                 </div>
               </CardContent>

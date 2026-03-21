@@ -374,7 +374,7 @@ export default function StylistLevels() {
                           <span className="font-medium truncate">{level.label}</span>
                           {hasStylists && (
                             <span className="text-xs text-muted-foreground shrink-0">
-                              {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}
+                              {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
                             </span>
                           )}
                         </div>
@@ -406,7 +406,7 @@ export default function StylistLevels() {
                                       <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
                                         <p className="font-medium flex items-center gap-2">
                                           <AlertTriangle className="w-4 h-4" />
-                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is')} assigned to this level
+                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
                                         </p>
                                         <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
                                           You'll need to reassign these stylists to a different level.
@@ -712,7 +712,7 @@ export default function StylistLevels() {
                 >
                   <span className="text-background/70">Level:</span>
                   <span className="font-medium truncate">
-                    {levels[previewLevel]?.label || 'New Talent')}
+                    {levels[previewLevel]?.label || 'New Talent'}
                   </span>
                   <ChevronDownIcon size={14} className="text-background/70 shrink-0" />
                 </button>

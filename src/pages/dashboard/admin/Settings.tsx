@@ -991,7 +991,7 @@ export default function Settings() {
           {/* Back button and header */}
           <div className="mb-6">
             <DashboardPageHeader
-              title={categoriesMap[activeCategory]?.label.toUpperCase() ?? '')}
+              title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
             />
           </div>
 

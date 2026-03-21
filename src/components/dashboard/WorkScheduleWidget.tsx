@@ -206,7 +206,7 @@ export function WorkScheduleWidget() {
                               <Button
                                 key={day.key}
                                 type="button"
-                                variant={requestedDays.includes(day.key) ? 'default' : 'outline')}
+                                variant={requestedDays.includes(day.key) ? 'default' : 'outline'}
                                 size="sm"
                                 onClick={() => toggleDay(day.key)}
                                 disabled={isDisabled}
@@ -365,7 +365,7 @@ export function WorkScheduleWidget() {
                 return (
                   <Badge
                     key={day.key}
-                    variant={isWorking ? 'default' : 'outline')}
+                    variant={isWorking ? 'default' : 'outline'}
                     className={cn(
                       "min-w-[50px] justify-center py-1.5",
                       isWorking 

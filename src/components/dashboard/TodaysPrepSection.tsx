@@ -103,7 +103,7 @@ export function TodaysPrepSection() {
             <CardTitle className={tokens.card.title}>TODAY'S PREP</CardTitle>
             {appointments && appointments.length > 0 && (
               <CardDescription className="font-sans text-xs text-muted-foreground">
-                {appointments.length} today{confirmCount > 0 ? ` · ${confirmCount} to confirm` : '')}
+                {appointments.length} today{confirmCount > 0 ? ` · ${confirmCount} to confirm` : ''}
               </CardDescription>
             )}
           </div>

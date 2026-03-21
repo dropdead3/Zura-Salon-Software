@@ -130,7 +130,7 @@ export function AtRiskSummary({ participants, className }: AtRiskSummaryProps) {
       />
       <div className="flex-1">
         <p className="text-sm font-medium">
-          {atRiskCount} participant{atRiskCount !== 1 ? 's' : '')} at risk
+          {atRiskCount} participant{atRiskCount !== 1 ? 's' : ''} at risk
         </p>
         {criticalCount > 0 && (
           <p className="text-xs text-muted-foreground">

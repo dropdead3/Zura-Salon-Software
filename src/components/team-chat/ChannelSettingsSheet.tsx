@@ -167,7 +167,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
       <div className="p-5 pb-3 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          {isDM ? 'Conversation Settings' : 'Channel Settings')}
+          {isDM ? 'Conversation Settings' : 'Channel Settings'}
         </h2>
       </div>
 

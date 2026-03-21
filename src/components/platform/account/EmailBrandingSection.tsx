@@ -214,7 +214,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
                 disabled={isUploading}
               >
                 {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                {branding.email_logo_url ? 'Replace' : 'Upload')}
+                {branding.email_logo_url ? 'Replace' : 'Upload'}
               </PlatformButton>
               {branding.email_logo_url && (
                 <PlatformButton
@@ -273,7 +273,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
             className="gap-1.5"
           >
             <Eye className="h-4 w-4" />
-            {showPreview ? 'Hide Preview' : 'Show Preview')}
+            {showPreview ? 'Hide Preview' : 'Show Preview'}
           </PlatformButton>
 
           <PlatformButton

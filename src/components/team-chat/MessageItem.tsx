@@ -146,7 +146,7 @@ export function MessageItem({
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors -mt-0.5"
             >
               <MessageSquare className="h-3.5 w-3.5" />
-              {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies')}
+              {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
             </button>
           </div>
         )}
@@ -195,7 +195,7 @@ export function MessageItem({
                 {onPin && (
                   <DropdownMenuItem onClick={onPin}>
                     <Pin className="h-4 w-4 mr-2" />
-                    {isPinned ? 'Unpin message' : 'Pin message')}
+                    {isPinned ? 'Unpin message' : 'Pin message'}
                   </DropdownMenuItem>
                 )}
                 {canEditMsg && (

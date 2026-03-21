@@ -208,7 +208,7 @@ export default function Handbooks() {
       );
       toast({
         title: handbook.is_active ? 'Hidden' : 'Published',
-        description: `Handbook is now ${handbook.is_active ? 'hidden from' : 'visible to')} staff.`,
+        description: `Handbook is now ${handbook.is_active ? 'hidden from' : 'visible to'} staff.`,
       });
     }
   };
@@ -266,7 +266,7 @@ export default function Handbooks() {
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display">
-                  {editingHandbook ? 'EDIT HANDBOOK' : 'NEW HANDBOOK')}
+                  {editingHandbook ? 'EDIT HANDBOOK' : 'NEW HANDBOOK'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -336,7 +336,7 @@ export default function Handbooks() {
                         key={role.value}
                         type="button"
                         size={tokens.button.card}
-                        variant={visibleToRoles.includes(role.value) ? 'default' : 'outline')}
+                        variant={visibleToRoles.includes(role.value) ? 'default' : 'outline'}
                         onClick={() => toggleRoleVisibility(role.value)}
                         className="text-xs"
                       >
@@ -373,7 +373,7 @@ export default function Handbooks() {
                 </h2>
                 <div className="space-y-3">
                   {items.map(handbook => (
-                    <Card key={handbook.id} className={`p-4 ${!handbook.is_active ? 'opacity-50' : '')}`}>
+                    <Card key={handbook.id} className={`p-4 ${!handbook.is_active ? 'opacity-50' : ''}`}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3">
                           <div className="p-2 bg-muted rounded">

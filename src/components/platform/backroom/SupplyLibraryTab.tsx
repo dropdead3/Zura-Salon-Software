@@ -512,7 +512,7 @@ export function SupplyLibraryTab() {
                     value: p.wholesale_price != null ? String(p.wholesale_price) : '',
                   })}
                 >
-                  {p.wholesale_price != null ? formatCurrency(p.wholesale_price, { currency: p.currency || 'USD' }) : '—')}
+                  {p.wholesale_price != null ? formatCurrency(p.wholesale_price, { currency: p.currency || 'USD' }) : '—'}
                 </span>
               </TooltipTrigger>
               {p.price_updated_at && (
@@ -541,7 +541,7 @@ export function SupplyLibraryTab() {
         )}
       </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-        {p.size_options?.join(', ') || '—')}
+        {p.size_options?.join(', ') || '—'}
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
@@ -875,10 +875,10 @@ export function SupplyLibraryTab() {
                   </SelectContent>
                 </Select>
                 <PlatformButton
-                  variant={recencyFilter === 'recent' ? 'secondary' : 'ghost')}
+                  variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
                   size="sm"
-                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all')}
-                  className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : '')}
+                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all'}
+                  className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : ''}
                 >
                   <Clock className="w-3.5 h-3.5 mr-1" />
                   Recently Added
@@ -1238,7 +1238,7 @@ function AddEditDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-sans text-base">
-            {isEdit ? 'Edit Product' : 'Add Product')}
+            {isEdit ? 'Edit Product' : 'Add Product'}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
@@ -1310,7 +1310,7 @@ function AddEditDialog({
         <DialogFooter>
           <PlatformButton variant="outline" onClick={() => onOpenChange(false)}>Cancel</PlatformButton>
           <PlatformButton onClick={handleSave} loading={saving} disabled={!brand.trim() || !name.trim()}>
-            {isEdit ? 'Save Changes' : 'Add Product')}
+            {isEdit ? 'Save Changes' : 'Add Product'}
           </PlatformButton>
         </DialogFooter>
       </DialogContent>

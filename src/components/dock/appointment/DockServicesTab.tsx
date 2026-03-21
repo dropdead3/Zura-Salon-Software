@@ -190,7 +190,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         sessionId={activeBowl.sessionId}
         bowlId={activeBowl.bowlId}
         bowlNumber={activeBowl.bowlNumber}
-        organizationId={effectiveOrganization?.id || '')}
+        organizationId={effectiveOrganization?.id || ''}
         bowlStatus={activeBowl.status}
         onBack={() => setActiveBowl(null)}
       />
@@ -225,8 +225,8 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const sessionState = deriveSessionState(remoteBowls, demoBowls);
 
   return (
-    <div className={`flex flex-col h-full ${allBowlCount === 0 ? '' : '')}`}>
-      <div className={`px-5 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3')}`}>
+    <div className={`flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
+      <div className={`px-5 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
         {/* Bowl grid */}
         {allBowlCount > 0 ? (
           <div className="grid grid-cols-2 gap-3">

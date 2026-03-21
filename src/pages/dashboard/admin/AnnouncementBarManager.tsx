@@ -94,7 +94,7 @@ export default function AnnouncementBarManager() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className={`bg-secondary py-4 md:py-2.5 px-4 md:px-6 rounded-lg ${!formData.enabled ? 'opacity-50' : '')}`}>
+            <div className={`bg-secondary py-4 md:py-2.5 px-4 md:px-6 rounded-lg ${!formData.enabled ? 'opacity-50' : ''}`}>
               <div className="flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
                 <p className="text-sm text-foreground/80 text-center md:text-left">
                   {formData.message_prefix}{' '}

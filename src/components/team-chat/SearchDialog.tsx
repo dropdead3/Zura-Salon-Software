@@ -94,7 +94,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             </div>
           ) : results.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground text-sm">
-              {debouncedQuery ? 'No messages found' : 'Type to search messages')}
+              {debouncedQuery ? 'No messages found' : 'Type to search messages'}
             </div>
           ) : (
             <div className="p-2">

@@ -84,7 +84,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
                     ? "bg-amber-500/20 text-amber-400"
                     : "bg-rose-500/20 text-rose-400"
                 )}>
-                  {org.subscription_status === 'past_due' ? 'Past due' : 'Cancelled')}
+                  {org.subscription_status === 'past_due' ? 'Past due' : 'Cancelled'}
                 </Badge>
                 {org.lastInvoice && (
                   <p className="text-xs text-slate-500 mt-1">

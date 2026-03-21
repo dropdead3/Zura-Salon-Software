@@ -178,7 +178,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                         {announcement.location_id ? (
                           <>
                             <MapPin className="w-3 h-3" />
-                            {locations.find(l => l.id === announcement.location_id)?.name || 'Location')}
+                            {locations.find(l => l.id === announcement.location_id)?.name || 'Location'}
                           </>
                         ) : (
                           <>
@@ -217,7 +217,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
         {/* Collapsed state preview */}
         {!isExpanded && hasAnnouncements && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{totalCount} announcement{totalCount !== 1 ? 's' : '')}</span>
+            <span>{totalCount} announcement{totalCount !== 1 ? 's' : ''}</span>
             {displayedAnnouncements.some(a => a.is_pinned) && (
               <span className="flex items-center gap-1 text-xs">
                 <Pin className="w-3 h-3" />

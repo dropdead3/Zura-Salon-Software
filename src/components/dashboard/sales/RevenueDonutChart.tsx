@@ -185,7 +185,7 @@ export function RevenueDonutChart({
                     </span>
                   )}
                   <span className="font-medium text-foreground tabular-nums">
-                    {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—')}
+                    {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
                   </span>
                 </div>
               </div>

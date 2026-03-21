@@ -168,7 +168,7 @@ export function ProductTable({ products, isLoading, onEdit }: ProductTableProps)
                     "font-medium",
                     isLowStock && "text-amber-600"
                   )}>
-                    {product.quantity_on_hand ?? '—')}
+                    {product.quantity_on_hand ?? '—'}
                     {isLowStock && <AlertTriangle className="inline ml-1 h-4 w-4" />}
                   </span>
                 </TableCell>

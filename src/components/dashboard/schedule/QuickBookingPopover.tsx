@@ -165,7 +165,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
           {isLoading ? (
             <DashboardLoader size="sm" className="py-8" />
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search')}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
+            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search'}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
           ) : (
             <div className="space-y-0.5">
               {filteredClients.map((client) => {
@@ -196,7 +196,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
           {ALPHABET.map((letter) => {
             const available = availableLetters.has(letter);
             const active = activeLetter === letter;
-            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
+            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none'} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
           })}
         </div>
       )}
@@ -829,7 +829,7 @@ export function QuickBookingPopover({
           redo_metadata: isRedo ? { reason: redoReason, originalAppointmentId } : undefined,
         });
         toast.success('Draft saved', {
-          description: `${selectedClient?.name || 'No client')} · ${selectedServices.length} service(s)`,
+          description: `${selectedClient?.name || 'No client'} · ${selectedServices.length} service(s)`,
         });
       }
     }
@@ -1212,7 +1212,7 @@ export function QuickBookingPopover({
             }}
           />
         ) : (
-          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
             <div className="p-3 border-b border-border">
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1247,7 +1247,7 @@ export function QuickBookingPopover({
 
       {/* Step: Service Selection */}
       {step === 'service' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
           {showBreakForm ? (
             <AddTimeBlockForm
               date={date}
@@ -1658,7 +1658,7 @@ export function QuickBookingPopover({
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
+                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
                       </Badge>
                       <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                     </div>
@@ -1701,7 +1701,7 @@ export function QuickBookingPopover({
                 </Button>
               )}
               <Button className="w-full h-9" onClick={handleServicesComplete}>
-                {selectedServices.length === 0 ? 'Skip Services' : 'Continue')}
+                {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
               </Button>
             </div>
           </div>
@@ -1712,7 +1712,7 @@ export function QuickBookingPopover({
 
       {/* Step: Location Selection */}
       {step === 'location' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-3">
               <div className="flex items-center gap-2 mb-3">
@@ -1756,7 +1756,7 @@ export function QuickBookingPopover({
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
                     </Badge>
                     <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
@@ -1791,7 +1791,7 @@ export function QuickBookingPopover({
 
       {/* Step: Stylist Selection */}
       {step === 'stylist' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-4">
               {!stylistFirstMode && autoSelectReason === 'previous' && selectedClient && (
@@ -1807,7 +1807,7 @@ export function QuickBookingPopover({
                 </div>
               )}
               <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
-                {stylistFirstMode ? 'All Stylists' : 'Available Stylists')}
+                {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
                 {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
                   <span className="text-xs font-normal text-muted-foreground ml-2">
                     ({filteredStylists.length} qualified)
@@ -1896,7 +1896,7 @@ export function QuickBookingPopover({
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
                     </Badge>
                     <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
@@ -1934,7 +1934,7 @@ export function QuickBookingPopover({
 
       {/* Step: Confirmation */}
       {step === 'confirm' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-3">
               <div className="bg-muted/50 rounded-lg p-3">
@@ -2009,7 +2009,7 @@ export function QuickBookingPopover({
                         <div>
                           <div className="font-medium text-xs">{addon.name}</div>
                           <div className="text-[10px] text-muted-foreground">
-                            {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on')}
+                            {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on'}
                           </div>
                         </div>
                       </div>
@@ -2190,9 +2190,9 @@ export function QuickBookingPopover({
                           <span className="text-muted-foreground">Redo pricing</span>
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-[10px]">
-                              {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary')}
+                              {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary'}
                               {redoPolicy?.redo_pricing_policy === 'percentage' && `${redoPolicy.redo_pricing_percentage}% of original`}
-                              {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price')}
+                              {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price'}
                             </Badge>
                             {displayPrice != null && (
                               <span className="font-medium tabular-nums">{formatCurrencyWhole(displayPrice)}</span>
@@ -2212,7 +2212,7 @@ export function QuickBookingPopover({
                           type="number"
                           min={0}
                           placeholder="Leave empty to use policy"
-                          value={redoPriceOverride ?? '')}
+                          value={redoPriceOverride ?? ''}
                           onChange={(e) => setRedoPriceOverride(e.target.value ? parseFloat(e.target.value) : null)}
                           className="h-8 text-xs"
                         />
@@ -2347,7 +2347,7 @@ export function QuickBookingPopover({
                   }, {
                     onSuccess: () => {
                       toast.success('Draft saved', {
-                        description: `${selectedClient?.name || 'No client')} · ${selectedServices.length} service(s)`,
+                        description: `${selectedClient?.name || 'No client'} · ${selectedServices.length} service(s)`,
                       });
                       handleClose(true);
                     },
@@ -2400,7 +2400,7 @@ export function QuickBookingPopover({
       <BannedClientWarningDialog
         open={!!pendingBannedClient}
         onOpenChange={(open) => !open && setPendingBannedClient(null)}
-        clientName={pendingBannedClient?.name || '')}
+        clientName={pendingBannedClient?.name || ''}
         banReason={pendingBannedClient?.ban_reason}
         onProceed={handleProceedWithBannedClient}
         onCancel={() => setPendingBannedClient(null)}

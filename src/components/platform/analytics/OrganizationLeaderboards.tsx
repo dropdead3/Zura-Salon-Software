@@ -51,7 +51,7 @@ export function OrganizationLeaderboards({
     rank: index + 1,
     organization: org,
     value: org.revenueGrowth,
-    formattedValue: `${org.revenueGrowth >= 0 ? '+' : '')}${org.revenueGrowth.toFixed(1)}%`,
+    formattedValue: `${org.revenueGrowth >= 0 ? '+' : ''}${org.revenueGrowth.toFixed(1)}%`,
   }));
 
   const performanceEntries = topByPerformance.map((org, index) => ({

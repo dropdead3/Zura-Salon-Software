@@ -36,7 +36,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(`${clientId}-${type}`);
-      toast.success(`${type === 'email' ? 'Email' : 'Phone')} copied to clipboard`);
+      toast.success(`${type === 'email' ? 'Email' : 'Phone'} copied to clipboard`);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       toast.error('Failed to copy');
@@ -106,7 +106,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
             <div className="col-span-1 md:col-span-2 flex items-center">
               <span className="md:hidden text-xs text-muted-foreground mr-2">Last visit:</span>
               <span className="text-sm">
-                {client.lastVisit ? formatDate(parseISO(client.lastVisit), 'MMM d, yyyy') : 'Unknown')}
+                {client.lastVisit ? formatDate(parseISO(client.lastVisit), 'MMM d, yyyy') : 'Unknown'}
               </span>
             </div>
 

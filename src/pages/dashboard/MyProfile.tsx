@@ -422,7 +422,7 @@ export default function MyProfile() {
       <div className="p-6 lg:p-8 max-w-3xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-display font-medium mb-2">
-            {isReadOnly ? `${impersonatedUser?.full_name}'s Profile` : 'My Profile')}
+            {isReadOnly ? `${impersonatedUser?.full_name}'s Profile` : 'My Profile'}
           </h1>
           <p className="text-muted-foreground">
             {isReadOnly 
@@ -653,7 +653,7 @@ export default function MyProfile() {
                       onClick={handlePhotoClick}
                       disabled={uploadPhoto.isPending}
                     >
-                      {uploadPhoto.isPending ? 'Uploading...' : profile?.photo_url ? 'Change Photo' : 'Upload Photo')}
+                      {uploadPhoto.isPending ? 'Uploading...' : profile?.photo_url ? 'Change Photo' : 'Upload Photo'}
                     </Button>
                     <p className="text-[10px] text-muted-foreground">JPG, PNG. Max 5MB.</p>
                   </div>
@@ -831,7 +831,7 @@ export default function MyProfile() {
                   </p>
                   <div className="flex gap-2">
                     <Badge
-                      variant={formData.preferred_social_handle === 'instagram' ? 'default' : 'outline')}
+                      variant={formData.preferred_social_handle === 'instagram' ? 'default' : 'outline'}
                       className={cn(
                         "cursor-pointer transition-all px-4 py-2",
                         !formData.instagram && "opacity-50 cursor-not-allowed"
@@ -849,7 +849,7 @@ export default function MyProfile() {
                       )}
                     </Badge>
                     <Badge
-                      variant={formData.preferred_social_handle === 'tiktok' ? 'default' : 'outline')}
+                      variant={formData.preferred_social_handle === 'tiktok' ? 'default' : 'outline'}
                       className={cn(
                         "cursor-pointer transition-all px-4 py-2",
                         !formData.tiktok && "opacity-50 cursor-not-allowed"
@@ -914,7 +914,7 @@ export default function MyProfile() {
                     return (
                       <Badge
                         key={loc.id}
-                        variant={isSelected ? 'default' : 'outline')}
+                        variant={isSelected ? 'default' : 'outline'}
                         className="cursor-pointer transition-all"
                         onClick={() => {
                           setFormData(prev => ({
@@ -1011,7 +1011,7 @@ export default function MyProfile() {
                         <span className="font-medium text-sm">{location.name}</span>
                         {currentSchedule.length > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : '')}
+                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : ''}
                           </Badge>
                         )}
                         {closedDays.length > 0 && (
@@ -1084,7 +1084,7 @@ export default function MyProfile() {
                 {Object.values(formData.location_schedules).flat().length > 0 && (
                   <div className="pt-3 border-t">
                     <p className="text-xs text-muted-foreground">
-                      Total: {Object.values(formData.location_schedules).flat().length} day{Object.values(formData.location_schedules).flat().length !== 1 ? 's' : '')} per week across all locations
+                      Total: {Object.values(formData.location_schedules).flat().length} day{Object.values(formData.location_schedules).flat().length !== 1 ? 's' : ''} per week across all locations
                     </p>
                   </div>
                 )}

@@ -221,7 +221,7 @@ export default function TeamCalendar() {
           {/* Selected Date Panel */}
           <Card className="p-4">
             <h3 className="font-medium mb-4">
-              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date')}
+              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date'}
             </h3>
             
             {selectedDate ? (
@@ -258,7 +258,7 @@ export default function TeamCalendar() {
                         </div>
                         {!event.all_day && event.start_time && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD')}
+                            {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD'}
                           </p>
                         )}
                         {event.all_day && (

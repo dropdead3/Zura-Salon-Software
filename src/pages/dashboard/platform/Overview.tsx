@@ -110,7 +110,7 @@ export default function PlatformOverview() {
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display bg-gradient-to-r from-[hsl(var(--platform-foreground))] via-[hsl(var(--platform-foreground))] to-[hsl(var(--platform-primary))] bg-clip-text text-transparent tracking-tight">
-              {greeting}{firstName ? `, ${firstName}` : '')}
+              {greeting}{firstName ? `, ${firstName}` : ''}
             </h1>
             <p className="text-[hsl(var(--platform-foreground-muted)/0.8)] mt-1.5 text-sm">
               {contextualMessage}
@@ -151,7 +151,7 @@ export default function PlatformOverview() {
             value={stats?.pendingMigrations || 0}
             icon={Upload}
             description="Data imports in progress"
-            variant={stats?.pendingMigrations ? 'warning' : 'default')}
+            variant={stats?.pendingMigrations ? 'warning' : 'default'}
             href="/platform/import"
             sparkData={[3, 2, 4, 1, 2, 1, 0, 1]}
             index={2}

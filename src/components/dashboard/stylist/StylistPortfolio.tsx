@@ -62,7 +62,7 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
         {categoriesWithEntries.map(cat => (
           <Button
             key={cat}
-            variant={activeCategory === cat ? 'default' : 'outline')}
+            variant={activeCategory === cat ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveCategory(cat)}
             className="text-xs h-7 px-3"
@@ -103,7 +103,7 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
               )}
               <div className="flex items-center justify-between">
                 <span className={cn(tokens.body.muted, 'text-[10px]')}>
-                  {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : '')}
+                  {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : ''}
                 </span>
                 {t.portfolio_category && (
                   <Badge variant="secondary" className="text-[9px] h-4">{t.portfolio_category}</Badge>

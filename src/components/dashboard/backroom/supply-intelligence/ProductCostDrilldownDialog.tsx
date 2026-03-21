@@ -73,7 +73,7 @@ export function ProductCostDrilldownDialog({
                     : 'text-emerald-600 dark:text-emerald-400',
                 )}
               >
-                {product.changePercent > 0 ? '+' : '')}
+                {product.changePercent > 0 ? '+' : ''}
                 {product.changePercent}%
               </p>
             </div>

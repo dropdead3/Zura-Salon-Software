@@ -166,10 +166,10 @@ export function LeaderboardWeightsManager() {
       </div>
 
       {/* Total Display */}
-      <Card className={`p-4 ${isValid ? 'bg-primary/5 border-primary/20' : 'bg-destructive/5 border-destructive/20')}`}>
+      <Card className={`p-4 ${isValid ? 'bg-primary/5 border-primary/20' : 'bg-destructive/5 border-destructive/20'}`}>
         <div className="flex items-center justify-between">
           <span className="font-sans font-medium">Total Weight</span>
-          <span className={`font-display text-2xl ${isValid ? 'text-primary' : 'text-destructive')}`}>
+          <span className={`font-display text-2xl ${isValid ? 'text-primary' : 'text-destructive'}`}>
             {Math.round(totalWeight * 100)}%
           </span>
         </div>

@@ -449,10 +449,10 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
       const unitCost = p.cost_price ?? p.cost_per_gram;
       const total = unitCost != null ? unitCost * qty : null;
       return `<tr>
-        <td style="padding: 10px; border: 1px solid #ddd;">${p.name}${p.sku ? }` (SKU: ${p.sku})` : '')}</td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${p.name}${p.sku ? }` (SKU: ${p.sku})` : ''}</td>
         <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${qty}</td>
-        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${unitCost != null ? }`$${unitCost.toFixed(2)}` : '—')}</td>` : '')}
-        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${total != null ? }`$${total.toFixed(2)}` : '—')}</td>` : '')}
+        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${unitCost != null ? }`$${unitCost.toFixed(2)}` : '—')}</td>` : ''}
+        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${total != null ? }`$${total.toFixed(2)}` : '—')}</td>` : ''}
       </tr>`;
     }).join('');
 
@@ -464,13 +464,13 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #1a1a1a; margin-bottom: 24px;">Purchase Order Request</h2>
       <p>Dear ${group.supplierName},</p>
-      <p>We would like to place the following order${selectedProducts.length > 1 ? }` (${selectedProducts.length} items)` : '')}:</p>
+      <p>We would like to place the following order${selectedProducts.length > 1 ? }` (${selectedProducts.length} items)` : ''}:</p>
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background: #f5f5f5;">
           <th style="text-align: left; padding: 10px; border: 1px solid #ddd;">Product</th>
           <th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Quantity</th>
-          ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Unit Cost</th>' : '')}
-          ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Total</th>' : '')}
+          ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Unit Cost</th>' : ''}
+          ${hasUnitCost ? '<th style="text-align: right; padding: 10px; border: 1px solid #ddd;">Total</th>' : ''}
         </tr>
         ${rows}
         ${hasUnitCost && selectedProducts.length > 1 ? }`<tr style="background: #f9f9f9; font-weight: bold;">
@@ -549,7 +549,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           <Package className={tokens.empty.icon} />
           <h3 className={tokens.empty.heading}>No products found</h3>
           <p className={tokens.empty.description}>
-            {inventory.length === 0 ? 'No tracked products at this location. Enable tracking in the Product Catalog.' : 'Try adjusting your search or filters.')}
+            {inventory.length === 0 ? 'No tracked products at this location. Enable tracking in the Product Catalog.' : 'Try adjusting your search or filters.'}
           </p>
         </div>
       ) : (
@@ -596,7 +596,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
               {hasActionItems ? (
                 <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground shrink-0">
                   <button
-                    onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
+                    onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical'}
                     className={cn(
                       'tabular-nums transition-colors duration-150',
                       severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
@@ -606,7 +606,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                   </button>
                   <span className="text-muted-foreground/30">·</span>
                   <button
-                    onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
+                    onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low'}
                     className={cn(
                       'tabular-nums transition-colors duration-150',
                       severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
@@ -636,9 +636,9 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                       variant="outline"
                       size="sm"
                       className="font-sans rounded-full h-7 px-3 text-xs"
-                      onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
+                      onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder'}
                     >
-                      {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items')}
+                      {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
                     </Button>
                     <Button
                       size="sm"
@@ -753,13 +753,13 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         open={autoPoDialog}
         onOpenChange={setAutoPoDialog}
         products={autoPoProducts}
-        organizationId={orgId ?? '')}
+        organizationId={orgId ?? ''}
       />
       <AutoParDialog
         open={autoParDialog}
         onOpenChange={setAutoParDialog}
         productIds={inventory.map(r => r.id)}
-        orgId={orgId ?? '')}
+        orgId={orgId ?? ''}
         locationId={locationId}
       />
 
@@ -848,7 +848,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           {selectedWithoutEmail > 0 && (
             <p className="text-xs text-warning flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
-              {selectedWithoutEmail} selected item{selectedWithoutEmail !== 1 ? 's' : '')} skipped (no supplier email)
+              {selectedWithoutEmail} selected item{selectedWithoutEmail !== 1 ? 's' : ''} skipped (no supplier email)
             </p>
           )}
 
@@ -856,7 +856,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
 
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {emailPreviewGroups.length} supplier{emailPreviewGroups.length !== 1 ? 's' : '')} ·{' '}
+              {emailPreviewGroups.length} supplier{emailPreviewGroups.length !== 1 ? 's' : ''} ·{' '}
               {emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)} items ·{' '}
               {formatCurrency(emailPreviewGroups.reduce((s, g) => s + g.products.reduce((ss, p) => ss + getOrderQtyForEmail(p) * (p.cost_price ?? p.cost_per_gram ?? 0), 0), 0))}
             </div>
@@ -914,13 +914,13 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
         <TableCell colSpan={8} className="py-2.5">
           <div className="flex items-center gap-2.5">
             <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150', open && 'rotate-90')} />
-            <Truck className={cn('w-4 h-4', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70')} />
+            <Truck className={cn('w-4 h-4', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70'} />
             <div className="flex flex-col">
-              <span className={cn('text-sm font-medium font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
+              <span className={cn('text-sm font-medium font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80'}>
                 {isUnassigned ? 'Unassigned Supplier' : group.supplier}
               </span>
               <span className="text-[10px] text-muted-foreground/50 tabular-nums font-sans">
-                {group.products.length} item{group.products.length !== 1 ? 's' : '')}
+                {group.products.length} item{group.products.length !== 1 ? 's' : ''}
                 {group.estimatedTotal > 0 && <> · {formatCurrency(group.estimatedTotal)} est.</>}
               </span>
             </div>

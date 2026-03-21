@@ -301,15 +301,15 @@ export default function ScheduleMeeting() {
                              {formatMeetingDate(meeting.meeting_date, formatDate)} at {formatTime(meeting.start_time, formatDate)}
                            </span>
                           <span className="text-xs text-muted-foreground capitalize">
-                            {meeting.meeting_type?.replace('_', ' ') || 'Meeting')}
+                            {meeting.meeting_type?.replace('_', ' ') || 'Meeting'}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          with {meeting.coach?.display_name || meeting.coach?.full_name || 'Coach')}
+                          with {meeting.coach?.display_name || meeting.coach?.full_name || 'Coach'}
                         </span>
-                        <Badge variant={meeting.status === 'confirmed' ? 'default' : 'secondary')} className="text-xs">
+                        <Badge variant={meeting.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs">
                           {meeting.status}
                         </Badge>
                       </div>
@@ -354,10 +354,10 @@ export default function ScheduleMeeting() {
                         <div key={request.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                           <div className="flex flex-col">
                              <span className={tokens.body.emphasis}>
-                               {request.requester?.display_name || request.requester?.full_name || 'Team Member')}
+                               {request.requester?.display_name || request.requester?.full_name || 'Team Member'}
                              </span>
                             <span className="text-xs text-muted-foreground capitalize">
-                              {request.meeting_type?.replace('_', ' ') || 'Meeting')}
+                              {request.meeting_type?.replace('_', ' ') || 'Meeting'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -405,7 +405,7 @@ export default function ScheduleMeeting() {
                             <div className="flex flex-col">
                               <span className={cn(tokens.body.emphasis, "line-clamp-1")}>{item.title}</span>
                               <span className="text-xs text-muted-foreground">
-                                For {item.teamMember?.display_name || item.teamMember?.full_name || 'Team Member')}
+                                For {item.teamMember?.display_name || item.teamMember?.full_name || 'Team Member'}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">

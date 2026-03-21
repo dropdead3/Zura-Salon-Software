@@ -219,7 +219,7 @@ export function EmailVariablesManager() {
       </div>
 
       <div className="text-sm text-muted-foreground">
-        {filteredVariables?.length} variable{filteredVariables?.length !== 1 ? 's' : '')} found
+        {filteredVariables?.length} variable{filteredVariables?.length !== 1 ? 's' : ''} found
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -326,7 +326,7 @@ export function EmailVariablesManager() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingVariable ? 'Edit Variable' : 'Add New Variable')}
+              {editingVariable ? 'Edit Variable' : 'Add New Variable'}
             </DialogTitle>
             <DialogDescription>
               {editingVariable
@@ -409,7 +409,7 @@ export function EmailVariablesManager() {
               onClick={handleSave}
               disabled={createVariable.isPending || updateVariable.isPending}
             >
-              {editingVariable ? 'Save Changes' : 'Create Variable')}
+              {editingVariable ? 'Save Changes' : 'Create Variable'}
             </Button>
           </DialogFooter>
         </DialogContent>

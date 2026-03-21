@@ -99,7 +99,7 @@ export default function CoachRequests() {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm">
-                            With: {meeting.requester?.display_name || meeting.requester?.full_name || 'Unknown')}
+                            With: {meeting.requester?.display_name || meeting.requester?.full_name || 'Unknown'}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">

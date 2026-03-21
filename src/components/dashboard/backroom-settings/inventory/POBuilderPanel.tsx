@@ -80,7 +80,7 @@ export function POBuilderPanel({
           <FileText className="w-4 h-4 text-primary" />
           <span className={cn(tokens.label.tiny, 'text-foreground')}>PO Builder</span>
           <span className="text-[10px] text-muted-foreground tabular-nums">
-            ({items.length} {items.length === 1 ? 'item' : 'items')})
+            ({items.length} {items.length === 1 ? 'item' : 'items'})
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -135,7 +135,7 @@ export function POBuilderPanel({
             <span className="text-sm font-medium tabular-nums">{formatCurrency(grandTotal)}</span>
           </div>
           <div className="flex items-center justify-between text-[10px] text-muted-foreground/60">
-            <span>{supplierGroups.length} {supplierGroups.length === 1 ? 'supplier' : 'suppliers')}</span>
+            <span>{supplierGroups.length} {supplierGroups.length === 1 ? 'supplier' : 'suppliers'}</span>
             <span>{items.length} line items</span>
           </div>
         </div>
@@ -172,8 +172,8 @@ function SupplierPOCard({
         onClick={() => setCollapsed(!collapsed)}
       >
         <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-150', !collapsed && 'rotate-90')} />
-        <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary')} />
-        <span className={cn('text-xs font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground')}>
+        <Truck className={cn('w-3.5 h-3.5', isUnassigned ? 'text-muted-foreground/40' : 'text-primary'} />
+        <span className={cn('text-xs font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground'}>
           {group.supplier}
         </span>
         <span className="text-[10px] text-muted-foreground/50">({group.items.length})</span>
@@ -272,7 +272,7 @@ function SupplierPOCard({
           {/* Submit button per supplier */}
           <div className="px-3 py-2 flex items-center justify-between border-t border-border/20">
             <span className="text-[10px] text-muted-foreground/40 font-sans tabular-nums">
-              {group.items.length} {group.items.length === 1 ? 'item' : 'items')} · {formatCurrency(group.totalCost)}
+              {group.items.length} {group.items.length === 1 ? 'item' : 'items'} · {formatCurrency(group.totalCost)}
             </span>
             <Button
               size="sm"

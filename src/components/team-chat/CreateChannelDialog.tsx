@@ -196,7 +196,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
                     </>
                   ) : availableMembers.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-4">
-                      {memberSearch ? 'No members found' : 'No more members to add')}
+                      {memberSearch ? 'No members found' : 'No more members to add'}
                     </p>
                   ) : (
                     availableMembers.map((member) => (
@@ -237,7 +237,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
 
               {selectedMembers.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : '')} will be added
+                  {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : ''} will be added
                 </p>
               )}
             </div>
@@ -248,7 +248,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim() || isCreating}>
-              {isCreating ? 'Creating...' : 'Create Channel')}
+              {isCreating ? 'Creating...' : 'Create Channel'}
             </Button>
           </DialogFooter>
         </form>

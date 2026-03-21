@@ -142,7 +142,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
   for (let hour = 8; hour <= 20; hour++) {
     for (let min = 0; min < 60; min += 15) {
       const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-      const displayTime = `${hour > 12 ? hour - 12 : hour}:${min.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM')}`;
+      const displayTime = `${hour > 12 ? hour - 12 : hour}:${min.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
       timeSlots.push({ value: time, label: displayTime });
     }
   }
@@ -188,7 +188,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? formatDate(date, 'PPP') : 'Pick a date first')}
+                  {date ? formatDate(date, 'PPP') : 'Pick a date first'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -232,7 +232,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
               </Select>
               {locationId && availableAssistantsAtLocation.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {availableAssistantsAtLocation.length} assistant{availableAssistantsAtLocation.length !== 1 ? 's' : '')} available
+                  {availableAssistantsAtLocation.length} assistant{availableAssistantsAtLocation.length !== 1 ? 's' : ''} available
                 </p>
               )}
             </div>
@@ -358,7 +358,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {recurrenceEndDate ? formatDate(recurrenceEndDate, 'PPP') : 'Pick end date')}
+                      {recurrenceEndDate ? formatDate(recurrenceEndDate, 'PPP') : 'Pick end date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -392,7 +392,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
             className="w-full"
             disabled={!date || !serviceId || !clientName || !startTime || createRequest.isPending || (isRecurring && !recurrenceEndDate)}
           >
-            {createRequest.isPending ? 'Submitting...' : isRecurring ? 'Submit Recurring Request' : 'Submit Request')}
+            {createRequest.isPending ? 'Submitting...' : isRecurring ? 'Submit Recurring Request' : 'Submit Request'}
           </Button>
         </form>
       </DialogContent>

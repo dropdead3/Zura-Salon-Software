@@ -279,7 +279,7 @@ export function PlanUpgradeDialog({
             {isLoading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : null}
-            {isUpgrade ? 'Confirm Upgrade' : isDowngrade ? 'Confirm Downgrade' : 'Confirm Change')}
+            {isUpgrade ? 'Confirm Upgrade' : isDowngrade ? 'Confirm Downgrade' : 'Confirm Change'}
           </PlatformButton>
         </DialogFooter>
       </DialogContent>

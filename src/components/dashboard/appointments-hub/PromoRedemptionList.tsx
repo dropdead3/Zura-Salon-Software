@@ -163,7 +163,7 @@ export function PromoRedemptionList({ redemptions, isLoading }: PromoRedemptionL
       {/* Footer with count + batch bar */}
       <div className="border-t p-3 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">
-          {redemptions.length} redemption{redemptions.length !== 1 ? 's' : '')}
+          {redemptions.length} redemption{redemptions.length !== 1 ? 's' : ''}
         </span>
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-2">

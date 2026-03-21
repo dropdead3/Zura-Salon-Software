@@ -465,7 +465,7 @@ export default function Onboarding() {
                   <div className="flex-1 text-left">
                     <h2 className="font-display text-lg">ONBOARDING CHECKLIST</h2>
                     <p className="text-sm text-muted-foreground font-sans">
-                      {tasksProgress >= 100 ? 'All tasks completed!' : 'Complete these tasks to finish your setup')}
+                      {tasksProgress >= 100 ? 'All tasks completed!' : 'Complete these tasks to finish your setup'}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -575,7 +575,7 @@ export default function Onboarding() {
                   <div className="flex-1 text-left">
                     <h2 className="font-display text-lg">READ & ACKNOWLEDGE HANDBOOKS</h2>
                     <p className="text-sm text-muted-foreground font-sans">
-                      {handbooksProgress >= 100 ? 'All handbooks acknowledged!' : 'Review and acknowledge receipt of required documents')}
+                      {handbooksProgress >= 100 ? 'All handbooks acknowledged!' : 'Review and acknowledge receipt of required documents'}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -633,7 +633,7 @@ export default function Onboarding() {
                           <Button 
                             onClick={() => openHandbook(handbook, index)}
                             size="sm"
-                            variant={isCurrent ? 'default' : 'outline')}
+                            variant={isCurrent ? 'default' : 'outline'}
                             className="font-display text-xs"
                           >
                             REVIEW
@@ -669,7 +669,7 @@ export default function Onboarding() {
                   <div className="flex-1 text-left">
                     <h2 className="font-display text-lg">REQUEST YOUR HEADSHOTS</h2>
                     <p className="text-sm text-muted-foreground font-sans">
-                      {headshotRequest ? 'Headshot session requested!' : 'Request a professional headshot session')}
+                      {headshotRequest ? 'Headshot session requested!' : 'Request a professional headshot session'}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -782,7 +782,7 @@ export default function Onboarding() {
                   <div className="flex-1 text-left">
                     <h2 className="font-display text-lg">REQUEST YOUR BUSINESS CARDS</h2>
                     <p className="text-sm text-muted-foreground font-sans">
-                      {businessCardRequest ? 'Business cards requested!' : 'Choose your preferred design style')}
+                      {businessCardRequest ? 'Business cards requested!' : 'Choose your preferred design style'}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">

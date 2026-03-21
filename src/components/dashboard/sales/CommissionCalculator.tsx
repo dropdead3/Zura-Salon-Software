@@ -70,7 +70,7 @@ export function CommissionCalculator({
           <div>
             <CardTitle className="font-display text-base tracking-wide">COMMISSION CALCULATOR</CardTitle>
             <CardDescription className="text-xs">
-              {stylistName ? `Estimated earnings for ${stylistName}` : 'Estimated earnings based on assigned level')}
+              {stylistName ? `Estimated earnings for ${stylistName}` : 'Estimated earnings based on assigned level'}
             </CardDescription>
           </div>
         </div>

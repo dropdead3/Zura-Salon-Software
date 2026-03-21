@@ -304,7 +304,7 @@ export function ServicesSettingsContent() {
     updateService.mutate({ id: service.id, is_active: newState }, {
       onSuccess: () => {
         showUndoToast(
-          `'${service.name}' ${newState ? 'activated' : 'deactivated')}`,
+          `'${service.name}' ${newState ? 'activated' : 'deactivated'}`,
           () => updateService.mutate({ id: service.id, is_active: !newState }),
         );
       },
@@ -516,7 +516,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             <div className="flex items-center gap-2 flex-wrap">
                               {isEmpty 
                                 ? <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-destructive/15 text-destructive border border-destructive/25">No services</span>
-                                : <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : '')}</p>
+                                : <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
                               }
                             </div>
                           </div>
@@ -693,7 +693,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                           />
                                         </div>
                                       </TooltipTrigger>
-                                      <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive')}</p></TooltipContent>
+                                      <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
                                     </Tooltip>
                                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
                                       e.stopPropagation();
@@ -763,7 +763,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                 />
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive')}</p></TooltipContent>
+                            <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
                           </Tooltip>
                           {svc.category && (
                             <Tooltip>
@@ -939,7 +939,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                         <div className="flex-1 min-w-0">
                           <p className={tokens.body.emphasis}>{cat.category_name}</p>
                           <p className={tokens.body.muted}>
-                            {cat.category_name === 'Block' ? 'Blocked time slots (admin tasks, personal time)' : 'Scheduled breaks (lunch, etc.)')}
+                            {cat.category_name === 'Block' ? 'Blocked time slots (admin tasks, personal time)' : 'Scheduled breaks (lunch, etc.)'}
                           </p>
                         </div>
                       </div>

@@ -223,19 +223,19 @@ export function ProductUsageFrequencyTable({ locationId }: Props) {
                       {row.productName}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
-                      {row.brand ?? '—')}
+                      {row.brand ?? '—'}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground text-sm capitalize">
-                      {row.category ?? '—')}
+                      {row.category ?? '—'}
                     </TableCell>
                     <TableCell className="text-right font-sans tabular-nums">
                       {row.sessionsUsed}
                     </TableCell>
                     <TableCell className="text-right hidden sm:table-cell font-sans tabular-nums">
-                      {row.totalDispensedGrams > 0 ? `${row.totalDispensedGrams}g` : '—')}
+                      {row.totalDispensedGrams > 0 ? `${row.totalDispensedGrams}g` : '—'}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {row.lastUsedDate ? formatRelativeTime(row.lastUsedDate) : 'Never')}
+                      {row.lastUsedDate ? formatRelativeTime(row.lastUsedDate) : 'Never'}
                     </TableCell>
                     <TableCell>
                       <Badge

@@ -283,7 +283,7 @@ export function PayScheduleCard() {
             <SelectContent>
               {[0, 1, 2, 3, 4, 5, 6, 7, 10, 14].map((days) => (
                 <SelectItem key={days} value={String(days)}>
-                  {days} day{days !== 1 ? 's' : '')} after period end
+                  {days} day{days !== 1 ? 's' : ''} after period end
                 </SelectItem>
               ))}
             </SelectContent>

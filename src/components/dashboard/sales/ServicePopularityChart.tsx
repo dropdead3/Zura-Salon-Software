@@ -65,7 +65,7 @@ const AnimatedBar = (props: any) => {
         width={animWidth}
         height={h}
         fill={fill}
-        stroke={animWidth > 0 ? stroke : 'none')}
+        stroke={animWidth > 0 ? stroke : 'none'}
         strokeWidth={strokeWidth}
         clipPath={`url(#${clipId})`}
         style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
@@ -201,7 +201,7 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
                 onClick={() => setShowAll(!showAll)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-2 pl-3"
               >
-                <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : '')}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : ''}`} />
                 {showAll ? 'Show less' : `Show all ${stylists.length} stylists`}
               </button>
             )}
@@ -577,7 +577,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             <FilterTabsList>
               <FilterTabsTrigger
                 value="service"
-                data-state={viewMode === 'service' ? 'active' : 'inactive')}
+                data-state={viewMode === 'service' ? 'active' : 'inactive'}
                 onClick={() => setViewMode('service')}
                 className="flex items-center gap-1"
               >
@@ -586,7 +586,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               </FilterTabsTrigger>
               <FilterTabsTrigger
                 value="category"
-                data-state={viewMode === 'category' ? 'active' : 'inactive')}
+                data-state={viewMode === 'category' ? 'active' : 'inactive'}
                 onClick={() => setViewMode('category')}
                 className="flex items-center gap-1"
               >
@@ -649,7 +649,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">{svc.frequency}× · {formatCurrencyWhole(svc.totalRevenue)} · avg {formatCurrencyWhole(Math.round(svc.avgPrice))}</span>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedService === svc.name ? 'rotate-180' : '')}`} />
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedService === svc.name ? 'rotate-180' : ''}`} />
                       </div>
                     </button>
                     <AnimatePresence>
@@ -728,7 +728,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           <span className="text-xs text-muted-foreground">
                             {cat.count}× · <BlurredAmount>{formatCurrencyWhole(cat.revenue)}</BlurredAmount> · {cat.sharePercent}%
                           </span>
-                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : '')}`} />
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </button>
                       <AnimatePresence>

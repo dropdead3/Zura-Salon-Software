@@ -157,10 +157,10 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
                 <TableCell>
                   <div>
                     <p className="font-medium text-white">
-                      {invoice.organization?.name || 'Unknown')}
+                      {invoice.organization?.name || 'Unknown'}
                     </p>
                     <p className="text-sm text-slate-500">
-                      {invoice.organization?.slug || '—')}
+                      {invoice.organization?.slug || '—'}
                     </p>
                   </div>
                 </TableCell>
@@ -238,7 +238,7 @@ export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
               </TableCell>
               <TableCell>
                 <PlatformBadge variant={statusColors[subscription.subscription_status || 'inactive']}>
-                  {subscription.subscription_status === 'past_due' ? 'Payment Failed' : 'Cancelled')}
+                  {subscription.subscription_status === 'past_due' ? 'Payment Failed' : 'Cancelled'}
                 </PlatformBadge>
               </TableCell>
               <TableCell>

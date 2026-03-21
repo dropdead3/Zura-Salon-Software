@@ -223,7 +223,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                   />
                   <Label htmlFor="private" className="flex items-center gap-1">
                     {isPrivate ? <Lock className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    {isPrivate ? 'Private' : 'Shared')}
+                    {isPrivate ? 'Private' : 'Shared'}
                   </Label>
                 </div>
               </div>
@@ -307,7 +307,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={(!content.trim() && photoUrls.length === 0) || createNote.isPending || updateNote.isPending}>
                 <Save className="h-4 w-4 mr-1" />
-                {editingId ? 'Update' : 'Save')}
+                {editingId ? 'Update' : 'Save'}
               </Button>
               <Button variant="ghost" onClick={resetForm}>
                 <X className="h-4 w-4 mr-1" />

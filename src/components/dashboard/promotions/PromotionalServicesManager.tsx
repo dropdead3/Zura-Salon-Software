@@ -122,10 +122,10 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                   const isExpiredOrDeactivated = ps.deactivated_at || isPast(new Date(ps.expires_at));
                   
                   return (
-                    <TableRow key={ps.id} className={isExpiredOrDeactivated ? 'opacity-60' : '')}>
+                    <TableRow key={ps.id} className={isExpiredOrDeactivated ? 'opacity-60' : ''}>
                       <TableCell>
                         <div className="font-medium">
-                          {ps.service?.name || 'Unknown Service')}
+                          {ps.service?.name || 'Unknown Service'}
                         </div>
                       </TableCell>
                       <TableCell>

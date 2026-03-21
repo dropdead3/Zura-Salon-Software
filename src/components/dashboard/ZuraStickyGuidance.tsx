@@ -101,7 +101,7 @@ export function ZuraStickyGuidance() {
                 <button
                   onClick={() => setExpanded(prev => !prev)}
                   className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                  aria-label={expanded ? 'Collapse guidance' : 'Expand guidance')}
+                  aria-label={expanded ? 'Collapse guidance' : 'Expand guidance'}
                 >
                   {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
                 </button>

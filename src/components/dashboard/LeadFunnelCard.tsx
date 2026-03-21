@@ -95,7 +95,7 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
               <span className="text-xs text-blue-600 uppercase tracking-wide">Avg Response</span>
             </div>
             <p className="font-display text-2xl text-blue-700 dark:text-blue-400">
-              {summary.avgResponseTimeMinutes > 0 ? `${summary.avgResponseTimeMinutes}m` : 'N/A')}
+              {summary.avgResponseTimeMinutes > 0 ? `${summary.avgResponseTimeMinutes}m` : 'N/A'}
             </p>
           </div>
           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
@@ -263,7 +263,7 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
                       </div>
                       <div className="text-right">
                         <Badge 
-                          variant={stylist.conversionRate >= 50 ? 'default' : 'secondary')}
+                          variant={stylist.conversionRate >= 50 ? 'default' : 'secondary'}
                           className={cn(
                             stylist.conversionRate >= 70 && "bg-green-500 hover:bg-green-600",
                             stylist.conversionRate >= 50 && stylist.conversionRate < 70 && "bg-blue-500 hover:bg-blue-600",

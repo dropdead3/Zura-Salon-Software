@@ -95,7 +95,7 @@ export function useWeekAheadRevenue(locationId?: string) {
         if (staffData) {
           (staffData as any[]).forEach((s: any) => {
             if (s.phorest_staff_id) {
-              staffMap[s.phorest_staff_id] = `${s.staff_first_name || '')} ${s.staff_last_name?.charAt(0) || '')}.`.trim();
+              staffMap[s.phorest_staff_id] = `${s.staff_first_name || '')} ${s.staff_last_name?.charAt(0) || ''}.`.trim();
             }
           });
         }

@@ -206,7 +206,7 @@ export function WebsiteEditorSidebar({
     try {
       await updateSections.mutateAsync({ homepage: newSections });
       const label = newSections.find(s => s.id === sectionId)?.label ?? 'Section';
-      toast.success(`${label} ${enabled ? 'enabled' : 'disabled')}`);
+      toast.success(`${label} ${enabled ? 'enabled' : 'disabled'}`);
     } catch {
       toast.error('Failed to update section');
       setLocalSections(orderedSections);
@@ -390,7 +390,7 @@ export function WebsiteEditorSidebar({
                 <FileText className="h-4 w-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">{selectedPage?.title ?? 'Pages')}</TooltipContent>
+            <TooltipContent side="right">{selectedPage?.title ?? 'Pages'}</TooltipContent>
           </Tooltip>
         </div>
 
@@ -661,7 +661,7 @@ export function WebsiteEditorSidebar({
         <div className="text-[10px] text-muted-foreground text-center">
           {isHomePage
             ? `${localSections.filter(s => s.enabled).length}/${localSections.length} sections visible`
-            : `${selectedPage?.title ?? 'Page')} • ${localPageSections.filter(s => s.enabled).length}/${localPageSections.length} sections visible`
+            : `${selectedPage?.title ?? 'Page'} • ${localPageSections.filter(s => s.enabled).length}/${localPageSections.length} sections visible`
           }
         </div>
       </div>

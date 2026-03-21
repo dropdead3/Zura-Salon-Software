@@ -491,7 +491,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
               <div>
                 <h2 className="text-xl font-medium text-white">Kiosk Settings</h2>
                 <p className="text-sm text-white/60">
-                  {isAuthenticated ? 'Configure your kiosk' : 'Enter PIN to access')}
+                  {isAuthenticated ? 'Configure your kiosk' : 'Enter PIN to access'}
                 </p>
               </div>
             </div>
@@ -592,7 +592,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           : key === 'del'
                           ? 'bg-white/5 text-white/60 hover:bg-white/10'
                           : 'bg-white/10 text-white hover:bg-white/15'
-                      } ${isValidating ? 'opacity-50 cursor-not-allowed' : '')}`}
+                      } ${isValidating ? 'opacity-50 cursor-not-allowed' : ''}`}
                       onClick={() => {
                         if (key === 'del') handlePinDelete();
                         else if (key) handlePinDigit(key);
@@ -612,7 +612,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                   disabled={pinInput.length < 4 || isValidating}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {isValidating ? 'Validating...' : 'Unlock Settings')}
+                  {isValidating ? 'Validating...' : 'Unlock Settings'}
                 </motion.button>
               </div>
             ) : (
@@ -833,7 +833,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 logoSource === 'org-light' 
                                   ? 'border-2' 
                                   : 'border-white/10 hover:border-white/20'
-                              } ${!businessSettings?.logo_light_url ? 'opacity-50' : '')}`}
+                              } ${!businessSettings?.logo_light_url ? 'opacity-50' : ''}`}
                               style={logoSource === 'org-light' ? { borderColor: accentColor } : undefined}
                               onClick={() => handleLogoSourceChange('org-light')}
                               whileTap={{ scale: 0.98 }}
@@ -847,7 +847,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 logoSource === 'org-dark' 
                                   ? 'border-2' 
                                   : 'border-white/10 hover:border-white/20'
-                              } ${!businessSettings?.logo_dark_url ? 'opacity-50' : '')}`}
+                              } ${!businessSettings?.logo_dark_url ? 'opacity-50' : ''}`}
                               style={logoSource === 'org-dark' ? { borderColor: accentColor } : undefined}
                               onClick={() => handleLogoSourceChange('org-dark')}
                               whileTap={{ scale: 0.98 }}
@@ -919,7 +919,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   whileTap={{ scale: 0.98 }}
                                 >
                                   <span className="text-white/80">
-                                    {size === 'xs' ? 'XS' : size === 'sm' ? 'S' : size === 'md' ? 'M' : size === 'lg' ? 'L' : 'XL')}
+                                    {size === 'xs' ? 'XS' : size === 'sm' ? 'S' : size === 'md' ? 'M' : size === 'lg' ? 'L' : 'XL'}
                                   </span>
                                 </motion.button>
                               ))}
@@ -928,7 +928,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                               {localSettings.logo_size === 'xs' ? 'Extra small' : 
                                localSettings.logo_size === 'sm' ? 'Small' : 
                                localSettings.logo_size === 'md' ? 'Medium (default)' : 
-                               localSettings.logo_size === 'lg' ? 'Large' : 'Extra large')}
+                               localSettings.logo_size === 'lg' ? 'Large' : 'Extra large'}
                             </p>
                           </div>
 

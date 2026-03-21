@@ -142,7 +142,7 @@ export default function RewardShop() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">
-                          {redemption.reward?.name || 'Unknown Reward')}
+                          {redemption.reward?.name || 'Unknown Reward'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(new Date(redemption.created_at), 'MMM d, yyyy')}

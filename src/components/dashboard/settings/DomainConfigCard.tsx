@@ -187,7 +187,7 @@ export function DomainConfigCard({ organizationId }: DomainConfigCardProps) {
                   className="flex-1"
                 />
                 <Button onClick={handleSave} disabled={saveDomain.isPending || !domainInput.trim()}>
-                  {saveDomain.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? 'Update' : 'Connect')}
+                  {saveDomain.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? 'Update' : 'Connect'}
                 </Button>
                 {isEditing && (
                   <Button variant="ghost" onClick={handleCancelEdit}>Cancel</Button>

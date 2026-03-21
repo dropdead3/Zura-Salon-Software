@@ -240,7 +240,7 @@ export function TransactionList({
         </Table>
       </div>
       <div className="border-t p-3 text-sm text-muted-foreground">
-        Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : '')}
+        Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
       </div>
     </Card>
   );

@@ -234,7 +234,7 @@ export function SupplierSettingsSection() {
                     <div className={cn(tokens.empty.container, 'py-8')}>
                       <Truck className={tokens.empty.icon} />
                       <p className={tokens.empty.description}>
-                        {searchFilter ? 'No matches' : 'No suppliers yet')}
+                        {searchFilter ? 'No matches' : 'No suppliers yet'}
                       </p>
                     </div>
                   )}
@@ -291,7 +291,7 @@ export function SupplierSettingsSection() {
                             }}
                           />
                           <Button size="sm" variant="outline" onClick={handleRename} disabled={renameSupplier.isPending}>
-                            {renameSupplier.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save')}
+                            {renameSupplier.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save'}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => setRenameMode(false)}>Cancel</Button>
                         </div>
@@ -309,7 +309,7 @@ export function SupplierSettingsSection() {
                         </div>
                       )}
                       <p className={tokens.body.muted}>
-                        {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : '')} linked
+                        {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : ''} linked
                       </p>
                     </div>
                   </div>
@@ -475,7 +475,7 @@ export function SupplierSettingsSection() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Unlink Product</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Remove "{prod?.name || 'this product')}" from {selectedGroup.supplier_name}? This won't delete the product.
+                                    Remove "{prod?.name || 'this product'}" from {selectedGroup.supplier_name}? This won't delete the product.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -506,7 +506,7 @@ export function SupplierSettingsSection() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete {selectedGroup.supplier_name}?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will unlink all {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : '')} from this supplier. Products themselves won't be deleted.
+                          This will unlink all {selectedGroup.product_ids.length} product{selectedGroup.product_ids.length !== 1 ? 's' : ''} from this supplier. Products themselves won't be deleted.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -831,7 +831,7 @@ function LinkProductsDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button onClick={() => onLink(Array.from(selectedIds))} disabled={selectedIds.size === 0 || isPending}>
                 {isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                Link {selectedIds.size} Product{selectedIds.size !== 1 ? 's' : '')}
+                Link {selectedIds.size} Product{selectedIds.size !== 1 ? 's' : ''}
               </Button>
             </div>
           </div>

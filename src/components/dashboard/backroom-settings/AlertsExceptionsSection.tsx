@@ -178,7 +178,7 @@ export function AlertsExceptionsSection() {
                   {NOTIFY_ROLE_OPTIONS.map(role => (
                     <Badge
                       key={role}
-                      variant={form.notify_roles.includes(role) ? 'default' : 'outline')}
+                      variant={form.notify_roles.includes(role) ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => {
                         const next = form.notify_roles.includes(role) ? form.notify_roles.filter(r => r !== role) : [...form.notify_roles, role];

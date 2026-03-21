@@ -104,7 +104,7 @@ export function PredictiveBackroomSummary({ locationId }: PredictiveBackroomSumm
 
         {summary.unmapped_services_count > 0 && (
           <p className={cn(tokens.body.muted, 'mt-3 text-xs')}>
-            {summary.unmapped_services_count} service{summary.unmapped_services_count !== 1 ? 's' : '')} without formula data
+            {summary.unmapped_services_count} service{summary.unmapped_services_count !== 1 ? 's' : ''} without formula data
           </p>
         )}
       </CardContent>

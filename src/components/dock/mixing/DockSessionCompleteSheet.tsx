@@ -179,7 +179,7 @@ export function DockSessionCompleteSheet({
                   className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
-                  {isPending ? 'Completing...' : 'Complete Session')}
+                  {isPending ? 'Completing...' : 'Complete Session'}
                 </button>
               ) : (
                 <button
@@ -188,7 +188,7 @@ export function DockSessionCompleteSheet({
                   className="w-full h-12 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <Flag className="w-4 h-4" />
-                  {isPending ? 'Flagging...' : 'Flag as Unresolved')}
+                  {isPending ? 'Flagging...' : 'Flag as Unresolved'}
                 </button>
               )}
             </div>
@@ -203,7 +203,7 @@ function SummaryTile({ label, value, alert }: { label: string; value: string; al
   return (
     <div className="rounded-lg bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.1)] p-2.5 text-center">
       <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide mb-0.5">{label}</p>
-      <p className={cn('font-display text-sm tracking-tight', alert ? 'text-amber-400' : 'text-[hsl(var(--platform-foreground))]')}>
+      <p className={cn('font-display text-sm tracking-tight', alert ? 'text-amber-400' : 'text-[hsl(var(--platform-foreground))]'}>
         {value}
       </p>
     </div>

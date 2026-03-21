@@ -103,7 +103,7 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
         <DialogHeader>
           <DialogTitle>Set Supplier for {brand}</DialogTitle>
           <DialogDescription>
-            Assign a supplier to all {products.length} product{products.length !== 1 ? 's' : '')} in this brand. This will be used for PO creation and reordering.
+            Assign a supplier to all {products.length} product{products.length !== 1 ? 's' : ''} in this brand. This will be used for PO creation and reordering.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

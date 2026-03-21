@@ -355,7 +355,7 @@ export function StructureLayersTab({
           {!isHomePage && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePageDragEnd}>
               <SortableContext items={pageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <SectionGroupHeader title={`${pageTitle ?? 'Page')} Sections`} />
+                <SectionGroupHeader title={`${pageTitle ?? 'Page'} Sections`} />
                 {pageSections.map(section => (
                   <SectionNavItem
                     key={section.id}

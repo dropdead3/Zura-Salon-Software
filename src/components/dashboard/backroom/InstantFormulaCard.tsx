@@ -70,7 +70,7 @@ export function InstantFormulaCard({
   const headerLabel =
     formula.source === 'salon_recipe'
       ? 'Salon Formula'
-      : `Last Visit${formula.serviceName ? }` — ${formula.serviceName}` : '')}`;
+      : `Last Visit${formula.serviceName ? }` — ${formula.serviceName}` : ''}`;
 
   const dateLabel = formula.createdAt
     ? format(new Date(formula.createdAt), 'MMMM d')

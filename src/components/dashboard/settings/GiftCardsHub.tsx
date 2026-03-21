@@ -162,7 +162,7 @@ function ActiveCardsTab() {
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <Gift className={tokens.empty.icon} />
-                  <p className={tokens.empty.description}>{searchCode ? 'No cards match your search' : 'No gift cards created yet')}</p>
+                  <p className={tokens.empty.description}>{searchCode ? 'No cards match your search' : 'No gift cards created yet'}</p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -246,7 +246,7 @@ function EditGiftCardDialog({ card, onClose }: { card: GiftCard; onClose: () => 
     });
     setBalanceAdjust('');
     setAdjustReason('');
-    toast.success(`Balance adjusted by ${amount > 0 ? '+' : '')}${formatCurrency(amount)}`);
+    toast.success(`Balance adjusted by ${amount > 0 ? '+' : ''}${formatCurrency(amount)}`);
   };
 
   return (

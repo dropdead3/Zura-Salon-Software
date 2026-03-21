@@ -208,7 +208,7 @@ export function BackroomProductAnalyticsCard({ startDate, endDate, rangeLabel, l
                           {formatNumber(p.dispensedQty, { maximumFractionDigits: 1 })}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          <span className={p.wasteQty > 0 ? 'text-destructive' : '')}>
+                          <span className={p.wasteQty > 0 ? 'text-destructive' : ''}>
                             {formatNumber(p.wasteQty, { maximumFractionDigits: 1 })}
                           </span>
                         </TableCell>

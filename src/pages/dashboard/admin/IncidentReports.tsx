@@ -142,7 +142,7 @@ export default function IncidentReports() {
                   <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={e => setForm(f => ({ ...f, witnesses: e.target.value }))} placeholder="Names of witnesses" /></div>
                   <div><Label>Corrective Action Taken</Label><Textarea value={form.corrective_action} onChange={e => setForm(f => ({ ...f, corrective_action: e.target.value }))} /></div>
                   <Button onClick={handleSubmit} disabled={createIncident.isPending} className="w-full">
-                    {createIncident.isPending ? 'Submitting...' : 'Submit Report')}
+                    {createIncident.isPending ? 'Submitting...' : 'Submit Report'}
                   </Button>
                 </div>
               </DialogContent>

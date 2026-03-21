@@ -105,8 +105,8 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
                       <p className="text-sm font-sans font-medium text-foreground truncate">{service.name}</p>
                       {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
                     </div>
-                    <Badge variant={count > 0 ? 'default' : 'outline')} className="text-xs shrink-0">
-                      {count} baseline{count !== 1 ? 's' : '')}
+                    <Badge variant={count > 0 ? 'default' : 'outline'} className="text-xs shrink-0">
+                      {count} baseline{count !== 1 ? 's' : ''}
                     </Badge>
                   </button>
                 );
@@ -128,7 +128,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
       {selectedServiceId && (
         <RecipeBaselineDialog
           serviceId={selectedServiceId}
-          serviceName={services?.find((s) => s.id === selectedServiceId)?.name || '')}
+          serviceName={services?.find((s) => s.id === selectedServiceId)?.name || ''}
           orgId={orgId!}
           onClose={() => setSelectedServiceId(null)}
         />
@@ -197,7 +197,7 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
                 <div key={b.id} className="flex items-center gap-3 rounded-lg border border-border/60 p-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-sans font-medium text-foreground truncate">
-                      {products?.find((p) => p.id === b.product_id)?.name || 'Unknown')}
+                      {products?.find((p) => p.id === b.product_id)?.name || 'Unknown'}
                     </p>
                     <span className="text-xs text-muted-foreground">{b.expected_quantity}{b.unit}</span>
                   </div>

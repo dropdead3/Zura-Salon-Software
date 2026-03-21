@@ -127,7 +127,7 @@ export function PlanStepEditor({
 
             {/* Due date quick-pick */}
             <Select
-              value={step.dueDays?.toString() || 'none')}
+              value={step.dueDays?.toString() || 'none'}
               onValueChange={(v) =>
                 onUpdate({ ...step, dueDays: v === 'none' ? null : parseInt(v) })
               }

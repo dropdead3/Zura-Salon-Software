@@ -187,7 +187,7 @@ export function ServiceFormLinkDialog({ open, onOpenChange, template }: ServiceF
 
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {selectedServices.size} service{selectedServices.size !== 1 ? 's' : '')} selected
+              {selectedServices.size} service{selectedServices.size !== 1 ? 's' : ''} selected
             </span>
             {selectedServices.size > 0 && (
               <Button 
@@ -209,7 +209,7 @@ export function ServiceFormLinkDialog({ open, onOpenChange, template }: ServiceF
             onClick={handleSubmit}
             disabled={selectedServices.size === 0 || linkFormToServices.isPending}
           >
-            {linkFormToServices.isPending ? 'Saving...' : 'Link to Services')}
+            {linkFormToServices.isPending ? 'Saving...' : 'Link to Services'}
           </Button>
         </DialogFooter>
       </DialogContent>

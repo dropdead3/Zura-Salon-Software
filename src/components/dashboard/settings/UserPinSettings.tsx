@@ -71,11 +71,11 @@ export function UserPinSettings() {
             <div>
               <p className="font-medium text-sm">PIN Status</p>
               <p className="text-xs text-muted-foreground">
-                {isLoading ? 'Loading...' : pinStatus?.hasPin ? 'PIN is set' : 'No PIN configured')}
+                {isLoading ? 'Loading...' : pinStatus?.hasPin ? 'PIN is set' : 'No PIN configured'}
               </p>
             </div>
-            <Badge variant={pinStatus?.hasPin ? 'default' : 'secondary')}>
-              {pinStatus?.hasPin ? 'Active' : 'Not Set')}
+            <Badge variant={pinStatus?.hasPin ? 'default' : 'secondary'}>
+              {pinStatus?.hasPin ? 'Active' : 'Not Set'}
             </Badge>
           </div>
 
@@ -85,14 +85,14 @@ export function UserPinSettings() {
             onClick={() => setDialogOpen(true)}
           >
             <Lock className="w-4 h-4 mr-2" />
-            {pinStatus?.hasPin ? 'Change PIN' : 'Set PIN')}
+            {pinStatus?.hasPin ? 'Change PIN' : 'Set PIN'}
           </Button>
 
           {(isSuperAdmin || isAdmin) && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
               <AlertTriangle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
-                As a {isSuperAdmin ? 'Super Admin' : 'Admin')}, your PIN can also be used to access kiosk settings.
+                As a {isSuperAdmin ? 'Super Admin' : 'Admin'}, your PIN can also be used to access kiosk settings.
               </p>
             </div>
           )}
@@ -104,7 +104,7 @@ export function UserPinSettings() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
-              {pinStatus?.hasPin ? 'Change Your PIN' : 'Set Your PIN')}
+              {pinStatus?.hasPin ? 'Change Your PIN' : 'Set Your PIN'}
             </DialogTitle>
             <DialogDescription>
               Enter a 4-digit PIN for quick dashboard access.
@@ -117,7 +117,7 @@ export function UserPinSettings() {
               <div className="relative">
                 <Input
                   id="new-pin"
-                  type={showNewPin ? 'text' : 'password')}
+                  type={showNewPin ? 'text' : 'password'}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={4}
@@ -142,7 +142,7 @@ export function UserPinSettings() {
               <div className="relative">
                 <Input
                   id="confirm-pin"
-                  type={showConfirmPin ? 'text' : 'password')}
+                  type={showConfirmPin ? 'text' : 'password'}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={4}
@@ -182,7 +182,7 @@ export function UserPinSettings() {
               onClick={handleSubmit}
               disabled={!pinsMatch || setUserPin.isPending}
             >
-              {setUserPin.isPending ? 'Saving...' : 'Save PIN')}
+              {setUserPin.isPending ? 'Saving...' : 'Save PIN'}
             </Button>
           </DialogFooter>
         </DialogContent>

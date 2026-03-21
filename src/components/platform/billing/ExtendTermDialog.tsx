@@ -125,7 +125,7 @@ export function ExtendTermDialog({
               disabled={!reason.trim() || monthsToAdd < 1 || extendTerm.isPending}
               className="bg-violet-600 hover:bg-violet-700"
             >
-              {extendTerm.isPending ? 'Extending...' : 'Extend Contract')}
+              {extendTerm.isPending ? 'Extending...' : 'Extend Contract'}
             </Button>
           </DialogFooter>
         </form>

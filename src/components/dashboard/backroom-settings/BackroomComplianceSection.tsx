@@ -244,7 +244,7 @@ export function BackroomComplianceSection() {
                         formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Reweigh Rate' : 'Waste %']}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                       />
-                      <Legend formatter={(value) => value === 'complianceRate' ? 'Reweigh Rate' : 'Waste %')} />
+                      <Legend formatter={(value) => value === 'complianceRate' ? 'Reweigh Rate' : 'Waste %'} />
                       <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#reweighGrad)" strokeWidth={2} />
                       <Area type="monotone" dataKey="wastePct" stroke="hsl(var(--chart-5))" fill="url(#wasteGrad)" strokeWidth={2} />
                     </AreaChart>
@@ -326,8 +326,8 @@ export function BackroomComplianceSection() {
                       {missing.slice(0, 20).map((item) => (
                         <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-card/50">
                           <div className="min-w-0">
-                            <p className="font-sans text-sm text-foreground truncate">{item.serviceName ?? 'Color Service')}</p>
-                            <p className="font-sans text-xs text-muted-foreground truncate">{item.staffName ?? 'Unknown')} · {item.appointmentDate}</p>
+                            <p className="font-sans text-sm text-foreground truncate">{item.serviceName ?? 'Color Service'}</p>
+                            <p className="font-sans text-xs text-muted-foreground truncate">{item.staffName ?? 'Unknown'} · {item.appointmentDate}</p>
                           </div>
                           <Badge variant="destructive" className="text-xs">Missing</Badge>
                         </div>

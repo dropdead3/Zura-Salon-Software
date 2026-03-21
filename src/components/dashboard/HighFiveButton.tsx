@@ -95,7 +95,7 @@ export function HighFiveButton({
                 )}
               />
               <span className="font-medium">
-                {hasHighFived ? 'High-fived!' : 'Give a high-five!')}
+                {hasHighFived ? 'High-fived!' : 'Give a high-five!'}
               </span>
               {count > 0 && (
                 <span className={cn(
@@ -110,7 +110,7 @@ export function HighFiveButton({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{hasHighFived ? 'Click to remove your high five' : 'Celebrate this win!')}</p>
+            <p>{hasHighFived ? 'Click to remove your high five' : 'Celebrate this win!'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -123,7 +123,7 @@ export function HighFiveButton({
                 <Avatar key={user.id} className="h-6 w-6 border-2 border-background">
                   <AvatarImage src={user.user_photo || undefined} alt={user.user_name} />
                   <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-medium">
-                    {user.user_name?.charAt(0).toUpperCase() || '?')}
+                    {user.user_name?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
               ))}
@@ -144,7 +144,7 @@ export function HighFiveButton({
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={user.user_photo || undefined} alt={user.user_name} />
                     <AvatarFallback className="text-[8px] bg-amber-100 text-amber-700">
-                      {user.user_name?.charAt(0).toUpperCase() || '?')}
+                      {user.user_name?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-sans truncate">{user.user_name}</span>

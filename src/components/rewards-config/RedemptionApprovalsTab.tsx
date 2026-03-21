@@ -115,7 +115,7 @@ export function RedemptionApprovalsTab() {
                       <div className="flex items-center gap-2 mb-1">
                         <Gift className="w-4 h-4 text-primary" />
                         <span className="font-medium text-sm">
-                          {redemption.reward?.name || 'Unknown Reward')}
+                          {redemption.reward?.name || 'Unknown Reward'}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">

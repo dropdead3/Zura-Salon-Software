@@ -60,7 +60,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <PlatformButton
-          variant={isImpersonating ? 'default' : 'secondary')}
+          variant={isImpersonating ? 'default' : 'secondary'}
           role="combobox"
           aria-expanded={open}
           className={cn(
@@ -92,7 +92,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
           />
           <CommandList className="max-h-[300px]">
             <CommandEmpty className="text-slate-500 py-6 text-center text-sm">
-              {isLoading ? 'Loading...' : 'No organizations found.')}
+              {isLoading ? 'Loading...' : 'No organizations found.'}
             </CommandEmpty>
             
             {/* Platform-wide option */}

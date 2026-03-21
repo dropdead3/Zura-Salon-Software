@@ -115,7 +115,7 @@ export function WaterfallChart({
             <span className={`text-sm font-medium ${
               percentChange > 0 ? 'text-chart-2' : percentChange < 0 ? 'text-destructive' : 'text-muted-foreground'
             }`}>
-              {percentChange > 0 ? '+' : '')}{percentChange.toFixed(1)}%
+              {percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%
             </span>
           </div>
         </div>
@@ -143,7 +143,7 @@ export function WaterfallChart({
                 formatter={(value: number, name: string, props: any) => {
                   const delta = props.payload.delta;
                   if (delta !== undefined) {
-                    return [`${delta >= 0 ? '+' : '')}${formatCurrencyUtil(delta)}`, 'Change'];
+                    return [`${delta >= 0 ? '+' : ''}${formatCurrencyUtil(delta)}`, 'Change'];
                   }
                   return [formatCurrencyUtil(value), 'Total'];
                 }}

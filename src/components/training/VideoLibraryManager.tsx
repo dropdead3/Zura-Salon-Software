@@ -230,7 +230,7 @@ export function VideoLibraryManager() {
                       }
                     />
                     <span className="text-xs text-muted-foreground">
-                      {video.is_active ? 'Active' : 'Inactive')}
+                      {video.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">

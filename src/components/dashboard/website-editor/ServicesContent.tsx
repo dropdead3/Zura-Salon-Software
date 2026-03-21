@@ -633,7 +633,7 @@ export function ServicesContent() {
                                             <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                             <Input 
                                               className="pl-7 font-mono"
-                                              value={editingService.item.levelPrices[level.id]?.toString() || '')}
+                                              value={editingService.item.levelPrices[level.id]?.toString() || ''}
                                               onChange={(e) => {
                                                 const value = e.target.value;
                                                 setEditingService(prev => 

@@ -244,7 +244,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             <div className={`flex items-center gap-1 ${trendColor}`}>
               <TrendIcon className="w-4 h-4" />
               <span className="text-sm">
-                {data?.percentChange && data.percentChange > 0 ? '+' : '')}{data?.percentChange || 0}%
+                {data?.percentChange && data.percentChange > 0 ? '+' : ''}{data?.percentChange || 0}%
               </span>
               <span className="text-xs text-muted-foreground ml-1">vs prev 30d</span>
             </div>

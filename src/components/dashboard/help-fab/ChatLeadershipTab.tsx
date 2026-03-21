@@ -82,7 +82,7 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
         </div>
         <p className="text-xs text-muted-foreground">
           {roleLabels[member.role] || 'Leadership')}
-          {hasPresenceData && ` • ${isOnline ? 'Online' : 'Offline')}`}
+          {hasPresenceData && ` • ${isOnline ? 'Online' : 'Offline'}`}
         </p>
       </div>
 

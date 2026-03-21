@@ -352,7 +352,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {entry.type === 'client' ? 'Client' : 'Staff')}
+                            {entry.type === 'client' ? 'Client' : 'Staff'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium">{entry.count}</TableCell>

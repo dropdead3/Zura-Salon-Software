@@ -138,13 +138,13 @@ function CardOverlays({
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(to bottom right, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% + 1px), transparent calc(50% + 1px))`,
+              background: `linear-gradient(to bottom right, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), transparent calc(50% + 1px))`,
             }}
           />
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(to bottom left, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% + 1px), transparent calc(50% + 1px))`,
+              background: `linear-gradient(to bottom left, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), transparent calc(50% + 1px))`,
             }}
           />
         </div>
@@ -370,7 +370,7 @@ function AgendaContent({
                   {(appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
                     <p className="text-xs text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-0.5">
                       <ArrowRightLeft className="h-3 w-3 shrink-0" />
-                      Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${(appointment as any).rescheduled_from_date} ` : '')}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
+                      Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${(appointment as any).rescheduled_from_date} ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
                     </p>
                   )}
                 </div>

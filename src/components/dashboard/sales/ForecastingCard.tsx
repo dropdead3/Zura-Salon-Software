@@ -267,7 +267,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
                 onDayClick(day);
               }}
             >
-              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : '')}
+              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
             </text>
             {isClosed && (
               <text x={0} dy={50} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
@@ -371,9 +371,9 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
           <Target className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">Yearly Goal Progress</span>
         </div>
-        <Badge variant={isOnTrack ? 'default' : 'secondary')} className="text-xs">
+        <Badge variant={isOnTrack ? 'default' : 'secondary'} className="text-xs">
           <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />
-          {isOnTrack ? 'On Track' : 'Behind')}
+          {isOnTrack ? 'On Track' : 'Behind'}
         </Badge>
       </div>
 
@@ -383,7 +383,7 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
           <Progress 
             value={Math.min(percentComplete, 100)} 
             className="h-3"
-            indicatorClassName={isOnTrack ? 'bg-chart-2' : 'bg-chart-4')}
+            indicatorClassName={isOnTrack ? 'bg-chart-2' : 'bg-chart-4'}
           />
           {/* Expected progress marker */}
           <div 
@@ -713,7 +713,7 @@ export function ForecastingCard() {
           </div>
 
           {/* Summary Stats */}
-          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
+          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3'}>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
@@ -854,7 +854,7 @@ export function ForecastingCard() {
                 breakdownType={breakdownType}
               />
             ) : (
-              <p className="text-sm text-muted-foreground py-3">No {breakdownType === 'location' ? 'location' : breakdownType === 'stylist' ? 'service provider' : 'category')} data for this period</p>
+              <p className="text-sm text-muted-foreground py-3">No {breakdownType === 'location' ? 'location' : breakdownType === 'stylist' ? 'service provider' : 'category'} data for this period</p>
             );
           })()}
 
@@ -979,7 +979,7 @@ export function ForecastingCard() {
                           <Cell
                             key={`solid-${index}`}
                             fill="url(#solid-glass-forecast)"
-                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)')}
+                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)'}
                             strokeOpacity={isSelected ? 1 : 1}
                             strokeWidth={isSelected ? 1.5 : 1}
                           />
@@ -1039,7 +1039,7 @@ export function ForecastingCard() {
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
-                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)')} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                         </g>
                       );
                     }} />
@@ -1091,7 +1091,7 @@ export function ForecastingCard() {
                     {formatDate(days[0].date, 'EEEE, MMMM d')}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Click to view {days[0].appointmentCount} appointment{days[0].appointmentCount !== 1 ? 's' : '')}
+                    Click to view {days[0].appointmentCount} appointment{days[0].appointmentCount !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <div className="text-right">
@@ -1126,7 +1126,7 @@ export function ForecastingCard() {
           {showWeeklyChart && peakWeek && peakWeek.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground">
-                {period === '60days' ? 'Peak week (next 60 days)' : 'Peak week (next 30 days)')}: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
+                {period === '60days' ? 'Peak week (next 60 days)' : 'Peak week (next 30 days)'}: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrency(peakWeek.revenue)}</BlurredAmount>

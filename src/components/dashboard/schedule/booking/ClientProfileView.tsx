@@ -110,7 +110,7 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
             daysSinceVisit && daysSinceVisit > 60 && "text-destructive",
             daysSinceVisit && daysSinceVisit > 30 && daysSinceVisit <= 60 && "text-amber-600"
           )}>
-            {daysSinceVisit !== null ? `${daysSinceVisit}d` : 'N/A')}
+            {daysSinceVisit !== null ? `${daysSinceVisit}d` : 'N/A'}
           </p>
           <p className="text-[10px] text-muted-foreground">Since Visit</p>
         </Card>

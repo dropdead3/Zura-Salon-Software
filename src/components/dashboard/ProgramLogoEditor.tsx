@@ -220,7 +220,7 @@ export function ProgramLogoEditor({
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              {uploading ? 'Uploading...' : 'Upload New Logo')}
+              {uploading ? 'Uploading...' : 'Upload New Logo'}
             </Button>
 
             {isCustomLogo && (
@@ -272,7 +272,7 @@ export function ProgramLogoEditor({
               {SIZE_PRESETS.map((preset) => (
                 <Button
                   key={preset.label}
-                  variant={size === preset.value ? 'default' : 'outline')}
+                  variant={size === preset.value ? 'default' : 'outline'}
                   size={tokens.button.inline}
                   onClick={() => {
                     setSize(preset.value);
@@ -326,7 +326,7 @@ export function ProgramLogoEditor({
                     <X className="w-4 h-4 text-muted-foreground" />
                   )}
                   {color === preset.value && preset.value && (
-                    <Check className={`w-4 h-4 ${isLightColor(preset.value) ? 'text-foreground' : 'text-white')}`} />
+                    <Check className={`w-4 h-4 ${isLightColor(preset.value) ? 'text-foreground' : 'text-white'}`} />
                   )}
                 </button>
               ))}
@@ -336,15 +336,15 @@ export function ProgramLogoEditor({
             <div className="flex items-center gap-3 pt-2 border-t">
               <Label className="text-xs text-muted-foreground shrink-0">Custom:</Label>
               <div className="flex items-center gap-2 flex-1">
-                <div className={`relative ${isCustomColorActive ? 'ring-2 ring-primary/20 rounded-lg' : '')}`}>
+                <div className={`relative ${isCustomColorActive ? 'ring-2 ring-primary/20 rounded-lg' : ''}`}>
                   <input
                     type="color"
                     value={customColor}
                     onChange={(e) => setCustomColor(e.target.value)}
-                    className={`w-9 h-9 rounded-lg cursor-pointer ${isCustomColorActive ? 'border-2 border-primary' : 'border border-border')}`}
+                    className={`w-9 h-9 rounded-lg cursor-pointer ${isCustomColorActive ? 'border-2 border-primary' : 'border border-border'}`}
                   />
                   {isCustomColorActive && (
-                    <Check className={`absolute inset-0 m-auto w-4 h-4 pointer-events-none ${isLightColor(color) ? 'text-foreground' : 'text-white')}`} />
+                    <Check className={`absolute inset-0 m-auto w-4 h-4 pointer-events-none ${isLightColor(color) ? 'text-foreground' : 'text-white'}`} />
                   )}
                 </div>
                 <input

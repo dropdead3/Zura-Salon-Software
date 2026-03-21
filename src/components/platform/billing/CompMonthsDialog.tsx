@@ -82,7 +82,7 @@ export function CompMonthsDialog({
               {formatCurrency(compValue)}
             </p>
             <p className="text-xs text-green-400/70">
-              Based on {formatCurrency(monthlyRate)}/month × {monthsToComp} month{monthsToComp > 1 ? 's' : '')}
+              Based on {formatCurrency(monthlyRate)}/month × {monthsToComp} month{monthsToComp > 1 ? 's' : ''}
             </p>
           </div>
 
@@ -100,7 +100,7 @@ export function CompMonthsDialog({
           <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
             <p className="text-sm text-amber-300">
-              This extends the contract term by {monthsToComp} month{monthsToComp > 1 ? 's' : '')} and will be logged in the billing audit trail.
+              This extends the contract term by {monthsToComp} month{monthsToComp > 1 ? 's' : ''} and will be logged in the billing audit trail.
             </p>
           </div>
 
@@ -117,7 +117,7 @@ export function CompMonthsDialog({
               disabled={!reason.trim() || monthsToComp < 1 || compMonths.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
-              {compMonths.isPending ? 'Applying...' : 'Apply Credit')}
+              {compMonths.isPending ? 'Applying...' : 'Apply Credit'}
             </Button>
           </DialogFooter>
         </form>

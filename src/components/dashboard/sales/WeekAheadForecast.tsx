@@ -114,7 +114,7 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick, closedDate
                 onDayClick(day);
               }}
             >
-              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : '')}
+              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
             </text>
             {isClosed && (
               <text x={0} dy={39} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
@@ -419,7 +419,7 @@ export function WeekAheadForecast() {
               />
               <div className="flex items-center gap-1 justify-center">
                 <p className="text-xs text-muted-foreground">
-                  {isPredictedMode ? '7-Day Predicted' : '7-Day Total')}
+                  {isPredictedMode ? '7-Day Predicted' : '7-Day Total'}
                 </p>
                 <MetricInfoTooltip description={isPredictedMode
                   ? `Scheduled revenue adjusted by ${Math.round(realizationRate!)}% realization rate. Accounts for cancellations, no-shows, and pricing differences.`
@@ -579,7 +579,7 @@ export function WeekAheadForecast() {
                           <Cell
                             key={`solid-${index}`}
                             fill="url(#solid-glass-week)"
-                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)')}
+                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)'}
                             strokeOpacity={isSelected ? 1 : 1}
                             strokeWidth={isSelected ? 1.5 : 1}
                           />
@@ -656,7 +656,7 @@ export function WeekAheadForecast() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)')}
+                            stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'}
                             strokeDasharray={lineLength}
                             strokeDashoffset={lineLength}
                             strokeWidth={1}

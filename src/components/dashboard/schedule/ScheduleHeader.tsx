@@ -187,7 +187,7 @@ export function ScheduleHeader({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts')}</p>
+                <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -246,7 +246,7 @@ export function ScheduleHeader({
               <SelectContent>
                 {locations.map((loc) => {
                   const cityState = loc.city 
-                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || '')}`
+                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
                     : '';
                   
                   return (
@@ -355,7 +355,7 @@ export function ScheduleHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : '')}` : 'Assistant Blocks')}</p>
+                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : '')}` : 'Assistant Blocks'}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -377,7 +377,7 @@ export function ScheduleHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : '')}` : 'No drafts')}</p>
+                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : '')}` : 'No drafts'}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -465,7 +465,7 @@ export function ScheduleHeader({
               <Tooltip>
                 <TooltipTrigger asChild>{todayButton}</TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p>{todayClosed.reason && todayClosed.reason !== 'Regular hours' ? `Closed — ${todayClosed.reason}` : 'Closed')}</p>
+                  <p>{todayClosed.reason && todayClosed.reason !== 'Regular hours' ? `Closed — ${todayClosed.reason}` : 'Closed'}</p>
                 </TooltipContent>
               </Tooltip>
             ) : todayButton;
@@ -510,7 +510,7 @@ export function ScheduleHeader({
               <Tooltip key={day.toISOString()}>
                 <TooltipTrigger asChild>{btn}</TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p>{closed.reason && closed.reason !== 'Regular hours' ? `Closed — ${closed.reason}` : 'Closed')}</p>
+                  <p>{closed.reason && closed.reason !== 'Regular hours' ? `Closed — ${closed.reason}` : 'Closed'}</p>
                 </TooltipContent>
               </Tooltip>
             ) : (

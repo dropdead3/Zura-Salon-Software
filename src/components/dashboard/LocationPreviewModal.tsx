@@ -67,7 +67,7 @@ function LocationPreviewCard({ location }: { location: Location }) {
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
             <p className="text-sm text-muted-foreground">
-              {location.holiday_closures.length} upcoming closure{location.holiday_closures.length !== 1 ? 's' : '')}
+              {location.holiday_closures.length} upcoming closure{location.holiday_closures.length !== 1 ? 's' : ''}
             </p>
           </div>
         )}

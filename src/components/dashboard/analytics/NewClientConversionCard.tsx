@@ -96,8 +96,8 @@ export function NewClientConversionCard({ dateFrom, dateTo, locationId }: NewCli
           <KpiBlock
             icon={Clock}
             label="Avg Time to Convert"
-            value={data.avgDaysToConvert != null ? `${data.avgDaysToConvert}d` : '—')}
-            subtitle={data.avgDaysToConvert != null ? 'days avg' : 'no conversions yet')}
+            value={data.avgDaysToConvert != null ? `${data.avgDaysToConvert}d` : '—'}
+            subtitle={data.avgDaysToConvert != null ? 'days avg' : 'no conversions yet'}
           />
         </div>
 

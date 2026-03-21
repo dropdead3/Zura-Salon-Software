@@ -284,7 +284,7 @@ export default function DemoFeatures() {
               </TableHeader>
               <TableBody>
                 {features.map((feature) => (
-                  <TableRow key={feature.id} className={!feature.is_active ? 'opacity-50' : '')}>
+                  <TableRow key={feature.id} className={!feature.is_active ? 'opacity-50' : ''}>
                     <TableCell>
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                     </TableCell>
@@ -364,7 +364,7 @@ export default function DemoFeatures() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingFeature ? 'Edit Feature' : 'Add Feature')}
+              {editingFeature ? 'Edit Feature' : 'Add Feature'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -497,7 +497,7 @@ export default function DemoFeatures() {
                 Cancel
               </Button>
               <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving...' : 'Save Feature')}
+                {saveMutation.isPending ? 'Saving...' : 'Save Feature'}
               </Button>
             </DialogFooter>
           </form>

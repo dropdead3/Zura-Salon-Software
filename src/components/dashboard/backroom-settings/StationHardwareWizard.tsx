@@ -301,7 +301,7 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
       <div className="flex items-center justify-between pt-2">
         <Button variant="ghost" size="sm" onClick={step === 0 ? onClose : goBack}>
           <ArrowLeft className="w-4 h-4 mr-1.5" />
-          {step === 0 ? 'Cancel' : 'Back')}
+          {step === 0 ? 'Cancel' : 'Back'}
         </Button>
 
         {step < 3 ? (
@@ -312,7 +312,7 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
         ) : (
           <Button size="sm" onClick={handleSubmit} disabled={isPending}>
             {isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-            {isEditMode ? 'Update Station' : 'Create Station')}
+            {isEditMode ? 'Update Station' : 'Create Station'}
           </Button>
         )}
       </div>
@@ -519,7 +519,7 @@ function StepScalePairing({
         <div className="flex items-center justify-between">
           <div>
             <h3 className={tokens.heading.section}>
-              {isBle ? 'Pair Bluetooth Scale' : 'Connect Scale')}
+              {isBle ? 'Pair Bluetooth Scale' : 'Connect Scale'}
             </h3>
             <p className={tokens.body.muted}>
               {isBle
@@ -663,10 +663,10 @@ function StepConfirmation({
           </div>
           <div>
             <h3 className={tokens.heading.section}>
-              {isEditMode ? 'Review Changes' : 'Ready to Create')}
+              {isEditMode ? 'Review Changes' : 'Ready to Create'}
             </h3>
             <p className={tokens.body.muted}>
-              {isEditMode ? 'Review your updated station configuration.' : 'Review your station configuration.')}
+              {isEditMode ? 'Review your updated station configuration.' : 'Review your station configuration.'}
             </p>
           </div>
         </div>

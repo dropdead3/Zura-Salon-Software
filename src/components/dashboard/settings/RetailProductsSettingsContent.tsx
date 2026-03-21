@@ -298,7 +298,7 @@ function ProductsTab() {
         <span className="text-xs text-muted-foreground">
           {totalCount > PAGE_SIZE
             ? `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount} products`
-            : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : '')}`
+            : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`
           }
         </span>
         <div className="flex items-center gap-2">
@@ -395,7 +395,7 @@ function ProductsTab() {
                 }}
               >
                 <FileText className="w-3.5 h-3.5" />
-                Draft{drafts.length > 1 ? '' : '')}: {(d.form_data as any)?.name || 'Untitled')}
+                Draft{drafts.length > 1 ? '' : '')}: {(d.form_data as any)?.name || 'Untitled'}
               </Button>
             ))}
           </div>
@@ -553,8 +553,8 @@ function ProductsTab() {
                     </TableCell>
                     {/* Price: Retail / Cost stacked */}
                     <TableCell className="py-3 text-right">
-                      <div className="tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—')}</BlurredAmount></div>
-                      <div className="tabular-nums text-xs text-muted-foreground mt-0.5"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—')}</BlurredAmount></div>
+                      <div className="tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></div>
+                      <div className="tabular-nums text-xs text-muted-foreground mt-0.5"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></div>
                     </TableCell>
                     {/* Inventory: Stock / Reorder stacked */}
                     <TableCell className="py-3 text-right">
@@ -600,13 +600,13 @@ function ProductsTab() {
                             }}
                             title="Click to edit stock"
                           >
-                            {p.quantity_on_hand ?? '—')}
+                            {p.quantity_on_hand ?? '—'}
                             {isLow && <AlertTriangle className="w-3 h-3" />}
                           </button>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-                        {p.reorder_level != null ? `Min. stock: ${p.reorder_level}` : '—')}
+                        {p.reorder_level != null ? `Min. stock: ${p.reorder_level}` : '—'}
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -819,7 +819,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display">{product ? 'Edit Product' : 'Add Product')}</DialogTitle>
+          <DialogTitle className="font-display">{product ? 'Edit Product' : 'Add Product'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           {/* Image upload */}
@@ -995,7 +995,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!form.name.trim() || uploading}>{product ? 'Save Changes' : 'Add Product')}</Button>
+          <Button onClick={handleSubmit} disabled={!form.name.trim() || uploading}>{product ? 'Save Changes' : 'Add Product'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1174,7 +1174,7 @@ function CategoriesTab() {
                         onValueChange={(val) => bulkUpdateType.mutate({ category: c.category, newType: val })}
                       >
                         <SelectTrigger className="h-7 w-[130px] text-xs rounded-md px-2">
-                          <SelectValue placeholder={isSingleType ? typeEntries[0][0] : 'Mixed')} />
+                          <SelectValue placeholder={isSingleType ? typeEntries[0][0] : 'Mixed'} />
                         </SelectTrigger>
                         <SelectContent>
                           {PRODUCT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -1245,7 +1245,7 @@ function InventoryCoverageBanner() {
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
         <span className="text-sm font-medium">
-          {uncoveredLocations.length} location{uncoveredLocations.length !== 1 ? 's have' : ' has')} no inventory lead assigned
+          {uncoveredLocations.length} location{uncoveredLocations.length !== 1 ? 's have' : ' has'} no inventory lead assigned
         </span>
       </div>
       <p className="text-xs text-muted-foreground mt-1 ml-6">
@@ -1399,7 +1399,7 @@ function InventoryByLocationTab() {
           )}
           <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
             <Button
-              variant={inventoryView === 'stock' ? 'default' : 'ghost')}
+              variant={inventoryView === 'stock' ? 'default' : 'ghost'}
               size="sm"
               className="h-7 px-3 text-xs gap-1.5"
               onClick={() => setInventoryView('stock')}
@@ -1407,7 +1407,7 @@ function InventoryByLocationTab() {
               <Package className="w-3.5 h-3.5" /> Stock
             </Button>
             <Button
-              variant={inventoryView === 'orders' ? 'default' : 'ghost')}
+              variant={inventoryView === 'orders' ? 'default' : 'ghost'}
               size="sm"
               className="h-7 px-3 text-xs gap-1.5"
               onClick={() => setInventoryView('orders')}
@@ -1529,7 +1529,7 @@ function InventoryByLocationTab() {
               </TableHeader>
               <TableBody>
                 {!products?.length ? (
-                  <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : '')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
                 ) : products.map(p => {
                   const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                   const supplier = supplierMap.get(p.id);
@@ -1574,11 +1574,11 @@ function InventoryByLocationTab() {
                           </button>
                         )}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—')}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—')}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
                       <TableCell className="text-right">
                         {supplier?.avg_delivery_days ? (
-                          <span className="text-xs tabular-nums text-muted-foreground" title={`Based on ${supplier.delivery_count} delivery${supplier.delivery_count !== 1 ? 'ies' : '')}`}>
+                          <span className="text-xs tabular-nums text-muted-foreground" title={`Based on ${supplier.delivery_count} delivery${supplier.delivery_count !== 1 ? 'ies' : ''}`}>
                             {Math.round(supplier.avg_delivery_days as number)}d
                           </span>
                         ) : (
@@ -1610,13 +1610,13 @@ function InventoryByLocationTab() {
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
-                          variant={isLow ? 'default' : 'outline')}
+                          variant={isLow ? 'default' : 'outline'}
                           size={tokens.button.inline}
                           className="gap-1"
                           onClick={() => setReorderProduct(p)}
                         >
                           <ShoppingCart className="w-3.5 h-3.5" />
-                          {isLow ? 'Reorder' : 'Order')}
+                          {isLow ? 'Reorder' : 'Order'}
                         </Button>
                       </TableCell>
                     </TableRow>

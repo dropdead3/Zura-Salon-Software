@@ -144,7 +144,7 @@ export function PlatformHeader() {
                 
                 <div className="hidden sm:block text-left">
                   <span className="text-sm font-medium block text-[hsl(var(--platform-foreground))]">
-                    {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account')}
+                    {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
                   </span>
                   {roleInfo && (
                     <PlatformBadge variant={roleInfo.variant} size="sm" className="gap-1">
@@ -163,7 +163,7 @@ export function PlatformHeader() {
           >
             <div className="px-3 py-2 border-b border-[hsl(var(--platform-border))]">
               <p className="text-sm font-medium text-[hsl(var(--platform-foreground))]">
-                {profile?.full_name || 'Platform User')}
+                {profile?.full_name || 'Platform User'}
               </p>
               <p className="text-xs truncate text-[hsl(var(--platform-foreground-muted))]">
                 {user?.email}

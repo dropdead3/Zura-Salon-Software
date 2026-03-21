@@ -35,7 +35,7 @@ export function ResponsibilityBadges({ userId, size = 'default' }: Responsibilit
                   size === 'sm' ? 'text-[10px] h-5 px-1.5' : 'text-xs'
                 )}
               >
-                <Icon className={cn(size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
+                <Icon className={cn(size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
                 {r.display_name}
               </Badge>
             </TooltipTrigger>

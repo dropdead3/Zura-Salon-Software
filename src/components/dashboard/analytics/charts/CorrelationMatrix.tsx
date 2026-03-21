@@ -110,7 +110,7 @@ export function CorrelationMatrix({ locationId, days = 90 }: CorrelationMatrixPr
                                 <p className="text-muted-foreground">
                                   {Math.abs(coefficient) >= 0.7 ? 'Strong' : 
                                    Math.abs(coefficient) >= 0.4 ? 'Moderate' : 
-                                   Math.abs(coefficient) >= 0.2 ? 'Weak' : 'No')} correlation
+                                   Math.abs(coefficient) >= 0.2 ? 'Weak' : 'No'} correlation
                                 </p>
                               </div>
                             </TooltipContent>
@@ -138,7 +138,7 @@ export function CorrelationMatrix({ locationId, days = 90 }: CorrelationMatrixPr
                       'font-medium',
                       pair.coefficient >= 0 ? 'text-chart-2' : 'text-destructive'
                     )}>
-                      {pair.coefficient >= 0 ? '+' : '')}{pair.coefficient.toFixed(2)}
+                      {pair.coefficient >= 0 ? '+' : ''}{pair.coefficient.toFixed(2)}
                     </span>
                     <span className="text-xs text-muted-foreground capitalize">
                       ({pair.strength})

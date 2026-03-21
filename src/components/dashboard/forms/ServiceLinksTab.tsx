@@ -137,7 +137,7 @@ export function ServiceLinksTab() {
                     )}
                   </div>
                   <Badge variant="secondary">
-                    {reqs?.length || 0} form{(reqs?.length || 0) !== 1 ? 's' : '')}
+                    {reqs?.length || 0} form{(reqs?.length || 0) !== 1 ? 's' : ''}
                   </Badge>
                 </div>
 
@@ -149,7 +149,7 @@ export function ServiceLinksTab() {
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-sm truncate">
-                          {req.form_template?.name || 'Unknown Form')}
+                          {req.form_template?.name || 'Unknown Form'}
                         </span>
                         <Badge variant="outline" className="text-xs shrink-0">
                           {req.form_template?.version}

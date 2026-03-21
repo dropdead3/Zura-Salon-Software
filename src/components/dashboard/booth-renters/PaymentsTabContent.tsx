@@ -314,7 +314,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
               Cancel
             </Button>
             <Button onClick={handleRecordPayment} disabled={recordPayment.isPending}>
-              {recordPayment.isPending ? 'Recording...' : 'Record Payment')}
+              {recordPayment.isPending ? 'Recording...' : 'Record Payment'}
             </Button>
           </DialogFooter>
         </DialogContent>

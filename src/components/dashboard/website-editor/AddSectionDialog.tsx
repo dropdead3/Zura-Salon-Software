@@ -126,7 +126,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
             <TabsContent value="templates" className="mt-3 space-y-3">
               <div className="flex gap-1.5 flex-wrap">
                 <Button
-                  variant={activeCategory === null ? 'default' : 'outline')}
+                  variant={activeCategory === null ? 'default' : 'outline'}
                   size={tokens.button.inline}
                   className="h-7 text-xs"
                   onClick={() => setActiveCategory(null)}
@@ -136,7 +136,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
                 {TEMPLATE_CATEGORIES.map(cat => (
                   <Button
                     key={cat.id}
-                    variant={activeCategory === cat.id ? 'default' : 'outline')}
+                    variant={activeCategory === cat.id ? 'default' : 'outline'}
                     size={tokens.button.inline}
                     className="h-7 text-xs"
                     onClick={() => setActiveCategory(cat.id)}

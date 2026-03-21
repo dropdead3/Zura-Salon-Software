@@ -246,7 +246,7 @@ export function DockScaleTab() {
                   'text-[9px] uppercase tracking-wide',
                   isActive ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground-muted)/0.3)]'
                 )}>
-                  {step === 'disconnected' ? 'Off' : step === 'scanning' ? 'Scan' : step === 'pairing' ? 'Pair' : 'Live')}
+                  {step === 'disconnected' ? 'Off' : step === 'scanning' ? 'Scan' : step === 'pairing' ? 'Pair' : 'Live'}
                 </span>
               </div>
             );
@@ -265,7 +265,7 @@ export function DockScaleTab() {
       {lastReading !== null && (connectionState === 'connected' || isLiveReading) && (
         <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 mb-6 text-center">
           <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)] uppercase tracking-wide mb-1">
-            {connectionState === 'unstable_reading' ? 'Stabilizing...' : 'Live Weight')}
+            {connectionState === 'unstable_reading' ? 'Stabilizing...' : 'Live Weight'}
           </p>
           <p className={cn(
             'font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]',
@@ -286,7 +286,7 @@ export function DockScaleTab() {
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <BluetoothSearching className="w-4 h-4" />
-            {isConnecting ? 'Connecting...' : 'Scan for Acaia Pearl')}
+            {isConnecting ? 'Connecting...' : 'Scan for Acaia Pearl'}
           </button>
         )}
         {mode === 'ble' && (connectionState === 'connected' || isLiveReading) && (
@@ -311,7 +311,7 @@ export function DockScaleTab() {
           <div className="flex items-center justify-center gap-2 py-3">
             <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-              {connectionState === 'scanning' ? 'Searching nearby devices...' : 'Establishing connection...')}
+              {connectionState === 'scanning' ? 'Searching nearby devices...' : 'Establishing connection...'}
             </span>
           </div>
         )}

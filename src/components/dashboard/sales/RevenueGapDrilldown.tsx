@@ -137,7 +137,7 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
                         "font-medium",
                         data.gapAmount <= 0 ? "text-success-foreground" : "text-warning"
                       )}>
-                        {data.gapAmount <= 0 ? '+' : '-')}{formatCurrency(Math.abs(data.gapAmount))}
+                        {data.gapAmount <= 0 ? '+' : '-'}{formatCurrency(Math.abs(data.gapAmount))}
                       </span>
                     </BlurredAmount>
                   </div>

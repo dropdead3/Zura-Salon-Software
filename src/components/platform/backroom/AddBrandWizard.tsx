@@ -509,7 +509,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
                     </span>
                   </button>
                   <PlatformButton variant="ghost" size="sm" onClick={goNext}>
-                    Skip — {selectedScrapedProducts.length > 0 ? 'use scraped products only' : 'add products later')}
+                    Skip — {selectedScrapedProducts.length > 0 ? 'use scraped products only' : 'add products later'}
                   </PlatformButton>
                 </div>
               ) : (
@@ -527,7 +527,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
                           setCsvProducts(csvProducts.map((p) => ({ ...p, selected: !allSelected })));
                         }}
                       >
-                        {csvProducts.every((p) => p.selected) ? 'Deselect All' : 'Select All')}
+                        {csvProducts.every((p) => p.selected) ? 'Deselect All' : 'Select All'}
                       </PlatformButton>
                       <PlatformButton variant="ghost" size="sm" onClick={() => { setCsvProducts([]); csvFileRef.current && (csvFileRef.current.value = ''); }}>
                         Clear
@@ -569,7 +569,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
                               {p.size_options.join(', ') || '—')}
                             </TableCell>
                             <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                              {p.wholesale_price != null ? `$${p.wholesale_price.toFixed(2)}` : '—')}
+                              {p.wholesale_price != null ? `$${p.wholesale_price.toFixed(2)}` : '—'}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -729,7 +729,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
                 disabled={!canProceed()}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                Create Brand{finalProducts.length > 0 ? ` + ${finalProducts.length} Products` : '')}
+                Create Brand{finalProducts.length > 0 ? ` + ${finalProducts.length} Products` : ''}
               </PlatformButton>
             ) : (
               <PlatformButton size="sm" onClick={goNext} disabled={!canProceed()}>

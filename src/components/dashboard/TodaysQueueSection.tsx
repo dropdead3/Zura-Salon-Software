@@ -166,7 +166,7 @@ export function TodaysQueueSection({
               onClick={() => refetch()}
               disabled={isFetching}
             >
-              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : '')}`} />
+              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
             
             <WalkInDialog locationId={locationId} />
@@ -337,7 +337,7 @@ export function TodaysQueueSection({
           isUpdating={updateStatus.isPending}
           taxRate={taxRate}
           businessSettings={businessSettings as any}
-          locationName={selectedLocation?.name || '')}
+          locationName={selectedLocation?.name || ''}
           locationAddress={(selectedLocation as any)?.address}
           locationPhone={(selectedLocation as any)?.phone}
         />

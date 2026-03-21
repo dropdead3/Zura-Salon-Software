@@ -151,8 +151,8 @@ export function BackroomAnalyticsTab() {
         <KPICard
           icon={TrendingDown}
           label="Avg Waste %"
-          value={metrics.avgWasteReduction != null ? `${metrics.avgWasteReduction.toFixed(1)}%` : '—')}
-          subtitle={metrics.avgWasteReduction != null ? 'Across active orgs' : 'No data yet')}
+          value={metrics.avgWasteReduction != null ? `${metrics.avgWasteReduction.toFixed(1)}%` : '—'}
+          subtitle={metrics.avgWasteReduction != null ? 'Across active orgs' : 'No data yet'}
         />
         <KPICard
           icon={Activity}
@@ -243,7 +243,7 @@ export function BackroomAnalyticsTab() {
                     <TableCell className="font-sans text-sm tabular-nums">
                       {org.avgWastePct != null ? (
                         <PlatformBadge
-                          variant={org.avgWastePct > 10 ? 'error' : 'success')}
+                          variant={org.avgWastePct > 10 ? 'error' : 'success'}
                           size="sm"
                         >
                           {org.avgWastePct.toFixed(1)}%
@@ -254,7 +254,7 @@ export function BackroomAnalyticsTab() {
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums text-[hsl(var(--platform-foreground)/0.85)]">{org.totalSessions.toLocaleString()}</TableCell>
                     <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">
-                      {org.lastSnapshotDate ? new Date(org.lastSnapshotDate).toLocaleDateString() : 'Never')}
+                      {org.lastSnapshotDate ? new Date(org.lastSnapshotDate).toLocaleDateString() : 'Never'}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -316,7 +316,7 @@ export function BackroomAnalyticsTab() {
                     <TableCell className="font-sans text-sm tabular-nums">
                       {signal.avgReweighPct != null ? (
                         <PlatformBadge
-                          variant={signal.avgReweighPct < 50 ? 'error' : signal.avgReweighPct < 75 ? 'warning' : 'success')}
+                          variant={signal.avgReweighPct < 50 ? 'error' : signal.avgReweighPct < 75 ? 'warning' : 'success'}
                           size="sm"
                         >
                           {signal.avgReweighPct.toFixed(0)}%
@@ -389,7 +389,7 @@ export function BackroomAnalyticsTab() {
 
       <CoachingHistoryDrawer
         orgId={historyOrg?.id ?? null}
-        orgName={historyOrg?.name ?? '')}
+        orgName={historyOrg?.name ?? ''}
         open={!!historyOrg}
         onOpenChange={(v) => { if (!v) setHistoryOrg(null); }}
       />

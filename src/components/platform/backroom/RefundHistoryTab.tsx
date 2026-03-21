@@ -110,35 +110,35 @@ export function RefundHistoryTab() {
             <PlatformInput
               type="date"
               placeholder="From date"
-              value={filters.dateFrom ?? '')}
+              value={filters.dateFrom ?? ''}
               onChange={(e) => updateFilter('dateFrom', e.target.value)}
             />
             <PlatformInput
               type="date"
               placeholder="To date"
-              value={filters.dateTo ?? '')}
+              value={filters.dateTo ?? ''}
               onChange={(e) => updateFilter('dateTo', e.target.value)}
             />
             <PlatformInput
               type="number"
               placeholder="Min amount"
-              value={filters.minAmount ?? '')}
+              value={filters.minAmount ?? ''}
               onChange={(e) => updateFilter('minAmount', e.target.value ? Number(e.target.value) : undefined)}
             />
             <PlatformInput
               type="number"
               placeholder="Max amount"
-              value={filters.maxAmount ?? '')}
+              value={filters.maxAmount ?? ''}
               onChange={(e) => updateFilter('maxAmount', e.target.value ? Number(e.target.value) : undefined)}
             />
             <PlatformInput
               placeholder="Search org…"
               icon={<Search className="w-3.5 h-3.5" />}
-              value={filters.orgSearch ?? '')}
+              value={filters.orgSearch ?? ''}
               onChange={(e) => updateFilter('orgSearch', e.target.value)}
             />
             <Select
-              value={filters.status ?? 'all')}
+              value={filters.status ?? 'all'}
               onValueChange={(v) => updateFilter('status', v === 'all' ? undefined : v)}
             >
               <SelectTrigger>
@@ -186,7 +186,7 @@ export function RefundHistoryTab() {
                     {records.map((r) => (
                       <TableRow key={r.id} className="border-slate-700/30 hover:bg-slate-800/30">
                         <TableCell className="text-sm text-slate-200 font-medium">{r.org_name}</TableCell>
-                        <TableCell className="text-sm text-slate-300">{r.original_item_name ?? '—')}</TableCell>
+                        <TableCell className="text-sm text-slate-300">{r.original_item_name ?? '—'}</TableCell>
                         <TableCell className="text-sm text-slate-200 font-medium tabular-nums">
                           {formatCurrency(r.refund_amount)}
                         </TableCell>
@@ -196,15 +196,15 @@ export function RefundHistoryTab() {
                           </PlatformBadge>
                         </TableCell>
                         <TableCell>
-                          <PlatformBadge variant={STATUS_VARIANTS[r.status] ?? 'default')} className="capitalize text-xs">
+                          <PlatformBadge variant={STATUS_VARIANTS[r.status] ?? 'default'} className="capitalize text-xs">
                             {r.status}
                           </PlatformBadge>
                         </TableCell>
                         <TableCell className="text-sm text-slate-400 max-w-[200px] truncate">
-                          {r.reason ?? '—')}
+                          {r.reason ?? '—'}
                         </TableCell>
                         <TableCell className="text-sm text-slate-400 whitespace-nowrap">
-                          {r.created_at ? formatDateFull(r.created_at) : '—')}
+                          {r.created_at ? formatDateFull(r.created_at) : '—'}
                         </TableCell>
                       </TableRow>
                     ))}

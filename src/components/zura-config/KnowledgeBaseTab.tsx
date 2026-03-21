@@ -140,8 +140,8 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
                       <Badge variant="secondary" className="text-xs">{entry.priority}/10</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={entry.is_active ? 'default' : 'secondary')} className="text-xs">
-                        {entry.is_active ? 'Active' : 'Inactive')}
+                      <Badge variant={entry.is_active ? 'default' : 'secondary'} className="text-xs">
+                        {entry.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -162,7 +162,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
       <Dialog open={!!editingEntry} onOpenChange={open => { if (!open) close(); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{isNew ? 'Add Knowledge Entry' : 'Edit Knowledge Entry')}</DialogTitle>
+            <DialogTitle>{isNew ? 'Add Knowledge Entry' : 'Edit Knowledge Entry'}</DialogTitle>
           </DialogHeader>
           {editingEntry && (
             <div className="space-y-4">
@@ -214,7 +214,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
                     return (
                       <Badge
                         key={fn.value}
-                        variant={active ? 'default' : 'outline')}
+                        variant={active ? 'default' : 'outline'}
                         className="cursor-pointer"
                         onClick={() => toggleScope(fn.value)}
                       >
@@ -237,7 +237,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
           <DialogFooter>
             <Button variant="outline" onClick={close}>Cancel</Button>
             <Button onClick={handleSave} disabled={createEntry.isPending || updateEntry.isPending}>
-              {isNew ? 'Create' : 'Save')}
+              {isNew ? 'Create' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>

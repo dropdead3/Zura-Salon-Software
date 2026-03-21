@@ -166,11 +166,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               <Avatar className="w-8 h-8">
                 <AvatarImage src={organizerProfile?.photo_url || undefined} />
                 <AvatarFallback className="text-xs">
-                  {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name).slice(0, 2).toUpperCase() || '?')}
+                  {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name).slice(0, 2).toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-sans">
-                {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name) || 'Unknown')}
+                {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name) || 'Unknown'}
                 {isOrganizer && <span className="text-muted-foreground ml-1">(you)</span>}
               </span>
             </div>
@@ -192,11 +192,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
                     <Avatar className="w-7 h-7">
                       <AvatarImage src={profile?.photo_url || undefined} />
                       <AvatarFallback className="text-[10px]">
-                        {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?')}
+                        {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-sans flex-1 truncate">
-                      {formatDisplayName(profile?.full_name || '', profile?.display_name) || 'Unknown')}
+                      {formatDisplayName(profile?.full_name || '', profile?.display_name) || 'Unknown'}
                       {att.user_id === user?.id && <span className="text-muted-foreground ml-1">(you)</span>}
                     </span>
                     <div className={cn('flex items-center gap-1', rsvp.className)}>
@@ -228,7 +228,7 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant={myAttendee.rsvp_status === 'accepted' ? 'default' : 'outline')}
+                variant={myAttendee.rsvp_status === 'accepted' ? 'default' : 'outline'}
                 className="flex-1 gap-1"
                 onClick={() => handleRsvp('accepted')}
                 disabled={updateRsvp.isPending}
@@ -238,7 +238,7 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               </Button>
               <Button
                 size="sm"
-                variant={myAttendee.rsvp_status === 'declined' ? 'destructive' : 'outline')}
+                variant={myAttendee.rsvp_status === 'declined' ? 'destructive' : 'outline'}
                 className="flex-1 gap-1"
                 onClick={() => handleRsvp('declined')}
                 disabled={updateRsvp.isPending}

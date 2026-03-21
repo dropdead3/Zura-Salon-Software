@@ -47,7 +47,7 @@ function getFieldLabel(field: string): string {
 
 function exportAuditCsv(entries: AuditEntry[], productName: string) {
   const headers = ['Timestamp', 'Type', 'Field', 'Change', 'After', 'User', 'Notes'];
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
   const rows = entries.map(e => [
     new Date(e.created_at).toISOString(),
     e.type,
@@ -167,7 +167,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-normal">
                   <CalendarIcon className="w-3 h-3" />
-                  {dateFrom ? format(dateFrom, 'MMM d') : 'From')}
+                  {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -185,7 +185,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-normal">
                   <CalendarIcon className="w-3 h-3" />
-                  {dateTo ? format(dateTo, 'MMM d') : 'To')}
+                  {dateTo ? format(dateTo, 'MMM d') : 'To'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -293,7 +293,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
               'text-xs font-medium tabular-nums',
               isPositive ? 'text-success' : isNegative ? 'text-destructive' : 'text-muted-foreground'
             )}>
-              {isPositive ? '+' : '')}{entry.quantity_change}
+              {isPositive ? '+' : ''}{entry.quantity_change}
             </span>
           )}
 
@@ -305,7 +305,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
 
           {!isStock && (
             <span className="text-xs text-muted-foreground tabular-nums">
-              {entry.old_value ?? '—')} → {entry.quantity_after ?? '—')}
+              {entry.old_value ?? '—')} → {entry.quantity_after ?? '—'}
             </span>
           )}
         </div>

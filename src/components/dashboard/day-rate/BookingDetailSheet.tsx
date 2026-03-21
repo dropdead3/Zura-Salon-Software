@@ -139,7 +139,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
               <div>
                 <p className="font-medium">{formatCurrency(booking.amount_paid || 0)}</p>
                 <p className="text-sm text-muted-foreground">
-                  {booking.stripe_payment_id ? 'Paid' : 'Payment Pending')}
+                  {booking.stripe_payment_id ? 'Paid' : 'Payment Pending'}
                 </p>
               </div>
             </div>

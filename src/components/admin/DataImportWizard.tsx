@@ -495,7 +495,7 @@ export function DataImportWizard({
                 <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               )}
               <p className="text-lg font-medium mb-2">
-                {file ? file.name : 'Upload your CSV file')}
+                {file ? file.name : 'Upload your CSV file'}
               </p>
               <p className="text-sm text-muted-foreground mb-4">
                 Drag and drop or click to browse
@@ -550,7 +550,7 @@ export function DataImportWizard({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Assign to Location {requiresLocation ? '(required)' : '(optional)')}
+                Assign to Location {requiresLocation ? '(required)' : '(optional)'}
                 {requiresLocation && <span className="text-destructive ml-1">*</span>}
               </Label>
               <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
@@ -821,7 +821,7 @@ export function DataImportWizard({
               </div>
               
               <p className="text-sm">
-                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported')} to{' '}
+                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported'} to{' '}
                 <strong className="capitalize">{dataType}</strong>
                 {selectedLocationId && locations && (
                   <> at <strong>{locations.find(l => l.id === selectedLocationId)?.name}</strong></>
@@ -837,7 +837,7 @@ export function DataImportWizard({
             <Loader2 className="w-16 h-16 mx-auto animate-spin text-primary" />
             <div>
               <p className="text-lg font-medium mb-2">
-                {isDryRun ? 'Validating your data...' : 'Importing your data...')}
+                {isDryRun ? 'Validating your data...' : 'Importing your data...'}
               </p>
               <p className="text-sm text-muted-foreground">
                 Please don't close this window
@@ -860,7 +860,7 @@ export function DataImportWizard({
             )}
             <div>
               <p className="text-lg font-medium mb-2">
-                {isDryRunResult ? 'Dry Run Complete' : 'Import Complete')}
+                {isDryRunResult ? 'Dry Run Complete' : 'Import Complete'}
               </p>
               {isDryRunResult && (
                 <Badge variant="secondary" className="mb-3">
@@ -1014,7 +1014,7 @@ export function DataImportWizard({
                 </Button>
                 {step !== 'upload' && step !== 'importing' && (
                   <Button onClick={handleNext} disabled={!canGoNext()}>
-                    {step === 'preview' ? 'Import Data' : 'Next')}
+                    {step === 'preview' ? 'Import Data' : 'Next'}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 )}

@@ -377,7 +377,7 @@ function JobHistory({ functionName }: { functionName: string }) {
                   {log.status}
                 </td>
                 <td className="px-4 py-2 text-slate-300">
-                  {log.duration_ms ? `${(log.duration_ms / 1000).toFixed(2)}s` : '-')}
+                  {log.duration_ms ? `${(log.duration_ms / 1000).toFixed(2)}s` : '-'}
                 </td>
                 <td className="px-4 py-2 text-slate-400 capitalize">
                   {log.triggered_by}

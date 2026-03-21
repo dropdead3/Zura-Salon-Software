@@ -86,7 +86,7 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }
             {peakTime.count > 0 && (
               <Badge variant="outline" className="flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
-                {DAYS[peakTime.day]} {peakTime.hour > 12 ? peakTime.hour - 12 : peakTime.hour}{peakTime.hour >= 12 ? 'pm' : 'am')}
+                {DAYS[peakTime.day]} {peakTime.hour > 12 ? peakTime.hour - 12 : peakTime.hour}{peakTime.hour >= 12 ? 'pm' : 'am'}
               </Badge>
             )}
           </div>
@@ -108,7 +108,7 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }
                   <div className="w-10" />
                   {HOURS.map(hour => (
                     <div key={hour} className="flex-1 text-center text-[10px] text-muted-foreground">
-                      {hour > 12 ? hour - 12 : hour}{hour >= 12 ? 'p' : 'a')}
+                      {hour > 12 ? hour - 12 : hour}{hour >= 12 ? 'p' : 'a'}
                     </div>
                   ))}
                 </div>
@@ -168,7 +168,7 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }
                 <p className="text-sm">
                   <span className="text-muted-foreground">Busiest time: </span>
                   <span className="font-medium">
-                    {DAYS[peakTime.day]}s at {peakTime.hour > 12 ? peakTime.hour - 12 : peakTime.hour}:00 {peakTime.hour >= 12 ? 'PM' : 'AM')}
+                    {DAYS[peakTime.day]}s at {peakTime.hour > 12 ? peakTime.hour - 12 : peakTime.hour}:00 {peakTime.hour >= 12 ? 'PM' : 'AM'}
                   </span>
                 </p>
               </div>

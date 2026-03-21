@@ -193,7 +193,7 @@ export function PersonalGoalsCard({
         ) : (
           <div className="space-y-4">
             {/* Two-column view: Service | Retail */}
-            <div className={cn('grid gap-6', (hasServiceGoals || hasRetailGoals) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1')}>
+            <div className={cn('grid gap-6', (hasServiceGoals || hasRetailGoals) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}>
               {/* Service Goals */}
               {hasServiceGoals && (
                 <div className="space-y-3">

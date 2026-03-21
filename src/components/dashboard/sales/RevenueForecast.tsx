@@ -131,9 +131,9 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
                 dateRange={filterContext.dateRange} 
               />
             )}
-            <Badge variant={forecast.isOnTrack ? 'default' : 'secondary')}>
+            <Badge variant={forecast.isOnTrack ? 'default' : 'secondary'}>
               <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />
-              {forecast.isOnTrack ? 'On Track' : 'Behind')}
+              {forecast.isOnTrack ? 'On Track' : 'Behind'}
             </Badge>
           </div>
         </div>
@@ -150,7 +150,7 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
             <p className="text-lg font-display">{formatCurrencyWhole(Math.round(forecast.dailyAverage))}</p>
             <p className="text-xs text-muted-foreground">Daily Average</p>
           </div>
-          <div className={cn('text-center p-3 rounded-lg', forecast.isOnTrack ? 'bg-chart-2/10' : 'bg-chart-4/10')}>
+          <div className={cn('text-center p-3 rounded-lg', forecast.isOnTrack ? 'bg-chart-2/10' : 'bg-chart-4/10'}>
             <p className={cn('text-lg font-display', statusColor)}>
               {formatCurrencyWhole(Math.round(forecast.projectedTotal))}
             </p>

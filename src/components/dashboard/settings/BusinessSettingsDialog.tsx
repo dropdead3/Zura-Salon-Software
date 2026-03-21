@@ -203,7 +203,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         [type === 'light' ? 'logo_light_url' : 'logo_dark_url']: publicUrl,
       }));
 
-      toast.success(`${type === 'light' ? 'Light' : 'Dark')} mode logo uploaded`);
+      toast.success(`${type === 'light' ? 'Light' : 'Dark'} mode logo uploaded`);
     } catch (err) {
       console.error('Upload error:', err);
       toast.error('Failed to upload logo');
@@ -242,7 +242,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         [type === 'light' ? 'icon_light_url' : 'icon_dark_url']: publicUrl,
       }));
 
-      toast.success(`${type === 'light' ? 'Light' : 'Dark')} mode icon uploaded`);
+      toast.success(`${type === 'light' ? 'Light' : 'Dark'} mode icon uploaded`);
     } catch (err) {
       console.error('Upload error:', err);
       toast.error('Failed to upload icon');
@@ -322,7 +322,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
       <div className="space-y-2">
         <Label className="flex items-center gap-2">
           <Icon className="w-4 h-4" />
-          {isLight ? 'Light Mode Logo' : 'Dark Mode Logo')}
+          {isLight ? 'Light Mode Logo' : 'Dark Mode Logo'}
         </Label>
         <div 
           className={cn(
@@ -361,7 +361,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               <span className="text-sm opacity-70">Click to upload</span>
               <span className="text-xs opacity-50">SVG or PNG · Horizontal/wordmark preferred</span>
               <span className="text-xs opacity-40 mt-1">
-                {isLight ? 'Use a dark/black logo' : 'Use a white/light logo')}
+                {isLight ? 'Use a dark/black logo' : 'Use a white/light logo'}
               </span>
               <span className="text-xs opacity-30 mt-0.5">
                 PNGs are auto-trimmed to remove excess padding
@@ -400,7 +400,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
       <div className="space-y-2">
         <Label className="flex items-center gap-2">
           <Icon className="w-4 h-4" />
-          {isLight ? 'Light Mode Icon' : 'Dark Mode Icon')}
+          {isLight ? 'Light Mode Icon' : 'Dark Mode Icon'}
         </Label>
         <div 
           className={cn(
@@ -439,7 +439,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               <span className="text-xs opacity-70">Click to upload</span>
               <span className="text-xs opacity-50">SVG or PNG</span>
               <span className="text-xs opacity-40">
-                {isLight ? 'Dark/black icon' : 'White/light icon')}
+                {isLight ? 'Dark/black icon' : 'White/light icon'}
               </span>
             </div>
           )}

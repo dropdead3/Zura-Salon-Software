@@ -76,7 +76,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <TrendingUp className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Collection Rate</span>
             </div>
-            <p className={`text-2xl font-medium ${metrics.collectionRate >= 95 ? 'text-emerald-400' : metrics.collectionRate >= 80 ? 'text-amber-400' : 'text-red-400')}`}>
+            <p className={`text-2xl font-medium ${metrics.collectionRate >= 95 ? 'text-emerald-400' : metrics.collectionRate >= 80 ? 'text-amber-400' : 'text-red-400'}`}>
               {metrics.collectionRate.toFixed(1)}%
             </p>
           </CardContent>
@@ -95,7 +95,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               />
             </p>
             {metrics.overdueRenterCount > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">{metrics.overdueRenterCount} renter{metrics.overdueRenterCount !== 1 ? 's' : '')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{metrics.overdueRenterCount} renter{metrics.overdueRenterCount !== 1 ? 's' : ''}</p>
             )}
           </CardContent>
         </Card>

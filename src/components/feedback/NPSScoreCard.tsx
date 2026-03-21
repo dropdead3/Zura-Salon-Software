@@ -54,7 +54,7 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
           NPS Score
           <span className={cn('flex items-center gap-1 text-xs', trendColor)}>
             <TrendIcon className="h-3 w-3" />
-            {stats.trend === 'up' ? '+' : stats.trend === 'down' ? '' : '')}
+            {stats.trend === 'up' ? '+' : stats.trend === 'down' ? '' : ''}
             {stats.currentNPS - stats.previousNPS} vs last period
           </span>
         </CardTitle>

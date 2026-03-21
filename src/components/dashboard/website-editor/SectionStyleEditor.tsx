@@ -50,7 +50,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         <div className="space-y-2">
           <Label className="text-xs">
             {merged.background_type === 'color' ? 'Color' :
-             merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL')}
+             merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL'}
           </Label>
           {merged.background_type === 'color' ? (
             <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
               value={merged.background_value}
               onChange={v => update('background_value', v)}
               label=""
-              pathPrefix={`sections/${sectionId ?? 'bg')}`}
+              pathPrefix={`sections/${sectionId ?? 'bg'}`}
             />
           ) : (
             <Input

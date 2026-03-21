@@ -48,7 +48,7 @@ export function SalesTrendIndicator({
       )}
       {showValue && (
         <span className="text-xs font-medium">
-          {isPositive ? '+' : '-')}{absChange.toFixed(1)}%
+          {isPositive ? '+' : '-'}{absChange.toFixed(1)}%
         </span>
       )}
     </div>

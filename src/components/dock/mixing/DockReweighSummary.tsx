@@ -92,7 +92,7 @@ function MetricTile({
           {label}
         </span>
       </div>
-      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : muted ? 'text-[hsl(var(--platform-foreground-muted))]' : 'text-[hsl(var(--platform-foreground))]')}`}>
+      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : muted ? 'text-[hsl(var(--platform-foreground-muted))]' : 'text-[hsl(var(--platform-foreground))]'}`}>
         {value}
       </p>
       {sub && (

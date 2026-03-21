@@ -149,7 +149,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                         </span>
                       </div>
                       {i < arr.length - 1 && (
-                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60')} />
+                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60'} />
                       )}
                     </React.Fragment>
                   ))}
@@ -216,7 +216,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
           {/* ── KPI Strip ── */}
-          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
+          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'}>
             <KpiTile
               icon={FlaskConical}
               label="Chemical Cost/Svc"
@@ -226,19 +226,19 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
               icon={Trash2}
               label="Waste Rate"
               value={`${kpis.wasteRate.toFixed(1)}%`}
-              status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral')}
+              status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral'}
             />
             <KpiTile
               icon={ClipboardCheck}
               label="Reweigh Rate"
               value={`${kpis.reweighCompliance.toFixed(0)}%`}
-              status={kpis.reweighCompliance < 80 ? 'warning' : 'ok')}
+              status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
             />
             <KpiTile
               icon={AlertCircle}
               label="Stockout Alerts"
               value={String(kpis.stockoutAlertCount)}
-              status={kpis.stockoutAlertCount > 0 ? 'warning' : 'ok')}
+              status={kpis.stockoutAlertCount > 0 ? 'warning' : 'ok'}
             />
             <BudgetKpiTile
               budgetPct={kpis.budgetPct}
@@ -253,7 +253,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                 icon={DollarSign}
                 label="Supply Recovery"
                 value={`${supplyCostRecovery.recoveryRate}%`}
-                status={supplyCostRecovery.recoveryRate >= 80 ? 'ok' : supplyCostRecovery.recoveryRate > 0 ? 'warning' : 'neutral')}
+                status={supplyCostRecovery.recoveryRate >= 80 ? 'ok' : supplyCostRecovery.recoveryRate > 0 ? 'warning' : 'neutral'}
                 subtitle={`${formatCurrency(supplyCostRecovery.totalRecouped)} recouped · ${formatCurrency(supplyCostRecovery.totalWaived)} waived`}
               />
             )}
@@ -270,7 +270,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                   <div>
                     <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
                     <CardDescription>
-                      {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention')}
+                      {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
                     </CardDescription>
                   </div>
                 </div>
@@ -359,7 +359,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     ) : (
                       <TrendingDown className="w-3.5 h-3.5 text-primary" />
                     )}
-                    <span>{Math.abs(reorderData.trendPct).toFixed(1)}% {reorderData.trendPct > 0 ? 'increase' : 'decrease')} month-over-month</span>
+                    <span>{Math.abs(reorderData.trendPct).toFixed(1)}% {reorderData.trendPct > 0 ? 'increase' : 'decrease'} month-over-month</span>
                   </div>
                 )}
               </CardContent>
@@ -506,7 +506,7 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
     <div className={cn(tokens.kpi.tile, 'relative')}>
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary')} />
+          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary'} />
         </div>
         <span className={tokens.kpi.label}>{label}</span>
       </div>
@@ -536,7 +536,7 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary')} />
+          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary'} />
         </div>
         <span className={tokens.kpi.label}>Budget</span>
       </div>
@@ -548,14 +548,14 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
           <Progress
             value={Math.min(pct, 100)}
             className="h-1 mt-1"
-            indicatorClassName={status === 'over' ? 'bg-destructive' : status === 'warn' ? 'bg-amber-500' : 'bg-primary')}
+            indicatorClassName={status === 'over' ? 'bg-destructive' : status === 'warn' ? 'bg-amber-500' : 'bg-primary'}
           />
         </>
       ) : (
         <span className={cn(tokens.kpi.value, 'text-muted-foreground')}>Not set</span>
       )}
       <span className="text-[10px] font-sans text-muted-foreground mt-1 block">
-        {monthlyBudget > 0 ? 'Adjust →' : 'Set budget →')}
+        {monthlyBudget > 0 ? 'Adjust →' : 'Set budget →'}
       </span>
     </button>
   );
@@ -598,7 +598,7 @@ function StaffRow({ name, wasteRate, sessions, reweighPct, isBottom = false }: {
   return (
     <div className="flex items-center gap-3 py-1.5 text-xs font-sans">
       <span className="flex-1 truncate text-foreground">{name}</span>
-      <span className={cn('tabular-nums', isBottom ? 'text-amber-500' : 'text-muted-foreground')}>
+      <span className={cn('tabular-nums', isBottom ? 'text-amber-500' : 'text-muted-foreground'}>
         {wasteRate.toFixed(1)}% waste
       </span>
       <span className="text-muted-foreground tabular-nums">{reweighPct.toFixed(0)}% reweigh</span>
@@ -609,7 +609,7 @@ function StaffRow({ name, wasteRate, sessions, reweighPct, isBottom = false }: {
 function HealthStat({ label, count, color }: { label: string; count: number; color: string }) {
   return (
     <div className="text-center py-3">
-      <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground')}>
+      <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground'}>
         {count}
       </p>
       <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider mt-1">{label}</p>

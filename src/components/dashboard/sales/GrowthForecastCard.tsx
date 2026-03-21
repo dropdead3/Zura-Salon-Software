@@ -105,7 +105,7 @@ function TrendKPICards({ summary, scenario }: { summary: any; scenario: Scenario
               <BlurredAmount>{formatCurrencyWhole(Math.round(card.value as number))}</BlurredAmount>
             ) : card.isPercent ? (
               card.value !== null ? (
-                <span className={card.accent}>{(card.value as number) >= 0 ? '+' : '')}{(card.value as number).toFixed(1)}%</span>
+                <span className={card.accent}>{(card.value as number) >= 0 ? '+' : ''}{(card.value as number).toFixed(1)}%</span>
               ) : (
                 <span className="text-muted-foreground text-sm">N/A</span>
               )
@@ -144,8 +144,8 @@ function TrajectoryTooltip({ active, payload, label }: any) {
             </span>
           </div>
         )}
-        <Badge variant={data.type === 'actual' ? 'default' : 'secondary')} className="text-[10px] mt-1">
-          {data.type === 'actual' ? 'Actual' : 'Projected')}
+        <Badge variant={data.type === 'actual' ? 'default' : 'secondary'} className="text-[10px] mt-1">
+          {data.type === 'actual' ? 'Actual' : 'Projected'}
         </Badge>
       </div>
     </div>
@@ -415,8 +415,8 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
                   {' → ')}
                   <BlurredAmount>{formatCurrencyWholeUtil(Math.round(h.actual))}</BlurredAmount>
                 </span>
-                <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive')}>
-                  {isOver ? '+' : '')}{((diff / h.projected) * 100).toFixed(1)}%
+                <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive'}>
+                  {isOver ? '+' : ''}{((diff / h.projected) * 100).toFixed(1)}%
                 </span>
               </div>
             </div>

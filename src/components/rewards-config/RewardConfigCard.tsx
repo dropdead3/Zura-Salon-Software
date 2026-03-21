@@ -140,7 +140,7 @@ export function RewardConfigCard({
         
         <div className="flex items-center justify-between mt-4 pt-3 border-t">
           <span className="text-xs text-muted-foreground">
-            {reward.is_active ? 'Active' : 'Inactive')}
+            {reward.is_active ? 'Active' : 'Inactive'}
           </span>
           <Switch 
             checked={reward.is_active} 

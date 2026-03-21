@@ -405,7 +405,7 @@ export default function Extensions() {
 
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'})`, 'gi');
     const parts = text.split(regex);
     return parts.map((part, index) => 
       regex.test(part) ? (
@@ -1686,7 +1686,7 @@ export default function Extensions() {
                   animate={{ opacity: 1 }}
                   className="text-sm text-muted-foreground mt-4"
                 >
-                  {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results')} found
+                  {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results'} found
                 </motion.p>
               )}
             </div>

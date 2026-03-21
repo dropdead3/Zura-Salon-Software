@@ -124,7 +124,7 @@ export function DayRateWidget() {
                   </div>
                 </div>
                 <Badge 
-                  variant={booking.status === 'checked_in' ? 'default' : 'secondary')}
+                  variant={booking.status === 'checked_in' ? 'default' : 'secondary'}
                   className="capitalize text-xs"
                 >
                   {booking.status.replace('_', ' ')}

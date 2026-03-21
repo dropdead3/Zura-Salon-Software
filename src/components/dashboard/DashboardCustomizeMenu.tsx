@@ -603,7 +603,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
               disabled={resetToDefault.isPending}
             >
               <RotateCcw className="w-4 h-4" />
-              {resetToDefault.isPending ? 'Resetting...' : 'Reset to Default')}
+              {resetToDefault.isPending ? 'Resetting...' : 'Reset to Default'}
             </Button>
 
             {canManageVisibility && (

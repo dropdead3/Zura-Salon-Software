@@ -207,7 +207,7 @@ export function ClientStep({
             ) : filteredClients.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground text-sm">
-                  {activeLetter ? `No clients starting with "${activeLetter}"` : searchQuery ? 'No clients found' : 'Start typing to search clients')}
+                  {activeLetter ? `No clients starting with "${activeLetter}"` : searchQuery ? 'No clients found' : 'Start typing to search clients'}
                 </p>
                 {activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}
                 <Button
@@ -282,7 +282,7 @@ export function ClientStep({
       <BannedClientWarningDialog
         open={!!pendingBannedClient}
         onOpenChange={(open) => !open && setPendingBannedClient(null)}
-        clientName={pendingBannedClient?.name || '')}
+        clientName={pendingBannedClient?.name || ''}
         banReason={pendingBannedClient?.ban_reason}
         onProceed={handleProceedWithBanned}
         onCancel={handleCancelBanned}

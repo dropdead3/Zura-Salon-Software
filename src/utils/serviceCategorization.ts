@@ -77,7 +77,7 @@ export function isColorOrChemicalService(
   serviceCategory?: string | null,
 ): boolean {
   if (!serviceName && !serviceCategory) return false;
-  const combined = `${serviceName ?? '')} ${serviceCategory ?? '')}`.trim();
+  const combined = `${serviceName ?? '')} ${serviceCategory ?? ''}`.trim();
   return COLOR_CHEMICAL_PATTERN.test(combined);
 }
 

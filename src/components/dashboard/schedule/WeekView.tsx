@@ -262,7 +262,7 @@ export function WeekView({
                       'text-[10px] uppercase tracking-wider font-medium',
                       dayIsToday ? 'text-primary' : 'text-muted-foreground'
                     )}>
-                      {format(day, 'EEE')}{dayIsToday ? ' · Today' : dayIsTomorrow ? ' · Tomorrow' : '')}
+                      {format(day, 'EEE')}{dayIsToday ? ' · Today' : dayIsTomorrow ? ' · Tomorrow' : ''}
                     </div>
                     <div className="flex items-center justify-center mt-1">
                       <span className={cn(

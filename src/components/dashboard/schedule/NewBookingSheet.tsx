@@ -520,7 +520,7 @@ export function NewBookingSheet({
                   {availableSlots.map((slot) => (
                     <Button
                       key={slot.start_time}
-                      variant={selectedTime === slot.start_time ? 'default' : 'outline')}
+                      variant={selectedTime === slot.start_time ? 'default' : 'outline'}
                       className="text-sm"
                       onClick={() => setSelectedTime(slot.start_time)}
                     >
@@ -575,7 +575,7 @@ export function NewBookingSheet({
                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <p className="font-medium">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-                  <p className="text-sm text-muted-foreground">at {selectedTime ? formatTime12h(selectedTime) : 'TBD')}</p>
+                  <p className="text-sm text-muted-foreground">at {selectedTime ? formatTime12h(selectedTime) : 'TBD'}</p>
                 </div>
               </div>
 

@@ -53,7 +53,7 @@ function buildIndicators(flags: IndicatorFlags): IndicatorDef[] {
       key: 'redo',
       priority: 2,
       label: 'Redo appointment',
-      render: (size) => <RotateCcw key="redo" className={cn('text-amber-500 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3')} />,
+      render: (size) => <RotateCcw key="redo" className={cn('text-amber-500 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />,
     });
   }
 
@@ -62,7 +62,7 @@ function buildIndicators(flags: IndicatorFlags): IndicatorDef[] {
       key: 'rescheduled',
       priority: 3,
       label: 'Rescheduled',
-      render: (size) => <ArrowRightLeft key="rescheduled" className={cn('text-blue-500 dark:text-blue-400 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3')} />,
+      render: (size) => <ArrowRightLeft key="rescheduled" className={cn('text-blue-500 dark:text-blue-400 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />,
     });
   }
 
@@ -71,7 +71,7 @@ function buildIndicators(flags: IndicatorFlags): IndicatorDef[] {
       key: 'recurring',
       priority: 4,
       label: 'Recurring appointment',
-      render: (size) => <Repeat key="recurring" className={cn('opacity-60 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3')} />,
+      render: (size) => <Repeat key="recurring" className={cn('opacity-60 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />,
     });
   }
 
@@ -89,7 +89,7 @@ function buildIndicators(flags: IndicatorFlags): IndicatorDef[] {
       key: 'assistants',
       priority: 6,
       label: 'Has assistant(s)',
-      render: (size) => <Users key="assistants" className={cn('opacity-60 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3')} />,
+      render: (size) => <Users key="assistants" className={cn('opacity-60 shrink-0', size === 'compact' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />,
     });
   }
 

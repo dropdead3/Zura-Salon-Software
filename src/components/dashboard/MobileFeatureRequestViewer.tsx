@@ -105,7 +105,7 @@ export function MobileFeatureRequestViewer({
                             <ChevronUp className="h-8 w-8" />
                             <span className="text-4xl font-medium">{request.vote_count || 0}</span>
                             <span className="text-sm">
-                              {request.user_voted ? 'You voted!' : 'votes')}
+                              {request.user_voted ? 'You voted!' : 'votes'}
                             </span>
                           </button>
                         </motion.div>
@@ -156,13 +156,13 @@ export function MobileFeatureRequestViewer({
 
                         {/* Vote CTA Button */}
                         <Button
-                          variant={request.user_voted ? 'default' : 'outline')}
+                          variant={request.user_voted ? 'default' : 'outline'}
                           size={tokens.button.hero}
                           className="mt-8 gap-2"
                           onClick={() => onVote(request)}
                         >
                           <Heart className={cn('h-5 w-5', request.user_voted && 'fill-current')} />
-                          {request.user_voted ? 'Remove Vote' : 'Vote for This')}
+                          {request.user_voted ? 'Remove Vote' : 'Vote for This'}
                         </Button>
                       </div>
                     </ScrollArea>

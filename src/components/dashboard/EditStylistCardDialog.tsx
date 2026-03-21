@@ -220,7 +220,7 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
               className={cn(!formData.is_booking && "opacity-60")}
               disabled
             >
-              {formData.is_booking ? 'Book Consult →' : 'Not Booking')}
+              {formData.is_booking ? 'Book Consult →' : 'Not Booking'}
             </Button>
           </div>
 
@@ -288,7 +288,7 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
                 return (
                   <Badge
                     key={loc.id}
-                    variant={isSelected ? 'default' : 'outline')}
+                    variant={isSelected ? 'default' : 'outline'}
                     className="cursor-pointer"
                     onClick={() => toggleLocation(loc.id)}
                   >
@@ -309,7 +309,7 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
                 return (
                   <Badge
                     key={option.name}
-                    variant={isSelected ? 'default' : 'outline')}
+                    variant={isSelected ? 'default' : 'outline'}
                     className={cn(
                       "cursor-pointer transition-all",
                       isDisabled && "opacity-50 cursor-not-allowed"
@@ -338,7 +338,7 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
                   return (
                     <Badge
                       key={specialty}
-                      variant={isSelected ? 'default' : 'outline')}
+                      variant={isSelected ? 'default' : 'outline'}
                       className={cn(
                         "cursor-pointer transition-all",
                         isDisabled && "opacity-50 cursor-not-allowed"

@@ -491,7 +491,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
           )}
           <Button onClick={goNext} disabled={isSaving} className="font-sans">
             {isSaving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-            {step === STEP_COUNT - 1 ? 'Complete Setup' : 'Next')}
+            {step === STEP_COUNT - 1 ? 'Complete Setup' : 'Next'}
             {step < STEP_COUNT - 1 && <ArrowRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
@@ -717,7 +717,7 @@ function SuppliersStep({
           </div>
 
           <p className={cn(tokens.body.muted, 'text-xs')}>
-            {selectedIds.size} product{selectedIds.size !== 1 ? 's' : '')} selected
+            {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
             {assignMode === 'brand' && ' • Check a brand to assign all its products')}
           </p>
 

@@ -98,7 +98,7 @@ export function CapacityUsageCard({
           {showWarning && (
             <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-orange-500/10 text-orange-400">
               <AlertTriangle className="h-3 w-3" />
-              {capacity.isOverLimit ? 'Over limit' : 'Near limit')}
+              {capacity.isOverLimit ? 'Over limit' : 'Near limit'}
             </div>
           )}
         </div>

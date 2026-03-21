@@ -633,7 +633,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
             Mode: <span className="font-medium capitalize">{settings.theme_mode}</span>
             {settings.theme_mode === 'auto' && (
               <span className="ml-1 opacity-70">
-                (currently {isDarkMode ? 'dark' : 'light')})
+                (currently {isDarkMode ? 'dark' : 'light'})
               </span>
             )}
           </span>

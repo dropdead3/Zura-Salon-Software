@@ -73,9 +73,9 @@ function getTimeAtCompany(hireDate: string | null): string {
   if (years > 0 && months > 0) {
     return `${years}y ${months}mo`;
   } else if (years > 0) {
-    return `${years} year${years > 1 ? 's' : '')}`;
+    return `${years} year${years > 1 ? 's' : ''}`;
   } else if (months > 0) {
-    return `${months} month${months > 1 ? 's' : '')}`;
+    return `${months} month${months > 1 ? 's' : ''}`;
   }
   return 'New';
 }
@@ -622,7 +622,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         {/* Hours */}
         <CopyableField 
           icon={<Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
-          value={`${hoursDisplay || location.hours || 'Hours not set')}${closedDays ? }` (${closedDays})` : '')}`}
+          value={`${hoursDisplay || location.hours || 'Hours not set')}${closedDays ? }` (${closedDays})` : ''}`}
           label="hours"
         >
           <div className="text-sm space-y-1">
@@ -683,7 +683,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         {/* Member Count */}
         <div className="pt-3 mt-3 border-t border-border">
           <Badge variant="secondary" className="text-xs">
-            {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members')}
+            {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
           </Badge>
         </div>
       </CardContent>
@@ -787,7 +787,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
                   {strikeCount > 0 
-                    ? `${strikeCount} active strike${strikeCount > 1 ? 's' : '')}`
+                    ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''}`
                     : 'No active strikes')}
                 </TooltipContent>
               </Tooltip>

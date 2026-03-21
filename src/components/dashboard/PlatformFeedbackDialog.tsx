@@ -77,7 +77,7 @@ export function PlatformFeedbackDialog({ open, onOpenChange, defaultType = 'feat
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             {isBug ? <Bug className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
-            {isBug ? 'Report a Bug' : 'Request a Feature')}
+            {isBug ? 'Report a Bug' : 'Request a Feature'}
           </DialogTitle>
           <DialogDescription>
             {isBug
@@ -159,7 +159,7 @@ export function PlatformFeedbackDialog({ open, onOpenChange, defaultType = 'feat
 
           {/* Screenshot Upload */}
           <div className="space-y-1.5">
-            <Label>{isBug ? 'Attach a screenshot to help us understand the issue' : 'Attach images (optional)')}</Label>
+            <Label>{isBug ? 'Attach a screenshot to help us understand the issue' : 'Attach images (optional)'}</Label>
             <input
               ref={fileInputRef}
               type="file"
@@ -178,7 +178,7 @@ export function PlatformFeedbackDialog({ open, onOpenChange, defaultType = 'feat
               )}
             >
               {isBug ? <ImageIcon className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
-              {isBug ? 'Upload screenshot' : 'Upload images')}
+              {isBug ? 'Upload screenshot' : 'Upload images'}
             </button>
             {files.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">

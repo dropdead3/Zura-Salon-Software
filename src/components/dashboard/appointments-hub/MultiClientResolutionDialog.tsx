@@ -131,7 +131,7 @@ export function MultiClientResolutionDialog({
                           </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">
-                          · {group.appointments.length} appt{group.appointments.length !== 1 ? 's' : '')}
+                          · {group.appointments.length} appt{group.appointments.length !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>

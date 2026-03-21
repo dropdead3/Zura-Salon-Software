@@ -72,7 +72,7 @@ export default function Payroll() {
                     </Button>
                   )}
                   <Button 
-                    variant={activeTab === 'hire' ? 'default' : 'outline')}
+                    variant={activeTab === 'hire' ? 'default' : 'outline'}
                     onClick={() => handleTabChange('hire')}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />

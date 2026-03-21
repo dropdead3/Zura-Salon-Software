@@ -369,7 +369,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                       <div className="flex items-center gap-2 text-sm">
                         <Star className="w-4 h-4 text-amber-500 shrink-0" />
                         <span className="text-foreground">
-                          {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews')}
+                          {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews'}
                           {reviewSummary.averageRating !== null && (
                             <span className="text-muted-foreground"> · Avg {reviewSummary.averageRating} ★</span>
                           )}
@@ -384,8 +384,8 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                               parseISO(appointment.appointment_date)
                             );
                             if (days === 0) return ' · Same day as visit';
-                            if (days > 0) return ` · ${days} day${days !== 1 ? 's' : '')} after visit`;
-                            return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : '')} before visit`;
+                            if (days > 0) return ` · ${days} day${days !== 1 ? 's' : ''} after visit`;
+                            return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} before visit`;
                           })()}
                         </div>
                       )}
@@ -501,7 +501,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 <DetailRow icon={Info} label="Source">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[10px]">
-                      {appointment._source === 'phorest' ? 'Phorest' : 'Local')}
+                      {appointment._source === 'phorest' ? 'Phorest' : 'Local'}
                     </Badge>
                     {appointment.import_source && appointment.import_source !== 'manual' && (
                       <Badge variant="outline" className="text-[10px]">
@@ -666,7 +666,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   }
                 }}
               >
-                {cancelling ? 'Cancelling…' : 'Cancel Appointment')}
+                {cancelling ? 'Cancelling…' : 'Cancel Appointment'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

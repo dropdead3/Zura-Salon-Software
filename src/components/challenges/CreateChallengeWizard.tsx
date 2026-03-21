@@ -373,7 +373,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
               onClick={form.handleSubmit(onSubmit)}
               disabled={createChallenge.isPending}
             >
-              {createChallenge.isPending ? 'Creating...' : 'Launch Challenge')}
+              {createChallenge.isPending ? 'Creating...' : 'Launch Challenge'}
             </Button>
           )}
         </div>

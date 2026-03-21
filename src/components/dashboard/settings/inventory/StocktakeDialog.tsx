@@ -224,7 +224,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
             </DialogTitle>
             <div className="flex items-center gap-1">
               <Button
-                variant={scanMode ? 'default' : 'outline')}
+                variant={scanMode ? 'default' : 'outline'}
                 size="sm"
                 className="text-xs gap-1.5 h-8"
                 onClick={() => { setScanMode(true); setScanError(null); setPendingProduct(null); }}
@@ -233,7 +233,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                 Scan
               </Button>
               <Button
-                variant={!scanMode ? 'default' : 'outline')}
+                variant={!scanMode ? 'default' : 'outline'}
                 size="sm"
                 className="text-xs gap-1.5 h-8"
                 onClick={() => setScanMode(false)}
@@ -367,7 +367,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                                     : 'text-muted-foreground',
                               )}
                             >
-                              {variance > 0 ? '+' : '')}{variance}
+                              {variance > 0 ? '+' : ''}{variance}
                               {hasShrinkage && <AlertTriangle className="w-2.5 h-2.5 ml-0.5" />}
                             </Badge>
                           </TableCell>
@@ -446,7 +446,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                                       : 'text-muted-foreground',
                                 )}
                               >
-                                {variance > 0 ? '+' : '')}{variance}
+                                {variance > 0 ? '+' : ''}{variance}
                                 {hasShrinkage && <AlertTriangle className="w-2.5 h-2.5 ml-0.5" />}
                               </Badge>
                             ) : (
@@ -466,7 +466,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
         <DialogFooter className="p-6 pt-3 border-t">
           <div className="flex items-center justify-between w-full">
             <div className="text-xs text-muted-foreground space-x-1">
-              <span>{allEntries.length} product{allEntries.length !== 1 ? 's' : '')} counted</span>
+              <span>{allEntries.length} product{allEntries.length !== 1 ? 's' : ''} counted</span>
               {totalVariance < 0 && (
                 <span className="text-red-500">· {Math.abs(totalVariance)} unit shrinkage</span>
               )}
@@ -481,7 +481,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                 onClick={handleSubmit}
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                Record {allEntries.length} Count{allEntries.length !== 1 ? 's' : '')}
+                Record {allEntries.length} Count{allEntries.length !== 1 ? 's' : ''}
               </Button>
             </div>
           </div>

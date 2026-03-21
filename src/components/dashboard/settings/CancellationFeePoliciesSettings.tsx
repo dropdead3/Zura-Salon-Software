@@ -163,8 +163,8 @@ export function CancellationFeePoliciesSettings() {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">{form.fee_type === 'percentage' ? 'Percentage (%)' : 'Amount ($)')}</Label>
-                    <Input type="number" min="0" step={form.fee_type === 'percentage' ? '1' : '0.01')} value={form.fee_amount} onChange={(e) => setForm((f) => ({ ...f, fee_amount: e.target.value }))} />
+                    <Label className="text-xs">{form.fee_type === 'percentage' ? 'Percentage (%)' : 'Amount ($)'}</Label>
+                    <Input type="number" min="0" step={form.fee_type === 'percentage' ? '1' : '0.01'} value={form.fee_amount} onChange={(e) => setForm((f) => ({ ...f, fee_amount: e.target.value }))} />
                   </div>
                 </div>
                 <div className="flex items-center justify-between">

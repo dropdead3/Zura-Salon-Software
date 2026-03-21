@@ -86,7 +86,7 @@ export function RandomAssignModal({
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className={tokens.heading.card}>
-            {mode === 'idle' ? 'Assign Chairs' : 'Preview Assignments')}
+            {mode === 'idle' ? 'Assign Chairs' : 'Preview Assignments'}
           </DialogTitle>
           <DialogDescription>
             {mode === 'idle'
@@ -130,7 +130,7 @@ export function RandomAssignModal({
                   <div className="flex items-center gap-2">
                     <UserX className="h-4 w-4 text-destructive" />
                     <span className={cn(tokens.label.default, 'text-destructive')}>
-                      {result.exclusions.length} stylist{result.exclusions.length > 1 ? 's' : '')} excluded
+                      {result.exclusions.length} stylist{result.exclusions.length > 1 ? 's' : ''} excluded
                     </span>
                   </div>
                   {result.exclusions.map(ex => (
@@ -149,7 +149,7 @@ export function RandomAssignModal({
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <AlertTriangle className="h-4 w-4" />
                   <span className={tokens.body.muted}>
-                    {result.unassignedChairs.length} chair{result.unassignedChairs.length > 1 ? 's' : '')} will remain unassigned
+                    {result.unassignedChairs.length} chair{result.unassignedChairs.length > 1 ? 's' : ''} will remain unassigned
                   </span>
                 </div>
               )}
@@ -158,7 +158,7 @@ export function RandomAssignModal({
               <div className="flex items-center gap-2 text-primary">
                 <CheckCircle2 className="h-4 w-4" />
                 <span className={tokens.body.default}>
-                  {result.assignments.length} assignment{result.assignments.length !== 1 ? 's' : '')} ready
+                  {result.assignments.length} assignment{result.assignments.length !== 1 ? 's' : ''} ready
                 </span>
               </div>
             </div>
@@ -183,7 +183,7 @@ export function RandomAssignModal({
                 Back
               </Button>
               <Button onClick={handleApply} disabled={isApplying || !result?.assignments.length}>
-                {isApplying ? 'Saving...' : 'Apply Assignments')}
+                {isApplying ? 'Saving...' : 'Apply Assignments'}
               </Button>
             </>
           )}

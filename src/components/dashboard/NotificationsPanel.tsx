@@ -401,7 +401,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                         <AssistantBlockNotificationItem
                           key={notification.id}
                           notification={notification}
-                          currentUserId={user?.id || '')}
+                          currentUserId={user?.id || ''}
                           onDismiss={handleDismissNotification}
                         />
                       );

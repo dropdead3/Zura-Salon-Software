@@ -33,7 +33,7 @@ export function HelpCenterWidget() {
                 key={article.id}
                 onClick={() =>
                   navigate(
-                    dashPath(`/help/${article.category?.slug || 'uncategorized')}/${article.slug}`)
+                    dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`)
                   )
                 }
                 className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors group"

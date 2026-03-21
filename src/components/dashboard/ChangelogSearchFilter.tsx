@@ -119,7 +119,7 @@ export function ChangelogSearchFilter({
           )}
         </div>
         <Button
-          variant={showFilters || activeFilterCount > 0 ? 'secondary' : 'outline')}
+          variant={showFilters || activeFilterCount > 0 ? 'secondary' : 'outline'}
           size="icon"
           onClick={() => setShowFilters(!showFilters)}
           className="relative shrink-0"
@@ -174,7 +174,7 @@ export function ChangelogSearchFilter({
                     !filters.dateFrom && 'text-muted-foreground'
                   )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateFrom ? formatDate(filters.dateFrom, 'MMM d, yyyy') : 'From date')}
+                    {filters.dateFrom ? formatDate(filters.dateFrom, 'MMM d, yyyy') : 'From date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -195,7 +195,7 @@ export function ChangelogSearchFilter({
                     !filters.dateTo && 'text-muted-foreground'
                   )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateTo ? formatDate(filters.dateTo, 'MMM d, yyyy') : 'To date')}
+                    {filters.dateTo ? formatDate(filters.dateTo, 'MMM d, yyyy') : 'To date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

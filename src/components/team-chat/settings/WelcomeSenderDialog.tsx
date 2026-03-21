@@ -136,7 +136,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {editingRule ? 'Edit Welcome Sender' : 'Add Welcome Sender')}
+            {editingRule ? 'Edit Welcome Sender' : 'Add Welcome Sender'}
           </DialogTitle>
         </DialogHeader>
 
@@ -204,7 +204,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={currentHolder?.photo_url || undefined} />
                       <AvatarFallback>
-                        {currentHolder?.display_name?.charAt(0) || 'U')}
+                        {currentHolder?.display_name?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium">{currentHolder?.display_name}</span>
@@ -234,7 +234,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
                   className="h-7 text-xs"
                 >
                   <Eye className="h-3 w-3 mr-1" />
-                  {showPreview ? 'Edit' : 'Preview')}
+                  {showPreview ? 'Edit' : 'Preview'}
                 </Button>
               </div>
               
@@ -295,7 +295,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
                   <Button
                     key={opt.value}
                     type="button"
-                    variant={delayMinutes === opt.value ? 'default' : 'outline')}
+                    variant={delayMinutes === opt.value ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setDelayMinutes(opt.value)}
                   >
@@ -326,7 +326,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
             onClick={handleSubmit}
             disabled={!selectedRole || !messageTemplate.trim() || isAdding || isUpdating}
           >
-            {editingRule ? 'Save Changes' : 'Add Sender')}
+            {editingRule ? 'Save Changes' : 'Add Sender'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -117,7 +117,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
               )}
             </div>
             <p className={tokens.body.muted}>
-              {data?.summary_line ?? 'Analyze your supply chain for actionable insights.')}
+              {data?.summary_line ?? 'Analyze your supply chain for actionable insights.'}
             </p>
           </div>
         </div>
@@ -231,7 +231,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
             </div>
             {insights.length > 0 && (
               <Badge variant="secondary" className="font-sans text-xs">
-                {insights.length} insight{insights.length !== 1 ? 's' : '')}
+                {insights.length} insight{insights.length !== 1 ? 's' : ''}
               </Badge>
             )}
           </div>

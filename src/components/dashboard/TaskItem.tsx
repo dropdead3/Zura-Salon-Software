@@ -132,7 +132,7 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
           {task.due_date && !isArchiveView && (() => {
             return (
               <p className={cn("text-xs mt-0.5 ml-3.5", isOverdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-                {isOverdue ? `${daysOverdue}d overdue · ` : 'Due ')}{formatDate(parseISO(task.due_date), 'MMM d')}
+                {isOverdue ? `${daysOverdue}d overdue · ` : 'Due ')}{formatDate(parseISO(task.due_date), 'MMM d'}
               </p>
             );
           })()}

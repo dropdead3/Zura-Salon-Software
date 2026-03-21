@@ -130,7 +130,7 @@ export function BenchmarkBar({
                     <TrendingDown className="w-3 h-3" />
                   )}
                   <span>
-                    {isAbove ? '+' : '')}{benchmark.percentDiff.toFixed(1)}%
+                    {isAbove ? '+' : ''}{benchmark.percentDiff.toFixed(1)}%
                   </span>
                 </div>
               </div>

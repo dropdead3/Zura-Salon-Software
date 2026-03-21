@@ -151,7 +151,7 @@ export function CategoryAddonManager({
             <span className="text-[11px] text-muted-foreground mr-1">Link to:</span>
             <Button
               size="sm"
-              variant={linkMode === 'service' ? 'default' : 'outline')}
+              variant={linkMode === 'service' ? 'default' : 'outline'}
               className="h-6 text-xs px-2"
               onClick={() => setLinkMode('service')}
             >
@@ -159,7 +159,7 @@ export function CategoryAddonManager({
             </Button>
             <Button
               size="sm"
-              variant={linkMode === 'category' ? 'default' : 'outline')}
+              variant={linkMode === 'category' ? 'default' : 'outline'}
               className="h-6 text-xs px-2"
               onClick={() => setLinkMode('category')}
             >
@@ -220,7 +220,7 @@ export function CategoryAddonManager({
               onClick={handleCreate}
               disabled={!addLabel.trim() || createAddon.isPending}
             >
-              {createAddon.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save')}
+              {createAddon.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
             </Button>
             <Button
               size="sm"

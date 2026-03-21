@@ -108,7 +108,7 @@ export function SupplyBulkPricingDialog({ open, onOpenChange, productIds, scopeL
             </div>
           </DialogTitle>
           <DialogDescription>
-            Apply to {productIds.length} product{productIds.length === 1 ? '' : 's')} in {scopeLabel}.
+            Apply to {productIds.length} product{productIds.length === 1 ? '' : 's'} in {scopeLabel}.
           </DialogDescription>
         </DialogHeader>
 

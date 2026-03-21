@@ -135,7 +135,7 @@ function StatTile({ icon: Icon, label, value, highlight }: {
         <Icon className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
         <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide">{label}</span>
       </div>
-      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]')}`}>
+      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]'}`}>
         {value}
       </p>
     </div>

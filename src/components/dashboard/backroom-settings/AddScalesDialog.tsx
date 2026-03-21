@@ -122,7 +122,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
               </>
             ) : (
               <>
-                Add {qty} Scale{qty > 1 ? 's' : '')} — ${qty * SCALE_HARDWARE_PRICE} + ${qty * SCALE_LICENSE_MONTHLY}/mo
+                Add {qty} Scale{qty > 1 ? 's' : ''} — ${qty * SCALE_HARDWARE_PRICE} + ${qty * SCALE_LICENSE_MONTHLY}/mo
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

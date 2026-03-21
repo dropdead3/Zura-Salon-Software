@@ -77,7 +77,7 @@ export function KioskDeployCard({ locationId, locationName }: KioskDeployCardPro
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}
-                {copied ? 'Copied' : 'Copy URL')}
+                {copied ? 'Copied' : 'Copy URL'}
               </Button>
               
               <Button 

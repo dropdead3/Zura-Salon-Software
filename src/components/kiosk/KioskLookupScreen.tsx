@@ -198,7 +198,7 @@ export function KioskLookupScreen() {
             className="text-4xl md:text-5xl font-light tracking-widest"
             style={{ color: phoneNumber ? textColor : `${textColor}40` }}
           >
-            {phoneNumber ? formatPhoneDisplay(phoneNumber) : '(___) ___-____')}
+            {phoneNumber ? formatPhoneDisplay(phoneNumber) : '(___) ___-____'}
           </span>
         </motion.div>
 

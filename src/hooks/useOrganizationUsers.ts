@@ -81,7 +81,7 @@ export function useUpdateOrganizationUserRole(organizationId: string | undefined
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['organization-users', organizationId] });
-      toast.success(`Role ${variables.action === 'add' ? 'added' : 'removed')} successfully`);
+      toast.success(`Role ${variables.action === 'add' ? 'added' : 'removed'} successfully`);
     },
     onError: (error: Error) => {
       toast.error('Failed to update role', { description: error.message });

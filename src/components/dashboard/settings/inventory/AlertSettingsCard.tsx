@@ -130,8 +130,8 @@ export function AlertSettingsCard() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={enabled ? 'default' : 'secondary')} className="text-[10px]">
-                  {enabled ? 'Active' : 'Disabled')}
+                <Badge variant={enabled ? 'default' : 'secondary'} className="text-[10px]">
+                  {enabled ? 'Active' : 'Disabled'}
                 </Badge>
                 {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </div>
@@ -348,7 +348,7 @@ export function AlertSettingsCard() {
                       <div className="space-y-2">
                         <Label className="text-sm">Remind before due date</Label>
                         <p className="text-xs text-muted-foreground">
-                          Send reminder {auditReminderDaysBefore} day{auditReminderDaysBefore !== 1 ? 's' : '')} before the audit is due
+                          Send reminder {auditReminderDaysBefore} day{auditReminderDaysBefore !== 1 ? 's' : ''} before the audit is due
                         </p>
                         <Slider
                           value={[auditReminderDaysBefore]}

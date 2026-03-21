@@ -29,7 +29,7 @@ function buildSummary(policy: any, buckets: any[]): string {
     return 'Parts & Labor — actual product cost passed through';
   }
   if (!buckets.length) {
-    return `${policy.included_allowance_qty}${policy.allowance_unit || 'g')} included, overage at $${policy.overage_rate}/${policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit || 'g')}`;
+    return `${policy.included_allowance_qty}${policy.allowance_unit || 'g')} included, overage at $${policy.overage_rate}/${policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit || 'g'}`;
   }
   return buckets.map(b =>
     `${b.bucket_name}: ${b.included_quantity}${b.included_unit} included, overage $${b.overage_rate}/${b.overage_rate_type === 'flat' ? 'flat' : b.included_unit}`
@@ -267,7 +267,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                         <div className="flex items-center gap-2">
                           {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                           <p className={cn(tokens.body.emphasis, 'text-foreground')}>{getServiceName(policy.service_id)}</p>
-                          <Badge variant={policy.is_active ? 'default' : 'secondary')}>{policy.is_active ? 'Active' : 'Inactive')}</Badge>
+                          <Badge variant={policy.is_active ? 'default' : 'secondary')}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
                           {isPartsAndLabor && (
                             <Badge variant="default" className="text-xs">Parts & Labor</Badge>
                           )}
@@ -275,7 +275,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                         <p className={cn('text-sm text-muted-foreground', 'ml-6 mt-1')}>{buildSummary(policy, buckets)}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">{buckets.length} bucket{buckets.length !== 1 ? 's' : '')}</span>
+                        <span className="text-sm text-muted-foreground">{buckets.length} bucket{buckets.length !== 1 ? 's' : ''}</span>
                       </div>
                     </button>
 
@@ -322,7 +322,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                   <p className={tokens.label.tiny}>Overage Cap</p>
                                   <MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." />
                                 </div>
-                                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap')}</p>
+                                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap'}</p>
                               </div>
                               <div className="flex gap-2">
                                 <Button variant="destructive" size="sm" onClick={() => deletePolicy.mutate(policy.id)}>
@@ -380,7 +380,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                           <Button
                                             key={w}
                                             type="button"
-                                            variant={bucketForm.included_quantity === w ? 'default' : 'outline')}
+                                            variant={bucketForm.included_quantity === w ? 'default' : 'outline'}
                                             size="sm"
                                             className="h-7 px-2 text-xs"
                                             onClick={() => setBucketForm(f => ({ ...f, included_quantity: w }))}
@@ -413,7 +413,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                           <Button
                                             key={r.value}
                                             type="button"
-                                            variant={selectedDevRatio === r.value ? 'default' : 'outline')}
+                                            variant={selectedDevRatio === r.value ? 'default' : 'outline'}
                                             size="sm"
                                             className="h-7 px-3 text-xs"
                                             onClick={() => setSelectedDevRatio(r.value)}

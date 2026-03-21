@@ -185,7 +185,7 @@ export function AddRenterDialog({
                   />
                   <CommandList>
                     <CommandEmpty>
-                      {isLoadingEmployees ? 'Loading...' : 'No available employees found.')}
+                      {isLoadingEmployees ? 'Loading...' : 'No available employees found.'}
                     </CommandEmpty>
                     <CommandGroup>
                       {availableEmployees.map((employee) => (

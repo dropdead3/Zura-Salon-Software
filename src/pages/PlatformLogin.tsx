@@ -214,7 +214,7 @@ export default function PlatformLogin() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
           <p className="text-slate-400 text-sm">
-            {loadingInvitation ? 'Loading invitation...' : 'Checking access...')}
+            {loadingInvitation ? 'Loading invitation...' : 'Checking access...'}
           </p>
         </div>
       </div>
@@ -230,7 +230,7 @@ export default function PlatformLogin() {
             <Mail className="w-8 h-8 text-red-400" />
           </div>
           <h2 className="text-xl font-medium text-white mb-2">
-            {invitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired')}
+            {invitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired'}
           </h2>
           <p className="text-slate-400 mb-6">
             {invitation.status === 'accepted' 
@@ -287,7 +287,7 @@ export default function PlatformLogin() {
               </div>
             </div>
             <h1 className="text-3xl font-medium text-white tracking-tight">
-              {isSignupMode ? 'Create Your Account' : 'Platform Administration')}
+              {isSignupMode ? 'Create Your Account' : 'Platform Administration'}
             </h1>
             <p className="text-slate-400">
               {isSignupMode 
@@ -338,7 +338,7 @@ export default function PlatformLogin() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  autoComplete={isSignupMode ? 'new-password' : 'current-password')}
+                  autoComplete={isSignupMode ? 'new-password' : 'current-password'}
                   minLength={isSignupMode ? 8 : undefined}
                 />
                 {isSignupMode && (
@@ -354,7 +354,7 @@ export default function PlatformLogin() {
               >
                 {loading 
                   ? (isSignupMode ? 'Creating account...' : 'Signing in...')
-                  : (isSignupMode ? 'Create Account' : 'Sign In')}
+                  : (isSignupMode ? 'Create Account' : 'Sign In'}
               </PlatformButton>
 
               {isSignupMode && (

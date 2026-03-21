@@ -181,7 +181,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {availableEmployees.length === 0 ? (
               <p className={cn(tokens.body.muted, 'text-center py-3')}>
-                {search ? 'No matching stylists' : 'All stylists have overrides')}
+                {search ? 'No matching stylists' : 'All stylists have overrides'}
               </p>
             ) : (
               availableEmployees.map(emp => (
@@ -206,7 +206,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                           step="0.01"
                           min="0"
                           className="pl-7 rounded-lg h-8 text-sm"
-                          placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00')}
+                          placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00'}
                           value={newPrice}
                           onChange={e => setNewPrice(e.target.value)}
                           onClick={e => e.stopPropagation()}

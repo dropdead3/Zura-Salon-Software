@@ -55,7 +55,7 @@ export function TierProgressCard({ currentTier, currentPoints, lifetimePoints, t
         <div className="flex items-center gap-4">
           <div 
             className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: `${currentTierData?.color || 'hsl(var(--primary))')}20` }}
+            style={{ backgroundColor: `${currentTierData?.color || 'hsl(var(--primary))'}20` }}
           >
             <TierIcon 
               className="w-8 h-8" 
@@ -70,7 +70,7 @@ export function TierProgressCard({ currentTier, currentPoints, lifetimePoints, t
               className="text-2xl font-medium"
               style={{ color: currentTierData?.color }}
             >
-              {currentTierData?.tier_name || 'Member')}
+              {currentTierData?.tier_name || 'Member'}
             </h2>
           </div>
         </div>

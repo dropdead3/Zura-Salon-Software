@@ -158,7 +158,7 @@ export function SwapCard({
               <div>
                 <p className="font-sans font-medium">{requesterName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isOwner ? 'Your request' : 'is looking for help')}
+                  {isOwner ? 'Your request' : 'is looking for help'}
                 </p>
               </div>
             </div>

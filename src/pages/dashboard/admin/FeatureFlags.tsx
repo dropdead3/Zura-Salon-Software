@@ -297,7 +297,7 @@ export default function FeatureFlags() {
           <Card className="p-12 text-center">
             <Flag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground font-sans">
-              {searchQuery ? 'No flags match your search' : 'No feature flags yet')}
+              {searchQuery ? 'No flags match your search' : 'No feature flags yet'}
             </p>
             {!searchQuery && (
               <Button onClick={handleCreate} variant="outline" className="mt-4">
@@ -360,7 +360,7 @@ export default function FeatureFlags() {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
-                {editingFlag ? 'Edit Feature Flag' : 'Create Feature Flag')}
+                {editingFlag ? 'Edit Feature Flag' : 'Create Feature Flag'}
               </DialogTitle>
               <DialogDescription>
                 {editingFlag
@@ -469,7 +469,7 @@ export default function FeatureFlags() {
                 {createFlag.isPending || updateFlag.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                {editingFlag ? 'Save Changes' : 'Create Flag')}
+                {editingFlag ? 'Save Changes' : 'Create Flag'}
               </Button>
             </DialogFooter>
           </DialogContent>

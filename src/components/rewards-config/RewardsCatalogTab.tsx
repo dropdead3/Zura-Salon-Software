@@ -312,7 +312,7 @@ export function RewardsCatalogTab() {
               className="font-display text-xs uppercase tracking-wider pb-2 border-b"
               style={{ color: category?.color }}
             >
-              {category?.label || 'Other')}
+              {category?.label || 'Other'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {categoryRewards.map((reward) => (
@@ -355,7 +355,7 @@ export function RewardsCatalogTab() {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete')}
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

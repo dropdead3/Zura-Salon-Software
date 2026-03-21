@@ -100,7 +100,7 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowTemplates(!showTemplates)}>
-                {showTemplates ? 'Hide' : 'Show')} Templates
+                {showTemplates ? 'Hide' : 'Show'} Templates
               </Button>
               <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Add Rule</Button>
             </div>
@@ -126,8 +126,8 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
                         disabled={exists}
                         onClick={() => applyTemplate(template)}
                       >
-                        <Badge variant={template.severity === 'hard_block' ? 'destructive' : 'secondary')} className="text-[10px] mr-2 shrink-0">
-                          {template.severity === 'hard_block' ? 'BLOCK' : 'WARN')}
+                        <Badge variant={template.severity === 'hard_block' ? 'destructive' : 'secondary'} className="text-[10px] mr-2 shrink-0">
+                          {template.severity === 'hard_block' ? 'BLOCK' : 'WARN'}
                         </Badge>
                         <span className="line-clamp-2">{template.rule_description}</span>
                       </Button>
@@ -152,10 +152,10 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
               {guardrails.map(g => (
                 <div key={g.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
                   <Badge
-                    variant={g.severity === 'hard_block' ? 'destructive' : 'secondary')}
+                    variant={g.severity === 'hard_block' ? 'destructive' : 'secondary'}
                     className="text-[10px] mt-0.5 shrink-0"
                   >
-                    {g.severity === 'hard_block' ? 'BLOCK' : 'WARN')}
+                    {g.severity === 'hard_block' ? 'BLOCK' : 'WARN'}
                   </Badge>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm">{g.rule_description}</p>
@@ -181,7 +181,7 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
       <Dialog open={!!editing} onOpenChange={open => { if (!open) close(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isNew ? 'Add Guardrail' : 'Edit Guardrail')}</DialogTitle>
+            <DialogTitle>{isNew ? 'Add Guardrail' : 'Edit Guardrail'}</DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="space-y-4">
@@ -225,7 +225,7 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
           <DialogFooter>
             <Button variant="outline" onClick={close}>Cancel</Button>
             <Button onClick={handleSave} disabled={createGuardrail.isPending || updateGuardrail.isPending}>
-              {isNew ? 'Create' : 'Save')}
+              {isNew ? 'Create' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>

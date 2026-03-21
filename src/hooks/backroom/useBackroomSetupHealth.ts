@@ -62,7 +62,7 @@ export function useBackroomSetupHealth() {
         warnings.push({
           id: 'products-missing-cost',
           severity: 'warning',
-          title: `${missingCost.length} tracked product${missingCost.length > 1 ? 's' : '')} missing unit cost`,
+          title: `${missingCost.length} tracked product${missingCost.length > 1 ? 's' : ''} missing unit cost`,
           description: 'Products need cost data for accurate usage tracking and overage billing.',
           section: 'products',
         });
@@ -98,7 +98,7 @@ export function useBackroomSetupHealth() {
           warnings.push({
             id: 'services-no-components',
             severity: 'warning',
-            title: `${servicesWithoutComponents.length} tracked service${servicesWithoutComponents.length > 1 ? 's' : '')} with no usage components`,
+            title: `${servicesWithoutComponents.length} tracked service${servicesWithoutComponents.length > 1 ? 's' : ''} with no usage components`,
             description: 'Map products to tracked services so usage can be measured.',
             section: 'services',
           });

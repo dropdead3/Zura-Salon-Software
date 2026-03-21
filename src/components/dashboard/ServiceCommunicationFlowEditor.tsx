@@ -262,7 +262,7 @@ export function ServiceCommunicationFlowEditor({
         <DialogFooter className="flex items-center justify-between sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant="secondary">{activeCount} active</Badge>
-            <span>trigger{activeCount !== 1 ? 's' : '')}</span>
+            <span>trigger{activeCount !== 1 ? 's' : ''}</span>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

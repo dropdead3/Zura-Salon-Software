@@ -83,7 +83,7 @@ function RuleEditor({ rule, onSave, isSaving }: RuleEditorProps) {
   };
 
   return (
-    <Card className={!isActive ? 'opacity-60' : '')}>
+    <Card className={!isActive ? 'opacity-60' : ''}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">

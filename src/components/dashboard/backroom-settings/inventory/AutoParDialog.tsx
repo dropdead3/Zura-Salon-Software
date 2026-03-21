@@ -81,7 +81,7 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
 
     setApplying(false);
     onOpenChange(false);
-    toast.success(`Updated par levels for ${count} product${count !== 1 ? 's' : '')}`);
+    toast.success(`Updated par levels for ${count} product${count !== 1 ? 's' : ''}`);
   };
 
   const selectedCount = suggestions.filter(s => selectedIds.has(s.productId) && s.suggestedPar > 0).length;
@@ -134,7 +134,7 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
                         {s.productName.replace(/\s*[—–-]\s*\d+(\.\d+)?\s*(g|oz|ml|L)\s*$/i, '').trim()}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {s.currentPar ?? '—')}
+                        {s.currentPar ?? '—'}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {s.suggestedPar > 0 ? (
@@ -144,10 +144,10 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
                         ) : '—')}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground text-sm">
-                        {s.velocity > 0 ? `${s.velocity.toFixed(1)}/day` : '—')}
+                        {s.velocity > 0 ? `${s.velocity.toFixed(1)}/day` : '—'}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-muted-foreground text-xs max-w-[200px] truncate" title={s.explanation}>
-                        {hasVelocity ? s.explanation : 'No recent usage')}
+                        {hasVelocity ? s.explanation : 'No recent usage'}
                       </TableCell>
                     </TableRow>
                   );
@@ -174,7 +174,7 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
             ) : (
               <>
                 <Zap className="w-4 h-4 mr-1.5" />
-                Apply {selectedCount} Par Level{selectedCount !== 1 ? 's' : '')}
+                Apply {selectedCount} Par Level{selectedCount !== 1 ? 's' : ''}
               </>
             )}
           </Button>

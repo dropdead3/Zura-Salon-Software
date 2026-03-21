@@ -232,7 +232,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.6)')}
+                      fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.6)'}
                     />
                   ))}
                 </Bar>

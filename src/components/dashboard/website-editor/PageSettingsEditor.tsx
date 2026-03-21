@@ -93,8 +93,8 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Page Settings — {page.title}</CardTitle>
-            <Badge variant={local.enabled ? 'default' : 'secondary')} className="text-[10px]">
-              {local.enabled ? 'Live' : 'Draft')}
+            <Badge variant={local.enabled ? 'default' : 'secondary'} className="text-[10px]">
+              {local.enabled ? 'Live' : 'Draft'}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1 font-mono">{previewUrl}</p>

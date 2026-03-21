@@ -136,7 +136,7 @@ export function StylistStep({
                 className="h-7 text-xs text-primary"
                 onClick={() => setShowCalendar(!showCalendar)}
               >
-                {showCalendar ? 'Quick dates' : 'View calendar')}
+                {showCalendar ? 'Quick dates' : 'View calendar'}
               </Button>
             </div>
 

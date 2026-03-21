@@ -77,10 +77,10 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
     const rows = displayLines.map(line => {
       const prod = productMap.get(line.product_id);
       return [
-        `"${(prod?.name || 'Unknown').replace(/"/g, '""')}"`,
-        `"${(prod?.brand || '').replace(/"/g, '""')}"`,
-        `"${(prod?.category || '').replace(/"/g, '""')}"`,
-        `"${(prod?.container_size || '').replace(/"/g, '""')}"`,
+        `"${(prod?.name || 'Unknown').replace(/"/g, '""'}"`,
+        `"${(prod?.brand || '').replace(/"/g, '""'}"`,
+        `"${(prod?.category || '').replace(/"/g, '""'}"`,
+        `"${(prod?.container_size || '').replace(/"/g, '""'}"`,
         line.quantity_ordered,
         line.quantity_received,
         line.unit_cost ?? '',
@@ -173,9 +173,9 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
                   const prod = productMap.get(line.product_id);
                   return (
                     <TableRow key={line.id}>
-                      <TableCell className="text-sm font-medium">{prod?.name || 'Unknown')}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{prod?.brand || '—')}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{prod?.container_size || '—')}</TableCell>
+                      <TableCell className="text-sm font-medium">{prod?.name || 'Unknown'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{prod?.brand || '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{prod?.container_size || '—'}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">{line.quantity_ordered}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
                         {line.quantity_received}
@@ -186,10 +186,10 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                        <BlurredAmount>{line.unit_cost != null ? formatCurrency(line.unit_cost) : '—')}</BlurredAmount>
+                        <BlurredAmount>{line.unit_cost != null ? formatCurrency(line.unit_cost) : '—'}</BlurredAmount>
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
-                        <BlurredAmount>{line.line_total != null ? formatCurrency(line.line_total) : '—')}</BlurredAmount>
+                        <BlurredAmount>{line.line_total != null ? formatCurrency(line.line_total) : '—'}</BlurredAmount>
                       </TableCell>
                     </TableRow>
                   );
@@ -202,7 +202,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="text-sm text-muted-foreground">
-            {displayLines.length} item{displayLines.length !== 1 ? 's' : '')} · {itemCount} unit{itemCount !== 1 ? 's' : '')}
+            {displayLines.length} item{displayLines.length !== 1 ? 's' : '')} · {itemCount} unit{itemCount !== 1 ? 's' : ''}
           </div>
           <div className="flex items-center gap-3">
             <div className="text-sm font-medium tabular-nums">

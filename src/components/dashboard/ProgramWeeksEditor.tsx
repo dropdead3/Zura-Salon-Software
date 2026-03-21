@@ -144,7 +144,7 @@ function SortableAssignmentItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 bg-muted/50 border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!assignment.is_active ? 'opacity-50' : '')}`}
+      className={`flex items-center gap-3 p-3 bg-muted/50 border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!assignment.is_active ? 'opacity-50' : ''}`}
     >
       <button
         {...attributes}
@@ -292,7 +292,7 @@ function WeekCard({
   };
 
   return (
-    <Card className={`${!week.is_active ? 'opacity-60' : '')}`}>
+    <Card className={`${!week.is_active ? 'opacity-60' : ''}`}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">

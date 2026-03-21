@@ -81,7 +81,7 @@ export function MultiLocationSection() {
           }
         }
       }
-      toast.success(`Pushed ${settingsPushed} setting(s)${rulesPushed > 0 ? }` + ${rulesPushed} alert rule(s)` : '')} to ${locations.length} locations`);
+      toast.success(`Pushed ${settingsPushed} setting(s)${rulesPushed > 0 ? }` + ${rulesPushed} alert rule(s)` : ''} to ${locations.length} locations`);
       setShowPushDialog(false);
     } catch (e: any) { toast.error('Push failed: ' + e.message); }
     finally { setIsPushing(false); }
@@ -213,7 +213,7 @@ export function MultiLocationSection() {
             <AlertDialogCancel disabled={isPushing}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handlePushToAll} disabled={isPushing}>
               {isPushing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
-              {isPushing ? 'Pushing…' : 'Confirm Push')}
+              {isPushing ? 'Pushing…' : 'Confirm Push'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -246,7 +246,7 @@ export function MultiLocationSection() {
                 <div key={key} className="rounded-lg border bg-card/50 p-4">
                   <div className="flex items-center justify-between mb-2">
                     <p className={cn(tokens.body.emphasis, 'text-foreground')}>{key.replace(/_/g, ' ')}</p>
-                    <Badge variant="outline">{overrides.length} override{overrides.length !== 1 ? 's' : '')}</Badge>
+                    <Badge variant="outline">{overrides.length} override{overrides.length !== 1 ? 's' : ''}</Badge>
                   </div>
                   {orgDefault && <p className="text-sm text-muted-foreground">Org default: {JSON.stringify(orgDefault.setting_value).slice(0, 100)}…</p>}
                   {overrides.length > 0 && (
@@ -325,7 +325,7 @@ export function MultiLocationSection() {
                 compareKeys.map(item => (
                   <div key={item.key} className="rounded-lg border bg-card/50 p-3 flex items-center justify-between">
                     <p className="text-sm text-foreground">{item.key.replace(/_/g, ' ')}</p>
-                    <Badge variant={item.differs ? 'destructive' : 'secondary')}>{item.differs ? 'Different' : 'Same')}</Badge>
+                    <Badge variant={item.differs ? 'destructive' : 'secondary')}>{item.differs ? 'Different' : 'Same'}</Badge>
                   </div>
                 ))
               )}

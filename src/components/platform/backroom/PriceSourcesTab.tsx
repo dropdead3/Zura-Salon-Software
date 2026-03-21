@@ -66,7 +66,7 @@ export function PriceSourcesTab() {
   const toggleActive = (source: typeof sources[0]) => {
     updateMutation.mutate(
       { id: source.id, updates: { is_active: !source.is_active } },
-      { onSuccess: () => toast.success(`${source.brand} ${source.is_active ? 'disabled' : 'enabled')}`) }
+      { onSuccess: () => toast.success(`${source.brand} ${source.is_active ? 'disabled' : 'enabled'}`) }
     );
   };
 
@@ -197,7 +197,7 @@ export function PriceSourcesTab() {
                   <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{source.brand}</TableCell>
                   <TableCell>
                     <PlatformBadge variant="outline" size="sm">
-                      {source.source_type === 'api' ? 'API' : 'CSV')}
+                      {source.source_type === 'api' ? 'API' : 'CSV'}
                     </PlatformBadge>
                   </TableCell>
                   <TableCell className="font-sans text-sm capitalize text-[hsl(var(--platform-foreground)/0.85)]">{source.scrape_frequency}</TableCell>

@@ -25,7 +25,7 @@ function DeltaBadge({ value, invertColor = false }: { value: number | null; inve
       isGood ? 'text-emerald-400' : value === 0 ? 'text-muted-foreground' : 'text-rose-400'
     )}>
       {isPositive ? <TrendingUp className="w-3 h-3" /> : value < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-      {value > 0 ? '+' : '')}{(value * 100).toFixed(1)}%
+      {value > 0 ? '+' : ''}{(value * 100).toFixed(1)}%
     </span>
   );
 }

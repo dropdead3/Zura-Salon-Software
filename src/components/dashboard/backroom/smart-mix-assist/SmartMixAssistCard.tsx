@@ -90,7 +90,7 @@ export function SmartMixAssistCard({
             size="sm"
             className="flex-1"
           >
-            {isApplying ? 'Applying…' : 'Use Suggested Formula')}
+            {isApplying ? 'Applying…' : 'Use Suggested Formula'}
           </Button>
           <Button
             variant="outline"

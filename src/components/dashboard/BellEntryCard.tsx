@@ -150,7 +150,7 @@ export function BellEntryCard({
   };
 
   return (
-    <Card className={`p-6 ${entry.is_pinned ? 'border-primary bg-primary/5' : '')}`}>
+    <Card className={`p-6 ${entry.is_pinned ? 'border-primary bg-primary/5' : ''}`}>
       {isEditing ? (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -235,7 +235,7 @@ export function BellEntryCard({
             <Avatar className="h-12 w-12 shrink-0">
               <AvatarImage src={entry.stylist_photo || undefined} alt={entry.stylist_name} />
               <AvatarFallback className="bg-primary/10 text-primary font-display text-sm">
-                {entry.stylist_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??')}
+                {entry.stylist_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
               </AvatarFallback>
             </Avatar>
             
@@ -243,7 +243,7 @@ export function BellEntryCard({
               <div className="flex items-center gap-3 mb-1">
                 {entry.stylist_name && (
                   <span className="font-medium font-sans text-sm">
-                    {showStylistName ? entry.stylist_name : 'You')}
+                    {showStylistName ? entry.stylist_name : 'You'}
                   </span>
                 )}
                 {entry.stylist_locations && entry.stylist_locations.length > 0 && (
@@ -257,7 +257,7 @@ export function BellEntryCard({
                           activeLocationFilter === loc ? 'text-primary font-medium' : ''
                         }`}
                       >
-                        {loc}{idx < Math.min(entry.stylist_locations!.length, 2) - 1 ? ',' : '')}
+                        {loc}{idx < Math.min(entry.stylist_locations!.length, 2) - 1 ? ',' : ''}
                       </button>
                     ))}
                     {entry.stylist_locations.length > 2 && (
@@ -376,13 +376,13 @@ export function BellEntryCard({
                 {isCoach && (
                   <>
                     <DropdownMenuItem onClick={() => onTogglePin(entry.id, entry.is_pinned)}>
-                      <Pin className={`w-4 h-4 mr-2 ${entry.is_pinned ? 'text-primary' : '')}`} />
-                      {entry.is_pinned ? 'Unpin' : 'Pin to Top')}
+                      <Pin className={`w-4 h-4 mr-2 ${entry.is_pinned ? 'text-primary' : ''}`} />
+                      {entry.is_pinned ? 'Unpin' : 'Pin to Top'}
                     </DropdownMenuItem>
                     {!isEditingNote && (
                       <DropdownMenuItem onClick={startEditingNote}>
                         <MessageSquare className="w-4 h-4 mr-2" />
-                        {entry.coach_note ? 'Edit Note' : 'Add Note')}
+                        {entry.coach_note ? 'Edit Note' : 'Add Note'}
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />

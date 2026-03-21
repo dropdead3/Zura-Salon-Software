@@ -118,7 +118,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
               <div>
                 <p className="text-xs text-muted-foreground font-sans">Avg Ticket</p>
                 <p className="font-display text-lg tracking-wide text-foreground">
-                  {appointment.visitCount > 0 ? formatCurrency(appointment.totalSpend / appointment.visitCount) : '—')}
+                  {appointment.visitCount > 0 ? formatCurrency(appointment.totalSpend / appointment.visitCount) : '—'}
                 </p>
               </div>
             </div>
@@ -266,7 +266,7 @@ export default function TodayPrep() {
         ) : (
           <>
             <p className="text-sm font-sans text-muted-foreground mb-6">
-              {appts.length} appointment{appts.length !== 1 ? 's' : '')} today
+              {appts.length} appointment{appts.length !== 1 ? 's' : ''} today
               {completedCount > 0 && ` · ${completedCount} completed`}
             </p>
             <div className="space-y-4">

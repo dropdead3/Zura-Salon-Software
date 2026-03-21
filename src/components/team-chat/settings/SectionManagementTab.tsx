@@ -237,7 +237,7 @@ export function SectionManagementTab() {
               <Label htmlFor="edit-section-name">Section Name</Label>
               <Input
                 id="edit-section-name"
-                value={editingSection?.name || '')}
+                value={editingSection?.name || ''}
                 onChange={(e) =>
                   setEditingSection((prev) => (prev ? { ...prev, name: e.target.value } : null))
                 }

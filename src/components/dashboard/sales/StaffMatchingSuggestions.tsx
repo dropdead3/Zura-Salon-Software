@@ -209,7 +209,7 @@ export function StaffMatchingSuggestions({
 
         {unmappedCount > 0 && (
           <p className="text-xs text-muted-foreground text-center pt-2">
-            {unmappedCount} Phorest staff member{unmappedCount !== 1 ? 's' : '')} not yet linked
+            {unmappedCount} Phorest staff member{unmappedCount !== 1 ? 's' : ''} not yet linked
           </p>
         )}
       </CardContent>

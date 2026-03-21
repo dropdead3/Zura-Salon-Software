@@ -382,7 +382,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
               <div className="mt-4 flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/40">
                 <Award className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
-                  {needsAttentionCount} {needsAttentionCount === 1 ? 'stylist' : 'stylists')} may benefit from coaching on client experience fundamentals.
+                  {needsAttentionCount} {needsAttentionCount === 1 ? 'stylist' : 'stylists'} may benefit from coaching on client experience fundamentals.
                 </p>
               </div>
             )}

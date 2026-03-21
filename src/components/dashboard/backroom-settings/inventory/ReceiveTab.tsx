@@ -293,7 +293,7 @@ export function ReceiveTab() {
     <div className="space-y-4">
       <div>
         <p className={tokens.body.emphasis}>
-          {receivablePOs.length} shipment{receivablePOs.length !== 1 ? 's' : '')} awaiting receiving
+          {receivablePOs.length} shipment{receivablePOs.length !== 1 ? 's' : ''} awaiting receiving
         </p>
         <p className={tokens.body.muted}>
           Expand a shipment to receive items line by line and update stock levels.
@@ -323,14 +323,14 @@ export function ReceiveTab() {
                       </CardTitle>
                       <CardDescription>
                         {po.supplier_name || 'Unknown Supplier')}
-                        {po.line_count != null && ` · ${po.line_count} item${po.line_count !== 1 ? 's' : '')}`}
+                        {po.line_count != null && ` · ${po.line_count} item${po.line_count !== 1 ? 's' : ''}`}
                         {po.grand_total != null && ` · ${formatCurrency(po.grand_total)}`}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground hidden sm:inline">
-                      Sent {po.sent_at ? format(new Date(po.sent_at), 'MMM d') : '—')}
+                      Sent {po.sent_at ? format(new Date(po.sent_at), 'MMM d') : '—'}
                     </span>
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -484,7 +484,7 @@ export function ReceiveTab() {
                       {alreadyReceivedLines.length > 0 && (
                         <div className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
                           <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                          {alreadyReceivedLines.length} item{alreadyReceivedLines.length !== 1 ? 's' : '')} already fully received
+                          {alreadyReceivedLines.length} item{alreadyReceivedLines.length !== 1 ? 's' : ''} already fully received
                         </div>
                       )}
 

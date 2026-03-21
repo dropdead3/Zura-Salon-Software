@@ -39,7 +39,7 @@ export default function ClientPortal() {
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
             <p className="text-muted-foreground">
-              {error instanceof Error ? error.message : 'This link is invalid or has expired.')}
+              {error instanceof Error ? error.message : 'This link is invalid or has expired.'}
             </p>
           </CardContent>
         </Card>

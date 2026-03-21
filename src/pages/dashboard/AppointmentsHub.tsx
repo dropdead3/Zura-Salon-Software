@@ -143,7 +143,7 @@ function TransactionsTab({ search }: { search: string }) {
             <BlurredAmount>{formatCurrency(totalDiscounts)}</BlurredAmount>
           </p>
           {discountedCount > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">{discountedCount} item{discountedCount !== 1 ? 's' : '')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{discountedCount} item{discountedCount !== 1 ? 's' : ''}</p>
           )}
         </Card>
         <Card className={cn(tokens.card.wrapper, 'p-4')}>
@@ -186,7 +186,7 @@ function TransactionsTab({ search }: { search: string }) {
 
         {/* Discounted Only toggle */}
         <Button
-          variant={showDiscountedOnly ? 'default' : 'outline')}
+          variant={showDiscountedOnly ? 'default' : 'outline'}
           size={tokens.button.card}
           onClick={() => setShowDiscountedOnly(!showDiscountedOnly)}
           className="gap-2"
@@ -203,7 +203,7 @@ function TransactionsTab({ search }: { search: string }) {
         {/* Pending Refunds toggle */}
         {pendingRefunds.length > 0 && (
           <Button
-            variant={showPendingRefunds ? 'default' : 'outline')}
+            variant={showPendingRefunds ? 'default' : 'outline'}
             size={tokens.button.card}
             onClick={() => setShowPendingRefunds(!showPendingRefunds)}
             className="gap-2"
@@ -218,7 +218,7 @@ function TransactionsTab({ search }: { search: string }) {
 
         {/* Promo History toggle */}
         <Button
-          variant={showPromoHistory ? 'default' : 'outline')}
+          variant={showPromoHistory ? 'default' : 'outline'}
           size={tokens.button.card}
           onClick={() => setShowPromoHistory(!showPromoHistory)}
           className="gap-2"

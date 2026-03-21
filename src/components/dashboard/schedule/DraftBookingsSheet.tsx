@@ -147,7 +147,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
                 <FileText className={tokens.empty.icon} />
                 <h3 className={tokens.empty.heading}>No drafts</h3>
                 <p className={tokens.empty.description}>
-                  {search ? 'No drafts match your search.' : 'Incomplete bookings will appear here.')}
+                  {search ? 'No drafts match your search.' : 'Incomplete bookings will appear here.'}
                 </p>
               </div>
             ) : (
@@ -175,7 +175,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
             <AlertDialogTitle>Discard draft?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove this draft booking for{' '}
-              {discardingDraft?.client_name || 'unknown client')}. This action cannot be undone.
+              {discardingDraft?.client_name || 'unknown client'}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -193,7 +193,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
           <AlertDialogHeader>
             <AlertDialogTitle>Discard all drafts for {discardingGroup?.clientKey}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove {discardingGroup?.ids.length} draft{(discardingGroup?.ids.length || 0) > 1 ? 's' : '')}.
+              This will permanently remove {discardingGroup?.ids.length} draft{(discardingGroup?.ids.length || 0) > 1 ? 's' : ''}.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -258,7 +258,7 @@ function ClientGroup({ clientKey, drafts, orgId, onResume, onDiscard, onDiscardA
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-sans text-sm text-foreground">{clientKey}</span>
                 <span className="text-xs text-muted-foreground">
-                  ({drafts.length} draft{drafts.length > 1 ? 's' : '')})
+                  ({drafts.length} draft{drafts.length > 1 ? 's' : ''})
                 </span>
               </div>
               <div className="flex items-center gap-2">

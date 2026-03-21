@@ -91,7 +91,7 @@ export function AnniversaryWidget() {
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {person.years}yr{person.years > 1 ? 's' : '')}
+                    {person.years}yr{person.years > 1 ? 's' : ''}
                   </Badge>
                 </div>
               ))}

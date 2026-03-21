@@ -115,7 +115,7 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-violet-400" />
-            {article ? 'Edit Article' : 'New Article')}
+            {article ? 'Edit Article' : 'New Article'}
           </DialogTitle>
         </DialogHeader>
 

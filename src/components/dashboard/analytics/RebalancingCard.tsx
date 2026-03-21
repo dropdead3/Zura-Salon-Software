@@ -72,7 +72,7 @@ export function RebalancingCard({ filterContext }: RebalancingCardProps) {
                   <MetricInfoTooltip description="Suggests stock transfers when one location has surplus (>1.5× par) and another is below reorder level. Creates pending transfers for manager approval." />
                 </div>
                 <CardDescription className="text-xs">
-                  {result.totalOpportunities} opportunity{result.totalOpportunities !== 1 ? 'ies' : 'y')} · <BlurredAmount>{formatCurrencyWhole(result.totalStuckCapital)}</BlurredAmount> rebalanceable value
+                  {result.totalOpportunities} opportunity{result.totalOpportunities !== 1 ? 'ies' : 'y'} · <BlurredAmount>{formatCurrencyWhole(result.totalStuckCapital)}</BlurredAmount> rebalanceable value
                 </CardDescription>
               </div>
             </div>

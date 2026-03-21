@@ -313,10 +313,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   sections.kpi_tiles = (
     <div className="space-y-2" key="kpi_tiles">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue')} onClick={() => toggleKpi('revenue')} />
-        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active')} onClick={() => toggleKpi('active')} />
-        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket')} onClick={() => toggleKpi('ticket')} />
-        <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph')} onClick={() => toggleKpi('rph')} />
+        <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue')} onClick={() => toggleKpi('revenue'} />
+        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active')} onClick={() => toggleKpi('active'} />
+        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket')} onClick={() => toggleKpi('ticket'} />
+        <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph')} onClick={() => toggleKpi('rph'} />
       </div>
       <DrillDown open={expandedKpi === 'revenue')}>
         <Card className="border-primary/20"><CardContent className="p-4">
@@ -462,7 +462,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                             <span className="tabular-nums">{svc.bookings} bookings</span>
                                             <span className="tabular-nums font-medium"><BlurredAmount>{formatCurrency(svc.avgRevenue)}</BlurredAmount></span>
                                             <span className={cn('tabular-nums font-medium', svcAbove && 'text-emerald-600 dark:text-emerald-400', svcBelow && 'text-red-500 dark:text-red-400')}>
-                                              <BlurredAmount>{svc.revPerHour > 0 ? `${formatCurrency(svc.revPerHour)}/hr` : '—')}</BlurredAmount>
+                                              <BlurredAmount>{svc.revPerHour > 0 ? `${formatCurrency(svc.revPerHour)}/hr` : '—'}</BlurredAmount>
                                             </span>
                                             <span className="tabular-nums text-muted-foreground">{cat.revenue > 0 ? Math.round((svc.totalRevenue / cat.revenue) * 100) : 0}%</span>
                                           </div>
@@ -497,17 +497,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">{clientView === 'magnets' ? 'NEW CLIENT MAGNETS' : 'RETENTION DRIVERS')}</CardTitle>
+                  <CardTitle className="font-display text-base tracking-wide">{clientView === 'magnets' ? 'NEW CLIENT MAGNETS' : 'RETENTION DRIVERS'}</CardTitle>
                   <MetricInfoTooltip description="Shows the mix of new vs. returning clients for each service. 'Magnets' ranks by new client volume; 'Retention' ranks by returning client percentage. Services need 3+ bookings to appear." />
                 </div>
-                <CardDescription>{clientView === 'magnets' ? 'Which services attract the most new clients?' : 'Which services have the highest returning client percentage?')}</CardDescription>
+                <CardDescription>{clientView === 'magnets' ? 'Which services attract the most new clients?' : 'Which services have the highest returning client percentage?'}</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
               <div className="flex gap-1">
-                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('magnets')}>New Clients</button>
-                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'retention' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('retention')}>Retention</button>
+                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('magnets'}>New Clients</button>
+                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'retention' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('retention'}>Retention</button>
               </div>
             </div>
           </div>
@@ -603,10 +603,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             </div>
                           </TableCell>
                           <TableCell><Badge variant="secondary" className="text-xs">{s.category}</Badge></TableCell>
-                          <TableCell className="text-right tabular-nums text-sm">{s.avgDuration > 0 ? s.avgDuration : '—')}</TableCell>
+                          <TableCell className="text-right tabular-nums text-sm">{s.avgDuration > 0 ? s.avgDuration : '—'}</TableCell>
                           <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrency(s.avgRevenue)}</BlurredAmount></TableCell>
                           <TableCell className={cn('text-right tabular-nums text-sm font-medium', isAbove && 'text-emerald-600 dark:text-emerald-400', isBelow && 'text-red-500 dark:text-red-400')}>
-                            <BlurredAmount>{s.revPerHour > 0 ? formatCurrency(s.revPerHour) : '—')}</BlurredAmount>
+                            <BlurredAmount>{s.revPerHour > 0 ? formatCurrency(s.revPerHour) : '—'}</BlurredAmount>
                           </TableCell>
                           <TableCell className="text-right tabular-nums text-sm">{formatNumber(s.bookings)}</TableCell>
                         </TableRow>
@@ -633,7 +633,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                             <div className="flex items-center gap-4">
                                               <span className="tabular-nums">{st.bookings} bookings</span>
                                               <span className="tabular-nums font-medium"><BlurredAmount>{formatCurrency(st.revPerHour)}</BlurredAmount>/hr</span>
-                                              <div className="w-16"><div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={cn('h-full rounded-full', st.revShare > 70 ? 'bg-amber-500' : 'bg-primary/60')} style={{ width: `${st.revShare}%` }} /></div></div>
+                                              <div className="w-16"><div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={cn('h-full rounded-full', st.revShare > 70 ? 'bg-amber-500' : 'bg-primary/60'} style={{ width: `${st.revShare}%` }} /></div></div>
                                               <span className="tabular-nums text-muted-foreground w-10 text-right">{Math.round(st.revShare)}%</span>
                                             </div>
                                           </div>
@@ -808,7 +808,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                     <Bar dataKey="menuPrice" fill="hsl(var(--muted-foreground) / 0.3)" name="Menu Price" radius={[0, 3, 3, 0]} barSize={14} />
                     <Bar dataKey="avgCollected" name="Avg Collected" radius={[0, 3, 3, 0]} barSize={14}>
                       {priceRealizationData.map((entry, i) => (
-                        <Cell key={i} fill={entry.rate < 85 ? 'hsl(0 84% 60%)' : entry.rate > 105 ? 'hsl(142 76% 36%)' : 'hsl(var(--primary))')} />
+                        <Cell key={i} fill={entry.rate < 85 ? 'hsl(0 84% 60%)' : entry.rate > 105 ? 'hsl(142 76% 36%)' : 'hsl(var(--primary))'} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -938,7 +938,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                         <div className="h-12">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={service.weeks}>
-                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--muted-foreground))')} strokeWidth={1.5} dot={false} />
+                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--muted-foreground))'} strokeWidth={1.5} dot={false} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
@@ -953,7 +953,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                               <XAxis dataKey="weekStart" tick={{ fontSize: 9 }} tickFormatter={(v) => v.slice(5)} />
                               <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: 12 }} />
-                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--primary))')} strokeWidth={2} dot={{ r: 2 }} />
+                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--primary))'} strokeWidth={2} dot={{ r: 2 }} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
@@ -965,8 +965,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             const prevWeek = service.weeks[service.weeks.length - 2]?.count || 0;
                             const wowChange = prevWeek > 0 ? ((lastWeek - prevWeek) / prevWeek) * 100 : 0;
                             return (
-                              <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground')}>
-                                WoW: <span className="font-medium">{wowChange > 0 ? '+' : '')}{wowChange.toFixed(0)}%</span>
+                              <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground'}>
+                                WoW: <span className="font-medium">{wowChange > 0 ? '+' : ''}{wowChange.toFixed(0)}%</span>
                               </span>
                             );
                           })()}

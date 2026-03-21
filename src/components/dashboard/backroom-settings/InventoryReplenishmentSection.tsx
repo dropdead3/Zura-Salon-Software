@@ -125,7 +125,7 @@ export function InventoryReplenishmentSection() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className={tokens.label.tiny}>Alerts Enabled</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.enabled ? 'Yes' : 'No')}</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.enabled ? 'Yes' : 'No'}</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Default Threshold</p>
@@ -133,11 +133,11 @@ export function InventoryReplenishmentSection() {
               </div>
               <div>
                 <p className={tokens.label.tiny}>Auto-Create PO</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.auto_create_draft_po ? 'Yes' : 'No')}</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.auto_create_draft_po ? 'Yes' : 'No'}</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Auto-Reorder</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.auto_reorder_enabled ? alertSettings.auto_reorder_mode : 'Disabled')}</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.auto_reorder_enabled ? alertSettings.auto_reorder_mode : 'Disabled'}</p>
               </div>
             </div>
           </CardContent>

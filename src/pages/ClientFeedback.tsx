@@ -262,7 +262,7 @@ export default function ClientFeedback() {
               <div className="flex gap-4">
                 <Button
                   type="button"
-                  variant={wouldRecommend === true ? 'default' : 'outline')}
+                  variant={wouldRecommend === true ? 'default' : 'outline'}
                   className="flex-1 gap-2"
                   onClick={() => setWouldRecommend(true)}
                 >
@@ -271,7 +271,7 @@ export default function ClientFeedback() {
                 </Button>
                 <Button
                   type="button"
-                  variant={wouldRecommend === false ? 'destructive' : 'outline')}
+                  variant={wouldRecommend === false ? 'destructive' : 'outline'}
                   className="flex-1 gap-2"
                   onClick={() => setWouldRecommend(false)}
                 >

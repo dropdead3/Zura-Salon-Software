@@ -182,7 +182,7 @@ export function PromotionFormDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Edit Promotion' : 'Create Promotion')}
+            {isEditing ? 'Edit Promotion' : 'Create Promotion'}
           </DialogTitle>
         </DialogHeader>
 
@@ -261,14 +261,14 @@ export function PromotionFormDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          {promotionType === 'percentage_discount' ? 'Discount %' : 'Discount $')}
+                          {promotionType === 'percentage_discount' ? 'Discount %' : 'Discount $'}
                         </FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
-                            placeholder={promotionType === 'percentage_discount' ? '20' : '25')}
+                            placeholder={promotionType === 'percentage_discount' ? '20' : '25'}
                             {...field}
-                            value={field.value ?? '')}
+                            value={field.value ?? ''}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                           />
                         </FormControl>
@@ -289,7 +289,7 @@ export function PromotionFormDialog({
                               type="number"
                               placeholder="50"
                               {...field}
-                              value={field.value ?? '')}
+                              value={field.value ?? ''}
                               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                             />
                           </FormControl>
@@ -385,7 +385,7 @@ export function PromotionFormDialog({
                           type="number" 
                           placeholder="Unlimited"
                           {...field}
-                          value={field.value ?? '')}
+                          value={field.value ?? ''}
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         />
                       </FormControl>
@@ -521,7 +521,7 @@ export function PromotionFormDialog({
                 {(createPromotion.isPending || updatePromotion.isPending) && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
-                {isEditing ? 'Save Changes' : 'Create Promotion')}
+                {isEditing ? 'Save Changes' : 'Create Promotion'}
               </Button>
             </DialogFooter>
           </form>

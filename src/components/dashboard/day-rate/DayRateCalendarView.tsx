@@ -207,7 +207,7 @@ export function DayRateCalendarView() {
       {/* Booking Detail Sheet */}
       <BookingDetailSheet
         booking={selectedBooking}
-        locationName={selectedBooking ? getLocationName(selectedBooking.location_id) : '')}
+        locationName={selectedBooking ? getLocationName(selectedBooking.location_id) : ''}
         onClose={() => setSelectedBooking(null)}
       />
     </div>

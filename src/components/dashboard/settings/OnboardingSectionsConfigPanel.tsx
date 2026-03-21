@@ -101,7 +101,7 @@ export function OnboardingSectionsConfigPanel({
                     <Icon className="w-4 h-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className={`font-sans text-sm block ${!config.isEnabled ? 'text-muted-foreground' : '')}`}>
+                    <span className={`font-sans text-sm block ${!config.isEnabled ? 'text-muted-foreground' : ''}`}>
                       {section.label}
                     </span>
                     <p className="text-xs text-muted-foreground">{section.description}</p>

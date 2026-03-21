@@ -168,8 +168,8 @@ export function MixSessionManager({
       try {
         await Promise.all(sealPromises);
         const parts: string[] = [];
-        if (sealed.length) parts.push(`Sealed bowl${sealed.length > 1 ? 's' : '')} ${sealed.join(', ')}`);
-        if (discarded.length) parts.push(`Discarded empty bowl${discarded.length > 1 ? 's' : '')} ${discarded.join(', ')}`);
+        if (sealed.length) parts.push(`Sealed bowl${sealed.length > 1 ? 's' : '')} ${sealed.join(', '}`);
+        if (discarded.length) parts.push(`Discarded empty bowl${discarded.length > 1 ? 's' : '')} ${discarded.join(', '}`);
         if (parts.length) toast.info(parts.join('. '));
       } catch {
         toast.error('Failed to auto-finalize bowls');
@@ -516,7 +516,7 @@ export function MixSessionManager({
             className="h-12 px-8 font-sans"
           >
             <Play className="w-4 h-4 mr-2" />
-            {isPrepMode ? 'Start Prep' : 'Start Session')}
+            {isPrepMode ? 'Start Prep' : 'Start Session'}
           </Button>
         </div>
       </div>

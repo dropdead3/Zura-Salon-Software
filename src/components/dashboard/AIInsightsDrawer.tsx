@@ -208,7 +208,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
                       'text-muted-foreground': insight.trendDirection === 'stable',
                     })}>
                       {insight.trendDirection === 'improving' ? <TrendingUp className="w-3 h-3" /> : insight.trendDirection === 'declining' ? <TrendingDown className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
-                      {insight.trendDirection === 'improving' ? 'Improving' : insight.trendDirection === 'declining' ? 'Declining' : 'Stable')}
+                      {insight.trendDirection === 'improving' ? 'Improving' : insight.trendDirection === 'declining' ? 'Declining' : 'Stable'}
                     </span>
                   )}
                   {insight.trendDirection && (insight.estimatedImpact || insight.comparisonContext) && (
@@ -238,7 +238,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
                       'bg-blue-500/10 text-blue-700 dark:text-blue-400': insight.effortLevel === 'strategic',
                     })}>
                       {insight.effortLevel === 'quick_win' ? <Zap className="w-2.5 h-2.5" /> : <BarChart3 className="w-2.5 h-2.5" />}
-                      {insight.effortLevel === 'quick_win' ? 'Quick Win' : 'Strategic')}
+                      {insight.effortLevel === 'quick_win' ? 'Quick Win' : 'Strategic'}
                     </span>
                   )}
                   {insight.actByDate && (

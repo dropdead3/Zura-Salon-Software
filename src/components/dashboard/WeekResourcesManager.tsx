@@ -135,7 +135,7 @@ function SortableResourceItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 border rounded-lg bg-muted/30 ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!resource.is_active ? 'opacity-50' : '')}`}
+      className={`flex items-center gap-3 p-3 border rounded-lg bg-muted/30 ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!resource.is_active ? 'opacity-50' : ''}`}
     >
       {/* Drag Handle */}
       <button

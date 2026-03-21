@@ -49,7 +49,7 @@ export function LocationStationsTab({ locationId }: LocationStationsTabProps) {
 
     try {
       await Promise.all(promises);
-      toast.success(`Added ${bulkCount} station${bulkCount > 1 ? 's' : '')}`);
+      toast.success(`Added ${bulkCount} station${bulkCount > 1 ? 's' : ''}`);
       setBulkCount(1);
     } catch {
       // Individual errors handled by hook
@@ -77,7 +77,7 @@ export function LocationStationsTab({ locationId }: LocationStationsTabProps) {
       {/* Summary */}
       <div className="flex items-center justify-between">
         <p className={tokens.body.muted}>
-          {stations.length} station{stations.length !== 1 ? 's' : '')} configured
+          {stations.length} station{stations.length !== 1 ? 's' : ''} configured
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export function LocationStationsTab({ locationId }: LocationStationsTabProps) {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Add {bulkCount > 1 ? `${bulkCount} Stations` : 'Station')}
+            Add {bulkCount > 1 ? `${bulkCount} Stations` : 'Station'}
           </Button>
         </div>
       </div>

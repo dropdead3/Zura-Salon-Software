@@ -52,15 +52,15 @@ export default function RenterPortal() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-medium">
-            Welcome back, {renterProfile?.display_name || renterProfile?.full_name || 'Booth Renter')}
+            Welcome back, {renterProfile?.display_name || renterProfile?.full_name || 'Booth Renter'}
           </h1>
           <p className="text-muted-foreground">
             {renterProfile?.business_name && `${renterProfile.business_name} • `}
             Manage your booth rental account
           </p>
         </div>
-        <Badge variant={renterProfile?.status === 'active' ? 'default' : 'secondary')}>
-          {renterProfile?.status || 'Active')}
+        <Badge variant={renterProfile?.status === 'active' ? 'default' : 'secondary'}>
+          {renterProfile?.status || 'Active'}
         </Badge>
       </div>
 
@@ -133,13 +133,13 @@ export default function RenterPortal() {
               <div>
                 <p className="text-sm text-muted-foreground">Autopay</p>
                 <p className="text-lg font-medium">
-                  {hasAutopay ? 'Enabled' : 'Disabled')}
+                  {hasAutopay ? 'Enabled' : 'Disabled'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {hasAutopay ? 'Automatic payments' : 'Manual payments')}
+                  {hasAutopay ? 'Automatic payments' : 'Manual payments'}
                 </p>
               </div>
-              <div className={`p-3 rounded-full ${hasAutopay ? 'bg-green-500/10' : 'bg-amber-500/10')}`}>
+              <div className={`p-3 rounded-full ${hasAutopay ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
                 {hasAutopay ? (
                   <CheckCircle className="h-5 w-5 text-green-500" />
                 ) : (

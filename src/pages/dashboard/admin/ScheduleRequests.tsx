@@ -97,10 +97,10 @@ export default function ScheduleRequests() {
               </Avatar>
               <div>
                 <p className="font-medium">
-                  {member?.display_name || member?.full_name || 'Unknown')}
+                  {member?.display_name || member?.full_name || 'Unknown'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {location?.name || 'Unknown location')}
+                  {location?.name || 'Unknown location'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   <Clock className="w-3 h-3 inline mr-1" />
@@ -112,7 +112,7 @@ export default function ScheduleRequests() {
             {/* Status badge for reviewed requests */}
             {!showActions && (
               <Badge 
-                variant={request.status === 'approved' ? 'default' : 'destructive')}
+                variant={request.status === 'approved' ? 'default' : 'destructive'}
                 className="shrink-0"
               >
                 {request.status === 'approved' ? (
@@ -133,7 +133,7 @@ export default function ScheduleRequests() {
                   {DAYS_OF_WEEK.map(day => (
                     <Badge
                       key={day}
-                      variant={request.current_days?.includes(day) ? 'default' : 'outline')}
+                      variant={request.current_days?.includes(day) ? 'default' : 'outline'}
                       className={cn(
                         "text-xs",
                         !request.current_days?.includes(day) && "opacity-40"
@@ -151,7 +151,7 @@ export default function ScheduleRequests() {
                   {DAYS_OF_WEEK.map(day => (
                     <Badge
                       key={day}
-                      variant={request.requested_days?.includes(day) ? 'default' : 'outline')}
+                      variant={request.requested_days?.includes(day) ? 'default' : 'outline'}
                       className={cn(
                         "text-xs",
                         !request.requested_days?.includes(day) && "opacity-40"
@@ -310,7 +310,7 @@ export default function ScheduleRequests() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {reviewAction === 'approve' ? 'Approve' : 'Deny')} Schedule Change
+              {reviewAction === 'approve' ? 'Approve' : 'Deny'} Schedule Change
             </DialogTitle>
             <DialogDescription>
               Review {currentMember?.display_name || currentMember?.full_name}'s schedule change request for {currentLocation?.name}
@@ -327,7 +327,7 @@ export default function ScheduleRequests() {
                     {DAYS_OF_WEEK.map(day => (
                       <Badge
                         key={day}
-                        variant={currentRequest.current_days?.includes(day) ? 'default' : 'outline')}
+                        variant={currentRequest.current_days?.includes(day) ? 'default' : 'outline'}
                         className={cn(
                           "text-xs",
                           !currentRequest.current_days?.includes(day) && "opacity-40"
@@ -345,7 +345,7 @@ export default function ScheduleRequests() {
                     {DAYS_OF_WEEK.map(day => (
                       <Badge
                         key={day}
-                        variant={currentRequest.requested_days?.includes(day) ? 'default' : 'outline')}
+                        variant={currentRequest.requested_days?.includes(day) ? 'default' : 'outline'}
                         className={cn(
                           "text-xs",
                           !currentRequest.requested_days?.includes(day) && "opacity-40"
@@ -388,8 +388,8 @@ export default function ScheduleRequests() {
               Cancel
             </Button>
             <Button
-              variant={reviewAction === 'approve' ? 'default' : 'destructive')}
-              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied')}
+              variant={reviewAction === 'approve' ? 'default' : 'destructive'}
+              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied'}
               disabled={reviewRequest.isPending}
             >
               {reviewRequest.isPending ? (

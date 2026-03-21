@@ -74,7 +74,7 @@ export function ShareToDMDialog({ open, onOpenChange, planTitle, planContent }: 
       }
 
       setSent(true);
-      toast.success(`Plan shared with ${selectedUsers.length} team member${selectedUsers.length > 1 ? 's' : '')}`);
+      toast.success(`Plan shared with ${selectedUsers.length} team member${selectedUsers.length > 1 ? 's' : ''}`);
       setTimeout(() => {
         onOpenChange(false);
         setSelectedUsers([]);
@@ -214,7 +214,7 @@ export function ShareToDMDialog({ open, onOpenChange, planTitle, planContent }: 
             ) : (
               <Send className="w-4 h-4" />
             )}
-            {sent ? 'Sent!' : `Send to ${selectedUsers.length || '...')}`}
+            {sent ? 'Sent!' : `Send to ${selectedUsers.length || '...'}`}
           </Button>
         </DialogFooter>
       </DialogContent>

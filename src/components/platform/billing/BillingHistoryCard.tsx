@@ -90,7 +90,7 @@ export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) 
                         "text-sm font-medium",
                         change.proration_amount > 0 ? "text-emerald-400" : "text-red-400"
                       )}>
-                        {change.proration_amount > 0 ? '+' : '')}
+                        {change.proration_amount > 0 ? '+' : ''}
                         {formatCurrency(change.proration_amount)}
                       </span>
                     )}

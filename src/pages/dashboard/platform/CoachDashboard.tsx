@@ -60,7 +60,7 @@ export default function CoachDashboard() {
     <PlatformPageContainer>
       <PlatformPageHeader
         title="Coach Dashboard"
-        description={`${assignments.length} assigned organization${assignments.length !== 1 ? 's' : '')}`}
+        description={`${assignments.length} assigned organization${assignments.length !== 1 ? 's' : ''}`}
       />
 
       <div className="space-y-6 mt-6">
@@ -81,7 +81,7 @@ export default function CoachDashboard() {
                       </span>
                       {usage?.avgWastePct != null && (
                         <PlatformBadge
-                          variant={usage.avgWastePct > 10 ? 'error' : 'success')}
+                          variant={usage.avgWastePct > 10 ? 'error' : 'success'}
                           size="sm"
                         >
                           {usage.avgWastePct.toFixed(1)}% waste
@@ -111,7 +111,7 @@ export default function CoachDashboard() {
                 <div>
                   <PlatformCardTitle>Coaching Signals</PlatformCardTitle>
                   <PlatformCardDescription>
-                    {myCoachingSignals.length} organization{myCoachingSignals.length !== 1 ? 's' : '')} need attention
+                    {myCoachingSignals.length} organization{myCoachingSignals.length !== 1 ? 's' : ''} need attention
                   </PlatformCardDescription>
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function CoachDashboard() {
                       <TableCell className="font-sans text-sm tabular-nums">
                         {signal.avgReweighPct != null ? (
                           <PlatformBadge
-                            variant={signal.avgReweighPct < 50 ? 'error' : signal.avgReweighPct < 75 ? 'warning' : 'success')}
+                            variant={signal.avgReweighPct < 50 ? 'error' : signal.avgReweighPct < 75 ? 'warning' : 'success'}
                             size="sm"
                           >
                             {signal.avgReweighPct.toFixed(0)}%
@@ -198,7 +198,7 @@ export default function CoachDashboard() {
                       <TableCell className="font-sans text-sm tabular-nums text-slate-300">{org.snapshotCount}</TableCell>
                       <TableCell className="font-sans text-sm tabular-nums">
                         {org.avgWastePct != null ? (
-                          <PlatformBadge variant={org.avgWastePct > 10 ? 'error' : 'success')} size="sm">
+                          <PlatformBadge variant={org.avgWastePct > 10 ? 'error' : 'success'} size="sm">
                             {org.avgWastePct.toFixed(1)}%
                           </PlatformBadge>
                         ) : (
@@ -207,7 +207,7 @@ export default function CoachDashboard() {
                       </TableCell>
                       <TableCell className="font-sans text-sm tabular-nums text-slate-300">{org.totalSessions.toLocaleString()}</TableCell>
                       <TableCell className="font-sans text-xs text-slate-500">
-                        {org.lastSnapshotDate ? new Date(org.lastSnapshotDate).toLocaleDateString() : 'Never')}
+                        {org.lastSnapshotDate ? new Date(org.lastSnapshotDate).toLocaleDateString() : 'Never'}
                       </TableCell>
                     </TableRow>
                   ))}

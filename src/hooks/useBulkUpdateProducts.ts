@@ -72,7 +72,7 @@ export function useBulkToggleProducts() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product-brands'] });
       queryClient.invalidateQueries({ queryKey: ['product-category-summaries'] });
-      toast.success(`${variables.ids.length} product(s) ${variables.isActive ? 'activated' : 'deactivated')}`);
+      toast.success(`${variables.ids.length} product(s) ${variables.isActive ? 'activated' : 'deactivated'}`);
     },
     onError: (error) => {
       toast.error('Failed to update products: ' + error.message);

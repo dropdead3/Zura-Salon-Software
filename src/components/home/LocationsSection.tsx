@@ -122,7 +122,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
 
             {/* Hours */}
             <p className="text-sm text-foreground/50 mb-6">
-              {hoursDisplay}{closedDays ? ` · ${closedDays}` : '')}
+              {hoursDisplay}{closedDays ? ` · ${closedDays}` : ''}
             </p>
 
             {/* Address */}

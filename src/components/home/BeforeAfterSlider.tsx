@@ -243,7 +243,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-[3/4] overflow-hidden select-none ${isVideoMode ? '' : 'cursor-ew-resize')} ${className}`}
+      className={`relative aspect-[3/4] overflow-hidden select-none ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
       onTouchMove={!isVideoMode ? handleTouchMove : undefined}
       onTouchEnd={!isVideoMode ? handleTouchEnd : undefined}
       onMouseEnter={hoverMode ? handleMouseEnter : undefined}

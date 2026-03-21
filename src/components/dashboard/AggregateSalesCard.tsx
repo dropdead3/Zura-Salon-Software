@@ -705,10 +705,10 @@ export function AggregateSalesCard({
             <Moon className="h-6 w-6 text-muted-foreground" />
           </div>
           <h3 className="font-display text-lg text-foreground">
-            All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today')}
+            All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}
           </h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are')} closed {dateRange === 'yesterday' ? 'yesterday' : 'today')}.
+            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are')} closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}.
           </p>
         </div>
       ) : (
@@ -737,8 +737,8 @@ export function AggregateSalesCard({
                       <span className="flex items-center gap-1 text-muted-foreground/70">
                         <Moon className="w-3 h-3" />
                         {closedCount === totalCount
-                          ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today')}`
-                          : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today')}`}
+                          ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`
+                          : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`}
                       </span>
                     </>
                   );
@@ -895,7 +895,7 @@ export function AggregateSalesCard({
                             <BlurredAmount>
                               <span>{formatCurrency(scheduledRevenue)}</span>
                             </BlurredAmount>
-                            <span>{exceededScheduled ? 'Scheduled · Exceeded' : 'Scheduled')}</span>
+                            <span>{exceededScheduled ? 'Scheduled · Exceeded' : 'Scheduled'}</span>
                           </Badge>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -1458,7 +1458,7 @@ export function AggregateSalesCard({
                   </div>
                   <div>
                     <p className="text-sm font-display tabular-nums">
-                      {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—')}
+                      {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—'}
                     </p>
                     <p className="text-xs text-muted-foreground">Tip Attach</p>
                   </div>
@@ -1527,7 +1527,7 @@ export function AggregateSalesCard({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc'}
               >
                 {locationSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
               </Button>
@@ -1593,7 +1593,7 @@ export function AggregateSalesCard({
                               })()}
                             </BlurredAmount>
                           </span>
-                          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : '')}`} />
+                          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                         </div>
                       </button>
 
@@ -1850,9 +1850,9 @@ export function AggregateSalesCard({
       <LocationMetricDrilldownSheet
         open={!!locationDrilldown}
         onOpenChange={(open) => !open && setLocationDrilldown(null)}
-        type={locationDrilldown?.type ?? 'transactions')}
-        locationId={locationDrilldown?.locationId ?? '')}
-        locationName={locationDrilldown?.locationName ?? '')}
+        type={locationDrilldown?.type ?? 'transactions'}
+        locationId={locationDrilldown?.locationId ?? ''}
+        locationName={locationDrilldown?.locationName ?? ''}
         dateFrom={dateFilters.dateFrom}
         dateTo={dateFilters.dateTo}
       />

@@ -835,7 +835,7 @@ export default function Schedule() {
         isUpdating={isUpdating}
         taxRate={effectiveTaxRate}
         businessSettings={businessSettings || null}
-        locationName={selectedLocationData?.name || '')}
+        locationName={selectedLocationData?.name || ''}
         locationAddress={selectedLocationData?.address}
         locationPhone={selectedLocationData?.phone}
         onScheduleNext={handleCheckoutScheduleNext}
@@ -907,7 +907,7 @@ export default function Schedule() {
           closedDayWarning.pendingAction?.();
         }}
         date={closedDayWarning.date}
-        locationName={selectedLocationData?.name || 'This location')}
+        locationName={selectedLocationData?.name || 'This location'}
         reason={closedDayWarning.reason}
         isOutsideHours={closedDayWarning.isOutsideHours}
       />
@@ -962,7 +962,7 @@ export default function Schedule() {
             date={currentDate}
             time={breakDefaults.time}
             requestingUserId={breakDefaults.stylistId}
-            requestingUserName={allStylists.find(s => s.user_id === breakDefaults.stylistId)?.display_name || allStylists.find(s => s.user_id === breakDefaults.stylistId)?.full_name || 'Stylist')}
+            requestingUserName={allStylists.find(s => s.user_id === breakDefaults.stylistId)?.display_name || allStylists.find(s => s.user_id === breakDefaults.stylistId)?.full_name || 'Stylist'}
             appointments={appointments}
             locationId={selectedLocation}
             onBack={() => setAssistantDialogOpen(false)}

@@ -268,7 +268,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               </div>
               <div>
                 <p className="text-sm font-medium text-white">
-                  {existingUser?.fullName || 'Unknown')}
+                  {existingUser?.fullName || 'Unknown'}
                 </p>
                 <p className="text-xs text-slate-400">{existingUser?.email}</p>
               </div>

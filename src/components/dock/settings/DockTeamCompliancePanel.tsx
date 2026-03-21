@@ -324,9 +324,9 @@ function ComplianceDashboard({ staff, onBack }: { staff: DockStaffSession; onBac
           {/* KPI strip */}
           <div className="grid grid-cols-3 gap-3">
             <KpiTile icon={Scale} label="Reweigh" value={`${data.reweighPct}%`}
-              color={data.reweighPct >= 80 ? 'text-emerald-400' : data.reweighPct >= 50 ? 'text-amber-400' : 'text-red-400')} />
+              color={data.reweighPct >= 80 ? 'text-emerald-400' : data.reweighPct >= 50 ? 'text-amber-400' : 'text-red-400'} />
             <KpiTile icon={Droplets} label="Waste" value={`${data.wastePct}%`}
-              color={data.wastePct <= 3 ? 'text-emerald-400' : data.wastePct <= 7 ? 'text-amber-400' : 'text-red-400')} />
+              color={data.wastePct <= 3 ? 'text-emerald-400' : data.wastePct <= 7 ? 'text-amber-400' : 'text-red-400'} />
             <KpiTile icon={Activity} label="Sessions" value={String(data.totalSessions)}
               color="text-[hsl(var(--platform-foreground))]" />
           </div>

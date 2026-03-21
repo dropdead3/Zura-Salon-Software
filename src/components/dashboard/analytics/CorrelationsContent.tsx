@@ -143,8 +143,8 @@ export function CorrelationsContent({ locationId, filterContext, dateRange, loca
                             <span className="font-medium text-sm">{labelA}</span>
                             <span className="text-muted-foreground">↔</span>
                             <span className="font-medium text-sm">{labelB}</span>
-                            <Badge variant={pair.strength === 'strong' ? 'default' : 'secondary')} className="ml-auto">
-                              {pair.coefficient > 0 ? '+' : '')}{(pair.coefficient * 100).toFixed(0)}%
+                            <Badge variant={pair.strength === 'strong' ? 'default' : 'secondary'} className="ml-auto">
+                              {pair.coefficient > 0 ? '+' : ''}{(pair.coefficient * 100).toFixed(0)}%
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">

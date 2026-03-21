@@ -47,7 +47,7 @@ export function SetupFeesForm({
               onCheckedChange={onSetupFeePaidChange}
             />
             <span className="text-sm text-[hsl(var(--platform-foreground)/0.85)]">
-              {setupFeePaid ? 'Already Paid' : 'Not Paid')}
+              {setupFeePaid ? 'Already Paid' : 'Not Paid'}
             </span>
           </div>
         </div>

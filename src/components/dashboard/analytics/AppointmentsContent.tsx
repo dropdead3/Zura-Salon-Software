@@ -91,7 +91,7 @@ export function AppointmentsContent({
   const { formatDate } = useFormatDate();
   // Build heatmap data
   const heatmapData = HOURS.map(hour => {
-    const row: Record<string, number | string> = { hour: `${hour % 12 || 12}${hour >= 12 ? 'p' : 'a')}` };
+    const row: Record<string, number | string> = { hour: `${hour % 12 || 12}${hour >= 12 ? 'p' : 'a'}` };
     DAYS.forEach((day, idx) => {
       const match = hourlyDistribution.find(d => d.hour === hour && d.dayOfWeek === idx);
       row[day] = match?.count || 0;
@@ -411,7 +411,7 @@ export function AppointmentsContent({
                                 color: intensity > 0.5 ? 'white' : 'inherit'
                               }}
                             >
-                              {value > 0 ? value : '')}
+                              {value > 0 ? value : ''}
                             </div>
                           </td>
                         );

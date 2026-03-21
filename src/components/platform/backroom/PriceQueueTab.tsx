@@ -159,7 +159,7 @@ export function PriceQueueTab() {
             <div>
               <PlatformCardTitle>Price Review Queue</PlatformCardTitle>
               <PlatformCardDescription>
-                {pendingCount} pending review{pendingCount !== 1 ? 's' : '')} · {filteredItems.length} total
+                {pendingCount} pending review{pendingCount !== 1 ? 's' : ''} · {filteredItems.length} total
               </PlatformCardDescription>
             </div>
           </div>
@@ -280,8 +280,8 @@ export function PriceQueueTab() {
                       </TableCell>
                       <TableCell className="font-sans text-sm tabular-nums">
                         {item.price_delta_pct != null ? (
-                          <span className={item.price_delta_pct > 0 ? 'text-red-400' : 'text-emerald-400')}>
-                            {item.price_delta_pct > 0 ? '+' : '')}
+                          <span className={item.price_delta_pct > 0 ? 'text-red-400' : 'text-emerald-400'}>
+                            {item.price_delta_pct > 0 ? '+' : ''}
                             {item.price_delta_pct.toFixed(1)}%
                           </span>
                         ) : (
@@ -352,7 +352,7 @@ export function PriceQueueTab() {
       <RejectNoteDialog
         open={!!rejectTarget}
         onOpenChange={(v) => { if (!v) setRejectTarget(null); }}
-        productName={rejectTarget?.product_name || '')}
+        productName={rejectTarget?.product_name || ''}
         onConfirm={handleRejectConfirm}
         isPending={rejectMutation.isPending}
       />
@@ -360,8 +360,8 @@ export function PriceQueueTab() {
       <PriceHistoryDialog
         open={!!historyTarget}
         onOpenChange={(v) => { if (!v) setHistoryTarget(null); }}
-        productName={historyTarget?.productName || '')}
-        brand={historyTarget?.brand || '')}
+        productName={historyTarget?.productName || ''}
+        brand={historyTarget?.brand || ''}
       />
     </>
   );

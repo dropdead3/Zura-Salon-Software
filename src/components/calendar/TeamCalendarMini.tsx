@@ -152,7 +152,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
                     </div>
                     {!event.all_day && event.start_time && (
                       <p className="text-xs text-muted-foreground mt-1 ml-4">
-                        {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD')}
+                        {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD'}
                       </p>
                     )}
                   </button>

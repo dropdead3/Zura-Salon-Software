@@ -218,7 +218,7 @@ export function RevPerHourByCategoryChart({ dateFrom, dateTo, locationId, filter
                               Math.abs(cat.delta) <= 5 && 'text-muted-foreground'
                             )}
                           >
-                            {cat.delta > 0 ? '+' : '')}{Math.round(cat.delta)}%
+                            {cat.delta > 0 ? '+' : ''}{Math.round(cat.delta)}%
                           </Badge>
                         </div>
 

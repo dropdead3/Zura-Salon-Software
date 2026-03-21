@@ -407,7 +407,7 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
             <Avatar className="h-12 w-12">
               <AvatarImage src={account.photo_url || undefined} />
               <AvatarFallback className="bg-muted text-lg">
-                {account.full_name?.charAt(0)?.toUpperCase() || '?')}
+                {account.full_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
 
@@ -426,11 +426,11 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
                           : "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent"
                       )}>
                         <Crown className="w-3 h-3" />
-                        {account.is_primary_owner ? 'Account Owner' : 'Super Admin')}
+                        {account.is_primary_owner ? 'Account Owner' : 'Super Admin'}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {account.is_primary_owner ? 'Account owner - cannot be revoked' : 'Can approve other admins')}
+                      {account.is_primary_owner ? 'Account owner - cannot be revoked' : 'Can approve other admins'}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -519,13 +519,13 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
                             className={cn("gap-1", account.is_super_admin && "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600")}
                           >
                             <Crown className="w-3 h-3" />
-                            {account.is_super_admin ? 'Super Admin' : 'Grant Super Admin')}
+                            {account.is_super_admin ? 'Super Admin' : 'Grant Super Admin'}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>
-                              {account.is_super_admin ? 'Revoke Super Admin Status?' : 'Grant Super Admin Status?')}
+                              {account.is_super_admin ? 'Revoke Super Admin Status?' : 'Grant Super Admin Status?'}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
                               {account.is_super_admin 
@@ -539,7 +539,7 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
                             <AlertDialogAction
                               onClick={() => toggleSuperAdmin.mutate({ userId: account.user_id, grant: !account.is_super_admin })}
                             >
-                              {account.is_super_admin ? 'Revoke' : 'Grant')}
+                              {account.is_super_admin ? 'Revoke' : 'Grant'}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -778,7 +778,7 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
               ) : filteredInvitations?.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
-                    {searchQuery ? 'No invitations found matching your search' : 'No invitations yet')}
+                    {searchQuery ? 'No invitations found matching your search' : 'No invitations yet'}
                   </CardContent>
                 </Card>
               ) : (
@@ -830,7 +830,7 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
               ) : filteredAccounts?.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
-                    {searchQuery ? 'No accounts found matching your search' : 'No accounts yet')}
+                    {searchQuery ? 'No accounts found matching your search' : 'No accounts yet'}
                   </CardContent>
                 </Card>
               ) : (

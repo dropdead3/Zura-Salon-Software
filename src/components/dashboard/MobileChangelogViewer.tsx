@@ -141,14 +141,14 @@ export function MobileChangelogViewer({
                         {entry.entry_type === 'coming_soon' && onVote && (
                           <div className="mt-8 flex justify-center">
                             <Button
-                              variant={entry.user_voted ? 'default' : 'outline')}
+                              variant={entry.user_voted ? 'default' : 'outline'}
                               size={tokens.button.hero}
                               className="gap-3"
                               onClick={() => onVote(entry)}
                             >
                               <ChevronUp className="h-5 w-5" />
                               <span className="font-medium">{entry.vote_count || 0}</span>
-                              <span>{entry.user_voted ? 'Voted!' : 'Vote for this')}</span>
+                              <span>{entry.user_voted ? 'Voted!' : 'Vote for this'}</span>
                             </Button>
                           </div>
                         )}

@@ -127,7 +127,7 @@ export function OverviewContent({
                   <Gauge className="w-4 h-4 text-chart-3" />
                 </div>
                 <span className="text-lg font-display tabular-nums">
-                  {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA')}
+                  {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
                 </span>
                 <div className="flex items-center gap-1 justify-center">
                   <p className="text-xs text-muted-foreground">Capacity Utilization</p>
@@ -204,7 +204,7 @@ export function OverviewContent({
               <div className="space-y-1.5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-display tabular-nums">
-                    {retention ? formatNumber(retention.totalClients) : '0')}
+                    {retention ? formatNumber(retention.totalClients) : '0'}
                   </span>
                   <span className="text-xs text-muted-foreground">total clients</span>
                 </div>
@@ -308,7 +308,7 @@ export function OverviewContent({
               <div className="space-y-1.5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-display tabular-nums">
-                    {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA')}
+                    {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
                   </span>
                   <span className="text-xs text-muted-foreground">capacity</span>
                 </div>

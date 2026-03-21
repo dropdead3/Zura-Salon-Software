@@ -276,7 +276,7 @@ export default function ShiftSwapApprovals() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {actionType === 'approve' ? 'Approve Swap' : 'Deny Swap')}
+                {actionType === 'approve' ? 'Approve Swap' : 'Deny Swap'}
               </DialogTitle>
               <DialogDescription>
                 {actionType === 'approve'
@@ -302,12 +302,12 @@ export default function ShiftSwapApprovals() {
                 Cancel
               </Button>
               <Button
-                variant={actionType === 'deny' ? 'destructive' : 'default')}
+                variant={actionType === 'deny' ? 'destructive' : 'default'}
                 onClick={handleConfirmAction}
                 disabled={approveSwap.isPending}
               >
                 {approveSwap.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {actionType === 'approve' ? 'Approve' : 'Deny')}
+                {actionType === 'approve' ? 'Approve' : 'Deny'}
               </Button>
             </DialogFooter>
           </DialogContent>

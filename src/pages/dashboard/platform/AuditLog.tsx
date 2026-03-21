@@ -134,7 +134,7 @@ export default function AuditLogPage() {
             />
           </div>
           
-          <Select value={filters.actions?.[0] || 'all')} onValueChange={(v) => handleFilterChange('actions', v === 'all' ? undefined : [v])}>
+          <Select value={filters.actions?.[0] || 'all'} onValueChange={(v) => handleFilterChange('actions', v === 'all' ? undefined : [v])}>
             <SelectTrigger className="bg-background">
               <SelectValue placeholder="All Actions" />
             </SelectTrigger>
@@ -233,7 +233,7 @@ export default function AuditLogPage() {
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={log.user_photo || undefined} />
                             <AvatarFallback className="text-xs bg-muted">
-                              {log.user_name?.[0] || 'S')}
+                              {log.user_name?.[0] || 'S'}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-foreground">

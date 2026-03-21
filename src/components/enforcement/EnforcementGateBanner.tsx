@@ -53,10 +53,10 @@ export function EnforcementGateBanner({
         <div className="flex-1 space-y-3">
           <div>
             <h3 className="text-base font-medium tracking-tight text-[hsl(var(--platform-foreground))]">
-              {config?.label || 'Setup Required')}
+              {config?.label || 'Setup Required'}
             </h3>
             <p className="mt-1 text-sm text-[hsl(var(--platform-foreground-muted))]">
-              {config?.description || 'A structural prerequisite must be completed before this feature is available.')}
+              {config?.description || 'A structural prerequisite must be completed before this feature is available.'}
             </p>
           </div>
           {config?.ctaPath && (

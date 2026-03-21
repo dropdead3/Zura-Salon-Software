@@ -281,7 +281,7 @@ export function IncidentManagementCard() {
               <div key={inc.id} className="flex items-center justify-between text-xs text-[hsl(var(--platform-foreground-subtle))] hover:text-[hsl(var(--platform-foreground-muted))] transition-colors duration-200">
                 <span className="truncate mr-2">{inc.title}</span>
                 <span className="shrink-0 tabular-nums">
-                  {inc.resolved_at ? format(new Date(inc.resolved_at), 'MMM d') : '—')}
+                  {inc.resolved_at ? format(new Date(inc.resolved_at), 'MMM d') : '—'}
                 </span>
               </div>
             ))}

@@ -183,19 +183,19 @@ export function FinancialReportGenerator({
               'Total Revenue',
               formatCurrency(yoyData.periodA.totalRevenue),
               formatCurrency(yoyData.periodB.totalRevenue),
-              `${yoyData.changes.totalRevenue >= 0 ? '+' : '')}${yoyData.changes.totalRevenue.toFixed(1)}%`,
+              `${yoyData.changes.totalRevenue >= 0 ? '+' : ''}${yoyData.changes.totalRevenue.toFixed(1)}%`,
             ],
             [
               'Transactions',
               yoyData.periodA.totalTransactions.toString(),
               yoyData.periodB.totalTransactions.toString(),
-              `${yoyData.changes.totalTransactions >= 0 ? '+' : '')}${yoyData.changes.totalTransactions.toFixed(1)}%`,
+              `${yoyData.changes.totalTransactions >= 0 ? '+' : ''}${yoyData.changes.totalTransactions.toFixed(1)}%`,
             ],
             [
               'Avg Ticket',
               formatCurrency(Math.round(yoyData.periodA.averageTicket)),
               formatCurrency(Math.round(yoyData.periodB.averageTicket)),
-              `${yoyData.changes.averageTicket >= 0 ? '+' : '')}${yoyData.changes.averageTicket.toFixed(1)}%`,
+              `${yoyData.changes.averageTicket >= 0 ? '+' : ''}${yoyData.changes.averageTicket.toFixed(1)}%`,
             ],
           ],
           theme: 'striped',
@@ -379,7 +379,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(weeklyRevenue ?? 0)}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {goals.weeklyTarget > 0 ? `${(((weeklyRevenue ?? 0) / goals.weeklyTarget) * 100).toFixed(1)}%` : '—')}
+                  {goals.weeklyTarget > 0 ? `${(((weeklyRevenue ?? 0) / goals.weeklyTarget) * 100).toFixed(1)}%` : '—'}
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -391,7 +391,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(monthlyRevenue ?? 0)}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {goals.monthlyTarget > 0 ? `${(((monthlyRevenue ?? 0) / goals.monthlyTarget) * 100).toFixed(1)}%` : '—')}
+                  {goals.monthlyTarget > 0 ? `${(((monthlyRevenue ?? 0) / goals.monthlyTarget) * 100).toFixed(1)}%` : '—'}
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -420,7 +420,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(yoyData.periodB.totalRevenue)}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {yoyData.changes.totalRevenue >= 0 ? '+' : '')}
+                  {yoyData.changes.totalRevenue >= 0 ? '+' : ''}
                   {yoyData.changes.totalRevenue.toFixed(1)}%
                 </TableCell>
               </TableRow>
@@ -429,7 +429,7 @@ export function FinancialReportGenerator({
                 <TableCell className="text-right tabular-nums">{yoyData.periodA.totalTransactions}</TableCell>
                 <TableCell className="text-right tabular-nums">{yoyData.periodB.totalTransactions}</TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {yoyData.changes.totalTransactions >= 0 ? '+' : '')}
+                  {yoyData.changes.totalTransactions >= 0 ? '+' : ''}
                   {yoyData.changes.totalTransactions.toFixed(1)}%
                 </TableCell>
               </TableRow>
@@ -442,7 +442,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(Math.round(yoyData.periodB.averageTicket))}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {yoyData.changes.averageTicket >= 0 ? '+' : '')}
+                  {yoyData.changes.averageTicket >= 0 ? '+' : ''}
                   {yoyData.changes.averageTicket.toFixed(1)}%
                 </TableCell>
               </TableRow>

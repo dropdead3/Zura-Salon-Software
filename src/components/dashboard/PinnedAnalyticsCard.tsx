@@ -418,13 +418,13 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'operational_health': {
         const locCount = accessibleLocations?.length ?? 0;
-        metricValue = locCount > 0 ? `${locCount} location${locCount !== 1 ? 's' : '')} monitored` : 'Healthy';
+        metricValue = locCount > 0 ? `${locCount} location${locCount !== 1 ? 's' : ''} monitored` : 'Healthy';
         metricLabel = 'Monitoring status across all locations';
         break;
       }
       case 'locations_rollup': {
         const locRollupCount = accessibleLocations?.length ?? 0;
-        metricValue = `${locRollupCount} location${locRollupCount !== 1 ? 's' : '')}`;
+        metricValue = `${locRollupCount} location${locRollupCount !== 1 ? 's' : ''}`;
         metricLabel = '';
         break;
       }

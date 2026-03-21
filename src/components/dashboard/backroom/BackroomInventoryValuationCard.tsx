@@ -156,7 +156,7 @@ export function BackroomInventoryValuationCard({ locationId }: { locationId?: st
           <div className="text-center">
             <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider">Margin</p>
             <p className="font-display text-lg tabular-nums">
-              {totals && totals.retail > 0 ? (((totals.retail - totals.cost) / totals.retail) * 100).toFixed(1) : '0')}%
+              {totals && totals.retail > 0 ? (((totals.retail - totals.cost) / totals.retail) * 100).toFixed(1) : '0'}%
             </p>
           </div>
         </div>

@@ -118,7 +118,7 @@ export function MergeConfirmation({ primaryClient, secondaryClients, fieldResolu
         ) : (
           <GitMerge className="w-4 h-4" />
         )}
-        {executeMerge.isPending ? 'Merging...' : 'Execute Merge')}
+        {executeMerge.isPending ? 'Merging...' : 'Execute Merge'}
       </Button>
     </div>
   );

@@ -71,7 +71,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
     if (!value) return;
     await navigator.clipboard.writeText(value);
     setCopiedField(field);
-    toast.success(`${field === 'username' ? 'Username' : 'Password')} copied to clipboard`);
+    toast.success(`${field === 'username' ? 'Username' : 'Password'} copied to clipboard`);
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -128,7 +128,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
           <label className="text-sm text-slate-400 block mb-1">CRM Password</label>
           <div className="relative">
             <PlatformInput
-              type={showPassword ? 'text' : 'password')}
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter CRM password"

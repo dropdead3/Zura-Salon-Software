@@ -233,7 +233,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className={tokens.body.emphasis}>
-                    {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : 'No date')}
+                    {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
                   </span>
                   {t.service_name && (
                     <Badge variant="secondary" className="text-[10px]">{t.service_name}</Badge>
@@ -244,7 +244,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
-                    variant={isCompareSelected ? 'default' : 'ghost')}
+                    variant={isCompareSelected ? 'default' : 'ghost'}
                     size="icon"
                     className="h-7 w-7"
                     onClick={() => toggleCompareEntry(t)}
@@ -325,13 +325,13 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                     {/* Portfolio toggle */}
                     <div className="flex items-center justify-between">
                       <Button
-                        variant={t.portfolio_approved ? 'default' : 'outline')}
+                        variant={t.portfolio_approved ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => togglePortfolio(t)}
                         className="gap-1.5 text-xs"
                       >
                         <Star className={cn('w-3 h-3', t.portfolio_approved && 'fill-current')} />
-                        {t.portfolio_approved ? 'Portfolio Approved' : 'Add to Portfolio')}
+                        {t.portfolio_approved ? 'Portfolio Approved' : 'Add to Portfolio'}
                       </Button>
                       {t.portfolio_approved && (
                         <select

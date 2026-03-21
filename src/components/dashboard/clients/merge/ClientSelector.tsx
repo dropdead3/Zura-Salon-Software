@@ -212,12 +212,12 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
                   <p className="font-medium text-sm truncate">{client.name}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {client.email && (
-                      <span className={`truncate ${hasEmailMatch ? 'text-amber-500 font-medium' : '')}`}>
+                      <span className={`truncate ${hasEmailMatch ? 'text-amber-500 font-medium' : ''}`}>
                         {client.email}
                       </span>
                     )}
                     {client.phone && (
-                      <span className={hasPhoneMatch ? 'text-amber-500 font-medium' : '')}>
+                      <span className={hasPhoneMatch ? 'text-amber-500 font-medium' : ''}>
                         {client.phone}
                       </span>
                     )}

@@ -381,7 +381,7 @@ export function KioskConfirmScreen() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Calendar className="w-6 h-6" />
-                {isBrowsing ? 'Loading...' : 'Browse Upcoming Appointments')}
+                {isBrowsing ? 'Loading...' : 'Browse Upcoming Appointments'}
               </motion.button>
             </motion.div>
           </motion.div>

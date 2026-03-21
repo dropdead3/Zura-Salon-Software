@@ -115,7 +115,7 @@ export default function Stats() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <DashboardPageHeader
-          title={isAdmin ? 'Team Stats' : 'My Stats')}
+          title={isAdmin ? 'Team Stats' : 'My Stats'}
           description={isAdmin 
             ? 'View performance metrics for any team member.' 
             : 'Track your personal performance metrics.')}
@@ -295,7 +295,7 @@ export default function Stats() {
                 />
                 <StatCard
                   label="New Clients"
-                  value={myPhorestMetrics?.new_clients?.toString() || '0')}
+                  value={myPhorestMetrics?.new_clients?.toString() || '0'}
                 />
               </div>
               {!isLinkedToPhorest && (
@@ -487,8 +487,8 @@ export default function Stats() {
                             <td className="py-2.5 pr-4 font-medium">{stylist.displayName}</td>
                             <td className="py-2.5 px-4 text-right tabular-nums">{stylist.totalAddons}</td>
                             <td className="py-2.5 px-4 text-right tabular-nums">
-                              <span className={stylist.avgMarginPct >= 50 ? 'text-green-600' : stylist.avgMarginPct < 30 ? 'text-red-500' : '')}>
-                                {stylist.avgMarginPct > 0 ? `${stylist.avgMarginPct.toFixed(0)}%` : '—')}
+                              <span className={stylist.avgMarginPct >= 50 ? 'text-green-600' : stylist.avgMarginPct < 30 ? 'text-red-500' : ''}>
+                                {stylist.avgMarginPct > 0 ? `${stylist.avgMarginPct.toFixed(0)}%` : '—'}
                               </span>
                             </td>
                             <td className="py-2.5 pl-4 text-right tabular-nums">

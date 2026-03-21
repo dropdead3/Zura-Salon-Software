@@ -151,10 +151,10 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
                   <TableCell className="hidden md:table-cell text-muted-foreground text-xs">{client.email || '—')}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">{client.phone || '—')}</TableCell>
                   <TableCell className="text-xs">
-                    {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : '—')}
+                    {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : '—'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={client.days_inactive >= 90 ? 'destructive' : client.days_inactive >= 60 ? 'secondary' : 'outline')} className="text-xs">
+                    <Badge variant={client.days_inactive >= 90 ? 'destructive' : client.days_inactive >= 60 ? 'secondary' : 'outline'} className="text-xs">
                       {client.days_inactive}d
                     </Badge>
                   </TableCell>

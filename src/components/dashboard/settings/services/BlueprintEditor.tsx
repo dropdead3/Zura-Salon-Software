@@ -235,7 +235,7 @@ export function BlueprintEditor({ serviceId }: BlueprintEditorProps) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-base tracking-wide">
-              {editingStep?.id ? 'Edit Step' : 'Add Step')}
+              {editingStep?.id ? 'Edit Step' : 'Add Step'}
             </DialogTitle>
           </DialogHeader>
 
@@ -269,7 +269,7 @@ export function BlueprintEditor({ serviceId }: BlueprintEditorProps) {
               <div className="space-y-2">
                 <Label className="font-sans text-sm font-medium">Title</Label>
                 <Input
-                  value={editingStep.title ?? '')}
+                  value={editingStep.title ?? ''}
                   onChange={(e) => setEditingStep({ ...editingStep, title: e.target.value })}
                   placeholder="e.g. Mix Root Formula"
                 />
@@ -278,7 +278,7 @@ export function BlueprintEditor({ serviceId }: BlueprintEditorProps) {
               <div className="space-y-2">
                 <Label className="font-sans text-sm font-medium">Description</Label>
                 <Textarea
-                  value={editingStep.description ?? '')}
+                  value={editingStep.description ?? ''}
                   onChange={(e) => setEditingStep({ ...editingStep, description: e.target.value })}
                   placeholder="Optional instructions or notes"
                   rows={2}
@@ -346,7 +346,7 @@ function MixStepFields({
           <Label className="font-sans text-xs">Target Weight (g)</Label>
           <Input
             type="number"
-            value={metadata.target_weight_g ?? '')}
+            value={metadata.target_weight_g ?? ''}
             onChange={(e) =>
               onChange({ ...metadata, target_weight_g: e.target.value ? Number(e.target.value) : undefined })
             }
@@ -356,7 +356,7 @@ function MixStepFields({
         <div className="space-y-1">
           <Label className="font-sans text-xs">Ratio Guidance</Label>
           <Input
-            value={metadata.ratio_guidance ?? '')}
+            value={metadata.ratio_guidance ?? ''}
             onChange={(e) => onChange({ ...metadata, ratio_guidance: e.target.value || undefined })}
             placeholder="e.g. 1:1.5"
           />
@@ -365,7 +365,7 @@ function MixStepFields({
       <div className="space-y-1">
         <Label className="font-sans text-xs">Notes</Label>
         <Input
-          value={metadata.notes ?? '')}
+          value={metadata.notes ?? ''}
           onChange={(e) => onChange({ ...metadata, notes: e.target.value || undefined })}
           placeholder="Additional mixing notes"
         />
@@ -436,7 +436,7 @@ function ProcessingFields({
         <Label className="font-sans text-xs">Recommended Minutes</Label>
         <Input
           type="number"
-          value={metadata.recommended_minutes ?? '')}
+          value={metadata.recommended_minutes ?? ''}
           onChange={(e) =>
             onChange({
               ...metadata,

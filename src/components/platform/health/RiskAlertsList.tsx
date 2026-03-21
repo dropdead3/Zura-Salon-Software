@@ -83,7 +83,7 @@ export function RiskAlertsList({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-white truncate">
-                      {score.organization?.name || 'Unknown')}
+                      {score.organization?.name || 'Unknown'}
                     </span>
                     <span className={cn(
                       'text-sm font-medium px-1.5 py-0.5 rounded',
@@ -98,7 +98,7 @@ export function RiskAlertsList({
                         'text-xs flex items-center gap-0.5',
                         trendDiff > 0 ? 'text-emerald-400' : 'text-red-400'
                       )}>
-                        {trendDiff > 0 ? '↑' : '↓')}{Math.abs(trendDiff).toFixed(0)}
+                        {trendDiff > 0 ? '↑' : '↓'}{Math.abs(trendDiff).toFixed(0)}
                       </span>
                     )}
                   </div>

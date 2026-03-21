@@ -996,7 +996,7 @@ export function ExecutiveTrendChart() {
                             'inline-block mt-1.5 text-[10px] px-1.5 py-0.5 rounded-full',
                             isProjected ? 'bg-chart-2/10 text-chart-2' : 'bg-primary/10 text-primary'
                           )}>
-                            {isProjected ? 'Projected' : 'Actual')}
+                            {isProjected ? 'Projected' : 'Actual'}
                           </span>
                         </div>
                       );
@@ -1075,7 +1075,7 @@ export function ExecutiveTrendChart() {
                       {(forecastSummary.momGrowth ?? 0) >= 0
                         ? <TrendingUp className="w-3 h-3" />
                         : <TrendingDown className="w-3 h-3" />}
-                      <span>{(forecastSummary.momGrowth ?? 0) >= 0 ? '+' : '')}{(forecastSummary.momGrowth ?? 0).toFixed(1)}% MoM</span>
+                      <span>{(forecastSummary.momGrowth ?? 0) >= 0 ? '+' : ''}{(forecastSummary.momGrowth ?? 0).toFixed(1)}% MoM</span>
                     </div>
                   )}
                 </div>
@@ -1124,7 +1124,7 @@ export function ExecutiveTrendChart() {
                       'text-xs font-medium tabular-nums',
                       (forecastSummary.yoyGrowth ?? 0) >= 0 ? 'text-chart-2' : 'text-destructive'
                     )}>
-                      {(forecastSummary.yoyGrowth ?? 0) >= 0 ? '+' : '')}{(forecastSummary.yoyGrowth ?? 0).toFixed(1)}% YoY
+                      {(forecastSummary.yoyGrowth ?? 0) >= 0 ? '+' : ''}{(forecastSummary.yoyGrowth ?? 0).toFixed(1)}% YoY
                     </span>
                   </div>
                 )}

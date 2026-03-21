@@ -525,7 +525,7 @@ function ThemeTab() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant={showPreview ? 'default' : 'outline')}
+              variant={showPreview ? 'default' : 'outline'}
               size={tokens.button.card}
               onClick={() => setShowPreview(!showPreview)}
             >
@@ -568,7 +568,7 @@ function ThemeTab() {
                     </Button>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    Editing: {activeTheme?.name ?? 'Theme')}
+                    Editing: {activeTheme?.name ?? 'Theme'}
                   </span>
                 </div>
                 <div className="flex-1 overflow-auto p-6">

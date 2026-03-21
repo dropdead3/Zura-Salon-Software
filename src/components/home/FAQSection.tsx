@@ -103,7 +103,7 @@ export function FAQSection() {
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
     
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'})`, 'gi');
     const parts = text.split(regex);
     
     return parts.map((part, index) => 
@@ -201,7 +201,7 @@ export function FAQSection() {
                 animate={{ opacity: 1 }}
                 className="text-sm text-muted-foreground mb-4"
               >
-                {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results')} found
+                {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results'} found
               </motion.p>
             )}
 

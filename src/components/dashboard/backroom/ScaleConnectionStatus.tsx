@@ -28,7 +28,7 @@ export function ScaleConnectionStatus({ state, className }: ScaleConnectionStatu
   const Icon = config.icon;
 
   return (
-    <Badge variant={config.variant} className={`gap-1 text-[10px] ${className ?? '')}`}>
+    <Badge variant={config.variant} className={`gap-1 text-[10px] ${className ?? ''}`}>
       <Icon className="w-3 h-3" />
       {config.label}
     </Badge>

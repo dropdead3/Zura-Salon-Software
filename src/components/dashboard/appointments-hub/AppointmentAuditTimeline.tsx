@@ -45,7 +45,7 @@ function formatChange(entry: AuditLogEntry): string | null {
     if (from && to) return `${from} → ${to}`;
   }
   if (entry.event_type === 'status_changed' && entry.previous_value && entry.new_value) {
-    return `${entry.previous_value.status || '?')} → ${entry.new_value.status || '?')}`;
+    return `${entry.previous_value.status || '?')} → ${entry.new_value.status || '?'}`;
   }
   return null;
 }

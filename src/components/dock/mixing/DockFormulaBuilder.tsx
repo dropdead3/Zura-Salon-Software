@@ -79,7 +79,7 @@ export function DockFormulaBuilder({ lines, onLinesChange, baseWeight, onBaseWei
           <div className="relative">
             <input
               type="number"
-              value={WEIGHT_PRESETS.includes(baseWeight) ? '' : baseWeight || '')}
+              value={WEIGHT_PRESETS.includes(baseWeight) ? '' : baseWeight || ''}
               onChange={(e) => {
                 const v = parseFloat(e.target.value);
                 if (!isNaN(v) && v > 0) onBaseWeightChange(v);

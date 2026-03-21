@@ -105,7 +105,7 @@ function LogoUpload({ label, description, currentUrl, onUpload, onRemove, varian
               )}
             </div>
             <span className="text-xs text-[hsl(var(--platform-muted))]">
-              {isUploading ? 'Uploading...' : 'Click to upload')}
+              {isUploading ? 'Uploading...' : 'Click to upload'}
             </span>
             <input type="file" accept="image/*" onChange={handleUpload} className="hidden" disabled={isUploading} />
           </label>
@@ -168,7 +168,7 @@ export function PlatformAppearanceTab() {
             </PlatformButton>
             <PlatformButton variant="glow" size={tokens.button.card} onClick={handleSave} disabled={isSaving}>
               <Save className="h-4 w-4 mr-1" />
-              {isSaving ? 'Saving...' : 'Save Changes')}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </PlatformButton>
           </div>
         </div>

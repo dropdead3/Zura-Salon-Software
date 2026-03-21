@@ -145,7 +145,7 @@ export default function DocumentTracker() {
                   <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
                 </div>
                 <Button onClick={handleSubmit} disabled={createDocument.isPending} className="w-full">
-                  {createDocument.isPending ? 'Adding...' : 'Add Document')}
+                  {createDocument.isPending ? 'Adding...' : 'Add Document'}
                 </Button>
               </div>
             </DialogContent>

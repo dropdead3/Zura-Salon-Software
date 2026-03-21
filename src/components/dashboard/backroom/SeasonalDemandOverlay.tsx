@@ -108,7 +108,7 @@ export function SeasonalDemandOverlay({ locationId }: { locationId?: string }) {
                 formatter={(value: number, name: string) => [`${value}g`, name === 'thisWeek' ? 'This Week' : 'Last Year']}
               />
               <Legend
-                formatter={(value) => (value === 'thisWeek' ? 'This Week' : 'Last Year')}
+                formatter={(value) => (value === 'thisWeek' ? 'This Week' : 'Last Year'}
                 wrapperStyle={{ fontSize: '10px' }}
               />
               <Bar dataKey="lastYear" fill="hsl(var(--muted-foreground) / 0.3)" radius={[0, 2, 2, 0]} />

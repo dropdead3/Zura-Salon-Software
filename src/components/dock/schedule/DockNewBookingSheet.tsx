@@ -551,7 +551,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                   client={selectedClient}
                   services={selectedServiceDetails}
                   stylistName={effectiveStylistName}
-                  locationName={locations.find(l => l.id === selectedLocation)?.name || '')}
+                  locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
                   date={selectedDate}
                   time={selectedTime}
                   onTimeChange={setSelectedTime}
@@ -881,7 +881,7 @@ function ServiceStepDock({
                         <div>
                           <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
                           <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                            {svcs.length} service{svcs.length !== 1 ? 's' : '')}
+                            {svcs.length} service{svcs.length !== 1 ? 's' : ''}
                           </div>
                         </div>
                         {selectedInCat > 0 && (
@@ -1007,7 +1007,7 @@ function ServiceStepDock({
             </div>
             <div className="flex items-center justify-between text-sm mb-3">
               <span className="text-[hsl(var(--platform-foreground-muted))]">
-                {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')} · {formatMinutesToDuration(totalDuration)}
+                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {formatMinutesToDuration(totalDuration)}
               </span>
               <span className="text-[hsl(var(--platform-foreground))] font-medium">${totalPrice}</span>
             </div>
@@ -1136,7 +1136,7 @@ function ConfirmStepDock({
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{client?.name}</div>
             <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-              {client?.phone || client?.email || '')}
+              {client?.phone || client?.email || ''}
             </div>
           </div>
           {clientHistory && clientHistory.visitCount === 0 && (
@@ -1171,7 +1171,7 @@ function ConfirmStepDock({
               </span>
             </div>
             <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]">
-              {clientHistory.visitCount} visit{clientHistory.visitCount !== 1 ? 's' : '')} total
+              {clientHistory.visitCount} visit{clientHistory.visitCount !== 1 ? 's' : ''} total
             </div>
           </div>
         ) : null}

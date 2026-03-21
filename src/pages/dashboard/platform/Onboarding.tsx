@@ -143,7 +143,7 @@ function OrganizationCard({ org }: { org: OnboardingOrganization }) {
             {org.locationCount > 0 && (
               <span className="flex items-center gap-1">
                 <Building2 className="h-3.5 w-3.5" />
-                {org.locationCount} location{org.locationCount !== 1 ? 's' : '')}
+                {org.locationCount} location{org.locationCount !== 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -202,14 +202,14 @@ function TimelineItem({ org }: { org: OnboardingOrganization }) {
             ? 'bg-amber-500/20 text-amber-300'
             : 'bg-slate-700/50 text-slate-300'
       )}>
-        {org.go_live_date ? format(parseISO(org.go_live_date), 'd') : '—')}
+        {org.go_live_date ? format(parseISO(org.go_live_date), 'd') : '—'}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white truncate group-hover:text-violet-300 transition-colors">
           {org.name}
         </p>
         <p className="text-xs text-slate-500">
-          {org.go_live_date ? format(parseISO(org.go_live_date), 'MMMM yyyy') : 'No date set')}
+          {org.go_live_date ? format(parseISO(org.go_live_date), 'MMMM yyyy') : 'No date set'}
         </p>
       </div>
       {org.account_number && (
@@ -316,7 +316,7 @@ export default function PlatformOnboarding() {
         <div className="mt-6 flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
           <AlertTriangle className="h-5 w-5 text-red-400 shrink-0" />
           <p className="text-sm text-red-300 flex-1">
-            <strong>{stats.overdue}</strong> account{stats.overdue !== 1 ? 's are' : ' is')} past their scheduled go-live date
+            <strong>{stats.overdue}</strong> account{stats.overdue !== 1 ? 's are' : ' is'} past their scheduled go-live date
           </p>
         </div>
       )}
@@ -334,18 +334,18 @@ export default function PlatformOnboarding() {
           value={stats.approaching}
           icon={Clock}
           description="Go-live within 7 days"
-          variant={stats.approaching > 0 ? 'warning' : 'default')}
+          variant={stats.approaching > 0 ? 'warning' : 'default'}
         />
         <StatCard
           title="Overdue"
           value={stats.overdue}
           icon={AlertTriangle}
           description="Past go-live date"
-          variant={stats.overdue > 0 ? 'error' : 'default')}
+          variant={stats.overdue > 0 ? 'error' : 'default'}
         />
         <StatCard
           title="Avg. Days to Go-Live"
-          value={stats.avgDaysToGoLive !== null ? `${stats.avgDaysToGoLive}d` : '—')}
+          value={stats.avgDaysToGoLive !== null ? `${stats.avgDaysToGoLive}d` : '—'}
           icon={Calendar}
           description="For scheduled accounts"
         />

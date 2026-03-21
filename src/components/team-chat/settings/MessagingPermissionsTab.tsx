@@ -118,7 +118,7 @@ export function MessagingPermissionsTab({ settings, onUpdate }: MessagingPermiss
         <div className="space-y-2">
           <Label>Keep messages for</Label>
           <Select
-            value={settings.message_retention_days?.toString() ?? 'null')}
+            value={settings.message_retention_days?.toString() ?? 'null'}
             onValueChange={(value) =>
               onUpdate({ message_retention_days: value === 'null' ? null : parseInt(value) })
             }

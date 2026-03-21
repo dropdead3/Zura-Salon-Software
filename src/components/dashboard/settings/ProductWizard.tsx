@@ -228,7 +228,7 @@ export function ProductWizard({ open, onOpenChange, draftId, initialDraft }: Pro
                 )}>
                   {i < step ? <Check className="w-3 h-3" /> : i + 1}
                 </div>
-                <span className={cn('text-xs hidden sm:inline', i === step ? 'text-foreground font-medium' : 'text-muted-foreground')}>{label}</span>
+                <span className={cn('text-xs hidden sm:inline', i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}>{label}</span>
                 {i < STEPS.length - 1 && <div className="w-4 h-px bg-border hidden sm:block" />}
               </div>
             ))}
@@ -250,7 +250,7 @@ export function ProductWizard({ open, onOpenChange, draftId, initialDraft }: Pro
           <div className="flex items-center gap-2">
             <Button variant="ghost" size={tokens.button.card} onClick={() => step > 0 ? setStep(s => s - 1) : handleClose()} className="gap-1.5">
               <ArrowLeft className="w-3.5 h-3.5" />
-              {step === 0 ? 'Cancel' : 'Back')}
+              {step === 0 ? 'Cancel' : 'Back'}
             </Button>
             {/* Save as Draft — all steps except Review */}
             {step < STEPS.length - 1 && (
@@ -308,7 +308,7 @@ function StepBasics({ form, update, brands, categories, customBrand, setCustomBr
               className="w-20 h-20 shrink-0 rounded-lg border-2 border-dashed border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-1 hover:border-primary/40 transition-colors"
             >
               {uploading ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <ImagePlus className="w-4 h-4 text-muted-foreground" />}
-              <span className="text-[10px] text-muted-foreground">{uploading ? 'Uploading' : 'Upload')}</span>
+              <span className="text-[10px] text-muted-foreground">{uploading ? 'Uploading' : 'Upload'}</span>
             </button>
           )}
           <div className="flex-1 space-y-3">
@@ -433,7 +433,7 @@ function StepPricing({ form, update }: { form: WizardForm; update: (p: Partial<W
       {margin !== null && !isNaN(margin) && (
         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 border border-border/60">
           <span className="text-xs text-muted-foreground">Profit Margin:</span>
-          <span className={cn('text-sm font-medium', margin >= 40 ? 'text-emerald-600 dark:text-emerald-400' : margin >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+          <span className={cn('text-sm font-medium', margin >= 40 ? 'text-emerald-600 dark:text-emerald-400' : margin >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
             {margin.toFixed(1)}%
           </span>
         </div>
@@ -490,7 +490,7 @@ function StepDescription({ form, update, generating, onGenerate }: { form: Wizar
           </div>
           <Button size={tokens.button.card} onClick={onGenerate} disabled={generating || !form.name} className="gap-1.5 shrink-0">
             {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            {generating ? 'Generating…' : 'Generate')}
+            {generating ? 'Generating…' : 'Generate'}
           </Button>
         </div>
       </div>
@@ -568,11 +568,11 @@ function StepReview({ form, update, formatCurrency }: { form: WizardForm; update
         <div className="border-t border-border/60 px-4 py-3 grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
           <div>
             <span className="text-xs text-muted-foreground">Retail</span>
-            <p className="font-medium"><BlurredAmount>{form.retail_price ? formatCurrency(parseFloat(form.retail_price)) : '—')}</BlurredAmount></p>
+            <p className="font-medium"><BlurredAmount>{form.retail_price ? formatCurrency(parseFloat(form.retail_price)) : '—'}</BlurredAmount></p>
           </div>
           <div>
             <span className="text-xs text-muted-foreground">Cost</span>
-            <p className="font-medium text-muted-foreground"><BlurredAmount>{form.cost_price ? formatCurrency(parseFloat(form.cost_price)) : '—')}</BlurredAmount></p>
+            <p className="font-medium text-muted-foreground"><BlurredAmount>{form.cost_price ? formatCurrency(parseFloat(form.cost_price)) : '—'}</BlurredAmount></p>
           </div>
           <div>
             <span className="text-xs text-muted-foreground">SKU</span>
@@ -580,7 +580,7 @@ function StepReview({ form, update, formatCurrency }: { form: WizardForm; update
           </div>
           <div>
             <span className="text-xs text-muted-foreground">Stock</span>
-            <p>{form.quantity_on_hand || '—')}{form.reorder_level ? ` (reorder at ${form.reorder_level})` : '')}</p>
+            <p>{form.quantity_on_hand || '—')}{form.reorder_level ? ` (reorder at ${form.reorder_level})` : ''}</p>
           </div>
         </div>
 

@@ -252,7 +252,7 @@ export function SmsTemplatesManager() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">
-              {editingTemplate ? 'EDIT SMS TEMPLATE' : 'CREATE SMS TEMPLATE')}
+              {editingTemplate ? 'EDIT SMS TEMPLATE' : 'CREATE SMS TEMPLATE'}
             </DialogTitle>
             <DialogDescription>
               Customize your SMS template with dynamic variables.

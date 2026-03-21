@@ -86,7 +86,7 @@ export function ConfirmStep({
               <div>
                 <div className="font-medium">{client?.name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {client?.phone || client?.email || 'No contact info')}
+                  {client?.phone || client?.email || 'No contact info'}
                 </div>
               </div>
             </div>

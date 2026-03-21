@@ -93,7 +93,7 @@ export function CheckoutClarityPanel({
           return (
             <div
               key={charge.id}
-              className={`rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2.5 ${isWaived ? 'opacity-60' : '')}`}
+              className={`rounded-lg border border-border/50 bg-muted/20 p-3 space-y-2.5 ${isWaived ? 'opacity-60' : ''}`}
             >
               {/* Service name + status + charge type */}
               <div className="flex items-center justify-between">
@@ -104,12 +104,12 @@ export function CheckoutClarityPanel({
                     <Beaker className="w-3.5 h-3.5 text-muted-foreground" />
                   )}
                   <p className="font-sans text-sm font-medium">
-                    {charge.service_name ?? 'Service')}
+                    {charge.service_name ?? 'Service'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="outline" className="text-[10px]">
-                    {isProductCost ? productChargeLabel : 'Overage')}
+                    {isProductCost ? productChargeLabel : 'Overage'}
                   </Badge>
                   <Badge variant={statusInfo.variant} className="text-[10px]">
                     {statusInfo.label}
@@ -127,9 +127,9 @@ export function CheckoutClarityPanel({
               {/* Charge amount */}
               <div className="flex justify-between items-center pt-1">
                 <span className="font-sans text-sm text-muted-foreground">
-                  {isProductCost ? 'Client Charge' : 'Additional Product Usage')}
+                  {isProductCost ? 'Client Charge' : 'Additional Product Usage'}
                 </span>
-                <span className={`font-display text-base tabular-nums ${isWaived ? 'line-through text-muted-foreground' : 'text-foreground')}`}>
+                <span className={`font-display text-base tabular-nums ${isWaived ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                   <BlurredAmount>${charge.charge_amount.toFixed(2)}</BlurredAmount>
                 </span>
               </div>

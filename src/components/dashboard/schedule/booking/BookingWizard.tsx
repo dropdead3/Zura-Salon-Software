@@ -280,7 +280,7 @@ export function BookingWizard({
                 title={getStepTitle()}
                 subtitle={
                   step !== 'service' && selectedServices.length > 0
-                    ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : '')} selected`
+                    ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
                     : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
                 }
                 onClose={handleClose}
@@ -353,7 +353,7 @@ export function BookingWizard({
                     onNotesChange={setNotes}
                     onConfirm={() => createBooking.mutate()}
                     isLoading={createBooking.isPending}
-                    locationName={locations.find(l => l.id === selectedLocation)?.name || '')}
+                    locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
                     recurrenceRule={recurrenceRule}
                     onRecurrenceChange={setRecurrenceRule}
                   />

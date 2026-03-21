@@ -288,7 +288,7 @@ export function AssistantBlockManagerSheet({
       queryClient2.invalidateQueries({ queryKey: ['assistant-time-blocks'] });
       queryClient2.invalidateQueries({ queryKey: ['assistant-time-blocks-range'] });
       queryClient2.invalidateQueries({ queryKey: ['assistant-pending-blocks'] });
-      toast.success(`${expiredIds.length} expired block${expiredIds.length > 1 ? 's' : '')} cleared`);
+      toast.success(`${expiredIds.length} expired block${expiredIds.length > 1 ? 's' : ''} cleared`);
     }
     setIsClearingExpired(false);
   };
@@ -354,7 +354,7 @@ export function AssistantBlockManagerSheet({
                     disabled={isClearingExpired}
                   >
                     {isClearingExpired ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Trash2 className="h-3 w-3 mr-1" />}
-                    Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : '')}
+                    Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : ''}
                   </Button>
                 )}
                 <BlocksByDate

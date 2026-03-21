@@ -63,7 +63,7 @@ export function LocationComparisonView({ locations, isLoading }: LocationCompari
       {/* Location Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {locations.slice(0, 6).map((location, idx) => (
-          <Card key={location.locationId} className={idx === 0 ? 'border-primary/30 bg-primary/5' : '')}>
+          <Card key={location.locationId} className={idx === 0 ? 'border-primary/30 bg-primary/5' : ''}>
             <CardContent className="pt-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium truncate">{location.name}</span>

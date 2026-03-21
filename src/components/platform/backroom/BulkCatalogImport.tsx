@@ -545,7 +545,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
             {phase === 'select' && 'Build Full Color Catalog')}
-            {phase === 'review' && (isRunning ? 'Generating Preview...' : 'Review Generated Products')}
+            {phase === 'review' && (isRunning ? 'Generating Preview...' : 'Review Generated Products'}
             {phase === 'importing' && 'Importing to Library...')}
             {phase === 'done' && 'Import Complete')}
           </DialogTitle>
@@ -564,14 +564,14 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
             <div className="flex items-center gap-2 flex-wrap">
               <PlatformButton
                 size="sm"
-                variant={showPro ? 'default' : 'outline')}
+                variant={showPro ? 'default' : 'outline'}
                 onClick={() => setShowPro(!showPro)}
               >
                 Professional ({availableBrands.filter(b => b.is_professional).length})
               </PlatformButton>
               <PlatformButton
                 size="sm"
-                variant={showConsumer ? 'default' : 'outline')}
+                variant={showConsumer ? 'default' : 'outline'}
                 onClick={() => setShowConsumer(!showConsumer)}
               >
                 Consumer ({availableBrands.filter(b => !b.is_professional).length})
@@ -617,7 +617,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
 
             <div className="flex items-center justify-between pt-2">
               <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                {selectedBrands.size} brand{selectedBrands.size !== 1 ? 's' : '')} selected
+                {selectedBrands.size} brand{selectedBrands.size !== 1 ? 's' : ''} selected
               </span>
               <PlatformButton onClick={handleGenerate} disabled={selectedBrands.size === 0}>
                 <Eye className="w-4 h-4 mr-1" /> Generate & Review
@@ -644,7 +644,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
                         setExpandedBrands(allExpanded ? new Set() : new Set(allBrands));
                       }}
                     >
-                      {results.filter(r => r.products && r.products.length > 0).every(r => expandedBrands.has(r.brand)) ? 'Collapse All' : 'Expand All')}
+                      {results.filter(r => r.products && r.products.length > 0).every(r => expandedBrands.has(r.brand)) ? 'Collapse All' : 'Expand All'}
                     </button>
                   </div>
                 </div>
@@ -774,10 +774,10 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
               {phase === 'review' && isRunning && (
                 <>
                   <PlatformButton variant="destructive" size="sm" onClick={() => stopGeneration(false)} disabled={isCancelling}>
-                    {isCancelling ? 'Stopping...' : 'Stop generating')}
+                    {isCancelling ? 'Stopping...' : 'Stop generating'}
                   </PlatformButton>
                   <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] ml-auto flex items-center gap-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> {isCancelling ? 'Stopping run...' : 'Generating...')}
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> {isCancelling ? 'Stopping run...' : 'Generating...'}
                   </span>
                 </>
               )}

@@ -318,7 +318,7 @@ export default function PhorestSettings() {
               variant="outline"
               disabled={connectionLoading}
             >
-              <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : '')}`} />
+              <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : ''}`} />
               <span className="ml-2">Test Connection</span>
             </Button>
           }
@@ -384,7 +384,7 @@ export default function PhorestSettings() {
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff')}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff'}
                 </Button>
               </Card>
 
@@ -397,7 +397,7 @@ export default function PhorestSettings() {
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appts')}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appts'}
                 </Button>
               </Card>
 
@@ -410,7 +410,7 @@ export default function PhorestSettings() {
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales')}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales'}
                 </Button>
               </Card>
 
@@ -423,7 +423,7 @@ export default function PhorestSettings() {
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports')}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports'}
                 </Button>
               </Card>
             </div>
@@ -438,7 +438,7 @@ export default function PhorestSettings() {
                   disabled={triggerSync.isPending}
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All')}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All'}
                 </Button>
               </Card>
             </div>
@@ -560,8 +560,8 @@ export default function PhorestSettings() {
                               {suggestion.phorestStaff.branchName}
                             </Badge>
                           )}
-                          <Badge variant={suggestion.confidence === 'high' ? 'default' : 'secondary')}>
-                            {suggestion.confidence === 'high' ? 'Exact Match' : 'Partial Match')}
+                          <Badge variant={suggestion.confidence === 'high' ? 'default' : 'secondary'}>
+                            {suggestion.confidence === 'high' ? 'Exact Match' : 'Partial Match'}
                           </Badge>
                         </div>
                         <Button
@@ -598,7 +598,7 @@ export default function PhorestSettings() {
                 </Select>
 
                 <Select 
-                  value={selectedPhorestStaff ? `${selectedPhorestStaff.id}:${selectedPhorestStaff.branchId}` : '')} 
+                  value={selectedPhorestStaff ? `${selectedPhorestStaff.id}:${selectedPhorestStaff.branchId}` : ''} 
                   onValueChange={(value) => {
                     const [staffId, branchId] = value.split(':');
                     const staff = filteredPhorestStaff.find(s => s.id === staffId && s.branchId === branchId);
@@ -692,7 +692,7 @@ export default function PhorestSettings() {
                                   <div className="flex items-center gap-2">
                                     <CollapsibleTrigger asChild>
                                       <Button variant="ghost" size={tokens.button.inline} className="h-6 w-6 p-0">
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90')}`} />
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                                       </Button>
                                     </CollapsibleTrigger>
                                     <div>
@@ -716,15 +716,15 @@ export default function PhorestSettings() {
                                 <TableCell>
                                   <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
                                     {mappings.length} Locations
-                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? '' : '-rotate-90')}`} />
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                                   </CollapsibleTrigger>
                                 </TableCell>
                                 <TableCell>
                                   <span className="text-muted-foreground">-</span>
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant={allActive ? 'default' : 'secondary')}>
-                                    {allActive ? 'Active' : 'Mixed')}
+                                  <Badge variant={allActive ? 'default' : 'secondary'}>
+                                    {allActive ? 'Active' : 'Mixed'}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -862,8 +862,8 @@ export default function PhorestSettings() {
                             />
                           </TableCell>
                           <TableCell>
-                            <Badge variant={mapping.is_active ? 'default' : 'secondary')}>
-                              {mapping.is_active ? 'Active' : 'Inactive')}
+                            <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
+                              {mapping.is_active ? 'Active' : 'Inactive'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">

@@ -64,8 +64,8 @@ export function BundleSuggestionsCard({ locationId, filterContext, movementRatin
                   <MetricInfoTooltip description="Products frequently purchased together in the same transaction over the last 90 days. Strategic bundles pair a best seller with a slow mover to boost movement." />
                 </div>
                 <CardDescription className="text-xs">
-                  {data.pairs.length} co-purchase pair{data.pairs.length !== 1 ? 's' : '')} detected
-                  {strategicPairs.length > 0 && <span className="text-primary"> · {strategicPairs.length} strategic bundle{strategicPairs.length !== 1 ? 's' : '')}</span>}
+                  {data.pairs.length} co-purchase pair{data.pairs.length !== 1 ? 's' : ''} detected
+                  {strategicPairs.length > 0 && <span className="text-primary"> · {strategicPairs.length} strategic bundle{strategicPairs.length !== 1 ? 's' : ''}</span>}
                 </CardDescription>
               </div>
             </div>

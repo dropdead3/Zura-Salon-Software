@@ -59,7 +59,7 @@ export function LiveCountdown({
         }
       } else if (displayMode === 'full') {
         if (days > 0) {
-          setTimeRemaining(`${days} day${days !== 1 ? 's' : '')}, ${hours}h ${minutes}m`);
+          setTimeRemaining(`${days} day${days !== 1 ? 's' : ''}, ${hours}h ${minutes}m`);
         } else if (hours > 0) {
           setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
         } else if (minutes > 0) {
@@ -114,7 +114,7 @@ export function LiveCountdown({
           'w-6 h-6 rounded-full flex items-center justify-center transition-colors',
           isUrgent ? 'bg-destructive/10' : 'bg-oat/40'
         )}>
-          <Clock className={cn('h-3.5 w-3.5', isUrgent ? 'animate-pulse' : '')} />
+          <Clock className={cn('h-3.5 w-3.5', isUrgent ? 'animate-pulse' : ''} />
         </div>
       )}
       <span>

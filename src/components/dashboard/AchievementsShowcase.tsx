@@ -130,7 +130,7 @@ export function AchievementsShowcase({ userId, compact = false }: AchievementsSh
                     `}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={isEarned ? '' : 'grayscale')}>
+                      <div className={isEarned ? '' : 'grayscale'}>
                         <AchievementBadge 
                           achievement={achievement} 
                           earnedAt={userAch?.earned_at}

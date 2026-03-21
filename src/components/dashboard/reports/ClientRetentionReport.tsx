@@ -475,7 +475,7 @@ export function ClientRetentionReport({
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>{formatDate(new Date(client.lastVisit), 'MMM d, yyyy')}</TableCell>
                     <TableCell className="text-right">
-                      <span className={client.daysSinceVisit > 90 ? 'text-red-500' : 'text-amber-500')}>
+                      <span className={client.daysSinceVisit > 90 ? 'text-red-500' : 'text-amber-500'}>
                         {client.daysSinceVisit} days
                       </span>
                     </TableCell>

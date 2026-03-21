@@ -75,7 +75,7 @@ export function SuggestedTasksSection({ tasks, onAddTask }: SuggestedTasksSectio
                 </p>
                 {task.dueInDays && !isAdded && (
                   <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                    Due in {task.dueInDays} day{task.dueInDays !== 1 ? 's' : '')}
+                    Due in {task.dueInDays} day{task.dueInDays !== 1 ? 's' : ''}
                   </p>
                 )}
               </div>

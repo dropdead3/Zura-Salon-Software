@@ -326,7 +326,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 {locations.length <= 1 ? (
                   <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30">
                     <Store className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{locations[0]?.name || 'No locations')}</span>
+                    <span className="text-sm font-medium">{locations[0]?.name || 'No locations'}</span>
                     <Badge variant="outline" className="ml-auto text-[10px] capitalize">{rentalModel} rental</Badge>
                   </div>
                 ) : (
@@ -367,13 +367,13 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                     {rentalModel === 'weekly' && (
                       <>
                         <p className="font-medium">Weekly Rental Model</p>
-                        <p className="text-muted-foreground text-xs">This renter pays a weekly rate. {boothAssignmentEnabled ? 'A booth/station will be assigned.' : 'No fixed booth assignment — flexible seating.')}</p>
+                        <p className="text-muted-foreground text-xs">This renter pays a weekly rate. {boothAssignmentEnabled ? 'A booth/station will be assigned.' : 'No fixed booth assignment — flexible seating.'}</p>
                       </>
                     )}
                     {rentalModel === 'monthly' && (
                       <>
                         <p className="font-medium">Monthly Rental Model</p>
-                        <p className="text-muted-foreground text-xs">This renter pays a monthly rate. {boothAssignmentEnabled ? 'A booth/station will be assigned.' : 'No fixed booth assignment — flexible seating.')}</p>
+                        <p className="text-muted-foreground text-xs">This renter pays a monthly rate. {boothAssignmentEnabled ? 'A booth/station will be assigned.' : 'No fixed booth assignment — flexible seating.'}</p>
                       </>
                     )}
                   </div>
@@ -557,7 +557,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                   </Select>
                 </div>
                 <div>
-                  <Label>{form.rentFrequency === 'monthly' ? 'Due Day of Month' : 'Due Day of Week')}</Label>
+                  <Label>{form.rentFrequency === 'monthly' ? 'Due Day of Month' : 'Due Day of Week'}</Label>
                   {form.rentFrequency === 'monthly' ? (
                     <Input type="number" min="1" max="28" value={form.dueDay} onChange={e => updateField('dueDay', e.target.value)} placeholder="1" />
                   ) : (
@@ -630,7 +630,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
               {availableStations.length === 0 ? (
                 <div className="p-6 rounded-lg bg-muted/50 border border-dashed text-center">
                   <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No available stations{form.locationId ? ' at this location' : '')}. You can assign one later from the Renter Hub.</p>
+                  <p className="text-sm text-muted-foreground">No available stations{form.locationId ? ' at this location' : ''}. You can assign one later from the Renter Hub.</p>
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -715,7 +715,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Account</span>
                   <span className="font-medium">
-                    {identityMode === 'new' ? `New: ${form.fullName}` : selectedEmployee?.display_name || selectedEmployee?.full_name || 'Selected')}
+                    {identityMode === 'new' ? `New: ${form.fullName}` : selectedEmployee?.display_name || selectedEmployee?.full_name || 'Selected'}
                   </span>
                 </div>
                 {form.businessName && (
@@ -727,7 +727,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 {rentalModel !== 'daily' && form.rentAmount && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Rent</span>
-                    <span>{currency}{form.rentAmount}/{form.rentFrequency === 'monthly' ? 'mo' : 'wk')}</span>
+                    <span>{currency}{form.rentAmount}/{form.rentFrequency === 'monthly' ? 'mo' : 'wk'}</span>
                   </div>
                 )}
                 {rentalModel === 'daily' && (
@@ -739,7 +739,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 {form.stationId && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Station</span>
-                    <span>{availableStations.find(s => s.id === form.stationId)?.station_name || 'Assigned')}</span>
+                    <span>{availableStations.find(s => s.id === form.stationId)?.station_name || 'Assigned'}</span>
                   </div>
                 )}
                 <div className="flex justify-between">

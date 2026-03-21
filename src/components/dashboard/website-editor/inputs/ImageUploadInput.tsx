@@ -93,7 +93,7 @@ export function ImageUploadInput({
           onClick={() => !isUploading && fileInputRef.current?.click()}
           className={`
             border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-            ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/20 hover:border-muted-foreground/40')}
+            ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/20 hover:border-muted-foreground/40'}
           `}
         >
           {isUploading ? (

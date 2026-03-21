@@ -134,7 +134,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               <div className="flex flex-col items-center text-center">
                 <Award className="h-5 w-5 text-muted-foreground mb-2" />
                 <span className="text-lg font-medium truncate max-w-full px-2">
-                  {analytics?.summary.topCampaign || '—')}
+                  {analytics?.summary.topCampaign || '—'}
                 </span>
                 <span className="text-xs text-muted-foreground">Top Campaign</span>
               </div>

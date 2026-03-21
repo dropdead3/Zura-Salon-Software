@@ -312,7 +312,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
         <div className="flex justify-center py-4">
           <div
             ref={frameRef}
-            className={`relative overflow-hidden cursor-crosshair ${isCircle ? 'rounded-full' : 'rounded-lg')}`}
+            className={`relative overflow-hidden cursor-crosshair ${isCircle ? 'rounded-full' : 'rounded-lg'}`}
             style={frameSize}
             onMouseDown={handleFrameMouseDown}
             onMouseMove={handleFrameMouseMove}
@@ -345,7 +345,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               <Crosshair className="w-6 h-6 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" />
             </div>
             {/* Border overlay */}
-            <div className={`absolute inset-0 border-2 border-white/20 pointer-events-none ${isCircle ? 'rounded-full' : 'rounded-lg')}`} />
+            <div className={`absolute inset-0 border-2 border-white/20 pointer-events-none ${isCircle ? 'rounded-full' : 'rounded-lg'}`} />
           </div>
         </div>
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] text-white/50 flex items-center gap-1">
@@ -437,9 +437,9 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
           </DialogTitle>
           {isWizard && (
             <div className="flex items-center gap-2 mt-3">
-              <div className={`h-1 flex-1 rounded-full transition-colors ${stepIndex >= 0 ? 'bg-primary' : 'bg-border')}`} />
-              <div className={`h-1 flex-1 rounded-full transition-colors ${stepIndex >= 1 ? 'bg-primary' : 'bg-border')}`} />
-              <div className={`h-1 flex-1 rounded-full transition-colors ${stepIndex >= 2 ? 'bg-primary' : 'bg-border')}`} />
+              <div className={`h-1 flex-1 rounded-full transition-colors ${stepIndex >= 0 ? 'bg-primary' : 'bg-border'}`} />
+              <div className={`h-1 flex-1 rounded-full transition-colors ${stepIndex >= 1 ? 'bg-primary' : 'bg-border'}`} />
+              <div className={`h-1 flex-1 rounded-full transition-colors ${stepIndex >= 2 ? 'bg-primary' : 'bg-border'}`} />
             </div>
           )}
         </div>
@@ -454,7 +454,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                   <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                   <div className="text-xs text-muted-foreground space-y-0.5">
                     <p className="font-medium text-foreground">
-                      {step === 'avatar' ? 'Avatar composition' : 'Website card composition')}
+                      {step === 'avatar' ? 'Avatar composition' : 'Website card composition'}
                     </p>
                     <p>
                       {step === 'avatar'
@@ -523,7 +523,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     </Button>
                   ) : (
                     <Button type="button" size="sm" onClick={handleApply} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : 'Save Photo')}
+                      {isSaving ? 'Saving...' : 'Save Photo'}
                     </Button>
                   )}
                 </>
@@ -645,7 +645,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               </Button>
               <Button type="button" size="sm" onClick={handleSaveFromReview} className="gap-1.5" disabled={isSaving}>
                 <Save className="h-3.5 w-3.5" />
-                {isSaving ? 'Saving...' : 'Save Photo')}
+                {isSaving ? 'Saving...' : 'Save Photo'}
               </Button>
             </div>
           </>

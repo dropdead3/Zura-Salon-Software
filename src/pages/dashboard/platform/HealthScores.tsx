@@ -264,7 +264,7 @@ export default function HealthScores() {
                     onClick={() => navigate(`/dashboard/platform/accounts/${score.organization_id}?tab=health`)}
                   >
                     <TableCell className="font-medium text-white">
-                      {score.organization?.name || 'Unknown')}
+                      {score.organization?.name || 'Unknown'}
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={cn(

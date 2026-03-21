@@ -93,7 +93,7 @@ export function StickyFooterBar() {
                   <span className="text-xs font-medium uppercase tracking-wide">Call</span>
                   <ChevronUp 
                     size={12} 
-                    className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-0' : 'rotate-180')}`} 
+                    className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-0' : 'rotate-180'}`} 
                   />
                 </button>
 

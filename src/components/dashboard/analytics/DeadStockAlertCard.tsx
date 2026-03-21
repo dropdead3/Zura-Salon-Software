@@ -97,7 +97,7 @@ export function DeadStockAlertCard({ products, movementRatings, velocityMap, fil
                   <MetricInfoTooltip description="Products classified as Dead Weight or Stagnant that haven't been marked for clearance yet. Discount tiers are suggested based on days since last sale: 10% (<60d), 25% (60-120d), 50% (120d+)." />
                 </div>
                 <CardDescription className="text-xs">
-                  {candidates.length} product{candidates.length !== 1 ? 's' : '')} · <BlurredAmount>{formatCurrency(totalAtRisk)}</BlurredAmount> at risk
+                  {candidates.length} product{candidates.length !== 1 ? 's' : ''} · <BlurredAmount>{formatCurrency(totalAtRisk)}</BlurredAmount> at risk
                 </CardDescription>
               </div>
             </div>
@@ -111,11 +111,11 @@ export function DeadStockAlertCard({ products, movementRatings, velocityMap, fil
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{product.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <Badge variant="outline" className={cn('text-[10px]', tier === 'dead_weight' ? 'text-red-500 border-red-200 dark:border-red-800' : 'text-orange-500 border-orange-200 dark:border-orange-800')}>
-                      {tier === 'dead_weight' ? 'Dead Weight' : 'Stagnant')}
+                    <Badge variant="outline" className={cn('text-[10px]', tier === 'dead_weight' ? 'text-red-500 border-red-200 dark:border-red-800' : 'text-orange-500 border-orange-200 dark:border-orange-800'}>
+                      {tier === 'dead_weight' ? 'Dead Weight' : 'Stagnant'}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {daysSinceLastSale != null ? `${daysSinceLastSale}d idle` : 'Never sold')}
+                      {daysSinceLastSale != null ? `${daysSinceLastSale}d idle` : 'Never sold'}
                     </span>
                     <span className="text-[10px] text-muted-foreground tabular-nums">
                       · {product.quantity_on_hand} units

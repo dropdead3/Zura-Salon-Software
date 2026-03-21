@@ -80,7 +80,7 @@ export function MenuItemNode({ item, depth, isSelected, selectedItemId, onSelect
         {/* Visibility badge */}
         {item.visibility !== 'both' && (
           <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full flex-shrink-0">
-            {item.visibility === 'desktop_only' ? 'Desktop' : 'Mobile')}
+            {item.visibility === 'desktop_only' ? 'Desktop' : 'Mobile'}
           </span>
         )}
 

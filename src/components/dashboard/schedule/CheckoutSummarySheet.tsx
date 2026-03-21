@@ -528,7 +528,7 @@ export function CheckoutSummarySheet({
                 <div className="space-y-1.5">
                   {productCostCharges.map((charge, idx) => (
                     <div key={idx} className="flex items-center justify-between text-sm">
-                      <span>{charge.service_name ?? 'Product')}</span>
+                      <span>{charge.service_name ?? 'Product'}</span>
                       <span className="font-medium tabular-nums">{formatCurrency(charge.charge_amount)}</span>
                     </div>
                   ))}

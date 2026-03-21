@@ -334,7 +334,7 @@ export default function Program() {
                     Your streak will be reset to 0. This action cannot be undone.
                     {enrollment && enrollment.restart_count > 0 && (
                       <span className="block mt-2 text-muted-foreground">
-                        You've restarted {enrollment.restart_count} time{enrollment.restart_count > 1 ? 's' : '')} before.
+                        You've restarted {enrollment.restart_count} time{enrollment.restart_count > 1 ? 's' : ''} before.
                       </span>
                     )}
                   </AlertDialogDescription>
@@ -359,7 +359,7 @@ export default function Program() {
             </div>
             <div className="flex items-center gap-2 text-sm font-sans">
               <Shield className="w-4 h-4 text-primary" />
-              <span>{enrollment?.forgive_credits_remaining ?? 2} Life Happens {(enrollment?.forgive_credits_remaining ?? 2) === 1 ? 'Pass' : 'Passes')}</span>
+              <span>{enrollment?.forgive_credits_remaining ?? 2} Life Happens {(enrollment?.forgive_credits_remaining ?? 2) === 1 ? 'Pass' : 'Passes'}</span>
             </div>
             {enrollment?.status === 'active' && (
               <span className="px-2 py-1 bg-green-500/10 text-green-600 text-xs font-display tracking-wide">
@@ -681,7 +681,7 @@ export default function Program() {
                           </Badge>
                         )
                       )}
-                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weeklyExpanded ? 'rotate-180' : '')}`} />
+                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weeklyExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
                 </div>
@@ -760,7 +760,7 @@ export default function Program() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <AssignmentIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                    <span className={`text-sm font-medium ${isComplete ? 'line-through text-muted-foreground' : '')}`}>
+                                    <span className={`text-sm font-medium ${isComplete ? 'line-through text-muted-foreground' : ''}`}>
                                       {assignment.title}
                                     </span>
                                     {assignment.is_required && (
@@ -770,7 +770,7 @@ export default function Program() {
                                     )}
                                   </div>
                                   {assignment.description && (
-                                    <p className={`text-sm mt-1 ${isComplete ? 'text-muted-foreground/60 line-through' : 'text-muted-foreground')}`}>
+                                    <p className={`text-sm mt-1 ${isComplete ? 'text-muted-foreground/60 line-through' : 'text-muted-foreground'}`}>
                                       {assignment.description}
                                     </p>
                                   )}
@@ -912,7 +912,7 @@ function TaskItem({ label, completed, onChange, disabled }: TaskItemProps) {
       `}>
         {completed && <CheckCircle2 className="w-3 h-3 text-background" />}
       </div>
-      <span className={`text-sm font-sans ${completed ? 'line-through text-muted-foreground' : '')}`}>
+      <span className={`text-sm font-sans ${completed ? 'line-through text-muted-foreground' : ''}`}>
         {label}
       </span>
     </button>

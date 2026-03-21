@@ -140,7 +140,7 @@ export function AccountUsersTab({ organizationId, organizationName }: AccountUse
             <div className="text-center py-12">
               <Users className="h-12 w-12 mx-auto text-slate-600 mb-4" />
               <p className="text-slate-400">
-                {searchQuery ? 'No users match your search' : 'No users in this organization')}
+                {searchQuery ? 'No users match your search' : 'No users in this organization'}
               </p>
             </div>
           ) : (

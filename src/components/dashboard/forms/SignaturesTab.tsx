@@ -137,7 +137,7 @@ export function SignaturesTab() {
                         <span className="text-muted-foreground text-xs">{sig.client_id}</span>
                       )}
                     </TableCell>
-                    <TableCell>{sig.form_template?.name || 'Unknown')}</TableCell>
+                    <TableCell>{sig.form_template?.name || 'Unknown'}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
                         {sig.form_version}

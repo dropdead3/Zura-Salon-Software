@@ -95,7 +95,7 @@ export default function PTOManager() {
                       <Label>Default policy for new hires</Label>
                     </div>
                     <Button onClick={handleCreatePolicy} disabled={createPolicy.isPending} className="w-full">
-                      {createPolicy.isPending ? 'Creating...' : 'Create Policy')}
+                      {createPolicy.isPending ? 'Creating...' : 'Create Policy'}
                     </Button>
                   </div>
                 </DialogContent>
@@ -113,14 +113,14 @@ export default function PTOManager() {
                         <CardTitle className="text-base">{policy.name}</CardTitle>
                         <div className="flex gap-1.5">
                           {policy.is_default && <Badge variant="default">Default</Badge>}
-                          <Badge variant={policy.is_active ? 'secondary' : 'outline')}>{policy.is_active ? 'Active' : 'Inactive')}</Badge>
+                          <Badge variant={policy.is_active ? 'secondary' : 'outline')}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-1 text-sm">
                       <p><span className="text-muted-foreground">Accrual:</span> {policy.accrual_rate}h / {ACCRUAL_PERIODS.find(p => p.value === policy.accrual_period)?.label}</p>
-                      <p><span className="text-muted-foreground">Max Balance:</span> {policy.max_balance ? `${policy.max_balance}h` : 'Unlimited')}</p>
-                      <p><span className="text-muted-foreground">Carry-Over:</span> {policy.carry_over_limit ? `${policy.carry_over_limit}h` : 'Unlimited')}</p>
+                      <p><span className="text-muted-foreground">Max Balance:</span> {policy.max_balance ? `${policy.max_balance}h` : 'Unlimited'}</p>
+                      <p><span className="text-muted-foreground">Carry-Over:</span> {policy.carry_over_limit ? `${policy.carry_over_limit}h` : 'Unlimited'}</p>
                     </CardContent>
                   </Card>
                 ))}

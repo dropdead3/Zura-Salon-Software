@@ -69,10 +69,10 @@ export function ClientFormulaHistoryTab({ clientId, className }: ClientFormulaHi
                       {formula.service_name || 'Formula')}
                     </span>
                     <Badge
-                      variant={formula.formula_type === 'refined' ? 'default' : 'secondary')}
+                      variant={formula.formula_type === 'refined' ? 'default' : 'secondary'}
                       className="text-[10px] shrink-0"
                     >
-                      {formula.formula_type === 'refined' ? 'Refined' : 'Actual')}
+                      {formula.formula_type === 'refined' ? 'Refined' : 'Actual'}
                     </Badge>
                     {isLatest && (
                       <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">

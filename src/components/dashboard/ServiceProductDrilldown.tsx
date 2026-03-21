@@ -137,7 +137,7 @@ export function ServiceProductDrilldown({
             </div>
             <div>
               <DialogTitle className="font-display text-base font-medium tracking-wide">
-                {isServices ? 'Services by Stylist' : 'Products by Stylist')}
+                {isServices ? 'Services by Stylist' : 'Products by Stylist'}
               </DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">Revenue &amp; share of total</p>
             </div>
@@ -184,7 +184,7 @@ export function ServiceProductDrilldown({
             <div className="py-14 text-center">
               {!isServices && <ShoppingBag className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />}
               <p className="text-sm text-muted-foreground">
-                {isServices ? 'No service data in this period' : 'No product sales in this period')}
+                {isServices ? 'No service data in this period' : 'No product sales in this period'}
               </p>
             </div>
           ) : (
@@ -195,7 +195,7 @@ export function ServiceProductDrilldown({
                 return (
                   <div
                     key={staff.phorestStaffId}
-                    className={`p-4 bg-muted/30 rounded-xl ${canExpand ? 'cursor-pointer transition-colors hover:bg-muted/50' : '')}`}
+                    className={`p-4 bg-muted/30 rounded-xl ${canExpand ? 'cursor-pointer transition-colors hover:bg-muted/50' : ''}`}
                     onClick={() => canExpand && setExpandedStaffId(isExpanded ? null : staff.phorestStaffId)}
                   >
                     <div className="flex items-center gap-3">
@@ -208,14 +208,14 @@ export function ServiceProductDrilldown({
                         <p className="text-sm font-medium truncate">{staff.staffName}</p>
                         <p className="text-xs text-muted-foreground">
                           {isServices
-                            ? <>{staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : '')} · {staff.sharePercent}% of total{staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}</>
-                            : <>{staff.primaryCount} product{staff.primaryCount !== 1 ? 's' : '')} · {staff.sharePercent}% of total</>
+                            ? <>{staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total{staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}</>
+                            : <>{staff.primaryCount} product{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total</>
                           }
                         </p>
                       </div>
                       <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>
                       {canExpand && (
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : '')}`} />
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                       )}
                     </div>
                     {isExpanded && staff.productItems && (
@@ -239,7 +239,7 @@ export function ServiceProductDrilldown({
         <div className="px-6 py-3 border-t border-border/50 bg-muted/30 sticky bottom-0">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground tracking-wide">
-              {isServices ? 'Total Service Revenue' : 'Total Product Revenue')}
+              {isServices ? 'Total Service Revenue' : 'Total Product Revenue'}
             </p>
             <span className="font-display text-lg tabular-nums font-medium">
               {fmt(isServices ? totalServiceRevenue : adjustedTotalProduct)}

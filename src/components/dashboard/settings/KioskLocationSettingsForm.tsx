@@ -680,7 +680,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
       <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
         <Button onClick={handleSave} disabled={updateSettings.isPending}>
           {updateSettings.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-          Save {!locationId ? 'Defaults' : 'Settings')}
+          Save {!locationId ? 'Defaults' : 'Settings'}
         </Button>
 
         {locationId && locations.length > 1 && (

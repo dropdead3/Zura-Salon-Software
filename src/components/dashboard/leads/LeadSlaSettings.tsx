@@ -68,7 +68,7 @@ export function LeadSlaSettings({ className }: LeadSlaSettingsProps) {
               className="w-24"
             />
             <span className="text-sm text-muted-foreground">
-              Alert managers when leads wait longer than {slaHours} hour{slaHours !== 1 ? 's' : '')}
+              Alert managers when leads wait longer than {slaHours} hour{slaHours !== 1 ? 's' : ''}
             </span>
           </div>
         </div>

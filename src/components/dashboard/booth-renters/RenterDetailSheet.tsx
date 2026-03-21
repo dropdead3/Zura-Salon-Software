@@ -274,7 +274,7 @@ export function RenterDetailSheet({
                         </div>
                         <div>
                           <p className="text-muted-foreground">Start Date</p>
-                          <p>{renter.start_date ? formatDate(new Date(renter.start_date), 'MMM d, yyyy') : '—')}</p>
+                          <p>{renter.start_date ? formatDate(new Date(renter.start_date), 'MMM d, yyyy') : '—'}</p>
                         </div>
                       </div>
                     )}
@@ -346,7 +346,7 @@ export function RenterDetailSheet({
                       <div className="flex items-center gap-4 mt-3 text-sm">
                         <span className="flex items-center gap-1 text-primary">
                           <DollarSign className="h-3.5 w-3.5" />
-                          {formatCurrency(contract.rent_amount)}/{contract.rent_frequency === 'monthly' ? 'mo' : 'wk')}
+                          {formatCurrency(contract.rent_amount)}/{contract.rent_frequency === 'monthly' ? 'mo' : 'wk'}
                         </span>
                         {contract.security_deposit && (
                           <span className="text-muted-foreground">

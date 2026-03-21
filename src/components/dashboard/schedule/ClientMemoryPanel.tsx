@@ -98,7 +98,7 @@ export function ClientMemoryPanel({ clientId, serviceName, orgId, className, onV
           Client Memory
         </h4>
         <span className="text-[10px] text-muted-foreground">
-          {data.visitCount} visit{data.visitCount !== 1 ? 's' : '')}
+          {data.visitCount} visit{data.visitCount !== 1 ? 's' : ''}
         </span>
       </div>
 

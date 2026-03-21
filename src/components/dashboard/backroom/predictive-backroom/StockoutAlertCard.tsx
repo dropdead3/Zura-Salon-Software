@@ -29,7 +29,7 @@ export function StockoutAlertCard({ locationId }: StockoutAlertCardProps) {
             Stockout Risk Detected
           </span>
           <Badge variant="destructive" className="font-sans text-xs ml-auto">
-            {alerts.length} product{alerts.length !== 1 ? 's' : '')}
+            {alerts.length} product{alerts.length !== 1 ? 's' : ''}
           </Badge>
         </div>
         <div className="space-y-2">

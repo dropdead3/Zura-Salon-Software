@@ -51,7 +51,7 @@ export function ChallengeLeaderboard({
         <div>
           <h3 className="font-display text-lg">Leaderboard</h3>
           <p className="text-sm text-muted-foreground">
-            {participants.length} participant{participants.length !== 1 ? 's' : '')}
+            {participants.length} participant{participants.length !== 1 ? 's' : ''}
           </p>
         </div>
         <Tabs value={view} onValueChange={(v) => setView(v as 'list' | 'cards')}>
@@ -78,7 +78,7 @@ export function ChallengeLeaderboard({
                 transition={{ delay: index * 0.05 }}
               >
                 <Card
-                  className={`p-3 ${isCurrentUser ? 'ring-2 ring-primary/50 bg-primary/5' : '')}`}
+                  className={`p-3 ${isCurrentUser ? 'ring-2 ring-primary/50 bg-primary/5' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     {/* Rank */}

@@ -133,7 +133,7 @@ export function QuizCard({
           </div>
 
           <h3 className="text-2xl font-medium mb-2">
-            {passed ? 'Congratulations!' : 'Keep Trying!')}
+            {passed ? 'Congratulations!' : 'Keep Trying!'}
           </h3>
 
           <p className="text-muted-foreground mb-4">
@@ -143,8 +143,8 @@ export function QuizCard({
           </p>
 
           <Badge
-            variant={passed ? 'default' : 'destructive')}
-            className={passed ? 'bg-green-600' : '')}
+            variant={passed ? 'default' : 'destructive'}
+            className={passed ? 'bg-green-600' : ''}
           >
             {passed ? 'PASSED' : `Need ${passingScore}% to pass`}
           </Badge>

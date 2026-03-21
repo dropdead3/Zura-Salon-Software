@@ -132,7 +132,7 @@ function RevenueForecastCardComponent({
             <TrendIcon className={cn('w-4 h-4', trendColor)} />
             <span className={cn('text-sm font-medium', trendColor)}>
               {data?.summary.trend === 'up' ? 'Trending up' : 
-               data?.summary.trend === 'down' ? 'Trending down' : 'Stable')}
+               data?.summary.trend === 'down' ? 'Trending down' : 'Stable'}
             </span>
           </div>
         </div>

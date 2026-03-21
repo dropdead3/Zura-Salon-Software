@@ -154,7 +154,7 @@ export function UserRolesFilterBar({
 
       {/* Unassigned Toggle */}
       <Button
-        variant={showUnassigned ? 'default' : 'outline')}
+        variant={showUnassigned ? 'default' : 'outline'}
         size="sm"
         className={cn(
           "h-9 gap-1.5 text-sm font-normal",

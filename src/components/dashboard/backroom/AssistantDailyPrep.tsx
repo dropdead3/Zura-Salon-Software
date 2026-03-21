@@ -48,7 +48,7 @@ export function AssistantDailyPrep({ locationId, onStartPrep }: AssistantDailyPr
           <div>
             <CardTitle className={tokens.card.title}>Today's Color Prep</CardTitle>
             <CardDescription className="font-sans text-sm text-muted-foreground">
-              {prepItems.length} service{prepItems.length !== 1 ? 's' : '')} requiring prep
+              {prepItems.length} service{prepItems.length !== 1 ? 's' : ''} requiring prep
             </CardDescription>
           </div>
         </div>
@@ -112,7 +112,7 @@ function PrepItemRow({
         </p>
         <p className="font-sans text-xs text-muted-foreground truncate">
           {item.clientName}
-          {item.staffName ? ` · ${item.staffName}` : '')}
+          {item.staffName ? ` · ${item.staffName}` : ''}
         </p>
       </div>
 

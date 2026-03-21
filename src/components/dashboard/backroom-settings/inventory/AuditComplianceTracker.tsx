@@ -241,7 +241,7 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
           <DialogHeader>
             <DialogTitle className={tokens.card.title}>Skip Audit</DialogTitle>
             <DialogDescription>
-              Provide a reason for skipping the audit due {skipDialogAudit ? format(new Date(skipDialogAudit.due_date), 'MMM d, yyyy') : '')}.
+              Provide a reason for skipping the audit due {skipDialogAudit ? format(new Date(skipDialogAudit.due_date), 'MMM d, yyyy') : ''}.
             </DialogDescription>
           </DialogHeader>
           <Textarea

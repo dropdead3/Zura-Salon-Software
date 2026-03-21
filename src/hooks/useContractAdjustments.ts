@@ -90,7 +90,7 @@ export function useExtendTerm() {
         .insert({
           organization_id: organizationId,
           adjustment_type: 'term_extension',
-          description: `Extended contract by ${monthsToAdd} month${monthsToAdd > 1 ? 's' : '')}`,
+          description: `Extended contract by ${monthsToAdd} month${monthsToAdd > 1 ? 's' : ''}`,
           previous_end_date: currentEndDate,
           new_end_date: newEndDate,
           months_added: monthsToAdd,
@@ -178,7 +178,7 @@ export function useCompMonths() {
         .insert({
           organization_id: organizationId,
           adjustment_type: 'comp_months',
-          description: `Comp'd ${monthsToComp} month${monthsToComp > 1 ? 's' : '')} ($${compValue.toFixed(2)} value)`,
+          description: `Comp'd ${monthsToComp} month${monthsToComp > 1 ? 's' : ''} ($${compValue.toFixed(2)} value)`,
           previous_end_date: currentEndDate,
           new_end_date: newEndDate,
           months_added: monthsToComp,

@@ -122,7 +122,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                 step="0.01"
                 value={formValue}
                 onChange={e => setFormValue(e.target.value)}
-                placeholder={formType === 'percentage' ? 'e.g. 10' : 'e.g. -5')}
+                placeholder={formType === 'percentage' ? 'e.g. 10' : 'e.g. -5'}
                 autoCapitalize="off"
               />
             </div>
@@ -135,7 +135,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formStartDate && 'text-muted-foreground')}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formStartDate ? format(formStartDate, 'MMM d, yyyy') : 'Pick date')}
+                    {formStartDate ? format(formStartDate, 'MMM d, yyyy') : 'Pick date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -149,7 +149,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formEndDate && 'text-muted-foreground')}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formEndDate ? format(formEndDate, 'MMM d, yyyy') : 'Pick date')}
+                    {formEndDate ? format(formEndDate, 'MMM d, yyyy') : 'Pick date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -205,8 +205,8 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
             ? locations.find(l => l.id === adj.location_id)?.name || adj.location_id
             : 'All Locations';
           const valueLabel = adj.adjustment_type === 'percentage'
-            ? `${adj.adjustment_value > 0 ? '+' : '')}${adj.adjustment_value}%`
-            : `${adj.adjustment_value > 0 ? '+' : '')}$${adj.adjustment_value}`;
+            ? `${adj.adjustment_value > 0 ? '+' : ''}${adj.adjustment_value}%`
+            : `${adj.adjustment_value > 0 ? '+' : ''}$${adj.adjustment_value}`;
 
           return (
             <div

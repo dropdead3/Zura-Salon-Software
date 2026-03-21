@@ -255,7 +255,7 @@ export default function ChallengeDetail() {
                   <div>
                     <p className="text-sm font-medium">Participants</p>
                     <p className="text-xs text-muted-foreground">
-                      {participants.length} team member{participants.length !== 1 ? 's' : '')}
+                      {participants.length} team member{participants.length !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>

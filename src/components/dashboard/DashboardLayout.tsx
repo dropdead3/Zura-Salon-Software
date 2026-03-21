@@ -398,7 +398,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {hideNumbers ? 'Show numbers' : 'Hide numbers')}
+          {hideNumbers ? 'Show numbers' : 'Hide numbers'}
         </TooltipContent>
       </Tooltip>
     );

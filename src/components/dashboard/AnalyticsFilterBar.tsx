@@ -66,7 +66,7 @@ export function AnalyticsFilterBar({
       {/* Simple / Detailed toggle */}
       {onCompactChange && (
         <Tabs
-          value={compact ? 'simple' : 'detailed')}
+          value={compact ? 'simple' : 'detailed'}
           onValueChange={(v) => onCompactChange(v === 'simple')}
         >
           <FilterTabsList>

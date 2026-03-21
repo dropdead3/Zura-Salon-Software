@@ -134,7 +134,7 @@ function DetailEditCell({
           onClick={() => { setDraft(value != null ? String(value) : ''); setEditing(true); }}
           title="Click to edit"
         >
-          {value != null ? value : '—')}
+          {value != null ? value : '—'}
         </span>
       )}
     </div>

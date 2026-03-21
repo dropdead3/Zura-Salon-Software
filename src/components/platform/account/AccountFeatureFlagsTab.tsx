@@ -230,8 +230,8 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
             <DialogTitle>Add Feature Override</DialogTitle>
             <DialogDescription>
               You're changing <code className="text-violet-400">{overrideDialog?.flag.flag_key}</code> from 
-              the global default ({overrideDialog?.flag.global_enabled ? 'enabled' : 'disabled')}) to 
-              {overrideDialog?.enabled ? ' enabled' : ' disabled')} for this organization.
+              the global default ({overrideDialog?.flag.global_enabled ? 'enabled' : 'disabled'}) to 
+              {overrideDialog?.enabled ? ' enabled' : ' disabled'} for this organization.
             </DialogDescription>
           </DialogHeader>
 
@@ -252,7 +252,7 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
               Cancel
             </PlatformButton>
             <PlatformButton onClick={handleConfirmOverride} disabled={updateFlag.isPending}>
-              {updateFlag.isPending ? 'Saving...' : 'Save Override')}
+              {updateFlag.isPending ? 'Saving...' : 'Save Override'}
             </PlatformButton>
           </DialogFooter>
         </DialogContent>

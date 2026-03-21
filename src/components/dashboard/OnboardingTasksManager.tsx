@@ -246,7 +246,7 @@ export function OnboardingTasksManager() {
         <div className="flex items-center gap-2">
           <ClipboardCheck className="w-5 h-5 text-primary" />
           <span className="font-sans text-sm text-muted-foreground">
-            {tasks.length} task{tasks.length !== 1 ? 's' : '')} configured
+            {tasks.length} task{tasks.length !== 1 ? 's' : ''} configured
           </span>
         </div>
         <Button onClick={openCreateDialog} size={tokens.button.card} className="font-display text-xs">
@@ -269,7 +269,7 @@ export function OnboardingTasksManager() {
           {tasks.map((task, index) => (
             <Card 
               key={task.id} 
-              className={`p-4 ${!task.is_active ? 'opacity-50' : '')}`}
+              className={`p-4 ${!task.is_active ? 'opacity-50' : ''}`}
             >
               <div className="flex items-start gap-3">
                 <div className="flex flex-col gap-1 pt-1">
@@ -352,7 +352,7 @@ export function OnboardingTasksManager() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display">
-              {editingTask ? 'EDIT TASK' : 'CREATE TASK')}
+              {editingTask ? 'EDIT TASK' : 'CREATE TASK'}
             </DialogTitle>
           </DialogHeader>
 
@@ -460,7 +460,7 @@ export function OnboardingTasksManager() {
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving} className="font-display">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingTask ? 'SAVE CHANGES' : 'CREATE TASK')}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingTask ? 'SAVE CHANGES' : 'CREATE TASK'}
             </Button>
           </DialogFooter>
         </DialogContent>

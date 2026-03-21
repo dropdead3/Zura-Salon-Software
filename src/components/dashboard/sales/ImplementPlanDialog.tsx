@@ -272,7 +272,7 @@ export function ImplementPlanDialog({
           .map((step) => ({
             user_id: user.id,
             title: step.title,
-            description: `From campaign: ${campaignName}${step.description ? }`\n${step.description}` : '')}`,
+            description: `From campaign: ${campaignName}${step.description ? }`\n${step.description}` : ''}`,
             due_date: addDays(new Date(), step.dueDays).toISOString(),
             priority: 'high',
             source: 'ai_recovery_plan',
@@ -385,7 +385,7 @@ export function ImplementPlanDialog({
                       }
                       className="text-[11px] text-primary hover:underline"
                     >
-                      {allSelected ? 'Deselect all' : 'Select all')}
+                      {allSelected ? 'Deselect all' : 'Select all'}
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -438,7 +438,7 @@ export function ImplementPlanDialog({
                           noteOpen && 'rotate-180'
                         )}
                       />
-                      {noteOpen ? 'Leadership note' : '+ Add leadership note')}
+                      {noteOpen ? 'Leadership note' : '+ Add leadership note'}
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-2">

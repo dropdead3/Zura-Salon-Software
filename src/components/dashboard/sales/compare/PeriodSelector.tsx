@@ -93,14 +93,14 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
           {/* Period A */}
           <div className="flex-1 rounded-lg border-l-2 border-l-primary border border-border/50 bg-muted/20 p-3">
             <p className="text-[10px] font-medium text-primary uppercase tracking-wide mb-2">
-              {showSinglePeriod ? 'Period' : 'Period A')}
+              {showSinglePeriod ? 'Period' : 'Period A'}
             </p>
             <div className="flex gap-1.5">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
-                    {periodA.dateFrom ? formatDate(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start')}
+                    {periodA.dateFrom ? formatDate(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -118,7 +118,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                 <PopoverTrigger asChild>
                   <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
-                    {periodA.dateTo ? formatDate(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End')}
+                    {periodA.dateTo ? formatDate(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -152,7 +152,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                     <PopoverTrigger asChild>
                       <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                         <CalendarIcon className="mr-1.5 h-3 w-3" />
-                        {periodB.dateFrom ? formatDate(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start')}
+                        {periodB.dateFrom ? formatDate(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -170,7 +170,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                     <PopoverTrigger asChild>
                       <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                         <CalendarIcon className="mr-1.5 h-3 w-3" />
-                        {periodB.dateTo ? formatDate(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End')}
+                        {periodB.dateTo ? formatDate(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">

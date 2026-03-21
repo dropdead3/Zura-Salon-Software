@@ -119,7 +119,7 @@ export function ModulesTab({ canManage }: ModulesTabProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
-              {filterState === 'all' ? 'All' : filterState === 'enabled' ? 'Enabled' : 'Disabled')}
+              {filterState === 'all' ? 'All' : filterState === 'enabled' ? 'Enabled' : 'Disabled'}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

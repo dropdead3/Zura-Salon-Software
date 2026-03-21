@@ -313,7 +313,7 @@ export function StylistsContent() {
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  {stylist.homepage_visible ? 'Visible' : 'Hidden')}
+                  {stylist.homepage_visible ? 'Visible' : 'Hidden'}
                 </span>
                 <Switch
                   checked={stylist.homepage_visible ?? false}

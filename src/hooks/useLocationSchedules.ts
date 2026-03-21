@@ -230,7 +230,7 @@ export function useReviewScheduleChangeRequest() {
       queryClient.invalidateQueries({ queryKey: ['my-schedule-requests'] });
       queryClient.invalidateQueries({ queryKey: ['location-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['location-schedule'] });
-      toast.success(`Request ${variables.status === 'approved' ? 'approved' : 'denied')}`);
+      toast.success(`Request ${variables.status === 'approved' ? 'approved' : 'denied'}`);
     },
     onError: (error) => {
       console.error('Error reviewing request:', error);

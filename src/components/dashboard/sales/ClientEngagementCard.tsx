@@ -330,7 +330,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
                   {chartData.map((entry) => (
                     <Cell
                       key={entry.staffId}
-                      fill={expandedStaff === entry.staffId ? 'url(#engagementBarGradientActive)' : 'url(#engagementBarGradient)')}
+                      fill={expandedStaff === entry.staffId ? 'url(#engagementBarGradientActive)' : 'url(#engagementBarGradient)'}
                     />
                   ))}
                   <LabelList

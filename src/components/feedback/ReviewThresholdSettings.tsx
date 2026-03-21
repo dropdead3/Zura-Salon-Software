@@ -74,7 +74,7 @@ export function ReviewThresholdSettings() {
                 <SelectContent>
                   {[1, 2, 3, 4, 5].map((n) => (
                     <SelectItem key={n} value={String(n)}>
-                      {'★'.repeat(n)}{'☆'.repeat(5-n)} {n} star{n > 1 ? 's' : '')}
+                      {'★'.repeat(n)}{'☆'.repeat(5-n)} {n} star{n > 1 ? 's' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -96,7 +96,7 @@ export function ReviewThresholdSettings() {
                 <SelectContent>
                   {[6, 7, 8, 9, 10].map((n) => (
                     <SelectItem key={n} value={String(n)}>
-                      {n} - {n >= 9 ? 'Promoter' : n >= 7 ? 'Passive' : 'Detractor')}
+                      {n} - {n >= 9 ? 'Promoter' : n >= 7 ? 'Passive' : 'Detractor'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -224,7 +224,7 @@ export function ReviewThresholdSettings() {
                 <SelectContent>
                   {[1, 2, 3].map((n) => (
                     <SelectItem key={n} value={String(n)}>
-                      {'★'.repeat(n)}{'☆'.repeat(5-n)} {n} star{n > 1 ? 's' : '')} or below
+                      {'★'.repeat(n)}{'☆'.repeat(5-n)} {n} star{n > 1 ? 's' : ''} or below
                     </SelectItem>
                   ))}
                 </SelectContent>

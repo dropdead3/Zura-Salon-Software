@@ -439,7 +439,7 @@ export function BillingConfigurationPanel({
             <InvoicePreview
               calculation={calculation}
               billingCycle={billingCycle}
-              planName={selectedPlan?.name || 'No Plan Selected')}
+              planName={selectedPlan?.name || 'No Plan Selected'}
               setupFee={setupFee}
               setupFeePaid={setupFeePaid}
               locationCount={actualLocationCount}

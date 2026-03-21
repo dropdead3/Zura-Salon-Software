@@ -160,7 +160,7 @@ export function PlatformSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto relative">
-        <div className={cn('py-3 space-y-4', collapsed ? 'px-1' : 'px-2')}>
+        <div className={cn('py-3 space-y-4', collapsed ? 'px-1' : 'px-2'}>
           {visibleGroups.map((group, groupIndex) => (
             <div key={group.label}>
               {/* Section label */}
@@ -263,7 +263,7 @@ export function PlatformSidebar() {
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-medium truncate text-[hsl(var(--platform-foreground))]">
-                  {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account')}
+                  {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
                 </p>
                 {isConnected && (
                   <OnlineIndicator isOnline={true} size="sm" />

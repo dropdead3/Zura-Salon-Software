@@ -204,13 +204,13 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            PIN: {member.has_pin ? 'Set' : 'Not set')}
+                            PIN: {member.has_pin ? 'Set' : 'Not set'}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={member.has_pin ? 'default' : 'secondary')}>
-                          {member.has_pin ? 'Active' : 'None')}
+                        <Badge variant={member.has_pin ? 'default' : 'secondary'}>
+                          {member.has_pin ? 'Active' : 'None'}
                         </Badge>
                         {canReset && (
                           <>
@@ -338,7 +338,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 <div className="relative">
                   <Input
                     id="reset-pin"
-                    type={showPin ? 'text' : 'password')}
+                    type={showPin ? 'text' : 'password'}
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={4}
@@ -388,7 +388,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
             <Button 
               onClick={handleResetPin}
               disabled={(actionMode !== 'clear' && newPin.length > 0 && newPin.length < 4) || adminSetPin.isPending}
-              variant={actionMode === 'clear' ? 'destructive' : 'default')}
+              variant={actionMode === 'clear' ? 'destructive' : 'default'}
             >
               {adminSetPin.isPending 
                 ? 'Saving...' 

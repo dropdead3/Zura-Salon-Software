@@ -208,7 +208,7 @@ export function GoalSetupDialog({
       <DialogContent className="sm:max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className={tokens.heading.card}>
-            {isEditing ? 'Edit Goal' : step === 'select' ? 'Choose Your Goals' : 'Set Your Targets')}
+            {isEditing ? 'Edit Goal' : step === 'select' ? 'Choose Your Goals' : 'Set Your Targets'}
           </DialogTitle>
           <DialogDescription className={tokens.body.muted}>
             {isEditing
@@ -324,7 +324,7 @@ export function GoalSetupDialog({
                             <span className="font-display text-base font-medium tracking-wide text-primary mt-1 block">
                               {formatTarget(tmpl, bm)}
                               <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
-                                /{tmpl.goal_period === 'weekly' ? 'wk' : 'mo')}
+                                /{tmpl.goal_period === 'weekly' ? 'wk' : 'mo'}
                               </span>
                             </span>
                             {/* Show actual from historical data */}
@@ -467,13 +467,13 @@ export function GoalSetupDialog({
                   Back
                 </Button>
               )}
-              <div className={cn(!isEditing ? '' : 'ml-auto')}>
+              <div className={cn(!isEditing ? '' : 'ml-auto'}>
                 <Button onClick={handleSave} disabled={isPending}>
                   {isPending
                     ? 'Saving...'
                     : isEditing
                       ? 'Update Goal'
-                      : `Save ${selectedKeys.size} Goal${selectedKeys.size === 1 ? '' : 's')}`}
+                      : `Save ${selectedKeys.size} Goal${selectedKeys.size === 1 ? '' : 's'}`}
                 </Button>
               </div>
             </div>

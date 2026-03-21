@@ -236,7 +236,7 @@ export function NoShowReport({
                     <TableCell className="text-right">{day.total}</TableCell>
                     <TableCell className="text-right">{day.noShows}</TableCell>
                     <TableCell className="text-right">
-                      <span className={day.rate > 10 ? 'text-destructive' : day.rate > 5 ? 'text-warning-foreground' : '')}>
+                      <span className={day.rate > 10 ? 'text-destructive' : day.rate > 5 ? 'text-warning-foreground' : ''}>
                         {day.rate.toFixed(1)}%
                       </span>
                     </TableCell>

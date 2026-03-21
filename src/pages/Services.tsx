@@ -38,9 +38,9 @@ function StylistLevelSelector({
             : 'bg-card text-foreground border-border hover:border-foreground/30'
         }`}
       >
-        <span className={isSticky ? 'text-white/70' : 'text-muted-foreground')}>Service Pricing Level:</span>
-        <span className={`font-medium ${isSticky ? 'text-white' : '')}`}>{selectedClientLabel} Stylist — {selectedLabel}</span>
-        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : '')} ${isSticky ? 'text-white/70' : 'text-muted-foreground')}`} />
+        <span className={isSticky ? 'text-white/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
+        <span className={`font-medium ${isSticky ? 'text-white' : ''}`}>{selectedClientLabel} Stylist — {selectedLabel}</span>
+        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : '')} ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`} />
       </button>
       
       <AnimatePresence>
@@ -116,7 +116,7 @@ function ServiceCard({
           </span>
         </div>
       )}
-      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : '')} ${service.isPopular ? 'border-primary/30' : '')}`}>
+      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : '')} ${service.isPopular ? 'border-primary/30' : ''}`}>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
@@ -347,8 +347,8 @@ export default function Services() {
                 isSticky={isSticky}
                 levels={levels}
               />
-              <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground')}`}>
-                <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground')}`}>Pricing varies by stylist level</span>
+              <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`}>
+                <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground'}`}>Pricing varies by stylist level</span>
               </p>
             </motion.div>
           </div>

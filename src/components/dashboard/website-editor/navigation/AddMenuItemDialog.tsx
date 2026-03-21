@@ -115,7 +115,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
                     : 'border-border/40 hover:border-border'
                 )}
               >
-                <t.icon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', type === t.value ? 'text-primary' : 'text-muted-foreground')} />
+                <t.icon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', type === t.value ? 'text-primary' : 'text-muted-foreground'} />
                 <div>
                   <p className="font-medium">{t.label}</p>
                   <p className="text-muted-foreground text-[10px] mt-0.5">{t.description}</p>
@@ -170,7 +170,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
                 type="url"
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
-                placeholder={type === 'external_url' ? 'https://example.com' : '/booking')}
+                placeholder={type === 'external_url' ? 'https://example.com' : '/booking'}
                 className="h-9 text-sm"
               />
             </div>
@@ -203,7 +203,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
               Cancel
             </Button>
             <Button size="sm" onClick={handleCreate} disabled={createItem.isPending || !label.trim()}>
-              {createItem.isPending ? 'Adding...' : 'Add Item')}
+              {createItem.isPending ? 'Adding...' : 'Add Item'}
             </Button>
           </div>
         </div>

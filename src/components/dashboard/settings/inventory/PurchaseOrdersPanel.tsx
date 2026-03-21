@@ -61,13 +61,13 @@ export function PurchaseOrdersPanel() {
     const cfg = statusConfig[po.status] || statusConfig.draft;
     return (
       <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedOrder(po)}>
-        <TableCell className="font-medium text-sm">{prod?.name || 'Unknown')}</TableCell>
+        <TableCell className="font-medium text-sm">{prod?.name || 'Unknown'}</TableCell>
         {!groupBySupplier && (
           <TableCell className="text-sm text-muted-foreground">{po.supplier_name || '—')}</TableCell>
         )}
         <TableCell className="text-right tabular-nums text-sm">{po.quantity}</TableCell>
         <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-          <BlurredAmount>{po.total_cost != null ? formatCurrency(po.total_cost) : '—')}</BlurredAmount>
+          <BlurredAmount>{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</BlurredAmount>
         </TableCell>
         <TableCell>
           <Badge variant="outline" className={cn("text-[10px]", cfg.className)}>{cfg.label}</Badge>

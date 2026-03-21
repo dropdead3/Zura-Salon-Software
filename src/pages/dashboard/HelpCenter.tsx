@@ -74,13 +74,13 @@ export default function HelpCenter() {
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            {currentCategory ? 'Back to Help Center' : 'Back to Dashboard')}
+            {currentCategory ? 'Back to Help Center' : 'Back to Dashboard'}
           </Button>
         </div>
 
         <div className="text-center mb-6">
           <h1 className="text-3xl font-display mb-2">
-            {currentCategory ? currentCategory.name : 'Help Center')}
+            {currentCategory ? currentCategory.name : 'Help Center'}
           </h1>
           <p className="text-muted-foreground">
             {currentCategory
@@ -184,7 +184,7 @@ export default function HelpCenter() {
                     className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5"
                     onClick={() =>
                       navigate(
-                        dashPath(`/help/${article.category?.slug || 'uncategorized')}/${article.slug}`)
+                        dashPath(`/help/${article.category?.slug || 'uncategorized'}/${article.slug}`)
                       )
                     }
                   >
@@ -230,7 +230,7 @@ export default function HelpCenter() {
                           <CardTitle className="text-base">{category.name}</CardTitle>
                           <CardDescription>
                             {category.article_count || 0} article
-                            {category.article_count !== 1 ? 's' : '')}
+                            {category.article_count !== 1 ? 's' : ''}
                           </CardDescription>
                         </div>
                       </div>

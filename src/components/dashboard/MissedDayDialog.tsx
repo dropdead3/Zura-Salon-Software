@@ -145,7 +145,7 @@ export function MissedDayDialog({
             </div>
             
             <DialogTitle className="text-2xl font-display uppercase tracking-wider text-foreground">
-              You Missed {daysMissed} Day{daysMissed > 1 ? 's' : '')}
+              You Missed {daysMissed} Day{daysMissed > 1 ? 's' : ''}
             </DialogTitle>
           </DialogHeader>
 
@@ -195,9 +195,9 @@ export function MissedDayDialog({
                         ? 'bg-muted' 
                         : 'bg-gradient-to-br from-primary to-primary/80 shadow-md'
                     }`}>
-                      <Shield className={`h-5 w-5 ${isExpired ? 'text-muted-foreground' : 'text-primary-foreground')}`} />
+                      <Shield className={`h-5 w-5 ${isExpired ? 'text-muted-foreground' : 'text-primary-foreground'}`} />
                     </div>
-                    <span className={`font-medium ${isExpired ? 'text-muted-foreground' : 'text-foreground')}`}>
+                    <span className={`font-medium ${isExpired ? 'text-muted-foreground' : 'text-foreground'}`}>
                       Use a Life Happens Pass
                     </span>
                   </div>

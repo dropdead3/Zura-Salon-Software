@@ -312,7 +312,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
             )}
 
             <p className="text-muted-foreground text-xs">
-              {filteredProductCount} product{filteredProductCount !== 1 ? 's' : '')} will be included
+              {filteredProductCount} product{filteredProductCount !== 1 ? 's' : ''} will be included
             </p>
           </div>
           <div className="flex justify-end gap-2 pt-2">
@@ -349,13 +349,13 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
 
       {/* Sub-tab toggle */}
       <div className="flex gap-1">
-        <Button variant={tab === 'sessions' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('sessions')}>
+        <Button variant={tab === 'sessions' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('sessions'}>
           <ClipboardCheck className="w-4 h-4 mr-1" /> Sessions
         </Button>
-        <Button variant={tab === 'shrinkage' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('shrinkage')}>
+        <Button variant={tab === 'shrinkage' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('shrinkage'}>
           <TrendingDown className="w-4 h-4 mr-1" /> Shrinkage
         </Button>
-        <Button variant={tab === 'audit' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('audit')}>
+        <Button variant={tab === 'audit' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('audit'}>
           <CalendarCheck className="w-4 h-4 mr-1" /> Audit Schedule
         </Button>
       </div>
@@ -399,14 +399,14 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                           <Badge variant="outline" className={cn('text-[10px] font-medium border',
                             isActive ? 'bg-primary/10 text-primary border-primary/20' : 'bg-success/10 text-success border-success/20'
                           )}>
-                            {isActive ? 'In Progress' : 'Completed')}
+                            {isActive ? 'In Progress' : 'Completed'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right hidden sm:table-cell tabular-nums">{session.total_products_counted}</TableCell>
                         <TableCell className="text-right hidden sm:table-cell tabular-nums">
                           {session.total_variance_units !== 0 ? (
-                            <span className={session.total_variance_units < 0 ? 'text-destructive' : 'text-success')}>
-                              {session.total_variance_units > 0 ? '+' : '')}{session.total_variance_units}
+                            <span className={session.total_variance_units < 0 ? 'text-destructive' : 'text-success'}>
+                              {session.total_variance_units > 0 ? '+' : ''}{session.total_variance_units}
                             </span>
                           ) : '0')}
                         </TableCell>

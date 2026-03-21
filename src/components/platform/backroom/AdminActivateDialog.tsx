@@ -242,7 +242,7 @@ export function AdminActivateDialog({
             disabled={!hasStripeCustomer || enabledConfigs.length === 0}
           >
             <CreditCard className="w-4 h-4" />
-            Activate & Charge ({enabledConfigs.length} location{enabledConfigs.length !== 1 ? 's' : '')})
+            Activate & Charge ({enabledConfigs.length} location{enabledConfigs.length !== 1 ? 's' : ''})
           </PlatformButton>
         </DialogFooter>
       </DialogContent>

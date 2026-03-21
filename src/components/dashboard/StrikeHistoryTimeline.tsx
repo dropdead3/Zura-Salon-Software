@@ -86,7 +86,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
               <CardDescription>
                 {strikes.length === 0 
                   ? 'No strikes on record'
-                  : `${strikes.length} total strike${strikes.length !== 1 ? 's' : '')}`}
+                  : `${strikes.length} total strike${strikes.length !== 1 ? 's' : ''}`}
               </CardDescription>
             </div>
             {unresolvedCount > 0 && (
@@ -253,7 +253,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
               onClick={handleResolveSubmit}
               disabled={resolveStrike.isPending}
             >
-              {resolveStrike.isPending ? 'Resolving...' : 'Resolve Strike')}
+              {resolveStrike.isPending ? 'Resolving...' : 'Resolve Strike'}
             </Button>
           </DialogFooter>
         </DialogContent>

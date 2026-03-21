@@ -113,7 +113,7 @@ function DayXAxisTick({ x, y, payload, days }: any) {
         textAnchor="middle" 
         className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}
       >
-        {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full')}
+        {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full'}
       </text>
     </g>
   );
@@ -372,8 +372,8 @@ export function CapacityUtilizationCard() {
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={days[index]?.isClosed ? 'transparent' : 'url(#capacity-glass-sales)')}
-                      stroke={days[index]?.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)')}
+                      fill={days[index]?.isClosed ? 'transparent' : 'url(#capacity-glass-sales)'}
+                      stroke={days[index]?.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)'}
                     />
                   ))}
                 </Bar>

@@ -750,7 +750,7 @@ export function EmailTemplatesManager() {
                 letterSpacing: '-0.02em'
               }}
             >
-              {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject')}
+              {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject'}
             </h2>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-[15px]">

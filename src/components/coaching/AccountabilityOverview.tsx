@@ -110,9 +110,9 @@ export function AccountabilityOverview() {
             <div className="text-sm text-muted-foreground">Active Items</div>
           </CardContent>
         </Card>
-        <Card className={overdueItems.length > 0 ? 'border-destructive' : '')}>
+        <Card className={overdueItems.length > 0 ? 'border-destructive' : ''}>
           <CardContent className="p-4 text-center">
-            <div className={`text-2xl font-medium tabular-nums ${overdueItems.length > 0 ? 'text-destructive' : '')}`}>
+            <div className={`text-2xl font-medium tabular-nums ${overdueItems.length > 0 ? 'text-destructive' : ''}`}>
               {overdueItems.length}
             </div>
             <div className="text-sm text-muted-foreground">Overdue</div>
@@ -159,16 +159,16 @@ export function AccountabilityOverview() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={member?.photo_url || '')} />
+                  <AvatarImage src={member?.photo_url || ''} />
                   <AvatarFallback>
                     {(member?.full_name || 'U').charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-base">
-                  {member?.display_name || member?.full_name || 'Unknown')}
+                  {member?.display_name || member?.full_name || 'Unknown'}
                 </CardTitle>
                 <Badge variant="outline" className="ml-auto">
-                  {memberItems.length} item{memberItems.length !== 1 ? 's' : '')}
+                  {memberItems.length} item{memberItems.length !== 1 ? 's' : ''}
                 </Badge>
               </div>
             </CardHeader>
@@ -197,7 +197,7 @@ export function AccountabilityOverview() {
                         {item.due_date && (
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            <span className={isOverdue && item.status !== 'completed' ? 'text-destructive' : '')}>
+                            <span className={isOverdue && item.status !== 'completed' ? 'text-destructive' : ''}>
                               Due: {formatDate(parseISO(item.due_date), 'MMM d, yyyy')}
                             </span>
                           </div>

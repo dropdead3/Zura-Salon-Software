@@ -39,7 +39,7 @@ function UnitInput({
       <div className="relative">
         <input
           type="number"
-          step={step ?? '0.01')}
+          step={step ?? '0.01'}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
@@ -106,7 +106,7 @@ export function BackroomBulkPricingDialog({ open, onOpenChange, orgId, productId
         <DialogHeader>
           <DialogTitle className="font-display text-base tracking-wide">Set Pricing</DialogTitle>
           <DialogDescription className="font-sans text-sm text-muted-foreground">
-            {productIds.length} product{productIds.length === 1 ? '' : 's')} in {scopeLabel}
+            {productIds.length} product{productIds.length === 1 ? '' : 's'} in {scopeLabel}
           </DialogDescription>
         </DialogHeader>
 

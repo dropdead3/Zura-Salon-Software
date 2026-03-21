@@ -35,7 +35,7 @@ export function AppointmentProfitCard({ data, className }: AppointmentProfitCard
             </div>
             <div>
               <CardTitle className={tokens.card.title}>
-                {data.serviceName ?? 'Service')}
+                {data.serviceName ?? 'Service'}
               </CardTitle>
               <p className={tokens.body.muted}>Profit Breakdown</p>
             </div>

@@ -307,7 +307,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       {selectedServiceId && (
         <ComponentMappingDialog
           serviceId={selectedServiceId}
-          serviceName={services?.find((s) => s.id === selectedServiceId)?.name || '')}
+          serviceName={services?.find((s) => s.id === selectedServiceId)?.name || ''}
           orgId={orgId!}
           onClose={() => setSelectedServiceId(null)}
         />
@@ -437,7 +437,7 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
                   disabled={availableProducts.length === 0}
                 >
                   <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  {availableProducts.length === 0 ? 'No available products' : 'Add Component')}
+                  {availableProducts.length === 0 ? 'No available products' : 'Add Component'}
                 </Button>
               )}
             </>

@@ -96,7 +96,7 @@ export function UsageVarianceSummary({ sessionId, serviceId }: UsageVarianceSumm
                   >
                     {v.status === 'within_tolerance'
                       ? config.label
-                      : `${v.variance > 0 ? '+' : '')}${v.variance.toFixed(1)} (${v.variance_pct > 0 ? '+' : '')}${v.variance_pct}%)`}
+                      : `${v.variance > 0 ? '+' : '')}${v.variance.toFixed(1)} (${v.variance_pct > 0 ? '+' : ''}${v.variance_pct}%)`}
                   </Badge>
                 </div>
               </div>

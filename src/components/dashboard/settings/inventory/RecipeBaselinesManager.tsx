@@ -124,7 +124,7 @@ export function RecipeBaselinesManager() {
       <CardContent className="space-y-4">
         {/* Service selector */}
         <Select
-          value={selectedServiceId ?? '')}
+          value={selectedServiceId ?? ''}
           onValueChange={(v) => setSelectedServiceId(v || null)}
         >
           <SelectTrigger className="font-sans">
@@ -137,7 +137,7 @@ export function RecipeBaselinesManager() {
                   <span>{s.name}</span>
                   {serviceBaselineCount.get(s.id) ? (
                     <Badge variant="secondary" className="text-[10px] h-4 px-1">
-                      {serviceBaselineCount.get(s.id)} product{(serviceBaselineCount.get(s.id) ?? 0) > 1 ? 's' : '')}
+                      {serviceBaselineCount.get(s.id)} product{(serviceBaselineCount.get(s.id) ?? 0) > 1 ? 's' : ''}
                     </Badge>
                   ) : null}
                 </div>

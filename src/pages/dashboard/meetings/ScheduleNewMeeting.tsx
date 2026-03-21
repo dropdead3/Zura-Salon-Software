@@ -158,7 +158,7 @@ export default function ScheduleNewMeeting() {
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle>{isCoachMode ? 'Schedule 1:1 Meeting' : 'Request a Meeting')}</CardTitle>
+              <CardTitle>{isCoachMode ? 'Schedule 1:1 Meeting' : 'Request a Meeting'}</CardTitle>
               <CardDescription>
                 {isCoachMode
                   ? `Schedule a meeting with ${staffName}. This will be auto-confirmed.`

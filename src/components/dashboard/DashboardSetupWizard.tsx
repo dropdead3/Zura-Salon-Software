@@ -194,7 +194,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
                 disabled={!selectedTemplate || completeSetup.isPending}
                 className="gap-2"
               >
-                {completeSetup.isPending ? 'Setting up...' : 'Apply & Continue')}
+                {completeSetup.isPending ? 'Setting up...' : 'Apply & Continue'}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>

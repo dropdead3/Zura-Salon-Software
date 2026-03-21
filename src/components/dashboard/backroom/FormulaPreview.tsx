@@ -29,8 +29,8 @@ export function FormulaPreview({
           {serviceName && (
             <span className="font-sans text-sm font-medium">{serviceName}</span>
           )}
-          <Badge variant={formulaType === 'refined' ? 'default' : 'secondary')} className="text-[10px]">
-            {formulaType === 'refined' ? 'Refined' : 'Actual')}
+          <Badge variant={formulaType === 'refined' ? 'default' : 'secondary'} className="text-[10px]">
+            {formulaType === 'refined' ? 'Refined' : 'Actual'}
           </Badge>
           {staffName && (
             <span className="font-sans text-xs text-muted-foreground">by {staffName}</span>

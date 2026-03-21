@@ -50,7 +50,7 @@ export function ActiveCampaignsCard() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-xs tracking-[0.15em]">ACTIVE CAMPAIGNS</h2>
         <Link to={dashPath('/campaigns')} className="text-[11px] text-primary hover:underline">
-          {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all')}
+          {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all'}
         </Link>
       </div>
 

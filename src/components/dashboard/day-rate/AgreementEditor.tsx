@@ -298,7 +298,7 @@ By proceeding with this booking, you acknowledge that you have read, understood,
 
       <div className="flex justify-end gap-2">
         <Button type="submit" disabled={createAgreement.isPending}>
-          {createAgreement.isPending ? 'Creating...' : 'Create Agreement')}
+          {createAgreement.isPending ? 'Creating...' : 'Create Agreement'}
         </Button>
       </div>
     </form>

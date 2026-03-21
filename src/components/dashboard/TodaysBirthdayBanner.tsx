@@ -71,7 +71,7 @@ export function TodaysBirthdayBanner() {
             <div className="flex items-center gap-2 shrink-0">
               <PartyPopper className="w-5 h-5" />
               <span className="font-display text-sm tracking-wide">
-                BIRTHDAY{todaysBirthdays.length > 1 ? 'S' : '')} TODAY!
+                BIRTHDAY{todaysBirthdays.length > 1 ? 'S' : ''} TODAY!
               </span>
             </div>
             

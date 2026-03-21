@@ -82,12 +82,12 @@ export function PriceHistoryDialog({ open, onOpenChange, productName, brand }: P
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">${Number(h.wholesale_price).toFixed(2)}</TableCell>
                     <TableCell className="font-sans text-sm tabular-nums text-muted-foreground">
-                      {h.previous_price != null ? `$${Number(h.previous_price).toFixed(2)}` : '—')}
+                      {h.previous_price != null ? `$${Number(h.previous_price).toFixed(2)}` : '—'}
                     </TableCell>
                     <TableCell className="font-sans text-sm tabular-nums">
                       {h.price_delta_pct != null ? (
-                        <span className={h.price_delta_pct > 0 ? 'text-destructive' : 'text-emerald-600')}>
-                          {h.price_delta_pct > 0 ? '+' : '')}{Number(h.price_delta_pct).toFixed(1)}%
+                        <span className={h.price_delta_pct > 0 ? 'text-destructive' : 'text-emerald-600'}>
+                          {h.price_delta_pct > 0 ? '+' : ''}{Number(h.price_delta_pct).toFixed(1)}%
                         </span>
                       ) : '—')}
                     </TableCell>

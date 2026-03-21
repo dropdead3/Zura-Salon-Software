@@ -48,7 +48,7 @@ const AnimatedBar = (props: any) => {
       <rect
         x={x} y={y} width={animWidth} height={h}
         fill={fill}
-        stroke={animWidth > 0 ? stroke : 'none')}
+        stroke={animWidth > 0 ? stroke : 'none'}
         strokeWidth={strokeWidth}
         clipPath={`url(#${clipId})`}
         style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}

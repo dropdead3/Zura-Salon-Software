@@ -134,7 +134,7 @@ export function AdjustmentsStep({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={emp.employee?.photo_url || undefined} />
                       <AvatarFallback>
-                        {getInitials(emp.employee?.full_name || '')}
+                        {getInitials(emp.employee?.full_name || ''}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium">
@@ -206,7 +206,7 @@ export function AdjustmentsStep({
                         : ''
                     }
                   >
-                    {netAdjustment >= 0 ? '+' : '-')}{formatCurrency(Math.abs(netAdjustment))}
+                    {netAdjustment >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netAdjustment))}
                   </span>
                 </TableCell>
               </TableRow>

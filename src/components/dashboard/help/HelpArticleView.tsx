@@ -71,7 +71,7 @@ export function HelpArticleView({ article }: HelpArticleViewProps) {
         className="mb-6 gap-2"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to {article.category?.name || 'Help Center')}
+        Back to {article.category?.name || 'Help Center'}
       </Button>
 
       <Card>

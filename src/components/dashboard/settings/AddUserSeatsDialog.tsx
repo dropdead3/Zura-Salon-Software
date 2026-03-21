@@ -36,7 +36,7 @@ export function AddUserSeatsDialog({
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['organization-billing', organizationId] });
       queryClient.invalidateQueries({ queryKey: ['organization-usage', organizationId] });
-      toast.success(`User seat${seatsToAdd > 1 ? 's' : '')} added!`, {
+      toast.success(`User seat${seatsToAdd > 1 ? 's' : ''} added!`, {
         description: `You now have ${result.newSeats + (capacity.users.total - capacity.additionalUsersPurchased)} available user seats.`,
       });
       onOpenChange(false);
@@ -194,7 +194,7 @@ export function AddUserSeatsDialog({
             onClick={() => addSeatsMutation.mutate()}
             disabled={!agreed || addSeatsMutation.isPending}
           >
-            {addSeatsMutation.isPending ? 'Adding...' : `Confirm & Add ${seatsToAdd} Seat${seatsToAdd > 1 ? 's' : '')}`}
+            {addSeatsMutation.isPending ? 'Adding...' : `Confirm & Add ${seatsToAdd} Seat${seatsToAdd > 1 ? 's' : ''}`}
           </Button>
         </DialogFooter>
       </DialogContent>

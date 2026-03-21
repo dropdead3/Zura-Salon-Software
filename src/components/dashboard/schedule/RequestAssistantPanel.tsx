@@ -221,7 +221,7 @@ export function RequestAssistantPanel({
           {DURATION_PRESETS.map(preset => (
             <Badge
               key={preset.label}
-              variant={selectedDuration === preset.minutes ? 'default' : 'outline')}
+              variant={selectedDuration === preset.minutes ? 'default' : 'outline'}
               className={cn(
                 'cursor-pointer text-xs px-2.5 py-1 transition-colors',
                 selectedDuration === preset.minutes
@@ -267,7 +267,7 @@ export function RequestAssistantPanel({
                       setAssistantSearchOpen(false);
                     }}
                   >
-                    <Check className={cn('mr-2 h-3.5 w-3.5', !assistantUserId ? 'opacity-100' : 'opacity-0')} />
+                    <Check className={cn('mr-2 h-3.5 w-3.5', !assistantUserId ? 'opacity-100' : 'opacity-0'} />
                     Any available assistant
                   </CommandItem>
                   {sortedAssistants.map(member => {
@@ -283,7 +283,7 @@ export function RequestAssistantPanel({
                           setAssistantSearchOpen(false);
                         }}
                       >
-                        <Check className={cn('mr-2 h-3.5 w-3.5', assistantUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
+                        <Check className={cn('mr-2 h-3.5 w-3.5', assistantUserId === member.user_id ? 'opacity-100' : 'opacity-0'} />
                         <span className="flex-1">{formatDisplayName(member.full_name, member.display_name)}</span>
                         {suggestedUserIds.has(member.user_id) && (
                           <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 ml-1 shrink-0">

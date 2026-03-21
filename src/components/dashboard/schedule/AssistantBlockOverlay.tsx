@@ -206,7 +206,7 @@ export function AssistantBlockOverlay({
             <TooltipContent side="top" align="center" sideOffset={4} className="max-w-xs z-[100]">
               <div className="space-y-1 text-xs">
                 <div className="font-medium">
-                  {isAssistant ? `Assisting ${requesterName}` : 'Assistant Coverage')}
+                  {isAssistant ? `Assisting ${requesterName}` : 'Assistant Coverage'}
                 </div>
                 <div className="text-muted-foreground">
                   {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)}

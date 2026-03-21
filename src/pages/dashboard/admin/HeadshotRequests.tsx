@@ -293,10 +293,10 @@ export default function HeadshotRequests() {
                     <TableCell>
                       <div>
                         <p className="font-sans font-medium">
-                          {request.employee_profile?.display_name || request.employee_profile?.full_name || 'Unknown')}
+                          {request.employee_profile?.display_name || request.employee_profile?.full_name || 'Unknown'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {request.employee_profile?.email || '—')}
+                          {request.employee_profile?.email || '—'}
                         </p>
                       </div>
                     </TableCell>
@@ -351,7 +351,7 @@ export default function HeadshotRequests() {
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Team Member</p>
                     <p className="font-sans font-medium">
-                      {selectedRequest.employee_profile?.display_name || selectedRequest.employee_profile?.full_name || 'Unknown')}
+                      {selectedRequest.employee_profile?.display_name || selectedRequest.employee_profile?.full_name || 'Unknown'}
                     </p>
                     {selectedRequest.employee_profile?.email && (
                       <p className="text-sm text-muted-foreground">{selectedRequest.employee_profile.email}</p>
@@ -376,7 +376,7 @@ export default function HeadshotRequests() {
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start">
                           <CalendarDays className="w-4 h-4 mr-2" />
-                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date')}
+                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -458,7 +458,7 @@ export default function HeadshotRequests() {
                     Cancel
                   </Button>
                   <Button onClick={handleUpdateRequest} disabled={updating} className="font-display">
-                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'UPDATE REQUEST')}
+                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'UPDATE REQUEST'}
                   </Button>
                 </DialogFooter>
               </>

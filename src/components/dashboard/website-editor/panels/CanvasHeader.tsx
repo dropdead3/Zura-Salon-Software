@@ -140,7 +140,7 @@ export function CanvasHeader({
             isDirty ? 'bg-amber-500' : 'bg-emerald-500'
           )} />
           <span className="text-[11px] text-muted-foreground font-sans">
-            {isDirty ? 'Draft' : 'Published')}
+            {isDirty ? 'Draft' : 'Published'}
           </span>
           <SavedIndicator visible={showSaved} />
         </div>

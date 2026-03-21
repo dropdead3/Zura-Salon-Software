@@ -101,7 +101,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
               ) : (
                 <TrendingDown className="w-3 h-3" />
               )}
-              {kpi.change >= 0 ? '+' : '')}
+              {kpi.change >= 0 ? '+' : ''}
               {kpi.change.toFixed(1)}%
             </span>
           )}

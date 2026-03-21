@@ -35,7 +35,7 @@ export function LiveSessionIndicator({ locationId, compact }: LiveSessionIndicat
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border select-none whitespace-nowrap">
         <Moon className="h-3 w-3 text-muted-foreground shrink-0" />
         <span className="text-xs font-medium text-muted-foreground whitespace-nowrap font-sans truncate">
-          {compact ? 'Concluded' : 'Day concluded')}
+          {compact ? 'Concluded' : 'Day concluded'}
         </span>
       </div>
     );
@@ -99,8 +99,8 @@ export function LiveSessionIndicator({ locationId, compact }: LiveSessionIndicat
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-xs">
           <p className="text-xs font-sans">
-            {inSessionCount} appointment{inSessionCount !== 1 ? 's' : '')} in progress
-            {activeStylistCount > 0 && ` · ${activeStylistCount} stylist${activeStylistCount !== 1 ? 's' : '')} working`}
+            {inSessionCount} appointment{inSessionCount !== 1 ? 's' : ''} in progress
+            {activeStylistCount > 0 && ` · ${activeStylistCount} stylist${activeStylistCount !== 1 ? 's' : ''} working`}
           </p>
           {stylists.length > 0 && (
             <p className="text-xs text-muted-foreground mt-1 font-sans">

@@ -66,24 +66,24 @@ export default function StylistMixingDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile
           label="Sessions (30d)"
-          value={stats?.totalSessions?.toString() ?? '—')}
+          value={stats?.totalSessions?.toString() ?? '—'}
           icon={<FlaskConical className="w-4 h-4 text-primary" />}
         />
         <StatTile
           label="Waste Rate"
-          value={stats ? `${stats.wasteRate}%` : '—')}
+          value={stats ? `${stats.wasteRate}%` : '—'}
           icon={<AlertTriangle className="w-4 h-4 text-primary" />}
-          variant={stats && parseFloat(stats.wasteRate) > 10 ? 'warning' : 'default')}
+          variant={stats && parseFloat(stats.wasteRate) > 10 ? 'warning' : 'default'}
         />
         <StatTile
           label="Reweigh Rate"
-          value={stats ? `${stats.reweighCompliance}%` : '—')}
+          value={stats ? `${stats.reweighCompliance}%` : '—'}
           icon={<BarChart3 className="w-4 h-4 text-primary" />}
-          variant={stats && parseInt(stats.reweighCompliance) < 80 ? 'warning' : 'default')}
+          variant={stats && parseInt(stats.reweighCompliance) < 80 ? 'warning' : 'default'}
         />
         <StatTile
           label="Avg Variance"
-          value={stats ? `${stats.avgVariance}%` : '—')}
+          value={stats ? `${stats.avgVariance}%` : '—'}
           icon={<TrendingUp className="w-4 h-4 text-primary" />}
         />
       </div>
@@ -121,7 +121,7 @@ export default function StylistMixingDashboard() {
                       </div>
                       <div>
                         <p className={tokens.body.emphasis}>
-                          {session.bowl_count} bowl{session.bowl_count !== 1 ? 's' : '')}
+                          {session.bowl_count} bowl{session.bowl_count !== 1 ? 's' : ''}
                         </p>
                         <p className={cn(tokens.body.muted, 'text-xs')}>
                           {formatRelativeTime(session.started_at)}
@@ -311,7 +311,7 @@ export default function StylistMixingDashboard() {
                   return (
                     <TableRow key={charge.id}>
                       <TableCell className={tokens.body.muted}>{formatDateShort(charge.created_at)}</TableCell>
-                      <TableCell className={tokens.body.emphasis}>{charge.service_name ?? '—')}</TableCell>
+                      <TableCell className={tokens.body.emphasis}>{charge.service_name ?? '—'}</TableCell>
                       <TableCell className="text-right">{charge.included_allowance_qty}g</TableCell>
                       <TableCell className="text-right">{charge.actual_usage_qty}g</TableCell>
                       <TableCell className="text-right text-destructive">+{charge.overage_qty}g</TableCell>

@@ -148,7 +148,7 @@ export default function BackroomSubscription() {
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
                   <span className={cn(tokens.stat.large, 'text-foreground')}>
-                    {locationCount} Location{locationCount !== 1 ? 's' : '')}
+                    {locationCount} Location{locationCount !== 1 ? 's' : ''}
                   </span>
                   <Badge variant="outline" className="font-sans text-[10px]">
                     ${BACKROOM_BASE_PRICE}/mo each

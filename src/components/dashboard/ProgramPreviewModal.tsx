@@ -154,7 +154,7 @@ export function ProgramPreviewModal({ weeks = [] }: ProgramPreviewModalProps) {
                           </div>
                         </div>
                       </div>
-                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weekExpanded ? 'rotate-180' : '')}`} />
+                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weekExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
                 </CollapsibleTrigger>
@@ -195,7 +195,7 @@ export function ProgramPreviewModal({ weeks = [] }: ProgramPreviewModalProps) {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   <AssignmentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className={`text-sm ${isComplete ? 'line-through text-muted-foreground' : '')}`}>
+                                  <span className={`text-sm ${isComplete ? 'line-through text-muted-foreground' : ''}`}>
                                     {assignment.title}
                                   </span>
                                   {assignment.is_required && !isComplete && (
@@ -228,7 +228,7 @@ export function ProgramPreviewModal({ weeks = [] }: ProgramPreviewModalProps) {
                       }`}>
                         {isComplete && <CheckCircle2 className="w-3 h-3 text-background" />}
                       </div>
-                      <span className={`text-sm ${isComplete ? 'line-through text-muted-foreground' : '')}`}>
+                      <span className={`text-sm ${isComplete ? 'line-through text-muted-foreground' : ''}`}>
                         {task.label}
                       </span>
                     </div>

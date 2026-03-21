@@ -124,7 +124,7 @@ export function ScheduledReportsSubTab() {
         <div>
           <h3 className="text-lg font-medium">Scheduled Reports</h3>
           <p className="text-sm text-muted-foreground">
-            {reports.length} report{reports.length !== 1 ? 's' : '')} configured
+            {reports.length} report{reports.length !== 1 ? 's' : ''} configured
           </p>
         </div>
         <Button>
@@ -157,7 +157,7 @@ export function ScheduledReportsSubTab() {
                     
                     <span className="flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5" />
-                      {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : '')}
+                      {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : ''}
                     </span>
                     
                     {report.format && (

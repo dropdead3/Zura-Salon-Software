@@ -177,7 +177,7 @@ export function PersonalInsightsDrawer({ label, expanded: controlledExpanded, on
         <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
           <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <span className="truncate">{label ?? 'My Insights')}</span>
+        <span className="truncate">{label ?? 'My Insights'}</span>
         {sentiment && SentimentIcon && (
           <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
             <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
@@ -198,7 +198,7 @@ export function PersonalInsightsDrawer({ label, expanded: controlledExpanded, on
       <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
         <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
       </div>
-      <span className="truncate">{label ?? 'My Insights')}</span>
+      <span className="truncate">{label ?? 'My Insights'}</span>
       <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
     </SilverShineButton>
   );

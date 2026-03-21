@@ -327,7 +327,7 @@ export default function StaffStrikes() {
                     <Avatar className="w-10 h-10">
                       <AvatarImage src={strike.employee_photo || undefined} />
                       <AvatarFallback>
-                        {strike.employee_name?.charAt(0) || '?')}
+                        {strike.employee_name?.charAt(0) || '?'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">

@@ -79,7 +79,7 @@ function formatTimingLabel(hours: number, type: 'before_appointment' | 'after_ap
     if (days === 14) return `2 weeks ${direction}`;
     if (days === 21) return `3 weeks ${direction}`;
     if (days === 42) return `6 weeks ${direction}`;
-    return `${days} day${days > 1 ? 's' : '')} ${direction}`;
+    return `${days} day${days > 1 ? 's' : ''} ${direction}`;
   }
   return `${days}d ${remaining}h ${direction}`;
 }
@@ -349,7 +349,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
       <div className="flex items-center gap-3">
         <Button variant="ghost" size={tokens.button.inline} onClick={onBack}>← Back</Button>
         <div>
-          <h3 className="font-medium">{flow?.name || 'Flow')}</h3>
+          <h3 className="font-medium">{flow?.name || 'Flow'}</h3>
           <p className="text-xs text-muted-foreground">
             {flow?.service?.name || `All ${flow?.service_category} services`}
           </p>
@@ -821,12 +821,12 @@ function QueueItemRow({ item }: { item: ServiceEmailQueueItem }) {
           <StatusIcon className={cn('w-4 h-4 shrink-0', config.color)} />
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium truncate">{appt?.client_name || 'Unknown')}</span>
+              <span className="font-medium truncate">{appt?.client_name || 'Unknown'}</span>
               <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground truncate">{appt?.service_name || 'Service')}</span>
+              <span className="text-muted-foreground truncate">{appt?.service_name || 'Service'}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{step?.subject || 'Email')}</span>
+              <span>{step?.subject || 'Email'}</span>
               {item.error_message && (
                 <>
                   <span>·</span>

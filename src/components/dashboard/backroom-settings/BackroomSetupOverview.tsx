@@ -116,14 +116,14 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
                     'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
                     item.done ? 'bg-primary/15' : 'bg-muted'
                   )}>
-                    <Icon className={cn('w-4 h-4', item.done ? 'text-primary' : 'text-muted-foreground')} />
+                    <Icon className={cn('w-4 h-4', item.done ? 'text-primary' : 'text-muted-foreground'} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className={cn('text-sm font-sans', item.done ? 'text-foreground' : 'text-muted-foreground')}>
+                    <p className={cn('text-sm font-sans', item.done ? 'text-foreground' : 'text-muted-foreground'}>
                       {item.label}
                     </p>
                     <p className="text-xs text-muted-foreground/60">
-                      {item.value}{item.total != null ? ` / ${item.total}` : '')} configured
+                      {item.value}{item.total != null ? ` / ${item.total}` : ''} configured
                     </p>
                   </div>
                   {item.done && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}

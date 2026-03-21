@@ -176,7 +176,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
 
       toast.success(
         varianceSummary.discrepancyCount > 0
-          ? `Count complete — ${varianceSummary.discrepancyCount} discrepanc${varianceSummary.discrepancyCount === 1 ? 'y' : 'ies')} adjusted`
+          ? `Count complete — ${varianceSummary.discrepancyCount} discrepanc${varianceSummary.discrepancyCount === 1 ? 'y' : 'ies'} adjusted`
           : 'Count complete — no discrepancies found'
       );
       onClose();
@@ -249,7 +249,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
                   : 'text-muted-foreground'
               )}
             >
-              {varianceSummary.totalVarianceUnits > 0 ? '+' : '')}
+              {varianceSummary.totalVarianceUnits > 0 ? '+' : ''}
               {varianceSummary.totalVarianceUnits} units
             </span>
           </span>
@@ -258,7 +258,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
               <span className="text-muted-foreground">·</span>
               <span>
                 {varianceSummary.discrepancyCount} discrepanc
-                {varianceSummary.discrepancyCount === 1 ? 'y' : 'ies')}
+                {varianceSummary.discrepancyCount === 1 ? 'y' : 'ies'}
               </span>
               <span className="text-muted-foreground">·</span>
               <span className="text-destructive">
@@ -331,7 +331,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
                         type="number"
                         min={0}
                         placeholder="—"
-                        value={entry?.counted ?? '')}
+                        value={entry?.counted ?? ''}
                         onChange={(e) => {
                           const val = e.target.value;
                           updateEntry(product.id, val === '' ? null : Number(val));
@@ -356,7 +356,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
                                 : 'bg-success/10 text-success border-success/20'
                             )}
                           >
-                            {variance! > 0 ? '+' : '')}
+                            {variance! > 0 ? '+' : ''}
                             {variance}
                           </Badge>
                         ) : (

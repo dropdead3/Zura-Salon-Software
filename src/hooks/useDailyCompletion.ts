@@ -354,7 +354,7 @@ export function useDailyCompletion(userId: string | undefined) {
     setHasMissedDay(false);
     setDaysMissed(0);
     const remaining = enrollment.forgive_credits_remaining - 1;
-    toast.success(`Life Happens Pass used! You have ${remaining} ${remaining === 1 ? 'pass' : 'passes')} left. Keep going!`);
+    toast.success(`Life Happens Pass used! You have ${remaining} ${remaining === 1 ? 'pass' : 'passes'} left. Keep going!`);
     await fetchData();
     return true;
   };

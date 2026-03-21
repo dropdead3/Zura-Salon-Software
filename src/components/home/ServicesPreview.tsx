@@ -341,7 +341,7 @@ export function ServicesPreview() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex overflow-x-auto scrollbar-minimal pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab')}`}
+          className={`flex overflow-x-auto scrollbar-minimal pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ 
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none', 

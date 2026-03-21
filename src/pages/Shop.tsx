@@ -153,7 +153,7 @@ export default function Shop() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground text-center mt-6">
-                {products.length} product{products.length !== 1 ? 's' : '')}
+                {products.length} product{products.length !== 1 ? 's' : ''}
               </p>
             </>
           ) : (

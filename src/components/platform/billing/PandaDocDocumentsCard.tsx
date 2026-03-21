@@ -113,7 +113,7 @@ export function PandaDocDocumentsCard({ organizationId }: PandaDocDocumentsCardP
                           disabled={reapplyFields.isPending}
                           className="text-xs"
                         >
-                          <RefreshCw className={`h-3 w-3 mr-1 ${reapplyFields.isPending ? 'animate-spin' : '')}`} />
+                          <RefreshCw className={`h-3 w-3 mr-1 ${reapplyFields.isPending ? 'animate-spin' : ''}`} />
                           Re-apply Fields
                         </Button>
                       )}

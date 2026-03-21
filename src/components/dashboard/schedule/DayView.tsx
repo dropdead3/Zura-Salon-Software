@@ -505,7 +505,7 @@ export function DayView({
                     )}
                   >
                     {label && (
-                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60')}>
+                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60'}>
                         {label}
                       </span>
                     )}

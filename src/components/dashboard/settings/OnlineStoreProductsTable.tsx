@@ -70,7 +70,7 @@ function useBulkSetOnline() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success(`${vars.ids.length} product(s) ${vars.available_online ? 'made available' : 'removed from')} online store`);
+      toast.success(`${vars.ids.length} product(s) ${vars.available_online ? 'made available' : 'removed from'} online store`);
     },
     onError: () => {
       toast.error('Failed to update products');
@@ -207,7 +207,7 @@ export function OnlineStoreProductsTable() {
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="text-muted-foreground">{product.brand || '—')}</TableCell>
                     <TableCell className="text-right">
-                      {product.retail_price != null ? formatCurrency(product.retail_price) : '—')}
+                      {product.retail_price != null ? formatCurrency(product.retail_price) : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-1">
@@ -259,7 +259,7 @@ export function OnlineStoreProductsTable() {
 
       {/* Footer */}
       <p className="text-xs text-muted-foreground">
-        {filtered.length} Product{filtered.length !== 1 ? 's' : '')}
+        {filtered.length} Product{filtered.length !== 1 ? 's' : ''}
       </p>
     </div>
   );

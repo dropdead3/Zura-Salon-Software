@@ -341,10 +341,10 @@ export function KioskBookingWizard() {
           {step === 'services' && (
             <motion.div key="services" className="flex-1 flex flex-col" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
               <h2 className="text-3xl font-medium mb-2 tracking-tight" style={{ color: textColor }}>
-                {selectedCategory ? selectedCategory : 'Select a Service')}
+                {selectedCategory ? selectedCategory : 'Select a Service'}
               </h2>
               <p className="text-lg mb-6" style={{ color: `${textColor}70` }}>
-                {selectedCategory ? 'Choose your services' : 'Pick a category to get started')}
+                {selectedCategory ? 'Choose your services' : 'Pick a category to get started'}
               </p>
 
               {!selectedCategory ? (
@@ -478,7 +478,7 @@ export function KioskBookingWizard() {
             <motion.div key="datetime" className="flex-1 flex flex-col" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
               <h2 className="text-3xl font-medium mb-2 tracking-tight" style={{ color: textColor }}>Pick a Date & Time</h2>
               <p className="text-lg mb-6" style={{ color: `${textColor}70` }}>
-                {allowFuture ? 'Select a date in the next 14 days' : 'Choose a time for today')}
+                {allowFuture ? 'Select a date in the next 14 days' : 'Choose a time for today'}
               </p>
 
               {/* Date picker - horizontal scroll */}
@@ -635,7 +635,7 @@ export function KioskBookingWizard() {
                     <User className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} />
                     <div>
                       <div className="text-sm font-medium" style={{ color: `${textColor}60` }}>Stylist</div>
-                      <div className="text-lg" style={{ color: textColor }}>{selectedStylist?.name || 'First Available')}</div>
+                      <div className="text-lg" style={{ color: textColor }}>{selectedStylist?.name || 'First Available'}</div>
                     </div>
                   </div>
 
@@ -647,7 +647,7 @@ export function KioskBookingWizard() {
                     <div>
                       <div className="text-sm font-medium" style={{ color: `${textColor}60` }}>Date & Time</div>
                       <div className="text-lg" style={{ color: textColor }}>
-                        {format(selectedDate, 'EEEE, MMM d')} at {selectedTime ? formatTimeDisplay(selectedTime) : '')}
+                        {format(selectedDate, 'EEEE, MMM d')} at {selectedTime ? formatTimeDisplay(selectedTime) : ''}
                       </div>
                     </div>
                   </div>
@@ -700,7 +700,7 @@ export function KioskBookingWizard() {
             {/* Selected services summary */}
             {selectedServices.length > 0 && step !== 'services' && (
               <div className="flex items-center gap-2" style={{ color: `${textColor}70` }}>
-                <span className="text-sm">{selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}</span>
+                <span className="text-sm">{selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}</span>
                 <span className="text-sm">• {totalDuration} min</span>
                 {totalPrice > 0 && <span className="text-sm font-medium" style={{ color: accentColor }}>{formatPrice(totalPrice)}</span>}
               </div>

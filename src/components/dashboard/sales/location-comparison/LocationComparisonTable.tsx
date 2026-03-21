@@ -123,7 +123,7 @@ export function LocationComparisonTable({
             }}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
           >
-            {expandAll ? 'Collapse All' : 'Expand All')}
+            {expandAll ? 'Collapse All' : 'Expand All'}
           </button>
         </div>
       )}

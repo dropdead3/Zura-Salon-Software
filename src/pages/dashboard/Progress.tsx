@@ -162,7 +162,7 @@ export default function Progress() {
                       className={`
                         aspect-square flex items-center justify-center text-xs font-display
                         transition-colors relative
-                        ${isWeeklyWins ? 'ring-1 ring-yellow-500' : '')}
+                        ${isWeeklyWins ? 'ring-1 ring-yellow-500' : ''}
                         ${status === 'complete' 
                           ? 'bg-green-500/10 text-green-600' 
                           : status === 'current'

@@ -109,7 +109,7 @@ export function HouseholdCard({
           )}
         </div>
         <Badge variant="outline" className="w-fit text-xs mt-1">
-          {household.members.length} member{household.members.length !== 1 ? 's' : '')}
+          {household.members.length} member{household.members.length !== 1 ? 's' : ''}
         </Badge>
       </CardHeader>
 

@@ -382,7 +382,7 @@ export function BackroomEntitlementsTab() {
                 <DialogHeader>
                   <DialogTitle>Backfill Location Entitlements</DialogTitle>
                   <DialogDescription>
-                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has')} Backroom enabled but no per-location
+                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has'} Backroom enabled but no per-location
                     entitlements. This will create a Starter entitlement for every active location in these orgs.
                   </DialogDescription>
                 </DialogHeader>
@@ -520,7 +520,7 @@ export function BackroomEntitlementsTab() {
                                           ) : (
                                             <Send className="w-3 h-3" />
                                           )}
-                                          {cooldownActive ? 'Cooldown active' : 'Send Setup Link')}
+                                          {cooldownActive ? 'Cooldown active' : 'Send Setup Link'}
                                         </button>
                                       </TooltipContent>
                                     </Tooltip>

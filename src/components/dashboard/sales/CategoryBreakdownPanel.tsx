@@ -42,7 +42,7 @@ function formatValue(mode: BreakdownMode, entry: { revenue: number; count: numbe
     case 'dailyAvg':
       return formatCurrencyWhole(Math.round(entry.revenue / Math.max(dayCount, 1))) + '/day';
     case 'count':
-      return `${entry.count} appointment${entry.count !== 1 ? 's' : '')}`;
+      return `${entry.count} appointment${entry.count !== 1 ? 's' : ''}`;
   }
 }
 

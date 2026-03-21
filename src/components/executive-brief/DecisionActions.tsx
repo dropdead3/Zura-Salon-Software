@@ -82,7 +82,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>
-              {dialogType === 'modified' ? 'Modify Recommendation' : 'Decline Recommendation')}
+              {dialogType === 'modified' ? 'Modify Recommendation' : 'Decline Recommendation'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -99,12 +99,12 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
             )}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {dialogType === 'declined' ? 'Reason for declining' : 'Notes (optional)')}
+                {dialogType === 'declined' ? 'Reason for declining' : 'Notes (optional)'}
               </label>
               <Textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder={dialogType === 'declined' ? 'Why is this not the right lever?' : 'Any additional context...')}
+                placeholder={dialogType === 'declined' ? 'Why is this not the right lever?' : 'Any additional context...'}
                 rows={2}
               />
             </div>

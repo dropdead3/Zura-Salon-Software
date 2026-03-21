@@ -82,7 +82,7 @@ export function PointsActivityFeed({ transactions }: PointsActivityFeedProps) {
                     'font-medium',
                     isPositive ? 'text-green-600' : 'text-red-600'
                   )}>
-                    {isPositive ? '+' : '')}{tx.points.toLocaleString()}
+                    {isPositive ? '+' : ''}{tx.points.toLocaleString()}
                   </div>
                 </div>
               );

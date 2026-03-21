@@ -224,7 +224,7 @@ export function TasksCard({
           /* Search Results View */
           <div className="space-y-3">
             <p className="text-[10px] text-muted-foreground font-display tracking-wide">
-              {searchResults.length} RESULT{searchResults.length !== 1 ? 'S' : '')}
+              {searchResults.length} RESULT{searchResults.length !== 1 ? 'S' : ''}
             </p>
             {searchResults.length > 0 ? (
               <AnimatePresence mode="popLayout">
@@ -279,7 +279,7 @@ export function TasksCard({
                   onClick={() => setShowSnoozed(!showSnoozed)}
                 >
                   <AlarmClock className="w-3 h-3" />
-                  {showSnoozed ? 'Hide' : 'Show')} snoozed ({snoozedTasks.length})
+                  {showSnoozed ? 'Hide' : 'Show'} snoozed ({snoozedTasks.length})
                   {showSnoozed ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </Button>
                 {showSnoozed && (
@@ -301,7 +301,7 @@ export function TasksCard({
                   className="w-full text-xs text-muted-foreground gap-1.5"
                   onClick={() => setShowCompleted(!showCompleted)}
                 >
-                  {showCompleted ? 'Hide' : 'Show')} completed ({completedTasks.length})
+                  {showCompleted ? 'Hide' : 'Show'} completed ({completedTasks.length})
                   {showCompleted ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </Button>
 

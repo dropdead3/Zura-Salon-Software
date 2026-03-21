@@ -415,7 +415,7 @@ export default function PublicBooking() {
                 <div className="mt-6 pt-4 border-t flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      {booking.services.length} service{booking.services.length > 1 ? 's' : '')} selected
+                      {booking.services.length} service{booking.services.length > 1 ? 's' : ''} selected
                     </p>
                     <p className="font-medium">
                       {totalDuration} min • ${totalPrice.toLocaleString()}

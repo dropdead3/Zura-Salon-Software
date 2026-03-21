@@ -94,11 +94,11 @@ export function PendingMeetingRequests({ viewAs }: Props) {
     const person = viewAs === 'manager' ? request.team_member : request.manager;
 
     return (
-      <Card className={request.status === 'pending' && isExpired ? 'border-destructive/50' : '')}>
+      <Card className={request.status === 'pending' && isExpired ? 'border-destructive/50' : ''}>
         <CardContent className="p-4">
           <div className="flex items-start gap-4">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={person?.photo_url || '')} />
+              <AvatarImage src={person?.photo_url || ''} />
               <AvatarFallback>
                 {(person?.full_name || 'U').charAt(0)}
               </AvatarFallback>
@@ -108,8 +108,8 @@ export function PendingMeetingRequests({ viewAs }: Props) {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium">
                   {viewAs === 'manager' 
-                    ? `To: ${person?.display_name || person?.full_name || 'Unknown')}`
-                    : `From: ${person?.display_name || person?.full_name || 'Unknown')}`
+                    ? `To: ${person?.display_name || person?.full_name || 'Unknown'}`
+                    : `From: ${person?.display_name || person?.full_name || 'Unknown'}`
                   }
                 </span>
                 {getPriorityBadge(request.priority)}
@@ -127,7 +127,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
                   <span>Sent {formatDate(parseISO(request.created_at), 'MMM d, yyyy')}</span>
                 </div>
                 {request.expires_at && (
-                  <div className={`flex items-center gap-1 ${isExpired ? 'text-destructive' : '')}`}>
+                  <div className={`flex items-center gap-1 ${isExpired ? 'text-destructive' : ''}`}>
                     <Calendar className="h-3 w-3" />
                     <span>
                       {isExpired ? 'Expired' : `Schedule by ${formatDate(parseISO(request.expires_at), 'MMM d')}}
@@ -155,7 +155,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
                   disabled={updateStatus.isPending}
                 >
                   <XCircle className="h-4 w-4 mr-1" />
-                  {viewAs === 'manager' ? 'Cancel' : 'Decline')}
+                  {viewAs === 'manager' ? 'Cancel' : 'Decline'}
                 </Button>
               </div>
             )}
@@ -181,7 +181,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
       {pendingRequests.length > 0 && (
         <div className="space-y-4">
           <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-            {viewAs === 'manager' ? 'Awaiting Response' : 'Action Required')}
+            {viewAs === 'manager' ? 'Awaiting Response' : 'Action Required'}
           </h3>
           {pendingRequests.map(request => (
             <RequestCard key={request.id} request={request} showActions />

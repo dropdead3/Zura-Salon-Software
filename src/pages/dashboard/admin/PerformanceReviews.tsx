@@ -39,7 +39,7 @@ function RatingStars({ rating }: { rating: number | null }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map(i => (
-        <Star key={i} className={`w-4 h-4 ${i <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30')}`} />
+        <Star key={i} className={`w-4 h-4 ${i <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`} />
       ))}
     </div>
   );
@@ -145,7 +145,7 @@ export default function PerformanceReviews() {
                     <Select value={form.overall_rating} onValueChange={v => setForm(f => ({ ...f, overall_rating: v }))}>
                       <SelectTrigger><SelectValue placeholder="Select rating" /></SelectTrigger>
                       <SelectContent>
-                        {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n} Star{n > 1 ? 's' : '')}</SelectItem>)}
+                        {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n} Star{n > 1 ? 's' : ''}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -154,7 +154,7 @@ export default function PerformanceReviews() {
                   <div><Label>Goals</Label><Textarea value={form.goals_summary} onChange={e => setForm(f => ({ ...f, goals_summary: e.target.value }))} /></div>
                   <div><Label>Reviewer Notes</Label><Textarea value={form.reviewer_notes} onChange={e => setForm(f => ({ ...f, reviewer_notes: e.target.value }))} /></div>
                   <Button onClick={handleSubmit} disabled={createReview.isPending} className="w-full">
-                    {createReview.isPending ? 'Creating...' : 'Create Review (Draft)')}
+                    {createReview.isPending ? 'Creating...' : 'Create Review (Draft)'}
                   </Button>
                 </div>
               </DialogContent>

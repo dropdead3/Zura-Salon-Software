@@ -104,7 +104,7 @@ function buildInventoryAlerts(items: InventoryRiskProjection[]): ControlTowerAle
     const depletionLabel = daysUntilDepletion !== null
       ? daysUntilDepletion === 0
         ? 'today'
-        : `in ${daysUntilDepletion} day${daysUntilDepletion !== 1 ? 's' : '')}`
+        : `in ${daysUntilDepletion} day${daysUntilDepletion !== 1 ? 's' : ''}`
       : 'unknown';
 
     return {
@@ -214,7 +214,7 @@ function buildReorderAlerts(forecasts: ProductDemandForecast[]): ControlTowerAle
     category: 'reorder' as AlertCategory,
     priority: f.stockout_risk === 'critical' ? 'critical' : 'high',
     title: 'Urgent Reorder',
-    description: `${f.product_name} — predicted usage exceeds stock within ${f.remaining_after_1d <= 0 ? '24 hours' : '7 days')}.`,
+    description: `${f.product_name} — predicted usage exceeds stock within ${f.remaining_after_1d <= 0 ? '24 hours' : '7 days'}.`,
     metrics: {
       Product: f.product_name,
       'On Hand': f.current_on_hand,
@@ -247,8 +247,8 @@ function buildPOApprovalAlerts(draftPOs: DraftPOAlert[]): ControlTowerAlert[] {
       id: `po-approval-auto-${autoPOs.length}`,
       category: 'po_approval',
       priority: autoPOs.length >= 5 ? 'high' : 'medium',
-      title: `${autoPOs.length} Auto-Generated PO${autoPOs.length > 1 ? 's' : '')} Awaiting Approval`,
-      description: `Auto-reorder created ${autoPOs.length} draft PO${autoPOs.length > 1 ? 's' : '')}. Review and approve to send to suppliers.`,
+      title: `${autoPOs.length} Auto-Generated PO${autoPOs.length > 1 ? 's' : ''} Awaiting Approval`,
+      description: `Auto-reorder created ${autoPOs.length} draft PO${autoPOs.length > 1 ? 's' : ''}. Review and approve to send to suppliers.`,
       metrics: {
         'Draft POs': autoPOs.length,
         'Total Units': autoPOs.reduce((s, po) => s + po.quantity, 0),
@@ -266,8 +266,8 @@ function buildPOApprovalAlerts(draftPOs: DraftPOAlert[]): ControlTowerAlert[] {
       id: `po-approval-manual-${manualPOs.length}`,
       category: 'po_approval',
       priority: 'informational',
-      title: `${manualPOs.length} Draft PO${manualPOs.length > 1 ? 's' : '')} Pending`,
-      description: `${manualPOs.length} draft purchase order${manualPOs.length > 1 ? 's' : '')} awaiting review.`,
+      title: `${manualPOs.length} Draft PO${manualPOs.length > 1 ? 's' : ''} Pending`,
+      description: `${manualPOs.length} draft purchase order${manualPOs.length > 1 ? 's' : ''} awaiting review.`,
       metrics: { 'Draft POs': manualPOs.length },
       entityType: 'purchase_order',
       entityId: manualPOs[0].id,

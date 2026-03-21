@@ -346,7 +346,7 @@ export default function ReengagementHub() {
                           <div className="text-right">
                             <p className="text-sm font-medium flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : 'Never')}
+                              {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : 'Never'}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {client.visit_count} total visits

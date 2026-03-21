@@ -93,7 +93,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                     })()}
                   </DialogTitle>
                   <DialogDescription className={cn(tokens.body.muted, 'mt-1')}>
-                    {filteredCount} appointment{filteredCount !== 1 ? 's' : '')} · By Provider
+                    {filteredCount} appointment{filteredCount !== 1 ? 's' : ''} · By Provider
                   </DialogDescription>
                 </div>
                 <LocationSelect
@@ -127,7 +127,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                           />
                           <span className="text-sm font-medium">{group.name}</span>
                           <span className={tokens.body.muted}>
-                            {group.count} appointment{group.count !== 1 ? 's' : '')}
+                            {group.count} appointment{group.count !== 1 ? 's' : ''}
                           </span>
                         </div>
                         <span className="text-sm font-display tabular-nums">

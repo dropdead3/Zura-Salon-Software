@@ -107,7 +107,7 @@ export function OrdersTab() {
         {STATUS_FILTERS.map(s => (
           <Button
             key={s}
-            variant={statusFilter === s ? 'default' : 'ghost')}
+            variant={statusFilter === s ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setStatusFilter(s)}
             className="capitalize text-sm"
@@ -215,7 +215,7 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
         <TableCell className={tokens.body.emphasis}>{getPoLabel(po)}</TableCell>
         <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—')}</TableCell>
         <TableCell className="text-right hidden sm:table-cell tabular-nums">{po.quantity}</TableCell>
-        <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—')}</TableCell>
+        <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</TableCell>
         <TableCell>
           <Badge variant="outline" className={cn('text-[10px] font-medium border', statusStyle.className)}>
             {statusStyle.label}
@@ -322,7 +322,7 @@ function POExpandedRow({ poId, po, formatCurrency }: {
             </div>
             <div>
               <span className={tokens.label.tiny}>Sent At</span>
-              <p className="text-foreground">{po.sent_at ? format(new Date(po.sent_at), 'MMM d, yyyy h:mm a') : '—')}</p>
+              <p className="text-foreground">{po.sent_at ? format(new Date(po.sent_at), 'MMM d, yyyy h:mm a') : '—'}</p>
             </div>
             <div>
               <span className={tokens.label.tiny}>Expected Delivery</span>
@@ -331,7 +331,7 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-sm gap-1.5 -ml-2">
                       <CalendarIcon className="w-3.5 h-3.5" />
-                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date')}
+                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -339,12 +339,12 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                   </PopoverContent>
                 </Popover>
               ) : (
-                <p className="text-foreground">{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d, yyyy') : '—')}</p>
+                <p className="text-foreground">{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d, yyyy') : '—'}</p>
               )}
             </div>
             <div>
               <span className={tokens.label.tiny}>Received At</span>
-              <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—')}</p>
+              <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—'}</p>
             </div>
           </div>
 
@@ -385,10 +385,10 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                        {line.unit_cost != null ? formatCurrency(line.unit_cost) : '—')}
+                        {line.unit_cost != null ? formatCurrency(line.unit_cost) : '—'}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
-                        {line.line_total != null ? formatCurrency(line.line_total) : '—')}
+                        {line.line_total != null ? formatCurrency(line.line_total) : '—'}
                       </TableCell>
                     </TableRow>
                   ))}

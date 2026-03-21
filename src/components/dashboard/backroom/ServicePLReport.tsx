@@ -127,7 +127,7 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
                   <td className="py-2 text-right tabular-nums"><BlurredAmount>{formatCurrency(totals.laborCost)}</BlurredAmount></td>
                   <td className="py-2 text-right tabular-nums"><BlurredAmount>{formatCurrency(totals.margin)}</BlurredAmount></td>
                   <td className="py-2 text-right tabular-nums">
-                    {totals.revenue > 0 ? ((totals.margin / totals.revenue) * 100).toFixed(1) : '0')}%
+                    {totals.revenue > 0 ? ((totals.margin / totals.revenue) * 100).toFixed(1) : '0'}%
                   </td>
                 </tr>
               )}

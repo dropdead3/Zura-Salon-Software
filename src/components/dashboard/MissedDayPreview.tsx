@@ -130,7 +130,7 @@ export function MissedDayPreview() {
                   </div>
                   
                   <h2 className="text-2xl font-display uppercase tracking-wider text-foreground">
-                    You Missed {previewDaysMissed} Day{previewDaysMissed > 1 ? 's' : '')}
+                    You Missed {previewDaysMissed} Day{previewDaysMissed > 1 ? 's' : ''}
                   </h2>
                 </div>
 
@@ -180,9 +180,9 @@ export function MissedDayPreview() {
                               ? 'bg-muted' 
                               : 'bg-gradient-to-br from-primary to-primary/80 shadow-md'
                           }`}>
-                            <Shield className={`h-5 w-5 ${previewIsExpired ? 'text-muted-foreground' : 'text-primary-foreground')}`} />
+                            <Shield className={`h-5 w-5 ${previewIsExpired ? 'text-muted-foreground' : 'text-primary-foreground'}`} />
                           </div>
-                          <span className={`font-medium ${previewIsExpired ? 'text-muted-foreground' : 'text-foreground')}`}>
+                          <span className={`font-medium ${previewIsExpired ? 'text-muted-foreground' : 'text-foreground'}`}>
                             Use a Life Happens Pass
                           </span>
                         </div>

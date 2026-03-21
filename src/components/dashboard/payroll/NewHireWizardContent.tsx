@@ -219,7 +219,7 @@ export function NewHireWizardContent() {
                   </Select>
                 </div>
                 <div>
-                  <Label>{form.payType === 'salary' ? 'Annual Salary' : 'Hourly Rate')}</Label>
+                  <Label>{form.payType === 'salary' ? 'Annual Salary' : 'Hourly Rate'}</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
                     <Input
@@ -227,7 +227,7 @@ export function NewHireWizardContent() {
                       className="pl-7"
                       value={form.payRate}
                       onChange={e => updateField('payRate', e.target.value)}
-                      placeholder={form.payType === 'salary' ? '45000' : '18.00')}
+                      placeholder={form.payType === 'salary' ? '45000' : '18.00'}
                     />
                   </div>
                 </div>
@@ -281,7 +281,7 @@ export function NewHireWizardContent() {
                               : 'Payroll Provider')}
                           </p>
                           <Badge variant={payrollConnected ? "default" : "secondary"} className="text-[10px]">
-                            {payrollConnected ? 'Connected' : 'Not Connected')}
+                            {payrollConnected ? 'Connected' : 'Not Connected'}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -383,7 +383,7 @@ export function NewHireWizardContent() {
           {form.email && <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{form.email}</span></div>}
           {form.role && <div className="flex justify-between"><span className="text-muted-foreground">Role</span><Badge variant="secondary" className="capitalize text-[10px]">{form.role.replace(/_/g, ' ')}</Badge></div>}
           {form.startDate && <div className="flex justify-between"><span className="text-muted-foreground">Start Date</span><span>{form.startDate}</span></div>}
-          {form.payRate && <div className="flex justify-between"><span className="text-muted-foreground">Pay</span><span>{currency}{form.payRate}{form.payType === 'hourly' ? '/hr' : form.payType === 'salary' ? '/yr' : '')}</span></div>}
+          {form.payRate && <div className="flex justify-between"><span className="text-muted-foreground">Pay</span><span>{currency}{form.payRate}{form.payType === 'hourly' ? '/hr' : form.payType === 'salary' ? '/yr' : ''}</span></div>}
         </CardContent>
       </Card>
 

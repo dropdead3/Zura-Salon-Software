@@ -144,7 +144,7 @@ function ScheduledCoverageSection({
                 'text-[10px]',
                 block.status === 'confirmed' ? 'text-green-700 dark:text-green-300 border-green-300' : 'text-amber-700 dark:text-amber-300 border-amber-300'
               )}>
-                {block.status === 'confirmed' ? 'Confirmed' : 'Requested')}
+                {block.status === 'confirmed' ? 'Confirmed' : 'Requested'}
               </Badge>
             </div>
           );
@@ -1137,7 +1137,7 @@ export function AppointmentDetailSheet({
                           <div className="flex items-center gap-3">
                             <ArrowRightLeft className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
                             <span className="text-blue-600 dark:text-blue-400">
-                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d')} at ` : '')}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
+                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d')} at ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
                             </span>
                           </div>
                         )}
@@ -1287,7 +1287,7 @@ export function AppointmentDetailSheet({
                                   {canManageAssistants && (
                                     <input
                                       type="number" min={0} max={480} placeholder="min"
-                                      defaultValue={a.assist_duration_minutes ?? '')}
+                                      defaultValue={a.assist_duration_minutes ?? ''}
                                       className="w-14 h-6 text-xs text-center border rounded bg-background px-1"
                                       onBlur={e => {
                                         const val = e.target.value ? parseInt(e.target.value) : null;
@@ -1345,7 +1345,7 @@ export function AppointmentDetailSheet({
                                     </div>
                                     {conflicts.map((c, i) => (
                                       <span key={i} className="text-[11px] text-orange-600 dark:text-orange-400 pl-7 leading-tight">
-                                        {c.role === 'assistant' ? 'Assisting' : 'Busy')} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName} for {c.clientName})
+                                        {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName} for {c.clientName})
                                       </span>
                                     ))}
                                   </button>
@@ -1764,7 +1764,7 @@ export function AppointmentDetailSheet({
                   <TabsContent value="backroom" className="p-6 pt-4 mt-0">
                     <BackroomTab
                       appointment={appointment}
-                      organizationId={effectiveOrganization?.id ?? '')}
+                      organizationId={effectiveOrganization?.id ?? ''}
                     />
                   </TabsContent>
                 </ScrollArea>
@@ -1809,7 +1809,7 @@ export function AppointmentDetailSheet({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction === 'cancelled' ? 'Cancel Appointment?' : 'Mark as No Show?')}
+              {confirmAction === 'cancelled' ? 'Cancel Appointment?' : 'Mark as No Show?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction === 'cancelled'
@@ -1819,7 +1819,7 @@ export function AppointmentDetailSheet({
           </AlertDialogHeader>
           <div className="px-6 pb-2">
             <Textarea
-              placeholder={confirmAction === 'cancelled' ? 'Reason for cancellation (optional)...' : 'Reason for no-show (optional)...')}
+              placeholder={confirmAction === 'cancelled' ? 'Reason for cancellation (optional)...' : 'Reason for no-show (optional)...'}
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
               rows={2}
@@ -1830,7 +1830,7 @@ export function AppointmentDetailSheet({
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmStatusChange}
-              className={confirmAction === 'no_show' ? 'bg-destructive text-destructive-foreground' : '')}
+              className={confirmAction === 'no_show' ? 'bg-destructive text-destructive-foreground' : ''}
             >
               Confirm
             </AlertDialogAction>
@@ -2009,13 +2009,13 @@ export function AppointmentDetailSheet({
                             <span className="font-medium">{member.display_name || member.full_name}</span>
                             {conflicts.length > 0 && (
                               <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
-                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : '')}
+                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}
                               </Badge>
                             )}
                           </div>
                           {conflicts.map((c, ci) => (
                             <span key={ci} className="text-[11px] text-amber-600 dark:text-amber-400 pl-9 leading-tight mt-0.5">
-                              {c.role === 'assistant' ? 'Assisting' : 'Busy')} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
+                              {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
                             </span>
                           ))}
                         </button>
@@ -2123,7 +2123,7 @@ export function AppointmentDetailSheet({
                         const oldName = oldAssignment?.assigned_staff_name || appointment.stylist_profile?.display_name || 'Default';
                         fireAuditLog('service_reassigned', { service: a.serviceName, stylist: oldName }, { service: a.serviceName, stylist: a.staffName });
                       }
-                      toast.success(`${assignments.length} service${assignments.length > 1 ? 's' : '')} reassigned`);
+                      toast.success(`${assignments.length} service${assignments.length > 1 ? 's' : ''} reassigned`);
                       setShowReassignDialog(false);
                       setPerServiceSelections({});
                     } catch (err: any) {

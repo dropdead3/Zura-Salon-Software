@@ -111,7 +111,7 @@ export default function RenterPaymentMethods() {
           </div>
         ) : paymentMethods && paymentMethods.length > 0 ? (
           paymentMethods.map((method) => (
-            <Card key={method.id} className={method.is_default ? 'border-primary' : '')}>
+            <Card key={method.id} className={method.is_default ? 'border-primary' : ''}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">

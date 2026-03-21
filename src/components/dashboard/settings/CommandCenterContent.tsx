@@ -586,7 +586,7 @@ export function CommandCenterContent() {
                         )}
                         <CardTitle className="text-base">{category}</CardTitle>
                         <Badge variant="secondary" className="ml-2">
-                          {elements.length} element{elements.length !== 1 ? 's' : '')}
+                          {elements.length} element{elements.length !== 1 ? 's' : ''}
                         </Badge>
                       </div>
                     </div>

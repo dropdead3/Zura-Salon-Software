@@ -216,11 +216,11 @@ export function ChallengeCard({
             )}
             {onView && (
               <Button 
-                variant={isJoined ? 'default' : 'outline')} 
+                variant={isJoined ? 'default' : 'outline'} 
                 onClick={onView}
-                className={isJoined ? 'flex-1' : '')}
+                className={isJoined ? 'flex-1' : ''}
               >
-                {isJoined ? 'View Leaderboard' : 'Details')}
+                {isJoined ? 'View Leaderboard' : 'Details'}
               </Button>
             )}
           </div>

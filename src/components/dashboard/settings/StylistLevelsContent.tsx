@@ -363,7 +363,7 @@ export function StylistLevelsContent() {
                         <span className="font-medium truncate">{level.label}</span>
                         {hasStylists && (
                           <span className="text-xs text-muted-foreground shrink-0">
-                            {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}
+                            {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
@@ -395,7 +395,7 @@ export function StylistLevelsContent() {
                               <AlertDialogDescription>
                                 {hasStylists ? (
                                   <span className="text-destructive">
-                                    Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is')} assigned to this level.
+                                    Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level.
                                   </span>
                                 ) : (
                                   'No stylists are currently assigned to this level.'

@@ -148,7 +148,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
               </div>
               <div className="flex gap-2 justify-end">
                 <Button variant="ghost" size="sm" onClick={resetForm}>Cancel</Button>
-                <Button size="sm" onClick={handleSave} disabled={!form.station_name || !form.location_id}>{editingId ? 'Update' : 'Create')}</Button>
+                <Button size="sm" onClick={handleSave} disabled={!form.station_name || !form.location_id}>{editingId ? 'Update' : 'Create'}</Button>
               </div>
             </div>
           )}
@@ -176,10 +176,10 @@ export function StationsHardwareSection({ onNavigate }: Props) {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className={cn(tokens.body.emphasis, 'text-foreground')}>{station.station_name}</p>
-                          {connType !== 'manual' && <Badge variant="outline" className="text-[10px]">{connType === 'ble' ? 'BLE' : 'Direct')}</Badge>}
+                          {connType !== 'manual' && <Badge variant="outline" className="text-[10px]">{connType === 'ble' ? 'BLE' : 'Direct'}</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {loc?.name || 'Unknown location')}
+                          {loc?.name || 'Unknown location'}
                           {station.device_name && ` · ${station.device_name}`}
                           {station.scale_model && ` · ${station.scale_model}`}
                           {showHealth && station.last_seen_at && <> · Last seen {formatDistanceToNow(new Date(station.last_seen_at), { addSuffix: true })}</>}
@@ -187,7 +187,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant={station.is_active ? 'default' : 'outline')}>{station.is_active ? 'Active' : 'Inactive')}</Badge>
+                      <Badge variant={station.is_active ? 'default' : 'outline')}>{station.is_active ? 'Active' : 'Inactive'}</Badge>
                       <Switch checked={station.is_active} onCheckedChange={(checked) => updateStation.mutate({ id: station.id, is_active: checked })} />
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(station)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteStation.mutate(station.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>

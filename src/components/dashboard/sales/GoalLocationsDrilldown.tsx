@@ -60,7 +60,7 @@ function LocationMiniRow({ locationId, locationName, target, period, closedReaso
               {paceStatus === 'ahead' && <TrendingUp className="w-2.5 h-2.5" />}
               {paceStatus === 'on-track' && <Target className="w-2.5 h-2.5" />}
               {paceStatus === 'behind' && <TrendingDown className="w-2.5 h-2.5" />}
-              {paceStatus === 'ahead' ? 'Ahead' : paceStatus === 'on-track' ? 'On Track' : 'Behind')}
+              {paceStatus === 'ahead' ? 'Ahead' : paceStatus === 'on-track' ? 'On Track' : 'Behind'}
             </span>
           </div>
         </div>

@@ -220,7 +220,7 @@ export function LocationDrilldownPanel({
                 {capacityLoading ? (
                   <Skeleton className="h-6 w-16 rounded" />
                 ) : (
-                  <p className="text-lg font-display">{capacity?.peakHour || 'N/A')}</p>
+                  <p className="text-lg font-display">{capacity?.peakHour || 'N/A'}</p>
                 )}
               </div>
 
@@ -246,7 +246,7 @@ export function LocationDrilldownPanel({
                       revenueChange > 0 && 'text-success-foreground',
                       revenueChange < 0 && 'text-destructive',
                     )}>
-                      {revenueChange > 0 ? '+' : '')}{Math.round(revenueChange)}%
+                      {revenueChange > 0 ? '+' : ''}{Math.round(revenueChange)}%
                     </span>
                   </div>
                 ) : (

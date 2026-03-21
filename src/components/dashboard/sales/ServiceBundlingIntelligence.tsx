@@ -139,13 +139,13 @@ export function ServiceBundlingIntelligence({
                             className="bg-amber-500/80 flex items-center justify-center text-[10px] font-medium text-amber-950 transition-all"
                             style={{ width: `${Math.max(r.standaloneRate, 4)}%` }}
                           >
-                            {r.standaloneRate >= 15 ? `${Math.round(r.standaloneRate)}% solo` : '')}
+                            {r.standaloneRate >= 15 ? `${Math.round(r.standaloneRate)}% solo` : ''}
                           </div>
                           <div
                             className="bg-emerald-500/80 flex items-center justify-center text-[10px] font-medium text-emerald-950 transition-all"
                             style={{ width: `${Math.max(r.groupedRate, 4)}%` }}
                           >
-                            {r.groupedRate >= 15 ? `${Math.round(r.groupedRate)}% grouped` : '')}
+                            {r.groupedRate >= 15 ? `${Math.round(r.groupedRate)}% grouped` : ''}
                           </div>
                         </div>
                       </div>
@@ -329,7 +329,7 @@ export function ServiceBundlingIntelligence({
                                 }}
                               >
                                 <span className="font-medium text-[11px]">{pair.count}</span>
-                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground')}>{Math.round(pair.pct)}%</span>
+                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground'}>{Math.round(pair.pct)}%</span>
                               </div>
                             </td>
                           );

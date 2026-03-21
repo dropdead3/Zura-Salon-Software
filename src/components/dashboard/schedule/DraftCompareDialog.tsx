@@ -56,7 +56,7 @@ function StepDots({ stepReached }: { stepReached: string | null }) {
       {WIZARD_STEPS.map((s, i) => (
         <div
           key={s}
-          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted')}
+          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted'}
           title={s}
         />
       ))}
@@ -132,8 +132,8 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
             {/* Redo */}
             <DiffCell
               label="Redo"
-              valueA={draftA.is_redo ? 'Yes' : 'No')}
-              valueB={draftB.is_redo ? 'Yes' : 'No')}
+              valueA={draftA.is_redo ? 'Yes' : 'No'}
+              valueB={draftB.is_redo ? 'Yes' : 'No'}
             />
 
             {/* Resume buttons */}

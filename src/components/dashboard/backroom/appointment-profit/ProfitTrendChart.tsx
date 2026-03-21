@@ -87,7 +87,7 @@ export function ProfitTrendChart({ data, className }: ProfitTrendChartProps) {
                         <p className={tokens.body.emphasis}>{format(parseISO(d.date), 'MMM d, yyyy')}</p>
                         <p className={tokens.body.muted}>Margin: {d.avgMarginPct}%</p>
                         <p className={tokens.body.muted}>Total: {formatCurrency(d.totalMargin)}</p>
-                        <p className={tokens.body.muted}>{d.count} appointment{d.count !== 1 ? 's' : '')}</p>
+                        <p className={tokens.body.muted}>{d.count} appointment{d.count !== 1 ? 's' : ''}</p>
                       </div>
                     );
                   }}

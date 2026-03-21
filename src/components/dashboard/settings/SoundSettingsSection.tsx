@@ -27,7 +27,7 @@ export function SoundSettingsSection() {
             <p className="text-xs text-muted-foreground">Respects reduced motion preferences.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Label className="text-xs text-muted-foreground">{enabled ? 'On' : 'Off')}</Label>
+            <Label className="text-xs text-muted-foreground">{enabled ? 'On' : 'Off'}</Label>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
         </div>

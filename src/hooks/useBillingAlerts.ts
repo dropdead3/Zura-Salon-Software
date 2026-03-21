@@ -106,7 +106,7 @@ export function useBillingAlerts(): { alerts: BillingAlert[]; isLoading: boolean
         id: 'failed-payment',
         severity: 'red',
         title: 'Payment failed',
-        description: `You have ${failedInvoices.length} unpaid invoice${failedInvoices.length > 1 ? 's' : '')}. Update your payment method to resolve.`,
+        description: `You have ${failedInvoices.length} unpaid invoice${failedInvoices.length > 1 ? 's' : ''}. Update your payment method to resolve.`,
         ctaLabel: 'Retry Payment',
         ctaAction: 'open-portal',
         dismissible: false,

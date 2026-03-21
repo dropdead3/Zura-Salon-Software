@@ -129,7 +129,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Product' : 'Add Product')}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Product' : 'Add Product'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -262,7 +262,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               Cancel
             </Button>
             <Button type="submit" disabled={updateProduct.isPending || createProduct.isPending}>
-              {isEditing ? 'Save Changes' : 'Add Product')}
+              {isEditing ? 'Save Changes' : 'Add Product'}
             </Button>
           </DialogFooter>
         </form>

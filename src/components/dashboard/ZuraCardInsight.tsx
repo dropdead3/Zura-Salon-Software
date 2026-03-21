@@ -229,7 +229,7 @@ function ActionItemsSection({ actionItems }: { actionItems: CardActionItem[] }) 
 
                   {item.dueInDays && !isAdded && (
                     <p className="text-[10px] text-muted-foreground/70 mb-2">
-                      Due in {item.dueInDays} day{item.dueInDays !== 1 ? 's' : '')}
+                      Due in {item.dueInDays} day{item.dueInDays !== 1 ? 's' : ''}
                     </p>
                   )}
 

@@ -262,7 +262,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
-      toast.success(`${vars.tracked ? 'Enabled' : 'Disabled')} tracking for ${vars.ids.length} products`);
+      toast.success(`${vars.tracked ? 'Enabled' : 'Disabled'} tracking for ${vars.ids.length} products`);
     },
     onError: (error) => toast.error('Bulk update failed: ' + error.message),
   });
@@ -658,7 +658,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     <CardTitle className={tokens.card.title}>Backroom Product Catalog</CardTitle>
                     <CardDescription>
                       {effectiveLocationId
-                        ? `Managing catalog for ${activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'selected location')}`
+                        ? `Managing catalog for ${activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'selected location'}`
                         : 'Select a location to manage tracking, depletion methods, and pricing.')}
                     </CardDescription>
                   </>
@@ -843,7 +843,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                   )} />
                                 )}
                                 <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
-                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
+                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60'}>
                                   {item.count}
                                 </span>
                               </button>
@@ -964,7 +964,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">
-                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, '')}
+                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, ''}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
                                       {isGhostCost ? (
@@ -1271,7 +1271,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  This will update {syncScope === 'brand' && selectedBrand ? `all <strong class="text-foreground font-medium">${selectedBrand}</strong>` : 'all')} products missing pricing, markup, swatch, or size data with values from the Zura Library.
+                  This will update {syncScope === 'brand' && selectedBrand ? `all <strong class="text-foreground font-medium">${selectedBrand}</strong>` : 'all'} products missing pricing, markup, swatch, or size data with values from the Zura Library.
                 </p>
                 <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
                   <p className="font-medium text-foreground mb-1">What gets updated:</p>
@@ -1348,7 +1348,7 @@ function InventoryView({
       <div className="grid grid-cols-3 gap-3">
         <button
           type="button"
-          onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
+          onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock'}
           className={cn(
             'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
             stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/40 hover:shadow-sm'
@@ -1359,7 +1359,7 @@ function InventoryView({
         </button>
         <button
           type="button"
-          onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
+          onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder'}
           className={cn(
             'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
             stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/40 hover:shadow-sm'
@@ -1554,7 +1554,7 @@ function InventoryTableRow({
           <input type="number" value={minValue} onChange={(e) => setMinValue(e.target.value)} onBlur={handleMinSave} onKeyDown={(e) => e.key === 'Enter' && handleMinSave()} autoFocus className={inlineInputClass} />
         ) : (
           <button type="button" onClick={() => { setEditingMin(true); setMinValue(row.reorder_level?.toString() || ''); }} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums">
-            {row.reorder_level ?? '—')}
+            {row.reorder_level ?? '—'}
           </button>
         )}
       </TableCell>
@@ -1563,7 +1563,7 @@ function InventoryTableRow({
           <input type="number" value={maxValue} onChange={(e) => setMaxValue(e.target.value)} onBlur={handleMaxSave} onKeyDown={(e) => e.key === 'Enter' && handleMaxSave()} autoFocus className={inlineInputClass} />
         ) : (
           <button type="button" onClick={() => { setEditingMax(true); setMaxValue(row.par_level?.toString() || ''); }} className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums">
-            {row.par_level ?? '—')}
+            {row.par_level ?? '—'}
           </button>
         )}
       </TableCell>
@@ -1581,7 +1581,7 @@ function InventoryTableRow({
       </TableCell>
       <TableCell className="hidden lg:table-cell">
         <span className="text-xs font-sans text-muted-foreground tabular-nums">
-          {row.cost_per_gram != null ? `$${row.cost_per_gram.toFixed(4)}` : '—')}
+          {row.cost_per_gram != null ? `$${row.cost_per_gram.toFixed(4)}` : '—'}
         </span>
       </TableCell>
     </TableRow>

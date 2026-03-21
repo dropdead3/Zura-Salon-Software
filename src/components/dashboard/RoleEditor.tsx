@@ -175,7 +175,7 @@ function SortableRoleCard({ role, userCount, isSuperAdmin, onEdit, onArchive, on
               <DropdownMenuItem
                 onClick={() => onArchive(role)}
                 disabled={role.is_system}
-                className={role.is_system ? 'opacity-50' : '')}
+                className={role.is_system ? 'opacity-50' : ''}
               >
                 <Archive className="h-4 w-4 mr-2" />
                 Archive

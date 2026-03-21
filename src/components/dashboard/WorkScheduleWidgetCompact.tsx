@@ -91,7 +91,7 @@ export function WorkScheduleWidgetCompact() {
             return (
               <Badge
                 key={day}
-                variant={isWorking ? 'default' : 'outline')}
+                variant={isWorking ? 'default' : 'outline'}
                 className={cn(
                   "text-[10px] px-1.5 py-0.5",
                   isWorking 

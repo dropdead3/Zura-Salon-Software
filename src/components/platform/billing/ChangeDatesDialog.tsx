@@ -154,7 +154,7 @@ export function ChangeDatesDialog({
               disabled={!reason.trim() || !hasChanges || changeDates.isPending}
               className="bg-violet-600 hover:bg-violet-700"
             >
-              {changeDates.isPending ? 'Updating...' : 'Update Dates')}
+              {changeDates.isPending ? 'Updating...' : 'Update Dates'}
             </Button>
           </DialogFooter>
         </form>

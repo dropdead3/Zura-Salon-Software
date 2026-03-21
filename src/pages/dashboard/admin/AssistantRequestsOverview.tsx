@@ -92,7 +92,7 @@ function RequestRow({ request, onManualAssign }: { request: AssistantRequest; on
           {statusBadge()}
           {declinedCount > 0 && (
             <Badge variant="outline" className="text-destructive border-destructive/30">
-              {declinedCount} decline{declinedCount > 1 ? 's' : '')}
+              {declinedCount} decline{declinedCount > 1 ? 's' : ''}
             </Badge>
           )}
         </div>
@@ -110,7 +110,7 @@ function RequestRow({ request, onManualAssign }: { request: AssistantRequest; on
       <div className="flex items-center gap-3">
         <div className="text-right text-sm">
           <div className="font-medium">
-            {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown')}
+            {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown'}
           </div>
           {request.assistant_profile && (
             <div className="text-muted-foreground">
@@ -323,21 +323,21 @@ export default function AssistantRequestsOverview() {
                   value={stats.pending}
                   icon={Clock}
                   description="Waiting for assistant"
-                  variant={stats.pending > 0 ? 'warning' : 'default')}
+                  variant={stats.pending > 0 ? 'warning' : 'default'}
                 />
                 <StatCard 
                   title="Awaiting Response" 
                   value={stats.awaitingResponse}
                   icon={AlertCircle}
                   description="Assistant hasn't responded"
-                  variant={stats.awaitingResponse > 0 ? 'warning' : 'default')}
+                  variant={stats.awaitingResponse > 0 ? 'warning' : 'default'}
                 />
                 <StatCard 
                   title="Acceptance Rate" 
                   value={`${stats.acceptanceRate}%`}
                   icon={TrendingUp}
                   description={`${stats.accepted} accepted`}
-                  variant={stats.acceptanceRate >= 80 ? 'success' : stats.acceptanceRate >= 50 ? 'warning' : 'danger')}
+                  variant={stats.acceptanceRate >= 80 ? 'success' : stats.acceptanceRate >= 50 ? 'warning' : 'danger'}
                 />
               </div>
 
@@ -358,7 +358,7 @@ export default function AssistantRequestsOverview() {
                   title="Total Declines" 
                   value={stats.totalDeclines}
                   icon={XCircle}
-                  variant={stats.totalDeclines > 5 ? 'danger' : 'default')}
+                  variant={stats.totalDeclines > 5 ? 'danger' : 'default'}
                 />
                 <StatCard 
                   title="Cancelled" 

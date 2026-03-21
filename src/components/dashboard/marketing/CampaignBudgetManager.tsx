@@ -168,7 +168,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  {editingCampaign ? 'Edit Campaign' : 'Add Campaign')}
+                  {editingCampaign ? 'Edit Campaign' : 'Add Campaign'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -226,7 +226,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     <Input
                       id="budget"
                       type="number"
-                      value={formData.budget ?? '')}
+                      value={formData.budget ?? ''}
                       onChange={(e) => setFormData(prev => ({ 
                         ...prev, 
                         budget: e.target.value ? parseFloat(e.target.value) : undefined 
@@ -239,7 +239,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     <Input
                       id="spend_to_date"
                       type="number"
-                      value={formData.spend_to_date ?? '')}
+                      value={formData.spend_to_date ?? ''}
                       onChange={(e) => setFormData(prev => ({ 
                         ...prev, 
                         spend_to_date: e.target.value ? parseFloat(e.target.value) : 0 
@@ -266,7 +266,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     onClick={handleSubmit}
                     disabled={!formData.campaign_name || !formData.utm_campaign || createCampaign.isPending || updateCampaign.isPending}
                   >
-                    {editingCampaign ? 'Update' : 'Create')}
+                    {editingCampaign ? 'Update' : 'Create'}
                   </Button>
                 </div>
               </CardContent>
@@ -323,7 +323,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                             )}
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
-                            {campaign.budget ? formatCurrencyWhole(campaign.budget) : '—')}
+                            {campaign.budget ? formatCurrencyWhole(campaign.budget) : '—'}
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatCurrencyWhole(campaign.spend_to_date || 0)}

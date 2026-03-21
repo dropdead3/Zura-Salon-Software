@@ -109,7 +109,7 @@ export function BirthdayCalendarCard() {
                 <div className="flex items-center gap-2 mb-2">
                   <PartyPopper className="w-4 h-4 text-pink-500" />
                   <span className="font-medium text-sm">
-                    🎉 Today's Birthday{todaysBirthdays.length > 1 ? 's' : '')}!
+                    🎉 Today's Birthday{todaysBirthdays.length > 1 ? 's' : ''}!
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">

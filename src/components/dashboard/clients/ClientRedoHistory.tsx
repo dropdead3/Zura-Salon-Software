@@ -90,7 +90,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
     <div className="space-y-3">
       {/* Summary */}
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">{redos.length} redo{redos.length !== 1 ? 's' : '')}</span>
+        <span className="text-muted-foreground">{redos.length} redo{redos.length !== 1 ? 's' : ''}</span>
         {totalImpact > 0 && (
           <span className="text-muted-foreground">
             Revenue impact: <span className="font-medium text-amber-600 dark:text-amber-400">-{formatCurrencyWhole(totalImpact)}</span>

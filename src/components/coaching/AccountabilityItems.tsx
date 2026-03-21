@@ -99,7 +99,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
     const isDueToday = isToday(date);
 
     return (
-      <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground')}`}>
+      <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground'}`}>
         <Calendar className="h-3 w-3" />
         {formatDate(date, 'MMM d')}
         {isOverdue && ' (overdue)')}

@@ -146,7 +146,7 @@ export function ShiftEditorDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-base tracking-wide">
-            {existingShift ? 'Edit Shift' : 'Create Shift')}
+            {existingShift ? 'Edit Shift' : 'Create Shift'}
           </DialogTitle>
         </DialogHeader>
 
@@ -327,7 +327,7 @@ export function ShiftEditorDialog({
             className="font-sans"
           >
             {isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-            {existingShift ? 'Save Changes' : recurrence !== 'none' ? 'Create Series' : 'Create Shift')}
+            {existingShift ? 'Save Changes' : recurrence !== 'none' ? 'Create Series' : 'Create Shift'}
           </Button>
         </DialogFooter>
       </DialogContent>

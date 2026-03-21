@@ -43,7 +43,7 @@ export function StylistBowlReview({
           <div>
             <p className="font-display text-sm tracking-wide">
               Bowl {bowl.bowl_number}
-              {bowl.bowl_name ? ` — ${bowl.bowl_name}` : '')}
+              {bowl.bowl_name ? ` — ${bowl.bowl_name}` : ''}
             </p>
             {assistantName && (
               <p className="font-sans text-xs text-muted-foreground">
@@ -76,7 +76,7 @@ export function StylistBowlReview({
           <div className="border-t border-border/40 pt-1.5 flex items-center justify-between font-sans text-sm">
             <span className="text-muted-foreground">Total dispensed</span>
             <span className="text-foreground tabular-nums">
-              {bowl.total_dispensed_weight?.toFixed(1) ?? '0.0')} g
+              {bowl.total_dispensed_weight?.toFixed(1) ?? '0.0'} g
             </span>
           </div>
         </div>

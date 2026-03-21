@@ -245,7 +245,7 @@ export default function Policies() {
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
     
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'})`, 'gi');
     const parts = text.split(regex);
     
     return parts.map((part, index) => 
@@ -378,7 +378,7 @@ export default function Policies() {
                   animate={{ opacity: 1 }}
                   className="text-sm text-muted-foreground mb-6"
                 >
-                  {filteredPolicies.length} {filteredPolicies.length === 1 ? 'result' : 'results')} found
+                  {filteredPolicies.length} {filteredPolicies.length === 1 ? 'result' : 'results'} found
                 </motion.p>
               )}
 

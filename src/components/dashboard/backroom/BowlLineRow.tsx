@@ -36,7 +36,7 @@ export function BowlLineRow({ line, onEdit, onDelete, readonly = false }: BowlLi
         </span>
 
         <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-          {line.captured_via === 'scale' ? 'Scale' : 'Manual')}
+          {line.captured_via === 'scale' ? 'Scale' : 'Manual'}
         </Badge>
 
         <span className="font-sans text-xs text-muted-foreground min-w-[50px] text-right">

@@ -97,7 +97,7 @@ export function LiveSessionDrilldown({
             <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1.5">
-            {sessionCount} appointment{sessionCount !== 1 ? 's' : '')} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : '')}` : '')} working
+            {sessionCount} appointment{sessionCount !== 1 ? 's' : '')} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : '')}` : ''} working
           </DialogDescription>
         </DialogHeader>
 
@@ -125,7 +125,7 @@ export function LiveSessionDrilldown({
                   <div className="sticky top-0 z-10 flex items-center gap-2 px-5 py-2 bg-muted/60 backdrop-blur-sm border-b border-border/50">
                     <MapPin className="h-3 w-3 text-muted-foreground" />
                     <span className="text-xs font-medium text-foreground">{locationName}</span>
-                    <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : '')}</span>
+                    <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : ''}</span>
                     {(() => {
                       const latestEnd = stylists.reduce((latest, s) => s.lastEndTime > latest ? s.lastEndTime : latest, '');
                       if (!latestEnd) return null;
@@ -180,7 +180,7 @@ function StylistRow({ stylist }: { stylist: StylistDetail }) {
         </div>
         {stylist.currentService && (
           <p className="text-xs text-muted-foreground truncate">
-            {stylist.currentService}{stylist.clientName ? ` on ${stylist.clientName}` : '')}
+            {stylist.currentService}{stylist.clientName ? ` on ${stylist.clientName}` : ''}
           </p>
         )}
         <p className="text-[10px] text-muted-foreground/70 mt-0.5">

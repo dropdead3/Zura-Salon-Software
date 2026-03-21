@@ -76,7 +76,7 @@ export function BlueprintChecklist({ serviceId, className }: BlueprintChecklistP
   if (steps.length === 0) return null;
 
   return (
-    <Card className={`rounded-xl bg-card/80 backdrop-blur-xl border-border ${className ?? '')}`}>
+    <Card className={`rounded-xl bg-card/80 backdrop-blur-xl border-border ${className ?? ''}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
@@ -145,7 +145,7 @@ function ChecklistItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span
-            className={`font-sans text-sm ${isComplete ? 'line-through text-muted-foreground' : 'text-foreground')}`}
+            className={`font-sans text-sm ${isComplete ? 'line-through text-muted-foreground' : 'text-foreground'}`}
           >
             {step.title}
           </span>

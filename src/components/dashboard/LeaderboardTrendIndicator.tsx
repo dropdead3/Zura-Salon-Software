@@ -76,7 +76,7 @@ export function LeaderboardTrendIndicator({ trend, showTooltip = true }: Leaderb
             <div className="flex gap-1 text-[10px] text-muted-foreground">
               {weeklyHistory.map((week, idx) => (
                 <div key={week.week} className="flex-1 text-center truncate">
-                  {idx === 0 || idx === weeklyHistory.length - 1 ? week.week : '')}
+                  {idx === 0 || idx === weeklyHistory.length - 1 ? week.week : ''}
                 </div>
               ))}
             </div>
@@ -93,8 +93,8 @@ export function LeaderboardTrendIndicator({ trend, showTooltip = true }: Leaderb
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rank change</span>
-                <span className={rankChange > 0 ? 'text-chart-2' : rankChange < 0 ? 'text-destructive' : '')}>
-                  {rankChange > 0 ? `+${rankChange}` : rankChange < 0 ? rankChange : '—')}
+                <span className={rankChange > 0 ? 'text-chart-2' : rankChange < 0 ? 'text-destructive' : ''}>
+                  {rankChange > 0 ? `+${rankChange}` : rankChange < 0 ? rankChange : '—'}
                 </span>
               </div>
             </div>

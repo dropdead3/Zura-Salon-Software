@@ -300,7 +300,7 @@ export default function AccountDetail() {
                       rel="noopener noreferrer"
                       className="text-violet-400 hover:text-violet-300 hover:underline transition-colors"
                     >
-                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, ''}
                     </a>
                   </div>
                 )}
@@ -581,8 +581,8 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
                       </p>
                     </div>
                   </div>
-                  <PlatformBadge variant={location.is_active ? 'success' : 'default')}>
-                    {location.is_active ? 'Active' : 'Inactive')}
+                  <PlatformBadge variant={location.is_active ? 'success' : 'default'}>
+                    {location.is_active ? 'Active' : 'Inactive'}
                   </PlatformBadge>
                 </div>
               ))}

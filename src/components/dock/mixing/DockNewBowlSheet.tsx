@@ -100,7 +100,7 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
                 disabled={lines.length === 0}
                 className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
               >
-                Create Bowl ({lines.length} ingredient{lines.length !== 1 ? 's' : '')})
+                Create Bowl ({lines.length} ingredient{lines.length !== 1 ? 's' : ''})
               </button>
             </div>
           </motion.div>

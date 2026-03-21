@@ -74,10 +74,10 @@ export function PointsHistoryPanel() {
                 </div>
               </div>
               <Badge
-                variant={isPositive ? 'default' : 'destructive')}
-                className={isPositive ? 'bg-green-600' : '')}
+                variant={isPositive ? 'default' : 'destructive'}
+                className={isPositive ? 'bg-green-600' : ''}
               >
-                {isPositive ? '+' : '')}
+                {isPositive ? '+' : ''}
                 {transaction.points}
               </Badge>
             </div>

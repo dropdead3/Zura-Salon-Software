@@ -160,7 +160,7 @@ export function ClaimSwapDialog({ open, onOpenChange, swap }: ClaimSwapDialogPro
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {offerDate ? formatDate(offerDate, 'EEEE, MMMM d, yyyy') : 'Select date')}
+                        {offerDate ? formatDate(offerDate, 'EEEE, MMMM d, yyyy') : 'Select date'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">

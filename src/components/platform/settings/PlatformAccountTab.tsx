@@ -171,7 +171,7 @@ export function PlatformAccountTab() {
             <div className="space-y-2">
               <PlatformLabel>Email</PlatformLabel>
               <PlatformInput
-                value={user?.email || '')}
+                value={user?.email || ''}
                 disabled
                 className="opacity-60 cursor-not-allowed"
               />

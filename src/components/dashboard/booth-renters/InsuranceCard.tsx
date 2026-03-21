@@ -168,7 +168,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
             <DialogTrigger asChild>
               <Button size={tokens.button.card} variant="outline" onClick={handleEditOpen}>
                 <Edit2 className="h-3 w-3 mr-1" />
-                {insurance?.insurance_provider ? 'Update' : 'Add Insurance')}
+                {insurance?.insurance_provider ? 'Update' : 'Add Insurance'}
               </Button>
             </DialogTrigger>
             <DialogContent>

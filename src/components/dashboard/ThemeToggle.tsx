@@ -8,14 +8,14 @@ export function ThemeToggle() {
 
   return (
     <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      onClick={() => setTheme(isDark ? 'light' : 'dark'}
       className={cn(
         "relative flex items-center h-9 w-[60px] rounded-full p-1 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isDark
           ? "bg-[hsl(0,0%,8%)] border border-border/50 shadow-[inset_0_1px_3px_hsl(0,0%,0%/0.4)]"
           : "bg-accent/50 border border-border/40 shadow-[inset_0_1px_2px_hsl(0,0%,0%/0.06)]"
       )}
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode')}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {/* Sun icon - visible in dark mode as unselected hint */}
       <Sun className={cn(

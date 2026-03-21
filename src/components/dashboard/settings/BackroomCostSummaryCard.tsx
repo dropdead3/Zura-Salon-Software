@@ -80,7 +80,7 @@ export function BackroomCostSummaryCard() {
                   <span className="font-sans text-sm text-foreground">{locName}</span>
                   {ent.scale_count > 0 && (
                     <span className="text-xs text-muted-foreground">
-                      · {ent.scale_count} scale{ent.scale_count !== 1 ? 's' : '')}
+                      · {ent.scale_count} scale{ent.scale_count !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>

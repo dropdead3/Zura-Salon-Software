@@ -52,7 +52,7 @@ export function CheckoutAlertsSection() {
             <p className="text-xs text-muted-foreground">Show a toast and play a sound when revenue comes in.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Label className="text-xs text-muted-foreground">{chaChingEnabled ? 'On' : 'Off')}</Label>
+            <Label className="text-xs text-muted-foreground">{chaChingEnabled ? 'On' : 'Off'}</Label>
             <Switch checked={chaChingEnabled} onCheckedChange={setChaChingEnabled} />
           </div>
         </div>
@@ -64,7 +64,7 @@ export function CheckoutAlertsSection() {
               <p className="text-xs text-muted-foreground">Let Super Admins also receive checkout alerts.</p>
             </div>
             <div className="flex items-center gap-3">
-              <Label className="text-xs text-muted-foreground">{superAdminsEnabled ? 'On' : 'Off')}</Label>
+              <Label className="text-xs text-muted-foreground">{superAdminsEnabled ? 'On' : 'Off'}</Label>
               <Switch
                 checked={superAdminsEnabled}
                 onCheckedChange={setSuperAdminsEnabled}

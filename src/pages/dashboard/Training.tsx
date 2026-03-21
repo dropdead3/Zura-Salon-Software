@@ -189,7 +189,7 @@ export default function Training() {
         {/* Category Filter */}
         <div className="flex flex-wrap gap-2 mb-8">
           <Button
-            variant={selectedCategory === 'all' ? 'default' : 'outline')}
+            variant={selectedCategory === 'all' ? 'default' : 'outline'}
             onClick={() => setSelectedCategory('all')}
             className="font-display text-xs tracking-wide"
           >
@@ -198,7 +198,7 @@ export default function Training() {
           {categories.map(cat => (
             <Button
               key={cat.key}
-              variant={selectedCategory === cat.key ? 'default' : 'outline')}
+              variant={selectedCategory === cat.key ? 'default' : 'outline'}
               onClick={() => setSelectedCategory(cat.key)}
               className="font-display text-xs tracking-wide"
             >

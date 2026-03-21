@@ -411,7 +411,7 @@ export default function SalesDashboard() {
                     ? 'Monthly Goal'
                     : 'Weekly Goal'
               }
-              goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly')}
+              goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
               hoursJson={selectedLoc?.hours_json ?? mergedHoursJson}
               holidayClosures={selectedLoc?.holiday_closures ?? mergedHolidays}
             />

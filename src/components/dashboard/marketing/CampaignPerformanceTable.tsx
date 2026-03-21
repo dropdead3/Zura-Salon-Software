@@ -219,7 +219,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                     <TableCell className="text-right tabular-nums">{campaign.totalLeads}</TableCell>
                     <TableCell className="text-right tabular-nums">{campaign.converted}</TableCell>
                     <TableCell className="text-right">
-                      <span className={campaign.conversionRate >= 20 ? 'text-green-600 dark:text-green-400 font-medium' : '')}>
+                      <span className={campaign.conversionRate >= 20 ? 'text-green-600 dark:text-green-400 font-medium' : ''}>
                         {campaign.conversionRate.toFixed(1)}%
                       </span>
                     </TableCell>
@@ -229,7 +229,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                     {hasSpendData && (
                       <>
                         <TableCell className="text-right tabular-nums">
-                          {campaign.spendToDate !== null ? formatCurrencyWhole(campaign.spendToDate) : '—')}
+                          {campaign.spendToDate !== null ? formatCurrencyWhole(campaign.spendToDate) : '—'}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {campaign.costPerLead !== null ? (
@@ -260,7 +260,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                       </>
                     )}
                     <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {campaign.avgResponseTime > 0 ? campaign.avgResponseTime.toFixed(1) : '—')}
+                      {campaign.avgResponseTime > 0 ? campaign.avgResponseTime.toFixed(1) : '—'}
                     </TableCell>
                   </TableRow>
                 );

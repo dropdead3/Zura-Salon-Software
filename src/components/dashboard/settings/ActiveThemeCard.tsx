@@ -61,7 +61,7 @@ export function ActiveThemeCard({ theme, onCustomize, onPreview }: ActiveThemeCa
                 </span>
                 <span className="text-muted-foreground">·</span>
                 <span className="text-xs text-muted-foreground">
-                  Layout: <span className="capitalize">{(theme.layout_config as Record<string, string>)?.hero_style ?? 'standard')}</span>
+                  Layout: <span className="capitalize">{(theme.layout_config as Record<string, string>)?.hero_style ?? 'standard'}</span>
                 </span>
               </div>
             </div>

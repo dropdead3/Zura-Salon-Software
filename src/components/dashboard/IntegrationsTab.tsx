@@ -181,7 +181,7 @@ export function IntegrationsTab() {
                 size={tokens.button.card}
                 onClick={() => setCalSyncOpen(true)}
               >
-                {calFeedToken ? 'Manage' : 'Set Up')}
+                {calFeedToken ? 'Manage' : 'Set Up'}
               </Button>
             </div>
           </CardHeader>

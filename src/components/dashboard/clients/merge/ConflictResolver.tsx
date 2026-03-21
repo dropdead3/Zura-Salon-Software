@@ -83,7 +83,7 @@ export function ConflictResolver({ primaryClient, secondaryClients, fieldResolut
             </div>
 
             <RadioGroup
-              value={String(currentValue ?? '')}
+              value={String(currentValue ?? ''}
               onValueChange={(val) => {
                 // Parse back to original type
                 let parsed: any = val;

@@ -265,7 +265,7 @@ export function StructureInsightsTab({
                 'font-sans text-xs mt-0.5',
                 data.score >= 75 ? 'text-emerald-600' : data.score >= 50 ? 'text-amber-600' : 'text-destructive'
               )}>
-                {data.score >= 75 ? 'Strong' : data.score >= 50 ? 'Needs work' : 'Critical issues')}
+                {data.score >= 75 ? 'Strong' : data.score >= 50 ? 'Needs work' : 'Critical issues'}
               </p>
             </div>
           </div>

@@ -162,9 +162,9 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
                 dateRange={filterContext.dateRange} 
               />
             )}
-            <Badge variant={isUp ? 'default' : 'secondary')}>
-              <TrendIcon className={cn('w-3 h-3 mr-1', isUp ? 'text-chart-2' : 'text-destructive')} />
-              {isUp ? '+' : '')}{comparison.change.toFixed(1)}%
+            <Badge variant={isUp ? 'default' : 'secondary'}>
+              <TrendIcon className={cn('w-3 h-3 mr-1', isUp ? 'text-chart-2' : 'text-destructive'} />
+              {isUp ? '+' : ''}{comparison.change.toFixed(1)}%
             </Badge>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
               'text-lg font-display',
               comparison.monthChange >= 0 ? 'text-chart-2' : 'text-destructive'
             )}>
-              {comparison.monthChange >= 0 ? '+' : '')}{comparison.monthChange.toFixed(1)}%
+              {comparison.monthChange >= 0 ? '+' : ''}{comparison.monthChange.toFixed(1)}%
             </p>
             <p className="text-xs text-muted-foreground">{comparison.currentMonthName} vs LY</p>
           </div>
@@ -197,10 +197,10 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
             'text-center p-3 rounded-lg',
             isUp ? 'bg-chart-2/10' : 'bg-destructive/10'
           )}>
-            <p className={cn('text-lg font-display', isUp ? 'text-chart-2' : 'text-destructive')}>
+            <p className={cn('text-lg font-display', isUp ? 'text-chart-2' : 'text-destructive'}>
               {formatCurrencyWhole(Math.abs(comparison.currentTotal - comparison.lastTotal))}
             </p>
-            <p className="text-xs text-muted-foreground">{isUp ? 'Ahead' : 'Behind')} YTD</p>
+            <p className="text-xs text-muted-foreground">{isUp ? 'Ahead' : 'Behind'} YTD</p>
           </div>
         </div>
 

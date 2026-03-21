@@ -634,7 +634,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       client.daysSinceVisit && client.daysSinceVisit > 60 && "text-destructive",
                       client.daysSinceVisit && client.daysSinceVisit > 30 && client.daysSinceVisit <= 60 && "text-amber-600 dark:text-amber-400"
                     )}>
-                      {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A')}
+                      {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
                     </p>
                     <p className="text-xs text-muted-foreground">Since Visit</p>
                     {client.last_visit && (
@@ -942,9 +942,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                           {' — ')}
                           {(() => {
                             const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
-                            if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : '')}`;
+                            if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
                             const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
-                            return months === 0 ? 'Less than 1 month' : `${months} month${months !== 1 ? 's' : '')}`;
+                            return months === 0 ? 'Less than 1 month' : `${months} month${months !== 1 ? 's' : ''}`;
                           })()}
                         </>
                       ) : 'No start date on file')}
@@ -1007,11 +1007,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span>Email: {client.reminder_email_opt_in !== false ? 'On' : 'Off')}</span>
+                      <span>Email: {client.reminder_email_opt_in !== false ? 'On' : 'Off'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <span>SMS: {client.reminder_sms_opt_in !== false ? 'On' : 'Off')}</span>
+                      <span>SMS: {client.reminder_sms_opt_in !== false ? 'On' : 'Off'}</span>
                     </div>
                   </div>
                 )}
@@ -1145,8 +1145,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <p>Client notes: {client.prompt_client_notes ? 'Prompt enabled' : 'Off')}</p>
-                  <p>Appointment notes: {client.prompt_appointment_notes ? 'Prompt enabled' : 'Off')}</p>
+                  <p>Client notes: {client.prompt_client_notes ? 'Prompt enabled' : 'Off'}</p>
+                  <p>Appointment notes: {client.prompt_appointment_notes ? 'Prompt enabled' : 'Off'}</p>
                 </div>
               )}
             </CardContent>
@@ -1270,7 +1270,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                           <div className="flex items-center gap-2">
                             <span className="font-sans text-sm text-foreground">{formatDate(visit.appointment_date, 'EEE, MMM d')}</span>
                             <span className="text-xs text-muted-foreground">
-                              {(() => { const [h, m] = visit.start_time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM')}`; })()}
+                              {(() => { const [h, m] = visit.start_time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })()}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">

@@ -224,7 +224,7 @@ export function IssueContractDialog({
                     <SelectContent>
                       {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                         <SelectItem key={day} value={String(day)}>
-                          {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th')}
+                          {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'}
                         </SelectItem>
                       ))}
                     </SelectContent>

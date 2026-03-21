@@ -94,7 +94,7 @@ export function NewBookingsDrilldown({
             </div>
             <div>
               <DialogTitle className="font-display text-base font-medium tracking-wide">
-                {isNew ? 'New Client Bookings' : 'Returning Client Rebooks')}
+                {isNew ? 'New Client Bookings' : 'Returning Client Rebooks'}
               </DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">By stylist</p>
             </div>
@@ -137,7 +137,7 @@ export function NewBookingsDrilldown({
           {staffData.length === 0 ? (
             <div className="py-14 text-center">
               <p className="text-sm text-muted-foreground">
-                No {isNew ? 'new' : 'returning')} clients in this period
+                No {isNew ? 'new' : 'returning'} clients in this period
               </p>
             </div>
           ) : (
@@ -157,7 +157,7 @@ export function NewBookingsDrilldown({
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{staff.staffName}</p>
                           <p className="text-xs text-muted-foreground">
-                            {staff.count} new client{staff.count !== 1 ? 's' : '')} · {staff.sharePercent}% of new bookings
+                            {staff.count} new client{staff.count !== 1 ? 's' : ''} · {staff.sharePercent}% of new bookings
                           </p>
                         </div>
                         <span className="font-display text-lg tabular-nums">{staff.count}</span>

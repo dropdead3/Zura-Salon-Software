@@ -121,7 +121,7 @@ export function DayAppointmentsPanel({ day, open, onOpenChange }: DayAppointment
           {formatDate(parseISO(day.date), 'EEEE, MMMM d')}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-          <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : '')}</span>
+          <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}</span>
           <span>·</span>
           <span className="font-display">
             <BlurredAmount>{fmtWhole(day.revenue)}</BlurredAmount> projected

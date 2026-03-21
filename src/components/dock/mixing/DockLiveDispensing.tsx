@@ -138,7 +138,7 @@ export function DockLiveDispensing({
         <div className="flex-shrink-0 px-5 pt-6 pb-2">
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mb-1">Dispensing</p>
           <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-            {editingLine?.product_name_snapshot || 'Product')}
+            {editingLine?.product_name_snapshot || 'Product'}
           </p>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
             Target: {editingLine?.dispensed_quantity || 0}g
@@ -265,7 +265,7 @@ export function DockLiveDispensing({
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Lock className="w-4 h-4" />
-            {sealBowl.isPending ? 'Sealing...' : 'Seal Bowl')}
+            {sealBowl.isPending ? 'Sealing...' : 'Seal Bowl'}
           </button>
         )}
         {needsReweigh && !isComplete && (

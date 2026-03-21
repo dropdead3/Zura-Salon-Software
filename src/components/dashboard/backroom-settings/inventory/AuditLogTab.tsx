@@ -48,7 +48,7 @@ function getFieldLabel(field: string): string {
 
 function exportBulkCsv(entries: BulkAuditEntry[]) {
   const headers = ['Timestamp', 'Product', 'Type', 'Field', 'Change', 'After', 'User', 'Notes'];
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
   const rows = entries.map(e => [
     new Date(e.created_at).toISOString(),
     escape(e.product_name),
@@ -266,7 +266,7 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
                 <CalendarIcon className="w-3 h-3" />
-                {dateFrom ? format(dateFrom, 'MMM d') : 'From')}
+                {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -284,7 +284,7 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
                 <CalendarIcon className="w-3 h-3" />
-                {dateTo ? format(dateTo, 'MMM d') : 'To')}
+                {dateTo ? format(dateTo, 'MMM d') : 'To'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -426,7 +426,7 @@ function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () 
           'text-[10px]',
           isStock ? 'bg-muted/50 text-foreground/70' : 'bg-primary/5 text-primary border-primary/20'
         )}>
-          {isStock ? 'Qty Change' : 'Level Change')}
+          {isStock ? 'Qty Change' : 'Level Change'}
         </Badge>
       </TableCell>
       <TableCell>{getFieldLabel(entry.field)}</TableCell>
@@ -436,13 +436,13 @@ function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () 
       )}>
         {entry.quantity_change != null
           ? (isPositive ? '+' : '') + entry.quantity_change
-          : entry.old_value != null ? `${entry.old_value} →` : '—')}
+          : entry.old_value != null ? `${entry.old_value} →` : '—'}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        {entry.quantity_after ?? '—')}
+        {entry.quantity_after ?? '—'}
       </TableCell>
-      <TableCell className="text-muted-foreground">{entry.changed_by_name ?? '—')}</TableCell>
-      <TableCell className="text-muted-foreground max-w-[160px] truncate">{entry.notes ?? '—')}</TableCell>
+      <TableCell className="text-muted-foreground">{entry.changed_by_name ?? '—'}</TableCell>
+      <TableCell className="text-muted-foreground max-w-[160px] truncate">{entry.notes ?? '—'}</TableCell>
     </TableRow>
   );
 }

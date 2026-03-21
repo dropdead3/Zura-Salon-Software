@@ -128,7 +128,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       const errors = results.filter(r => r.error);
       if (errors.length > 0) throw errors[0].error;
 
-      toast.success(`${targets.length} appointment${targets.length !== 1 ? 's' : '')} updated to ${newStatus}`);
+      toast.success(`${targets.length} appointment${targets.length !== 1 ? 's' : ''} updated to ${newStatus}`);
       queryClient.invalidateQueries({ queryKey: ['appointments-hub'] });
       onClearSelection();
     } catch (err: any) {
@@ -255,7 +255,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       <AlertDialog open={cancelSelectedOpen} onOpenChange={setCancelSelectedOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel {selectedAppointments.length} selected appointment{selectedAppointments.length !== 1 ? 's' : '')}?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel {selectedAppointments.length} selected appointment{selectedAppointments.length !== 1 ? 's' : ''}?</AlertDialogTitle>
             <AlertDialogDescription>
               This will cancel all selected appointments. Cancelled appointments cannot be automatically restored.
             </AlertDialogDescription>
@@ -276,7 +276,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       <AlertDialog open={cancelFutureOpen} onOpenChange={setCancelFutureOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel {futureAppointments.length} future appointment{futureAppointments.length !== 1 ? 's' : '')}?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel {futureAppointments.length} future appointment{futureAppointments.length !== 1 ? 's' : ''}?</AlertDialogTitle>
             <AlertDialogDescription>
               This will cancel only the selected appointments dated today or later. Past appointments will not be affected.
             </AlertDialogDescription>
@@ -299,7 +299,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
         onOpenChange={setResolutionOpen}
         appointments={resolutionAppointments}
         actionLabel={getResolutionLabel()}
-        actionVariant={pendingAction?.type === 'status-update' ? 'default' : 'destructive')}
+        actionVariant={pendingAction?.type === 'status-update' ? 'default' : 'destructive'}
         onConfirm={handleResolutionConfirm}
       />
 

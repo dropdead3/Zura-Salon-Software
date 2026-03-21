@@ -114,7 +114,7 @@ export default function MeetingDetails() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={teamMemberProfile?.photo_url || '')} />
+                    <AvatarImage src={teamMemberProfile?.photo_url || ''} />
                     <AvatarFallback>
                       {(teamMemberProfile?.full_name || 'U').charAt(0)}
                     </AvatarFallback>

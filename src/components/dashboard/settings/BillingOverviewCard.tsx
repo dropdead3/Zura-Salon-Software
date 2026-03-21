@@ -66,11 +66,11 @@ export function BillingOverviewCard() {
         <div className="flex items-start justify-between">
           <div>
             <p className="font-display text-xl tracking-wide uppercase text-foreground">
-              {currentPlan?.name || 'No Plan')}
+              {currentPlan?.name || 'No Plan'}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {billing ? getBillingCycleLabel(billing.billing_cycle) : 'Monthly')} billing
-              {billing?.contract_length_months ? ` · ${getContractLengthLabel(billing.contract_length_months)} contract` : '')}
+              {billing ? getBillingCycleLabel(billing.billing_cycle) : 'Monthly'} billing
+              {billing?.contract_length_months ? ` · ${getContractLengthLabel(billing.contract_length_months)} contract` : ''}
             </p>
           </div>
           <div className="flex gap-2">

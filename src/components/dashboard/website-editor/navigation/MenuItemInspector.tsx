@@ -127,7 +127,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">Target Page</Label>
             <Select
-              value={item.target_page_id ?? '')}
+              value={item.target_page_id ?? ''}
               onValueChange={(v) => update({ target_page_id: v || null })}
             >
               <SelectTrigger className="h-9 text-sm">
@@ -157,7 +157,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
 
         {(item.item_type === 'external_url' || item.item_type === 'cta') && (
           <UrlInput
-            label={item.item_type === 'cta' ? 'CTA URL' : 'External URL')}
+            label={item.item_type === 'cta' ? 'CTA URL' : 'External URL'}
             value={targetUrl}
             onChange={setTargetUrl}
             placeholder="https://example.com"
@@ -168,7 +168,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">Anchor ID</Label>
             <Input
-              value={item.target_anchor ?? '')}
+              value={item.target_anchor ?? ''}
               onChange={(e) => update({ target_anchor: e.target.value || null })}
               placeholder="#section-name"
               className="h-9 text-sm"
@@ -182,7 +182,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">CTA Style</Label>
             <Select
-              value={item.cta_style ?? 'primary')}
+              value={item.cta_style ?? 'primary'}
               onValueChange={(v) => update({ cta_style: v as CtaStyle })}
             >
               <SelectTrigger className="h-9 text-sm">
@@ -285,7 +285,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <AlertDialogHeader>
             <AlertDialogTitle>Delete "{item.label}"?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this menu item{item.item_type === 'dropdown_parent' ? ' and all its children' : '')}. This cannot be undone.
+              This will permanently remove this menu item{item.item_type === 'dropdown_parent' ? ' and all its children' : ''}. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

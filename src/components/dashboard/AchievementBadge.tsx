@@ -139,7 +139,7 @@ export function AchievementBadgeStack({
             <TooltipTrigger asChild>
               <div 
                 className={`
-                  ${size === 'sm' ? 'w-6 h-6 text-[10px]' : size === 'md' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm')}
+                  ${size === 'sm' ? 'w-6 h-6 text-[10px]' : size === 'md' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm'}
                   bg-muted text-muted-foreground rounded-full border flex items-center justify-center
                   font-display cursor-pointer hover:scale-110 transition-transform
                 `}

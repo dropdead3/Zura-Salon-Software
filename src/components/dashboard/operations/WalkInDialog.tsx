@@ -232,7 +232,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           {isRedo && (
             <div className="space-y-3 border-l-2 border-amber-300 dark:border-amber-700 ml-2 pl-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Reason{redoPolicy?.redo_reason_required ? ' *' : '')}</Label>
+                <Label className="text-xs text-muted-foreground">Reason{redoPolicy?.redo_reason_required ? ' *' : ''}</Label>
                 <Select value={redoReason} onValueChange={setRedoReason}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select reason..." /></SelectTrigger>
                   <SelectContent>
@@ -344,7 +344,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center pt-1">
-                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price')}` : 'Estimated price, not including overages')}
+                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price')}` : 'Estimated price, not including overages'}
               </p>
             </div>
           )}
@@ -354,7 +354,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={() => createWalkIn.mutate()} disabled={createWalkIn.isPending || selectedServiceIds.length === 0 || !redoReasonValid}>
             {createWalkIn.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isRedo ? 'Add Redo to Queue' : 'Add to Queue')}
+            {isRedo ? 'Add Redo to Queue' : 'Add to Queue'}
           </Button>
         </div>
       </DialogContent>
