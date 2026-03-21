@@ -284,8 +284,8 @@ export function Header() {
         >
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
             <p className={cn("text-sm text-center md:text-left", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white/80" : "text-foreground/80")}>
-              {announcementSettings.message_prefix}{' ')}
-              <span className="font-medium">{announcementSettings.message_highlight}</span>{' ')}
+              {announcementSettings.message_prefix}{' '}
+              <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
               {announcementSettings.message_suffix}
             </p>
             <a 

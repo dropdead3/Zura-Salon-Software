@@ -530,7 +530,7 @@ export function DataImportWizard({
                   <li>File must be <span className="text-foreground">.csv</span> format (comma-separated values)</li>
                   <li>First row must contain column headers</li>
                   <li>
-                    Required fields: {' ')}
+                    Required fields: {' '}
                     <span className="text-foreground">{requiredFieldNames.join(', ')}</span>
                   </li>
                   <li>Prices should be numeric without currency symbols (e.g. <span className="text-foreground">14.99</span>)</li>
@@ -821,7 +821,7 @@ export function DataImportWizard({
               </div>
               
               <p className="text-sm">
-                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported')} to{' ')}
+                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported')} to{' '}
                 <strong className="capitalize">{dataType}</strong>
                 {selectedLocationId && locations && (
                   <> at <strong>{locations.find(l => l.id === selectedLocationId)?.name}</strong></>

@@ -276,7 +276,7 @@ export function ServicesContent() {
       <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/60 border border-border">
         <Settings2 className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
-          Services and categories are managed in{' ')}
+          Services and categories are managed in{' '}
           <Link to={dashPath('/admin/services')} className="underline font-medium text-foreground hover:text-primary">
             Services Settings
           </Link>

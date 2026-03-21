@@ -1545,7 +1545,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   {topDriver && (
                     <div className="mb-4 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground space-y-1">
                       <p>
-                        <span className="font-medium text-foreground">{topDriver.serviceName}</span> drives the most retail revenue at{' ')}
+                        <span className="font-medium text-foreground">{topDriver.serviceName}</span> drives the most retail revenue at{' '}
                         <span className="font-medium text-foreground">{formatCurrencyWhole(topDriver.retailRevenue)}</span> ({topDriver.attachmentRate}% attach rate).
                       </p>
                       {highVolumeLowest && highVolumeLowest.serviceName !== topDriver.serviceName && highVolumeLowest.attachmentRate < 40 && (
@@ -1991,11 +1991,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
               <div className="p-4 rounded-lg bg-muted/30 space-y-2">
                 <div className="flex items-center gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Type:</span>{' ')}
+                    <span className="text-muted-foreground">Type:</span>{' '}
                     <span className="font-medium capitalize">{commissionConfig.commission_type === 'flat_rate' ? 'Flat Rate' : commissionConfig.commission_type === 'tiered' ? 'Tiered' : 'Per-Employee')}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Default Rate:</span>{' ')}
+                    <span className="text-muted-foreground">Default Rate:</span>{' '}
                     <span className="font-medium">{commissionConfig.default_rate}%</span>
                   </div>
                 </div>

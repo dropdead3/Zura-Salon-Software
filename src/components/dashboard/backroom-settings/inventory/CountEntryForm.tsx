@@ -238,7 +238,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
       {countedCount > 0 && (
         <div className="flex items-center gap-4 rounded-lg border border-border/60 bg-muted/20 px-4 py-2.5 text-xs">
           <span>
-            Variance:{' ')}
+            Variance:{' '}
             <span
               className={cn(
                 'tabular-nums',

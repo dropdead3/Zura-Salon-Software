@@ -279,7 +279,7 @@ export function StylistLevelsContent() {
       <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-sm text-muted-foreground">
-          Commission rates set here apply to all stylists at each level unless individually overridden below. Level-based service pricing is displayed on the client-facing website — adjust level pricing in the{' ')}
+          Commission rates set here apply to all stylists at each level unless individually overridden below. Level-based service pricing is displayed on the client-facing website — adjust level pricing in the{' '}
           <a href=dashPath('/admin/services') className="text-primary hover:underline">Services editor</a>.
         </p>
       </div>

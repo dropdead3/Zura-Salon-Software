@@ -436,7 +436,7 @@ export function CommandCenterContent() {
               Collapse All
             </Button>
             <span className="text-sm text-muted-foreground ml-auto">
-              {Object.keys(filteredCategories).length} categories,{' ')}
+              {Object.keys(filteredCategories).length} categories,{' '}
               {Object.values(filteredCategories).reduce((acc, els) => acc + els.length, 0)} elements
             </span>
           </div>
@@ -723,7 +723,7 @@ export function CommandCenterContent() {
               Hide All Dashboard Elements?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will hide all dashboard elements for the{' ')}
+              This will hide all dashboard elements for the{' '}
               <strong>{confirmHideRole && roles.find(r => r.name === confirmHideRole)?.display_name}</strong> role.
               Users with this role won't see any of these elements on their dashboard.
             </AlertDialogDescription>

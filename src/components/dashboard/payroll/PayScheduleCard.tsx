@@ -298,11 +298,11 @@ export function PayScheduleCard() {
           <h4 className="font-medium text-sm">Schedule Summary</h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              <span className="font-medium text-foreground">Next Pay Day:</span>{' ')}
+              <span className="font-medium text-foreground">Next Pay Day:</span>{' '}
               {formatDate(nextPayDay, 'EEEE, MMMM d, yyyy')}
             </p>
             <p>
-              <span className="font-medium text-foreground">Current Period:</span>{' ')}
+              <span className="font-medium text-foreground">Current Period:</span>{' '}
               {formatDate(currentPeriod.periodStart, 'MMM d')} – {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy')}
             </p>
           </div>

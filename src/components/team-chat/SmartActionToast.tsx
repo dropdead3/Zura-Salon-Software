@@ -88,7 +88,7 @@ export function SmartActionToast({
           </div>
           
           <p className="text-sm font-medium">
-            <span className="text-primary">{senderName}</span>{' ')}
+            <span className="text-primary">{senderName}</span>{' '}
             <span className="text-muted-foreground">{config.description}</span>
           </p>
           

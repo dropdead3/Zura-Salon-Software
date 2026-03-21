@@ -276,7 +276,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
               <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/30">
                 <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  Staff names unavailable —{' ')}
+                  Staff names unavailable —{' '}
                   <Link to={dashPath('/admin/settings/staff-mapping')} className="text-primary hover:underline">
                     connect staff profiles in Settings
                   </Link>

@@ -249,14 +249,14 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
         )}>
           {forecast.isOnTrack ? (
             <>
-              At this pace, you'll exceed your goal by{' ')}
+              At this pace, you'll exceed your goal by{' '}
               <strong>{formatCurrencyWhole(Math.round(forecast.projectedTotal - monthlyTarget))}</strong>
             </>
           ) : (
             <>
-              To hit your goal, increase daily revenue to{' ')}
+              To hit your goal, increase daily revenue to{' '}
               <strong>{formatCurrencyWhole(Math.round(forecast.requiredDaily))}</strong>
-              {' ')}(+{formatCurrencyWhole(Math.round(forecast.requiredDaily - forecast.dailyAverage))}/day)
+              {' '}(+{formatCurrencyWhole(Math.round(forecast.requiredDaily - forecast.dailyAverage))}/day)
             </>
           )}
         </div>

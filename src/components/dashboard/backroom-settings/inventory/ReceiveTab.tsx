@@ -504,10 +504,10 @@ export function ReceiveTab() {
                         <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-4 py-3">
                           <div className="flex items-center gap-3 text-xs">
                             <span>
-                              Receiving{' ')}
+                              Receiving{' '}
                               <span className="text-foreground">
                                 {receivingSummary.totalReceiving}
-                              </span>{' ')}
+                              </span>{' '}
                               of {receivingSummary.totalOrdered} outstanding
                             </span>
                             {receivingSummary.totalDamaged > 0 && (

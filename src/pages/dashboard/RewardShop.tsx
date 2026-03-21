@@ -188,12 +188,12 @@ export default function RewardShop() {
               <AlertDialogDescription>
                 {confirmingReward && (
                   <>
-                    Are you sure you want to redeem{' ')}
-                    <strong>{confirmingReward.name}</strong> for{' ')}
+                    Are you sure you want to redeem{' '}
+                    <strong>{confirmingReward.name}</strong> for{' '}
                     <strong>{formatNumber(confirmingReward.points_cost)} points</strong>?
                     <br />
                     <br />
-                    Your remaining balance will be{' ')}
+                    Your remaining balance will be{' '}
                     <strong>
                       {formatNumber(balance - confirmingReward.points_cost)} points
                     </strong>

@@ -78,7 +78,7 @@ export function ScheduleActionBar({
         <Calendar className="h-4 w-4" />
         <span>
           <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-          {' ')}appt{todayAppointmentCount !== 1 ? 's' : '')}
+          {' '}appt{todayAppointmentCount !== 1 ? 's' : '')}
         </span>
       </div>
 

@@ -554,7 +554,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <>
                 <Separator />
                 <div className="text-xs text-muted-foreground">
-                  <span className={tokens.label.default}>Moved from:</span>{' ')}
+                  <span className={tokens.label.default}>Moved from:</span>{' '}
                   {formatDateDisplay(appointment.rescheduled_from_date)} at {appointment.rescheduled_from_time}
                 </div>
               </>

@@ -709,13 +709,13 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
             <AlertDialogDescription>
               {superAdminConfirm?.isSuperAdmin ? (
                 <>
-                  Are you sure you want to <strong>revoke</strong> Super Admin status from{' ')}
+                  Are you sure you want to <strong>revoke</strong> Super Admin status from{' '}
                   <strong>{superAdminConfirm?.userName}</strong>? They will no longer be able to 
                   assign or remove Admin roles.
                 </>
               ) : (
                 <>
-                  Are you sure you want to <strong>grant</strong> Super Admin status to{' ')}
+                  Are you sure you want to <strong>grant</strong> Super Admin status to{' '}
                   <strong>{superAdminConfirm?.userName}</strong>? They will be able to assign and 
                   remove Admin roles for all users.
                 </>

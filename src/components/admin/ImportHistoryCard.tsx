@@ -191,9 +191,9 @@ export function ImportHistoryCard({ job, showRollback = true }: ImportHistoryCar
                 </AlertDialogTitle>
                 <AlertDialogDescription className="space-y-3">
                   <p>
-                    This will permanently delete <strong>{job.success_count}</strong>{' ')}
+                    This will permanently delete <strong>{job.success_count}</strong>{' '}
                     <strong className="capitalize">{job.entity_type}</strong> records that were
-                    imported on {formatDate(new Date(job.created_at), 'MMM d, yyyy')} at{' ')}
+                    imported on {formatDate(new Date(job.created_at), 'MMM d, yyyy')} at{' '}
                     {formatDate(new Date(job.created_at), 'h:mm a')}.
                   </p>
                   <p className="text-destructive font-medium">

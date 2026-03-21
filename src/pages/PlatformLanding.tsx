@@ -69,7 +69,7 @@ export default function PlatformLanding() {
         </div>
 
         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1] mb-6">
-          Run your salon{' ')}
+          Run your salon{' '}
           <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
             smarter
           </span>

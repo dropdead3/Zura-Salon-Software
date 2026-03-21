@@ -283,7 +283,7 @@ export default function StylistLevels() {
         <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
           <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
           <p className="text-sm text-muted-foreground">
-            Level-based service pricing is displayed on the client-facing website{' ')}
+            Level-based service pricing is displayed on the client-facing website{' '}
             <a 
               href="/" 
               target="_blank" 
@@ -292,7 +292,7 @@ export default function StylistLevels() {
             >
               your website
             </a>
-            . To adjust or edit level pricing, you can do so in the{' ')}
+            . To adjust or edit level pricing, you can do so in the{' '}
             <a 
               href="${dashPath('/admin/services" 
               className="text-primary hover:underline"
@@ -624,7 +624,7 @@ export default function StylistLevels() {
                 <ul className="text-xs space-y-1.5 text-muted-foreground">
                   {levels.map((level, idx) => (
                     <li key={level.id}>
-                      <span className="font-medium text-foreground">Level {idx + 1}:</span>{' ')}
+                      <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
                       {level.description || 'No description')}
                     </li>
                   ))}
@@ -665,7 +665,7 @@ export default function StylistLevels() {
                           <ul className="text-[10px] space-y-1 text-muted-foreground">
                             {levels.map((level, idx) => (
                               <li key={level.id}>
-                                <span className="font-medium text-foreground">Level {idx + 1}:</span>{' ')}
+                                <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
                                 {level.description}
                               </li>
                             ))}

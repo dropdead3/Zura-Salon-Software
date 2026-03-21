@@ -77,7 +77,7 @@ export function PinnedMessagesSheet({ open, onOpenChange }: PinnedMessagesSheetP
                                 <div key={preview.id} className="text-xs text-muted-foreground">
                                   <span className="font-medium text-foreground">
                                     {preview.sender?.display_name || preview.sender?.full_name || 'Unknown')}:
-                                  </span>{' ')}
+                                  </span>{' '}
                                   <span className="line-clamp-1">{preview.content}</span>
                                 </div>
                               ))}

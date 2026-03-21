@@ -437,10 +437,10 @@ export default function MyProfile() {
           <Alert className="mb-6 border-primary/50 bg-primary/5">
             <Eye className="h-4 w-4" />
             <AlertDescription>
-              You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' ')}
+              You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' '}
               <a href={dashPath(`/admin/team/${impersonatedUser?.id}`)} className="underline font-medium">
                 View Profile
-              </a>{' ')}
+              </a>{' '}
               page from Team Overview.
             </AlertDescription>
           </Alert>

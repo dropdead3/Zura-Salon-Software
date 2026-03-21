@@ -766,7 +766,7 @@ export function EmailBrandingSettings() {
                   {/* Attribution */}
                   {showAttribution && (
                     <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
-                      Sent via{' ')}
+                      Sent via{' '}
                       <a href={PLATFORM_URL} style={{ color: '#a1a1aa', textDecoration: 'underline' }} onClick={(e) => e.preventDefault()}>
                         {PLATFORM_NAME}
                       </a>

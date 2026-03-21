@@ -312,8 +312,8 @@ function GeneralTab() {
                 style={annLocal.bg_color ? { backgroundColor: annLocal.bg_color } : undefined}
               >
                 <div className={cn("font-sans", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white/80" : "text-foreground/80")}>
-                  <span>{annLocal.message_prefix || 'Are you a salon')}</span>{' ')}
-                  <span className="font-medium">{annLocal.message_highlight || 'professional')}</span>{' ')}
+                  <span>{annLocal.message_prefix || 'Are you a salon')}</span>{' '}
+                  <span className="font-medium">{annLocal.message_highlight || 'professional')}</span>{' '}
                   <span>{annLocal.message_suffix || 'looking for our extensions?')}</span>
                 </div>
                 {annLocal.cta_text && (
@@ -1043,10 +1043,10 @@ function SeoLegalTab() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Don't have legal pages yet? Free generators like{' ')}
-            <a href="https://www.termsfeed.com" target="_blank" rel="noopener noreferrer" className="underline">TermsFeed</a>{' ')}
-            or{' ')}
-            <a href="https://www.freeprivacypolicy.com" target="_blank" rel="noopener noreferrer" className="underline">FreePrivacyPolicy</a>{' ')}
+            Don't have legal pages yet? Free generators like{' '}
+            <a href="https://www.termsfeed.com" target="_blank" rel="noopener noreferrer" className="underline">TermsFeed</a>{' '}
+            or{' '}
+            <a href="https://www.freeprivacypolicy.com" target="_blank" rel="noopener noreferrer" className="underline">FreePrivacyPolicy</a>{' '}
             can help you create them.
           </p>
         </CardContent>

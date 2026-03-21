@@ -279,7 +279,7 @@ export function BellEntryCard({
                 <span className="font-sans text-sm text-foreground">{entry.service_booked}</span>
               </div>
               <p className="text-xs text-muted-foreground font-sans">
-                {leadSources.find(s => s.value === entry.lead_source)?.label} · {' ')}
+                {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
                 {formatDate(new Date(entry.created_at), 'MMM d, yyyy')}
               </p>
               {entry.closing_script && (

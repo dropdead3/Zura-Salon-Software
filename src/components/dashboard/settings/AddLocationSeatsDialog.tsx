@@ -172,7 +172,7 @@ export function AddLocationSeatsDialog({
             />
             <div>
               <Label htmlFor="agree" className="text-sm font-normal cursor-pointer">
-                I agree to the updated billing terms. My monthly cost will increase by{' ')}
+                I agree to the updated billing terms. My monthly cost will increase by{' '}
                 <span className="font-medium">{formatCurrency(costIncrease)}</span>.
               </Label>
             </div>

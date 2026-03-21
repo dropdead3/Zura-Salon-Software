@@ -856,8 +856,8 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
 
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {emailPreviewGroups.length} supplier{emailPreviewGroups.length !== 1 ? 's' : '')} ·{' ')}
-              {emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)} items ·{' ')}
+              {emailPreviewGroups.length} supplier{emailPreviewGroups.length !== 1 ? 's' : '')} ·{' '}
+              {emailPreviewGroups.reduce((s, g) => s + g.products.length, 0)} items ·{' '}
               {formatCurrency(emailPreviewGroups.reduce((s, g) => s + g.products.reduce((ss, p) => ss + getOrderQtyForEmail(p) * (p.cost_price ?? p.cost_per_gram ?? 0), 0), 0))}
             </div>
             <div className="flex gap-2">

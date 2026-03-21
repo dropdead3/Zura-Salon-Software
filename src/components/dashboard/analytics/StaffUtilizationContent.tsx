@@ -340,7 +340,7 @@ export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizat
                         )}
                         {staff.averageTicket > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            avg{' ')}
+                            avg{' '}
                             <AnimatedBlurredAmount
                               value={staff.averageTicket}
                               currency={currency}

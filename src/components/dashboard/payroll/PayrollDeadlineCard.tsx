@@ -229,7 +229,7 @@ export function PayrollDeadlineCard() {
                 ? t('payroll.view_payroll')
                 : isPastDeadline
                   ? t('payroll.run_payroll_now')
-                  : t('payroll.run_payroll')}{' ')}
+                  : t('payroll.run_payroll')}{' '}
               <ChevronRight className="h-3 w-3 ml-1" />
             </Link>
           </Button>

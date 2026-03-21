@@ -1098,7 +1098,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   {client.referred_by && <p><span className="text-muted-foreground">Referred by:</span> {client.referred_by}</p>}
                   {client.external_client_id && <p><span className="text-muted-foreground">External ID:</span> {client.external_client_id}</p>}
                   <p>
-                    <span className="text-muted-foreground">Preferred Stylist:</span>{' ')}
+                    <span className="text-muted-foreground">Preferred Stylist:</span>{' '}
                     {client.preferred_stylist_id ? (
                       <>
                         {getStylistDisplayName(preferredStylist)}

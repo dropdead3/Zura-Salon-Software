@@ -359,7 +359,7 @@ export default function PlatformLogin() {
 
               {isSignupMode && (
                 <p className="text-center text-sm text-slate-400">
-                  Already have an account?{' ')}
+                  Already have an account?{' '}
                   <button
                     type="button"
                     onClick={() => setIsSignupMode(false)}

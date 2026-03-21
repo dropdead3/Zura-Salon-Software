@@ -301,7 +301,7 @@ export default function PointsConfig() {
                       <div>
                         <p className="font-medium">{reward.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatNumber(reward.points_cost)} pts •{' ')}
+                          {formatNumber(reward.points_cost)} pts •{' '}
                           {reward.quantity_available !== null
                             ? `${reward.quantity_available} available`
                             : 'Unlimited')}

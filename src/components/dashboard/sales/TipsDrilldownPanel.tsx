@@ -221,12 +221,12 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   return (
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>
-                        Overall Avg Tip Rate:{' ')}
+                        Overall Avg Tip Rate:{' '}
                         <span className="font-sans tabular-nums text-foreground">{avgTipRate.toFixed(1)}%</span>
                       </span>
                       <span className="text-border">|</span>
                       <span>
-                        Total Tips:{' ')}
+                        Total Tips:{' '}
                         <span className="font-sans tabular-nums text-foreground">
                           <BlurredAmount>{formatCurrencyWhole(Math.round(totalTipsSum))}</BlurredAmount>
                         </span>

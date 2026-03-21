@@ -569,7 +569,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                               <span key={i}>
                                 {i > 0 && ', ')}
                                 {c.type === 'appointment' ? 'a client' : 'a meeting')}
-                                {' ')}
+                                {' '}
                                 {formatTime12(c.startTime)}–{formatTime12(c.endTime)}
                               </span>
                             ))}

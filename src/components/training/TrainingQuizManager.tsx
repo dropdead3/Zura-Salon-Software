@@ -202,7 +202,7 @@ export function TrainingQuizManager() {
                   <div>
                     <p className="font-medium">{quiz.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {quiz.video?.title || 'Unknown video')} •{' ')}
+                      {quiz.video?.title || 'Unknown video')} •{' '}
                       {quiz.questions_count} questions • {quiz.passing_score}% to pass
                     </p>
                   </div>

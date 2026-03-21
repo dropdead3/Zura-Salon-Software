@@ -152,11 +152,11 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
                 </div>
                 <div className="flex gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Retail:</span>{' ')}
+                    <span className="text-muted-foreground">Retail:</span>{' '}
                     <span className="font-medium">{formatCurrencyWhole(previewContent.sales_goals.retail)}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Service:</span>{' ')}
+                    <span className="text-muted-foreground">Service:</span>{' '}
                     <span className="font-medium">{formatCurrencyWhole(previewContent.sales_goals.service)}</span>
                   </div>
                 </div>

@@ -1029,10 +1029,10 @@ export function SupplyLibraryTab() {
             <AlertDialogHeader>
               <PlatformAlertDialogTitle>Delete {selectedBrand}?</PlatformAlertDialogTitle>
               <PlatformAlertDialogDescription>
-                This will remove <span className="font-medium text-[hsl(var(--platform-foreground))]">{selectedBrand}</span> and all{' ')}
+                This will remove <span className="font-medium text-[hsl(var(--platform-foreground))]">{selectedBrand}</span> and all{' '}
                 <span className="font-medium text-[hsl(var(--platform-foreground))]">
                   {brandCards.find((b) => b.brand === selectedBrand)?.productCount ?? 0}
-                </span>{' ')}
+                </span>{' '}
                 products from the supply library. This cannot be undone.
               </PlatformAlertDialogDescription>
             </AlertDialogHeader>

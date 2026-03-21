@@ -841,7 +841,7 @@ function LocationEntitlementPanel({
             <DialogTitle>Process Refund</DialogTitle>
             <DialogDescription className="space-y-2">
               <p>
-                This will <strong>immediately revoke</strong> Backroom access for{' ')}
+                This will <strong>immediately revoke</strong> Backroom access for{' '}
                 <strong>{refundTarget?.locName}</strong>, cancel the Stripe subscription, and issue a
                 full refund for the most recent payment.
               </p>

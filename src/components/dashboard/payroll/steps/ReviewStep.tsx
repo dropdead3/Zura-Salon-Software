@@ -121,7 +121,7 @@ export function ReviewStep({
             <div>
               <p className="text-sm text-muted-foreground">Pay Period</p>
               <p className="font-medium">
-                {formatDate(new Date(payPeriodStart), 'MMM d')} -{' ')}
+                {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
                 {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
               </p>
             </div>

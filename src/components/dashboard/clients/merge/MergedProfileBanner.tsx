@@ -16,9 +16,9 @@ export function MergedProfileBanner({ mergedIntoName, mergedAt, mergedBy, primar
       <GitMerge className="w-5 h-5 text-amber-600 shrink-0" />
       <div className="flex-1">
         <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-          This profile was merged into{' ')}
+          This profile was merged into{' '}
           <span className="font-medium">{mergedIntoName}</span>
-          {' ')}on {format(new Date(mergedAt), 'MMM d, yyyy')}
+          {' '}on {format(new Date(mergedAt), 'MMM d, yyyy')}
         </p>
         <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
           Records have been consolidated into the primary profile.

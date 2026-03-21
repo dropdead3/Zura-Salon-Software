@@ -174,7 +174,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
           <AlertDialogHeader>
             <AlertDialogTitle>Discard draft?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this draft booking for{' ')}
+              This will permanently remove this draft booking for{' '}
               {discardingDraft?.client_name || 'unknown client')}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

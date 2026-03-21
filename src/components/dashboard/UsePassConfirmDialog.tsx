@@ -49,7 +49,7 @@ export function UsePassConfirmDialog({
           
           <AlertDialogDescription className="text-center space-y-4 pt-2">
             <p className="text-muted-foreground">
-              This will use <strong className="text-foreground font-medium">1 of your {passesRemaining}</strong> remaining{' ')}
+              This will use <strong className="text-foreground font-medium">1 of your {passesRemaining}</strong> remaining{' '}
               {passesRemaining === 1 ? 'pass' : 'passes')}.
             </p>
             

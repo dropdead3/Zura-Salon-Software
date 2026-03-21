@@ -97,10 +97,10 @@ export function CommissionStep({
       <div>
         <h3 className="text-lg font-medium mb-2">Commission Review</h3>
         <p className="text-sm text-muted-foreground">
-          Review commissions calculated from sales data for{' ')}
+          Review commissions calculated from sales data for{' '}
           {payPeriodStart && payPeriodEnd && (
             <>
-              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' ')}
+              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
               {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
             </>
           )}

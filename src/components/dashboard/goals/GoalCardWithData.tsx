@@ -199,7 +199,7 @@ export function GoalCardWithData({ goal, onEdit, onDelete }: GoalCardWithDataPro
               <TrendingDown className="w-3 h-3 text-amber-500 shrink-0" />
             )}
             <span className="text-[11px] text-muted-foreground">
-              Projected:{' ')}
+              Projected:{' '}
               {goal.unit === '$' ? (
                 <BlurredAmount>{formatGoalValue(projectedValue!, goal.unit)}</BlurredAmount>
               ) : (

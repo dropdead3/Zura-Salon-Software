@@ -239,22 +239,22 @@ export function PayPeriodStep({
           <h4 className="font-medium mb-2">Pay Period Summary</h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              <span className="font-medium text-foreground">Period:</span>{' ')}
-              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' ')}
+              <span className="font-medium text-foreground">Period:</span>{' '}
+              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
               {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
             </p>
             <p>
-              <span className="font-medium text-foreground">Duration:</span>{' ')}
+              <span className="font-medium text-foreground">Duration:</span>{' '}
               {Math.ceil(
                 (new Date(payPeriodEnd).getTime() -
                   new Date(payPeriodStart).getTime()) /
                   (1000 * 60 * 60 * 24)
-              ) + 1}{' ')}
+              ) + 1}{' '}
               days
             </p>
             {checkDate && (
               <p>
-                <span className="font-medium text-foreground">Pay Date:</span>{' ')}
+                <span className="font-medium text-foreground">Pay Date:</span>{' '}
                 {formatDate(new Date(checkDate), 'EEEE, MMMM d, yyyy')}
               </p>
             )}

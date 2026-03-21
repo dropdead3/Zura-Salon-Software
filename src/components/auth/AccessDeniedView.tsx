@@ -33,10 +33,10 @@ export function AccessDeniedView({ role, permission, onExitViewAs }: AccessDenie
           <div className="space-y-2">
             <CardTitle className="text-xl">Access Restricted</CardTitle>
             <CardDescription className="text-base">
-              This page is not accessible to the{' ')}
+              This page is not accessible to the{' '}
               <Badge variant="secondary" className="font-medium">
                 {roleLabel}
-              </Badge>{' ')}
+              </Badge>{' '}
               role.
             </CardDescription>
           </div>

@@ -94,7 +94,7 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
         </TableCell>
         <TableCell>
           <div className="font-medium">
-            {formatDate(new Date(run.pay_period_start), 'MMM d')} -{' ')}
+            {formatDate(new Date(run.pay_period_start), 'MMM d')} -{' '}
             {formatDate(new Date(run.pay_period_end), 'MMM d, yyyy')}
           </div>
         </TableCell>

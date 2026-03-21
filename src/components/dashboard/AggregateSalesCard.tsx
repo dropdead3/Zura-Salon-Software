@@ -848,7 +848,7 @@ export function AggregateSalesCard({
                           </div>
                         ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
                           <p className="text-xs text-muted-foreground/70 text-center">
-                            {t('sales.estimated_final_at')}{' ')}
+                            {t('sales.estimated_final_at')}{' '}
                             <span className="font-medium text-foreground/70">
                               {formatEndTime(todayActual.lastAppointmentEndTime)}
                             </span>

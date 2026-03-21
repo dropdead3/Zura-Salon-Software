@@ -383,7 +383,7 @@ export default function StaffStrikes() {
                               </p>
                               {strike.resolved_by_name && strike.resolved_at && (
                                 <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                                  Resolved by {strike.resolved_by_name} on{' ')}
+                                  Resolved by {strike.resolved_by_name} on{' '}
                                   {formatDate(new Date(strike.resolved_at), 'MMM d, yyyy')}
                                 </p>
                               )}

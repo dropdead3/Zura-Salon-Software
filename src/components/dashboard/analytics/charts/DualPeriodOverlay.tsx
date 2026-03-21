@@ -67,7 +67,7 @@ export function DualPeriodOverlay({
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           <div className="text-sm text-muted-foreground">
-            Avg daily difference:{' ')}
+            Avg daily difference:{' '}
             <span className={averageDelta >= 0 ? 'text-chart-2' : 'text-destructive')}>
               {averageDelta >= 0 ? '+' : '')}{formatCurrencyWholeUtil(Math.abs(averageDelta))}
             </span>
