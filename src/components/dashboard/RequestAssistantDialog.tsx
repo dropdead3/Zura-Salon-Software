@@ -188,7 +188,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? formatDate(date, 'PPP') : 'Pick a date first'}
+                  {date ? formatDate(date, 'PPP') : 'Pick a date first')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -358,7 +358,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {recurrenceEndDate ? formatDate(recurrenceEndDate, 'PPP') : 'Pick end date'}
+                      {recurrenceEndDate ? formatDate(recurrenceEndDate, 'PPP') : 'Pick end date')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
