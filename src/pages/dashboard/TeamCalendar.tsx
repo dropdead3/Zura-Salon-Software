@@ -133,7 +133,7 @@ export default function TeamCalendar() {
               <span className="font-medium min-w-[150px] text-center">
                 {view === 'month' 
                   ? format(currentDate, 'MMMM yyyy')
-                  : `${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy}`
+                  : `${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy)}`
                 }
               </span>
               <Button variant="ghost" size="icon" onClick={handleNext}>

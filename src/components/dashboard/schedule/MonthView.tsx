@@ -179,7 +179,7 @@ export function MonthView({
                         <div
                           key={status}
                           className={cn('w-2 h-2 rounded-full', STATUS_DOT_COLORS[status as AppointmentStatus])}
-                          title={`${count} ${status.replace('_', ' }`}
+                          title={`${count} ${status.replace('_', ' )}`}
                         />
                       ))}
                     </div>

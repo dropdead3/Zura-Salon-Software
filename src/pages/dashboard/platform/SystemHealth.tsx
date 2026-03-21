@@ -111,7 +111,7 @@ export default function SystemHealthPage() {
             </h2>
             <p className="text-sm text-slate-400">
               {health?.lastChecked 
-                ? `Last checked ${formatDistanceToNow(health.lastChecked, { addSuffix: true })}`
+                ? `Last checked ${formatDistanceToNow(health.lastChecked, { addSuffix: true )})}`
                 : 'No recent health check'
               }
             </p>

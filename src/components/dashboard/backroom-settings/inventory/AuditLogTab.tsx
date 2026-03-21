@@ -48,7 +48,7 @@ function getFieldLabel(field: string): string {
 
 function exportBulkCsv(entries: BulkAuditEntry[]) {
   const headers = ['Timestamp', 'Product', 'Type', 'Field', 'Change', 'After', 'User', 'Notes'];
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const rows = entries.map(e => [
     new Date(e.created_at).toISOString(),
     escape(e.product_name),

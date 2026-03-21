@@ -59,8 +59,8 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
   };
 
   const showSinglePeriod = mode === 'location';
-  const fmtA = periodA.dateFrom ? `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy}` : '';
-  const fmtB = periodB.dateFrom ? `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy}` : '';
+  const fmtA = periodA.dateFrom ? `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy)}` : '';
+  const fmtB = periodB.dateFrom ? `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy)}` : '';
 
   return (
     <div className="space-y-3">

@@ -164,7 +164,7 @@ export function useUpdateBookingStatus() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['day-rate-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['day-rate-booking', data.id] });
-      toast.success(`Booking ${data.status.replace('_', ' }`);
+      toast.success(`Booking ${data.status.replace('_', ' )}`);
     },
     onError: (error) => {
       toast.error('Failed to update status', { description: error.message });

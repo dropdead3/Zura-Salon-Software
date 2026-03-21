@@ -613,8 +613,8 @@ function BackroomCalculatorWidget() {
   const monthlyWasteSavings = Math.round(svc * BR_AVG_PRODUCT_COST * BR_BASELINE_WASTE_RATE);
   const annualWasteSavings = monthlyWasteSavings * 12;
 
-  const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const fmtWhole = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 )})}`;
+  const fmtWhole = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 )})}`;
 
   return (
     <PlatformCard variant="glass" id="backroom-calc">

@@ -304,7 +304,7 @@ export default function StylistLevels() {
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Levels List */}
+          {/* Levels List */)}
           <div className="lg:col-span-3 space-y-2">
             {levels.map((level, index) => {
               const stylistCount = getStylistCount(level.id);

@@ -224,7 +224,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
                 <CardTitle className={tokens.card.title}>Intelligence Feed</CardTitle>
                 <CardDescription className={tokens.body.muted}>
                   {data?.generated_at
-                    ? `Updated ${formatDistanceToNow(new Date(data.generated_at), { addSuffix: true })}`
+                    ? `Updated ${formatDistanceToNow(new Date(data.generated_at), { addSuffix: true )})}`
                     : 'No analysis yet'}
                 </CardDescription>
               </div>

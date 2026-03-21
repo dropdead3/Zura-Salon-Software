@@ -529,7 +529,7 @@ export function DayView({
                       return slotMins < dayNowMins;
                     })();
                       
-                      const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0}`;
+                      const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0)}`;
                       
                       // Determine if slot is outside operating hours
                       const isOutsideHours = isLocationClosed || (

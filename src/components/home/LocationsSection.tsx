@@ -127,7 +127,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
 
             {/* Address */}
             <a
-              href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(}`${location.address}, ${location.city}`)}`}
+              href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent()}`${location.address}, ${location.city}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}

@@ -19,7 +19,7 @@ export async function exportStockMovementsCsv(organizationId: string, productId?
   if (error) throw error;
 
   const headers = ['Date', 'Product', 'SKU', 'Brand', 'Change', 'After', 'Reason', 'Notes', 'Movement ID'];
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
   const rows = (data || []).map((m: any) => {
     const prod = m.products;

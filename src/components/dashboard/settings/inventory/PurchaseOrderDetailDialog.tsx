@@ -77,10 +77,10 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
     const rows = displayLines.map(line => {
       const prod = productMap.get(line.product_id);
       return [
-        `"${(prod?.name || 'Unknown').replace(/"/g, '""'}"`,
-        `"${(prod?.brand || '').replace(/"/g, '""'}"`,
-        `"${(prod?.category || '').replace(/"/g, '""'}"`,
-        `"${(prod?.container_size || '').replace(/"/g, '""'}"`,
+        `"${(prod?.name || 'Unknown').replace(/"/g, '""')}"`,
+        `"${(prod?.brand || '').replace(/"/g, '""')}"`,
+        `"${(prod?.category || '').replace(/"/g, '""')}"`,
+        `"${(prod?.container_size || '').replace(/"/g, '""')}"`,
         line.quantity_ordered,
         line.quantity_received,
         line.unit_cost ?? '',

@@ -103,7 +103,7 @@ export default function MeetingDetails() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
         <DashboardPageHeader
-          title={`1:1 with ${canManage ? teamMemberName : (meeting.coach?.display_name || meeting.coach?.full_name || 'Coach}`}
+          title={`1:1 with ${canManage ? teamMemberName : (meeting.coach?.display_name || meeting.coach?.full_name || 'Coach)}`}
           description={meetingTypes[meeting.meeting_type || 'other'] || meeting.meeting_type}
         />
 

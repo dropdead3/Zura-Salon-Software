@@ -59,7 +59,7 @@ function timeToMinutes(time: string): number {
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0)}`;
 }
 
 function formatTime12h(time: string) {
@@ -738,13 +738,13 @@ function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: 
   });
 
   const clientSinceLabel = client.client_since
-    ? `Client since · ${formatDistanceToNow(new Date(client.client_since), { addSuffix: false })}`
+    ? `Client since · ${formatDistanceToNow(new Date(client.client_since), { addSuffix: false )})}`
     : null;
 
   const lastVisitLabel = isLoadingVisit
     ? '…'
     : lastVisitDate
-      ? `Last visit · ${formatDistanceToNow(new Date(lastVisitDate), { addSuffix: true })}`
+      ? `Last visit · ${formatDistanceToNow(new Date(lastVisitDate), { addSuffix: true )})}`
       : 'No visits on record';
 
   return (

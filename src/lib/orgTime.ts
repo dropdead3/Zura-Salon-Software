@@ -46,7 +46,7 @@ function getOrgParts(timezone: string, instant: Date = new Date()) {
  */
 export function getOrgToday(timezone: string): string {
   const p = getOrgParts(timezone);
-  return `${String(p.year).padStart(4, '0')}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0}`;
+  return `${String(p.year).padStart(4, '0')}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0)}`;
 }
 
 /**

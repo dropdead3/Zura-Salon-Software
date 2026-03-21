@@ -49,7 +49,7 @@ export function generateProgressReport(data: ReportData): void {
   doc.setFontSize(12);
   doc.text(`Participant: ${data.userName}`, 20, 50);
   doc.text(`Generated: ${format(new Date(), 'MMMM d, yyyy')}, 20, 58);
-  doc.text(`Start Date: ${format(new Date(data.enrollment.start_date), 'MMMM d, yyyy}`, 20, 66);
+  doc.text(`Start Date: ${format(new Date(data.enrollment.start_date), 'MMMM d, yyyy)}`, 20, 66);
   
   // Status badge
   const statusColors: Record<string, number[]> = {
@@ -199,7 +199,7 @@ export function generateCompletionCertificate(userName: string, completedAt: Dat
   
   // Date
   doc.setFontSize(12);
-  doc.text(`Completed on ${format(completedAt, 'MMMM d, yyyy}`, pageWidth / 2, 170, { align: 'center' });
+  doc.text(`Completed on ${format(completedAt, 'MMMM d, yyyy)}`, pageWidth / 2, 170, { align: 'center' });
   
   // Signature line
   doc.setLineWidth(0.5);
