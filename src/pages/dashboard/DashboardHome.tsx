@@ -392,6 +392,7 @@ function DashboardSections({
   compact,
   onCompactChange,
 }: DashboardSectionsProps) {
+  const { dashPath } = useOrgDashboardPath();
   const { t } = useTranslation('dashboard');
   const { formatCurrencyWhole } = useFormatCurrency();
   const { todayClients, thisWeekRevenue, newClients, rebookingRate, isLoading: quickStatsLoading } = useQuickStats();

@@ -174,7 +174,6 @@ const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {
 };
 
 export function getCardSize(cardId: string): 'half' | 'full' {
-  const { dashPath } = useOrgDashboardPath();
   const card = PINNABLE_CARDS.find(c => c.id === cardId);
   if (card) return card.size;
   return CARD_SIZE_OVERRIDES[cardId] ?? 'full';
@@ -186,6 +185,7 @@ interface DashboardCustomizeMenuProps {
 }
 
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   
   const SECTIONS = useMemo(() => {
