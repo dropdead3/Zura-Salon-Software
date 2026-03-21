@@ -239,9 +239,21 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <h2 className={cn(tokens.heading.card, 'truncate')}>
                 {clientName}
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {appointment.service_name || 'Service'}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm text-muted-foreground mt-1">
+                  {appointment.service_name || 'Service'}
+                </p>
+                {!['completed', 'cancelled', 'no_show'].includes((status).toLowerCase()) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 mt-0.5"
+                    onClick={() => setEditServicesOpen(true)}
+                  >
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                )}
+              </div>
             </div>
             <Badge className={cn('shrink-0', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
               {statusBadge.label}
