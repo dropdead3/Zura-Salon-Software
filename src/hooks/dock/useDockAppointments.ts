@@ -123,6 +123,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           source: 'phorest' as const,
           client_name: a.client_name,
           stylist_name: a.stylist_user_id ? (stylistMap[a.stylist_user_id] || null) : null,
+          stylist_user_id: a.stylist_user_id || null,
           assistant_names: assistantMap[a.id] || [],
           service_name: a.service_name,
           appointment_date: a.appointment_date,
