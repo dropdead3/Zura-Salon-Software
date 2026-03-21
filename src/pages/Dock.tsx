@@ -11,6 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { DockLayout } from '@/components/dock/DockLayout';
 import { DockPinGate } from '@/components/dock/DockPinGate';
 import { DockDemoProvider } from '@/contexts/DockDemoContext';
+import { DockUnlockTransition } from '@/components/dock/DockUnlockTransition';
 import { DockDeviceSwitcher } from '@/components/dock/DockDeviceSwitcher';
 import { useDockDemoAccess } from '@/hooks/dock/useDockDemoAccess';
 import { useDockDevicePreview } from '@/hooks/dock/useDockDevicePreview';
