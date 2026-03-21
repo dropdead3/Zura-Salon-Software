@@ -174,7 +174,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
               onSuccess({
                 userId: 'dev-bypass-000',
                 organizationId: resolvedOrgId,
-                displayName: 'Dev Tester',
+                displayName: 'Demo User',
                 avatarUrl: null,
                 locationId: resolvedLocId,
               });
