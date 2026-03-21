@@ -18,6 +18,10 @@ export function useDepleteMixSession() {
 
   return useMutation({
     mutationFn: async ({ sessionId, organizationId, locationId }: DepletionParams) => {
+      // Guard demo sessions — skip inventory depletion
+      if (sessionId.startsWith('demo-')) {
+        return { movementsInserted: 0 };
+      }
       return postUsageFromSession({ sessionId, organizationId, locationId });
     },
     onSuccess: (result) => {

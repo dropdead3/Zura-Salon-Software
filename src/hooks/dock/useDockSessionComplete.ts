@@ -21,6 +21,11 @@ export function useCompleteDockSession() {
       locationId?: string;
       notes?: string;
     }) => {
+      // Guard demo sessions — no DB writes
+      if (params.sessionId.startsWith('demo-')) {
+        return;
+      }
+
       // Update session status
       const { error } = await supabase
         .from('mix_sessions')
@@ -67,6 +72,11 @@ export function useMarkDockSessionUnresolved() {
       locationId?: string;
       reason: string;
     }) => {
+      // Guard demo sessions — no DB writes
+      if (params.sessionId.startsWith('demo-')) {
+        return;
+      }
+
       // Use 'completed' status with unresolved_flag=true since DB enum doesn't have 'unresolved_exception'
       const { error } = await supabase
         .from('mix_sessions')

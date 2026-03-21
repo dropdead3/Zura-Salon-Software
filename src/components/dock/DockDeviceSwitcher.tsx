@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { Monitor, Smartphone, Tablet, RotateCcw, MapPin, User } from 'lucide-react';
+import { Monitor, Smartphone, Tablet, RotateCcw, RotateCw, MapPin, User } from 'lucide-react';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { DockDevice, DockOrientation } from '@/hooks/dock/useDockDevicePreview';
 import { formatFirstLastInitial } from '@/lib/dock-utils';
+import { toast } from 'sonner';
 
 interface DockDeviceSwitcherProps {
   device: DockDevice;
@@ -29,7 +30,18 @@ const deviceOptions = [
 export function DockDeviceSwitcher({ device, onChange, orientation, onOrientationChange, locationId, onLocationChange, organizationId, staffFilter, onStaffFilterChange }: DockDeviceSwitcherProps) {
   const showRotate = device === 'tablet';
   const { data: locations = [] } = useLocations(organizationId);
-  const { usesRealData } = useDockDemo();
+  const { isDemoMode, usesRealData } = useDockDemo();
+  const queryClient = useQueryClient();
+
+  const handleDemoReset = () => {
+    try { localStorage.removeItem('dock-location-id'); } catch {}
+    try { localStorage.removeItem('dock-staff-filter'); } catch {}
+    queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+    queryClient.invalidateQueries({ queryKey: ['dock-mix-sessions'] });
+    queryClient.invalidateQueries({ queryKey: ['dock-client-profile'] });
+    window.dispatchEvent(new CustomEvent('dock-demo-reset'));
+    toast.success('Demo reset');
+  };
 
   // Fetch team members for the selected location (demo mode only)
   const { data: teamMembers = [] } = useQuery({
@@ -114,6 +126,16 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         </div>
       )}
 
+      {isDemoMode && (
+        <button
+          type="button"
+          onClick={handleDemoReset}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-md text-foreground/60 hover:text-foreground/80 transition-colors"
+          title="Reset Demo"
+        >
+          <RotateCw className="w-3.5 h-3.5" />
+        </button>
+      )}
       {showRotate && (
         <button
           type="button"
