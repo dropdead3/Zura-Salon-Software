@@ -114,7 +114,7 @@ export function ScheduleRequestsCard() {
                       {member?.display_name || member?.full_name || 'Unknown'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {location?.name || 'Unknown location')} • {formatDate(new Date(request.created_at), 'MMM d'}
+                      {location?.name || 'Unknown location'} • {formatDate(new Date(request.created_at), 'MMM d')}
                     </p>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export function ScheduleRequestsCard() {
             </Button>
             <Button
               variant={reviewAction === 'approve' ? 'default' : 'destructive'}
-              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied'}
+              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied')}
               disabled={reviewRequest.isPending}
             >
               {reviewRequest.isPending ? (

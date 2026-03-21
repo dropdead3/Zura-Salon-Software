@@ -149,7 +149,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                         </span>
                       </div>
                       {i < arr.length - 1 && (
-                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60'} />
+                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60')} />
                       )}
                     </React.Fragment>
                   ))}
@@ -216,7 +216,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
           {/* ── KPI Strip ── */}
-          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'}>
+          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
             <KpiTile
               icon={FlaskConical}
               label="Chemical Cost/Svc"
@@ -506,7 +506,7 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
     <div className={cn(tokens.kpi.tile, 'relative')}>
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary'} />
+          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary')} />
         </div>
         <span className={tokens.kpi.label}>{label}</span>
       </div>
@@ -536,7 +536,7 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary'} />
+          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary')} />
         </div>
         <span className={tokens.kpi.label}>Budget</span>
       </div>
@@ -598,7 +598,7 @@ function StaffRow({ name, wasteRate, sessions, reweighPct, isBottom = false }: {
   return (
     <div className="flex items-center gap-3 py-1.5 text-xs font-sans">
       <span className="flex-1 truncate text-foreground">{name}</span>
-      <span className={cn('tabular-nums', isBottom ? 'text-amber-500' : 'text-muted-foreground'}>
+      <span className={cn('tabular-nums', isBottom ? 'text-amber-500' : 'text-muted-foreground')}>
         {wasteRate.toFixed(1)}% waste
       </span>
       <span className="text-muted-foreground tabular-nums">{reweighPct.toFixed(0)}% reweigh</span>
@@ -609,7 +609,7 @@ function StaffRow({ name, wasteRate, sessions, reweighPct, isBottom = false }: {
 function HealthStat({ label, count, color }: { label: string; count: number; color: string }) {
   return (
     <div className="text-center py-3">
-      <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground'}>
+      <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground')}>
         {count}
       </p>
       <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider mt-1">{label}</p>

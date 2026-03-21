@@ -64,7 +64,7 @@ export function AccessDeniedView({ role, permission, onExitViewAs }: AccessDenie
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => navigate(dashPath('/'))}
+              onClick={() => navigate(dashPath('/')}
               className="w-full"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />

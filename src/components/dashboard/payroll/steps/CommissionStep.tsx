@@ -164,7 +164,7 @@ export function CommissionStep({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={emp.employee?.photo_url || undefined} />
                       <AvatarFallback>
-                        {getInitials(emp.employee?.full_name || ''}
+                        {getInitials(emp.employee?.full_name || '')}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium">

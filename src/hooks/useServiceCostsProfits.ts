@@ -92,7 +92,7 @@ export function useServiceCostsProfits(dateFrom: string, dateTo: string, locatio
       }>();
 
       for (const appt of appointments) {
-        const key = `${appt.location_id || 'all'}|${appt.service_category || 'Other')}|${appt.service_name}`;
+        const key = `${appt.location_id || 'all'}|${appt.service_category || 'Other'}|${appt.service_name}`;
         const existing = grouped.get(key) || {
           locationId: appt.location_id,
           locationName: appt.location_id ? (locationMap.get(appt.location_id) || 'Unknown') : 'All',

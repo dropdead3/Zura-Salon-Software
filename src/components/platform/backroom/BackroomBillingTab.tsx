@@ -56,7 +56,7 @@ function BillingKPICard({
             'w-10 h-10 rounded-lg flex items-center justify-center',
             variant === 'danger' ? 'bg-red-500/10' : 'bg-[hsl(var(--platform-bg-hover))]'
           )}>
-            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]'} />
+            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]')} />
           </div>
         </div>
       </PlatformCardContent>

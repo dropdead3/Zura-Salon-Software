@@ -83,10 +83,10 @@ type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth'
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
-  'hsl(var(--chart-2'))',
-  'hsl(var(--chart-3'))',
-  'hsl(var(--chart-4'))',
-  'hsl(var(--chart-5'))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
 ];
 
 export default function SalesDashboard() {
@@ -266,7 +266,7 @@ export default function SalesDashboard() {
       s.totalTransactions,
     ]);
 
-    const csv = [headers.join(','), ...rows.map(r => r.join(',''))].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

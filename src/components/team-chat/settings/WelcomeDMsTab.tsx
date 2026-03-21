@@ -104,7 +104,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
         </div>
         <Switch
           checked={welcomeEnabled}
-          onCheckedChange={(checked) => onUpdate({ welcome_dms_enabled: checked } as any')}
+          onCheckedChange={(checked) => onUpdate({ welcome_dms_enabled: checked } as any)}
         />
       </div>
 

@@ -107,7 +107,7 @@ export function CommissionIntelligence() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(dashPath('/admin/settings?category=levels'))}
+            onClick={() => navigate(dashPath('/admin/settings?category=levels')}
           >
             <Settings2 className="h-4 w-4 mr-1.5" />
             Configure Rates
@@ -204,7 +204,7 @@ export function CommissionIntelligence() {
                     <TableRow
                       key={row.id}
                       className="cursor-pointer"
-                      onClick={() => navigate(dashPath('/admin/settings?category=levels'))}
+                      onClick={() => navigate(dashPath('/admin/settings?category=levels')}
                     >
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell>

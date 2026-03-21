@@ -834,7 +834,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={() => navigate(dashPath('/admin/booth-renters?tab=renters'))} className="flex-1">
+                <Button onClick={() => navigate(dashPath('/admin/booth-renters?tab=renters')} className="flex-1">
                   Back to Renter Hub
                 </Button>
                 <Button variant="outline" onClick={resetForm}>

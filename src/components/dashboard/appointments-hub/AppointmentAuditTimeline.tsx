@@ -40,8 +40,8 @@ const EVENT_LABELS: Record<string, string> = {
 
 function formatChange(entry: AuditLogEntry): string | null {
   if (entry.event_type === 'rescheduled' && entry.previous_value && entry.new_value) {
-    const from = `${entry.previous_value.date || ''} ${entry.previous_value.time || '')}`.trim();
-    const to = `${entry.new_value.date || ''} ${entry.new_value.time || '')}`.trim();
+    const from = `${entry.previous_value.date || ''} ${entry.previous_value.time || ''}`.trim();
+    const to = `${entry.new_value.date || ''} ${entry.new_value.time || ''}`.trim();
     if (from && to) return `${from} → ${to}`;
   }
   if (entry.event_type === 'status_changed' && entry.previous_value && entry.new_value) {

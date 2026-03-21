@@ -489,7 +489,7 @@ export default function ClientEngineTracker() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'}
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
               >
                 <ArrowUpDown className={cn("w-4 h-4", sortOrder === 'desc' && "rotate-180")} />
               </Button>
@@ -585,7 +585,7 @@ export default function ClientEngineTracker() {
                           <p className="text-sm font-medium">
                             {participant.enrollment.last_completion_date 
                               ? formatDate(new Date(participant.enrollment.last_completion_date), 'MMM d, yyyy')
-                              : 'Never'}
+                              : 'Never')}
                           </p>
                         </div>
                         <div>

@@ -93,7 +93,7 @@ export function ScheduleUtilizationBar({
 
       {/* Gap Count */}
       <div className="flex items-center gap-1.5">
-        <AlertCircle className={cn('h-3.5 w-3.5', metrics.gapCount > 0 ? 'text-amber-500' : 'text-muted-foreground'} />
+        <AlertCircle className={cn('h-3.5 w-3.5', metrics.gapCount > 0 ? 'text-amber-500' : 'text-muted-foreground')} />
         <span className={cn(tokens.stat.large, 'text-lg')}>{metrics.gapCount}</span>
         <span className={tokens.body.muted}>gap{metrics.gapCount !== 1 ? 's' : ''}</span>
       </div>

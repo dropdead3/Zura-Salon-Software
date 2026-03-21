@@ -30,7 +30,7 @@ export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelectio
       String(c.days_inactive),
       String(c.total_spend),
     ]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(','')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

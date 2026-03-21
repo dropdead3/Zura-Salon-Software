@@ -349,13 +349,13 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
 
       {/* Sub-tab toggle */}
       <div className="flex gap-1">
-        <Button variant={tab === 'sessions' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('sessions'}>
+        <Button variant={tab === 'sessions' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('sessions')}>
           <ClipboardCheck className="w-4 h-4 mr-1" /> Sessions
         </Button>
-        <Button variant={tab === 'shrinkage' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('shrinkage'}>
+        <Button variant={tab === 'shrinkage' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('shrinkage')}>
           <TrendingDown className="w-4 h-4 mr-1" /> Shrinkage
         </Button>
-        <Button variant={tab === 'audit' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('audit'}>
+        <Button variant={tab === 'audit' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('audit')}>
           <CalendarCheck className="w-4 h-4 mr-1" /> Audit Schedule
         </Button>
       </div>

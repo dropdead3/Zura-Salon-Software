@@ -333,7 +333,7 @@ export function BackroomPaywall() {
     : 'Start Recovering Revenue';
 
   const ActivateButton = ({ className = '', compact = false }: { className?: string; compact?: boolean }) => (
-    <div className={cn('flex flex-col items-center', compact ? 'gap-1' : 'gap-2'}>
+    <div className={cn('flex flex-col items-center', compact ? 'gap-1' : 'gap-2')}>
       <Button
         size={compact ? 'default' : 'lg'}
         className={cn(
@@ -744,7 +744,7 @@ export function BackroomPaywall() {
                       'w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-200',
                       activeFeature === f.key ? 'bg-primary/15' : 'bg-muted'
                     )}>
-                      <f.icon className={cn('w-5 h-5', activeFeature === f.key ? 'text-primary' : 'text-muted-foreground'} />
+                      <f.icon className={cn('w-5 h-5', activeFeature === f.key ? 'text-primary' : 'text-muted-foreground')} />
                     </div>
                     <div className="min-w-0">
                       <span className="font-display text-base tracking-wide text-foreground uppercase">{f.title}</span>
@@ -907,7 +907,7 @@ export function BackroomPaywall() {
                             ].map((row) => (
                               <div key={row.label} className="flex items-center justify-between py-0.5">
                                 <span className="font-sans text-sm text-muted-foreground">{row.label}</span>
-                                <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-success font-medium' : 'text-foreground'}>{row.value}</span>
+                                <span className={cn('font-sans text-sm tabular-nums', row.highlight ? 'text-success font-medium' : 'text-foreground')}>{row.value}</span>
                               </div>
                             ))}
                           </div>

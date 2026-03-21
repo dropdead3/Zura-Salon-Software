@@ -27,7 +27,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap }: DockApp
       onClick={() => onTap?.(appointment)}
       className={cn(
         'w-full text-left rounded-xl border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 transition-all duration-150',
-        'hover:bg-[hsl(var(--platform-bg-hover'))] hover:border-[hsl(var(--platform-border)/0.5)]',
+        'hover:bg-[hsl(var(--platform-bg-hover))] hover:border-[hsl(var(--platform-border)/0.5)]',
         'active:scale-[0.99]',
         borderClass
       )}
@@ -81,7 +81,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap }: DockApp
             <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600/20">
               <FlaskConical className="w-3.5 h-3.5 text-violet-400" />
             </div>
-          ')}
+          )}
 
           {/* Kebab */}
           <div className="text-[hsl(var(--platform-foreground-muted)/0.4)]">

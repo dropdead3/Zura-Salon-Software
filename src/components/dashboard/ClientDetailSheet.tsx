@@ -930,7 +930,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <span>
                       {client.birthday 
                         ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
-                        : 'No birthday on file'}
+                        : 'No birthday on file')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1230,7 +1230,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 </div>
               </CardContent>
             </Card>
-          ')}
+          )}
 
           {/* Upcoming Appointments Card */}
           {(() => {

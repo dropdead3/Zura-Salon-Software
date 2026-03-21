@@ -185,10 +185,10 @@ export function ReorderAnalyticsTab() {
 
   const CHART_COLORS = [
     'hsl(var(--primary))',
-    'hsl(var(--accent-foreground'))',
-    'hsl(var(--warning'))',
-    'hsl(var(--success'))',
-    'hsl(var(--destructive'))',
+    'hsl(var(--accent-foreground))',
+    'hsl(var(--warning))',
+    'hsl(var(--success))',
+    'hsl(var(--destructive))',
     'hsl(210 40% 60%)',
     'hsl(280 40% 60%)',
     'hsl(30 60% 55%)',
@@ -473,7 +473,7 @@ export function ReorderAnalyticsTab() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
                       {s.onTimePct > 0 ? (
-                        <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive'}>
+                        <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive')}>
                           {s.onTimePct}%
                         </span>
                       ) : '—'}

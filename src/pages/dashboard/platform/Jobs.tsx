@@ -252,7 +252,7 @@ export default function JobsPage() {
                               <div className="text-right mr-4">
                                 <p className="text-sm text-slate-300">
                                   {lastRun 
-                                    ? `Last: ${formatDistanceToNow(new Date(lastRun.started_at), { addSuffix: true )})}`
+                                    ? `Last: ${formatDistanceToNow(new Date(lastRun.started_at), { addSuffix: true })}`
                                     : 'Never run'
                                   }
                                 </p>

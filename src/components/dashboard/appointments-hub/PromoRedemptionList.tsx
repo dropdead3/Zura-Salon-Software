@@ -57,7 +57,7 @@ export function PromoRedemptionList({ redemptions, isLoading }: PromoRedemptionL
       r.original_amount ?? '',
       r.final_amount ?? '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(','')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

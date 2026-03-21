@@ -111,7 +111,7 @@ export function UserRolesTableView({
               <TableHead className="w-[40px]">
                 <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
               </TableHead>
-            ')}
+            )}
             <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Name</TableHead>
             <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Email</TableHead>
             {locations.length > 1 && (
@@ -119,7 +119,7 @@ export function UserRolesTableView({
             )}
             <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Roles</TableHead>
             {canManage && (
-              <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm font-medium', 'w-[80px]'}>Actions</TableHead>
+              <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm font-medium', 'w-[80px]')}>Actions</TableHead>
             )}
           </TableRow>
         </TableHeader>

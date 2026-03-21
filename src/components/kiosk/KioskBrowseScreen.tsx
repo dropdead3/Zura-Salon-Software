@@ -24,7 +24,7 @@ const groupByTimeSlot = (appointments: any[]) => {
     // Round to nearest 15 minutes for grouping
     const [hours, minutes] = apt.start_time.split(':').map(Number);
     const roundedMinutes = Math.floor(minutes / 15) * 15;
-    const slotKey = `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0)}`;
+    const slotKey = `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0}`;
     
     if (!groups[slotKey]) {
       groups[slotKey] = [];
@@ -33,7 +33,7 @@ const groupByTimeSlot = (appointments: any[]) => {
   });
   
   // Sort by time slot
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b'));
+  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
 };
 
 export function KioskBrowseScreen() {

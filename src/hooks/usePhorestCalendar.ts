@@ -164,7 +164,7 @@ export function usePhorestCalendar() {
 
         if (assistedIds.length > 0) {
           // Use or filter to include own + assisted appointments
-          query = query.or(`stylist_user_id.eq.${effectiveUserId},id.in.(${assistedIds.join(',')}')`);
+          query = query.or(`stylist_user_id.eq.${effectiveUserId},id.in.(${assistedIds.join(',')})`);
         } else {
           query = query.eq('stylist_user_id', effectiveUserId);
         }

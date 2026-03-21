@@ -512,7 +512,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
                   </TooltipProvider>
                 ))}
               </div>
-            ')}
+            )}
             
             {/* Open/Closed Status */}
             <Badge 
@@ -617,7 +617,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               {location.phone}
             </a>
           </CopyableField>
-        ')}
+        )}
 
         {/* Hours */}
         <CopyableField 
@@ -859,7 +859,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  ')}
+                  )}
                   {isStylistOrAssistant && member.stylist_level && (
                     <span className="flex items-center gap-1 font-medium text-foreground/70">
                       <Award className="w-3 h-3" />

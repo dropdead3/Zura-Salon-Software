@@ -106,7 +106,7 @@ export function Footer() {
                       </div>
                     )}
                     <a 
-                      href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent()}`${location.address}, ${location.city}`)}`}
+                      href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(}`${location.address}, ${location.city}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-col md:flex-row items-center md:items-start gap-2.5 group"

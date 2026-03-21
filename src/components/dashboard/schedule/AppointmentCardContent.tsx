@@ -281,7 +281,7 @@ function GridContent({
             <span className="opacity-50">└</span> Assisted by {names.join(', ')}
           </div>
         );
-      })('')}
+      })()}
 
       {/* Time + price (full size) */}
       {size === 'full' && (
@@ -421,7 +421,7 @@ function AgendaContent({
                   <Users className="h-3.5 w-3.5" />
                   w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
                 </div>
-              ')}
+              )}
             </div>
           </div>
 

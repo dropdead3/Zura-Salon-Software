@@ -164,7 +164,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
       s.totalTransactions,
     ]);
 
-    const csv = [headers.join(','), ...rows.map(r => r.join(',''))].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -544,7 +544,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               variant="outline"
               size={tokens.button.inline}
               className="shrink-0 text-xs gap-1.5"
-              onClick={() => navigate(dashPath('/admin/payroll?tab=commissions'))}
+              onClick={() => navigate(dashPath('/admin/payroll?tab=commissions')}
             >
               Manage Tiers
               <ArrowRight className="w-3.5 h-3.5" />

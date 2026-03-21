@@ -389,7 +389,7 @@ export default function ScheduleRequests() {
             </Button>
             <Button
               variant={reviewAction === 'approve' ? 'default' : 'destructive'}
-              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied'}
+              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied')}
               disabled={reviewRequest.isPending}
             >
               {reviewRequest.isPending ? (

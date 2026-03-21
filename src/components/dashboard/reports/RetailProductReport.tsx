@@ -194,7 +194,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
                   <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
                   <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(p.avgPrice)}</BlurredAmount></TableCell>
                   <TableCell className="text-right">
-                    <span className={cn('text-xs tabular-nums', p.revenueTrend > 0 ? 'text-emerald-600' : p.revenueTrend < 0 ? 'text-red-500' : 'text-muted-foreground'}>
+                    <span className={cn('text-xs tabular-nums', p.revenueTrend > 0 ? 'text-emerald-600' : p.revenueTrend < 0 ? 'text-red-500' : 'text-muted-foreground')}>
                       {p.revenueTrend > 0 ? '+' : ''}{Math.round(p.revenueTrend)}%
                     </span>
                   </TableCell>
@@ -226,7 +226,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
           <CardContent>
             <div className="space-y-2">
               {data.redFlags.map((f, i) => (
-                <div key={i} className={cn('flex items-center gap-3 rounded-lg border px-3 py-2', f.severity === 'danger' ? 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20' : 'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20'}>
+                <div key={i} className={cn('flex items-center gap-3 rounded-lg border px-3 py-2', f.severity === 'danger' ? 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20' : 'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20')}>
                   <Package className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div className="flex-1"><p className="text-sm font-medium">{f.product}</p><p className="text-xs text-muted-foreground">{f.detail}</p></div>
                   <Badge variant="outline" className="text-[10px]">{f.label}</Badge>

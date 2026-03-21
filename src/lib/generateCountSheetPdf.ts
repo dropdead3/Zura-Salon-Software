@@ -82,8 +82,8 @@ export async function generateCountSheetPdf({
 
   // Build subtitle showing active filters
   const filterParts: string[] = [];
-  if (filters?.brands?.length) filterParts.push(`Brands: ${filters.brands.join(', ')}`);
-  if (filters?.categories?.length) filterParts.push(`Categories: ${filters.categories.join(', ')}`);
+  if (filters?.brands?.length) filterParts.push(`Brands: ${filters.brands.join(', }`);
+  if (filters?.categories?.length) filterParts.push(`Categories: ${filters.categories.join(', }`);
 
   const headerOpts: ReportHeaderOptions = {
     orgName,
@@ -112,7 +112,7 @@ export async function generateCountSheetPdf({
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
     doc.setFont('helvetica', 'italic');
-    doc.text(`Filtered by: ${filterParts.join(' | ')}`, 14, bodyStartY);
+    doc.text(`Filtered by: ${filterParts.join(' | }`, 14, bodyStartY);
     bodyStartY += 5;
   }
 

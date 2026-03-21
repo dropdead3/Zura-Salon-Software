@@ -75,7 +75,7 @@ export function GoogleSheetsExport({ data, dateFrom, dateTo }: GoogleSheetsExpor
           s.totalProducts,
           s.totalTransactions,
           avgTicket.toFixed(2),
-        ].join(',''));
+        ].join(','));
       });
     }
 
@@ -93,7 +93,7 @@ export function GoogleSheetsExport({ data, dateFrom, dateTo }: GoogleSheetsExpor
           l.totalServices,
           l.totalProducts,
           l.totalTransactions,
-        ].join(',''));
+        ].join(','));
       });
     }
 
@@ -109,7 +109,7 @@ export function GoogleSheetsExport({ data, dateFrom, dateTo }: GoogleSheetsExpor
           d.services || 0,
           d.products || 0,
           d.transactions || 0,
-        ].join(',''));
+        ].join(','));
       });
     }
 

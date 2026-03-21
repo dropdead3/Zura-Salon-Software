@@ -304,7 +304,7 @@ export default function StylistLevels() {
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Levels List */)}
+          {/* Levels List */}
           <div className="lg:col-span-3 space-y-2">
             {levels.map((level, index) => {
               const stylistCount = getStylistCount(level.id);
@@ -351,7 +351,7 @@ export default function StylistLevels() {
                       <div className="flex-1 flex items-center gap-2">
                         <Input
                           value={level.label}
-                          onChange={(e) => handleRename(index, e.target.value')}
+                          onChange={(e) => handleRename(index, e.target.value)}
                           className="h-8 text-sm"
                           autoFocus
                           onKeyDown={(e) => {

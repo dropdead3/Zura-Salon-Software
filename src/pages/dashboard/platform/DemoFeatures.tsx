@@ -197,14 +197,14 @@ export default function DemoFeatures() {
       description: formData.description || null,
       problem_keywords: formData.problem_keywords
         .split(',')
-        .map(k => k.trim(''))
+        .map(k => k.trim())
         .filter(Boolean),
       category: formData.category,
       screenshot_url: formData.screenshot_url || null,
       demo_video_url: formData.demo_video_url || null,
       related_features: formData.related_features
         .split(',')
-        .map(k => k.trim(''))
+        .map(k => k.trim())
         .filter(Boolean),
       is_highlighted: formData.is_highlighted,
       is_active: formData.is_active,

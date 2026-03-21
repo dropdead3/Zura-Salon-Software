@@ -91,7 +91,7 @@ export function GoalLocationRow({
           type: 'insight',
           category: 'goal-recovery',
           title: `${locationName} ${period} Recovery Plan`,
-          description: `${locationName} is behind pace on the ${period} sales goal. Current: $${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 )})}. Target: $${target.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 )})}. Shortfall: $${Math.max(target - revenue, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 )})}. Need $${requiredDailyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 )})}/day over ${daysRemaining} open days.`,
+          description: `${locationName} is behind pace on the ${period} sales goal. Current: $${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Target: $${target.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Shortfall: $${Math.max(target - revenue, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Need $${requiredDailyRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day over ${daysRemaining} open days.`,
         },
       });
       if (error) throw error;
@@ -179,7 +179,7 @@ export function GoalLocationRow({
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Projected</p>
-                  <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive'}>
+                  <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive')}>
                     <AnimatedBlurredAmount value={projectedRevenue} currency={currency} />
                   </p>
                 </div>

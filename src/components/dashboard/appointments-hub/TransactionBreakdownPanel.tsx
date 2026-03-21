@@ -208,7 +208,7 @@ export function TransactionBreakdownPanel({
               {summary.paymentMethods.join(', ')}
             </span>
           </div>
-        ')}
+        )}
       </div>
 
       {/* Existing refunds */}

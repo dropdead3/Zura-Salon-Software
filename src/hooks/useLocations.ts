@@ -117,7 +117,7 @@ export function getClosedDays(hoursJson: HoursJson | null): string {
   if (closedDays.length === 0) return '';
   if (closedDays.length === 7) return 'Closed';
   
-  return `Closed ${closedDays.map(d => DAY_ABBREV[d]).join(' & ')}`;
+  return `Closed ${closedDays.map(d => DAY_ABBREV[d]).join(' & }`;
 }
 
 // Get closed days as abbreviation array (Mon, Tue, etc.)

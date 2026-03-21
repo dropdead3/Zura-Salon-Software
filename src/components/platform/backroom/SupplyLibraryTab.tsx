@@ -337,7 +337,7 @@ export function SupplyLibraryTab() {
       p.brand, p.name, p.category, p.default_depletion, p.default_unit,
       (p.size_options || []).join(';'),
     ]);
-    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(',''))].join('\n');
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -841,7 +841,7 @@ export function SupplyLibraryTab() {
                       <p className="absolute bottom-2 left-0 right-0 text-center font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight px-2">
                         {b.categorySummary.slice(0, 3).map((cs) =>
                           `${cs.count} ${SUPPLY_CATEGORY_LABELS[cs.category] || cs.category}`
-                        ).join(' · '}
+                        ).join(' · ')}
                         {b.categorySummary.length > 3 && ` +${b.categorySummary.length - 3}`}
                       </p>
                     </PlatformCard>
@@ -877,7 +877,7 @@ export function SupplyLibraryTab() {
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
                   size="sm"
-                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all'}
+                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all')}
                   className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : ''}
                 >
                   <Clock className="w-3.5 h-3.5 mr-1" />
@@ -1180,7 +1180,7 @@ function AddEditDialog({
     if (!brand.trim() || !name.trim()) return;
     setSaving(true);
     try {
-      const sizeArr = sizes.split(',').map((s) => s.trim('')).filter(Boolean);
+      const sizeArr = sizes.split(',').map((s) => s.trim()).filter(Boolean);
       const wpVal = wholesalePrice.trim() ? parseFloat(wholesalePrice) : null;
       const mpVal = markupPct.trim() ? parseFloat(markupPct) : null;
       const rrVal = wpVal != null && mpVal != null ? Math.round(wpVal * (1 + mpVal / 100) * 100) / 100 : null;

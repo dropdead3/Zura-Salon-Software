@@ -218,7 +218,7 @@ export function ClientInsightsCard({
                 <div key={client.id} className="flex items-center justify-between text-xs">
                   <span className="text-destructive">{client.name}</span>
                   <span className="text-destructive/80">
-                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown'}
+                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown')}
                   </span>
                 </div>
               ))}

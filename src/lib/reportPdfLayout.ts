@@ -189,8 +189,8 @@ export function addReportHeader(
   doc.text(opts.reportTitle, marginLeft, y + 2);
 
   // ── Date range + generated timestamp (right-aligned, top area) ──
-  const dateRange = `${format(new Date(opts.dateFrom), 'MMM d, yyyy')} – ${format(new Date(opts.dateTo), 'MMM d, yyyy')}`;
-  const generatedText = `Generated ${format(generatedAt, 'MMM d, yyyy · h:mm a')}`;
+  const dateRange = `${format(new Date(opts.dateFrom), 'MMM d, yyyy')} – ${format(new Date(opts.dateTo), 'MMM d, yyyy}`;
+  const generatedText = `Generated ${format(generatedAt, 'MMM d, yyyy · h:mm a}`;
 
   doc.setFontSize(8);
   doc.setTextColor(130, 130, 130);

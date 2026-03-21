@@ -56,7 +56,7 @@ function StepDots({ stepReached }: { stepReached: string | null }) {
       {WIZARD_STEPS.map((s, i) => (
         <div
           key={s}
-          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted'}
+          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted')}
           title={s}
         />
       ))}
@@ -119,8 +119,8 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
             {/* Date & Time */}
             <DiffCell
               label="Date & Time"
-              valueA={`${draftA.appointment_date || '—'} ${draftA.start_time || '')}`}
-              valueB={`${draftB.appointment_date || '—'} ${draftB.start_time || '')}`}
+              valueA={`${draftA.appointment_date || '—'} ${draftA.start_time || ''}`}
+              valueB={`${draftB.appointment_date || '—'} ${draftB.start_time || ''}`}
             />
 
             {/* Notes */}

@@ -60,7 +60,7 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 const TIME_SLOTS: string[] = [];
 for (let h = 7; h < 21; h++) {
   for (let m = 0; m < 60; m += 15) {
-    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`);
   }
 }
 
@@ -320,7 +320,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
           <AnimatePresence mode="wait">
             <motion.div
-              key={step + (showTemplates ? '-templates' : ''}
+              key={step + (showTemplates ? '-templates' : '')}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -666,7 +666,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{getAttendeeNames().join(', '')}</span>
+                      <span>{getAttendeeNames().join(', ')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       {meetingMode === 'video' ? (

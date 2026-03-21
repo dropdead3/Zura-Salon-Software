@@ -169,7 +169,7 @@ export function OverviewContent({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {peakDay.date
-                    ? `Peak: ${new Date(peakDay.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' )})} (${peakDay.count})`
+                    ? `Peak: ${new Date(peakDay.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} (${peakDay.count})`
                     : 'No peak day data'}
                 </p>
                 <p className="text-xs text-muted-foreground">

@@ -100,25 +100,25 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Platform-Wide Benchmarks
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center">
             <p className="text-3xl font-medium text-violet-500">{formatPercent(analytics.platformAvgRebooking)}</p>
-            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500'}>Avg Rebooking Rate</p>
+            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Rebooking Rate</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-medium text-emerald-500">{formatPercent(analytics.platformAvgRetention)}</p>
-            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500'}>Avg Retention Rate</p>
+            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Retention Rate</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-medium text-blue-500">{formatCurrencyWhole(analytics.platformAvgTicket)}</p>
-            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500'}>Avg Ticket Size</p>
+            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Ticket Size</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-medium text-amber-500">{formatPercent(analytics.platformAvgRetailAttachment)}</p>
-            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500'}>Avg Retail Attachment</p>
+            <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Retail Attachment</p>
           </div>
         </div>
       </div>
@@ -129,7 +129,7 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
         <div className="p-4 border-b flex items-center justify-between gap-4" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
-          <h3 className={cn('font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+          <h3 className={cn('font-medium', isDark ? 'text-white' : 'text-slate-900')}>
             Organization Comparison Matrix
           </h3>
           <Input
@@ -191,10 +191,10 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
                 >
                   <td className="p-3">
                     <div>
-                      <p className={cn('font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+                      <p className={cn('font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                         {org.name}
                       </p>
-                      <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>
+                      <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
                         #{org.accountNumber} • {org.subscriptionTier || 'No Plan'}
                       </p>
                     </div>

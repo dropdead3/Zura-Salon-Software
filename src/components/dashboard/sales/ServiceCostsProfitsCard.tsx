@@ -28,11 +28,11 @@ type CategorySortKey = 'category' | 'count' | 'totalSales' | 'totalCost' | 'prof
 
 const CHART_COLORS = [
   'hsl(var(--chart-1))',
-  'hsl(var(--chart-2'))',
-  'hsl(var(--chart-3'))',
-  'hsl(var(--chart-4'))',
-  'hsl(var(--chart-5'))',
-  'hsl(var(--primary'))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(var(--primary))',
 ];
 
 const CARD_HEADER = (
@@ -134,7 +134,7 @@ export function ServiceCostsProfitsCard({
     >
       <div className="flex items-center gap-1">
         {label}
-        <ArrowUpDown className={cn('w-3 h-3', sort.key === sortKey ? 'text-primary' : 'text-muted-foreground/50'} />
+        <ArrowUpDown className={cn('w-3 h-3', sort.key === sortKey ? 'text-primary' : 'text-muted-foreground/50')} />
       </div>
     </TableHead>
   );
@@ -146,7 +146,7 @@ export function ServiceCostsProfitsCard({
     >
       <div className="flex items-center gap-1">
         {label}
-        <ArrowUpDown className={cn('w-3 h-3', catSort.key === sortKey ? 'text-primary' : 'text-muted-foreground/50'} />
+        <ArrowUpDown className={cn('w-3 h-3', catSort.key === sortKey ? 'text-primary' : 'text-muted-foreground/50')} />
       </div>
     </TableHead>
   );
@@ -287,10 +287,10 @@ export function ServiceCostsProfitsCard({
             <TableCell className="text-sm tabular-nums">
               <BlurredAmount>{formatCurrency(row.totalCost)}</BlurredAmount>
             </TableCell>
-            <TableCell className={cn('text-sm tabular-nums', row.profit >= 0 ? 'text-success-foreground' : 'text-destructive'}>
+            <TableCell className={cn('text-sm tabular-nums', row.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
               <BlurredAmount>{formatCurrency(row.profit)}</BlurredAmount>
             </TableCell>
-            <TableCell className={cn('text-sm tabular-nums', noCost ? 'text-muted-foreground/50' : row.profitPct >= 50 ? 'text-success-foreground' : row.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
+            <TableCell className={cn('text-sm tabular-nums', noCost ? 'text-muted-foreground/50' : row.profitPct >= 50 ? 'text-success-foreground' : row.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
               {noCost ? '—' : formatPercent(row.profitPct)}
             </TableCell>
           </TableRow>
@@ -335,13 +335,13 @@ export function ServiceCostsProfitsCard({
             </div>
             <div className="rounded-lg bg-muted/30 px-4 py-3">
               <p className="text-xs text-muted-foreground font-sans mb-1">Total Profit</p>
-              <p className={cn('font-display text-lg tracking-wide tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive'}>
+              <p className={cn('font-display text-lg tracking-wide tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
                 <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
               </p>
             </div>
             <div className="rounded-lg bg-muted/30 px-4 py-3">
               <p className="text-xs text-muted-foreground font-sans mb-1">Avg Margin</p>
-              <p className={cn('font-display text-lg tracking-wide tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
+              <p className={cn('font-display text-lg tracking-wide tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
                 {formatPercent(data.totals.profitPct)}
               </p>
             </div>
@@ -392,10 +392,10 @@ export function ServiceCostsProfitsCard({
                         <TableCell className="text-sm tabular-nums">
                           <BlurredAmount>{formatCurrency(row.totalCost)}</BlurredAmount>
                         </TableCell>
-                        <TableCell className={cn('text-sm tabular-nums', row.profit >= 0 ? 'text-success-foreground' : 'text-destructive'}>
+                        <TableCell className={cn('text-sm tabular-nums', row.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
                           <BlurredAmount>{formatCurrency(row.profit)}</BlurredAmount>
                         </TableCell>
-                        <TableCell className={cn('text-sm tabular-nums', row.marginPct >= 50 ? 'text-success-foreground' : row.marginPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
+                        <TableCell className={cn('text-sm tabular-nums', row.marginPct >= 50 ? 'text-success-foreground' : row.marginPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
                           {formatPercent(row.marginPct)}
                         </TableCell>
                       </TableRow>
@@ -412,10 +412,10 @@ export function ServiceCostsProfitsCard({
                     <TableCell className="text-sm tabular-nums">
                       <BlurredAmount>{formatCurrency(data.totals.totalCost)}</BlurredAmount>
                     </TableCell>
-                    <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive'}>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
                       <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
                     </TableCell>
-                    <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
                       {formatPercent(data.totals.profitPct)}
                     </TableCell>
                   </TableRow>
@@ -449,10 +449,10 @@ export function ServiceCostsProfitsCard({
                     <TableCell className="text-sm tabular-nums">
                       <BlurredAmount>{formatCurrency(data.totals.totalCost)}</BlurredAmount>
                     </TableCell>
-                    <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive'}>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
                       <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
                     </TableCell>
-                    <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
                       {formatPercent(data.totals.profitPct)}
                     </TableCell>
                   </TableRow>

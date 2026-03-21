@@ -188,7 +188,7 @@ function RevenueForecastCardComponent({
         {/* Data quality indicator */}
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>Based on {data?.historicalDataPoints || 0} days of data</span>
-          <span>Avg: {formatCurrency(data?.summary.avgDaily ?? 0')}/day</span>
+          <span>Avg: {formatCurrency(data?.summary.avgDaily ?? 0)}/day</span>
         </div>
       </CardContent>
     </Card>

@@ -86,7 +86,7 @@ function StylistTicketRow({ stylist, delay, orgAvg }: { stylist: StylistTicketDa
           <p className="text-xs text-muted-foreground">
             {stylist.transactionCount} appointment{stylist.transactionCount !== 1 ? 's' : ''}
             {diff !== 0 && (
-              <span className={cn('ml-1.5', diff > 0 ? 'text-chart-4' : 'text-destructive'}>
+              <span className={cn('ml-1.5', diff > 0 ? 'text-chart-4' : 'text-destructive')}>
                 {diff > 0 ? '+' : ''}{diff}% vs avg
               </span>
             )}

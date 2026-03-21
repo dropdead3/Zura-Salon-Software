@@ -264,7 +264,7 @@ export function SuperAdminTopBar({
                     );
                   })}
                 </>
-              ')}
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to={dashPath('/profile')} className="flex items-center gap-2 cursor-pointer">

@@ -8,7 +8,7 @@ interface ReportPreviewProps {
   config: ReportConfig;
 }
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2'))', 'hsl(var(--chart-3'))', 'hsl(var(--chart-4'))'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 // Mock data for preview
 const MOCK_DATA = [

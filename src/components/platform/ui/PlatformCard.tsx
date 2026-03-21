@@ -75,7 +75,7 @@ const PlatformCardDescription = React.forwardRef<HTMLParagraphElement, PlatformC
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-[hsl(var(--platform-foreground-muted'))]', className)}
+      className={cn('text-sm text-[hsl(var(--platform-foreground-muted))]', className)}
       {...props}
     />
   )

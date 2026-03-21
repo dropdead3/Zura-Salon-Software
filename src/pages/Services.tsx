@@ -398,7 +398,7 @@ export default function Services() {
             {categories.map((category, index) => (
               <a
                 key={category.category}
-                href={`#${category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`}
+                href={`#${category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and}`}
                 className="group inline-flex items-center gap-2 px-5 py-3 text-sm font-sans text-foreground bg-card border border-border rounded-full transition-all duration-300 hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105"
               >
                 <span className="text-xs text-muted-foreground group-hover:text-background/70 font-display">{String(index + 1).padStart(2, '0')}</span>

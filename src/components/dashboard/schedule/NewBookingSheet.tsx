@@ -116,7 +116,7 @@ export function NewBookingSheet({
         const filters = [`name.ilike.${clientSearch}%`];
         if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
         if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
-        query = query.or(filters.join(',''));
+        query = query.or(filters.join(','));
       }
       
       const { data } = await query;

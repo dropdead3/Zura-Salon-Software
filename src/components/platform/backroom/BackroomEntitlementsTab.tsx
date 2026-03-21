@@ -728,7 +728,7 @@ function LocationEntitlementPanel({
                   <td className="px-4 py-2.5">
                     {ent ? statusBadge(ent.status) : (
                       <PlatformBadge variant="default" size="sm">Inactive</PlatformBadge>
-                    ')}
+                    )}
                   </td>
                   <td className="px-4 py-2.5">
                     {ent?.status === 'refunded' && ent.refunded_at ? (

@@ -58,7 +58,7 @@ export function CommandCenterVisibilityToggle({
 
   const handleToggle = async (checked: boolean) => {
     // #region agent log — H3: check if handleToggle fires
-    fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:ENTRY',message:'handleToggle called',data:{checked,elementKey,elementName,elementCategory},timestamp:Date.now(),hypothesisId:'H3')})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:ENTRY',message:'handleToggle called',data:{checked,elementKey,elementName,elementCategory},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
     // #endregion
     setIsToggling(true);
     try {
@@ -84,7 +84,7 @@ export function CommandCenterVisibilityToggle({
 
       // Invalidate all visibility queries so UI updates everywhere
       // #region agent log — H4: check invalidation
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:BEFORE_INVALIDATE',message:'about to invalidate queries',data:{queryKey:'dashboard-visibility')},timestamp:Date.now(),hypothesisId:'H4')})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:BEFORE_INVALIDATE',message:'about to invalidate queries',data:{queryKey:'dashboard-visibility'},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
       // #endregion
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch (error: any) {

@@ -228,7 +228,7 @@ export function ProductWizard({ open, onOpenChange, draftId, initialDraft }: Pro
                 )}>
                   {i < step ? <Check className="w-3 h-3" /> : i + 1}
                 </div>
-                <span className={cn('text-xs hidden sm:inline', i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}>{label}</span>
+                <span className={cn('text-xs hidden sm:inline', i === step ? 'text-foreground font-medium' : 'text-muted-foreground')}>{label}</span>
                 {i < STEPS.length - 1 && <div className="w-4 h-px bg-border hidden sm:block" />}
               </div>
             ))}
@@ -433,7 +433,7 @@ function StepPricing({ form, update }: { form: WizardForm; update: (p: Partial<W
       {margin !== null && !isNaN(margin) && (
         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 border border-border/60">
           <span className="text-xs text-muted-foreground">Profit Margin:</span>
-          <span className={cn('text-sm font-medium', margin >= 40 ? 'text-emerald-600 dark:text-emerald-400' : margin >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive'}>
+          <span className={cn('text-sm font-medium', margin >= 40 ? 'text-emerald-600 dark:text-emerald-400' : margin >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
             {margin.toFixed(1)}%
           </span>
         </div>

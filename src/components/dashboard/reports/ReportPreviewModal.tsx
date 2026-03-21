@@ -38,7 +38,7 @@ export function ReportPreviewModal({
   const { data: businessSettings } = useBusinessSettings();
   const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
   const logoUrl = businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null;
-  const dateRange = `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} – ${formatDate(new Date(dateTo), 'MMM d, yyyy')}`;
+  const dateRange = `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} – ${formatDate(new Date(dateTo), 'MMM d, yyyy}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

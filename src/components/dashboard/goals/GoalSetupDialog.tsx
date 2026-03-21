@@ -467,7 +467,7 @@ export function GoalSetupDialog({
                   Back
                 </Button>
               )}
-              <div className={cn(!isEditing ? '' : 'ml-auto'}>
+              <div className={cn(!isEditing ? '' : 'ml-auto')}>
                 <Button onClick={handleSave} disabled={isPending}>
                   {isPending
                     ? 'Saving...'

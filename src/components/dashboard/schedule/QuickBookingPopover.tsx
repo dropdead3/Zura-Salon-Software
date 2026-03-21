@@ -196,7 +196,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
           {ALPHABET.map((letter) => {
             const available = availableLetters.has(letter);
             const active = activeLetter === letter;
-            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none'} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
+            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
           })}
         </div>
       )}
@@ -512,7 +512,7 @@ export function QuickBookingPopover({
         const filters = [`name.ilike.${clientSearch}%`];
         if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
         if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
-        query = query.or(filters.join(',''));
+        query = query.or(filters.join(','));
       }
       
       const { data } = await query;
@@ -1212,7 +1212,7 @@ export function QuickBookingPopover({
             }}
           />
         ) : (
-          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
             <div className="p-3 border-b border-border">
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1247,7 +1247,7 @@ export function QuickBookingPopover({
 
       {/* Step: Service Selection */}
       {step === 'service' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           {showBreakForm ? (
             <AddTimeBlockForm
               date={date}
@@ -1712,7 +1712,7 @@ export function QuickBookingPopover({
 
       {/* Step: Location Selection */}
       {step === 'location' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-3">
               <div className="flex items-center gap-2 mb-3">
@@ -1736,7 +1736,7 @@ export function QuickBookingPopover({
                     >
                       <div className="flex-1 min-w-0 mr-2">
                         <div className="font-medium text-sm">{loc.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{[loc.address, loc.city].filter(Boolean).join(', '')}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{[loc.address, loc.city].filter(Boolean).join(', ')}</div>
                       </div>
                       <div className={cn(
                         'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
@@ -1791,7 +1791,7 @@ export function QuickBookingPopover({
 
       {/* Step: Stylist Selection */}
       {step === 'stylist' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-4">
               {!stylistFirstMode && autoSelectReason === 'previous' && selectedClient && (
@@ -1934,7 +1934,7 @@ export function QuickBookingPopover({
 
       {/* Step: Confirmation */}
       {step === 'confirm' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-3">
               <div className="bg-muted/50 rounded-lg p-3">

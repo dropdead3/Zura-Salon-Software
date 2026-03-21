@@ -70,12 +70,12 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-violet-500/20' : 'bg-violet-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-violet-500/20' : 'bg-violet-100')}>
               <Building2 className="h-5 w-5 text-violet-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Total Accounts</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Total Accounts</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {analytics.totalOrganizations}
               </p>
             </div>
@@ -87,12 +87,12 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-emerald-500/20' : 'bg-emerald-100')}>
               <TrendingUp className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Active Accounts</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Active Accounts</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {activeCount}
               </p>
             </div>
@@ -104,12 +104,12 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-amber-500/20' : 'bg-amber-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-amber-500/20' : 'bg-amber-100')}>
               <Calendar className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>In Trial</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>In Trial</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {trialCount}
               </p>
             </div>
@@ -121,12 +121,12 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-red-500/20' : 'bg-red-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-red-500/20' : 'bg-red-100')}>
               <TrendingDown className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Inactive</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Inactive</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {inactiveCount}
               </p>
             </div>
@@ -141,7 +141,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             Account Growth Timeline
           </h3>
           <div className="h-64">
@@ -181,7 +181,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             New Accounts Per Month
           </h3>
           <div className="h-64">
@@ -222,7 +222,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Platform Expansion (Locations & Users)
         </h3>
         <div className="h-72">
@@ -265,11 +265,11 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Recent Signups (Last 30 Days)
         </h3>
         {recentSignups.length === 0 ? (
-          <p className={cn('text-center py-8', isDark ? 'text-slate-400' : 'text-slate-500'}>
+          <p className={cn('text-center py-8', isDark ? 'text-slate-400' : 'text-slate-500')}>
             No new signups in the last 30 days
           </p>
         ) : (
@@ -283,18 +283,18 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
                 )}
               >
                 <div>
-                  <p className={cn('font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+                  <p className={cn('font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                     {org.name}
                   </p>
-                  <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500'}>
+                  <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>
                     #{org.accountNumber} • {org.country || 'Unknown Location'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={cn('text-sm font-medium', isDark ? 'text-violet-400' : 'text-violet-600'}>
+                  <p className={cn('text-sm font-medium', isDark ? 'text-violet-400' : 'text-violet-600')}>
                     {org.subscriptionTier || 'No Plan'}
                   </p>
-                  <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>
+                  <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
                     {formatDate(new Date(org.createdAt), 'MMM d, yyyy')}
                   </p>
                 </div>

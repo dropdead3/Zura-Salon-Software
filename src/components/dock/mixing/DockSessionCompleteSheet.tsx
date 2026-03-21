@@ -203,7 +203,7 @@ function SummaryTile({ label, value, alert }: { label: string; value: string; al
   return (
     <div className="rounded-lg bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.1)] p-2.5 text-center">
       <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide mb-0.5">{label}</p>
-      <p className={cn('font-display text-sm tracking-tight', alert ? 'text-amber-400' : 'text-[hsl(var(--platform-foreground))]'}>
+      <p className={cn('font-display text-sm tracking-tight', alert ? 'text-amber-400' : 'text-[hsl(var(--platform-foreground))]')}>
         {value}
       </p>
     </div>

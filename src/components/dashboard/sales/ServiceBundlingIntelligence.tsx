@@ -154,7 +154,7 @@ export function ServiceBundlingIntelligence({
                           {r.standaloneRate > 50 && (
                             <p className="text-[11px] text-amber-600 dark:text-amber-400">
                               {r.category} is booked alone {Math.round(r.standaloneRate)}% of the time — consider bundling
-                              {catPairings.length > 0 ? ` with ${catPairings.map(p => p.partner).join(' or ')}` : '')}.
+                              {catPairings.length > 0 ? ` with ${catPairings.map(p => p.partner).join(' or }` : ''}.
                             </p>
                           )}
                           {catPairings.length > 0 && (
@@ -329,7 +329,7 @@ export function ServiceBundlingIntelligence({
                                 }}
                               >
                                 <span className="font-medium text-[11px]">{pair.count}</span>
-                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground'}>{Math.round(pair.pct)}%</span>
+                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground')}>{Math.round(pair.pct)}%</span>
                               </div>
                             </td>
                           );

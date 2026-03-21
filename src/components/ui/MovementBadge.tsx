@@ -60,7 +60,7 @@ export function MovementBadge({ rating, compact = false, positiveOnly = false, v
             className,
           )}
         >
-          <Icon className={cn(compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+          <Icon className={cn(compact ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
           {rating.label}
           {velocityChange != null && <TrendIndicator change={velocityChange} />}
         </Badge>

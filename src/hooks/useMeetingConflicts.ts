@@ -58,7 +58,7 @@ export function useMeetingConflicts(
           conflicts.push({
             userId: apt.stylist_user_id,
             type: 'appointment',
-            title: `${apt.client_name || 'Client'} - ${apt.service_name || 'Service')}`,
+            title: `${apt.client_name || 'Client'} - ${apt.service_name || 'Service'}`,
             startTime: apt.start_time,
             endTime: apt.end_time,
           });
@@ -70,7 +70,7 @@ export function useMeetingConflicts(
           conflicts.push({
             userId: apt.staff_user_id,
             type: 'appointment',
-            title: `${apt.client_name || 'Client'} - ${apt.service_name || 'Service')}`,
+            title: `${apt.client_name || 'Client'} - ${apt.service_name || 'Service'}`,
             startTime: apt.start_time,
             endTime: apt.end_time,
           });

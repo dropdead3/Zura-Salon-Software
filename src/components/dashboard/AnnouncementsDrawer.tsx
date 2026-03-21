@@ -183,7 +183,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
         .or('expires_at.is.null,expires_at.gt.now()');
 
       if (!canViewAllLocations && assignedLocationIds.length > 0) {
-        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')}')`);
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
       }
 
       const { data, error } = await query

@@ -11,7 +11,7 @@ interface TipPaymentMethodBreakdownProps {
 
 const COLORS = [
   'hsl(var(--primary))',
-  'hsl(var(--accent'))',
+  'hsl(var(--accent))',
   'hsl(var(--muted-foreground) / 0.5)',
 ];
 

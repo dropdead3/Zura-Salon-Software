@@ -528,7 +528,7 @@ export function AggregateSalesCard({
       ];
     });
 
-    const csv = [headers.join(','), ...rows.map(r => r.join(',''))].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1009,7 +1009,7 @@ export function AggregateSalesCard({
                     activeDrilldown === 'revenue'
                       ? "ring-1 ring-primary/20 bg-primary/5 border-primary/30"
                       : "border-border/40 hover:border-border/80 dark:hover:border-border/60"
-                  )} onClick={() => toggleDrilldown('revenue'}>
+                  )} onClick={() => toggleDrilldown('revenue')}>
                     <div>
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <Scissors className="w-3.5 h-3.5 text-primary" />
@@ -1527,7 +1527,7 @@ export function AggregateSalesCard({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc'}
+                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
               >
                 {locationSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
               </Button>

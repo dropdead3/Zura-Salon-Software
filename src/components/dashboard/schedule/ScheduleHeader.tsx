@@ -246,7 +246,7 @@ export function ScheduleHeader({
               <SelectContent>
                 {locations.map((loc) => {
                   const cityState = loc.city 
-                    ? `${loc.city.split(',')[0]?.trim('')}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
+                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
                     : '';
                   
                   return (
@@ -390,7 +390,7 @@ export function ScheduleHeader({
                   variant="ghost"
                   size="icon"
                   className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                  onClick={() => navigate(dashPath('/today-prep'))}
+                  onClick={() => navigate(dashPath('/today-prep')}
                 >
                   <ClipboardCheck className="h-4 w-4" />
                 </Button>
@@ -406,7 +406,7 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="icon"
                 className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                onClick={() => navigate(dashPath('/admin/settings?category=services'))}
+                onClick={() => navigate(dashPath('/admin/settings?category=services')}
               >
                 <Settings className="h-4 w-4" />
               </Button>

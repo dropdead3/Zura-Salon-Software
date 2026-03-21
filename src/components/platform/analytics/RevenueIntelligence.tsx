@@ -67,12 +67,12 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-violet-500/20' : 'bg-violet-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-violet-500/20' : 'bg-violet-100')}>
               <DollarSign className="h-5 w-5 text-violet-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Platform MRR</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Platform MRR</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {formatCompact(analytics.platformMRR)}
               </p>
             </div>
@@ -84,12 +84,12 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-emerald-500/20' : 'bg-emerald-100')}>
               <TrendingUp className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Platform ARR</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Platform ARR</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {formatCompact(analytics.platformARR)}
               </p>
             </div>
@@ -101,12 +101,12 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-blue-500/20' : 'bg-blue-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-blue-500/20' : 'bg-blue-100')}>
               <Building2 className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Combined Salon Revenue</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Combined Salon Revenue</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {formatCompact(analytics.combinedMonthlyRevenue)}
               </p>
             </div>
@@ -118,12 +118,12 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-amber-500/20' : 'bg-amber-100'}>
+            <div className={cn('p-2 rounded-lg', isDark ? 'bg-amber-500/20' : 'bg-amber-100')}>
               <MapPin className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>Avg Revenue/Location</p>
-              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900'}>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Revenue/Location</p>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {formatCompact(analytics.avgRevenuePerLocation)}
               </p>
             </div>
@@ -138,7 +138,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             MRR by Subscription Tier
           </h3>
           <div className="h-64">
@@ -175,7 +175,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             Service vs Retail Revenue
           </h3>
           <div className="h-64">
@@ -216,7 +216,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900'}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Organization Revenue Distribution (Monthly)
         </h3>
         <div className="h-64">

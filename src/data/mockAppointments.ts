@@ -60,7 +60,7 @@ const generateTimeSlots = (hoursStart: number, hoursEnd: number): string[] => {
   const slots: string[] = [];
   for (let hour = hoursStart; hour < hoursEnd; hour++) {
     for (let min = 0; min < 60; min += 15) {
-      slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0)}`);
+      slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0}`);
     }
   }
   return slots;
@@ -70,7 +70,7 @@ const generateTimeSlots = (hoursStart: number, hoursEnd: number): string[] => {
 const shuffleArray = <T>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1'));
+    const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;

@@ -307,7 +307,7 @@ export function ImplementPlanDialog({
       setExecuted(true);
 
       if (actionResults.length > 0) {
-        toast.success(`Campaign launched: ${actionResults.join(', ')}`);
+        toast.success(`Campaign launched: ${actionResults.join(', }`);
       }
     } catch (err) {
       console.error('Execute plan error:', err);

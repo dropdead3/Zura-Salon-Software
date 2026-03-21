@@ -29,10 +29,10 @@ interface StylistLocationRevenueChartProps {
 // Chart colors using CSS variables
 const LOCATION_COLORS = [
   'hsl(var(--primary))',
-  'hsl(var(--chart-2, 217 91% 60%'))',
-  'hsl(var(--chart-3, 160 84% 39%'))',
-  'hsl(var(--chart-4, 43 96% 56%'))',
-  'hsl(var(--chart-5, 280 87% 65%'))',
+  'hsl(var(--chart-2, 217 91% 60%))',
+  'hsl(var(--chart-3, 160 84% 39%))',
+  'hsl(var(--chart-4, 43 96% 56%))',
+  'hsl(var(--chart-5, 280 87% 65%))',
 ];
 
 export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocationRevenueChartProps) {

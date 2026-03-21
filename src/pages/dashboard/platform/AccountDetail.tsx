@@ -300,7 +300,7 @@ export default function AccountDetail() {
                       rel="noopener noreferrer"
                       className="text-violet-400 hover:text-violet-300 hover:underline transition-colors"
                     >
-                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, ''}
+                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     </a>
                   </div>
                 )}

@@ -111,7 +111,7 @@ export function DeadStockAlertCard({ products, movementRatings, velocityMap, fil
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{product.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <Badge variant="outline" className={cn('text-[10px]', tier === 'dead_weight' ? 'text-red-500 border-red-200 dark:border-red-800' : 'text-orange-500 border-orange-200 dark:border-orange-800'}>
+                    <Badge variant="outline" className={cn('text-[10px]', tier === 'dead_weight' ? 'text-red-500 border-red-200 dark:border-red-800' : 'text-orange-500 border-orange-200 dark:border-orange-800')}>
                       {tier === 'dead_weight' ? 'Dead Weight' : 'Stagnant'}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground tabular-nums">

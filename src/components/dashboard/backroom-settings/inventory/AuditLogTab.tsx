@@ -58,7 +58,7 @@ function exportBulkCsv(entries: BulkAuditEntry[]) {
     e.quantity_after ?? '',
     escape(e.changed_by_name ?? ''),
     escape(e.notes ?? ''),
-  ].join(',''));
+  ].join(','));
   const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -266,7 +266,7 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
                 <CalendarIcon className="w-3 h-3" />
-                {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
+                {dateFrom ? format(dateFrom, 'MMM d') : 'From')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -284,7 +284,7 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
                 <CalendarIcon className="w-3 h-3" />
-                {dateTo ? format(dateTo, 'MMM d') : 'To'}
+                {dateTo ? format(dateTo, 'MMM d') : 'To')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">

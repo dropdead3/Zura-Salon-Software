@@ -172,7 +172,7 @@ export function PhysicalCardOrderForm({ organizationId }: PhysicalCardOrderFormP
                 className="w-40"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Cards will be numbered: {cardPrefix || 'GC-'}0001, {cardPrefix || 'GC-')}0002, etc.
+                Cards will be numbered: {cardPrefix || 'GC-'}0001, {cardPrefix || 'GC-'}0002, etc.
               </p>
             </div>
           </CardContent>

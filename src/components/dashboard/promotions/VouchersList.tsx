@@ -70,7 +70,7 @@ export function VouchersList({ organizationId }: VouchersListProps) {
         getStatus(v).label,
         v.expires_at ? format(new Date(v.expires_at), 'yyyy-MM-dd') : '-',
         v.is_redeemed ? 'Yes' : 'No',
-      ].join(',''))
+      ].join(','))
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });

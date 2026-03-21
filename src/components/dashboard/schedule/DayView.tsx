@@ -505,7 +505,7 @@ export function DayView({
                     )}
                   >
                     {label && (
-                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60'}>
+                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60')}>
                         {label}
                       </span>
                     )}
@@ -529,7 +529,7 @@ export function DayView({
                       return slotMins < dayNowMins;
                     })();
                       
-                      const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0)}`;
+                      const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0}`;
                       
                       // Determine if slot is outside operating hours
                       const isOutsideHours = isLocationClosed || (
@@ -556,7 +556,7 @@ export function DayView({
                           }}
                         />
                       );
-                    }')}
+                    })}
                     
                     {/* Assistant Time Block Overlay */}
                     <AssistantBlockOverlay

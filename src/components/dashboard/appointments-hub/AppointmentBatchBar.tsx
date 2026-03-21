@@ -95,7 +95,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       a.status || '',
       a.total_price ?? '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(','')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -172,7 +172,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
 
 
   const shareContent = selectedAppointments.slice(0, 15).map(a =>
-    `• ${a.client_name || 'Walk-in'} — ${formatDateDisplay(a.appointment_date)} ${a.start_time || '')} (${a.status || 'booked')})`
+    `• ${a.client_name || 'Walk-in'} — ${formatDateDisplay(a.appointment_date)} ${a.start_time || ''} (${a.status || 'booked'})`
   ).join('\n') + (selectedAppointments.length > 15 ? `\n...and ${selectedAppointments.length - 15} more` : '');
 
   const isVisible = selectedAppointments.length > 0;

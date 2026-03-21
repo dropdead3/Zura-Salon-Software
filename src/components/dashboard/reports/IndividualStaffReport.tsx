@@ -42,7 +42,7 @@ interface IndividualStaffReportProps {
   initialStaffId?: string;
 }
 
-const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2'))', 'hsl(var(--chart-3'))', 'hsl(var(--chart-4'))'];
+const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -71,7 +71,7 @@ function TrendIndicator({ values }: { values: [number, number, number] }) {
       <span className="text-muted-foreground">{'\u2192'}</span>
       <span className="text-muted-foreground tabular-nums">{Math.round(prev1)}</span>
       <span className="text-muted-foreground">{'\u2192'}</span>
-      <span className={cn('font-medium tabular-nums', improving ? 'text-emerald-600 dark:text-emerald-400' : declining ? 'text-red-500 dark:text-red-400' : 'text-foreground'}>
+      <span className={cn('font-medium tabular-nums', improving ? 'text-emerald-600 dark:text-emerald-400' : declining ? 'text-red-500 dark:text-red-400' : 'text-foreground')}>
         {Math.round(current)}
       </span>
       {improving && <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />}
@@ -124,7 +124,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       doc.setTextColor(100);
       const profileLine = [
         data.profile.role ? `Role: ${data.profile.role}` : '',
-        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy')}` : '',
+        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy}` : '',
         data.profile.locationName ? `Location: ${data.profile.locationName}` : '',
         `Experience Score: ${data.experienceScore.composite}/100`,
         data.commission.tierName ? `Commission Tier: ${data.commission.tierName}` : '',
@@ -403,7 +403,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <div className="flex items-end gap-2">
                       <span className="text-xl font-display tabular-nums"><BlurredAmount>{kpi.value}</BlurredAmount></span>
                       {kpi.change !== null && kpi.change !== undefined && (
-                        <span className={cn('text-xs font-medium tabular-nums', kpi.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
+                        <span className={cn('text-xs font-medium tabular-nums', kpi.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
                           {kpi.change >= 0 ? '+' : ''}{Math.round(kpi.change)}%
                         </span>
                       )}

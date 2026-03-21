@@ -92,7 +92,7 @@ export default function StripeHealthPage() {
             <div>
               <p className="text-xs text-amber-400 font-medium">Revenue at risk</p>
               <p className="text-lg font-medium text-[hsl(var(--platform-foreground))]">
-                ${((data?.revenueAtRisk || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 )})}
+                ${((data?.revenueAtRisk || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>

@@ -647,7 +647,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)};">
-          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : '')} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : ''}" />
+          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
       }
       case 'button': {
@@ -664,8 +664,8 @@ function blocksToHtml(blocks: EmailBlock[]): string {
             </span>`
           : '';
         const buttonStyles = isSecondary
-          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
@@ -674,7 +674,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       case 'link': {
         const linkFontSize = Math.round(16 * ((block.styles.linkSize || 100) / 100));
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6; font-size: ${linkFontSize}px;">
-          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
+          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
         </p>`;
       }
       case 'divider': {
@@ -865,7 +865,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         let contentHtml = '';
         if (config.layout === 'stacked') {
           contentHtml = imageHtml 
-            ? `<div style="text-align: ${textAlign}; margin-bottom: 12px;">${imageHtml.replace('display: block;', )}`display: inline-block;`)}</div>${textHtml}`
+            ? `<div style="text-align: ${textAlign}; margin-bottom: 12px;">${imageHtml.replace('display: block;', }`display: inline-block;`)}</div>${textHtml}`
             : textHtml;
         } else if (config.layout === 'horizontal-right') {
           contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
@@ -907,9 +907,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           
           switch (columnBlock.type) {
             case 'heading':
-              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
+              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
             case 'text':
-              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
+              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
             case 'button': {
               const isSecondary = columnBlock.styles.buttonVariant === 'secondary';
               const sizeScale = (columnBlock.styles.buttonSize || 100) / 100;
@@ -919,7 +919,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const shapeRadius = columnBlock.styles.buttonShape === 'pill' ? '9999px' : columnBlock.styles.buttonShape === 'rectangle' ? '0px' : '6px';
               const buttonStyles = isSecondary
                 ? `display: inline-block; background-color: transparent; color: ${columnBlock.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${columnBlock.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000'}; color: ${columnBlock.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000'}; color: ${columnBlock.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
               return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
                 <a href="${columnBlock.linkUrl || '#'}" style="${buttonStyles}">${columnBlock.content}</a>
               </div>`;
@@ -935,7 +935,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
             case 'link': {
               const linkFontSize = Math.round(16 * ((columnBlock.styles.linkSize || 100) / 100));
               return `<p style="margin: 0; padding: ${blockPadding}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.6;">
-                <a href="${columnBlock.linkUrl || '#'}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
+                <a href="${columnBlock.linkUrl || '#'}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
               </p>`;
             }
             case 'divider': {
@@ -996,7 +996,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const legacyColumnCells = (!useBlocks ? config.columns : []).map((columnItems, colIndex) => {
           const cellContent = columnItems.map(item => {
             if (item.type === 'text') {
-              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px'}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center')}; line-height: 1.5;">${item.content}</p>`;
+              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px'}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center'}; line-height: 1.5;">${item.content}</p>`;
             } else if (item.type === 'button') {
               const isSecondary = item.styles.buttonVariant === 'secondary';
               const sizeScale = (item.styles.buttonSize || 100) / 100;
@@ -1006,7 +1006,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
               const buttonStyles = isSecondary
                 ? `display: inline-block; background-color: transparent; color: ${item.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${item.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000'}; color: ${item.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000'}; color: ${item.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
               return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
                 <a href="${item.linkUrl || '#'}" style="${buttonStyles}">${item.content}</a>
               </div>`;
@@ -2869,7 +2869,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
               size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'themes' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes'}
+              onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes')}
             >
               <Palette className="w-4 h-4" />
               Themes
@@ -2878,7 +2878,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               variant={toolbarPanel === 'blocks' ? 'default' : 'outline'}
               size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'blocks' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks'}
+              onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks')}
             >
               <Plus className="w-4 h-4" />
               Add Block
@@ -2888,7 +2888,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                 variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
                 size={tokens.button.inline}
                 className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'variables' && "bg-background border-border/80")}
-                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables'}
+                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables')}
               >
                 <Variable className="w-4 h-4" />
                 Variables
@@ -3023,7 +3023,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="flex gap-0.5 mb-1.5">
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
@@ -3044,7 +3044,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {customThemes.map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={(e) => { e.stopPropagation(); handleEditCustomTheme(theme.id); }}><Pencil className="w-2.5 h-2.5" /></Button>
                               <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCustomTheme(theme.id); }}><Trash2 className="w-2.5 h-2.5" /></Button>
@@ -5792,7 +5792,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                               <div style={{ textAlign: 'center', padding: '4px 0' }}>
                                                 <hr style={{ 
                                                   border: 'none', 
-                                                  borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid'} ${colBlock.styles.textColor || '#e5e7eb')}`,
+                                                  borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid'} ${colBlock.styles.textColor || '#e5e7eb'}`,
                                                   margin: '0 auto',
                                                   width: `${colBlock.styles.dividerWidth || 100}%`
                                                 }} />

@@ -596,7 +596,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
               {hasActionItems ? (
                 <div className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground shrink-0">
                   <button
-                    onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical'}
+                    onClick={() => setSeverityFilter(severityFilter === 'critical' ? 'all' : 'critical')}
                     className={cn(
                       'tabular-nums transition-colors duration-150',
                       severityFilter === 'critical' ? 'text-destructive font-medium' : 'text-destructive/70 hover:text-destructive',
@@ -606,7 +606,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                   </button>
                   <span className="text-muted-foreground/30">·</span>
                   <button
-                    onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low'}
+                    onClick={() => setSeverityFilter(severityFilter === 'low' ? 'all' : 'low')}
                     className={cn(
                       'tabular-nums transition-colors duration-150',
                       severityFilter === 'low' ? 'text-warning font-medium' : 'text-warning/70 hover:text-warning',
@@ -636,7 +636,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                       variant="outline"
                       size="sm"
                       className="font-sans rounded-full h-7 px-3 text-xs"
-                      onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder'}
+                      onClick={() => setSeverityFilter(severityFilter === 'needs_reorder' ? 'all' : 'needs_reorder')}
                     >
                       {severityFilter === 'needs_reorder' ? 'Show All' : 'Review Items'}
                     </Button>
@@ -914,9 +914,9 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
         <TableCell colSpan={8} className="py-2.5">
           <div className="flex items-center gap-2.5">
             <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150', open && 'rotate-90')} />
-            <Truck className={cn('w-4 h-4', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70'} />
+            <Truck className={cn('w-4 h-4', isUnassigned ? 'text-muted-foreground/30' : 'text-primary/70')} />
             <div className="flex flex-col">
-              <span className={cn('text-sm font-medium font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80'}>
+              <span className={cn('text-sm font-medium font-sans', isUnassigned ? 'text-muted-foreground/60' : 'text-foreground/80')}>
                 {isUnassigned ? 'Unassigned Supplier' : group.supplier}
               </span>
               <span className="text-[10px] text-muted-foreground/50 tabular-nums font-sans">

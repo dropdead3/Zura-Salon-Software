@@ -180,7 +180,7 @@ export function GoalTrackerCard() {
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Projected</p>
-                      <p className={cn('text-sm md:text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive'}>
+                      <p className={cn('text-sm md:text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
                         <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} />
                       </p>
                     </div>

@@ -102,8 +102,8 @@ const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 const BAR_COLORS = [
-  'hsl(var(--chart-1))', 'hsl(var(--chart-2'))', 'hsl(var(--chart-3'))',
-  'hsl(var(--chart-4'))', 'hsl(var(--chart-5'))', 'hsl(var(--primary'))',
+  'hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--primary))',
 ];
 
 function RedFlagRow({ flag }: { flag: RedFlag }) {
@@ -169,7 +169,7 @@ function exportInventoryAlertsCSV(alerts: ReturnType<typeof calculateInventoryAl
     a.productName, a.brand || '', a.category || '', a.currentStock, a.reorderLevel, a.deficit,
     a.salesVelocity.toFixed(1), a.daysUntilStockout >= 999 ? 'N/A' : a.daysUntilStockout, a.suggestedReorder, a.severity,
   ]);
-  const csv = [headers, ...rows].map(r => r.join(','')).join('\n');
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -181,7 +181,7 @@ function exportInventoryAlertsCSV(alerts: ReturnType<typeof calculateInventoryAl
 function exportCommissionsCSV(commissions: { name: string; retailRevenue: number; commissionRate: number; commissionEarned: number; isOverride: boolean }[]) {
   const headers = ['Stylist', 'Retail Revenue', 'Rate %', 'Override', 'Commission'];
   const rows = commissions.map(c => [c.name, c.retailRevenue.toFixed(2), c.commissionRate, c.isOverride ? 'Yes' : 'No', c.commissionEarned.toFixed(2)]);
-  const csv = [headers, ...rows].map(r => r.join(','')).join('\n');
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -214,7 +214,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="brands" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -268,7 +268,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                         {brands.some(br => br.margin > 0) && (
                           <TableCell className="text-right">
                             {b.margin > 0 ? (
-                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400'}>
+                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400')}>
                                 {b.margin.toFixed(0)}%
                               </Badge>
                             ) : '—'}
@@ -324,7 +324,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                               {b.staleProducts.length > 0 && (
                                 <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-2">
                                   <AlertTriangle className="w-3 h-3" />
-                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', '')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
+                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', ')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
                                 </div>
                               )}
                             </div>
@@ -420,7 +420,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="deadstock" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -1627,7 +1627,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Set Goals
                   </Button>
                 </div>
@@ -1680,7 +1680,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="text-xs text-muted-foreground">Actual</div>
-                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500'} />
+                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500')} />
                       <div className="text-[10px] tabular-nums text-muted-foreground">{Math.round(goalProgress.progressPct)}%</div>
                     </div>
                   </div>
@@ -1825,7 +1825,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                        <Download className="w-3.5 h-3.5" /> Export Movements
                      </Button>
                    )}
-                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                      <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
                    </Button>
                 </div>
@@ -1908,7 +1908,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportCommissionsCSV(staffCommissions)}>
                     <Download className="w-3.5 h-3.5" /> Export
                   </Button>
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -1981,7 +1981,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'))}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -2077,7 +2077,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—'}</TableCell>
                           <TableCell className="text-right tabular-nums">
                             {s.priceConsistency != null ? (
-                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}>
+                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400')}>
                                 {s.priceConsistency}%
                               </span>
                             ) : '—'}

@@ -843,7 +843,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                   )} />
                                 )}
                                 <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
-                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60'}>
+                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
                                   {item.count}
                                 </span>
                               </button>
@@ -964,7 +964,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">
-                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, ''}
+                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, '')}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
                                       {isGhostCost ? (
@@ -1348,7 +1348,7 @@ function InventoryView({
       <div className="grid grid-cols-3 gap-3">
         <button
           type="button"
-          onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock'}
+          onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
           className={cn(
             'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
             stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/40 hover:shadow-sm'
@@ -1359,7 +1359,7 @@ function InventoryView({
         </button>
         <button
           type="button"
-          onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder'}
+          onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
           className={cn(
             'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
             stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/40 hover:shadow-sm'

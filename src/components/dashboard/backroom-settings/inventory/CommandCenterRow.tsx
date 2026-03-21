@@ -508,7 +508,7 @@ export function CommandCenterRow({
             </div>
           </TableCell>
         </TableRow>
-      ')}
+      )}
     </>
   );
 }

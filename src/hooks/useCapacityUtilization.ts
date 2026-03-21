@@ -135,7 +135,7 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
       // Get filtered locations (supports multi-select comma-separated ids)
       const filterIds = locationId && locationId !== 'all' ? locationId.split(',').filter(Boolean) : [];
       const filteredLocations = filterIds.length > 0
-        ? locations.filter(l => filterIds.includes(l.id'))
+        ? locations.filter(l => filterIds.includes(l.id))
         : locations;
 
       if (filteredLocations.length === 0) {

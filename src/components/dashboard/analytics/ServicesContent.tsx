@@ -313,10 +313,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   sections.kpi_tiles = (
     <div className="space-y-2" key="kpi_tiles">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue')} onClick={() => toggleKpi('revenue'} />
-        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active')} onClick={() => toggleKpi('active'} />
-        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket')} onClick={() => toggleKpi('ticket'} />
-        <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph')} onClick={() => toggleKpi('rph'} />
+        <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue'} onClick={() => toggleKpi('revenue')} />
+        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active'} onClick={() => toggleKpi('active')} />
+        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket'} onClick={() => toggleKpi('ticket')} />
+        <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph'} onClick={() => toggleKpi('rph')} />
       </div>
       <DrillDown open={expandedKpi === 'revenue'}>
         <Card className="border-primary/20"><CardContent className="p-4">
@@ -506,8 +506,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-2">
               <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
               <div className="flex gap-1">
-                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('magnets'}>New Clients</button>
-                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'retention' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('retention'}>Retention</button>
+                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('magnets')}>New Clients</button>
+                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'retention' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('retention')}>Retention</button>
               </div>
             </div>
           </div>
@@ -633,7 +633,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                             <div className="flex items-center gap-4">
                                               <span className="tabular-nums">{st.bookings} bookings</span>
                                               <span className="tabular-nums font-medium"><BlurredAmount>{formatCurrency(st.revPerHour)}</BlurredAmount>/hr</span>
-                                              <div className="w-16"><div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={cn('h-full rounded-full', st.revShare > 70 ? 'bg-amber-500' : 'bg-primary/60'} style={{ width: `${st.revShare}%` }} /></div></div>
+                                              <div className="w-16"><div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={cn('h-full rounded-full', st.revShare > 70 ? 'bg-amber-500' : 'bg-primary/60')} style={{ width: `${st.revShare}%` }} /></div></div>
                                               <span className="tabular-nums text-muted-foreground w-10 text-right">{Math.round(st.revShare)}%</span>
                                             </div>
                                           </div>
@@ -965,7 +965,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             const prevWeek = service.weeks[service.weeks.length - 2]?.count || 0;
                             const wowChange = prevWeek > 0 ? ((lastWeek - prevWeek) / prevWeek) * 100 : 0;
                             return (
-                              <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground'}>
+                              <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground')}>
                                 WoW: <span className="font-medium">{wowChange > 0 ? '+' : ''}{wowChange.toFixed(0)}%</span>
                               </span>
                             );

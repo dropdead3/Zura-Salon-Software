@@ -713,7 +713,7 @@ export function ForecastingCard() {
           </div>
 
           {/* Summary Stats */}
-          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3'}>
+          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",

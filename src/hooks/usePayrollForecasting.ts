@@ -238,7 +238,7 @@ export function usePayrollForecasting() {
       : 0;
 
     return {
-      periodLabel: `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d')}`,
+      periodLabel: `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d}`,
       periodStart,
       periodEnd,
       checkDate: format(currentPeriod.nextPayDay, 'yyyy-MM-dd'),
