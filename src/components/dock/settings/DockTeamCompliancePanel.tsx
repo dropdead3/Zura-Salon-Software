@@ -115,7 +115,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
               <div
                 key={i}
                 className={cn(
-                  'w-3.5 h-3.5 rounded-full border-2 transition-all duration-150',
+                  'w-4 h-4 rounded-full border-2 transition-all duration-150',
                   i < pin.length
                     ? pinError
                       ? 'bg-red-500 border-red-500'
