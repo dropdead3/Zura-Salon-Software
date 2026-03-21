@@ -55,13 +55,13 @@ export default function GrowthHub() {
           <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">Marketing & Visibility</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <HubCard
-              href={dashPath('/campaigns')
+              href={dashPath('/campaigns')}
               icon={Rocket}
               title="Campaigns"
               description="Create and manage marketing campaigns"
             />
             <HubCard
-              href={dashPath('/admin/seo-workshop')
+              href={dashPath('/admin/seo-workshop')}
               icon={Search}
               title="SEO Workshop"
               description="Tasks and guides to improve local search visibility"

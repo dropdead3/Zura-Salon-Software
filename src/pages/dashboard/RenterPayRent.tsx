@@ -237,7 +237,7 @@ export default function RenterPayRent() {
                 <div className="text-center py-4">
                   <p className="text-sm text-muted-foreground mb-3">No payment methods saved</p>
                   <Button variant="outline" size={tokens.button.card} asChild>
-                    <a href={dashPath('/renter/payment-methods')>Add Card</a>
+                    <a href={dashPath('/renter/payment-methods')}>Add Card</a>
                   </Button>
                 </div>
               ) : (
