@@ -128,6 +128,26 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
     }
   }, [pin, loading, completeSession]);
 
+  // Show location picker if multi-location staff needs to choose
+  if (pendingSession) {
+    return (
+      <DockLocationPicker
+        organizationId={pendingSession.organizationId}
+        locationIds={pendingSession.locationIds}
+        staffName={pendingSession.displayName}
+        onSelect={(locId) => {
+          completeSession(
+            pendingSession.userId,
+            pendingSession.organizationId,
+            pendingSession.displayName,
+            pendingSession.avatarUrl,
+            locId,
+          );
+        }}
+      />
+    );
+  }
+
   return (
     <div className="platform-theme platform-dark absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]">
       {/* Gradient accent */}
