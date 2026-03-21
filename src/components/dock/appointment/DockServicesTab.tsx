@@ -80,6 +80,13 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   // Demo-mode local bowl state
   const [demoBowls, setDemoBowls] = useState<DemoBowl[]>([]);
 
+  // Listen for demo reset event
+  useEffect(() => {
+    const handleReset = () => setDemoBowls([]);
+    window.addEventListener('dock-demo-reset', handleReset);
+    return () => window.removeEventListener('dock-demo-reset', handleReset);
+  }, []);
+
   // Get the first session ID for stats query
   const primarySessionId = sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);

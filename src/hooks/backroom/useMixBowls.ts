@@ -146,6 +146,25 @@ export function useUpdateBowlStatus() {
         net_usage_weight?: number;
       };
     }) => {
+      // Guard demo sessions — return mock data without DB writes
+      if (sessionId.startsWith('demo-') || id.startsWith('demo-')) {
+        return {
+          id,
+          mix_session_id: sessionId,
+          bowl_number: 1,
+          bowl_name: null,
+          purpose: null,
+          started_at: new Date().toISOString(),
+          completed_at: newStatus !== 'open' ? new Date().toISOString() : null,
+          status: newStatus,
+          total_dispensed_weight: totals?.total_dispensed_weight ?? 0,
+          total_dispensed_cost: totals?.total_dispensed_cost ?? 0,
+          leftover_weight: totals?.leftover_weight ?? null,
+          net_usage_weight: totals?.net_usage_weight ?? null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as MixBowl;
+      }
       if (!canTransitionBowl(currentStatus, newStatus)) {
         throw new Error(`Invalid bowl transition: ${currentStatus} → ${newStatus}`);
       }

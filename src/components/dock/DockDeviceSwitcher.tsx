@@ -126,6 +126,16 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         </div>
       )}
 
+      {isDemoMode && (
+        <button
+          type="button"
+          onClick={handleDemoReset}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-md text-foreground/60 hover:text-foreground/80 transition-colors"
+          title="Reset Demo"
+        >
+          <RotateCw className="w-3.5 h-3.5" />
+        </button>
+      )}
       {showRotate && (
         <button
           type="button"
