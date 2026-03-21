@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState } from 'react';
-import { Clock, FlaskConical, User, Users, CheckCircle2, UserCircle } from 'lucide-react';
+import { Clock, FlaskConical, User, Users, CheckCircle2 } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
