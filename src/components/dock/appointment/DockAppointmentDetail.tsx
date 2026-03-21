@@ -37,6 +37,8 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
     ? appointment.service_name.split(',').map(s => s.trim()).filter(Boolean)
     : [];
 
+  const isTerminal = ['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase());
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
