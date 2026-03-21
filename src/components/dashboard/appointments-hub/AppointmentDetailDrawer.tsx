@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 import { useAppointmentTransactionBreakdown } from '@/hooks/useAppointmentTransactionBreakdown';
 import { TransactionBreakdownPanel } from './TransactionBreakdownPanel';
 import { Badge } from '@/components/ui/badge';
