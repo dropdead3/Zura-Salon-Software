@@ -96,6 +96,8 @@ function computeFormulaDiff(newer: FormulaLine[], older: FormulaLine[]): Formula
 function hasDiff(diff: FormulaDiff): boolean {
   return diff.added.length > 0 || diff.removed.length > 0 || diff.changed.length > 0 || diff.ratioShift !== null;
 }
+
+export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTabProps) {
   const queryClient = useQueryClient();
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
@@ -103,6 +105,9 @@ function hasDiff(diff: FormulaDiff): boolean {
   // ─── Editable medical alerts state ───
   const [editingAlert, setEditingAlert] = useState(false);
   const [alertDraft, setAlertDraft] = useState('');
+
+  // Track whether we've logged recommendations this render
+  const recLoggedRef = useRef(false);
 
   // Client profile (includes medical_alerts + preferred_stylist_id)
   const { data: client, isLoading: loadingClient } = useQuery({
@@ -162,12 +167,26 @@ function hasDiff(diff: FormulaDiff): boolean {
   // Clone formula hook
   const cloneFormula = useCloneFormula();
 
-  // Cross-sell product recommendations
+  // ─── Session-aware: fetch active bowl lines for cross-sell ───
+  const { data: activeBowlLines } = useQuery({
+    queryKey: ['dock-active-bowl-lines', activeBowlId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mix_bowl_lines')
+        .select('product_name_snapshot, brand_snapshot')
+        .eq('bowl_id', activeBowlId!);
+      return data || [];
+    },
+    enabled: !!activeBowlId,
+    staleTime: 15_000,
+  });
+
+  // ─── Cross-sell product recommendations (session-aware + conversion-weighted) ───
   const { data: crossSellProducts } = useQuery({
-    queryKey: ['dock-cross-sell', staff.organizationId, appointment.service_name, phorestClientId],
+    queryKey: ['dock-cross-sell', staff.organizationId, appointment.service_name, phorestClientId, activeBowlId, activeBowlLines?.length],
     queryFn: async () => {
       if (!appointment.service_name) return [];
-      // Get top 3 retail products bought by clients with same service, excluding this client's frequent buys
+      // Get retail products bought by clients with same service
       const { data } = await supabase
         .from('phorest_transaction_items' as any)
         .select('item_name, phorest_client_id')
@@ -191,10 +210,39 @@ function hasDiff(diff: FormulaDiff): boolean {
       // Remove products client already buys
       for (const p of clientProducts) countMap.delete(p);
 
-      return [...countMap.entries()]
-        .sort((a, b) => b[1] - a[1])
+      // Session-aware boost: if bowl lines exist, boost products matching bowl brands
+      const bowlBrands = new Set((activeBowlLines || []).map(l => (l.brand_snapshot || '').toLowerCase()).filter(Boolean));
+      const entries = [...countMap.entries()].map(([name, count]) => {
+        const boosted = bowlBrands.size > 0 && [...bowlBrands].some(brand => name.toLowerCase().includes(brand));
+        return { name, buyerCount: count, score: count * (boosted ? 2 : 1) };
+      });
+
+      // Fetch conversion rates for weighting
+      const { data: conversionData } = await supabase
+        .from('retail_recommendation_events' as any)
+        .select('recommended_product_name, converted_at')
+        .eq('organization_id', staff.organizationId) as { data: { recommended_product_name: string; converted_at: string | null }[] | null };
+
+      if (conversionData && conversionData.length > 0) {
+        const convMap = new Map<string, { total: number; converted: number }>();
+        for (const r of conversionData) {
+          const existing = convMap.get(r.recommended_product_name) || { total: 0, converted: 0 };
+          existing.total++;
+          if (r.converted_at) existing.converted++;
+          convMap.set(r.recommended_product_name, existing);
+        }
+        for (const entry of entries) {
+          const conv = convMap.get(entry.name);
+          if (conv && conv.total >= 5) {
+            entry.score *= 1 + (conv.converted / conv.total);
+          }
+        }
+      }
+
+      return entries
+        .sort((a, b) => b.score - a.score)
         .slice(0, 3)
-        .map(([name, count]) => ({ name, buyerCount: count }));
+        .map(({ name, buyerCount }) => ({ name, buyerCount }));
     },
     enabled: !!staff.organizationId && !!appointment.service_name,
     staleTime: 10 * 60 * 1000,
