@@ -1,10 +1,19 @@
 
 
-## Fix Dock Bottom Nav Indicator to Full Round
+## Always Populate Faux Appointments in Demo Mode
 
-**Problem:** The sliding pill indicator behind the active tab uses `rounded-xl` (line 43), but the outer nav is `rounded-full`. The indicator bubbles should match and be fully round.
+**Problem:** When entering demo mode with a real org ID (`?demo=<orgId>`), the hook queries real DB data. If no appointments exist for that org today, the schedule shows "No appointments today" — defeating the purpose of a demo.
 
-**File:** `src/components/dock/DockBottomNav.tsx`
+**Fix in `src/hooks/dock/useDockAppointments.ts`:**
 
-**Change:** Line 43 — replace `rounded-xl` with `rounded-full` on the `motion.div` indicator element.
+In the `isDemoMode && usesRealData` branch (around line 42-183), after fetching real appointments, if the result is empty, fall back to returning `DEMO_APPOINTMENTS`. This ensures demo mode always has content to showcase.
+
+Change: After line 182 (`return appointments;`), replace with:
+```typescript
+return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;
+```
+
+This single-line change means:
+- If the org has real appointments today → show them (more realistic demo)
+- If no real appointments → always fall back to the faux data so the demo is never empty
 
