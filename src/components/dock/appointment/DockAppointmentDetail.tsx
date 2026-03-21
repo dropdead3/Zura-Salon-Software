@@ -52,13 +52,13 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-xl p-1 border border-[hsl(var(--platform-border)/0.2)]">
+        <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-2xl p-1.5 border border-[hsl(var(--platform-border)/0.2)]">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
               className={cn(
-                'flex items-center justify-center gap-1.5 flex-1 h-9 rounded-lg text-xs font-medium transition-all duration-150',
+                'flex items-center justify-center gap-1.5 flex-1 h-10 rounded-xl text-xs font-medium transition-all duration-150',
                 tab === id
                   ? 'bg-violet-600/30 text-violet-300'
                   : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
