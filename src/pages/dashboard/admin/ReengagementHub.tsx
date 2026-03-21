@@ -32,7 +32,6 @@ import {
 } from '@/hooks/useReengagementCampaigns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   Dialog,
   DialogContent,
@@ -40,6 +39,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function CampaignCard({ campaign }: { campaign: ReengagementCampaign }) {
   const { data: stats } = useCampaignStats(campaign.id);

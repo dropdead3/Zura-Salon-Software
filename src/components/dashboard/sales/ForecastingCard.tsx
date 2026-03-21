@@ -43,7 +43,6 @@ import { useLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
 import { motion, useInView } from 'framer-motion';
 import { 
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   BarChart, 
   Bar, 
@@ -55,6 +54,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
   LabelList,
   Customized 
 } from 'recharts';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function toLocalDateStr(d: Date): string {
   const year = d.getFullYear();

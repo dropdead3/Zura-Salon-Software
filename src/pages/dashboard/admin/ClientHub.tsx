@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   Users,
   Brain,
@@ -14,6 +13,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
   GitMerge,
   ChevronRight,
 } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface HubCardProps {
   href: string;

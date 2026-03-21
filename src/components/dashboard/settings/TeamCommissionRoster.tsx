@@ -17,13 +17,13 @@ import type { StylistLevel } from '@/hooks/useStylistLevels';
 import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
 import { differenceInDays } from 'date-fns';
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface TeamCommissionRosterProps {
   orgId: string;

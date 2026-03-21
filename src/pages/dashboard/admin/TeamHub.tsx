@@ -14,7 +14,6 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { usePendingInvitations } from '@/hooks/useStaffInvitations';
 import { useInvitableRoles } from '@/hooks/useInvitableRoles';
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   ClipboardList,
   GraduationCap,
@@ -51,6 +50,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
   Globe,
   Beaker,
 } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ManagementCardProps {
   href: string;

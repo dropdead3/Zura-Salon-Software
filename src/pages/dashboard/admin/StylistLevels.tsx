@@ -43,12 +43,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   useStylistLevels, 
   useSaveStylistLevels,
   StylistLevel 
 } from '@/hooks/useStylistLevels';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type LocalStylistLevel = {
   id: string;

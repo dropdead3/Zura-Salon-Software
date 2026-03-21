@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   LayoutGrid,
   ClipboardList,
@@ -44,6 +43,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
   Search,
   GitMerge,
 } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ManagementCardProps {
   href: string;

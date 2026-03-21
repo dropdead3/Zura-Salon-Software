@@ -41,12 +41,12 @@ import { cn } from '@/lib/utils';
 import type { CalendarView } from '@/hooks/usePhorestCalendar';
 import { CalendarFiltersPopover, type CalendarFilterState } from './CalendarFiltersPopover';
 import {
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
