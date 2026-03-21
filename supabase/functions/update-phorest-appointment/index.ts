@@ -268,13 +268,37 @@ serve(async (req) => {
       localUpdate.rebook_declined_reason = rebook_declined_reason;
     }
 
-    // Services update: rewrite service_name, total_price, duration_minutes
+    // Services update: rewrite service_name, total_price, duration_minutes, end_time
     if (services && services.length > 0) {
+      // ── Status guard: block edits on terminal appointments ──
+      const terminalStatuses = ['completed', 'cancelled', 'no_show'];
+      const { data: currentApt } = await supabase
+        .from(targetTable)
+        .select("status, start_time")
+        .eq(matchColumn, appointment_id)
+        .maybeSingle();
+
+      const currentStatus = (currentApt?.status || '').toLowerCase();
+      if (terminalStatuses.includes(currentStatus)) {
+        throw new Error(`Cannot edit services on a ${currentStatus} appointment`);
+      }
+
       localUpdate.service_name = services.map(s => s.name).join(', ');
       const totalPrice = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
       const totalDuration = services.reduce((sum, s) => sum + (s.duration_minutes ?? 0), 0);
       if (totalPrice > 0) localUpdate.total_price = totalPrice;
-      if (totalDuration > 0) localUpdate.duration_minutes = totalDuration;
+      if (totalDuration > 0) {
+        localUpdate.duration_minutes = totalDuration;
+        // Recalculate end_time from start_time + new duration
+        const startTime = currentApt?.start_time;
+        if (startTime) {
+          const [h, m] = startTime.split(':').map(Number);
+          const totalMinutes = h * 60 + m + totalDuration;
+          const endH = Math.floor(totalMinutes / 60) % 24;
+          const endM = totalMinutes % 60;
+          localUpdate.end_time = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
+        }
+      }
       localUpdate.service_category = services[0]?.category || null;
     }
 

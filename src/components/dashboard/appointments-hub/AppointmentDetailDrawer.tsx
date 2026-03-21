@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 import { useAppointmentTransactionBreakdown } from '@/hooks/useAppointmentTransactionBreakdown';
 import { TransactionBreakdownPanel } from './TransactionBreakdownPanel';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy, Star, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, DollarSign, MessageSquare, Tag, Percent, Phone, Mail, FileText, UserCheck, Info, ExternalLink, XCircle, Hash, Copy, Star, Send, Loader2, CheckCircle2, Pencil } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -76,6 +78,8 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [editServicesOpen, setEditServicesOpen] = useState(false);
+  const updateServicesMutation = useUpdateAppointmentServices();
 
   // Transaction breakdown hook
   const phorestClientIdForTx = appointment?.phorest_client_id || appointment?.client_id;
@@ -235,9 +239,21 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <h2 className={cn(tokens.heading.card, 'truncate')}>
                 {clientName}
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {appointment.service_name || 'Service'}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm text-muted-foreground mt-1">
+                  {appointment.service_name || 'Service'}
+                </p>
+                {!['completed', 'cancelled', 'no_show'].includes((status).toLowerCase()) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 mt-0.5"
+                    onClick={() => setEditServicesOpen(true)}
+                  >
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                )}
+              </div>
             </div>
             <Badge className={cn('shrink-0', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
               {statusBadge.label}
@@ -671,6 +687,24 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <EditServicesDialog
+          open={editServicesOpen}
+          onOpenChange={setEditServicesOpen}
+          currentServices={appointment.service_name ? appointment.service_name.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+          locationId={appointment.location_id}
+          isSaving={updateServicesMutation.isPending}
+          onSave={(newServices: ServiceEntry[]) => {
+            updateServicesMutation.mutate({
+              appointmentId: appointment.id,
+              organizationId: orgId || '',
+              services: newServices,
+              previousServiceName: appointment.service_name,
+            }, {
+              onSuccess: () => setEditServicesOpen(false),
+            });
+          }}
+        />
     </PremiumFloatingPanel>
   );
 }
