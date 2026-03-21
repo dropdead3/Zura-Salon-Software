@@ -179,7 +179,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           }
         }
 
-        return appointments;
+        return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;
       }
 
       // Normal (non-demo) mode — fetch by staff user
