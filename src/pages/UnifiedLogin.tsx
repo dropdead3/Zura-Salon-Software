@@ -324,7 +324,7 @@ export default function UnifiedLogin() {
               {isForgotPassword
                 ? 'Enter your email to receive a reset link'
                 : isPlatformInviteSignup
-                ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' }`
+                ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' ')}`
                 : isLogin
                 ? 'Sign in to access your dashboard'
                 : `Get started with ${PLATFORM_NAME}`}
