@@ -595,64 +595,93 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
           <div className="space-y-1.5">
             {displayFormulas.map((f) => {
               const lines = (f.formula_data || []).slice(0, 2);
+              const diff = formulaDiffs.get(f.id);
               return (
-                <div
-                  key={f.id}
-                  className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] px-3 py-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[hsl(var(--platform-foreground))]">
-                      {f.service_name || 'Formula'}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
-                        {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
+                <div key={f.id}>
+                  <div
+                    className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] px-3 py-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[hsl(var(--platform-foreground))]">
+                        {f.service_name || 'Formula'}
                       </span>
-                      {activeBowlId && f.formula_data?.length > 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cloneFormula.mutate({ bowlId: activeBowlId, formulaLines: f.formula_data });
-                          }}
-                          disabled={cloneFormula.isPending}
-                          className="p-1 rounded-lg hover:bg-violet-500/15 transition-colors"
-                          title="Clone into active bowl"
-                        >
-                          <Copy className="w-3 h-3 text-violet-400" />
-                        </button>
-                      )}
-                      {!activeBowlId && f.formula_data?.length > 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toast.info('Start a mixing session first to clone formulas');
-                          }}
-                          className="p-1 rounded-lg opacity-40 cursor-not-allowed"
-                          title="No active bowl"
-                        >
-                          <Copy className="w-3 h-3 text-[hsl(var(--platform-foreground-muted))]" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                          {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
+                        </span>
+                        {activeBowlId && f.formula_data?.length > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cloneFormula.mutate({ bowlId: activeBowlId, formulaLines: f.formula_data });
+                            }}
+                            disabled={cloneFormula.isPending}
+                            className="p-1 rounded-lg hover:bg-violet-500/15 transition-colors"
+                            title="Clone into active bowl"
+                          >
+                            <Copy className="w-3 h-3 text-violet-400" />
+                          </button>
+                        )}
+                        {!activeBowlId && f.formula_data?.length > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toast.info('Start a mixing session first to clone formulas');
+                            }}
+                            className="p-1 rounded-lg opacity-40 cursor-not-allowed"
+                            title="No active bowl"
+                          >
+                            <Copy className="w-3 h-3 text-[hsl(var(--platform-foreground-muted))]" />
+                          </button>
+                        )}
+                      </div>
                     </div>
+                    {lines.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                        {lines.map((line, i) => (
+                          <span key={i} className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                            {line.product_name} {line.quantity ? `${line.quantity}${line.unit || 'g'}` : ''}
+                          </span>
+                        ))}
+                        {(f.formula_data || []).length > 2 && (
+                          <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+                            +{(f.formula_data || []).length - 2} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {f.staff_name && (
+                      <span className="text-[9px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-0.5 block">
+                        by {f.staff_name}
+                      </span>
+                    )}
                   </div>
-                  {lines.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                      {lines.map((line, i) => (
-                        <span key={i} className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
-                          {line.product_name} {line.quantity ? `${line.quantity}${line.unit || 'g'}` : ''}
+                  {/* ─── Smart Formula Diff Badges ─── */}
+                  {diff && (
+                    <div className="flex flex-wrap gap-1 mt-1 ml-2">
+                      {diff.added.map(name => (
+                        <span key={`add-${name}`} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-display tracking-wide uppercase text-emerald-400">
+                          <Plus className="w-2 h-2" />{name}
                         </span>
                       ))}
-                      {(f.formula_data || []).length > 2 && (
-                        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
-                          +{(f.formula_data || []).length - 2} more
+                      {diff.removed.map(name => (
+                        <span key={`rm-${name}`} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[8px] font-display tracking-wide uppercase text-rose-400">
+                          <X className="w-2 h-2" />{name}
+                        </span>
+                      ))}
+                      {diff.changed.map(c => (
+                        <span key={`chg-${c.name}`} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[8px] tracking-wide text-amber-400">
+                          {c.newQty > c.oldQty ? <ArrowUp className="w-2 h-2" /> : <ArrowDown className="w-2 h-2" />}
+                          {c.oldQty}{c.unit} → {c.newQty}{c.unit}
+                        </span>
+                      ))}
+                      {diff.ratioShift && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-[8px] tracking-wide text-violet-400">
+                          <TrendingUp className="w-2 h-2" />
+                          {diff.ratioShift.oldRatio} → {diff.ratioShift.newRatio}
                         </span>
                       )}
                     </div>
-                  )}
-                  {f.staff_name && (
-                    <span className="text-[9px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-0.5 block">
-                      by {f.staff_name}
-                    </span>
                   )}
                 </div>
               );
