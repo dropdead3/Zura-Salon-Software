@@ -1,56 +1,47 @@
 
 
-## Implement 4 Client Intelligence Enhancements in DockClientTab
+## Three Client Intelligence Enhancements
 
-### 1. Editable Medical Alerts
-Allow stylists to add/update allergy info directly from the Client tab.
+### 1. Wire `stylist_user_id` onto DockAppointment
 
-**Changes:**
-- Add an "Edit" pencil icon button next to the "Allergy / Sensitivity" section header
-- When no alert exists, show an "Add Medical Alert" button
-- On tap, open an inline editable textarea (not a sheet — keep it lightweight)
-- On save, update `phorest_clients.medical_alerts` or `clients.medical_alerts` via direct Supabase update
-- Invalidate the `dock-client-profile` query on success
-- Add a small `useMutation` inline in the component for the update
+**Problem:** `stylist_user_id` is already fetched from `phorest_appointments` but dropped during the mapping to `DockAppointment`. Line 203 in `DockClientTab` hardcodes `currentStylistDiffers = false`.
 
-### 2. Preferred Stylist Indicator
-Show which stylist the client visits most as a badge in the Identity Card.
+**Fix:**
+- **`src/hooks/dock/useDockAppointments.ts`** — Add `stylist_user_id?: string | null` to the `DockAppointment` interface. Include `stylist_user_id: a.stylist_user_id || null` in all 3 mapping locations (lines ~120-134, ~157-172, and the personal query mapping ~200+).
+- **`src/components/dock/appointment/DockClientTab.tsx`** — Replace the hardcoded `const currentStylistDiffers = false` with an actual comparison: `const currentStylistDiffers = !!preferredStylistId && !!appointment.stylist_user_id && appointment.stylist_user_id !== preferredStylistId`. The amber warning UI is already built and will activate.
 
-**Changes:**
-- Fetch `preferred_stylist_id` in the existing client profile query (add it to the `select` for `phorest_clients`)
-- Use existing `usePreferredStylist(preferredStylistId)` hook to resolve the display name
-- Render a badge in the badges row: `"Prefers: [Stylist Name]"` with a `Heart` icon, violet tint
-- If the current appointment stylist differs from preferred, show a subtle amber "Different stylist" note
+### 2. Quick-Tap Formula Re-Use from History Timeline
 
-### 3. Retail Repurchase Reminders
-Flag products nearing typical repurchase cycles based on purchase frequency.
+**Problem:** Formula history cards in the Client tab are read-only. Stylists should be able to tap a past formula to clone it into an active bowl.
+
+**Approach:**
+- Add a `Copy` icon button on each formula history card in `DockClientTab`
+- On tap, use the existing `useCloneFormula` hook which inserts formula lines into a target bowl
+- Need to know the active bowl ID — pass it via props from `DockAppointmentDetail` which has access to the current mix session context
+- If no active bowl exists, show a toast prompting the stylist to create a bowl first
 
 **Changes:**
-- Extend the existing `useClientProductAffinity` data (already fetched) with repurchase logic
-- In the "Frequently Purchased" section, for products purchased 2+ times, compute the average days between purchases from `phorest_transaction_items`
-- If the last purchase was longer ago than 1.2× the average interval, show an amber "May need restock" pill next to the product
-- This is a UI-only computation on existing data — add a small helper function `computeRepurchaseStatus` in the component
+- **`src/components/dock/appointment/DockClientTab.tsx`** — Add optional `activeBowlId` prop. Import `useCloneFormula`. Add a `Copy` button on each formula history card that calls `cloneFormula.mutate({ bowlId, formulaLines })`. Show loading state on the button while cloning.
+- **`src/components/dock/appointment/DockAppointmentDetail.tsx`** — Query the active mix session's first open bowl (from `mix_bowls` where `status = 'open'` for the appointment's session) and pass `activeBowlId` to `DockClientTab`.
 
-### 4. Color History Timeline — Formula Evolution View
-Dedicated section showing how formulas have changed across visits.
+### 3. Product Recommendations Based on Formula + Retail Cross-Sell Patterns
+
+**Problem:** No product suggestions are surfaced. When a client uses specific color/treatment products, there are complementary retail products (e.g., color-safe shampoo for color services).
+
+**Approach — Lightweight, data-driven:**
+- Create a new section "Suggested Retail" in `DockClientTab` below Frequently Purchased
+- Query logic: Look at the client's current service name + formula products → match against `phorest_transaction_items` from *other clients* who had similar services and also bought retail
+- For MVP: use a simpler heuristic — surface the top 3 retail products purchased by clients who had the same `service_name` at this org, excluding products the client already buys frequently
+- Query `phorest_transaction_items` grouped by `item_name` where `item_type = 'product'`, joined to appointments with matching service names, limited to top 3 by count
 
 **Changes:**
-- Add a new "Formula History" section after "Last Formula" 
-- Use existing `useClientFormulaHistory(clientId)` hook (already built for `ClientFormulaHistoryTab`)
-- Render a compact vertical timeline: date → service name → key product lines (truncated to 2 lines max)
-- Show last 5 entries, collapsed with "Show more" if more exist
-- Reuse the same card styling as visit history rows
+- **`src/components/dock/appointment/DockClientTab.tsx`** — Add a new `useQuery` for cross-sell recommendations. Render a "Suggested Retail" section with `Sparkles` icon, showing product name + "X clients with similar services bought this" subtitle. Cards styled as subtle recommendation pills with `bg-violet-500/5 border-violet-500/15`.
 
-### Files
+### Files Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/dock/appointment/DockClientTab.tsx` — all 4 enhancements |
-| Modify | `src/hooks/useClientProductAffinity.ts` — add `lastPurchaseDate` + `avgDaysBetween` to return type (already has `lastPurchaseDate`, need interval calculation) |
-
-### No database changes needed
-- `medical_alerts` column already exists on both tables
-- `preferred_stylist_id` already exists on `phorest_clients`
-- `client_formula_history` table already exists
-- `phorest_transaction_items` already has the data for repurchase analysis
+| Modify | `src/hooks/dock/useDockAppointments.ts` — add `stylist_user_id` to interface + all mappings |
+| Modify | `src/components/dock/appointment/DockClientTab.tsx` — enable stylist diff warning, add formula clone button, add cross-sell section |
+| Modify | `src/components/dock/appointment/DockAppointmentDetail.tsx` — query active bowl ID, pass to Client tab |
 
