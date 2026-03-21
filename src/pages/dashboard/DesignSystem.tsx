@@ -234,7 +234,7 @@ const DesignSystem = () => {
   </CardHeader>
   <CardContent>
     <p>${cardContent}</p>
-  </CardContent>${cardHasButton ? `
+  </CardContent>${cardHasButton ? }`
   <CardFooter>
     <Button>Action</Button>
   </CardFooter>` : ""}

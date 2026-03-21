@@ -37,7 +37,7 @@ export function ClosedDayWarningDialog({
 
   const description = isOutsideHours
     ? `${locationName} is outside regular operating hours on ${formattedDate}. Are you sure you want to schedule at this time?`
-    : `${locationName} is closed on ${formattedDate}${reason && reason !== 'Regular hours' ? ` (${reason})` : ''}. Are you sure you want to schedule on this day?`;
+    : `${locationName} is closed on ${formattedDate}${reason && reason !== 'Regular hours' ? }` (${reason})` : ''}. Are you sure you want to schedule on this day?`;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

@@ -22,7 +22,7 @@ export function PublicOrgProvider({
   const orgPath = (path?: string) => {
     const base = `/org/${orgSlug}`;
     if (!path) return base;
-    return `${base}${path.startsWith('/') ? path : `/${path}`}`;
+    return `${base}${path.startsWith('/') ? path : }`/${path}`}`;
   };
 
   return (

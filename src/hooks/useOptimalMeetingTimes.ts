@@ -21,7 +21,7 @@ function timeToMinutes(t: string): number {
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0`;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`;
 }
 
 // Score slots by preference: late morning > early afternoon > morning > late afternoon

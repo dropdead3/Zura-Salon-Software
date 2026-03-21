@@ -140,8 +140,8 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                   const SocialTag = isPreview ? 'span' : 'a';
                   const socialProps = isPreview ? {} : {
                     href: isInstagram 
-                      ? `https://instagram.com/${handle.replace('@', '` 
-                      : `https://tiktok.com/@${handle.replace('@', '`,
+                      ? `https://instagram.com/${handle.replace('@', '}` 
+                      : `https://tiktok.com/@${handle.replace('@', '}`,
                     target: "_blank",
                     rel: "noopener noreferrer",
                   };
