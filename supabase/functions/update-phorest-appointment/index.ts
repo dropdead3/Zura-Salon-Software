@@ -14,6 +14,13 @@ const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/ap
 // Change to false and redeploy when ready to enable Phorest writes.
 const PHOREST_WRITES_GLOBALLY_DISABLED = true;
 
+interface ServicePayload {
+  name: string;
+  price?: number | null;
+  duration_minutes?: number | null;
+  category?: string | null;
+}
+
 interface UpdateRequest {
   appointment_id: string;
   status?: 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
@@ -21,6 +28,7 @@ interface UpdateRequest {
   rebooked_at_checkout?: boolean;
   tip_amount?: number;
   rebook_declined_reason?: string | null;
+  services?: ServicePayload[];
 }
 
 // Map our local status names to Phorest status names
