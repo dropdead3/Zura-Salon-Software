@@ -125,12 +125,16 @@ function AppointmentGroup({
   appointments,
   accentColor,
   onTap,
+  onComplete,
+  onViewClient,
 }: {
   label: string;
   count: number;
   appointments: DockAppointment[];
   accentColor: 'violet' | 'blue' | 'slate';
   onTap: (appointment: DockAppointment) => void;
+  onComplete?: (appointment: DockAppointment) => void;
+  onViewClient?: (appointment: DockAppointment) => void;
 }) {
   const dotColor = {
     violet: 'bg-violet-500',
@@ -151,7 +155,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-2">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onViewClient={onViewClient} />
         ))}
       </div>
     </div>
