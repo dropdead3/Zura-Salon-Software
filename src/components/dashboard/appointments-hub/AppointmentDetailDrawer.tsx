@@ -687,6 +687,24 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <EditServicesDialog
+          open={editServicesOpen}
+          onOpenChange={setEditServicesOpen}
+          currentServices={appointment.service_name ? appointment.service_name.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+          locationId={appointment.location_id}
+          isSaving={updateServicesMutation.isPending}
+          onSave={(newServices: ServiceEntry[]) => {
+            updateServicesMutation.mutate({
+              appointmentId: appointment.id,
+              organizationId: orgId || '',
+              services: newServices,
+              previousServiceName: appointment.service_name,
+            }, {
+              onSuccess: () => setEditServicesOpen(false),
+            });
+          }}
+        />
     </PremiumFloatingPanel>
   );
 }
