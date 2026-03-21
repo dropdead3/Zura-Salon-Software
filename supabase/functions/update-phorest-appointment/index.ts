@@ -14,6 +14,13 @@ const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/ap
 // Change to false and redeploy when ready to enable Phorest writes.
 const PHOREST_WRITES_GLOBALLY_DISABLED = true;
 
+interface ServicePayload {
+  name: string;
+  price?: number | null;
+  duration_minutes?: number | null;
+  category?: string | null;
+}
+
 interface UpdateRequest {
   appointment_id: string;
   status?: 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
@@ -21,6 +28,7 @@ interface UpdateRequest {
   rebooked_at_checkout?: boolean;
   tip_amount?: number;
   rebook_declined_reason?: string | null;
+  services?: ServicePayload[];
 }
 
 // Map our local status names to Phorest status names
@@ -117,14 +125,14 @@ serve(async (req) => {
     }
 
     const updateData: UpdateRequest = await req.json();
-    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason } = updateData;
+    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason, services } = updateData;
 
     if (!appointment_id) {
       throw new Error("Missing required field: appointment_id");
     }
 
-    if (!status && notes === undefined && rebooked_at_checkout === undefined && tip_amount === undefined) {
-      throw new Error("At least one of status, notes, rebooked_at_checkout, or tip_amount must be provided");
+    if (!status && notes === undefined && rebooked_at_checkout === undefined && tip_amount === undefined && !services) {
+      throw new Error("At least one of status, notes, rebooked_at_checkout, tip_amount, or services must be provided");
     }
 
     console.log(`Updating appointment ${appointment_id}: status=${status}, notes=${notes ? 'yes' : 'no'}`);
@@ -258,6 +266,16 @@ serve(async (req) => {
 
     if (rebook_declined_reason !== undefined) {
       localUpdate.rebook_declined_reason = rebook_declined_reason;
+    }
+
+    // Services update: rewrite service_name, total_price, duration_minutes
+    if (services && services.length > 0) {
+      localUpdate.service_name = services.map(s => s.name).join(', ');
+      const totalPrice = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
+      const totalDuration = services.reduce((sum, s) => sum + (s.duration_minutes ?? 0), 0);
+      if (totalPrice > 0) localUpdate.total_price = totalPrice;
+      if (totalDuration > 0) localUpdate.duration_minutes = totalDuration;
+      localUpdate.service_category = services[0]?.category || null;
     }
 
     console.log(`Updating ${targetTable}.${matchColumn} = ${appointment_id}`, JSON.stringify(localUpdate));

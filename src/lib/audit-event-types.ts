@@ -26,6 +26,9 @@ export const AUDIT_EVENTS = {
   MIX_SESSION_COMPLETED: 'mix_session_completed',
   BOWL_REWEIGHED: 'bowl_reweighed',
   WASTE_RECORDED: 'waste_recorded',
+
+  // Service edits
+  SERVICES_UPDATED: 'services_updated',
 } as const;
 
 export type AuditEventType = (typeof AUDIT_EVENTS)[keyof typeof AUDIT_EVENTS];

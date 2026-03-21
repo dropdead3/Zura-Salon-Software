@@ -89,6 +89,9 @@ import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { formatDisplayName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
+import { Pencil } from 'lucide-react';
 
 
 // ─── Scheduled Coverage sub-component ───────────────────────────
@@ -376,6 +379,8 @@ export function AppointmentDetailSheet({
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
   const { data: serviceLookup } = useServiceLookup();
   const { assignmentMap, upsertAssignments } = useServiceAssignments(appointment?.id || null);
+  const updateServicesMutation = useUpdateAppointmentServices();
+  const [editServicesOpen, setEditServicesOpen] = useState(false);
 
   // Location name + org lookup
   const { data: locationData } = useQuery({
@@ -1149,7 +1154,17 @@ export function AppointmentDetailSheet({
 
                     {/* Services Breakdown -- with per-service price (#5) */}
                     <motion.div variants={staggerItem} className="space-y-2">
-                      <h4 className={tokens.heading.subsection}>Services</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className={tokens.heading.subsection}>Services</h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => setEditServicesOpen(true)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
                       <div className="space-y-1.5">
                         {services.map((svc, i) => {
                           const override = assignmentMap.get(svc.name);
@@ -2142,6 +2157,26 @@ export function AppointmentDetailSheet({
           )}
         </DialogContent>
       </Dialog>
+
+      {appointment && (
+        <EditServicesDialog
+          open={editServicesOpen}
+          onOpenChange={setEditServicesOpen}
+          currentServices={services.map(s => s.name)}
+          locationId={appointment.location_id}
+          isSaving={updateServicesMutation.isPending}
+          onSave={(newServices: ServiceEntry[]) => {
+            updateServicesMutation.mutate({
+              appointmentId: appointment.id,
+              organizationId: resolvedOrgId || '',
+              services: newServices,
+              previousServiceName: appointment.service_name,
+            }, {
+              onSuccess: () => setEditServicesOpen(false),
+            });
+          }}
+        />
+      )}
     </>
   );
 }
