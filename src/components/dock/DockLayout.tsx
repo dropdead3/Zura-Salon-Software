@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
 import { DockBottomNav } from './DockBottomNav';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
 import { DockDemoBadge } from './DockDemoBadge';
@@ -18,6 +19,7 @@ import { DockSettingsTab } from './settings/DockSettingsTab';
 import { DockAppointmentDetail } from './appointment/DockAppointmentDetail';
 import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
+import { useDockLockGesture } from '@/hooks/dock/useDockLockGesture';
 
 interface DockLayoutProps {
   activeTab: DockTab;
@@ -45,6 +47,11 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   const completeAppointment = useDockCompleteAppointment();
   const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
 
+  const { containerRef, progress: lockProgress } = useDockLockGesture({
+    onLock: onLogout,
+    enabled: !showingDetail,
+  });
+
   const handleComplete = (appointment: DockAppointment) => {
     completeAppointment.mutate({
       appointmentId: appointment.id,
@@ -55,7 +62,8 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const dockContent = (
     <div
-      className="flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
+      ref={containerRef}
+      className="relative flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
       data-dock-device={device}
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
     >
@@ -100,6 +108,19 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
         clientId={clientViewAppt?.client_id}
         clientName={clientViewAppt?.client_name}
       />
+
+      {/* Lock gesture affordance — bottom-right corner */}
+      {!showingDetail && (
+        <div
+          className="absolute bottom-24 right-4 pointer-events-none transition-all duration-150"
+          style={{
+            opacity: lockProgress > 0 ? 0.15 + lockProgress * 0.6 : 0.12,
+            transform: `scale(${0.8 + lockProgress * 0.4})`,
+          }}
+        >
+          <Lock className="w-4 h-4 text-[hsl(var(--platform-foreground))]" />
+        </div>
+      )}
     </div>
   );
 
