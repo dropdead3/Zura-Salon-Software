@@ -97,10 +97,26 @@ function hasDiff(diff: FormulaDiff): boolean {
   return diff.added.length > 0 || diff.removed.length > 0 || diff.changed.length > 0 || diff.ratioShift !== null;
 }
 
+// Mock client data for demo IDs
+const DEMO_CLIENT_MOCK = {
+  id: 'demo-client-mock',
+  name: 'Jessica Miller',
+  email: 'jessica.miller@example.com',
+  phone: '(480) 555-0142',
+  notes: 'Prefers low-ammonia formulas. Sensitive scalp — patch test recommended.',
+  medical_alerts: 'PPD sensitivity — always patch test 48h prior',
+  preferred_stylist_id: null,
+  created_at: '2024-01-15T00:00:00Z',
+  _source: 'phorest' as const,
+};
+
+const isDemoClientId = (id: string | null | undefined) => id?.startsWith('demo-') ?? false;
+
 export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTabProps) {
   const queryClient = useQueryClient();
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
+  const usingDemoClient = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
 
   // ─── Editable medical alerts state ───
   const [editingAlert, setEditingAlert] = useState(false);
@@ -111,8 +127,13 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
 
   // Client profile (includes medical_alerts + preferred_stylist_id)
   const { data: client, isLoading: loadingClient } = useQuery({
-    queryKey: ['dock-client-profile', phorestClientId, clientId],
+    queryKey: ['dock-client-profile', phorestClientId, clientId, usingDemoClient],
     queryFn: async () => {
+      // Demo client IDs don't exist in DB — return mock
+      if (usingDemoClient) {
+        return { ...DEMO_CLIENT_MOCK, name: appointment.client_name || DEMO_CLIENT_MOCK.name };
+      }
+
       if (phorestClientId) {
         const { data } = await supabase
           .from('phorest_clients')

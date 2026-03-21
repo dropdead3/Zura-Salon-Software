@@ -22,11 +22,15 @@ export interface DockMixSession {
 }
 
 export function useDockMixSessions(appointmentId: string | null) {
-  const { isDemoMode } = useDockDemo();
+  const { isDemoMode, usesRealData } = useDockDemo();
   return useQuery({
-    queryKey: ['dock-mix-sessions', appointmentId, isDemoMode],
+    queryKey: ['dock-mix-sessions', appointmentId, isDemoMode, usesRealData],
     queryFn: async (): Promise<DockMixSession[]> => {
-      if (isDemoMode) return DEMO_MIX_SESSIONS[appointmentId!] || [];
+      // Pure demo mode or demo IDs — use static data
+      if (isDemoMode && (!usesRealData || isDemoId(appointmentId))) {
+        return DEMO_MIX_SESSIONS[appointmentId!] || [];
+      }
+
       const { data, error } = await supabase
         .from('mix_sessions')
         .select('id, status, notes, started_at, completed_at, is_manual_override, unresolved_flag, unresolved_reason')
@@ -34,7 +38,13 @@ export function useDockMixSessions(appointmentId: string | null) {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return (data || []) as unknown as DockMixSession[];
+      const sessions = (data || []) as unknown as DockMixSession[];
+
+      // Org-specific demo with no real sessions — fallback to demo data
+      if (isDemoMode && sessions.length === 0) {
+        return DEMO_MIX_SESSIONS[appointmentId!] || [];
+      }
+      return sessions;
     },
     enabled: !!appointmentId,
     staleTime: 15_000,
