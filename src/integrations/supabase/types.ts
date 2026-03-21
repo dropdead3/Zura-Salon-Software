@@ -5027,6 +5027,7 @@ export type Database = {
           last_visit_date: string | null
           lead_source: string | null
           location_id: string | null
+          medical_alerts: string | null
           merged_at: string | null
           merged_by: string | null
           merged_into_client_id: string | null
@@ -5088,6 +5089,7 @@ export type Database = {
           last_visit_date?: string | null
           lead_source?: string | null
           location_id?: string | null
+          medical_alerts?: string | null
           merged_at?: string | null
           merged_by?: string | null
           merged_into_client_id?: string | null
@@ -5149,6 +5151,7 @@ export type Database = {
           last_visit_date?: string | null
           lead_source?: string | null
           location_id?: string | null
+          medical_alerts?: string | null
           merged_at?: string | null
           merged_by?: string | null
           merged_into_client_id?: string | null
@@ -12441,6 +12444,7 @@ export type Database = {
           last_visit: string | null
           lead_source: string | null
           location_id: string | null
+          medical_alerts: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -12493,6 +12497,7 @@ export type Database = {
           last_visit?: string | null
           lead_source?: string | null
           location_id?: string | null
+          medical_alerts?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -12545,6 +12550,7 @@ export type Database = {
           last_visit?: string | null
           lead_source?: string | null
           location_id?: string | null
+          medical_alerts?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
