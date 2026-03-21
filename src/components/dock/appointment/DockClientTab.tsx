@@ -122,11 +122,11 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       if (!appointment.service_name) return [];
       // Get top 3 retail products bought by clients with same service, excluding this client's frequent buys
       const { data } = await supabase
-        .from('phorest_transaction_items')
+        .from('phorest_transaction_items' as any)
         .select('item_name, phorest_client_id')
         .eq('item_type', 'product')
         .eq('organization_id', staff.organizationId)
-        .limit(500);
+        .limit(500) as { data: { item_name: string | null; phorest_client_id: string | null }[] | null };
 
       if (!data || data.length === 0) return [];
 
