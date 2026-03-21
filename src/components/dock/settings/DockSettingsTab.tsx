@@ -69,7 +69,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   }
 
   return (
-    <div className="flex flex-col h-full px-6 py-8">
+    <div className="relative flex flex-col h-full px-6 py-8">
       {/* Staff profile card */}
       <div className="flex items-center gap-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="w-12 h-12 rounded-full bg-violet-600/20 flex items-center justify-center">
