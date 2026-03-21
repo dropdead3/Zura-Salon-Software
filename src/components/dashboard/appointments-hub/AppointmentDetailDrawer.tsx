@@ -78,6 +78,8 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [editServicesOpen, setEditServicesOpen] = useState(false);
+  const updateServicesMutation = useUpdateAppointmentServices();
 
   // Transaction breakdown hook
   const phorestClientIdForTx = appointment?.phorest_client_id || appointment?.client_id;
