@@ -659,7 +659,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     <CardDescription>
                       {effectiveLocationId
                         ? `Managing catalog for ${activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'selected location'}`
-                        : 'Select a location to manage tracking, depletion methods, and pricing.')}
+                        : 'Select a location to manage tracking, depletion methods, and pricing.'}
                     </CardDescription>
                   </>
                 )}
@@ -1004,7 +1004,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       )}
                                     </TableCell>
                                     <TableCell className="hidden lg:table-cell font-sans text-xs text-muted-foreground">
-                                      {p.container_size || '—')}
+                                      {p.container_size || '—'}
                                     </TableCell>
                                   </TableRow>
                                 );
@@ -1526,7 +1526,7 @@ function InventoryTableRow({
         {row.category && <Badge variant="outline" className="capitalize">{row.category}</Badge>}
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        <span className="text-xs font-sans text-muted-foreground">{row.container_size || '—')}</span>
+        <span className="text-xs font-sans text-muted-foreground">{row.container_size || '—'}</span>
       </TableCell>
       <TableCell>
         {editingStock ? (

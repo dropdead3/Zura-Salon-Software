@@ -459,7 +459,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     <p>
                       {step === 'avatar'
                         ? 'Set the focal point for your circular avatar used across the platform (sidebar, team directory, chat).'
-                        : 'Set the focal point for your 3:4 website card. This may need different positioning than the circle avatar.')}
+                        : 'Set the focal point for your 3:4 website card. This may need different positioning than the circle avatar.'}
                     </p>
                   </div>
                 </div>

@@ -603,7 +603,7 @@ export default function OnboardingTracker() {
                       {/* Name and roles */}
                       <div className="flex-1 text-left min-w-0">
                         <p className="font-sans font-medium text-sm truncate">
-                          {item.profile.full_name || 'Unnamed')}
+                          {item.profile.full_name || 'Unnamed'}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.roles.map(role => (
@@ -645,7 +645,7 @@ export default function OnboardingTracker() {
                               {getStatusIcon(item.businessCardStatus)}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>Business Card: {item.businessCardStatus || 'Not requested')}</TooltipContent>
+                          <TooltipContent>Business Card: {item.businessCardStatus || 'Not requested'}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger>
@@ -654,7 +654,7 @@ export default function OnboardingTracker() {
                               {getStatusIcon(item.headshotStatus)}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>Headshot: {item.headshotStatus || 'Not requested')}</TooltipContent>
+                          <TooltipContent>Headshot: {item.headshotStatus || 'Not requested'}</TooltipContent>
                         </Tooltip>
                       </div>
 

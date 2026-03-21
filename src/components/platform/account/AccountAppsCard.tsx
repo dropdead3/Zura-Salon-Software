@@ -68,7 +68,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {isBackroomEnabled
                     ? `${activeLocations} active ${activeLocations === 1 ? 'location' : 'locations'}`
-                    : '--')}
+                    : '--'}
                 </p>
               </div>
             </div>

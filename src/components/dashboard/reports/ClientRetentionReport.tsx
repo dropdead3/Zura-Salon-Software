@@ -238,7 +238,7 @@ export function ClientRetentionReport({
     if (isCLVReport && retentionData?.clvClients) {
       let csvContent = 'Client,Tier,Annual Value,Lifetime Value,Avg Ticket,Visits/Yr,Total Spend,Last Visit\n';
       retentionData.clvClients.forEach(c => {
-        csvContent += `"${c.name}","${CLV_TIERS[c.tier].label}",${Math.round(c.annualValue)},${Math.round(c.lifetimeValue)},${Math.round(c.avgTicket)},${c.annualFrequency.toFixed(1)},${Math.round(c.totalSpend)},"${c.lastVisit || '')}"\n`;
+        csvContent += `"${c.name}","${CLV_TIERS[c.tier].label}",${Math.round(c.annualValue)},${Math.round(c.lifetimeValue)},${Math.round(c.avgTicket)},${c.annualFrequency.toFixed(1)},${Math.round(c.totalSpend)},"${c.lastVisit || ''}"\n`;
       });
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);

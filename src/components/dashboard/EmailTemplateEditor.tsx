@@ -640,14 +640,14 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     switch (block.type) {
       case 'heading':
         // Heading does NOT use borderRadius in canvas, so don't apply it here
-        return `<h1 style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '24px')}; line-height: 1.3;">${formatContent(block.content)}</h1>`;
+        return `<h1 style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '24px'}; line-height: 1.3;">${formatContent(block.content)}</h1>`;
       case 'text':
-        return `<p style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '16px')}; line-height: 1.6;">${formatContent(block.content)}</p>`;
+        return `<p style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '16px'}; line-height: 1.6;">${formatContent(block.content)}</p>`;
       case 'image': {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-        return `<div style="text-align: ${block.styles.textAlign || 'center')}; padding: ${computePadding(block.styles)};">
-          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image')}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : '')} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : ''}" />
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)};">
+          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : '')} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
       }
       case 'button': {
@@ -664,17 +664,17 @@ function blocksToHtml(blocks: EmailBlock[]): string {
             </span>`
           : '';
         const buttonStyles = isSecondary
-          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8')}; color: ${block.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6')}; color: ${block.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
-        return `<div style="text-align: ${block.styles.textAlign || 'center')}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
-          <a href="${block.linkUrl || '{{dashboard_url}}')}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
+          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
         </div>`;
       }
       case 'link': {
         const linkFontSize = Math.round(16 * ((block.styles.linkSize || 100) / 100));
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6; font-size: ${linkFontSize}px;">
-          <a href="${block.linkUrl || '#')}" style="color: ${block.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
+          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
         </p>`;
       }
       case 'divider': {
@@ -682,7 +682,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const style = block.styles.dividerStyle || 'solid';
         const width = block.styles.dividerWidth || 100;
         const color = block.styles.textColor || '#e5e7eb';
-        return `<div style="text-align: center; padding: ${block.styles.padding || '16px 0')};">
+        return `<div style="text-align: center; padding: ${block.styles.padding || '16px 0'};">
           <hr style="border: none; border-top: ${thickness}px ${style} ${color}; margin: 0 auto; width: ${width}%;" />
         </div>`;
       }
@@ -717,7 +717,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
         }).join('');
         
-        return `<div style="text-align: ${block.styles.textAlign || 'center')}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
           ${socialIcons}
         </div>`;
       }
@@ -776,7 +776,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           }
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${computePadding(block.styles)}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px')}; font-size: 14px; line-height: 1.4;">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${computePadding(block.styles)}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'}; font-size: 14px; line-height: 1.4;">
           ${logoHtml}
           ${socialHtml}
           <p style="margin: 0; font-size: 11px; opacity: 0.8; text-align: ${textAlign};">${footerConfig.copyrightText}</p>
@@ -819,7 +819,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const centerContent = (logoPosition === 'center' ? logoHtml : '') + (navLinksPosition === 'center' ? navHtml : '');
         const rightContent = (logoPosition === 'right' ? logoHtml : '') + (navLinksPosition === 'right' ? navHtml : '');
         
-        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0')}; border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'}; border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
           <tr>
             <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${leftContent}</td>
             <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${centerContent}</td>
@@ -907,9 +907,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           
           switch (columnBlock.type) {
             case 'heading':
-              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px')}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
+              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
             case 'text':
-              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px')}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
+              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
             case 'button': {
               const isSecondary = columnBlock.styles.buttonVariant === 'secondary';
               const sizeScale = (columnBlock.styles.buttonSize || 100) / 100;
@@ -918,24 +918,24 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const baseFontSize = Math.round(14 * sizeScale);
               const shapeRadius = columnBlock.styles.buttonShape === 'pill' ? '9999px' : columnBlock.styles.buttonShape === 'rectangle' ? '0px' : '6px';
               const buttonStyles = isSecondary
-                ? `display: inline-block; background-color: transparent; color: ${columnBlock.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${columnBlock.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000')}; color: ${columnBlock.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
-              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center')}; padding: ${blockPadding};">
-                <a href="${columnBlock.linkUrl || '#')}" style="${buttonStyles}">${columnBlock.content}</a>
+                ? `display: inline-block; background-color: transparent; color: ${columnBlock.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${columnBlock.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000'}; color: ${columnBlock.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
+                <a href="${columnBlock.linkUrl || '#'}" style="${buttonStyles}">${columnBlock.content}</a>
               </div>`;
             }
             case 'image': {
               const imgUrl = columnBlock.imageUrl || '';
               if (!imgUrl) return '';
               const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center')}; padding: ${blockPadding};">
-                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image')}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? }`border-radius: ${columnBlock.styles.borderRadius};` : ''}" />
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
+                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image'}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? }`border-radius: ${columnBlock.styles.borderRadius};` : ''}" />
               </div>`;
             }
             case 'link': {
               const linkFontSize = Math.round(16 * ((columnBlock.styles.linkSize || 100) / 100));
-              return `<p style="margin: 0; padding: ${blockPadding}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.6;">
-                <a href="${columnBlock.linkUrl || '#')}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
+              return `<p style="margin: 0; padding: ${blockPadding}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.6;">
+                <a href="${columnBlock.linkUrl || '#'}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
               </p>`;
             }
             case 'divider': {
@@ -943,7 +943,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const divStyle = columnBlock.styles.dividerStyle || 'solid';
               const divWidth = columnBlock.styles.dividerWidth || 100;
               const divColor = columnBlock.styles.textColor || '#e5e7eb';
-              return `<div style="text-align: center; padding: ${columnBlock.styles.padding || '8px 0')};">
+              return `<div style="text-align: center; padding: ${columnBlock.styles.padding || '8px 0'};">
                 <hr style="border: none; border-top: ${thickness}px ${divStyle} ${divColor}; margin: 0 auto; width: ${divWidth}%;" />
               </div>`;
             }
@@ -974,7 +974,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
                 }
                 return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
               }).join('');
-              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center')}; padding: ${blockPadding}; font-size: 14px; line-height: 1;">
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding}; font-size: 14px; line-height: 1;">
                 ${socialIcons}
               </div>`;
             }
@@ -988,7 +988,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           const cellContent = columnBlocks.map(generateColumnBlockHtml).join('');
           
           return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? }`0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
-            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>')}
+            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
           </td>`;
         }).join('');
         
@@ -996,7 +996,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const legacyColumnCells = (!useBlocks ? config.columns : []).map((columnItems, colIndex) => {
           const cellContent = columnItems.map(item => {
             if (item.type === 'text') {
-              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px')}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center')}; line-height: 1.5;">${item.content}</p>`;
+              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px'}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center')}; line-height: 1.5;">${item.content}</p>`;
             } else if (item.type === 'button') {
               const isSecondary = item.styles.buttonVariant === 'secondary';
               const sizeScale = (item.styles.buttonSize || 100) / 100;
@@ -1005,26 +1005,26 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const baseFontSize = Math.round(14 * sizeScale);
               const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
               const buttonStyles = isSecondary
-                ? `display: inline-block; background-color: transparent; color: ${item.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${item.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000')}; color: ${item.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
-              return `<div style="text-align: ${item.styles.textAlign || 'center')}; padding: 8px 0;">
-                <a href="${item.linkUrl || '#')}" style="${buttonStyles}">${item.content}</a>
+                ? `display: inline-block; background-color: transparent; color: ${item.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${item.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000'}; color: ${item.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+              return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
+                <a href="${item.linkUrl || '#'}" style="${buttonStyles}">${item.content}</a>
               </div>`;
             } else if (item.type === 'image') {
               const imgUrl = item.imageUrl || '';
               if (!imgUrl) return '';
               const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-              return `<div style="text-align: ${item.styles.textAlign || 'center')}; padding: 8px 0;">
-                <img src="${absoluteImgUrl}" alt="${item.content || 'Image')}" style="max-width: 100%; height: auto;" />
+              return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
+                <img src="${absoluteImgUrl}" alt="${item.content || 'Image'}" style="max-width: 100%; height: auto;" />
               </div>`;
             } else if (item.type === 'spacer') {
-              return `<div style="height: ${item.styles.height || '16px')};"></div>`;
+              return `<div style="height: ${item.styles.height || '16px'};"></div>`;
             }
             return '';
           }).join('');
           
           return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? }`0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
-            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>')}
+            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
           </td>`;
         }).join('');
         
@@ -3384,7 +3384,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <div className="flex-1 space-y-1.5">
                             <Label className="text-xs text-muted-foreground">Font Size</Label>
                             <Select
-                              value={selectedBlock.styles.fontSize || '16px')}
+                              value={selectedBlock.styles.fontSize || '16px'}
                               onValueChange={(v) => updateBlockStyles(selectedBlock.id, { fontSize: v })}
                             >
                               <SelectTrigger className="h-8 text-xs">
@@ -3468,7 +3468,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="space-y-2">
                           <Label className="text-xs">Link URL</Label>
                           <Input
-                            value={selectedBlock.linkUrl || '')}
+                            value={selectedBlock.linkUrl || ''}
                             onChange={(e) => updateBlock(selectedBlock.id, { linkUrl: e.target.value })}
                             placeholder="https://... or {{variable}}"
                             className="h-8 text-sm font-mono"
@@ -3480,7 +3480,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               {selectedBlock.styles.buttonVariant === 'secondary' ? 'Border/Text Color' : 'Button Color'}
                             </Label>
                             <ColorWheelPicker
-                              value={selectedBlock.styles.buttonColor || '#3b82f6')}
+                              value={selectedBlock.styles.buttonColor || '#3b82f6'}
                               colorType="primary"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                               themeColors={currentTheme.colors}
@@ -3490,7 +3490,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div className="flex items-center gap-2">
                               <Label className="text-xs text-muted-foreground">Text Color</Label>
                               <ColorWheelPicker
-                                value={selectedBlock.styles.buttonTextColor || '#ffffff')}
+                                value={selectedBlock.styles.buttonTextColor || '#ffffff'}
                                 colorType="white"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
                                 themeColors={currentTheme.colors}
@@ -3579,7 +3579,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="space-y-2">
                           <Label className="text-xs">Link URL</Label>
                           <Input
-                            value={selectedBlock.linkUrl || '')}
+                            value={selectedBlock.linkUrl || ''}
                             onChange={(e) => updateBlock(selectedBlock.id, { linkUrl: e.target.value })}
                             placeholder="https://... or {{variable}}"
                             className="h-8 text-sm font-mono"
@@ -3588,7 +3588,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex items-center gap-2">
                           <Label className="text-xs text-muted-foreground">Link Color</Label>
                           <ColorWheelPicker
-                            value={selectedBlock.styles.buttonColor || '#3b82f6')}
+                            value={selectedBlock.styles.buttonColor || '#3b82f6'}
                             colorType="primary"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             themeColors={currentTheme.colors}
@@ -3617,7 +3617,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <Label className="text-xs">Custom Image</Label>
                           <div className="flex gap-2">
                             <Input
-                              value={selectedBlock.imageUrl || '')}
+                              value={selectedBlock.imageUrl || ''}
                               onChange={(e) => updateBlock(selectedBlock.id, { imageUrl: e.target.value })}
                               placeholder="https://..."
                               className="h-8 text-sm flex-1"
@@ -3652,7 +3652,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="space-y-2">
                           <Label className="text-xs">Max Width</Label>
                           <Select
-                            value={selectedBlock.styles.width || 'auto')}
+                            value={selectedBlock.styles.width || 'auto'}
                             onValueChange={(v) => updateBlockStyles(selectedBlock.id, { width: v })}
                           >
                             <SelectTrigger className="h-8 text-xs">
@@ -3672,7 +3672,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       <div className="space-y-2">
                         <Label className="text-xs">Height</Label>
                         <Select
-                          value={selectedBlock.styles.height || '24px')}
+                          value={selectedBlock.styles.height || '24px'}
                           onValueChange={(v) => updateBlockStyles(selectedBlock.id, { height: v })}
                         >
                           <SelectTrigger className="h-8 text-xs">
@@ -3749,7 +3749,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex items-center gap-2">
                           <Label className="text-xs text-muted-foreground">Icon Color</Label>
                           <ColorWheelPicker
-                            value={selectedBlock.styles.buttonColor || '#1a1a1a')}
+                            value={selectedBlock.styles.buttonColor || '#1a1a1a'}
                             colorType="dark"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             themeColors={currentTheme.colors}
@@ -3959,7 +3959,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div className="flex items-center gap-3 pt-2">
                               <Label className="text-xs whitespace-nowrap">Icon Color</Label>
                               <ColorWheelPicker
-                                value={selectedBlock.styles.buttonColor || '#f5f0e8')}
+                                value={selectedBlock.styles.buttonColor || '#f5f0e8'}
                                 colorType="light"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                                 themeColors={currentTheme.colors}
@@ -4283,7 +4283,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               </div>
                               {config.showPhone && (
                                 <Input
-                                  value={config.phone || '')}
+                                  value={config.phone || ''}
                                   onChange={(e) => {
                                     updateBlock(selectedBlock.id, {
                                       signatureConfig: { ...config, phone: e.target.value }
@@ -4308,7 +4308,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               </div>
                               {config.showEmail && (
                                 <Input
-                                  value={config.email || '')}
+                                  value={config.email || ''}
                                   onChange={(e) => {
                                     updateBlock(selectedBlock.id, {
                                       signatureConfig: { ...config, email: e.target.value }
@@ -4743,7 +4743,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             className="h-7 text-xs"
                                           />
                                           <Input
-                                            value={colBlock.linkUrl || '')}
+                                            value={colBlock.linkUrl || ''}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { linkUrl: e.target.value })}
                                             placeholder="Button URL..."
                                             className="h-7 text-xs"
@@ -4784,7 +4784,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             className="h-7 text-xs"
                                           />
                                           <Input
-                                            value={colBlock.linkUrl || '')}
+                                            value={colBlock.linkUrl || ''}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { linkUrl: e.target.value })}
                                             placeholder="URL..."
                                             className="h-7 text-xs"
@@ -4795,13 +4795,13 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       {colBlock.type === 'image' && (
                                         <div className="space-y-2">
                                           <Input
-                                            value={colBlock.imageUrl || '')}
+                                            value={colBlock.imageUrl || ''}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { imageUrl: e.target.value })}
                                             placeholder="Image URL..."
                                             className="h-7 text-xs"
                                           />
                                           <Input
-                                            value={colBlock.content || '')}
+                                            value={colBlock.content || ''}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
                                             placeholder="Alt text..."
                                             className="h-7 text-xs"
@@ -4811,7 +4811,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       
                                       {colBlock.type === 'spacer' && (
                                         <Select
-                                          value={colBlock.styles.height || '16px')}
+                                          value={colBlock.styles.height || '16px'}
                                           onValueChange={(v) => updateColumnBlock(colIndex, blockIndex, { 
                                             styles: { ...colBlock.styles, height: v } 
                                           })}
@@ -4958,7 +4958,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex items-center gap-2">
                           <Label className="text-xs text-muted-foreground">Color</Label>
                           <ColorWheelPicker
-                            value={selectedBlock.styles.textColor || '#e5e7eb')}
+                            value={selectedBlock.styles.textColor || '#e5e7eb'}
                             colorType="accent"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
                             themeColors={currentTheme.colors}
@@ -5074,7 +5074,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Background</Label>
                             <ColorWheelPicker
-                              value={selectedBlock.styles.backgroundColor || 'transparent')}
+                              value={selectedBlock.styles.backgroundColor || 'transparent'}
                               colorType="light"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
                               themeColors={currentTheme.colors}
@@ -5083,7 +5083,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Text Color</Label>
                             <ColorWheelPicker
-                              value={selectedBlock.styles.textColor || '#000000')}
+                              value={selectedBlock.styles.textColor || '#000000'}
                               colorType="text"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
                               themeColors={currentTheme.colors}
@@ -5145,7 +5145,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <div className="flex items-center gap-2">
                                 <Label className="text-xs text-muted-foreground">Border Color</Label>
                                 <ColorWheelPicker
-                                  value={selectedBlock.styles.borderColor || '#e5e7eb')}
+                                  value={selectedBlock.styles.borderColor || '#e5e7eb'}
                                   colorType="accent"
                                   onChange={(v) => updateBlockStyles(selectedBlock.id, { borderColor: v })}
                                   themeColors={currentTheme.colors}
@@ -5382,7 +5382,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           textAlign: block.styles.textAlign,
                           padding: computePadding(block.styles),
                           border: (block.styles.borderWidth || 0) > 0 
-                            ? `${block.styles.borderWidth}px ${block.styles.borderStyle || 'solid')} ${block.styles.borderColor || '#e5e7eb'}`
+                            ? `${block.styles.borderWidth}px ${block.styles.borderStyle || 'solid'} ${block.styles.borderColor || '#e5e7eb'}`
                             : undefined,
                         }}
                       >
@@ -5403,7 +5403,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             {block.imageUrl ? (
                               <img 
                                 src={block.imageUrl} 
-                                alt={block.content || 'Email image')} 
+                                alt={block.content || 'Email image'} 
                                 style={{ maxWidth: '100%', borderRadius: block.styles.borderRadius }}
                               />
                             ) : (
@@ -5432,7 +5432,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     fontWeight: 'bold',
                                     fontSize: `${fontSize}px`,
                                     borderRadius: shapeRadius,
-                                    border: `2px solid ${block.styles.buttonColor || '#1a1a1a')}`,
+                                    border: `2px solid ${block.styles.buttonColor || '#1a1a1a'}`,
                                   }}
                                 >
                                   {block.content}
@@ -5485,7 +5485,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div style={{ textAlign: 'center', padding: '8px 0' }}>
                               <hr style={{ 
                                 border: 'none', 
-                                borderTop: `${thickness}px ${style} ${block.styles.textColor || '#e5e7eb')}`,
+                                borderTop: `${thickness}px ${style} ${block.styles.textColor || '#e5e7eb'}`,
                                 margin: '0 auto',
                                 width: `${width}%`
                               }} />
@@ -5785,14 +5785,14 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             )}
                                             {colBlock.type === 'image' && colBlock.imageUrl && (
                                               <div style={{ textAlign: colBlock.styles.textAlign || 'center' }}>
-                                                <img src={colBlock.imageUrl} alt={colBlock.content || 'Image')} className="max-w-full h-auto" />
+                                                <img src={colBlock.imageUrl} alt={colBlock.content || 'Image'} className="max-w-full h-auto" />
                                               </div>
                                             )}
                                             {colBlock.type === 'divider' && (
                                               <div style={{ textAlign: 'center', padding: '4px 0' }}>
                                                 <hr style={{ 
                                                   border: 'none', 
-                                                  borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid')} ${colBlock.styles.textColor || '#e5e7eb')}`,
+                                                  borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid'} ${colBlock.styles.textColor || '#e5e7eb')}`,
                                                   margin: '0 auto',
                                                   width: `${colBlock.styles.dividerWidth || 100}%`
                                                 }} />

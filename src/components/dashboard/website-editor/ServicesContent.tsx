@@ -594,7 +594,7 @@ export function ServicesContent() {
                                   <div className="space-y-2">
                                     <Label>Description</Label>
                                     <Textarea 
-                                      value={editingService.item.description || '')}
+                                      value={editingService.item.description || ''}
                                       onChange={(e) => setEditingService(prev => 
                                         prev ? { ...prev, item: { ...prev.item, description: e.target.value } } : null
                                       )}
@@ -612,7 +612,7 @@ export function ServicesContent() {
                                       Marketing copy shown on the public website. If empty, the operational description above will be used.
                                     </p>
                                     <Textarea 
-                                      value={editingService.item.websiteDescription || '')}
+                                      value={editingService.item.websiteDescription || ''}
                                       onChange={(e) => setEditingService(prev => 
                                         prev ? { ...prev, item: { ...prev.item, websiteDescription: e.target.value } } : null
                                       )}
@@ -702,7 +702,7 @@ export function ServicesContent() {
                                           <Label>Restriction Reason</Label>
                                           <Textarea 
                                             placeholder="e.g., Extensions require 7-day custom order"
-                                            value={(editingService.item as any).restrictionReason || '')}
+                                            value={(editingService.item as any).restrictionReason || ''}
                                             onChange={(e) => setEditingService(prev => 
                                               prev ? { ...prev, item: { ...prev.item, restrictionReason: e.target.value } } : null
                                             )}

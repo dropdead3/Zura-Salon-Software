@@ -220,8 +220,8 @@ export function AlertsExceptionsSection() {
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Threshold: {rule.threshold_value}{rule.threshold_unit}
-                        {rule.creates_exception && ' · Creates exception')}
-                        {rule.creates_task && ' · Creates task')}
+                        {rule.creates_exception && ' · Creates exception'}
+                        {rule.creates_task && ' · Creates task'}
                         {rule.notify_roles.length > 0 && ` · Notifies: ${rule.notify_roles.join(', ')}`}
                       </p>
                     </div>

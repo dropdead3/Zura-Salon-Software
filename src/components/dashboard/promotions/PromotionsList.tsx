@@ -157,7 +157,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
                           ? `${promo.discount_value}%`
                           : promo.promotion_type === 'fixed_discount'
                           ? formatCurrency(promo.discount_value)
-                          : '-')}
+                          : '-'}
                       </TableCell>
                       <TableCell>
                         {promo.promo_code ? (

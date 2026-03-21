@@ -79,7 +79,7 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
                 min="0"
                 className="pl-7 rounded-lg"
                 placeholder="0.00"
-                value={prices[loc.id] || '')}
+                value={prices[loc.id] || ''}
                 onChange={e => setPrices(prev => ({ ...prev, [loc.id]: e.target.value }))}
                 autoCapitalize="off"
               />

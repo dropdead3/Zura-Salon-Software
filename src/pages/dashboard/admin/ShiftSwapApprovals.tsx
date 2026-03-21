@@ -281,7 +281,7 @@ export default function ShiftSwapApprovals() {
               <DialogDescription>
                 {actionType === 'approve'
                   ? 'This will notify both parties and update their schedules.'
-                  : 'This will notify both parties that the swap was not approved.')}
+                  : 'This will notify both parties that the swap was not approved.'}
               </DialogDescription>
             </DialogHeader>
 

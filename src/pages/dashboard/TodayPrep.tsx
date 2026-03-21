@@ -73,7 +73,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-display text-base tracking-wide text-foreground truncate">
-                  {appointment.clientName || 'Walk-in')}
+                  {appointment.clientName || 'Walk-in'}
                 </h3>
                 {appointment.isNewClient && (
                   <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
@@ -90,7 +90,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                 {appointment.clvTier && <TierBadge tier={appointment.clvTier} />}
               </div>
               <p className="text-sm text-muted-foreground font-sans mt-0.5">
-                {appointment.serviceName || appointment.serviceCategory || 'Service')}
+                {appointment.serviceName || appointment.serviceCategory || 'Service'}
                 {appointment.totalPrice != null && ` · ${formatCurrency(appointment.totalPrice)}`}
               </p>
             </div>
@@ -159,7 +159,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                   <p>{n.note}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {n.authorName} · {format(parseISO(n.createdAt), 'MMM d')}
-                    {n.isPrivate && ' · Private')}
+                    {n.isPrivate && ' · Private'}
                   </p>
                 </div>
               ))}

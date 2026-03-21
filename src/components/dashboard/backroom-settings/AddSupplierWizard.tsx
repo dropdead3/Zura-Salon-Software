@@ -514,7 +514,7 @@ function StepAssignProducts({
 
       <p className={cn(tokens.body.muted, 'text-xs')}>
         {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
-        {assignMode === 'brand' && ' • Check a brand to assign all its products')}
+        {assignMode === 'brand' && ' • Check a brand to assign all its products'}
       </p>
 
       {assignMode === 'product' && (
@@ -632,7 +632,7 @@ function StepReview({
           <p className={tokens.body.default}>
             {selectedCount > 0
               ? `${selectedCount} product${selectedCount !== 1 ? 's' : ''} will be assigned`
-              : 'No products assigned yet')}
+              : 'No products assigned yet'}
           </p>
           {selectedCount === 0 && (
             <p className={cn(tokens.body.muted, 'text-xs')}>

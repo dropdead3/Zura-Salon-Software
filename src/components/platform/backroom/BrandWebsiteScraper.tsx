@@ -322,7 +322,7 @@ export function BrandWebsiteScraper({
                     </PlatformBadge>
                   </TableCell>
                   <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                    {p.product_line || '—')}
+                    {p.product_line || '—'}
                   </TableCell>
                   <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
                     {p.sizes?.join(', ') || '—'}

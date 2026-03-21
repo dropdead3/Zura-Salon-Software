@@ -149,7 +149,7 @@ export function AdjustmentsStep({
                     </span>
                     <Input
                       type="number"
-                      value={empAdjustments.bonus || '')}
+                      value={empAdjustments.bonus || ''}
                       onChange={(e) =>
                         updateAdjustment(emp.employee_id, 'bonus', Number(e.target.value) || 0)
                       }
@@ -167,7 +167,7 @@ export function AdjustmentsStep({
                     </span>
                     <Input
                       type="number"
-                      value={empAdjustments.tips || '')}
+                      value={empAdjustments.tips || ''}
                       onChange={(e) =>
                         updateAdjustment(emp.employee_id, 'tips', Number(e.target.value) || 0)
                       }
@@ -185,7 +185,7 @@ export function AdjustmentsStep({
                     </span>
                     <Input
                       type="number"
-                      value={empAdjustments.deductions || '')}
+                      value={empAdjustments.deductions || ''}
                       onChange={(e) =>
                         updateAdjustment(emp.employee_id, 'deductions', Number(e.target.value) || 0)
                       }

@@ -108,7 +108,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                     <div className="space-y-2">
                       <Label>Tone Override</Label>
                       <Select
-                        value={state.tone_override || '')}
+                        value={state.tone_override || ''}
                         onValueChange={v => updateField(role.value, 'tone_override', v || null)}
                       >
                         <SelectTrigger><SelectValue placeholder="Use org default" /></SelectTrigger>
@@ -121,7 +121,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                     <div className="space-y-2">
                       <Label>Custom Instructions</Label>
                       <Textarea
-                        value={state.custom_instructions || '')}
+                        value={state.custom_instructions || ''}
                         onChange={e => updateField(role.value, 'custom_instructions', e.target.value)}
                         placeholder={
                           role.value === 'stylist'
@@ -137,7 +137,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                     <div className="space-y-2">
                       <Label>Data Boundaries</Label>
                       <Textarea
-                        value={state.data_boundaries || '')}
+                        value={state.data_boundaries || ''}
                         onChange={e => updateField(role.value, 'data_boundaries', e.target.value)}
                         placeholder="Never share organizational financials or other team members' performance data"
                         rows={2}
@@ -148,7 +148,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                     <div className="space-y-2">
                       <Label>CTA Style</Label>
                       <Textarea
-                        value={state.suggested_cta_style || '')}
+                        value={state.suggested_cta_style || ''}
                         onChange={e => updateField(role.value, 'suggested_cta_style', e.target.value)}
                         placeholder="End with a challenge or goal"
                         rows={2}

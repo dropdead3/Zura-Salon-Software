@@ -380,7 +380,7 @@ export default function AllNotifications() {
             {announcement.link_url && (
               <a href={announcement.link_url} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size={tokens.button.card}>
-                  {announcement.link_label || 'View Link')}
+                  {announcement.link_label || 'View Link'}
                   <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
               </a>

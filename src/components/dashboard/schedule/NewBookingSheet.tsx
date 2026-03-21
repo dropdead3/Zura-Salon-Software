@@ -270,10 +270,10 @@ export function NewBookingSheet({
       <div className="p-5 pb-4 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase">New Booking</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {step === 'client' && 'Select or search for a client')}
-          {step === 'service' && 'Choose services for this appointment')}
-          {step === 'datetime' && 'Pick a stylist, date, and time')}
-          {step === 'confirm' && 'Review and confirm the booking')}
+          {step === 'client' && 'Select or search for a client'}
+          {step === 'service' && 'Choose services for this appointment'}
+          {step === 'datetime' && 'Pick a stylist, date, and time'}
+          {step === 'confirm' && 'Review and confirm the booking'}
         </p>
         
         {/* Step Indicators */}
@@ -347,7 +347,7 @@ export function NewBookingSheet({
                       <div>
                         <div className="font-medium">{client.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {client.phone || client.email || 'No contact info')}
+                          {client.phone || client.email || 'No contact info'}
                         </div>
                       </div>
                     </div>

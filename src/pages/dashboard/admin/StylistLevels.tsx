@@ -625,7 +625,7 @@ export default function StylistLevels() {
                   {levels.map((level, idx) => (
                     <li key={level.id}>
                       <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
-                      {level.description || 'No description')}
+                      {level.description || 'No description'}
                     </li>
                   ))}
                 </ul>

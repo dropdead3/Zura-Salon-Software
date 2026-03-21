@@ -168,12 +168,12 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={editingEntry.title || '')} onChange={e => setEditingEntry({ ...editingEntry, title: e.target.value })} placeholder="Cancellation Policy" />
+                <Input value={editingEntry.title || ''} onChange={e => setEditingEntry({ ...editingEntry, title: e.target.value })} placeholder="Cancellation Policy" />
               </div>
 
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={editingEntry.category || 'custom')} onValueChange={v => setEditingEntry({ ...editingEntry, category: v as ZuraKnowledgeEntry['category'] })}>
+                <Select value={editingEntry.category || 'custom'} onValueChange={v => setEditingEntry({ ...editingEntry, category: v as ZuraKnowledgeEntry['category'] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
@@ -187,7 +187,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
                   <span className="text-xs text-muted-foreground">{(editingEntry.content || '').length}/2000</span>
                 </div>
                 <Textarea
-                  value={editingEntry.content || '')}
+                  value={editingEntry.content || ''}
                   onChange={e => setEditingEntry({ ...editingEntry, content: e.target.value.slice(0, 2000) })}
                   placeholder="Clients must cancel 24 hours before their appointment..."
                   rows={5}

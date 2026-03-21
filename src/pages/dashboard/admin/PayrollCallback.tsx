@@ -65,7 +65,7 @@ export default function PayrollCallback() {
               <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
               <h2 className="text-xl font-medium mb-2">Connection Failed</h2>
               <p className="text-muted-foreground mb-4">
-                {errorDescription || 'An error occurred while connecting your payroll provider.')}
+                {errorDescription || 'An error occurred while connecting your payroll provider.'}
               </p>
               <p className="text-sm text-muted-foreground mb-6">
                 Error: {error}

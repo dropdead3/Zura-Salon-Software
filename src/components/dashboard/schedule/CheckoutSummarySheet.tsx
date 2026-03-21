@@ -272,7 +272,7 @@ export function CheckoutSummarySheet({
     y += 6;
 
     // Client and stylist
-    doc.text(`Client: ${appointment.client_name || 'Walk-in')}`, margin, y);
+    doc.text(`Client: ${appointment.client_name || 'Walk-in'}`, margin, y);
     y += 4;
     doc.text(`Stylist: ${stylistName}`, margin, y);
     y += 6;
@@ -421,7 +421,7 @@ export function CheckoutSummarySheet({
             <h3 className="text-sm font-medium text-muted-foreground">Client</h3>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <p className="font-medium text-lg">
-                {appointment.client_name || 'Walk-in')}
+                {appointment.client_name || 'Walk-in'}
               </p>
               {appointment.client_phone && (
                 <div className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export function CheckoutSummarySheet({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service</span>
                 <span className="font-medium text-right max-w-[60%]">
-                  {appointment.service_name || 'Service')}
+                  {appointment.service_name || 'Service'}
                 </span>
               </div>
               <div className="flex justify-between">

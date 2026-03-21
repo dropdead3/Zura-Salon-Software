@@ -524,7 +524,7 @@ function StepScalePairing({
             <p className={tokens.body.muted}>
               {isBle
                 ? 'Scan for nearby BLE scales and pair.'
-                : 'Enter the scale identifier shown in your iPad app.')}
+                : 'Enter the scale identifier shown in your iPad app.'}
             </p>
           </div>
           <ScaleConnectionStatus state={isBle ? bleState : (state.pairingCode ? 'connected' : 'disconnected')} />

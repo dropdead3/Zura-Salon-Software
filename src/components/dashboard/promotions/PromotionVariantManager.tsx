@@ -114,7 +114,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                     name="discount_type"
                     control={control}
                     render={({ field }) => (
-                      <Select value={field.value || 'percentage')} onValueChange={field.onChange}>
+                      <Select value={field.value || 'percentage'} onValueChange={field.onChange}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>

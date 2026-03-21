@@ -484,7 +484,7 @@ export function BackroomEntitlementsTab() {
                             )}
                           </TableCell>
                           <TableCell className="font-sans text-xs text-slate-500 capitalize">
-                            {org.subscription_tier || '—')}
+                            {org.subscription_tier || '—'}
                           </TableCell>
                           <TableCell className="font-sans text-xs">
                             {(() => {
@@ -539,7 +539,7 @@ export function BackroomEntitlementsTab() {
                           <TableCell className="font-sans text-xs text-slate-500">
                             {org.flag_created_at
                               ? new Date(org.flag_created_at).toLocaleDateString()
-                              : '—')}
+                              : '—'}
                           </TableCell>
                           <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                             <Switch

@@ -165,12 +165,12 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                                     <span className="text-muted-foreground">
                                       {formatTime(apt.start_time)}
                                     </span>
-                                    <span className="font-medium truncate">{apt.service_name || 'Service')}</span>
+                                    <span className="font-medium truncate">{apt.service_name || 'Service'}</span>
                                   </div>
                                   <div className="flex items-center gap-3 shrink-0">
                                     <span className="text-muted-foreground flex items-center gap-1">
                                       <User className="w-3 h-3" />
-                                      {apt.client_name || 'Walk-in')}
+                                      {apt.client_name || 'Walk-in'}
                                     </span>
                                     <span className="font-display tabular-nums">
                                       {formatCurrencyWhole(Number(apt.total_price) || 0)}

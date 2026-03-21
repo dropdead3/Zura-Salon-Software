@@ -121,7 +121,7 @@ export default function RenterPaymentMethods() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium capitalize">
-                          {method.card_brand || 'Card')} •••• {method.card_last4}
+                          {method.card_brand || 'Card'} •••• {method.card_last4}
                         </p>
                         {method.is_default && (
                           <Badge variant="secondary" className="flex items-center gap-1">

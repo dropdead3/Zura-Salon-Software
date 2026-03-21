@@ -81,7 +81,7 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
           <RoleIcon className="h-3.5 w-3.5 text-primary shrink-0" />
         </div>
         <p className="text-xs text-muted-foreground">
-          {roleLabels[member.role] || 'Leadership')}
+          {roleLabels[member.role] || 'Leadership'}
           {hasPresenceData && ` • ${isOnline ? 'Online' : 'Offline'}`}
         </p>
       </div>

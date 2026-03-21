@@ -249,7 +249,7 @@ export function RequestAssistantPanel({
             >
               {selectedAssistant
                 ? formatDisplayName(selectedAssistant.full_name, selectedAssistant.display_name)
-                : 'Any available assistant')}
+                : 'Any available assistant'}
               <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>

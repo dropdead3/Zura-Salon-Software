@@ -162,7 +162,7 @@ export default function ScheduleNewMeeting() {
               <CardDescription>
                 {isCoachMode
                   ? `Schedule a meeting with ${staffName}. This will be auto-confirmed.`
-                  : 'Select a coach and time that works for you.')}
+                  : 'Select a coach and time that works for you.'}
               </CardDescription>
             </CardHeader>
             <CardContent>

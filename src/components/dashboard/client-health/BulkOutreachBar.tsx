@@ -41,7 +41,7 @@ export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelectio
   };
 
   const shareContent = selectedClients.slice(0, 10).map(c =>
-    `• ${c.name} — last visit ${c.last_visit || 'unknown')}, ${formatCurrencyWhole(c.total_spend)} total`
+    `• ${c.name} — last visit ${c.last_visit || 'unknown'}, ${formatCurrencyWhole(c.total_spend)} total`
   ).join('\n') + (selectedClients.length > 10 ? `\n...and ${selectedClients.length - 10} more` : '');
 
   return (

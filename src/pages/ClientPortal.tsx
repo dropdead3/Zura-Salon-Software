@@ -66,7 +66,7 @@ export default function ClientPortal() {
         {/* Tier Progress */}
         {loyalty && tiers.length > 0 ? (
           <TierProgressCard
-            currentTier={loyalty.tier || 'bronze')}
+            currentTier={loyalty.tier || 'bronze'}
             currentPoints={loyalty.current_points}
             lifetimePoints={loyalty.lifetime_points}
             tiers={tiers}

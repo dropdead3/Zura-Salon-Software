@@ -155,7 +155,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
           <CardContent className="py-12 text-center text-muted-foreground">
             {searchQuery || statusFilter !== 'all' 
               ? 'No renters match your filters'
-              : 'No booth renters yet. Add your first renter to get started.')}
+              : 'No booth renters yet. Add your first renter to get started.'}
           </CardContent>
         </Card>
       ) : (
@@ -174,7 +174,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-medium text-foreground">
-                        {renter.display_name || renter.full_name || 'Unknown')}
+                        {renter.display_name || renter.full_name || 'Unknown'}
                       </h3>
                       <Badge variant="outline" className={statusColors[renter.status]}>
                         {renter.status}
@@ -236,7 +236,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
           open={contractDialogOpen}
           onOpenChange={setContractDialogOpen}
           renterId={selectedRenter.id}
-          renterName={selectedRenter.display_name || selectedRenter.full_name || 'Renter')}
+          renterName={selectedRenter.display_name || selectedRenter.full_name || 'Renter'}
           organizationId={organizationId}
         />
       )}

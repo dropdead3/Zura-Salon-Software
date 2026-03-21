@@ -142,7 +142,7 @@ export function ClientInsightsCard({
         {/* Location Filter */}
         {showLocationFilter && clientLocations.length > 1 && onLocationChange && (
           <div className="mt-3">
-            <Select value={locationId || 'all')} onValueChange={onLocationChange}>
+            <Select value={locationId || 'all'} onValueChange={onLocationChange}>
               <SelectTrigger className="w-full h-8 text-xs">
                 <MapPin className="w-3 h-3 mr-1.5 text-muted-foreground" />
                 <SelectValue placeholder="All Locations" />
@@ -230,7 +230,7 @@ export function ClientInsightsCard({
           <p className="text-sm text-muted-foreground text-center py-4">
             {locationId && locationId !== 'all' 
               ? 'No clients at this location.' 
-              : 'No client data available yet. Data syncs from Phorest automatically.')}
+              : 'No client data available yet. Data syncs from Phorest automatically.'}
           </p>
         )}
       </CardContent>

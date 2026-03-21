@@ -119,7 +119,7 @@ export function KioskErrorScreen() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {error || 'We encountered an issue. Please try again or ask for assistance.')}
+          {error || 'We encountered an issue. Please try again or ask for assistance.'}
         </motion.p>
 
         {/* Actions - glass style */}

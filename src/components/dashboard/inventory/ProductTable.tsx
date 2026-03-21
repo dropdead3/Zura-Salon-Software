@@ -161,7 +161,7 @@ export function ProductTable({ products, isLoading, onEdit }: ProductTableProps)
                 <TableCell className="text-right font-medium">
                   {product.retail_price 
                     ? formatCurrency(product.retail_price) 
-                    : '—')}
+                    : '—'}
                 </TableCell>
                 <TableCell className="text-right">
                   <span className={cn(

@@ -188,7 +188,7 @@ export function ProductUsageFrequencyTable({ locationId }: Props) {
             <p className={tokens.empty.description}>
               {search || tierFilter !== 'all'
                 ? 'Try adjusting your filters.'
-                : 'No backroom-tracked products exist yet.')}
+                : 'No backroom-tracked products exist yet.'}
             </p>
           </div>
         ) : (

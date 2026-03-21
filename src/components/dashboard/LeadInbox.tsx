@@ -256,7 +256,7 @@ export function LeadInbox() {
                     ? 'All leads have been assigned'
                     : activeTab === 'my_leads'
                       ? 'You have no leads assigned to you'
-                      : 'Try adjusting your filters')}
+                      : 'Try adjusting your filters'}
                 </p>
               </div>
             ) : (

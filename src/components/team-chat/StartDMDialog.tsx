@@ -138,7 +138,7 @@ export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
               <div className="text-center py-8 text-muted-foreground text-sm">
                 {search || locationFilter !== 'all' || roleFilter !== 'all' 
                   ? 'No members found' 
-                  : 'Type to search team members')}
+                  : 'Type to search team members'}
               </div>
             ) : (
               <div className="space-y-1">

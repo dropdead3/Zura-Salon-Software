@@ -68,9 +68,9 @@ function TrendIndicator({ values }: { values: [number, number, number] }) {
   return (
     <div className="flex items-center gap-1 text-xs">
       <span className="text-muted-foreground tabular-nums">{Math.round(prev2)}</span>
-      <span className="text-muted-foreground">{'\u2192')}</span>
+      <span className="text-muted-foreground">{'\u2192'}</span>
       <span className="text-muted-foreground tabular-nums">{Math.round(prev1)}</span>
-      <span className="text-muted-foreground">{'\u2192')}</span>
+      <span className="text-muted-foreground">{'\u2192'}</span>
       <span className={cn('font-medium tabular-nums', improving ? 'text-emerald-600 dark:text-emerald-400' : declining ? 'text-red-500 dark:text-red-400' : 'text-foreground'}>
         {Math.round(current)}
       </span>

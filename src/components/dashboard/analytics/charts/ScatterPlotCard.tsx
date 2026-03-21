@@ -126,13 +126,13 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
                 <XAxis 
                   dataKey="x" 
                   type="number"
-                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                   label={{ value: labelA, position: 'bottom', offset: 0 }}
                 />
                 <YAxis 
                   dataKey="y"
                   type="number"
-                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                   label={{ value: labelB, angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 

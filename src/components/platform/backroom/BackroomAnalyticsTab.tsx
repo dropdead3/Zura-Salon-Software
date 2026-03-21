@@ -338,7 +338,7 @@ export function BackroomAnalyticsTab() {
                     <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">
                       {signal.lastActiveDate
                         ? new Date(signal.lastActiveDate).toLocaleDateString()
-                        : 'Never')}
+                        : 'Never'}
                     </TableCell>
                     <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] max-w-[200px] truncate">
                       {signal.reason}

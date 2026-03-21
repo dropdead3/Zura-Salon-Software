@@ -718,7 +718,7 @@ function SuppliersStep({
 
           <p className={cn(tokens.body.muted, 'text-xs')}>
             {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
-            {assignMode === 'brand' && ' • Check a brand to assign all its products')}
+            {assignMode === 'brand' && ' • Check a brand to assign all its products'}
           </p>
 
           {assignMode === 'product' && (
@@ -915,7 +915,7 @@ function ServicesStep({
                 {s.category && <p className="text-xs text-muted-foreground">{s.category}</p>}
               </div>
               {isSelected && trackedProducts.length > 0 && (
-                <Select value={productMap[s.id] || '')} onValueChange={(v) => onProductMap(s.id, v)}>
+                <Select value={productMap[s.id] || ''} onValueChange={(v) => onProductMap(s.id, v)}>
                   <SelectTrigger className="w-40 h-8 text-xs">
                     <SelectValue placeholder="Map product" />
                   </SelectTrigger>

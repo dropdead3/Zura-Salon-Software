@@ -85,7 +85,7 @@ export function RedemptionQueue() {
           <div className="space-y-3">
             <Textarea
               placeholder="Add notes (optional)..."
-              value={notes[redemption.id] || '')}
+              value={notes[redemption.id] || ''}
               onChange={(e) =>
                 setNotes((prev) => ({ ...prev, [redemption.id]: e.target.value }))
               }

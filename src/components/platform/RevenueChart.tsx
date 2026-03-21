@@ -138,7 +138,7 @@ export function PlanBreakdownChart({ data }: PlanBreakdownChartProps) {
         <Tooltip content={<PlanTooltip />} />
         <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={tierColors[entry.tier] || '#8b5cf6')} />
+            <Cell key={`cell-${index}`} fill={tierColors[entry.tier] || '#8b5cf6'} />
           ))}
         </Bar>
       </BarChart>

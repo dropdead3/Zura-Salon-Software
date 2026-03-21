@@ -340,7 +340,7 @@ export default function ReengagementHub() {
                           <div>
                             <p className="font-medium">{client.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {client.email || 'No email')}
+                              {client.email || 'No email'}
                             </p>
                           </div>
                           <div className="text-right">

@@ -149,7 +149,7 @@ function SchedulingCopilotPanelComponent({
                 <p className="text-sm">
                   {data?.suggestions.length === 0
                     ? 'No optimal slots found for this configuration'
-                    : 'All suggestions dismissed')}
+                    : 'All suggestions dismissed'}
                 </p>
                 {dismissedIds.size > 0 && (
                   <Button

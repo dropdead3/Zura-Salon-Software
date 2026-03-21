@@ -167,7 +167,7 @@ export function UserRolesTableView({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.email || '—')}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{user.email || '—'}</TableCell>
                     {locations.length > 1 && (
                       <TableCell className="text-sm text-muted-foreground max-w-[180px] truncate">{getUserLocationNames(user)}</TableCell>
                     )}

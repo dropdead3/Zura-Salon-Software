@@ -195,7 +195,7 @@ export default function LocationsManager() {
                       </p>
                       <p className="flex items-center gap-2">
                         <Clock className="w-3 h-3 shrink-0" />
-                        {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set')}
+                        {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}
                       </p>
                     </div>
                   </div>

@@ -106,7 +106,7 @@ export function useCreatePromotionalService() {
         .insert({
           organization_id: input.organizationId,
           name: input.promotionalName,
-          description: `Promotional: ${originalService.description || '')}`,
+          description: `Promotional: ${originalService.description || ''}`,
           category: originalService.category,
           duration_minutes: originalService.duration_minutes,
           price: input.promotionalPrice,

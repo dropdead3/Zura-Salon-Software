@@ -294,7 +294,7 @@ export default function StaffLogin() {
                   }}
                   placeholder="you@yoursalon.com"
                   required
-                  className={`h-12 bg-card border-border pr-10 ${emailError ? 'border-destructive' : '')} ${invitation && !isLogin ? 'border-green-500' : ''}`}
+                  className={`h-12 bg-card border-border pr-10 ${emailError ? 'border-destructive' : ''} ${invitation && !isLogin ? 'border-green-500' : ''}`}
                 />
                 {!isLogin && checkingInvitation && debouncedEmail.includes('@') && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">

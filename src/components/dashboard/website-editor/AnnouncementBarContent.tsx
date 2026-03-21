@@ -127,13 +127,13 @@ export function AnnouncementBarContent() {
               <input
                 type="color"
                 id="custom_color_picker"
-                value={formData.bg_color || '#ebe6df')}
+                value={formData.bg_color || '#ebe6df'}
                 onChange={(e) => handleChange('bg_color', e.target.value)}
                 className="w-8 h-8 rounded border border-border cursor-pointer shrink-0"
               />
               <Input
                 id="custom_color"
-                value={formData.bg_color || '')}
+                value={formData.bg_color || ''}
                 onChange={(e) => handleChange('bg_color', e.target.value)}
                 placeholder="e.g. hsl(40, 20%, 92%)"
                 className="min-w-0"

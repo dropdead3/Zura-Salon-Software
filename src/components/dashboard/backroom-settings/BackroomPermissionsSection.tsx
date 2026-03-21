@@ -148,7 +148,7 @@ export function BackroomPermissionsSection() {
                         </td>
                         {ROLES.map(role => (
                           <td key={role.key} className="text-center py-2.5">
-                            <Checkbox checked={(matrix[role.key] || []).includes(perm.key)} onCheckedChange={() => toggle(role.key, perm.key)} disabled={role.key === 'owner')} />
+                            <Checkbox checked={(matrix[role.key] || []).includes(perm.key)} onCheckedChange={() => toggle(role.key, perm.key)} disabled={role.key === 'owner'} />
                           </td>
                         ))}
                       </tr>

@@ -55,7 +55,7 @@ export function ProductCostDrilldownDialog({
               <DialogDescription className={tokens.body.muted}>
                 {product.supplierName
                   ? `${product.supplierName} · `
-                  : '')}
+                  : ''}
                 90-day cost history
               </DialogDescription>
             </div>

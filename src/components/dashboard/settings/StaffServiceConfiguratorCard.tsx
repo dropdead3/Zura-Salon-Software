@@ -211,7 +211,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                           {(s.display_name || s.full_name || '?').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{s.display_name || s.full_name || 'Unnamed')}</span>
+                      <span>{s.display_name || s.full_name || 'Unnamed'}</span>
                     </div>
                   </SelectItem>
                 ))
@@ -286,7 +286,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                   <AccordionItem key={cat.id} value={cat.id} className="border-b-0">
                     <div className="flex items-center gap-2">
                       <Checkbox
-                        checked={checkState === 'all')}
+                        checked={checkState === 'all'}
                         {...(checkState === 'some' ? { 'data-state': 'indeterminate' as any } : {})}
                         onCheckedChange={() => handleToggleCategory(cat.category_name)}
                         className="ml-1"

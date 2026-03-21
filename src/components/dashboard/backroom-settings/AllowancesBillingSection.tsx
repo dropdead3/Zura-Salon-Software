@@ -29,7 +29,7 @@ function buildSummary(policy: any, buckets: any[]): string {
     return 'Parts & Labor — actual product cost passed through';
   }
   if (!buckets.length) {
-    return `${policy.included_allowance_qty}${policy.allowance_unit || 'g')} included, overage at $${policy.overage_rate}/${policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit || 'g'}`;
+    return `${policy.included_allowance_qty}${policy.allowance_unit || 'g'} included, overage at $${policy.overage_rate}/${policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit || 'g'}`;
   }
   return buckets.map(b =>
     `${b.bucket_name}: ${b.included_quantity}${b.included_unit} included, overage $${b.overage_rate}/${b.overage_rate_type === 'flat' ? 'flat' : b.included_unit}`
@@ -222,7 +222,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                 <p className="text-xs text-muted-foreground">
                   {billingSettings?.enable_supply_cost_recovery
                     ? 'Recovery rate and recouped costs are visible in the Command Center.'
-                    : 'Enable to track how much product cost is recovered through client billing.')}
+                    : 'Enable to track how much product cost is recovered through client billing.'}
                 </p>
               </div>
             </div>
@@ -267,7 +267,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                         <div className="flex items-center gap-2">
                           {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                           <p className={cn(tokens.body.emphasis, 'text-foreground')}>{getServiceName(policy.service_id)}</p>
-                          <Badge variant={policy.is_active ? 'default' : 'secondary')}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
+                          <Badge variant={policy.is_active ? 'default' : 'secondary'}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
                           {isPartsAndLabor && (
                             <Badge variant="default" className="text-xs">Parts & Labor</Badge>
                           )}
@@ -290,7 +290,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                               <p className="text-xs text-muted-foreground">
                                 {isPartsAndLabor
                                   ? 'Actual product cost is passed through to the client.'
-                                  : 'Fixed allowance with overage billing.')}
+                                  : 'Fixed allowance with overage billing.'}
                               </p>
                             </div>
                           </div>
@@ -348,8 +348,8 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                     <p className={cn(tokens.body.emphasis, 'text-foreground')}>{bucket.bucket_name}</p>
                                     <p className="text-sm text-muted-foreground">
                                       {bucket.included_quantity}{bucket.included_unit} included · ${bucket.overage_rate}/{bucket.overage_rate_type}
-                                      {bucket.is_taxable && ' · Taxable')}
-                                      {bucket.requires_manager_override && ' · Manager override required')}
+                                      {bucket.is_taxable && ' · Taxable'}
+                                      {bucket.requires_manager_override && ' · Manager override required'}
                                     </p>
                                   </div>
                                   <Button variant="ghost" size="icon" onClick={() => deleteBucket.mutate(bucket.id)} className="h-8 w-8">

@@ -564,10 +564,10 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                         return (
                           <div key={uid} className="text-xs font-sans text-muted-foreground pl-6">
                             <span className="text-foreground">{member?.display_name || member?.full_name}</span>
-                            {' has ')}
+                            {' has '}
                             {userConflicts.map((c, i) => (
                               <span key={i}>
-                                {i > 0 && ', ')}
+                                {i > 0 && ', '}
                                 {c.type === 'appointment' ? 'a client' : 'a meeting'}
                                 {' '}
                                 {formatTime12(c.startTime)}–{formatTime12(c.endTime)}

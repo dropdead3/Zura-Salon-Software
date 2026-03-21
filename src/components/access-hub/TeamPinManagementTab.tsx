@@ -290,7 +290,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                     </TableCell>
                     <TableCell className="text-sm">{entry.changer_name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {entry.reason || '—')}
+                      {entry.reason || '—'}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -327,7 +327,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 ? 'This will remove the PIN and disable quick login for this user.'
                 : selectedMember?.has_pin 
                   ? 'Enter a new 4-digit PIN to replace the existing one.'
-                  : 'Create a 4-digit PIN to enable quick login for this user.')}
+                  : 'Create a 4-digit PIN to enable quick login for this user.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -396,7 +396,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                   ? 'Clear PIN' 
                   : selectedMember?.has_pin 
                     ? 'Update PIN' 
-                    : 'Set PIN')}
+                    : 'Set PIN'}
             </Button>
           </DialogFooter>
         </DialogContent>

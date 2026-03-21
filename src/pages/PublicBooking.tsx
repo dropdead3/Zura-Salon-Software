@@ -319,7 +319,7 @@ export default function PublicBooking() {
               </div>
             </div>
 
-            <Button onClick={() => window.location.href = '/')} className="w-full">
+            <Button onClick={() => window.location.href = '/'} className="w-full">
               Return to Homepage
             </Button>
           </Card>

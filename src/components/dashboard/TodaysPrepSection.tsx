@@ -169,7 +169,7 @@ export function TodaysPrepSection() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <span className="font-sans text-sm truncate">
-                          {appt.clientName || 'Walk-in')}
+                          {appt.clientName || 'Walk-in'}
                         </span>
                         {appt.isNewClient && (
                           <UserPlus className="w-3.5 h-3.5 text-primary shrink-0" />

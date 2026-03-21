@@ -112,7 +112,7 @@ export function RandomAssignModal({
                         onCheckedChange={() => toggleExclude(s.user_id)}
                       />
                       <span className={tokens.body.default}>
-                        {s.display_name || s.full_name || 'Unknown')}
+                        {s.display_name || s.full_name || 'Unknown'}
                       </span>
                     </label>
                   ))}

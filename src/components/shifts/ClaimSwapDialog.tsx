@@ -95,7 +95,7 @@ export function ClaimSwapDialog({ open, onOpenChange, swap }: ClaimSwapDialogPro
           <DialogDescription>
             {isSwapType
               ? 'Offer one of your shifts in exchange'
-              : 'Confirm you want to take this shift')}
+              : 'Confirm you want to take this shift'}
           </DialogDescription>
         </DialogHeader>
 

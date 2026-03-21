@@ -132,7 +132,7 @@ export function ExpiryAlertCard({ products, filterContext }: ExpiryAlertCardProp
                   {candidates.length} product{candidates.length !== 1 ? 's' : ''}
                   {expiredCount > 0 && <span className="text-red-500"> · {expiredCount} expired</span>}
                   {criticalCount > 0 && <span className="text-orange-500"> · {criticalCount} critical</span>}
-                  {' · ')}<BlurredAmount>{formatCurrency(totalAtRisk)}</BlurredAmount> at risk
+                  {' · '}<BlurredAmount>{formatCurrency(totalAtRisk)}</BlurredAmount> at risk
                 </CardDescription>
               </div>
             </div>

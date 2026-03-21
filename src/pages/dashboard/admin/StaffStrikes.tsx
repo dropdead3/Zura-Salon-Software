@@ -307,7 +307,7 @@ export default function StaffStrikes() {
               <p className="text-sm">
                 {statusFilter === 'active'
                   ? 'No active strikes at this time.'
-                  : 'No strikes match your filters.')}
+                  : 'No strikes match your filters.'}
               </p>
             </CardContent>
           </Card>

@@ -141,7 +141,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
                     selectedTemplate === template.role_name
                       ? 'border-primary ring-2 ring-primary/20'
                       : 'border-transparent hover:border-muted-foreground/20',
-                    `bg-gradient-to-br ${TEMPLATE_COLORS[template.role_name] || 'from-muted/50 to-muted/30')}`
+                    `bg-gradient-to-br ${TEMPLATE_COLORS[template.role_name] || 'from-muted/50 to-muted/30'}`
                   )}
                   onClick={() => handleSelectTemplate(template.role_name)}
                 >

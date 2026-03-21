@@ -254,7 +254,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                   <button onClick={() => setActiveCategory(null)} className="flex items-center gap-1 hover:text-primary transition-colors">
                     <ChevronLeft className="w-4 h-4" />{activeCategory}
                   </button>
-                ) : 'Pick a Service Category')}
+                ) : 'Pick a Service Category'}
               </Label>
               {selectedServiceIds.length > 0 && (
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{selectedServiceIds.length} selected • {totalDuration} min</span>
@@ -344,7 +344,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center pt-1">
-                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price')}` : 'Estimated price, not including overages'}
+                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price'}` : 'Estimated price, not including overages'}
               </p>
             </div>
           )}

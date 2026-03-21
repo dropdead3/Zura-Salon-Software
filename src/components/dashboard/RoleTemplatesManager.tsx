@@ -292,7 +292,7 @@ export function RoleTemplatesManager() {
             <DialogDescription>
               {editDialog.template
                 ? 'Update the template settings and permissions.'
-                : 'Define a new template with pre-configured permissions.')}
+                : 'Define a new template with pre-configured permissions.'}
             </DialogDescription>
           </DialogHeader>
 

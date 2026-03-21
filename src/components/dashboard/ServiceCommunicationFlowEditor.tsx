@@ -205,7 +205,7 @@ export function ServiceCommunicationFlowEditor({
                           Email Template
                         </Label>
                         <Select
-                          value={flows[trigger.value].emailTemplateId || 'none')}
+                          value={flows[trigger.value].emailTemplateId || 'none'}
                           onValueChange={(val) => handleEmailChange(trigger.value, val)}
                           disabled={!flows[trigger.value].isActive}
                         >
@@ -232,7 +232,7 @@ export function ServiceCommunicationFlowEditor({
                           SMS Template
                         </Label>
                         <Select
-                          value={flows[trigger.value].smsTemplateId || 'none')}
+                          value={flows[trigger.value].smsTemplateId || 'none'}
                           onValueChange={(val) => handleSmsChange(trigger.value, val)}
                           disabled={!flows[trigger.value].isActive}
                         >

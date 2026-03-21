@@ -130,7 +130,7 @@ export function CapacityUsageCard({
               {capacity.locationCostPerMonth > 0 && (
                 <span>Locations: {formatCurrency(capacity.locationCostPerMonth)}</span>
               )}
-              {capacity.locationCostPerMonth > 0 && capacity.userCostPerMonth > 0 && ' • ')}
+              {capacity.locationCostPerMonth > 0 && capacity.userCostPerMonth > 0 && ' • '}
               {capacity.userCostPerMonth > 0 && (
                 <span>Users: {formatCurrency(capacity.userCostPerMonth)}</span>
               )}

@@ -87,7 +87,7 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
               {(t.after_url || t.before_url) ? (
                 <img
                   src={t.after_url || t.before_url!}
-                  alt={t.service_name || 'Transformation')}
+                  alt={t.service_name || 'Transformation'}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />

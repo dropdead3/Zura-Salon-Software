@@ -59,7 +59,7 @@ export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', un
           'font-display text-4xl tracking-tight transition-colors',
           value ? 'text-[hsl(var(--platform-foreground))]' : 'text-[hsl(var(--platform-foreground-muted)/0.3)]'
         )}>
-          {value || '0')}
+          {value || '0'}
         </span>
         <span className="text-lg text-[hsl(var(--platform-foreground-muted)/0.5)]">{unit}</span>
       </div>

@@ -283,7 +283,7 @@ export default function BusinessCardRequests() {
               <p className="text-muted-foreground font-sans">
                 {requests.length === 0 
                   ? 'No business card requests yet' 
-                  : 'No requests match your filters')}
+                  : 'No requests match your filters'}
               </p>
             </div>
           ) : (

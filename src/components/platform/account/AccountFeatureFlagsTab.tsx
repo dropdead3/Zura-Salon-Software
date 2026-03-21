@@ -212,7 +212,7 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
               <div className="col-span-3">
                 {flag.has_override ? (
                   <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-300 border-amber-500/30">
-                    {flag.override_reason || 'Custom override')}
+                    {flag.override_reason || 'Custom override'}
                   </Badge>
                 ) : (
                   <span className="text-sm text-slate-500">—</span>

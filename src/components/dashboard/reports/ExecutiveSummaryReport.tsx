@@ -139,7 +139,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
     if (isMultiLocation && locationData?.length) {
       csv += '\nLocation,Revenue,Appointments,Avg Ticket\n';
       locationData.forEach(loc => {
-        csv += `"${loc.locationName || 'Unknown')}",${loc.revenue ?? 0},${loc.appointments ?? 0},${loc.appointments ? ((loc.revenue ?? 0) / loc.appointments).toFixed(2) : 0}\n`;
+        csv += `"${loc.locationName || 'Unknown'}",${loc.revenue ?? 0},${loc.appointments ?? 0},${loc.appointments ? ((loc.revenue ?? 0) / loc.appointments).toFixed(2) : 0}\n`;
       });
     }
 
@@ -227,7 +227,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
                     .sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))
                     .map((loc, i) => (
                       <TableRow key={i}>
-                        <TableCell>{loc.locationName || 'Unknown')}</TableCell>
+                        <TableCell>{loc.locationName || 'Unknown'}</TableCell>
                         <TableCell className="text-right tabular-nums">
                           <BlurredAmount>{formatCurrency(loc.revenue ?? 0)}</BlurredAmount>
                         </TableCell>

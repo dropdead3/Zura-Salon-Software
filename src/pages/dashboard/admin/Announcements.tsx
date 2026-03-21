@@ -600,7 +600,7 @@ function AnnouncementForm({
       <div className="space-y-2">
         <Label>Audience</Label>
         <Select 
-          value={locationId || 'all')} 
+          value={locationId || 'all'} 
           onValueChange={(v) => setLocationId(v === 'all' ? null : v)}
         >
           <SelectTrigger>

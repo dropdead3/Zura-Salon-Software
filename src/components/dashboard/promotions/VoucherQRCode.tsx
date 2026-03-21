@@ -244,7 +244,7 @@ export function BulkQRGenerator({ vouchers }: BulkQRGeneratorProps) {
       const qrData = JSON.stringify({ type: 'voucher', code: v.code, id: v.id });
       return `
         <div class="voucher-card">
-          <h3>${v.type || 'Gift Card')}</h3>
+          <h3>${v.type || 'Gift Card'}</h3>
           <div class="value">${formatCurrency(v.value)}</div>
           <div class="qr-placeholder" data-qr="${encodeURIComponent(qrData)}"></div>
           <div class="code">${v.code}</div>

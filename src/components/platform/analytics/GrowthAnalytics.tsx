@@ -287,12 +287,12 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
                     {org.name}
                   </p>
                   <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500'}>
-                    #{org.accountNumber} • {org.country || 'Unknown Location')}
+                    #{org.accountNumber} • {org.country || 'Unknown Location'}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className={cn('text-sm font-medium', isDark ? 'text-violet-400' : 'text-violet-600'}>
-                    {org.subscriptionTier || 'No Plan')}
+                    {org.subscriptionTier || 'No Plan'}
                   </p>
                   <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>
                     {formatDate(new Date(org.createdAt), 'MMM d, yyyy')}

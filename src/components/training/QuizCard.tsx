@@ -179,7 +179,7 @@ export function QuizCard({
         <p className="text-lg font-medium mb-4">{currentQuestion.question_text}</p>
 
         <RadioGroup
-          value={answers[currentQuestion.id] || '')}
+          value={answers[currentQuestion.id] || ''}
           onValueChange={handleAnswer}
           className="space-y-3"
         >

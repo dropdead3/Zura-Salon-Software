@@ -178,7 +178,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
                   <span className="text-2xl font-medium tabular-nums">
                     {analytics?.summary.avgCPL !== null 
                       ? formatCurrency(analytics.summary.avgCPL) 
-                      : '—')}
+                      : '—'}
                   </span>
                   <span className="text-xs text-muted-foreground">Avg Cost Per Lead</span>
                 </div>
@@ -200,7 +200,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
                   }`}>
                     {analytics?.summary.overallROAS !== null 
                       ? `${analytics.summary.overallROAS.toFixed(2)}x` 
-                      : '—')}
+                      : '—'}
                   </span>
                   <span className="text-xs text-muted-foreground">Overall ROAS</span>
                 </div>

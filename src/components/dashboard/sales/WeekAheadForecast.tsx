@@ -470,7 +470,7 @@ export function WeekAheadForecast() {
           {byCategory && (
             <CategoryBreakdownPanel
               data={byCategory}
-              mode={selectedStatCard || 'revenue')}
+              mode={selectedStatCard || 'revenue'}
               dayCount={7}
               isOpen={selectedStatCard !== null}
             />

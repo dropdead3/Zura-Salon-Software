@@ -241,7 +241,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                                 Cost per Lead
                               </TooltipContent>
                             </Tooltip>
-                          ) : '—')}
+                          ) : '—'}
                         </TableCell>
                         <TableCell className="text-right">
                           {campaign.roas !== null ? (
@@ -255,7 +255,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                                 </Badge>
                               )}
                             </div>
-                          ) : '—')}
+                          ) : '—'}
                         </TableCell>
                       </>
                     )}

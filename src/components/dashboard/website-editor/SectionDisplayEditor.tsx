@@ -89,7 +89,7 @@ export function SectionDisplayEditor<T extends object>({
               <div key={field.key} className="space-y-2">
                 <Label>{field.label}</Label>
                 <Input
-                  value={(value as string) || '')}
+                  value={(value as string) || ''}
                   onChange={(e) => updateField(field.key, e.target.value)}
                   placeholder={field.placeholder}
                 />
@@ -100,7 +100,7 @@ export function SectionDisplayEditor<T extends object>({
               <div key={field.key} className="space-y-2">
                 <Label>{field.label}</Label>
                 <Textarea
-                  value={(value as string) || '')}
+                  value={(value as string) || ''}
                   onChange={(e) => updateField(field.key, e.target.value)}
                   placeholder={field.placeholder}
                   rows={3}

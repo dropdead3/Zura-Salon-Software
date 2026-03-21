@@ -74,7 +74,7 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50">
           <DialogTitle className="font-display tracking-wide text-base">COMPARE DRAFTS</DialogTitle>
           <DialogDescription className="font-sans text-sm">
-            Side-by-side comparison for {draftA.client_name || 'No Client Selected')}. Fields that differ are highlighted.
+            Side-by-side comparison for {draftA.client_name || 'No Client Selected'}. Fields that differ are highlighted.
           </DialogDescription>
         </DialogHeader>
 
@@ -119,8 +119,8 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
             {/* Date & Time */}
             <DiffCell
               label="Date & Time"
-              valueA={`${draftA.appointment_date || '—')} ${draftA.start_time || '')}`}
-              valueB={`${draftB.appointment_date || '—')} ${draftB.start_time || '')}`}
+              valueA={`${draftA.appointment_date || '—'} ${draftA.start_time || '')}`}
+              valueB={`${draftB.appointment_date || '—'} ${draftB.start_time || '')}`}
             />
 
             {/* Notes */}

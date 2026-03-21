@@ -66,7 +66,7 @@ export function ClientFormulaHistoryTab({ clientId, className }: ClientFormulaHi
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-sans text-sm text-foreground truncate">
-                      {formula.service_name || 'Formula')}
+                      {formula.service_name || 'Formula'}
                     </span>
                     <Badge
                       variant={formula.formula_type === 'refined' ? 'default' : 'secondary'}

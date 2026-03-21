@@ -202,7 +202,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="text-sm text-muted-foreground">
-            {displayLines.length} item{displayLines.length !== 1 ? 's' : '')} · {itemCount} unit{itemCount !== 1 ? 's' : ''}
+            {displayLines.length} item{displayLines.length !== 1 ? 's' : ''} · {itemCount} unit{itemCount !== 1 ? 's' : ''}
           </div>
           <div className="flex items-center gap-3">
             <div className="text-sm font-medium tabular-nums">

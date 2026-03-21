@@ -96,7 +96,7 @@ export function MarginErosionCard({ filterContext }: MarginErosionCardProps) {
                         )}>
                           {item.currentMargin}%
                         </Badge>
-                      ) : '—')}
+                      ) : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
                       <BlurredAmount>{formatCurrencyWhole(item.annualImpact)}</BlurredAmount>

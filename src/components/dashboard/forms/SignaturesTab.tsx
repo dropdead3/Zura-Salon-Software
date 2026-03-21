@@ -144,7 +144,7 @@ export function SignaturesTab() {
                       </Badge>
                     </TableCell>
                     <TableCell className="font-serif italic">
-                      {sig.typed_signature || '—')}
+                      {sig.typed_signature || '—'}
                     </TableCell>
                   </TableRow>
                 ))}

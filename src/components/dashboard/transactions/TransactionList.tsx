@@ -152,7 +152,7 @@ export function TransactionList({
                   {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>
-                  <span className={tokens.body.emphasis}>{transaction.client_name || 'Walk-in')}</span>
+                  <span className={tokens.body.emphasis}>{transaction.client_name || 'Walk-in'}</span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export function TransactionList({
                   {formatCurrency(Number(transaction.total_amount) || 0)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {transaction.branch_name || '-')}
+                  {transaction.branch_name || '-'}
                 </TableCell>
                 <TableCell>
                   {transaction.refund_status ? (

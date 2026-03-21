@@ -244,7 +244,7 @@ export function PriceQueueTab() {
                         <Checkbox
                           checked={selected.has(item.id)}
                           onCheckedChange={() => toggleSelect(item.id)}
-                          disabled={item.status !== 'pending')}
+                          disabled={item.status !== 'pending'}
                         />
                       </TableCell>
                       <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">

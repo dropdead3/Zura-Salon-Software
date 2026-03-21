@@ -198,7 +198,7 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
               <div className="space-y-2">
                 <Label>Rule Description</Label>
                 <Textarea
-                  value={editing.rule_description || '')}
+                  value={editing.rule_description || ''}
                   onChange={e => setEditing({ ...editing, rule_description: e.target.value })}
                   placeholder="Never discuss employee salaries with non-admin roles"
                   rows={3}

@@ -195,7 +195,7 @@ export function LocationsContent() {
                     </p>
                     <p className="flex items-center gap-1.5 min-w-0">
                       <Clock className="w-3 h-3 shrink-0" />
-                      <span className="truncate [overflow-wrap:anywhere]">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set')}</span>
+                      <span className="truncate [overflow-wrap:anywhere]">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}</span>
                     </p>
                   </div>
                   {/* Toggle */}

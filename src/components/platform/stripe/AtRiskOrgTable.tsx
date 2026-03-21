@@ -72,7 +72,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">{org.name}</p>
-                <p className="text-xs text-slate-400 truncate">{org.billing_email || 'No billing email')}</p>
+                <p className="text-xs text-slate-400 truncate">{org.billing_email || 'No billing email'}</p>
               </div>
             </div>
 

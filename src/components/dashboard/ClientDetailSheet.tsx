@@ -700,7 +700,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       <Home className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <CardTitle className={tokens.heading.subsection}>
-                      {householdData.household_name || 'Household')}
+                      {householdData.household_name || 'Household'}
                     </CardTitle>
                   </div>
                 </CardHeader>
@@ -930,7 +930,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <span>
                       {client.birthday 
                         ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
-                        : 'No birthday on file')}
+                        : 'No birthday on file'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -939,7 +939,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       {client.client_since ? (
                         <>
                           Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
-                          {' — ')}
+                          {' — '}
                           {(() => {
                             const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
                             if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
@@ -947,7 +947,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                             return months === 0 ? 'Less than 1 month' : `${months} month${months !== 1 ? 's' : ''}`;
                           })()}
                         </>
-                      ) : 'No start date on file')}
+                      ) : 'No start date on file'}
                     </span>
                   </div>
                 </>

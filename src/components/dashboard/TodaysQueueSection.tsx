@@ -280,7 +280,7 @@ export function TodaysQueueSection({
                 <p className="text-sm mt-1">
                   {queueData.completed.length > 0 
                     ? `${queueData.completed.length} completed today` 
-                    : 'Add a walk-in or wait for scheduled appointments')}
+                    : 'Add a walk-in or wait for scheduled appointments'}
                 </p>
               </div>
             )}

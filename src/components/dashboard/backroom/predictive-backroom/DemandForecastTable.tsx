@@ -208,7 +208,7 @@ function ForecastRow({ forecast }: { forecast: ProductDemandForecast }) {
       <TableCell className={tokens.body.default}>
         {forecast.recommended_order_qty > 0
           ? `${forecast.recommended_order_qty} ${forecast.unit}`
-          : '—')}
+          : '—'}
       </TableCell>
     </TableRow>
   );

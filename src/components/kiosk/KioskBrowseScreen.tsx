@@ -291,7 +291,7 @@ export function KioskBrowseScreen() {
                             className="text-base opacity-80"
                             style={{ color: textColor }}
                           >
-                            {appointment.service_name || 'Appointment')}
+                            {appointment.service_name || 'Appointment'}
                             {appointment.stylist_name && (
                               <span className="opacity-70"> • with {appointment.stylist_name}</span>
                             )}

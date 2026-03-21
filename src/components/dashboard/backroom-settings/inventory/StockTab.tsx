@@ -451,8 +451,8 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
       return `<tr>
         <td style="padding: 10px; border: 1px solid #ddd;">${p.name}${p.sku ? }` (SKU: ${p.sku})` : ''}</td>
         <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${qty}</td>
-        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${unitCost != null ? }`$${unitCost.toFixed(2)}` : '—')}</td>` : ''}
-        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${total != null ? }`$${total.toFixed(2)}` : '—')}</td>` : ''}
+        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${unitCost != null ? }`$${unitCost.toFixed(2)}` : '—'}</td>` : ''}
+        ${hasUnitCost ? }`<td style="text-align: right; padding: 10px; border: 1px solid #ddd;">${total != null ? }`$${total.toFixed(2)}` : '—'}</td>` : ''}
       </tr>`;
     }).join('');
 
@@ -476,7 +476,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         ${hasUnitCost && selectedProducts.length > 1 ? }`<tr style="background: #f9f9f9; font-weight: bold;">
           <td style="padding: 10px; border: 1px solid #ddd;" colspan="${hasUnitCost ? 3 : 2}">Grand Total</td>
           <td style="text-align: right; padding: 10px; border: 1px solid #ddd;">$${grandTotal.toFixed(2)}</td>
-        </tr>` : '')}
+        </tr>` : ''}
       </table>
       <p>Please confirm receipt of this order and provide an estimated delivery date.</p>
       <p>Thank you,<br/>${orgName}</p>

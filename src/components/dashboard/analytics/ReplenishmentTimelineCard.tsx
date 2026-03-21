@@ -72,9 +72,9 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                 </div>
                 <CardDescription className="text-xs">
                   {criticalCount > 0 && <span className="text-red-500">{criticalCount} critical</span>}
-                  {criticalCount > 0 && warningCount > 0 && ', ')}
+                  {criticalCount > 0 && warningCount > 0 && ', '}
                   {warningCount > 0 && <span className="text-amber-600 dark:text-amber-400">{warningCount} warning</span>}
-                  {criticalCount === 0 && warningCount === 0 && 'All products have adequate runway')}
+                  {criticalCount === 0 && warningCount === 0 && 'All products have adequate runway'}
                 </CardDescription>
               </div>
             </div>

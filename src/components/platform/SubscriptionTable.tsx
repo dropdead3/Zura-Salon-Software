@@ -95,12 +95,12 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
                 </TableCell>
                 <TableCell>
                   <span className="text-slate-300">
-                    {tierLabels[subscription.subscription_tier || 'starter'] || 'Starter')}
+                    {tierLabels[subscription.subscription_tier || 'starter'] || 'Starter'}
                   </span>
                 </TableCell>
                 <TableCell>
                   <PlatformBadge variant={statusColors[subscription.subscription_status || 'inactive']}>
-                    {subscription.subscription_status || 'inactive')}
+                    {subscription.subscription_status || 'inactive'}
                   </PlatformBadge>
                 </TableCell>
                 <TableCell>
@@ -113,7 +113,7 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className="text-slate-400">{subscription.billing_email || '—')}</span>
+                  <span className="text-slate-400">{subscription.billing_email || '—'}</span>
                 </TableCell>
               </TableRow>
             ))
@@ -233,7 +233,7 @@ export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
               <TableCell>
                 <div>
                   <p className="font-medium text-white">{subscription.name}</p>
-                  <p className="text-sm text-slate-500">{subscription.billing_email || '—')}</p>
+                  <p className="text-sm text-slate-500">{subscription.billing_email || '—'}</p>
                 </div>
               </TableCell>
               <TableCell>

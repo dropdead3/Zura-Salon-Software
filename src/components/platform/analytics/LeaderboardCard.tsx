@@ -134,7 +134,7 @@ export function LeaderboardCard({ title, icon, entries, valueLabel, emptyMessage
                   'text-xs truncate',
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 )}>
-                  #{entry.organization.accountNumber} • {entry.organization.subscriptionTier || 'No Plan')}
+                  #{entry.organization.accountNumber} • {entry.organization.subscriptionTier || 'No Plan'}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">

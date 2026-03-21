@@ -38,7 +38,7 @@ export function PlanSelector({ plans, selectedPlanId, onSelect, disabled }: Plan
           <button
             key={plan.id}
             type="button"
-            disabled={disabled || plan.tier === 'enterprise')}
+            disabled={disabled || plan.tier === 'enterprise'}
             onClick={() => onSelect(plan.id)}
             className={cn(
               'relative p-4 rounded-xl border-2 text-left transition-all duration-200',
@@ -77,7 +77,7 @@ export function PlanSelector({ plans, selectedPlanId, onSelect, disabled }: Plan
               <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.5)]">
                 <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
                   {plan.max_locations === -1 ? 'Unlimited locations' : `Up to ${plan.max_locations} location${plan.max_locations !== 1 ? 's' : ''}`}
-                  {' • ')}
+                  {' • '}
                   {plan.max_users === -1 ? 'Unlimited users' : `${plan.max_users} max users`}
                 </p>
               </div>

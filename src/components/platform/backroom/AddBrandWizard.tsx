@@ -566,7 +566,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
                               </PlatformBadge>
                             </TableCell>
                             <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                              {p.size_options.join(', ') || '—')}
+                              {p.size_options.join(', ') || '—'}
                             </TableCell>
                             <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
                               {p.wholesale_price != null ? `$${p.wholesale_price.toFixed(2)}` : '—'}
@@ -588,7 +588,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
               <div className="rounded-xl border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-hover)/0.2)] p-4 flex items-start gap-4">
                 {(logoPreview || uploadedLogoUrl) ? (
                   <img
-                    src={uploadedLogoUrl || logoPreview || '')}
+                    src={uploadedLogoUrl || logoPreview || ''}
                     alt={brandName}
                     className="w-14 h-14 rounded-lg object-contain border border-[hsl(var(--platform-border)/0.3)] bg-white/5 p-1 shrink-0"
                   />

@@ -130,7 +130,7 @@ export function WaterfallChart({
             >
               <XAxis 
                 type="number" 
-                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                 tick={{ fontSize: 12 }}
               />
               <YAxis 

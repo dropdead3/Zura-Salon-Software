@@ -64,7 +64,7 @@ export function EnforcementGateBanner({
               onClick={() => navigate(config.ctaPath)}
               className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--platform-accent))] px-4 py-2 text-sm font-medium text-[hsl(var(--platform-accent-foreground))] transition-colors hover:bg-[hsl(var(--platform-accent))]/90"
             >
-              {config.ctaLabel || 'Complete Setup')}
+              {config.ctaLabel || 'Complete Setup'}
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           )}

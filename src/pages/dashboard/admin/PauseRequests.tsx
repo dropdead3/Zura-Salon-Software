@@ -99,7 +99,7 @@ export default function PauseRequests() {
                         <p className="text-sm text-muted-foreground">{request.user_email}</p>
                       </div>
                       <Badge variant="secondary" className="ml-2">
-                        Day {request.current_day || '?')}
+                        Day {request.current_day || '?'}
                       </Badge>
                     </div>
 

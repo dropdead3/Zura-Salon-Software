@@ -93,7 +93,7 @@ export function DraggableAnnouncementCard({
     <Card 
       ref={setNodeRef}
       style={style}
-      className={`p-6 transition-all duration-300 ${!announcement.is_active ? 'opacity-50 hover:opacity-100' : '')} ${togglingId === announcement.id ? 'scale-[0.98] ring-2 ring-primary/30' : '')} ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
+      className={`p-6 transition-all duration-300 ${!announcement.is_active ? 'opacity-50 hover:opacity-100' : ''} ${togglingId === announcement.id ? 'scale-[0.98] ring-2 ring-primary/30' : '')} ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
     >
       <div className="flex items-start justify-between gap-4">
         {isDraggable && (

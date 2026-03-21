@@ -235,7 +235,7 @@ export default function PlatformLogin() {
           <p className="text-slate-400 mb-6">
             {invitation.status === 'accepted' 
               ? 'This invitation has already been accepted.'
-              : 'This invitation has expired or been cancelled.')}
+              : 'This invitation has expired or been cancelled.'}
           </p>
           <PlatformButton 
             onClick={() => navigate('/login', { replace: true })}
@@ -292,7 +292,7 @@ export default function PlatformLogin() {
             <p className="text-slate-400">
               {isSignupMode 
                 ? `You've been invited as ${invitation?.role.replace('platform_', '').replace('_', ' }`
-                : 'Internal access for development and support teams')}
+                : 'Internal access for development and support teams'}
             </p>
           </div>
 

@@ -342,7 +342,7 @@ export function SupplyLibraryTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `supply-library-${selectedBrand || 'all')}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `supply-library-${selectedBrand || 'all'}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Exported ${products.length} products`);
@@ -528,7 +528,7 @@ export function SupplyLibraryTab() {
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
         {p.default_markup_pct != null && p.default_markup_pct > 0
           ? `${p.default_markup_pct}%`
-          : '—')}
+          : '—'}
       </TableCell>
       {/* Computed Retail column */}
       <TableCell className="font-sans text-xs">
@@ -841,7 +841,7 @@ export function SupplyLibraryTab() {
                       <p className="absolute bottom-2 left-0 right-0 text-center font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight px-2">
                         {b.categorySummary.slice(0, 3).map((cs) =>
                           `${cs.count} ${SUPPLY_CATEGORY_LABELS[cs.category] || cs.category}`
-                        ).join(' · ')}
+                        ).join(' · '}
                         {b.categorySummary.length > 3 && ` +${b.categorySummary.length - 3}`}
                       </p>
                     </PlatformCard>

@@ -168,7 +168,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
             <Label htmlFor="email-sender-name">Sender Display Name</Label>
             <Input
               id="email-sender-name"
-              placeholder={branding.name || 'e.g. Luxe Hair Studio')}
+              placeholder={branding.name || 'e.g. Luxe Hair Studio'}
               value={branding.email_sender_name}
               onChange={e => setBranding(prev => ({ ...prev, email_sender_name: e.target.value }))}
             />

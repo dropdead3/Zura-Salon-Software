@@ -125,19 +125,19 @@ export default function FeaturesCenter() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuCheckboxItem
-                checked={filterState === 'all')}
+                checked={filterState === 'all'}
                 onCheckedChange={() => setFilterState('all')}
               >
                 All Features
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
-                checked={filterState === 'enabled')}
+                checked={filterState === 'enabled'}
                 onCheckedChange={() => setFilterState('enabled')}
               >
                 Enabled Only
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
-                checked={filterState === 'disabled')}
+                checked={filterState === 'disabled'}
                 onCheckedChange={() => setFilterState('disabled')}
               >
                 Disabled Only

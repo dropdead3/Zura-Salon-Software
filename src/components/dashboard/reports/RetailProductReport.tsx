@@ -112,7 +112,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
   const exportCSV = () => {
     if (!data) return;
     let csv = 'Product,Category,Units,Revenue,Avg Price,Discount,Trend %\n';
-    data.products.forEach(p => { csv += `"${p.name}","${p.category || '')}",${p.unitsSold},${p.revenue},${p.avgPrice},${p.discount},${Math.round(p.revenueTrend)}\n`; });
+    data.products.forEach(p => { csv += `"${p.name}","${p.category || ''}",${p.unitsSold},${p.revenue},${p.avgPrice},${p.discount},${Math.round(p.revenueTrend)}\n`; });
     csv += `\nRed Flags\nProduct,Issue,Detail\n`;
     data.redFlags.forEach(f => { csv += `"${f.product}","${f.label}","${f.detail}"\n`; });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -189,7 +189,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
                 <TableRow key={p.name}>
                   <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014')}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014'}</TableCell>
                   <TableCell className="text-right tabular-nums">{p.unitsSold}</TableCell>
                   <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
                   <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(p.avgPrice)}</BlurredAmount></TableCell>

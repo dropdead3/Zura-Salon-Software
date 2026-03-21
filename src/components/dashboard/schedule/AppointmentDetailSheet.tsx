@@ -135,7 +135,7 @@ function ScheduledCoverageSection({
             <div key={block.id} className="flex items-center gap-2 text-sm">
               <UsersIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="truncate">
-                {name || 'Unassigned')}
+                {name || 'Unassigned'}
               </span>
               <span className="text-xs text-muted-foreground">
                 {formatTime12h(block.start_time)}–{formatTime12h(block.end_time)}
@@ -166,7 +166,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
       <motion.div variants={staggerItem} className="space-y-2">
         <h4 className={tokens.heading.subsection}>
           <Home className="h-3.5 w-3.5 inline mr-1.5" />
-          {householdData.household_name || 'Household')}
+          {householdData.household_name || 'Household'}
         </h4>
         <div className="space-y-2">
           {householdData.members.map((member: any) => {
@@ -185,7 +185,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
                       ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d}`
-                      : 'No visits yet')}
+                      : 'No visits yet'}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
                 </div>
@@ -653,7 +653,7 @@ export function AppointmentDetailSheet({
 
   // Recurrence
   const recurrenceLabel = appointment.recurrence_group_id && appointment.recurrence_rule
-    ? `Recurring (${(appointment.recurrence_index ?? 0) + 1} of ${(appointment.recurrence_rule as any)?.occurrences ?? '?')})`
+    ? `Recurring (${(appointment.recurrence_index ?? 0) + 1} of ${(appointment.recurrence_rule as any)?.occurrences ?? '?'})`
     : null;
 
   // ─── Handlers ─────────────────────────────────────────────────
@@ -1004,7 +1004,7 @@ export function AppointmentDetailSheet({
                     <span className="text-xs text-muted-foreground">
                       {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method]
                         ? `via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
-                        : '(method unknown)')}
+                        : '(method unknown)'}
                     </span>
                   )}
 
@@ -1099,7 +1099,7 @@ export function AppointmentDetailSheet({
                       <motion.div variants={staggerItem} className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200 dark:border-blue-800">
                         <RotateCcw className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                         <span className="text-sm text-blue-700 dark:text-blue-300">
-                          Redo scheduled: {linkedRedos[0].service_name || 'Service')} on {linkedRedos[0].appointment_date}
+                          Redo scheduled: {linkedRedos[0].service_name || 'Service'} on {linkedRedos[0].appointment_date}
                           {linkedRedos[0].staff_name && ` with ${linkedRedos[0].staff_name}`}
                         </span>
                       </motion.div>
@@ -1554,7 +1554,7 @@ export function AppointmentDetailSheet({
                         <p className={tokens.kpi.label}>
                           {visitStats.tenure != null
                             ? visitStats.tenure < 30 ? 'New' : `${Math.floor(visitStats.tenure / 30)}mo`
-                            : '—')}
+                            : '—'}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Tenure</p>
                       </div>
@@ -1562,7 +1562,7 @@ export function AppointmentDetailSheet({
                         <p className={tokens.kpi.label}>
                           {visitStats.avgFrequencyWeeks != null
                             ? `${visitStats.avgFrequencyWeeks}w`
-                            : '—')}
+                            : '—'}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Avg Frequency</p>
                       </div>
@@ -1814,7 +1814,7 @@ export function AppointmentDetailSheet({
             <AlertDialogDescription>
               {confirmAction === 'cancelled'
                 ? 'This will cancel the appointment. The client may need to be notified.'
-                : 'This will mark the client as a no-show for this appointment.')}
+                : 'This will mark the client as a no-show for this appointment.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="px-6 pb-2">
@@ -1878,7 +1878,7 @@ export function AppointmentDetailSheet({
             <AlertDialogDescription>
               {isManagerOrAdmin
                 ? 'This will permanently remove this appointment from all records. This is not a cancellation — no fee or notification will be applied.'
-                : 'This will remove this appointment as a data entry correction. This action cannot be undone.')}
+                : 'This will remove this appointment as a data entry correction. This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1959,7 +1959,7 @@ export function AppointmentDetailSheet({
             <DialogDescription>
               {services.length > 1
                 ? 'Reassign the entire appointment or individual services.'
-                : 'Select a new stylist for this appointment.')}
+                : 'Select a new stylist for this appointment.'}
             </DialogDescription>
           </DialogHeader>
 

@@ -87,7 +87,7 @@ function formatCountdown(
   if (daysRemaining >= 1) {
     const remainingHours = (hoursRemaining ?? 0) - (daysRemaining * 24);
     if (remainingHours > 0) {
-      return `${daysRemaining} day${daysRemaining !== 1 ? 's' : '')}, ${remainingHours} hour${remainingHours !== 1 ? 's' : ''} remaining`;
+      return `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}, ${remainingHours} hour${remainingHours !== 1 ? 's' : ''} remaining`;
     }
     return `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`;
   }

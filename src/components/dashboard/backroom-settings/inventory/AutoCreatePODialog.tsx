@@ -240,7 +240,7 @@ export function AutoCreatePODialog({
 
         {totalPOs > 0 && (
           <div className="flex items-center justify-between px-1 text-sm text-muted-foreground">
-            <span>{totalPOs} PO{totalPOs !== 1 ? 's' : '')} · {totalLines} line{totalLines !== 1 ? 's' : ''}</span>
+            <span>{totalPOs} PO{totalPOs !== 1 ? 's' : ''} · {totalLines} line{totalLines !== 1 ? 's' : ''}</span>
             <span className="tabular-nums">Est. total: {formatCurrency(totalCost)}</span>
           </div>
         )}

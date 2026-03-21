@@ -53,12 +53,12 @@ export function CommandCenterVisibilityToggle({
   );
 
   // #region agent log — H5: check visibility data on render
-  fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json')},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:RENDER',message:'render state',data:{elementKey,elementCategory,isLoading,isToggling,visibilityDataLength:visibilityData?.length,elementVisibilityCount:elementVisibility.length,elementVisibilityRoles:elementVisibility.map(v=>({role:v.role,is_visible:v.is_visible})),isVisibleToLeadership},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:RENDER',message:'render state',data:{elementKey,elementCategory,isLoading,isToggling,visibilityDataLength:visibilityData?.length,elementVisibilityCount:elementVisibility.length,elementVisibilityRoles:elementVisibility.map(v=>({role:v.role,is_visible:v.is_visible})),isVisibleToLeadership},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
   // #endregion
 
   const handleToggle = async (checked: boolean) => {
     // #region agent log — H3: check if handleToggle fires
-    fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json')},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:ENTRY',message:'handleToggle called',data:{checked,elementKey,elementName,elementCategory},timestamp:Date.now(),hypothesisId:'H3')})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:ENTRY',message:'handleToggle called',data:{checked,elementKey,elementName,elementCategory},timestamp:Date.now(),hypothesisId:'H3')})}).catch(()=>{});
     // #endregion
     setIsToggling(true);
     try {
@@ -77,19 +77,19 @@ export function CommandCenterVisibilityToggle({
         .select();
 
       // #region agent log — H1/H2: check upsert result
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json')},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:UPSERT_RESULT',message:'upsert result',data:{error:error?{message:error.message,code:error.code,details:error.details,hint:error.hint}:null,dataLength:data?.length,status,statusText,returnedRows:data?.map((r:any)=>({element_key:r.element_key,role:r.role,is_visible:r.is_visible}))},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:UPSERT_RESULT',message:'upsert result',data:{error:error?{message:error.message,code:error.code,details:error.details,hint:error.hint}:null,dataLength:data?.length,status,statusText,returnedRows:data?.map((r:any)=>({element_key:r.element_key,role:r.role,is_visible:r.is_visible}))},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
       // #endregion
 
       if (error) throw error;
 
       // Invalidate all visibility queries so UI updates everywhere
       // #region agent log — H4: check invalidation
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json')},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:BEFORE_INVALIDATE',message:'about to invalidate queries',data:{queryKey:'dashboard-visibility')},timestamp:Date.now(),hypothesisId:'H4')})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:BEFORE_INVALIDATE',message:'about to invalidate queries',data:{queryKey:'dashboard-visibility')},timestamp:Date.now(),hypothesisId:'H4')})}).catch(()=>{});
       // #endregion
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch (error: any) {
       // #region agent log — H1/H2: catch block
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json')},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:CATCH',message:'toggle error caught',data:{errorMessage:error?.message,errorCode:error?.code},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:CATCH',message:'toggle error caught',data:{errorMessage:error?.message,errorCode:error?.code},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
       // #endregion
       toast.error('Failed to update visibility', { description: error.message });
     } finally {

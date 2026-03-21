@@ -329,7 +329,7 @@ export function SystemDefaultsConfigurator() {
                         <strong>Current permissions differ from defaults.</strong>
                         <span className="ml-1">
                           {diff.onlyInCurrent.length > 0 && `${diff.onlyInCurrent.length} extra`}
-                          {diff.onlyInCurrent.length > 0 && diff.onlyInDefaults.length > 0 && ', ')}
+                          {diff.onlyInCurrent.length > 0 && diff.onlyInDefaults.length > 0 && ', '}
                           {diff.onlyInDefaults.length > 0 && `${diff.onlyInDefaults.length} missing`}
                         </span>
                       </div>

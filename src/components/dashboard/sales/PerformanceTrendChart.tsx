@@ -236,7 +236,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
               />
               <Tooltip 
                 formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}

@@ -198,7 +198,7 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <span className="text-xs text-muted-foreground line-clamp-1">
-                          {audit.notes || '—')}
+                          {audit.notes || '—'}
                         </span>
                       </TableCell>
                       <TableCell>

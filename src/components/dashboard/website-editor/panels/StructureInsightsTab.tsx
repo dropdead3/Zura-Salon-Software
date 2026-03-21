@@ -131,7 +131,7 @@ function CategorySection({
               >
                 <button
                   onClick={() => finding.actionTarget && onFindingClick?.(finding.actionTarget)}
-                  disabled={!finding.actionTarget || finding.severity === 'pass')}
+                  disabled={!finding.actionTarget || finding.severity === 'pass'}
                   className={cn(
                     'flex-1 flex items-start gap-2 text-left min-w-0',
                     finding.actionTarget && finding.severity !== 'pass'

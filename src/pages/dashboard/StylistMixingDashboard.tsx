@@ -125,7 +125,7 @@ export default function StylistMixingDashboard() {
                         </p>
                         <p className={cn(tokens.body.muted, 'text-xs')}>
                           {formatRelativeTime(session.started_at)}
-                          {session.is_manual_override && ' · Manual override')}
+                          {session.is_manual_override && ' · Manual override'}
                         </p>
                       </div>
                     </div>

@@ -55,8 +55,8 @@ export function ShrinkageReportCard({ filterContext }: ShrinkageReportCardProps)
                 </div>
                 <CardDescription className="text-xs">
                   {summaries.length} product{summaries.length !== 1 ? 's' : ''} with variance
-                  {' · ')}{totalShrinkageUnits} units
-                  {' · ')}<BlurredAmount>{formatCurrency(totalShrinkageCost)}</BlurredAmount> estimated loss
+                  {' · '}{totalShrinkageUnits} units
+                  {' · '}<BlurredAmount>{formatCurrency(totalShrinkageCost)}</BlurredAmount> estimated loss
                 </CardDescription>
               </div>
             </div>

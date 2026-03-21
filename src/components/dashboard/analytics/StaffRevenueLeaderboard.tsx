@@ -173,7 +173,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
-                    <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')} />
+                    <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} />
                     <YAxis 
                       type="category" 
                       dataKey="name" 

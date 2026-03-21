@@ -456,7 +456,7 @@ export default function ProgramResourcesEditor() {
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
-                  value={editingResource.description || '')}
+                  value={editingResource.description || ''}
                   onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
                   rows={2}
                 />
@@ -464,7 +464,7 @@ export default function ProgramResourcesEditor() {
               <div className="space-y-2">
                 <Label>Link to Week</Label>
                 <Select
-                  value={editingResource.week_id || '')}
+                  value={editingResource.week_id || ''}
                   onValueChange={(v) => setEditingResource({ ...editingResource, week_id: v || null })}
                 >
                   <SelectTrigger>

@@ -56,7 +56,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={merged.background_value || '#000000')}
+                value={merged.background_value || '#000000'}
                 onChange={e => update('background_value', e.target.value)}
                 className="h-8 w-10 rounded border cursor-pointer"
               />
@@ -91,7 +91,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         <div className="flex items-center gap-2">
           <input
             type="color"
-            value={merged.text_color_override || '#000000')}
+            value={merged.text_color_override || '#000000'}
             onChange={e => update('text_color_override', e.target.value)}
             className="h-8 w-10 rounded border cursor-pointer"
           />

@@ -54,7 +54,7 @@ function LocationPreviewCard({ location }: { location: Location }) {
         <div className="flex items-start gap-3">
           <Clock className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
           <div className="text-sm">
-            <p>{formatHoursForDisplay(location.hours_json) || location.hours || 'Hours not set')}</p>
+            <p>{formatHoursForDisplay(location.hours_json) || location.hours || 'Hours not set'}</p>
             {closedDays.length > 0 && (
               <p className="text-muted-foreground text-xs mt-0.5">
                 Closed {closedDays.join(' & ')}

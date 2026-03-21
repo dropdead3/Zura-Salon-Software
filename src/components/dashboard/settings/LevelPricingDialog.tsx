@@ -95,7 +95,7 @@ export function LevelPricingDialog({
                     min="0"
                     className="pl-7 rounded-lg"
                     placeholder="0.00"
-                    value={prices[level.id] || '')}
+                    value={prices[level.id] || ''}
                     onChange={e => setPrices(prev => ({ ...prev, [level.id]: e.target.value }))}
                     autoCapitalize="off"
                   />

@@ -144,7 +144,7 @@ export function RoleTemplateSelector({ selectedTemplate, onSelect }: RoleTemplat
                   {permNames.length > 0 && (
                     <span className="text-[10px] text-muted-foreground truncate">
                       {permNames.join(', ')}
-                      {permCount > 5 && '...')}
+                      {permCount > 5 && '...'}
                     </span>
                   )}
                 </div>

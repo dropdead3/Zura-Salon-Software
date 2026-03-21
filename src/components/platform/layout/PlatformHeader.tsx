@@ -102,7 +102,7 @@ export function PlatformHeader() {
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p className="font-medium">{onlineUser.full_name || 'Team Member')}</p>
+                        <p className="font-medium">{onlineUser.full_name || 'Team Member'}</p>
                         <p className="text-xs text-emerald-400">Online</p>
                       </TooltipContent>
                     </Tooltip>

@@ -723,7 +723,7 @@ export default function ClientDirectory() {
           title="Client Directory"
           description={primaryTab === 'all' 
             ? 'View and manage all salon clients.' 
-            : 'Track your client relationships and identify opportunities.')}
+            : 'Track your client relationships and identify opportunities.'}
           actions={
             <div className="flex items-center gap-2">
               {canMerge && selectedForMerge.size >= 2 && (

@@ -572,7 +572,7 @@ export function KioskBookingWizard() {
                     }}
                     onClick={() => setPhoneInputActive(true)}
                   >
-                    {clientPhone || 'Enter phone number')}
+                    {clientPhone || 'Enter phone number'}
                   </div>
                 </div>
 
@@ -580,7 +580,7 @@ export function KioskBookingWizard() {
                 <div className="grid grid-cols-3 gap-3">
                   {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key) => (
                     <motion.button
-                      key={key || 'empty')}
+                      key={key || 'empty'}
                       className={cn(
                         "h-16 rounded-2xl text-xl font-medium transition-colors backdrop-blur-md",
                         key === '' && 'invisible',
@@ -595,7 +595,7 @@ export function KioskBookingWizard() {
                         else if (key) handlePhoneDigit(key);
                       }}
                       whileTap={{ scale: 0.95 }}
-                      disabled={key === '')}
+                      disabled={key === ''}
                     >
                       {key === 'del' ? '←' : key}
                     </motion.button>

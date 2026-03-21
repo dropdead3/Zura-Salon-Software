@@ -276,7 +276,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
             <AlertDialogDescription className="font-sans">
               {deleteTarget?.is_recurring
                 ? 'This shift is part of a recurring series. How would you like to proceed?'
-                : 'Are you sure you want to cancel this shift?')}
+                : 'Are you sure you want to cancel this shift?'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">

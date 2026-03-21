@@ -213,7 +213,7 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
           {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
         </TableCell>
         <TableCell className={tokens.body.emphasis}>{getPoLabel(po)}</TableCell>
-        <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—')}</TableCell>
+        <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—'}</TableCell>
         <TableCell className="text-right hidden sm:table-cell tabular-nums">{po.quantity}</TableCell>
         <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</TableCell>
         <TableCell>
@@ -318,7 +318,7 @@ function POExpandedRow({ poId, po, formatCurrency }: {
             </div>
             <div>
               <span className={tokens.label.tiny}>Supplier Email</span>
-              <p className="text-foreground">{po.supplier_email || '—')}</p>
+              <p className="text-foreground">{po.supplier_email || '—'}</p>
             </div>
             <div>
               <span className={tokens.label.tiny}>Sent At</span>

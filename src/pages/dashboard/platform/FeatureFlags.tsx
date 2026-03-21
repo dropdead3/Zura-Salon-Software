@@ -414,7 +414,7 @@ export default function PlatformFeatureFlags() {
             <DialogDescription>
               {editingFlag
                 ? 'Update the feature flag settings'
-                : 'Create a new feature flag to control feature rollouts')}
+                : 'Create a new feature flag to control feature rollouts'}
             </DialogDescription>
           </DialogHeader>
 

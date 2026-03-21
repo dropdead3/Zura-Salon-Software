@@ -535,7 +535,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                   isSuperAdminRole ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"
                 )}>
                   <RoleIcon className="w-3 h-3" />
-                  {role.display_name}{!isSuperAdminRole && 's')}
+                  {role.display_name}{!isSuperAdminRole && 's'}
                 </p>
               </CardContent>
             </Card>
@@ -591,7 +591,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                         {role.display_name}
                       </Badge>
                       <span className="text-sm text-muted-foreground leading-snug">
-                        {role.description || 'No description')}
+                        {role.description || 'No description'}
                         {role.name === 'admin' && !canApproveAdmin && (
                           <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
                         )}

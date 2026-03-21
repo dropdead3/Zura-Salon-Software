@@ -291,7 +291,7 @@ export default function DemoFeatures() {
                     <TableCell>
                       <div>
                         <div className="font-medium flex items-center gap-2">
-                          {categoryIcons[feature.category || ''] || '✨')}
+                          {categoryIcons[feature.category || ''] || '✨'}
                           {feature.name}
                         </div>
                         <div className="text-xs text-muted-foreground">

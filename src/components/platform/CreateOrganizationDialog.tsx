@@ -245,7 +245,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                     <FormControl>
                       <PlatformInput 
                         placeholder="(555) 123-4567" 
-                        value={field.value || '')}
+                        value={field.value || ''}
                         onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
                       />
                     </FormControl>

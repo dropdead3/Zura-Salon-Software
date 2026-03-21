@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: string }) {
     declined: 'bg-destructive/10 text-destructive',
   };
   return (
-    <Badge variant="outline" className={variants[status] || '')}>
+    <Badge variant="outline" className={variants[status] || ''}>
       {status}
     </Badge>
   );

@@ -79,7 +79,7 @@ export function HouseholdCard({
             ) : (
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.heading.card}>
-                  {household.household_name || 'Unnamed Household')}
+                  {household.household_name || 'Unnamed Household'}
                 </CardTitle>
                 {canEdit && (
                   <Button

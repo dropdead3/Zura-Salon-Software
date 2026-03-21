@@ -325,7 +325,7 @@ export function MultiLocationSection() {
                 compareKeys.map(item => (
                   <div key={item.key} className="rounded-lg border bg-card/50 p-3 flex items-center justify-between">
                     <p className="text-sm text-foreground">{item.key.replace(/_/g, ' ')}</p>
-                    <Badge variant={item.differs ? 'destructive' : 'secondary')}>{item.differs ? 'Different' : 'Same'}</Badge>
+                    <Badge variant={item.differs ? 'destructive' : 'secondary'}>{item.differs ? 'Different' : 'Same'}</Badge>
                   </div>
                 ))
               )}

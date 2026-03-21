@@ -285,7 +285,7 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
 
   return (
     <EditorCard
-      title={sectionTypeLabels[sectionType] || 'Custom Section')}
+      title={sectionTypeLabels[sectionType] || 'Custom Section'}
       icon={Layers}
       description={`Configure this ${sectionType.replace('_', ' ')} section`}
     >

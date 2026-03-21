@@ -98,7 +98,7 @@ export function PlanStepEditor({
           <div className="flex items-center gap-2 pl-7">
             {/* Owner picker */}
             <Select
-              value={step.ownerId || 'unassigned')}
+              value={step.ownerId || 'unassigned'}
               onValueChange={handleOwnerChange}
             >
               <SelectTrigger className="h-7 w-[160px] text-xs">
@@ -118,7 +118,7 @@ export function PlanStepEditor({
                           {(m.displayName || m.fullName || '?')[0]}
                         </AvatarFallback>
                       </Avatar>
-                      {m.displayName || m.fullName || 'Unknown')}
+                      {m.displayName || m.fullName || 'Unknown'}
                     </div>
                   </SelectItem>
                 ))}

@@ -125,7 +125,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
         <div className="relative mb-4">
           <motion.img 
             src={logoUrl} 
-            alt={businessName || 'Logo')} 
+            alt={businessName || 'Logo'} 
             className={`${logoSizeClass} w-auto object-contain`}
             style={{
               filter: isDarkMode 
@@ -294,7 +294,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
           style={{ color: settings.text_color }} 
           className="text-base font-medium mb-1 tracking-tight"
         >
-          {settings.welcome_title || 'Welcome')}
+          {settings.welcome_title || 'Welcome'}
         </h1>
         
         {settings.welcome_subtitle && (
@@ -395,7 +395,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
         style={{ color: settings.text_color }} 
         className="text-sm font-medium mb-4 tracking-tight px-2"
       >
-        {settings.check_in_prompt || 'Please enter your phone number')}
+        {settings.check_in_prompt || 'Please enter your phone number'}
       </h1>
       
       {/* Phone display mockup */}
@@ -514,7 +514,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
         style={{ color: settings.text_color }} 
         className="text-[10px] opacity-70 px-4 leading-relaxed"
       >
-        {settings.success_message || 'Your stylist has been notified and will be with you shortly.')}
+        {settings.success_message || 'Your stylist has been notified and will be with you shortly.'}
       </p>
       
       {/* Auto-return indicator */}

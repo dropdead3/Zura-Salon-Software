@@ -73,7 +73,7 @@ export function KioskMediaUploader({
     try {
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `kiosk-bg-${organizationId || 'default')}-${Date.now()}.${fileExt}`;
+      const fileName = `kiosk-bg-${organizationId || 'default'}-${Date.now()}.${fileExt}`;
 
       // Upload to kiosk-assets bucket
       const { error: uploadError } = await supabase.storage
@@ -271,7 +271,7 @@ export function KioskMediaUploader({
       <p className="text-xs text-muted-foreground">
         {currentMediaType === 'video' 
           ? 'Video will loop automatically. Use object-cover for full-screen display.'
-          : 'For best results, use high-resolution images that fill the tablet screen.')}
+          : 'For best results, use high-resolution images that fill the tablet screen.'}
       </p>
     </div>
   );

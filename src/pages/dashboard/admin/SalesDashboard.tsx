@@ -807,7 +807,7 @@ export default function SalesDashboard() {
                         ? 'All staff are linked! 🎉'
                         : phorestStaffFilter === 'mapped'
                           ? 'No linked staff yet. Link staff to see their data here.'
-                          : 'No Phorest staff data available for this period. Try syncing sales data.')}
+                          : 'No Phorest staff data available for this period. Try syncing sales data.'}
                     </CardContent>
                   </Card>
                 )}

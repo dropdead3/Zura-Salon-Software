@@ -257,7 +257,7 @@ export function ClientStep({
                             {client.is_banned && <BannedClientBadge />}
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
-                            {formatPhone(client.phone) || client.email || 'No contact info')}
+                            {formatPhone(client.phone) || client.email || 'No contact info'}
                           </div>
                         </div>
                       </button>

@@ -179,7 +179,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
                         <Avatar className="h-9 w-9 bg-muted shrink-0"><AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">{gi(client.name)}</AvatarFallback></Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2"><span className="font-medium text-sm truncate">{client.name}</span>{client.is_banned && <BannedClientBadge />}</div>
-                          <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info')}</div>
+                          <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info'}</div>
                         </div>
                       </button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); onViewProfile(client); }}><Info className="h-4 w-4" /></Button>
@@ -1595,7 +1595,7 @@ export function QuickBookingPopover({
             {/* Add-on toast — lives above the footer buttons */}
             <ServiceAddonToast
               visible={showAddonToast && addonSuggestions.length > 0}
-              categoryName={selectedCategory || '')}
+              categoryName={selectedCategory || ''}
               suggestions={addonSuggestions}
               onAdd={(addonId) => {
                 const addon = addonSuggestions.find(a => a.id === addonId);
@@ -2054,7 +2054,7 @@ export function QuickBookingPopover({
                             <div className="text-[10px] text-muted-foreground">
                               {est.hasBaselines
                                 ? `${est.markupPct.toFixed(0)}% markup`
-                                : 'Estimate unavailable')}
+                                : 'Estimate unavailable'}
                             </div>
                           </div>
                         </div>
@@ -2157,9 +2157,9 @@ export function QuickBookingPopover({
                                 }}
                               >
                                 <div className="min-w-0 flex-1">
-                                  <div className="font-medium truncate">{apt.service_name || 'Service')}</div>
+                                  <div className="font-medium truncate">{apt.service_name || 'Service'}</div>
                                   <div className="text-[10px] text-muted-foreground">
-                                    {apt.appointment_date} · {apt.staff_name || 'Unknown')}
+                                    {apt.appointment_date} · {apt.staff_name || 'Unknown'}
                                   </div>
                                 </div>
                                 {apt.total_price != null && (

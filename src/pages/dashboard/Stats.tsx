@@ -118,12 +118,12 @@ export default function Stats() {
           title={isAdmin ? 'Team Stats' : 'My Stats'}
           description={isAdmin 
             ? 'View performance metrics for any team member.' 
-            : 'Track your personal performance metrics.')}
+            : 'Track your personal performance metrics.'}
           className="mb-8"
           actions={
             isAdmin && teamMembers && teamMembers.length > 0 ? (
               <Select 
-                value={selectedMemberId || '')} 
+                value={selectedMemberId || ''} 
                 onValueChange={(value) => setSelectedMemberId(value || null)}
               >
                 <SelectTrigger className="w-full sm:w-[250px]">
@@ -493,7 +493,7 @@ export default function Stats() {
                             </td>
                             <td className="py-2.5 pl-4 text-right tabular-nums">
                               <span className="text-green-600">{stylist.highMarginCount}</span>
-                              {' / ')}
+                              {' / '}
                               <span className="text-red-500">{stylist.lowMarginCount}</span>
                             </td>
                           </tr>

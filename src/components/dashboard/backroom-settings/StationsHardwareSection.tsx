@@ -187,7 +187,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant={station.is_active ? 'default' : 'outline')}>{station.is_active ? 'Active' : 'Inactive'}</Badge>
+                      <Badge variant={station.is_active ? 'default' : 'outline'}>{station.is_active ? 'Active' : 'Inactive'}</Badge>
                       <Switch checked={station.is_active} onCheckedChange={(checked) => updateStation.mutate({ id: station.id, is_active: checked })} />
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(station)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteStation.mutate(station.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>

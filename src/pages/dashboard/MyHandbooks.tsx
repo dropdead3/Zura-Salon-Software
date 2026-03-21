@@ -246,7 +246,7 @@ export default function MyHandbooks() {
                     {selectedHandbook.title}
                   </DialogTitle>
                   <p className="text-sm text-muted-foreground">
-                    Version {selectedHandbook.version} • {selectedHandbook.category || 'General')}
+                    Version {selectedHandbook.version} • {selectedHandbook.category || 'General'}
                   </p>
                 </DialogHeader>
                 

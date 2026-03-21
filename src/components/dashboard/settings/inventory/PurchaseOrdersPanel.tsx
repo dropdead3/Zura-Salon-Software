@@ -63,7 +63,7 @@ export function PurchaseOrdersPanel() {
       <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedOrder(po)}>
         <TableCell className="font-medium text-sm">{prod?.name || 'Unknown'}</TableCell>
         {!groupBySupplier && (
-          <TableCell className="text-sm text-muted-foreground">{po.supplier_name || '—')}</TableCell>
+          <TableCell className="text-sm text-muted-foreground">{po.supplier_name || '—'}</TableCell>
         )}
         <TableCell className="text-right tabular-nums text-sm">{po.quantity}</TableCell>
         <TableCell className="text-right tabular-nums text-sm text-muted-foreground">

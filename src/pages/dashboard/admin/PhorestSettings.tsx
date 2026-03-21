@@ -347,7 +347,7 @@ export default function PhorestSettings() {
                     ? 'CHECKING CONNECTION...' 
                     : connection?.connected 
                       ? 'CONNECTED TO PHOREST' 
-                      : 'NOT CONNECTED')}
+                      : 'NOT CONNECTED'}
                 </h2>
                 {connection?.connected && connection.business && (
                   <p className="text-muted-foreground text-sm">
@@ -613,7 +613,7 @@ export default function PhorestSettings() {
                       <SelectItem value="_none" disabled>
                         {phorestStaffList.length === 0 
                           ? 'Test connection to load staff' 
-                          : 'All staff are mapped')}
+                          : 'All staff are mapped'}
                       </SelectItem>
                     ) : (
                       filteredPhorestStaff.map((staff) => (
@@ -744,7 +744,7 @@ export default function PhorestSettings() {
                                         <div className="flex items-center gap-2">
                                           {visibleMappings.has(mapping.id) ? (
                                             <div>
-                                              <p className="text-sm font-medium">{mapping.phorest_staff_name || '-')}</p>
+                                              <p className="text-sm font-medium">{mapping.phorest_staff_name || '-'}</p>
                                               <p className="text-xs text-muted-foreground font-mono">
                                                 {mapping.phorest_staff_id}
                                               </p>
@@ -767,7 +767,7 @@ export default function PhorestSettings() {
                                       <TableCell>
                                         <span className="flex items-center gap-1 text-sm">
                                           <MapPin className="w-3 h-3 text-muted-foreground" />
-                                          {mapping.phorest_branch_name || '-')}
+                                          {mapping.phorest_branch_name || '-'}
                                         </span>
                                       </TableCell>
                                       <TableCell>
@@ -818,7 +818,7 @@ export default function PhorestSettings() {
                             <div className="flex items-center gap-2">
                               {visibleMappings.has(mapping.id) ? (
                                 <div>
-                                  <p className="font-medium">{mapping.phorest_staff_name || '-')}</p>
+                                  <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
                                   <p className="text-xs text-muted-foreground font-mono">
                                     {mapping.phorest_staff_id}
                                   </p>
@@ -936,14 +936,14 @@ export default function PhorestSettings() {
                         <TableCell>
                           {log.completed_at 
                             ? formatDate(new Date(log.completed_at), 'MMM d, HH:mm')
-                            : '-')}
+                            : '-'}
                         </TableCell>
                         <TableCell>
                           {log.error_message ? (
                             <span className="text-destructive text-sm truncate max-w-xs block">
                               {log.error_message}
                             </span>
-                          ) : '-')}
+                          ) : '-'}
                         </TableCell>
                       </TableRow>
                     ))}

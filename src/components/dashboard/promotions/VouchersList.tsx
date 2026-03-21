@@ -155,7 +155,7 @@ export function VouchersList({ organizationId }: VouchersListProps) {
                           ? `${voucher.value}%`
                           : voucher.value 
                           ? formatCurrency(voucher.value)
-                          : '-')}
+                          : '-'}
                       </TableCell>
                       <TableCell>
                         {voucher.issued_to_name || voucher.issued_to_email || (

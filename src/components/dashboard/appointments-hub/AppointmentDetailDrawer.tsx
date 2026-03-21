@@ -236,7 +236,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 {clientName}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {appointment.service_name || 'Service')}
+                {appointment.service_name || 'Service'}
               </p>
             </div>
             <Badge className={cn('shrink-0', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
@@ -445,7 +445,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="w-4 h-4 shrink-0" />
-                  <span>{appointment.stylist_name || 'Unassigned')}</span>
+                  <span>{appointment.stylist_name || 'Unassigned'}</span>
                 </div>
                 {appointment.location_name && (
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -496,7 +496,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   {formatFullDateTime(appointment.created_at)}
                 </DetailRow>
                 <DetailRow icon={UserCheck} label="Created By">
-                  {appointment.created_by_name || '—')}
+                  {appointment.created_by_name || '—'}
                 </DetailRow>
                 <DetailRow icon={Info} label="Source">
                   <div className="flex items-center gap-2">

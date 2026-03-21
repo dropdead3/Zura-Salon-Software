@@ -358,7 +358,7 @@ export function PromotionFormDialog({
                         <Input 
                           type="date" 
                           {...field}
-                          value={field.value || '')}
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormDescription>Leave blank for no expiration</FormDescription>

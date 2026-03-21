@@ -281,7 +281,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                       <FormItem>
                         <FormLabel className="text-slate-300">Legal Name</FormLabel>
                         <FormControl>
-                          <PlatformInput placeholder="Luxe Hair Studio LLC" {...field} value={field.value || '')} />
+                          <PlatformInput placeholder="Luxe Hair Studio LLC" {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage className="text-red-400" />
                       </FormItem>
@@ -328,7 +328,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                           <PlatformInput 
                             placeholder="https://..." 
                             {...field} 
-                            value={field.value || '')} 
+                            value={field.value || ''} 
                             autoCapitalize="none"
                           />
                         </FormControl>
@@ -347,7 +347,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                           <PlatformInput 
                             placeholder="https://..." 
                             {...field} 
-                            value={field.value || '')} 
+                            value={field.value || ''} 
                             autoCapitalize="none"
                           />
                         </FormControl>
@@ -560,7 +560,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                             type="email" 
                             placeholder="owner@salon.com" 
                             {...field} 
-                            value={field.value || '')} 
+                            value={field.value || ''} 
                             autoCapitalize="none"
                           />
                         </FormControl>
@@ -578,7 +578,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                         <FormControl>
                           <PlatformInput 
                             placeholder="(555) 123-4567" 
-                            value={field.value || '')} 
+                            value={field.value || ''} 
                             onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
                           />
                         </FormControl>
@@ -598,7 +598,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-300">Previous Software</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || '')}>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select previous software" />

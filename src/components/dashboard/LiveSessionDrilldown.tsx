@@ -97,7 +97,7 @@ export function LiveSessionDrilldown({
             <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1.5">
-            {sessionCount} appointment{sessionCount !== 1 ? 's' : '')} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : '')}` : ''} working
+            {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : '')}` : ''} working
           </DialogDescription>
         </DialogHeader>
 

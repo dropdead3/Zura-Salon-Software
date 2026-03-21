@@ -617,7 +617,7 @@ export default function Schedule() {
                 closureReason={hoursInfo.closureReason}
                 assistedAppointmentIds={assistedAppointmentIds}
                 appointmentsWithAssistants={appointmentsWithAssistants}
-                colorBy={preferences.color_by as 'status' | 'service' | 'stylist')}
+                colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
                 serviceLookup={serviceLookup}
                 assistantNamesMap={assistantNamesMap}
                 assistantProfilesMap={assistantProfilesMap}
@@ -641,7 +641,7 @@ export default function Schedule() {
               selectedAppointmentId={selectedAppointment?.id}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy={preferences.color_by as 'status' | 'service' | 'stylist')}
+              colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
                assistantNamesMap={assistantNamesMap}
                  assistantProfilesMap={assistantProfilesMap}
@@ -666,7 +666,7 @@ export default function Schedule() {
               locationHolidayClosures={selectedLocationData?.holiday_closures}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy={preferences.color_by as 'status' | 'service' | 'stylist')}
+              colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}
@@ -853,7 +853,7 @@ export default function Schedule() {
           }
         }}
         date={bookingDefaults.date || currentDate}
-        time={bookingDefaults.time || '09:00')}
+        time={bookingDefaults.time || '09:00'}
         defaultLocationId={selectedLocation}
         defaultStylistId={bookingDefaults.stylistId}
         onBookingComplete={(bookedDate) => {

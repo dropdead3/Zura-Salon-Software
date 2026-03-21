@@ -119,7 +119,7 @@ export function AutoJoinRulesTab() {
                       )}
                     >
                       #{channel.name}
-                      {channel.type === 'location' && ' (location)')}
+                      {channel.type === 'location' && ' (location)'}
                     </Label>
                   </div>
                 );

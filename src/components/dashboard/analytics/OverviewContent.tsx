@@ -170,7 +170,7 @@ export function OverviewContent({
                 <p className="text-xs text-muted-foreground">
                   {peakDay.date
                     ? `Peak: ${new Date(peakDay.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} (${peakDay.count})`
-                    : 'No peak day data')}
+                    : 'No peak day data'}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Rebook rate: <span className="tabular-nums text-foreground">{summary.rebookRate.toFixed(1)}%</span>
@@ -210,7 +210,7 @@ export function OverviewContent({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   <span className="tabular-nums text-foreground">{retention?.newClients || 0}</span> new
-                  {' / ')}
+                  {' / '}
                   Retention: <span className="tabular-nums text-foreground">{retention?.retentionRate.toFixed(0) || 0}%</span>
                 </p>
                 {(retention?.atRiskClients || 0) > 0 ? (
@@ -315,7 +315,7 @@ export function OverviewContent({
                 <p className="text-xs text-muted-foreground">
                   {capacityData
                     ? `${capacityData.totalBookedHours}h booked / ${capacityData.gapHours.toFixed(0)}h unused`
-                    : 'No capacity data')}
+                    : 'No capacity data'}
                 </p>
               </div>
             )}

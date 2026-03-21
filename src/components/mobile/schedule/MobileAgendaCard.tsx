@@ -115,7 +115,7 @@ export function MobileAgendaCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <p className="font-medium truncate">
-                {appointment.client_name || 'Unknown Client')}
+                {appointment.client_name || 'Unknown Client'}
               </p>
               <Badge className={cn('text-[10px] shrink-0', statusConfig.color)}>
                 <StatusIcon className="h-2.5 w-2.5 mr-1" />
@@ -156,7 +156,7 @@ export function MobileAgendaCard({
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{appointment.client_name || 'Unknown')}</p>
+              <p className="font-medium">{appointment.client_name || 'Unknown'}</p>
               <Badge className={cn('mt-1', statusConfig.color)}>
                 <StatusIcon className="h-3 w-3 mr-1" />
                 {statusConfig.label}

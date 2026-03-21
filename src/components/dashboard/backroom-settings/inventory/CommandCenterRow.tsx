@@ -381,7 +381,7 @@ export function CommandCenterRow({
                 ? 'Critical'
                 : row.severity === 'low'
                   ? 'Low Stock'
-                  : 'In Stock')}
+                  : 'In Stock'}
           </Badge>
         </TableCell>
 

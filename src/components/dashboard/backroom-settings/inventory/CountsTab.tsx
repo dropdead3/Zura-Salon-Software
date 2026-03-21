@@ -408,15 +408,15 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                             <span className={session.total_variance_units < 0 ? 'text-destructive' : 'text-success'}>
                               {session.total_variance_units > 0 ? '+' : ''}{session.total_variance_units}
                             </span>
-                          ) : '0')}
+                          ) : '0'}
                         </TableCell>
                         <TableCell className="text-right hidden md:table-cell tabular-nums">
                           {session.total_variance_cost !== 0 ? (
                             <span className="text-destructive">{formatCurrency(Math.abs(session.total_variance_cost))}</span>
-                          ) : '—')}
+                          ) : '—'}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-muted-foreground text-sm truncate max-w-[200px]">
-                          {session.notes || '—')}
+                          {session.notes || '—'}
                         </TableCell>
                         <TableCell className="w-10">
                           {isActive && (
@@ -460,7 +460,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                   {shrinkage.map((item) => (
                     <TableRow key={item.productId}>
                       <TableCell className={tokens.body.emphasis}>{item.productName}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{item.category || '—')}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{item.category || '—'}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatNumber(item.expectedQty)}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatNumber(item.countedQty)}</TableCell>
                       <TableCell className="text-right tabular-nums text-destructive font-medium">

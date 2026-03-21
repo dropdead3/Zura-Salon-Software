@@ -172,7 +172,7 @@ export function KioskConfirmScreen() {
                 >
                   {appointments.length === 1 
                     ? 'Tap to confirm your appointment'
-                    : 'Select your appointment to check in')}
+                    : 'Select your appointment to check in'}
                 </motion.p>
               </motion.div>
             )}
@@ -226,7 +226,7 @@ export function KioskConfirmScreen() {
                         className="text-2xl font-medium mb-2 truncate"
                         style={{ color: textColor }}
                       >
-                        {appointment.service_name || 'Appointment')}
+                        {appointment.service_name || 'Appointment'}
                       </div>
                       
                       <div className="flex items-center gap-4 flex-wrap">

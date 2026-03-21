@@ -278,7 +278,7 @@ export function NewHireWizardContent() {
                           <p className="font-medium text-sm">
                             {payrollConnected
                               ? `${connectedProvider === 'gusto' ? 'Gusto' : connectedProvider === 'quickbooks' ? 'QuickBooks' : connectedProvider} Payroll`
-                              : 'Payroll Provider')}
+                              : 'Payroll Provider'}
                           </p>
                           <Badge variant={payrollConnected ? "default" : "secondary"} className="text-[10px]">
                             {payrollConnected ? 'Connected' : 'Not Connected'}
@@ -289,7 +289,7 @@ export function NewHireWizardContent() {
                             ? 'Offer letter, W-4, I-9, and direct deposit will be handled via Gusto'
                             : payrollConnected && connectedProvider === 'quickbooks'
                             ? 'Employee setup, tax forms, and direct deposit will be handled via QuickBooks Payroll'
-                            : 'Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding')}
+                            : 'Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding'}
                         </p>
                       </div>
                     </div>

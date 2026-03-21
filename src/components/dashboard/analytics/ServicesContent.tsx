@@ -318,7 +318,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
         <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket')} onClick={() => toggleKpi('ticket'} />
         <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph')} onClick={() => toggleKpi('rph'} />
       </div>
-      <DrillDown open={expandedKpi === 'revenue')}>
+      <DrillDown open={expandedKpi === 'revenue'}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <p className="text-xs font-medium text-muted-foreground mb-3">Revenue by Category</p>
           <div className="space-y-2">
@@ -334,13 +334,13 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           </div>
         </CardContent></Card>
       </DrillDown>
-      <DrillDown open={expandedKpi === 'active')}>
+      <DrillDown open={expandedKpi === 'active'}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <p className="text-xs font-medium text-muted-foreground mb-2">Services booked this period: <span className="font-medium">{data?.activeServiceCount || 0}</span></p>
           <p className="text-xs text-muted-foreground">The count of distinct services that had at least one booking. Review your full service menu to identify dormant services that may be candidates for retirement or promotion.</p>
         </CardContent></Card>
       </DrillDown>
-      <DrillDown open={expandedKpi === 'ticket')}>
+      <DrillDown open={expandedKpi === 'ticket'}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -354,7 +354,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           </div>
         </CardContent></Card>
       </DrillDown>
-      <DrillDown open={expandedKpi === 'rph')}>
+      <DrillDown open={expandedKpi === 'rph'}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>

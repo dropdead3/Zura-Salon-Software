@@ -355,7 +355,7 @@ export function ScheduleHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : '')}` : 'Assistant Blocks'}</p>
+                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -377,7 +377,7 @@ export function ScheduleHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : '')}` : 'No drafts'}</p>
+                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : ''}` : 'No drafts'}</p>
               </TooltipContent>
             </Tooltip>
           )}

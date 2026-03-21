@@ -566,7 +566,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    {pinErrorMessage || 'Incorrect PIN')}. Please try again.
+                    {pinErrorMessage || 'Incorrect PIN'}. Please try again.
                   </motion.p>
                 )}
 
@@ -585,7 +585,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 <div className="grid grid-cols-3 gap-3">
                   {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key) => (
                     <motion.button
-                      key={key || 'empty')}
+                      key={key || 'empty'}
                       className={`w-16 h-16 rounded-xl text-xl font-medium transition-colors ${
                         key === '' 
                           ? 'invisible' 
@@ -673,7 +673,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                             ? 'Follows device system preference' 
                             : localSettings.theme_mode === 'dark'
                             ? 'Always display in dark mode'
-                            : 'Always display in light mode')}
+                            : 'Always display in light mode'}
                         </p>
                       </SettingGroup>
 
@@ -704,7 +704,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                         <p className="text-xs text-white/40 mt-2">
                           {localSettings.display_orientation === 'portrait' 
                             ? 'Vertical tablet placement (taller than wide)' 
-                            : 'Horizontal tablet placement (wider than tall)')}
+                            : 'Horizontal tablet placement (wider than tall)'}
                         </p>
                       </SettingGroup>
 
@@ -948,13 +948,13 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                             <div className="flex items-center gap-2">
                               <input
                                 type="color"
-                                value={localSettings.logo_color || '#000000')}
+                                value={localSettings.logo_color || '#000000'}
                                 onChange={(e) => updateLocalSetting('logo_color', e.target.value)}
                                 className="w-10 h-10 rounded-lg border border-white/20 cursor-pointer bg-transparent"
                               />
                               <input
                                 type="text"
-                                value={localSettings.logo_color || '')}
+                                value={localSettings.logo_color || ''}
                                 onChange={(e) => updateLocalSetting('logo_color', e.target.value || null)}
                                 placeholder="No color overlay"
                                 className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-mono"

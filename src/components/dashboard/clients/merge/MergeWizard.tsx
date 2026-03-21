@@ -98,10 +98,10 @@ export function MergeWizard({ preselectedClientIds, onComplete, onCancel }: Merg
             {STEPS[step]}
           </CardTitle>
           <CardDescription>
-            {step === 0 && 'Search and select 2 or more client profiles to merge.')}
-            {step === 1 && 'Choose which profile will be the primary (surviving) record.')}
-            {step === 2 && 'Review and resolve field conflicts between the selected profiles.')}
-            {step === 3 && 'Review the merge summary and confirm by typing MERGE.')}
+            {step === 0 && 'Search and select 2 or more client profiles to merge.'}
+            {step === 1 && 'Choose which profile will be the primary (surviving) record.'}
+            {step === 2 && 'Review and resolve field conflicts between the selected profiles.'}
+            {step === 3 && 'Review the merge summary and confirm by typing MERGE.'}
           </CardDescription>
         </CardHeader>
         <CardContent>

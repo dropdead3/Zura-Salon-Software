@@ -1003,7 +1003,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
               <AlertDialogDescription>
                 {(servicesByCategory[archiveCategoryName]?.length || 0) > 0
                   ? `This category and its ${servicesByCategory[archiveCategoryName]?.length} services will be archived. You can restore them later.`
-                  : 'This category will be archived. You can restore it later.')}
+                  : 'This category will be archived. You can restore it later.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

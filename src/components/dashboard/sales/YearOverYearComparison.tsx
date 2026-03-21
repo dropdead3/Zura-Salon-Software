@@ -218,7 +218,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
                 tick={{ fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
               />
               <Tooltip 
                 contentStyle={{ 

@@ -237,12 +237,12 @@ export default function AuditLogPage() {
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-foreground">
-                            {log.user_name || 'System')}
+                            {log.user_name || 'System'}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {log.organization_name || '-')}
+                        {log.organization_name || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {format(new Date(log.created_at), 'MMM d, h:mm a')}
@@ -315,11 +315,11 @@ export default function AuditLogPage() {
             </div>
             <div>
               <label className={tokens.heading.subsection}>User</label>
-              <p className="mt-1 text-foreground">{selectedLog.user_name || 'System')}</p>
+              <p className="mt-1 text-foreground">{selectedLog.user_name || 'System'}</p>
             </div>
             <div>
               <label className={tokens.heading.subsection}>Organization</label>
-              <p className="mt-1 text-foreground">{selectedLog.organization_name || '-')}</p>
+              <p className="mt-1 text-foreground">{selectedLog.organization_name || '-'}</p>
             </div>
             <div>
               <label className={tokens.heading.subsection}>Timestamp</label>

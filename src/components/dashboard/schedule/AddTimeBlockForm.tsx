@@ -192,7 +192,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
       {/* Date & Time summary */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
         <Clock className="h-3.5 w-3.5" />
-        <span>{format(date, 'EEE, MMM d')} · {startTime}{!isFullDay && ` – ${endTime}`}{isFullDay && ' (Full Day)')}</span>
+        <span>{format(date, 'EEE, MMM d'} · {startTime}{!isFullDay && ` – ${endTime}`}{isFullDay && ' (Full Day)')}</span>
       </div>
 
       {/* Reason Pills */}
@@ -252,7 +252,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
                   ? (teamMembers.find(m => m.user_id === selectedUserId)?.display_name ||
                      teamMembers.find(m => m.user_id === selectedUserId)?.full_name ||
                      'Select team member')
-                  : 'Select team member')}
+                  : 'Select team member'}
                 <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -265,7 +265,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
                     {teamMembers.map(member => (
                       <CommandItem
                         key={member.user_id}
-                        value={member.display_name || member.full_name || '')}
+                        value={member.display_name || member.full_name || ''}
                         onSelect={() => {
                           setSelectedUserId(member.user_id);
                           setStaffSearchOpen(false);

@@ -585,7 +585,7 @@ export function EmailTemplatesManager() {
           {/* Sticky Footer */}
           <div className="sticky bottom-0 px-6 py-4 bg-background border-t mt-4 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {hasUnsavedChanges && 'Remember to save your changes')}
+              {hasUnsavedChanges && 'Remember to save your changes'}
             </div>
             <div className="flex gap-2">
               <Button 

@@ -154,7 +154,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
                 <SelectContent>
                   {pagesConfig?.pages.map(p => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.title} {!p.enabled && '(disabled)')}
+                      {p.title} {!p.enabled && '(disabled)'}
                     </SelectItem>
                   ))}
                 </SelectContent>

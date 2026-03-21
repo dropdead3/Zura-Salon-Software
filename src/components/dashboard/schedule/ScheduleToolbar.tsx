@@ -241,7 +241,7 @@ export function ScheduleToolbar({
               <div>
                 <h4 className="font-medium text-sm mb-2">Location</h4>
                 <Select
-                  value={filters.locationIds[0] || 'all')}
+                  value={filters.locationIds[0] || 'all'}
                   onValueChange={(v) => setFilters({
                     ...filters,
                     locationIds: v === 'all' ? [] : [v],
@@ -264,7 +264,7 @@ export function ScheduleToolbar({
               <div>
                 <h4 className="font-medium text-sm mb-2">Stylist</h4>
                 <Select
-                  value={filters.stylistIds[0] || 'all')}
+                  value={filters.stylistIds[0] || 'all'}
                   onValueChange={(v) => setFilters({
                     ...filters,
                     stylistIds: v === 'all' ? [] : [v],

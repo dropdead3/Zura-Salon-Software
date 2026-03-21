@@ -109,7 +109,7 @@ export function IncidentBanner() {
                 config.text
               )}
             >
-              {incident.link_text || 'Learn more')}
+              {incident.link_text || 'Learn more'}
               <ExternalLink className="w-3 h-3" />
             </a>
           )}

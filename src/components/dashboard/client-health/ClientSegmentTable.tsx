@@ -148,8 +148,8 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
                     />
                   </TableCell>
                   <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs">{client.email || '—')}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">{client.phone || '—')}</TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs">{client.email || '—'}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">{client.phone || '—'}</TableCell>
                   <TableCell className="text-xs">
                     {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : '—'}
                   </TableCell>

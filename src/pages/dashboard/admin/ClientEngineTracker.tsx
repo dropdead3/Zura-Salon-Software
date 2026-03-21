@@ -585,7 +585,7 @@ export default function ClientEngineTracker() {
                           <p className="text-sm font-medium">
                             {participant.enrollment.last_completion_date 
                               ? formatDate(new Date(participant.enrollment.last_completion_date), 'MMM d, yyyy')
-                              : 'Never')}
+                              : 'Never'}
                           </p>
                         </div>
                         <div>
@@ -630,7 +630,7 @@ export default function ClientEngineTracker() {
                       {/* Coach Notes */}
                       <CoachNotesSection 
                         enrollmentId={participant.enrollment.id}
-                        participantName={participant.profile.display_name || participant.profile.full_name || 'Participant')}
+                        participantName={participant.profile.display_name || participant.profile.full_name || 'Participant'}
                       />
                     </div>
                   </CollapsibleContent>
@@ -646,7 +646,7 @@ export default function ClientEngineTracker() {
               <p className="text-sm text-muted-foreground">
                 {searchQuery || statusFilter !== 'all' 
                   ? 'Try adjusting your filters'
-                  : 'No one has enrolled in the Client Engine program yet.')}
+                  : 'No one has enrolled in the Client Engine program yet.'}
               </p>
             </Card>
           )}
@@ -700,7 +700,7 @@ export default function ClientEngineTracker() {
                           <p className="text-xs text-muted-foreground">{request.user_email}</p>
                         </div>
                         <Badge variant="secondary" className="ml-2 text-[10px]">
-                          Day {request.current_day || '?')}
+                          Day {request.current_day || '?'}
                         </Badge>
                       </div>
 

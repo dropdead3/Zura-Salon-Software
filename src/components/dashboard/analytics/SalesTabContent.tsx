@@ -318,7 +318,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                             axisLine={false}
                           />
                           <YAxis 
-                            tickFormatter={(value) => formatCurrencyUtil(value / 1000, undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) + 'k')}
+                            tickFormatter={(value) => formatCurrencyUtil(value / 1000, undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) + 'k'}
                             tick={{ fontSize: 12 }}
                             tickLine={false}
                             axisLine={false}

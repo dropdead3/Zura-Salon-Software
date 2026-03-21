@@ -139,19 +139,19 @@ export function PromoRedemptionList({ redemptions, isLoading }: PromoRedemptionL
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm">{r.client_name || 'Walk-in')}</TableCell>
+                  <TableCell className="text-sm">{r.client_name || 'Walk-in'}</TableCell>
                   <TableCell className="text-right text-sm font-medium text-amber-600">
                     <BlurredAmount>-{formatCurrency(r.discount_applied)}</BlurredAmount>
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {r.original_amount != null ? (
                       <BlurredAmount>{formatCurrency(r.original_amount)}</BlurredAmount>
-                    ) : '—')}
+                    ) : '—'}
                   </TableCell>
                   <TableCell className="text-right text-sm font-medium">
                     {r.final_amount != null ? (
                       <BlurredAmount>{formatCurrency(r.final_amount)}</BlurredAmount>
-                    ) : '—')}
+                    ) : '—'}
                   </TableCell>
                 </TableRow>
               );

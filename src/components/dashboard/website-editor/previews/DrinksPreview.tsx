@@ -25,12 +25,12 @@ function DrinkCard({ drink }: { drink: Drink }) {
       
       {/* Name */}
       <h4 className="text-xl font-display text-foreground text-center leading-tight">
-        {drink.name || 'Drink Name')}
+        {drink.name || 'Drink Name'}
       </h4>
       
       {/* Ingredients */}
       <p className="text-sm text-muted-foreground text-center leading-relaxed">
-        {drink.ingredients || 'Ingredients...')}
+        {drink.ingredients || 'Ingredients...'}
       </p>
     </div>
   );

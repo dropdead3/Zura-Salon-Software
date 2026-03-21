@@ -90,7 +90,7 @@ export function AddLocationSeatsDialog({
           <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Current plan</span>
-              <span className="font-medium">{capacity.planName || 'Standard')}</span>
+              <span className="font-medium">{capacity.planName || 'Standard'}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Included locations</span>

@@ -205,7 +205,7 @@ export function OnlineStoreProductsTable() {
                 return (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{product.brand || '—')}</TableCell>
+                    <TableCell className="text-muted-foreground">{product.brand || '—'}</TableCell>
                     <TableCell className="text-right">
                       {product.retail_price != null ? formatCurrency(product.retail_price) : '—'}
                     </TableCell>

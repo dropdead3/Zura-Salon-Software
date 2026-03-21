@@ -130,7 +130,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
                   <YAxis 
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     tickLine={{ stroke: 'hsl(var(--border))' }}
-                    tickFormatter={(value) => formatCurrencyWholeUtil(value / 1000) + 'k')}
+                    tickFormatter={(value) => formatCurrencyWholeUtil(value / 1000) + 'k'}
                   />
                   <Tooltip
                     contentStyle={{

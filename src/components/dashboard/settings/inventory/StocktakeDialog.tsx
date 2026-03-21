@@ -246,7 +246,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
           <p className="text-xs text-muted-foreground mt-1">
             {scanMode
               ? 'Scan barcodes or type SKUs to quickly count products.'
-              : 'Enter actual quantities for each product. Only products with entered counts will be recorded.')}
+              : 'Enter actual quantities for each product. Only products with entered counts will be recorded.'}
           </p>
         </DialogHeader>
 

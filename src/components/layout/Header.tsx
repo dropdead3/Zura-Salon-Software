@@ -289,7 +289,7 @@ export function Header() {
               {announcementSettings.message_suffix}
             </p>
             <a 
-              href={announcementSettings.cta_url || '#')} 
+              href={announcementSettings.cta_url || '#'} 
               target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
               rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
               className={cn("group inline-flex items-center gap-1.5 text-sm font-sans font-medium uppercase tracking-wider hover:opacity-70 transition-opacity", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white" : "text-foreground")}

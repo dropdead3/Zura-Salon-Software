@@ -306,8 +306,8 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle className="text-sm font-medium">Booking Conflict Detected</AlertTitle>
                 <AlertDescription className="text-xs">
-                  You have a Phorest appointment ({phorestConflict.service_name || 'Service')}) 
-                  with {phorestConflict.client_name || 'a client')} from {phorestConflict.start_time?.slice(0, 5)} - {phorestConflict.end_time?.slice(0, 5)}.
+                  You have a Phorest appointment ({phorestConflict.service_name || 'Service'}) 
+                  with {phorestConflict.client_name || 'a client'} from {phorestConflict.start_time?.slice(0, 5)} - {phorestConflict.end_time?.slice(0, 5)}.
                   Consider choosing a different time.
                 </AlertDescription>
               </Alert>

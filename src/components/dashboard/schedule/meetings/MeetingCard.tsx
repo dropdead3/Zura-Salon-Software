@@ -90,7 +90,7 @@ export function MeetingGridCard({
       {height > 70 && (
         <div className="flex items-center gap-1 mt-1">
           <Badge variant="outline" className="text-[9px] h-4 px-1 border-chart-1/30 text-chart-1">
-            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting')}
+            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting'}
           </Badge>
         </div>
       )}
@@ -129,7 +129,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
           <Users className="h-3.5 w-3.5 text-chart-1 shrink-0" />
           <span className="text-sm font-medium font-sans truncate">{meeting.title}</span>
           <Badge variant="outline" className="text-[10px] border-chart-1/30 text-chart-1 shrink-0">
-            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting')}
+            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting'}
           </Badge>
         </div>
         <div className="flex items-center gap-2 mt-1">

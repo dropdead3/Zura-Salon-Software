@@ -187,7 +187,7 @@ function FormulaLineCard({
           </button>
           <input
             type="number"
-            value={line.targetWeight || '')}
+            value={line.targetWeight || ''}
             onChange={(e) => onUpdate({ targetWeight: parseFloat(e.target.value) || 0 })}
             className="w-12 h-full text-center text-xs bg-transparent text-[hsl(var(--platform-foreground))] focus:outline-none"
           />

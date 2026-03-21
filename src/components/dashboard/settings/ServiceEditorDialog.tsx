@@ -135,7 +135,7 @@ export function ServiceEditorDialog({
           <DialogDescription>
             {isCreateMode
               ? 'Create a new service for your menu.'
-              : 'Update service details, level pricing, and stylist overrides.')}
+              : 'Update service details, level pricing, and stylist overrides.'}
           </DialogDescription>
         </DialogHeader>
 

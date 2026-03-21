@@ -113,7 +113,7 @@ export default function PTOManager() {
                         <CardTitle className="text-base">{policy.name}</CardTitle>
                         <div className="flex gap-1.5">
                           {policy.is_default && <Badge variant="default">Default</Badge>}
-                          <Badge variant={policy.is_active ? 'secondary' : 'outline')}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
+                          <Badge variant={policy.is_active ? 'secondary' : 'outline'}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
                         </div>
                       </div>
                     </CardHeader>

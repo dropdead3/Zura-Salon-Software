@@ -138,7 +138,7 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                           <span className="line-through text-muted-foreground">
                             {formatCurrency(ps.original_price)}
                           </span>
-                        ) : '—')}
+                        ) : '—'}
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-primary">

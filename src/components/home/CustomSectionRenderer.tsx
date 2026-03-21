@@ -33,7 +33,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       const bg = config.background === 'muted' ? 'bg-muted' : config.background === 'primary' ? 'bg-primary/5' : '';
       return (
         <section className={cn('py-16 px-4', bg)}>
-          <div className={cn('max-w-3xl mx-auto', `text-${config.alignment || 'center')}`)}>
+          <div className={cn('max-w-3xl mx-auto', `text-${config.alignment || 'center'}`)}>
             {config.heading && <h2 className="text-3xl font-display font-medium mb-4">{config.heading as string}</h2>}
             {config.body && <p className="text-muted-foreground whitespace-pre-line">{config.body as string}</p>}
           </div>
@@ -57,7 +57,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
             </div>
             <div className={isRight ? 'order-1 md:order-2' : ''}>
               {config.image_url && (
-                <img src={config.image_url as string} alt={config.heading as string || 'Section image')} className="rounded-xl w-full object-cover" />
+                <img src={config.image_url as string} alt={config.heading as string || 'Section image'} className="rounded-xl w-full object-cover" />
               )}
             </div>
           </div>

@@ -86,7 +86,7 @@ function DeviceStatusCell({ status }: { status?: KioskDeviceStatus }) {
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
-          <p className="font-medium">{status.deviceName || 'Unknown Device')}</p>
+          <p className="font-medium">{status.deviceName || 'Unknown Device'}</p>
           <p className="text-muted-foreground">Last seen: {lastSeenText}</p>
         </TooltipContent>
       </Tooltip>

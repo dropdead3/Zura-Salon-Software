@@ -277,7 +277,7 @@ export function usePhorestClientSearch(searchQuery: string, limit = 20) {
 
       return (data || []).map(c => ({
         ...c,
-        name: c.name || `${c.first_name || '')} ${c.last_name || '')}`.trim(),
+        name: c.name || `${c.first_name || ''} ${c.last_name || '')}`.trim(),
         mobile: c.phone,
         last_visit_date: c.last_visit,
       }));

@@ -45,7 +45,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
       if (!error && data?.length) {
         const clients = data.map(c => ({
           ...c,
-          name: c.name || `${c.first_name || '')} ${c.last_name || '')}`.trim(),
+          name: c.name || `${c.first_name || ''} ${c.last_name || '')}`.trim(),
           mobile: c.phone,
           last_visit_date: c.last_visit,
         })) as unknown as MergeClient[];
@@ -88,7 +88,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
       if (ne) {
         emailMap.set(ne, [...(emailMap.get(ne) || []), c.id]);
       }
-      const fullName = (c.name || `${c.first_name || '')} ${c.last_name || '')}`.trim()).toLowerCase();
+      const fullName = (c.name || `${c.first_name || ''} ${c.last_name || '')}`.trim()).toLowerCase();
       if (fullName) {
         nameMap.set(fullName, [...(nameMap.get(fullName) || []), c.id]);
       }
@@ -104,7 +104,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
       if (ne && (emailMap.get(ne)?.length || 0) > 1) {
         reasons.push('email');
       }
-      const fullName = (c.name || `${c.first_name || '')} ${c.last_name || '')}`.trim()).toLowerCase();
+      const fullName = (c.name || `${c.first_name || ''} ${c.last_name || '')}`.trim()).toLowerCase();
       if (fullName && (nameMap.get(fullName)?.length || 0) > 1 && reasons.length === 0) {
         reasons.push('name');
       }

@@ -78,7 +78,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
       </div>
 
       {/* Modify / Decline dialog */}
-      <Dialog open={!!dialogType && dialogType !== 'approved' && dialogType !== 'snoozed')} onOpenChange={() => setDialogType(null)}>
+      <Dialog open={!!dialogType && dialogType !== 'approved' && dialogType !== 'snoozed'} onOpenChange={() => setDialogType(null)}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>

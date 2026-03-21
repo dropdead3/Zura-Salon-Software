@@ -224,7 +224,7 @@ export function PagesManager() {
                 <TableRow key={page.id}>
                   <TableCell className="text-sm font-medium">{page.title}</TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">
-                    /{page.slug || '(home)')}
+                    /{page.slug || '(home)'}
                   </TableCell>
                   <TableCell>
                     <Badge

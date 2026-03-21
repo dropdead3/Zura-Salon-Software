@@ -147,7 +147,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
               <div className="space-y-3">
                 <Label>Select Sender Role</Label>
                 <RadioGroup
-                  value={selectedRole || '')}
+                  value={selectedRole || ''}
                   onValueChange={(value) => setSelectedRole(value as AppRole)}
                   className="space-y-2"
                 >

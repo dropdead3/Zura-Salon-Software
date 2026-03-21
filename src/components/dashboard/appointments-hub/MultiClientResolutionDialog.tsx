@@ -147,7 +147,7 @@ export function MultiClientResolutionDialog({
                         <div key={appt.id} className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>{formatApptTime(appt)}</span>
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize">
-                            {appt.status || 'booked')}
+                            {appt.status || 'booked'}
                           </Badge>
                         </div>
                       ))}

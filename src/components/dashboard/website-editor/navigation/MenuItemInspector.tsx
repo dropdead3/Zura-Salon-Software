@@ -137,7 +137,7 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
                 <SelectItem value="">— None (use URL) —</SelectItem>
                 {pagesConfig?.pages.map(p => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.title} {!p.enabled && '(disabled)')}
+                    {p.title} {!p.enabled && '(disabled)'}
                   </SelectItem>
                 ))}
               </SelectContent>

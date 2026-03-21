@@ -708,7 +708,7 @@ export function AggregateSalesCard({
             All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}
           </h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are')} closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}.
+            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are'} closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}.
           </p>
         </div>
       ) : (
@@ -927,10 +927,10 @@ export function AggregateSalesCard({
 
                         {/* Gap analysis drill-down */}
                         <RevenueGapDrilldown
-                          isOpen={activeDrilldown === 'expectedGap')}
+                          isOpen={activeDrilldown === 'expectedGap'}
                           data={gapAnalysis}
                           isLoading={gapLoading}
-                          showDates={dateRange !== 'yesterday')}
+                          showDates={dateRange !== 'yesterday'}
                         />
                       </>
                     );
@@ -1009,7 +1009,7 @@ export function AggregateSalesCard({
                     activeDrilldown === 'revenue'
                       ? "ring-1 ring-primary/20 bg-primary/5 border-primary/30"
                       : "border-border/40 hover:border-border/80 dark:hover:border-border/60"
-                  )} onClick={() => toggleDrilldown('revenue')}>
+                  )} onClick={() => toggleDrilldown('revenue'}>
                     <div>
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <Scissors className="w-3.5 h-3.5 text-primary" />
@@ -1136,7 +1136,7 @@ export function AggregateSalesCard({
 
             {/* Revenue by Category Drill-Down */}
             <RevenueByCategoryPanel
-              isOpen={activeDrilldown === 'revenue')}
+              isOpen={activeDrilldown === 'revenue'}
               dateFrom={dateFilters.dateFrom}
               dateTo={dateFilters.dateTo}
               locationId={filterContext?.locationId}
@@ -1298,14 +1298,14 @@ export function AggregateSalesCard({
 
           {/* Transactions by Hour Drill-Down */}
           <TransactionsByHourPanel
-            isOpen={activeDrilldown === 'transactions')}
+            isOpen={activeDrilldown === 'transactions'}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
           />
           {/* Client Type Split → Rebooking (Level 2) */}
           <ClientTypeSplitPanel
-            isOpen={activeDrilldown === 'transactions')}
+            isOpen={activeDrilldown === 'transactions'}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
@@ -1313,14 +1313,14 @@ export function AggregateSalesCard({
 
           {/* Ticket Distribution Drill-Down */}
           <TicketDistributionPanel
-            isOpen={activeDrilldown === 'avgTicket')}
+            isOpen={activeDrilldown === 'avgTicket'}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
           />
           {/* Avg Ticket by Stylist → Service Mix (Level 2) */}
           <AvgTicketByStylistPanel
-            isOpen={activeDrilldown === 'avgTicket')}
+            isOpen={activeDrilldown === 'avgTicket'}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
@@ -1328,7 +1328,7 @@ export function AggregateSalesCard({
 
           {/* Rev/Hour by Stylist Drill-Down */}
           <RevPerHourByStylistPanel
-            isOpen={activeDrilldown === 'revPerHour')}
+            isOpen={activeDrilldown === 'revPerHour'}
             stylistData={stylistData}
             totalServiceHours={metrics?.totalServiceHours || 0}
             isLoading={stylistLoading}
@@ -1379,10 +1379,10 @@ export function AggregateSalesCard({
                     hoursJson={selectedLoc?.hours_json ?? mergedHoursJson}
                     holidayClosures={selectedLoc?.holiday_closures ?? mergedHolidays}
                     onClick={() => toggleDrilldown('goals')}
-                    isExpanded={activeDrilldown === 'goals')}
+                    isExpanded={activeDrilldown === 'goals'}
                   />
                   <GoalLocationsDrilldown
-                    isOpen={activeDrilldown === 'goals')}
+                    isOpen={activeDrilldown === 'goals'}
                     period={goalPeriodForCard}
                   />
                 </>

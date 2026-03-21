@@ -138,13 +138,13 @@ function CardOverlays({
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(to bottom right, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), transparent calc(50% + 1px))`,
+              background: `linear-gradient(to bottom right, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), transparent calc(50% + 1px))`,
             }}
           />
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(to bottom left, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor')}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), transparent calc(50% + 1px))`,
+              background: `linear-gradient(to bottom left, transparent calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), transparent calc(50% + 1px))`,
             }}
           />
         </div>

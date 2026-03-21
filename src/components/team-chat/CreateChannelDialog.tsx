@@ -216,7 +216,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {member.displayName || member.fullName || 'Unknown')}
+                            {member.displayName || member.fullName || 'Unknown'}
                           </p>
                           {member.email && (
                             <p className="text-xs text-muted-foreground truncate">

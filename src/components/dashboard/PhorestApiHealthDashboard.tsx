@@ -312,7 +312,7 @@ export function PhorestApiHealthDashboard() {
                     <p className="font-medium truncate">
                       {endpoint.lastSuccess 
                         ? formatDistanceToNow(endpoint.lastSuccess, { addSuffix: true })
-                        : 'Never')}
+                        : 'Never'}
                     </p>
                   </div>
                   <div>
@@ -379,7 +379,7 @@ export function PhorestApiHealthDashboard() {
                   </TableCell>
                   <TableCell className="max-w-[300px]">
                     <p className="text-sm text-destructive truncate">
-                      {failure.error_message || 'Unknown error')}
+                      {failure.error_message || 'Unknown error'}
                     </p>
                   </TableCell>
                 </TableRow>

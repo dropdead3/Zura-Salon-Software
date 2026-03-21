@@ -319,7 +319,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
 
         {notes?.length === 0 && !isAdding && (
           <p className="text-muted-foreground text-sm text-center py-4">
-            No notes yet. {isCoach && 'Click "Add Note" to get started.')}
+            No notes yet. {isCoach && 'Click "Add Note" to get started.'}
           </p>
         )}
 

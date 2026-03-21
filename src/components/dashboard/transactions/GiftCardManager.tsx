@@ -252,10 +252,10 @@ export function GiftCardManager() {
                     {formatCurrency(Number(card.current_balance))}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {card.purchaser_name || '-')}
+                    {card.purchaser_name || '-'}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {card.recipient_name || '-')}
+                    {card.recipient_name || '-'}
                   </TableCell>
                   <TableCell>
                     {!card.is_active ? (

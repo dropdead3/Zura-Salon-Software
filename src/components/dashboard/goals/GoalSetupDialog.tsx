@@ -215,7 +215,7 @@ export function GoalSetupDialog({
               ? 'Update the target for this goal.'
               : step === 'select'
                 ? 'Tap to select the goals that matter most to your salon.'
-                : 'Review and customize your targets. Targets are personalized from your data when available.')}
+                : 'Review and customize your targets. Targets are personalized from your data when available.'}
           </DialogDescription>
         </DialogHeader>
 

@@ -204,7 +204,7 @@ export function PriceSourcesTab() {
                   <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground-subtle))]">
                     {source.last_polled_at
                       ? new Date(source.last_polled_at).toLocaleDateString()
-                      : 'Never')}
+                      : 'Never'}
                   </TableCell>
                   <TableCell>
                     <Switch

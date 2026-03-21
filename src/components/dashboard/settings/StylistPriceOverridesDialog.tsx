@@ -154,7 +154,7 @@ export function StylistPriceOverridesDialog({
                       <div className="flex-1 min-w-0">
                         <p className={cn(tokens.body.emphasis, 'truncate')}>{emp.display_name || emp.full_name}</p>
                         <p className={tokens.body.muted}>
-                          {emp.stylist_level || 'No level')}
+                          {emp.stylist_level || 'No level'}
                           {levelPrice != null && ` · Level: $${levelPrice.toFixed(2)}`}
                         </p>
                       </div>
@@ -216,7 +216,7 @@ export function StylistPriceOverridesDialog({
                     >
                       <div className="flex-1 min-w-0">
                         <p className={cn(tokens.body.emphasis, 'truncate')}>{emp.display_name || emp.full_name}</p>
-                        <p className={tokens.body.muted}>{emp.stylist_level || 'No level')}</p>
+                        <p className={tokens.body.muted}>{emp.stylist_level || 'No level'}</p>
                       </div>
                       {addingEmployeeId === emp.id && (
                         <div className="flex items-center gap-2">

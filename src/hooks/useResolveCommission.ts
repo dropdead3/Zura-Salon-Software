@@ -115,7 +115,7 @@ export function useResolveCommission() {
           retailCommission: productRevenue * retailRate,
           totalCommission: serviceRevenue * serviceRate + productRevenue * retailRate,
           source: 'override',
-          sourceName: `Override: ${override.reason || 'Custom')}`,
+          sourceName: `Override: ${override.reason || 'Custom'}`,
         };
       }
     }

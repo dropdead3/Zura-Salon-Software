@@ -156,7 +156,7 @@ export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeH
                     <TableCell>
                       <Input
                         type="number"
-                        value={empHours.regularHours || '')}
+                        value={empHours.regularHours || ''}
                         onChange={(e) =>
                           updateHours(emp.employee_id, 'regularHours', Number(e.target.value))
                         }
@@ -168,7 +168,7 @@ export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeH
                     <TableCell>
                       <Input
                         type="number"
-                        value={empHours.overtimeHours || '')}
+                        value={empHours.overtimeHours || ''}
                         onChange={(e) =>
                           updateHours(emp.employee_id, 'overtimeHours', Number(e.target.value))
                         }

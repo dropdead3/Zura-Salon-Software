@@ -278,7 +278,7 @@ function GeneralTab() {
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={annLocal.bg_color || '#e8e3da')}
+                value={annLocal.bg_color || '#e8e3da'}
                 onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
                 className="w-8 h-8 rounded-full border border-border cursor-pointer p-0 overflow-hidden"
                 style={{ WebkitAppearance: 'none' }}
@@ -287,7 +287,7 @@ function GeneralTab() {
                 placeholder="#hexcolor"
                 autoCapitalize="off"
                 className="flex-1 font-mono text-xs"
-                value={annLocal.bg_color || '')}
+                value={annLocal.bg_color || ''}
                 onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
               />
             </div>
@@ -312,9 +312,9 @@ function GeneralTab() {
                 style={annLocal.bg_color ? { backgroundColor: annLocal.bg_color } : undefined}
               >
                 <div className={cn("font-sans", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white/80" : "text-foreground/80")}>
-                  <span>{annLocal.message_prefix || 'Are you a salon')}</span>{' '}
-                  <span className="font-medium">{annLocal.message_highlight || 'professional')}</span>{' '}
-                  <span>{annLocal.message_suffix || 'looking for our extensions?')}</span>
+                  <span>{annLocal.message_prefix || 'Are you a salon'}</span>{' '}
+                  <span className="font-medium">{annLocal.message_highlight || 'professional'}</span>{' '}
+                  <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
                 </div>
                 {annLocal.cta_text && (
                   <div className={cn("flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
@@ -345,7 +345,7 @@ function GeneralTab() {
                 placeholder={placeholder}
                 autoCapitalize="off"
                 className="flex-1"
-                value={socialLocal[key] || '')}
+                value={socialLocal[key] || ''}
                 onChange={(e) => setSocialLocal(prev => ({ ...prev, [key]: e.target.value }))}
               />
             </div>
@@ -519,7 +519,7 @@ function ThemeTab() {
             <div className="flex items-center gap-2">
               <LayoutGrid className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">
-                {TAB_LABELS[editorTab] || 'Website Editor')}
+                {TAB_LABELS[editorTab] || 'Website Editor'}
               </span>
             </div>
           </div>

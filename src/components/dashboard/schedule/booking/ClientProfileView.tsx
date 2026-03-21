@@ -85,7 +85,7 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
               )}
             </div>
             <div className="text-xs text-muted-foreground truncate">
-              {client.phone || client.email || 'No contact info')}
+              {client.phone || client.email || 'No contact info'}
             </div>
           </div>
         </div>

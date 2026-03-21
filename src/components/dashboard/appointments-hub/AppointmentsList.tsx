@@ -268,7 +268,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                   <CalendarRange className="h-3.5 w-3.5" />
                   {customRange.from
                     ? `${format(customRange.from, 'MMM d')}${customRange.to ? }` – ${format(customRange.to, 'MMM d')}` : ''}`
-                    : 'Pick dates')}
+                    : 'Pick dates'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start" side="bottom">
@@ -413,13 +413,13 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelection(appt.id)}
-                        aria-label={`Select ${appt.client_name || 'appointment')}`}
+                        aria-label={`Select ${appt.client_name || 'appointment'}`}
                       />
                     </TableCell>
                     <TableCell className="text-sm whitespace-nowrap">{formatDateDisplay(appt.appointment_date)}</TableCell>
                     <TableCell className="text-sm whitespace-nowrap hidden md:table-cell">{formatTime12h(appt.start_time)}</TableCell>
-                    <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in')}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{appt.client_phone || '—')}</TableCell>
+                    <TableCell className="text-sm font-medium">{appt.client_name || 'Walk-in'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{appt.client_phone || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate hidden 2xl:table-cell">
                       {appt.client_email ? (
                         <Tooltip>
@@ -428,10 +428,10 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                           </TooltipTrigger>
                           <TooltipContent>{appt.client_email}</TooltipContent>
                         </Tooltip>
-                      ) : '—')}
+                      ) : '—'}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden xl:table-cell">{appt.service_name || '—')}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—')}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground truncate max-w-[200px] hidden xl:table-cell">{appt.service_name || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{appt.stylist_name || '—'}</TableCell>
                     <TableCell className="whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <Badge variant="outline" className={cn('text-[10px]', statusBadge.bg, statusBadge.text, statusBadge.border)}>
@@ -452,12 +452,12 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                     <TableCell className="text-sm text-right hidden lg:table-cell whitespace-nowrap">
                       {appt.total_price != null ? (
                         <BlurredAmount>${appt.total_price}</BlurredAmount>
-                      ) : '—')}
+                      ) : '—'}
                     </TableCell>
                     <TableCell className="text-sm text-right hidden lg:table-cell whitespace-nowrap">
                       {appt.total_paid != null ? (
                         <BlurredAmount>${appt.total_paid.toFixed(2)}</BlurredAmount>
-                      ) : '—')}
+                      ) : '—'}
                     </TableCell>
                     <TableCell className="w-8 pr-2">
                       <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

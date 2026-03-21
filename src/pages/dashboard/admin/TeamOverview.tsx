@@ -621,7 +621,7 @@ export default function TeamOverview() {
                               <p className="font-sans">
                                 {member.last_completion_date 
                                   ? formatDate(new Date(member.last_completion_date), 'MMM d')
-                                  : 'Never')}
+                                  : 'Never'}
                               </p>
                             </div>
                           </div>
@@ -639,7 +639,7 @@ export default function TeamOverview() {
                               <p className="font-sans">
                                 {memberHandbooks[member.enrollment_id] 
                                   ? `${memberHandbooks[member.enrollment_id].acknowledged}/${memberHandbooks[member.enrollment_id].total}`
-                                  : '—')}
+                                  : '—'}
                               </p>
                             </div>
                           </div>

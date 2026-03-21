@@ -85,7 +85,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
 
   const previewUrl = page.page_type === 'home'
     ? '/org/your-salon'
-    : `/org/your-salon/${local.slug || 'untitled')}`;
+    : `/org/your-salon/${local.slug || 'untitled'}`;
 
   return (
     <div className="max-w-2xl">
@@ -157,16 +157,16 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
               <p className="text-xs font-sans text-muted-foreground truncate">
                 getzura.com
                 {page.page_type !== 'home' && (
-                  <> › {local.slug || 'untitled')}</>
+                  <> › {local.slug || 'untitled'}</>
                 )}
               </p>
               <p className="text-sm font-sans text-primary truncate leading-snug">
                 {(local.seo_title || local.title || 'Untitled Page').slice(0, 60)}
-                {(local.seo_title || local.title || '').length > 60 && '…')}
+                {(local.seo_title || local.title || '').length > 60 && '…'}
               </p>
               <p className="text-xs font-sans text-muted-foreground line-clamp-2 leading-relaxed">
                 {(local.seo_description || 'No description provided. Add an SEO description to improve your search appearance.').slice(0, 160)}
-                {(local.seo_description || '').length > 160 && '…')}
+                {(local.seo_description || '').length > 160 && '…'}
               </p>
             </div>
           </div>

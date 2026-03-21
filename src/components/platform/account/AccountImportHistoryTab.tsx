@@ -114,7 +114,7 @@ export function AccountImportHistoryTab({ organizationId }: AccountImportHistory
             <p className="text-slate-400">
               {entityFilter !== 'all' 
                 ? `No ${entityFilter} imports found` 
-                : 'No imports yet for this organization')}
+                : 'No imports yet for this organization'}
             </p>
             <PlatformButton 
               variant="secondary" 

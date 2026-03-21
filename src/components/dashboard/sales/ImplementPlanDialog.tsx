@@ -335,7 +335,7 @@ export function ImplementPlanDialog({
             <p className="text-xs text-muted-foreground">
               {executed
                 ? 'Campaign launched!'
-                : 'Name your campaign, review the actions, and launch it')}
+                : 'Name your campaign, review the actions, and launch it'}
             </p>
           </DialogHeader>
 

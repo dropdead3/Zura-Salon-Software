@@ -213,7 +213,7 @@ function RevenueTrajectoryChart({
             className="fill-muted-foreground"
           />
           <YAxis
-            tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+            tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
             tick={{ fontSize: 11 }}
             tickLine={false}
             axisLine={false}
@@ -412,7 +412,7 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground tabular-nums">
                   <BlurredAmount>{formatCurrencyWholeUtil(Math.round(h.projected))}</BlurredAmount>
-                  {' → ')}
+                  {' → '}
                   <BlurredAmount>{formatCurrencyWholeUtil(Math.round(h.actual))}</BlurredAmount>
                 </span>
                 <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive'}>

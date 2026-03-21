@@ -544,16 +544,16 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
-            {phase === 'select' && 'Build Full Color Catalog')}
+            {phase === 'select' && 'Build Full Color Catalog'}
             {phase === 'review' && (isRunning ? 'Generating Preview...' : 'Review Generated Products'}
-            {phase === 'importing' && 'Importing to Library...')}
-            {phase === 'done' && 'Import Complete')}
+            {phase === 'importing' && 'Importing to Library...'}
+            {phase === 'done' && 'Import Complete'}
           </DialogTitle>
           <DialogDescription>
             {phase === 'select' && `AI-powered catalog generation for ${availableBrands.length} brands not yet in your library.`}
-            {phase === 'review' && !isRunning && 'Review the AI-generated products below before committing to the database.')}
-            {phase === 'review' && isRunning && 'Generating product catalogs with AI verification...')}
-            {phase === 'importing' && 'Writing products to the library...')}
+            {phase === 'review' && !isRunning && 'Review the AI-generated products below before committing to the database.'}
+            {phase === 'review' && isRunning && 'Generating product catalogs with AI verification...'}
+            {phase === 'importing' && 'Writing products to the library...'}
             {phase === 'done' && `Successfully added ${totalInserted} products across ${results.filter(r => r.products_inserted && r.products_inserted > 0).length} brands.`}
           </DialogDescription>
         </DialogHeader>

@@ -52,7 +52,7 @@ export function TierProgressionCard({ opportunities, impactAnalysis, isLoading }
         <CardDescription>
           {opportunities.length > 0 
             ? `${opportunities.length} stylists are close to unlocking higher commission rates`
-            : 'No employees are currently near a tier threshold')}
+            : 'No employees are currently near a tier threshold'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -409,7 +409,7 @@ export function ExecutiveTrendChart() {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-3 h-[3px] rounded-full bg-primary shrink-0" />
             <span className="text-[11px] text-muted-foreground">
-              {point.currentDate || 'Current')}
+              {point.currentDate || 'Current'}
             </span>
           </div>
           <p className="font-display text-sm tabular-nums pl-5 mb-2">
@@ -426,7 +426,7 @@ export function ExecutiveTrendChart() {
               }}
             />
             <span className="text-[11px] text-muted-foreground">
-              {point.priorDate || 'Prior')}
+              {point.priorDate || 'Prior'}
             </span>
           </div>
           <p className="font-display text-sm tabular-nums pl-5 mb-2">

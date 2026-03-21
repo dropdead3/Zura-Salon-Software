@@ -42,7 +42,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
           </button>
           <div className="flex-1 min-w-0">
             <h1 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
-              {appointment.client_name || 'Walk-in')}
+              {appointment.client_name || 'Walk-in'}
             </h1>
             <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5">
               {appointment.service_name && <span>{appointment.service_name} · </span>}

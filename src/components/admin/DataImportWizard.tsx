@@ -622,7 +622,7 @@ export function DataImportWizard({
                       </span>
                     </div>
                     <Select
-                      value={fieldMapping[field.field] || '_none')}
+                      value={fieldMapping[field.field] || '_none'}
                       onValueChange={(v) => handleMappingChange(field.field, v)}
                     >
                       <SelectTrigger className="w-2/3">
@@ -792,7 +792,7 @@ export function DataImportWizard({
                     <TableRow key={i}>
                       {fields.filter(f => fieldMapping[f.field]).map(f => (
                         <TableCell key={f.field} className="whitespace-nowrap">
-                          {row[f.field] || '-')}
+                          {row[f.field] || '-'}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -956,12 +956,12 @@ export function DataImportWizard({
             Import {dataType.charAt(0).toUpperCase() + dataType.slice(1)}
           </DialogTitle>
           <DialogDescription>
-            {step === 'upload' && 'Upload your CSV file to begin')}
-            {step === 'mapping' && 'Map your CSV columns to the correct fields')}
-            {step === 'reconcile' && 'Match categories and types to existing values')}
-            {step === 'preview' && 'Review your data before importing')}
-            {step === 'importing' && 'Processing your import...')}
-            {step === 'complete' && 'Your import has finished')}
+            {step === 'upload' && 'Upload your CSV file to begin'}
+            {step === 'mapping' && 'Map your CSV columns to the correct fields'}
+            {step === 'reconcile' && 'Match categories and types to existing values'}
+            {step === 'preview' && 'Review your data before importing'}
+            {step === 'importing' && 'Processing your import...'}
+            {step === 'complete' && 'Your import has finished'}
           </DialogDescription>
         </DialogHeader>
 
@@ -996,7 +996,7 @@ export function DataImportWizard({
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={step === 'upload' || step === 'importing' || step === 'complete')}
+            disabled={step === 'upload' || step === 'importing' || step === 'complete'}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back

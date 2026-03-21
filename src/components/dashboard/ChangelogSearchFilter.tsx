@@ -263,7 +263,7 @@ export function ChangelogSearchFilter({
               onClick={() => onFiltersChange({ ...filters, dateFrom: undefined, dateTo: undefined })}
             >
               {filters.dateFrom && formatDate(filters.dateFrom, 'MMM d')}
-              {filters.dateFrom && filters.dateTo && ' - ')}
+              {filters.dateFrom && filters.dateTo && ' - '}
               {filters.dateTo && formatDate(filters.dateTo, 'MMM d')}
               <X className="h-3 w-3" />
             </Badge>

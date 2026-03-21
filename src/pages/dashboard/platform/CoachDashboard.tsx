@@ -73,7 +73,7 @@ export default function CoachDashboard() {
                 <PlatformCardContent className="p-5">
                   <div className="space-y-2">
                     <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-                      {a.org_name || 'Unknown Org')}
+                      {a.org_name || 'Unknown Org'}
                     </p>
                     <div className="flex items-center gap-3 text-sm">
                       <span className="font-sans text-slate-400">
@@ -91,7 +91,7 @@ export default function CoachDashboard() {
                     <p className="font-sans text-xs text-slate-500">
                       Last active: {usage?.lastSnapshotDate
                         ? new Date(usage.lastSnapshotDate).toLocaleDateString()
-                        : 'Never')}
+                        : 'Never'}
                     </p>
                   </div>
                 </PlatformCardContent>

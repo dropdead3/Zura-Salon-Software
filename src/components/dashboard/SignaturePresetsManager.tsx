@@ -115,7 +115,7 @@ export const SignaturePresetsManager: React.FC = () => {
                     <div>
                       <p className="font-medium text-sm">{preset.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {preset.config.name || 'No name set')}
+                        {preset.config.name || 'No name set'}
                         {preset.config.title && ` • ${preset.config.title}`}
                       </p>
                     </div>

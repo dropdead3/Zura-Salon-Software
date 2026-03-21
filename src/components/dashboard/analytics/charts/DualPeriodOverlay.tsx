@@ -86,7 +86,7 @@ export function DualPeriodOverlay({
                 axisLine={false}
               />
               <YAxis 
-                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}

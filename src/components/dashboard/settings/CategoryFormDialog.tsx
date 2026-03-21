@@ -55,7 +55,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmit, isPending, in
           <DialogDescription>
             {mode === 'create' 
               ? 'Add a new service category for organizing your menu.'
-              : 'Update the category name.')}
+              : 'Update the category name.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

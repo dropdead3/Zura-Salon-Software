@@ -154,7 +154,7 @@ export default function RewardShop() {
                         </span>
                         <Badge
                           variant="secondary"
-                          className={statusColors[redemption.status] || '')}
+                          className={statusColors[redemption.status] || ''}
                         >
                           {redemption.status}
                         </Badge>

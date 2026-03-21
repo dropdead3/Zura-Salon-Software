@@ -247,7 +247,7 @@ export function DataHealthSection() {
                   <span className="font-medium text-foreground">
                     {source.lastSync 
                       ? formatRelativeTime(source.lastSync)
-                      : 'Never')}
+                      : 'Never'}
                   </span>
                 </div>
                 

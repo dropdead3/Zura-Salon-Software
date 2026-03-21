@@ -861,7 +861,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
             <span className="text-sm font-sans text-muted-foreground">
               {selected.size > 0
                 ? `${selected.size} product${selected.size === 1 ? '' : 's'} selected`
-                : 'No products selected')}
+                : 'No products selected'}
             </span>
             <Button
               onClick={handleAdd}
@@ -874,7 +874,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                   Adding...
                 </>
               ) : (
-                `Add ${selected.size || '')} Product${selected.size === 1 ? '' : 's'}`
+                `Add ${selected.size || ''} Product${selected.size === 1 ? '' : 's'}`
               )}
             </Button>
           </div>

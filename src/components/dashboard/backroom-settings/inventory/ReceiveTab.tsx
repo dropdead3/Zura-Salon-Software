@@ -322,7 +322,7 @@ export function ReceiveTab() {
                         {getReceivingBadge(po)}
                       </CardTitle>
                       <CardDescription>
-                        {po.supplier_name || 'Unknown Supplier')}
+                        {po.supplier_name || 'Unknown Supplier'}
                         {po.line_count != null && ` · ${po.line_count} item${po.line_count !== 1 ? 's' : ''}`}
                         {po.grand_total != null && ` · ${formatCurrency(po.grand_total)}`}
                       </CardDescription>

@@ -170,7 +170,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
           <CardContent className="py-12 text-center text-muted-foreground">
             {searchQuery || statusFilter !== 'all'
               ? 'No payments match your filters'
-              : 'No rent payments for this period')}
+              : 'No rent payments for this period'}
           </CardContent>
         </Card>
       ) : (
@@ -194,7 +194,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                     <tr key={payment.id} className="border-b border-border/50 hover:bg-card/70">
                       <td className="p-4">
                         <div>
-                          <p className="font-medium text-foreground">{payment.renter_name || 'Unknown')}</p>
+                          <p className="font-medium text-foreground">{payment.renter_name || 'Unknown'}</p>
                           {payment.renter_business_name && (
                             <p className="text-sm text-muted-foreground">{payment.renter_business_name}</p>
                           )}

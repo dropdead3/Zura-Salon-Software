@@ -363,7 +363,7 @@ export function SupplierSettingsSection() {
                       <div className="space-y-1.5">
                         <Label htmlFor="srm" className={tokens.label.default}>Reorder Method</Label>
                         <Select
-                          value={watch('reorder_method') || '')}
+                          value={watch('reorder_method') || ''}
                           onValueChange={val => {
                             if (!val) return;
                             setValue('reorder_method', val, { shouldDirty: true });

@@ -315,7 +315,7 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
               <p className="text-sm text-slate-400">Primary location for new operations</p>
             </div>
             <Select 
-              value={settings.defaults.default_location_id || 'none')} 
+              value={settings.defaults.default_location_id || 'none'} 
               onValueChange={(v) => updateSettings('defaults.default_location_id', v === 'none' ? null : v)}
             >
               <SelectTrigger className="w-48">

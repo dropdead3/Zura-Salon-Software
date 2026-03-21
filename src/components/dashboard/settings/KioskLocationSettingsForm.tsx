@@ -557,8 +557,8 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="color" value={localSettings.logo_color || '#000000')} onChange={(e) => updateField('logo_color', e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
-                  <Input value={localSettings.logo_color || '')} onChange={(e) => updateField('logo_color', e.target.value || null)} placeholder="No color overlay" className="font-mono text-sm" />
+                  <input type="color" value={localSettings.logo_color || '#000000'} onChange={(e) => updateField('logo_color', e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
+                  <Input value={localSettings.logo_color || ''} onChange={(e) => updateField('logo_color', e.target.value || null)} placeholder="No color overlay" className="font-mono text-sm" />
                 </div>
               </div>
             </div>
@@ -637,7 +637,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
             </div>
             <div className="space-y-2">
               <Label>Welcome Subtitle</Label>
-              <Input value={localSettings.welcome_subtitle || '')} onChange={(e) => updateField('welcome_subtitle', e.target.value || null)} placeholder="Optional tagline or instructions" />
+              <Input value={localSettings.welcome_subtitle || ''} onChange={(e) => updateField('welcome_subtitle', e.target.value || null)} placeholder="Optional tagline or instructions" />
             </div>
             <div className="space-y-2">
               <Label>Check-In Prompt</Label>

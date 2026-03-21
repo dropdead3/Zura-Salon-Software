@@ -195,7 +195,7 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
                         {org.name}
                       </p>
                       <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500'}>
-                        #{org.accountNumber} • {org.subscriptionTier || 'No Plan')}
+                        #{org.accountNumber} • {org.subscriptionTier || 'No Plan'}
                       </p>
                     </div>
                   </td>

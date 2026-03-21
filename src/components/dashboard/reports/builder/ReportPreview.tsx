@@ -98,7 +98,7 @@ export function ReportPreview({ config }: ReportPreviewProps) {
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-            <YAxis tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')} tick={{ fontSize: 10 }} />
+            <YAxis tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} tick={{ fontSize: 10 }} />
             <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
             <Line 
               type="monotone" 
@@ -117,7 +117,7 @@ export function ReportPreview({ config }: ReportPreviewProps) {
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical">
-          <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')} tick={{ fontSize: 10 }} />
+          <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} tick={{ fontSize: 10 }} />
           <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={70} />
           <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
           <Bar 

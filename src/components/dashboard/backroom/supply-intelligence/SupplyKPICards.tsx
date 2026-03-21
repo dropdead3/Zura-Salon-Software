@@ -97,7 +97,7 @@ export function SupplyKPICards({ kpis, isLoading, overallHealth }: SupplyKPICard
                 </BlurredAmount>
               ) : (
                 <>
-                  {tile.prefix ?? '')}{tile.value}{tile.suffix ?? ''}
+                  {tile.prefix ?? ''}{tile.value}{tile.suffix ?? ''}
                 </>
               )}
             </div>

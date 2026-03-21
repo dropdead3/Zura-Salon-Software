@@ -81,7 +81,7 @@ function ChangeBadge({ value, suffix = '%' }: { value: number; suffix?: string }
 }
 
 function TrendArrow({ value }: { value: number }) {
-  if (value === 0) return <span className="text-muted-foreground">{'\u2014')}</span>;
+  if (value === 0) return <span className="text-muted-foreground">{'\u2014'}</span>;
   const positive = value > 0;
   return (
     <span className={cn(
@@ -271,7 +271,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                               <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400'}>
                                 {b.margin.toFixed(0)}%
                               </Badge>
-                            ) : '—')}
+                            ) : '—'}
                           </TableCell>
                         )}
                         <TableCell className="text-right"><TrendArrow value={b.revenueTrend} /></TableCell>
@@ -313,7 +313,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                                               p.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' :
                                               'text-red-500 border-red-200 dark:text-red-400'
                                             )}>{p.margin.toFixed(0)}%</Badge>
-                                          ) : '—')}
+                                          ) : '—'}
                                         </TableCell>
                                       )}
                                       <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.quantityOnHand ?? '—'}</TableCell>
@@ -450,7 +450,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
                     <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(d.retailPrice)}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums">{d.quantityOnHand}</TableCell>
                     <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(d.capitalTiedUp)}</BlurredAmount></TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">{d.lastSoldDate || 'Never')}</TableCell>
+                    <TableCell className="text-right text-sm text-muted-foreground">{d.lastSoldDate || 'Never'}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant="outline" className={cn('text-[10px] tabular-nums',
                         d.daysStale >= 90 ? 'text-red-500 border-red-200 dark:text-red-400' :
@@ -870,8 +870,8 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                               })()}
                             </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014')}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014')}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014'}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014'}</TableCell>
                           <TableCell className="text-right tabular-nums">{p.unitsSold}</TableCell>
                           <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
                           <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(p.avgPrice)}</BlurredAmount></TableCell>
@@ -1572,7 +1572,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                         {filtered.slice(0, 20).map(row => (
                           <TableRow key={row.serviceName}>
                             <TableCell className="font-medium text-sm">{row.serviceName}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{row.serviceCategory || '\u2014')}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{row.serviceCategory || '\u2014'}</TableCell>
                             <TableCell className="text-right tabular-nums font-medium">
                               <BlurredAmount>{formatCurrencyWhole(row.retailRevenue)}</BlurredAmount>
                             </TableCell>
@@ -1850,7 +1850,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     {inventoryAlerts.slice(0, 15).map(a => (
                       <TableRow key={a.productId} className={cn(a.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10')}>
                         <TableCell className="font-medium text-sm">{a.productName}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{a.brand || '—')}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{a.brand || '—'}</TableCell>
                         <TableCell className="text-right tabular-nums font-medium">{a.currentStock}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">{a.reorderLevel}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
@@ -2080,7 +2080,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                               <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}>
                                 {s.priceConsistency}%
                               </span>
-                            ) : '—')}
+                            ) : '—'}
                           </TableCell>
                           <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalSpend)}</BlurredAmount></TableCell>
                         </TableRow>

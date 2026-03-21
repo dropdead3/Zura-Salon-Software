@@ -89,11 +89,11 @@ export function PriceHistoryDialog({ open, onOpenChange, productName, brand }: P
                         <span className={h.price_delta_pct > 0 ? 'text-destructive' : 'text-emerald-600'}>
                           {h.price_delta_pct > 0 ? '+' : ''}{Number(h.price_delta_pct).toFixed(1)}%
                         </span>
-                      ) : '—')}
+                      ) : '—'}
                     </TableCell>
                     <TableCell>{statusBadge(h.status)}</TableCell>
                     <TableCell className="font-sans text-xs text-muted-foreground max-w-[150px] truncate">
-                      {h.notes || '—')}
+                      {h.notes || '—'}
                     </TableCell>
                   </TableRow>
                 ))}

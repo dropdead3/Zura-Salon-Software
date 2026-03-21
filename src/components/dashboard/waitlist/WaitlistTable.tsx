@@ -78,7 +78,7 @@ export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {entry.service_name || '—')}
+                  {entry.service_name || '—'}
                 </TableCell>
                 <TableCell className="text-sm">
                   <div className="flex items-center gap-1.5">
@@ -95,7 +95,7 @@ export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
                       <Clock className="h-3.5 w-3.5" />
                       {entry.preferred_time_start.slice(0, 5)} – {entry.preferred_time_end.slice(0, 5)}
                     </div>
-                  ) : 'Any time')}
+                  ) : 'Any time'}
                 </TableCell>
                 <TableCell>
                   {entry.priority > 0 ? (
@@ -105,7 +105,7 @@ export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge className={STATUS_STYLES[entry.status] || '')} variant="secondary">
+                  <Badge className={STATUS_STYLES[entry.status] || ''} variant="secondary">
                     {entry.status}
                   </Badge>
                 </TableCell>

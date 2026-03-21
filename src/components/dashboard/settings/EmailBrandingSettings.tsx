@@ -454,7 +454,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://instagram.com/yoursalon"
-                value={socialLinks.instagram || '')}
+                value={socialLinks.instagram || ''}
                 onChange={(e) => updateSocialLink('instagram', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -466,7 +466,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://facebook.com/yoursalon"
-                value={socialLinks.facebook || '')}
+                value={socialLinks.facebook || ''}
                 onChange={(e) => updateSocialLink('facebook', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -478,7 +478,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://tiktok.com/@yoursalon"
-                value={socialLinks.tiktok || '')}
+                value={socialLinks.tiktok || ''}
                 onChange={(e) => updateSocialLink('tiktok', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -490,7 +490,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://yoursalon.com"
-                value={socialLinks.website || '')}
+                value={socialLinks.website || ''}
                 onChange={(e) => updateSocialLink('website', e.target.value)}
                 autoCapitalize="off"
                 type="url"

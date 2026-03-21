@@ -108,7 +108,7 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <Badge variant="outline" className="text-[10px] border-chart-1/30 text-chart-1 mb-2">
-                {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting')}
+                {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting'}
               </Badge>
               <h2 className="font-display text-base tracking-wide truncate">{meeting.title}</h2>
               <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground font-sans">

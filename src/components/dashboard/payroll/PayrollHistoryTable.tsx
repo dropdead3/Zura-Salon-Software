@@ -164,7 +164,7 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
                       Submitted on {formatDate(new Date(run.submitted_at), 'MMMM d, yyyy at h:mm a')}
                       {run.processed_at && (
                         <span>
-                          {' • ')}Processed on {formatDate(new Date(run.processed_at), 'MMMM d, yyyy at h:mm a')}
+                          {' • '}Processed on {formatDate(new Date(run.processed_at), 'MMMM d, yyyy at h:mm a')}
                         </span>
                       )}
                     </div>

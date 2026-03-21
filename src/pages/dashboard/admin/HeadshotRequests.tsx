@@ -273,7 +273,7 @@ export default function HeadshotRequests() {
               <p className="text-muted-foreground font-sans">
                 {requests.length === 0 
                   ? 'No headshot requests yet' 
-                  : 'No requests match your filters')}
+                  : 'No requests match your filters'}
               </p>
             </div>
           ) : (

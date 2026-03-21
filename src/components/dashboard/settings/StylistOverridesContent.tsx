@@ -133,7 +133,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                   <div className="flex-1 min-w-0">
                     <p className={cn(tokens.body.emphasis, 'truncate')}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
                     <p className={tokens.body.muted}>
-                      {emp.stylist_level || 'No level')}
+                      {emp.stylist_level || 'No level'}
                       {levelPrice != null && ` · Level: $${levelPrice.toFixed(2)}`}
                     </p>
                   </div>
@@ -195,7 +195,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                 >
                   <div className="flex-1 min-w-0">
                     <p className={cn(tokens.body.emphasis, 'truncate')}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
-                    <p className={tokens.body.muted}>{emp.stylist_level || 'No level')}</p>
+                    <p className={tokens.body.muted}>{emp.stylist_level || 'No level'}</p>
                   </div>
                   {addingEmployeeId === emp.id && (
                     <div className="flex items-center gap-2">

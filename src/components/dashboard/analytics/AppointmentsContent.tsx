@@ -345,7 +345,7 @@ export function AppointmentsContent({
                     {statusBreakdown.map((entry) => (
                       <Cell 
                         key={entry.status} 
-                        fill={STATUS_COLORS[entry.status] || 'hsl(var(--muted))')} 
+                        fill={STATUS_COLORS[entry.status] || 'hsl(var(--muted))'} 
                       />
                     ))}
                   </Pie>

@@ -180,8 +180,8 @@ function ActiveCardsTab() {
                   <TableCell className={cn("text-sm tabular-nums font-medium", Number(card.current_balance) === 0 && "text-muted-foreground")}>
                     <BlurredAmount>{formatCurrency(Number(card.current_balance))}</BlurredAmount>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{card.purchaser_name || '—')}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{card.recipient_name || '—')}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{card.purchaser_name || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{card.recipient_name || '—'}</TableCell>
                   <TableCell>
                     {!card.is_active ? (
                       <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
@@ -398,7 +398,7 @@ function GiftCardSettingsTab() {
         </div>
         {settings.include_terms && (
           <Input
-            value={settings.terms_text || '')}
+            value={settings.terms_text || ''}
             onChange={e => updateSettings.mutate({ organizationId: organizationId!, settings: { terms_text: e.target.value } })}
             placeholder="Terms and conditions text"
             className="h-9 text-sm"

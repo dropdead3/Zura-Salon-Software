@@ -476,7 +476,7 @@ export function ReorderAnalyticsTab() {
                         <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive'}>
                           {s.onTimePct}%
                         </span>
-                      ) : '—')}
+                      ) : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">{formatCurrency(s.totalSpend)}</TableCell>
                   </TableRow>

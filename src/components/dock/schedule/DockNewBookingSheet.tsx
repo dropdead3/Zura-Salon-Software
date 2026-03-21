@@ -614,7 +614,7 @@ function ClientStepDock({
               <span className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{selectedClient.name}</span>
             </div>
             <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-              {selectedClient.phone || selectedClient.email || 'No contact info')}
+              {selectedClient.phone || selectedClient.email || 'No contact info'}
             </div>
           </div>
           <button
@@ -758,7 +758,7 @@ function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: 
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{client.name}</div>
         <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-          {client.phone || client.email || 'No contact info')}
+          {client.phone || client.email || 'No contact info'}
         </div>
         <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.7)] truncate mt-0.5">
           {clientSinceLabel ? `${clientSinceLabel} · ${lastVisitLabel}` : lastVisitLabel}
@@ -1156,7 +1156,7 @@ function ConfirmStepDock({
               <CalendarIcon className="w-3 h-3 text-violet-400 shrink-0" />
               <span>
                 Last visit: {format(new Date(clientHistory.lastVisit.date + 'T12:00:00'), 'MMM d')}
-                {' · ')}
+                {' · '}
                 <span className="text-[hsl(var(--platform-foreground-muted))]">
                   {formatDistanceToNow(new Date(clientHistory.lastVisit.date + 'T12:00:00'), { addSuffix: true })}
                 </span>
@@ -1165,7 +1165,7 @@ function ConfirmStepDock({
             <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--platform-foreground-muted))]">
               <Scissors className="w-3 h-3 shrink-0" />
               <span className="truncate">
-                {clientHistory.lastVisit.service || 'Unknown service')}
+                {clientHistory.lastVisit.service || 'Unknown service'}
                 {clientHistory.lastVisit.stylist && ` · with ${clientHistory.lastVisit.stylist}`}
                 {clientHistory.lastVisit.location && ` at ${clientHistory.lastVisit.location}`}
               </span>

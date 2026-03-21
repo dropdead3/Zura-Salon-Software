@@ -635,7 +635,7 @@ export default function ServicesManager() {
                                     <div className="space-y-2">
                                       <Label>Description</Label>
                                       <Textarea 
-                                        value={editingService.item.description || '')}
+                                        value={editingService.item.description || ''}
                                         onChange={(e) => setEditingService(prev => 
                                           prev ? { ...prev, item: { ...prev.item, description: e.target.value } } : null
                                         )}
@@ -723,7 +723,7 @@ export default function ServicesManager() {
                                             <Label>Restriction Reason</Label>
                                             <Textarea 
                                               placeholder="e.g., Extensions require 7-day custom order"
-                                              value={(editingService.item as any).restrictionReason || '')}
+                                              value={(editingService.item as any).restrictionReason || ''}
                                               onChange={(e) => setEditingService(prev => 
                                                 prev ? { ...prev, item: { ...prev.item, restrictionReason: e.target.value } } : null
                                               )}

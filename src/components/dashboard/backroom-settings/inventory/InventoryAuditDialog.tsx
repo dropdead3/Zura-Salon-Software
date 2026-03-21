@@ -305,7 +305,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
 
           {!isStock && (
             <span className="text-xs text-muted-foreground tabular-nums">
-              {entry.old_value ?? '—')} → {entry.quantity_after ?? '—'}
+              {entry.old_value ?? '—'} → {entry.quantity_after ?? '—'}
             </span>
           )}
         </div>

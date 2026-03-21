@@ -326,7 +326,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
                         >
-                          {announcement.link_label || 'Learn more')}
+                          {announcement.link_label || 'Learn more'}
                           <ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       )}

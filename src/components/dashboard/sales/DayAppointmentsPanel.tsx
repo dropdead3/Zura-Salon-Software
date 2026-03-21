@@ -68,14 +68,14 @@ function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSum
         <div className="flex items-center gap-2">
           <User className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="font-medium text-sm">
-            {appointment.client_name || 'Walk-in')}
+            {appointment.client_name || 'Walk-in'}
           </span>
         </div>
         
         <div className="flex items-center gap-2 text-muted-foreground">
           <Scissors className="w-3.5 h-3.5" />
           <span className="text-sm">
-            {appointment.service_name || 'Service')}
+            {appointment.service_name || 'Service'}
           </span>
         </div>
         

@@ -74,7 +74,7 @@ export function KioskWrongLocationScreen() {
       if (error) throw error;
 
       setNotified(true);
-      toast.success(`${appointment.stylist_name || 'Your provider')} has been notified!`);
+      toast.success(`${appointment.stylist_name || 'Your provider'} has been notified!`);
     } catch (error) {
       console.error('Failed to notify provider:', error);
       toast.error('Unable to send notification. Please call or text your provider directly.');
@@ -302,7 +302,7 @@ export function KioskWrongLocationScreen() {
                     className="text-xl font-medium mb-1"
                     style={{ color: textColor }}
                   >
-                    {appointment.service_name || 'Your Appointment')}
+                    {appointment.service_name || 'Your Appointment'}
                   </div>
                   <div 
                     className="flex items-center gap-2 mb-2"
@@ -326,7 +326,7 @@ export function KioskWrongLocationScreen() {
                   >
                     <MapPin className="w-4 h-4" />
                     <span className="text-sm font-medium">
-                      Scheduled at: {appointment.location_name || 'Different Location')}
+                      Scheduled at: {appointment.location_name || 'Different Location'}
                     </span>
                   </div>
                 </div>
@@ -370,12 +370,12 @@ export function KioskWrongLocationScreen() {
                 ) : notified ? (
                   <>
                     <CheckCircle className="w-6 h-6" />
-                    {appointment.stylist_name || 'Provider')} Notified!
+                    {appointment.stylist_name || 'Provider'} Notified!
                   </>
                 ) : (
                   <>
                     <Bell className="w-6 h-6" />
-                    Notify {appointment.stylist_name || 'My Provider')}
+                    Notify {appointment.stylist_name || 'My Provider'}
                   </>
                 )}
               </motion.button>
@@ -425,7 +425,7 @@ export function KioskWrongLocationScreen() {
             >
               {notified 
                 ? 'Your provider will reach out shortly. They can advise if you should travel to the correct location or if rescheduling is needed.'
-                : 'If no receptionist is available, tap the button above to notify your provider. They can help determine if you can still make your appointment.')}
+                : 'If no receptionist is available, tap the button above to notify your provider. They can help determine if you can still make your appointment.'}
             </motion.p>
 
             {/* Start over button */}

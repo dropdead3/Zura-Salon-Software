@@ -84,7 +84,7 @@ export function CompareVisitsDialog({
                   <div key={f.id} className="mt-1 text-xs space-y-0.5">
                     {f.formula_data?.map((line, i) => (
                       <div key={i} className={tokens.body.muted}>
-                        {line.product_name} — {line.quantity}{line.unit || 'g')}
+                        {line.product_name} — {line.quantity}{line.unit || 'g'}
                       </div>
                     ))}
                   </div>
@@ -142,7 +142,7 @@ export function CompareVisitsDialog({
                   <div key={f.id} className="mt-1 text-xs space-y-0.5">
                     {f.formula_data?.map((line, i) => (
                       <div key={i} className={tokens.body.muted}>
-                        {line.product_name} — {line.quantity}{line.unit || 'g')}
+                        {line.product_name} — {line.quantity}{line.unit || 'g'}
                       </div>
                     ))}
                   </div>

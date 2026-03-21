@@ -40,7 +40,7 @@ function StylistLevelSelector({
       >
         <span className={isSticky ? 'text-white/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
         <span className={`font-medium ${isSticky ? 'text-white' : ''}`}>{selectedClientLabel} Stylist — {selectedLabel}</span>
-        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : '')} ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`} />
+        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`} />
       </button>
       
       <AnimatePresence>
@@ -116,7 +116,7 @@ function ServiceCard({
           </span>
         </div>
       )}
-      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : '')} ${service.isPopular ? 'border-primary/30' : ''}`}>
+      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''} ${service.isPopular ? 'border-primary/30' : ''}`}>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">

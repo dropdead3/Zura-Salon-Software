@@ -225,7 +225,7 @@ export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocat
                     tick={{ fontSize: 11 }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
+                    tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                   />
                   <Tooltip 
                     formatter={(value: number, name: string) => [formatCurrencyWhole(value), name]}

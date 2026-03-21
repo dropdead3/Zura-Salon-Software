@@ -108,7 +108,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
             <RotateCcw className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium truncate">{redo.service_name || 'Service')}</span>
+                <span className="text-sm font-medium truncate">{redo.service_name || 'Service'}</span>
                 <span className="text-xs text-muted-foreground shrink-0">{redo.appointment_date}</span>
               </div>
               <div className="flex items-center gap-2 mt-0.5">

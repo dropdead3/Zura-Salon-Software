@@ -239,7 +239,7 @@ export function useCreateAssistantRequest() {
       if (result.recurringCount > 0) {
         toast.success(`Request submitted with ${result.recurringCount} recurring appointments!`);
       } else if (result.assignResult?.assigned) {
-        toast.success(`Request submitted and assigned to ${result.assignResult.assistant_name || 'an assistant')}!`);
+        toast.success(`Request submitted and assigned to ${result.assignResult.assistant_name || 'an assistant'}!`);
       } else {
         toast.success('Request submitted! Awaiting assistant assignment.');
       }

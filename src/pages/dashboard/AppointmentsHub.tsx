@@ -251,8 +251,8 @@ function TransactionsTab({ search }: { search: string }) {
             {pendingRefunds.map((r: any) => (
               <div key={r.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                 <div>
-                  <p className={tokens.body.emphasis}>{r.original_item_name || 'Transaction')}</p>
-                  <p className="text-xs text-muted-foreground">{r.reason || 'No reason provided')}</p>
+                  <p className={tokens.body.emphasis}>{r.original_item_name || 'Transaction'}</p>
+                  <p className="text-xs text-muted-foreground">{r.reason || 'No reason provided'}</p>
                 </div>
                 <BlurredAmount>
                   <span className={tokens.body.emphasis}>${r.refund_amount}</span>

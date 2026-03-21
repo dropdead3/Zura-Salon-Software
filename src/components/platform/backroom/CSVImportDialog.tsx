@@ -184,8 +184,8 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                 <TableBody>
                   {rows.slice(0, 50).map((r, i) => (
                     <TableRow key={i} className={cn(!r.valid && 'opacity-40')}>
-                      <TableCell className="font-sans text-xs">{r.brand || '—')}</TableCell>
-                      <TableCell className="font-sans text-xs">{r.name || '—')}</TableCell>
+                      <TableCell className="font-sans text-xs">{r.brand || '—'}</TableCell>
+                      <TableCell className="font-sans text-xs">{r.name || '—'}</TableCell>
                       <TableCell className="font-sans text-xs">{r.category}</TableCell>
                       <TableCell className="font-sans text-xs">{r.default_unit}</TableCell>
                     </TableRow>

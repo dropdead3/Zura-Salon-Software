@@ -36,7 +36,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap }: DockApp
         <div className="flex-1 min-w-0">
           {/* Client name */}
           <p className="font-medium text-sm text-[hsl(var(--platform-foreground))] truncate">
-            {appointment.client_name || 'Walk-in')}
+            {appointment.client_name || 'Walk-in'}
           </p>
 
           {/* Service */}

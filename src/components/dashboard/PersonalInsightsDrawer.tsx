@@ -305,7 +305,7 @@ export function PersonalInsightsPanel({ onClose }: { onClose: () => void }) {
                         <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
                           Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                          {isStale && ' · Stale')}
+                          {isStale && ' · Stale'}
                           {cooldown > 0 && ` · ${cooldown}s cooldown`}
                         </p>
                       )}

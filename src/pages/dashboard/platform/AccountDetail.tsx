@@ -343,7 +343,7 @@ export default function AccountDetail() {
                           : 'text-slate-300'
                     }`}>
                       Go-Live {format(parseISO(organization.go_live_date), 'MMM d, yyyy')}
-                      {organization.onboarding_stage !== 'live' && isBefore(parseISO(organization.go_live_date), startOfDay(new Date())) && ' (overdue)')}
+                      {organization.onboarding_stage !== 'live' && isBefore(parseISO(organization.go_live_date), startOfDay(new Date())) && ' (overdue)'}
                     </span>
                   </div>
                 )}
@@ -359,11 +359,11 @@ export default function AccountDetail() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Globe className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Source: <span className="capitalize">{organization.source_software || 'Not specified')}</span></span>
+                  <span className="text-slate-300">Source: <span className="capitalize">{organization.source_software || 'Not specified'}</span></span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Building2 className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Plan: <span className="capitalize">{organization.subscription_tier || 'Standard')}</span></span>
+                  <span className="text-slate-300">Plan: <span className="capitalize">{organization.subscription_tier || 'Standard'}</span></span>
                 </div>
                 
                 {/* Contract Term Information - Always visible for quick view */}
@@ -439,7 +439,7 @@ export default function AccountDetail() {
         <TabsContent value="billing">
           <BillingConfigurationPanel
             organizationId={organization.id}
-            billingStatus={(organization as any).billing_status as BillingStatus || 'draft')}
+            billingStatus={(organization as any).billing_status as BillingStatus || 'draft'}
             locationCount={organization.locationCount}
           />
         </TabsContent>

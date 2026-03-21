@@ -109,9 +109,9 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
 
     // What drove it
     if (Math.abs(svcChange) > Math.abs(prdChange) && Math.abs(svcChange) > 1) {
-      parts.push(`services ${svcChange > 0 ? 'led the gain' : 'drove the decline')} (${svcChange > 0 ? '+' : ''}${svcChange.toFixed(1)}%)`);
+      parts.push(`services ${svcChange > 0 ? 'led the gain' : 'drove the decline'} (${svcChange > 0 ? '+' : ''}${svcChange.toFixed(1)}%)`);
     } else if (Math.abs(prdChange) > 1) {
-      parts.push(`products ${prdChange > 0 ? 'led the gain' : 'drove the decline')} (${prdChange > 0 ? '+' : ''}${prdChange.toFixed(1)}%)`);
+      parts.push(`products ${prdChange > 0 ? 'led the gain' : 'drove the decline'} (${prdChange > 0 ? '+' : ''}${prdChange.toFixed(1)}%)`);
     }
 
     // Transactions

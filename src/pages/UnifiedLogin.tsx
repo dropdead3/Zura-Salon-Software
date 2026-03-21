@@ -263,7 +263,7 @@ export default function UnifiedLogin() {
           <p className="text-slate-400 mb-6">
             {platformInvitation.status === 'accepted'
               ? 'This invitation has already been accepted.'
-              : 'This invitation has expired or been cancelled.')}
+              : 'This invitation has expired or been cancelled.'}
           </p>
           <Button onClick={() => navigate('/login', { replace: true })} className="bg-violet-600 hover:bg-violet-500">
             Go to Login
@@ -318,7 +318,7 @@ export default function UnifiedLogin() {
                 ? 'Create Your Account'
                 : isLogin
                 ? 'Welcome back'
-                : 'Create Account')}
+                : 'Create Account'}
             </h1>
             <p className="text-slate-400">
               {isForgotPassword
@@ -401,7 +401,7 @@ export default function UnifiedLogin() {
                     placeholder="you@company.com"
                     required
                     disabled={isPlatformInviteSignup}
-                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-10 ${emailError ? 'border-red-500' : '')} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
+                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-10 ${emailError ? 'border-red-500' : ''} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
                   />
                   {!isLogin && checkingStaffInvitation && debouncedEmail.includes('@') && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -550,7 +550,7 @@ export default function UnifiedLogin() {
                     ? 'Back to sign in'
                     : isLogin
                     ? "Don't have an account? Sign up"
-                    : 'Already have an account? Sign in')}
+                    : 'Already have an account? Sign in'}
                 </button>
               </div>
             </div>

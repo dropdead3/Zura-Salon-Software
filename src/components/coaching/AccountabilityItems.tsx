@@ -102,8 +102,8 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
       <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground'}`}>
         <Calendar className="h-3 w-3" />
         {formatDate(date, 'MMM d')}
-        {isOverdue && ' (overdue)')}
-        {isDueToday && ' (today)')}
+        {isOverdue && ' (overdue)'}
+        {isDueToday && ' (today)'}
       </span>
     );
   };
@@ -193,7 +193,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
 
           {activeItems.length === 0 && !isAdding && (
             <p className="text-muted-foreground text-sm text-center py-4">
-              No active items. {isCoach && 'Create action items to track follow-ups.')}
+              No active items. {isCoach && 'Create action items to track follow-ups.'}
             </p>
           )}
 

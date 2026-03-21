@@ -95,7 +95,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
         <div>
           <label className="text-sm text-slate-400 block mb-1">Previous Software</label>
           <p className="text-slate-300 capitalize">
-            {organization.source_software || 'Not specified')}
+            {organization.source_software || 'Not specified'}
           </p>
         </div>
 

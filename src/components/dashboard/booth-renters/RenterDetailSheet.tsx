@@ -125,7 +125,7 @@ export function RenterDetailSheet({
             </Avatar>
             <div className="flex-1">
               <h2 className="flex items-center gap-2 font-display text-sm tracking-wide uppercase">
-                {renter.display_name || renter.full_name || 'Unknown')}
+                {renter.display_name || renter.full_name || 'Unknown'}
                 <Badge variant="outline" className={statusColors[renter.status]}>
                   {renter.status}
                 </Badge>
@@ -213,7 +213,7 @@ export function RenterDetailSheet({
                         <div className="space-y-2">
                           <Label>Business Name</Label>
                           <Input
-                            defaultValue={renter.business_name || '')}
+                            defaultValue={renter.business_name || ''}
                             onChange={(e) => setEditData({ ...editData, business_name: e.target.value })}
                           />
                         </div>
@@ -221,14 +221,14 @@ export function RenterDetailSheet({
                           <div className="space-y-2">
                             <Label>License Number</Label>
                             <Input
-                              defaultValue={renter.business_license_number || '')}
+                              defaultValue={renter.business_license_number || ''}
                               onChange={(e) => setEditData({ ...editData, business_license_number: e.target.value })}
                             />
                           </div>
                           <div className="space-y-2">
                             <Label>License State</Label>
                             <Input
-                              defaultValue={renter.license_state || '')}
+                              defaultValue={renter.license_state || ''}
                               onChange={(e) => setEditData({ ...editData, license_state: e.target.value })}
                             />
                           </div>
@@ -236,7 +236,7 @@ export function RenterDetailSheet({
                         <div className="space-y-2">
                           <Label>EIN Number</Label>
                           <Input
-                            defaultValue={renter.ein_number || '')}
+                            defaultValue={renter.ein_number || ''}
                             onChange={(e) => setEditData({ ...editData, ein_number: e.target.value })}
                           />
                         </div>
@@ -262,15 +262,15 @@ export function RenterDetailSheet({
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">License #</p>
-                          <p>{renter.business_license_number || '—')}</p>
+                          <p>{renter.business_license_number || '—'}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">State</p>
-                          <p>{renter.license_state || '—')}</p>
+                          <p>{renter.license_state || '—'}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">EIN</p>
-                          <p>{renter.ein_number || '—')}</p>
+                          <p>{renter.ein_number || '—'}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Start Date</p>
@@ -288,11 +288,11 @@ export function RenterDetailSheet({
                   <CardContent className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span>{renter.billing_email || renter.email || '—')}</span>
+                      <span>{renter.billing_email || renter.email || '—'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{renter.billing_phone || '—')}</span>
+                      <span>{renter.billing_phone || '—'}</span>
                     </div>
                     {renter.billing_address && (
                       <div className="flex items-start gap-2">

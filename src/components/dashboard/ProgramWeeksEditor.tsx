@@ -144,7 +144,7 @@ function SortableAssignmentItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 bg-muted/50 border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!assignment.is_active ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-3 p-3 bg-muted/50 border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''} ${!assignment.is_active ? 'opacity-50' : ''}`}
     >
       <button
         {...attributes}
@@ -342,7 +342,7 @@ function WeekCard({
                     <div className="space-y-2">
                       <Label>Video URL (optional)</Label>
                       <Input
-                        value={editedWeek.video_url || '')}
+                        value={editedWeek.video_url || ''}
                         onChange={(e) => setEditedWeek({ ...editedWeek, video_url: e.target.value || null })}
                         placeholder="https://..."
                       />
@@ -351,7 +351,7 @@ function WeekCard({
                   <div className="space-y-2">
                     <Label>Description</Label>
                     <Textarea
-                      value={editedWeek.description || '')}
+                      value={editedWeek.description || ''}
                       onChange={(e) => setEditedWeek({ ...editedWeek, description: e.target.value })}
                       placeholder="What this week covers..."
                       rows={3}
@@ -360,7 +360,7 @@ function WeekCard({
                   <div className="space-y-2">
                     <Label>Objective</Label>
                     <Textarea
-                      value={editedWeek.objective || '')}
+                      value={editedWeek.objective || ''}
                       onChange={(e) => setEditedWeek({ ...editedWeek, objective: e.target.value })}
                       placeholder="The main goal for participants this week..."
                       rows={2}
@@ -556,7 +556,7 @@ function WeekCard({
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
-                  value={editingAssignment.description || '')}
+                  value={editingAssignment.description || ''}
                   onChange={(e) => setEditingAssignment({ ...editingAssignment, description: e.target.value })}
                   rows={3}
                 />

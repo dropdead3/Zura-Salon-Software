@@ -141,7 +141,7 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
                           <span className={cn(changed && 'text-primary font-medium')}>
                             {s.suggestedPar}
                           </span>
-                        ) : '—')}
+                        ) : '—'}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground text-sm">
                         {s.velocity > 0 ? `${s.velocity.toFixed(1)}/day` : '—'}

@@ -131,7 +131,7 @@ function SortableRoleCard({ role, userCount, isSuperAdmin, onEdit, onArchive, on
           )}
         </div>
         <p className="text-sm text-muted-foreground truncate">
-          {role.description || 'No description')}
+          {role.description || 'No description'}
         </p>
       </div>
 

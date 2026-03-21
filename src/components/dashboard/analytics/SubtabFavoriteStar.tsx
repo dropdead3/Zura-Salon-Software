@@ -49,7 +49,7 @@ export function SubtabFavoriteStar({ tab, subtab, label }: SubtabFavoriteStarPro
           ? 'Maximum favorites reached (6)'
           : favorited
             ? 'Remove from sidebar'
-            : 'Pin to sidebar')}
+            : 'Pin to sidebar'}
       </TooltipContent>
     </Tooltip>
   );

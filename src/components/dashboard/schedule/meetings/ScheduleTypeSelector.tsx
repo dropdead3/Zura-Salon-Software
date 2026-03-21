@@ -30,7 +30,7 @@ export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting, o
       <p className="text-sm text-muted-foreground font-sans text-center">
         {timeLabel
           ? `What would you like to schedule at ${timeLabel}?`
-          : 'What would you like to schedule?')}
+          : 'What would you like to schedule?'}
       </p>
       <div className="grid gap-3">
         <button

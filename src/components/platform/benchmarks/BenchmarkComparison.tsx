@@ -79,11 +79,11 @@ export function BenchmarkComparison({
                 isNegative && 'text-red-400',
                 isNeutral && 'text-slate-500'
               )}>
-                {isPositive && '+')}
+                {isPositive && '+'}
                 {formatMetricValue(row.difference, row.format)}
                 {row.difference_percent !== 0 && (
                   <span className="text-xs ml-1">
-                    ({isPositive && '+')}{row.difference_percent.toFixed(0)}%)
+                    ({isPositive && '+'}{row.difference_percent.toFixed(0)}%)
                   </span>
                 )}
               </span>

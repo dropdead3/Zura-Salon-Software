@@ -181,7 +181,7 @@ function ServiceFlowsList() {
           {groupFlowsByCategory(flows).map(([category, categoryFlows]) => (
             <div key={category}>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                {category || 'Uncategorized')}
+                {category || 'Uncategorized'}
               </p>
               {categoryFlows.map(flow => (
                 <FlowCard
@@ -929,7 +929,7 @@ function AddStepDialog({
               onChange={e => setHtmlBody(e.target.value)}
               rows={8}
               className="font-mono text-sm"
-              placeholder={'<p>Hi {{first_name}},</p>\n<p>Your {{service_name}} appointment is coming up!</p>')}
+              placeholder={'<p>Hi {{first_name}},</p>\n<p>Your {{service_name}} appointment is coming up!</p>'}
             />
           </div>
 

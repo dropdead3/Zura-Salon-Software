@@ -315,7 +315,7 @@ export function LeadDetailsSheet({
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.performer_name || 'System')} • {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                          {item.performer_name || 'System'} • {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                         </p>
                       </div>
                     </div>

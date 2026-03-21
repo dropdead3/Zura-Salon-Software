@@ -342,7 +342,7 @@ function StepBasics({ form, update, brands, categories, customBrand, setCustomBr
               </Button>
             </div>
           ) : (
-            <Select value={form.brand || '__none__')} onValueChange={v => {
+            <Select value={form.brand || '__none__'} onValueChange={v => {
               if (v === '__other__') { setCustomBrand(true); update({ brand: '' }); }
               else if (v === '__none__') update({ brand: '' });
               else update({ brand: v });
@@ -366,7 +366,7 @@ function StepBasics({ form, update, brands, categories, customBrand, setCustomBr
               </Button>
             </div>
           ) : (
-            <Select value={form.category || '__none__')} onValueChange={v => {
+            <Select value={form.category || '__none__'} onValueChange={v => {
               if (v === '__other__') { setCustomCategory(true); update({ category: '' }); }
               else if (v === '__none__') update({ category: '' });
               else update({ category: v });
@@ -530,7 +530,7 @@ function StepInventory({ form, update, locations }: { form: WizardForm; update: 
       {showLocation && (
         <div>
           <Label className="text-xs">Location</Label>
-          <Select value={form.location_id || '__none__')} onValueChange={v => update({ location_id: v === '__none__' ? '' : v })}>
+          <Select value={form.location_id || '__none__'} onValueChange={v => update({ location_id: v === '__none__' ? '' : v })}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Select location" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">All Locations</SelectItem>
@@ -556,7 +556,7 @@ function StepReview({ form, update, formatCurrency }: { form: WizardForm; update
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm truncate">{form.name || 'Untitled Product')}</h3>
+            <h3 className="font-medium text-sm truncate">{form.name || 'Untitled Product'}</h3>
             <div className="flex items-center gap-2 mt-1">
               {form.brand && <span className="text-xs text-muted-foreground">{form.brand}</span>}
               {form.category && <Badge variant="secondary" className="text-[10px]">{form.category}</Badge>}
@@ -576,11 +576,11 @@ function StepReview({ form, update, formatCurrency }: { form: WizardForm; update
           </div>
           <div>
             <span className="text-xs text-muted-foreground">SKU</span>
-            <p className="font-mono text-xs">{form.sku || '—')}</p>
+            <p className="font-mono text-xs">{form.sku || '—'}</p>
           </div>
           <div>
             <span className="text-xs text-muted-foreground">Stock</span>
-            <p>{form.quantity_on_hand || '—')}{form.reorder_level ? ` (reorder at ${form.reorder_level})` : ''}</p>
+            <p>{form.quantity_on_hand || '—'}{form.reorder_level ? ` (reorder at ${form.reorder_level})` : ''}</p>
           </div>
         </div>
 

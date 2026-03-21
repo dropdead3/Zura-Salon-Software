@@ -137,7 +137,7 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
                   )}>
                     {entry.quantity_change != null
                       ? (isPositive ? '+' : '') + entry.quantity_change
-                      : '—')}
+                      : '—'}
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-muted-foreground mt-1" />
                 </div>

@@ -192,7 +192,7 @@ export default function RenterPayRent() {
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{invoice.description || 'Rent Payment')}</p>
+                            <p className="font-medium">{invoice.description || 'Rent Payment'}</p>
                             {invoice.status === 'overdue' && (
                               <Badge variant="destructive" className="text-xs">
                                 <AlertCircle className="h-3 w-3 mr-1" />

@@ -77,7 +77,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         <div className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)] text-white/60">
           <MapPin className="w-3 h-3 shrink-0" />
           <select
-            value={locationId || '')}
+            value={locationId || ''}
             onChange={handleLocationChange}
             className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[120px] truncate"
           >
@@ -98,7 +98,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         <div className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)] text-white/60">
           <User className="w-3 h-3 shrink-0" />
           <select
-            value={staffFilter || 'all')}
+            value={staffFilter || 'all'}
             onChange={(e) => onStaffFilterChange?.(e.target.value)}
             className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[120px] truncate"
           >

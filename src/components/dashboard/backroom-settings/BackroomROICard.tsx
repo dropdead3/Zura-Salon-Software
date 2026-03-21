@@ -38,7 +38,7 @@ export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProp
           </div>
           <p className="text-sm text-muted-foreground font-sans">
             We'll calculate your ROI once you have at least 7 days of usage data.
-            {roi?.snapshotCount ? ` (${roi.snapshotCount} day${roi.snapshotCount !== 1 ? 's' : '')} so far)` : ''}
+            {roi?.snapshotCount ? ` (${roi.snapshotCount} day${roi.snapshotCount !== 1 ? 's' : ''} so far)` : ''}
           </p>
         </CardContent>
       </Card>

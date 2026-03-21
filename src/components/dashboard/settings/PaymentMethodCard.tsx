@@ -69,7 +69,7 @@ export function PaymentMethodCard() {
         ) : pm ? (
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/60">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{BRAND_ICONS[pm.brand] || '💳')}</span>
+              <span className="text-2xl">{BRAND_ICONS[pm.brand] || '💳'}</span>
               <div>
                 <p className="font-sans text-sm text-foreground">
                   {pm.brand.charAt(0).toUpperCase() + pm.brand.slice(1)} ···· {pm.last4}

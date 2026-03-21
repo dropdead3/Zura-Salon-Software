@@ -85,7 +85,7 @@ export default function HelpCenter() {
           <p className="text-muted-foreground">
             {currentCategory
               ? currentCategory.description
-              : 'Find answers to common questions')}
+              : 'Find answers to common questions'}
           </p>
         </div>
 

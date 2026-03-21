@@ -137,7 +137,7 @@ function SortableTaskItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!task.is_active ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''} ${!task.is_active ? 'opacity-50' : ''}`}
     >
       <button
         {...attributes}
@@ -225,7 +225,7 @@ function SortableRuleItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!rule.is_active ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''} ${!rule.is_active ? 'opacity-50' : ''}`}
     >
       <button
         {...attributes}
@@ -955,7 +955,7 @@ export default function ProgramEditor() {
                     <div className="space-y-2">
                       <Label>Description</Label>
                       <Textarea
-                        value={editingTask.description || '')}
+                        value={editingTask.description || ''}
                         onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
                       />
                     </div>

@@ -395,7 +395,7 @@ function ProductsTab() {
                 }}
               >
                 <FileText className="w-3.5 h-3.5" />
-                Draft{drafts.length > 1 ? '' : '')}: {(d.form_data as any)?.name || 'Untitled'}
+                Draft{drafts.length > 1 ? '' : ''}: {(d.form_data as any)?.name || 'Untitled'}
               </Button>
             ))}
           </div>
@@ -522,8 +522,8 @@ function ProductsTab() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-sm text-muted-foreground">{p.brand || '—')}</TableCell>
-                    <TableCell className="py-3 text-sm text-muted-foreground">{p.category || '—')}</TableCell>
+                    <TableCell className="py-3 text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
+                    <TableCell className="py-3 text-sm text-muted-foreground">{p.category || '—'}</TableCell>
                     {/* Movement */}
                     <TableCell className="py-3">
                       {productRatings.has(p.id) ? (
@@ -912,7 +912,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                   </Button>
                 </div>
               ) : (
-                <Select value={form.brand || '__none__')} onValueChange={v => {
+                <Select value={form.brand || '__none__'} onValueChange={v => {
                   if (v === '__other__') { setCustomBrand(true); setForm(f => ({ ...f, brand: '' })); }
                   else if (v === '__none__') setForm(f => ({ ...f, brand: '' }));
                   else setForm(f => ({ ...f, brand: v }));
@@ -936,7 +936,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                   </Button>
                 </div>
               ) : (
-                <Select value={form.category || '__none__')} onValueChange={v => {
+                <Select value={form.category || '__none__'} onValueChange={v => {
                   if (v === '__other__') { setCustomCategory(true); setForm(f => ({ ...f, category: '' })); }
                   else if (v === '__none__') setForm(f => ({ ...f, category: '' }));
                   else setForm(f => ({ ...f, category: v }));
@@ -983,7 +983,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
           {locations && locations.length > 1 && (
             <div>
               <Label className="text-xs">Location</Label>
-              <Select value={form.location_id || 'all')} onValueChange={v => setForm(f => ({ ...f, location_id: v === 'all' ? '' : v }))}>
+              <Select value={form.location_id || 'all'} onValueChange={v => setForm(f => ({ ...f, location_id: v === 'all' ? '' : v }))}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="All locations" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
@@ -1556,7 +1556,7 @@ function InventoryByLocationTab() {
                           <span className="font-medium text-sm">{p.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{p.brand || '—')}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
                       <TableCell>
                         {supplier ? (
                           <button

@@ -252,7 +252,7 @@ export function RewardsCatalogTab() {
             <Button variant="outline" className="gap-2">
               {categoryFilter 
                 ? REWARD_CATEGORIES.find(c => c.value === categoryFilter)?.label 
-                : 'All Categories')}
+                : 'All Categories'}
               <ChevronDown className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -146,7 +146,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{client.first_name} {client.last_name}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {client.email || client.phone || client.mobile || 'No contact info')}
+                            {client.email || client.phone || client.mobile || 'No contact info'}
                           </p>
                         </div>
                       </button>

@@ -114,7 +114,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
             <div className="space-y-1">
               <p className="text-sm font-medium">{insurance.insurance_provider}</p>
               <p className="text-xs text-muted-foreground">
-                Policy: {insurance.insurance_policy_number || 'Not provided')}
+                Policy: {insurance.insurance_policy_number || 'Not provided'}
               </p>
             </div>
 

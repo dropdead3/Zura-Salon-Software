@@ -104,7 +104,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
             <p className="font-medium">{transaction.item_name}</p>
             <div className="flex justify-between items-center mt-1">
               <span className="text-sm text-muted-foreground">
-                {transaction.client_name || 'Walk-in')} • {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                {transaction.client_name || 'Walk-in'} • {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
               </span>
               <span className="font-medium">{formatCurrency(maxAmount)}</span>
             </div>

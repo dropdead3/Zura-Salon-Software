@@ -215,7 +215,7 @@ export function PlatformTeamManager() {
                           <div className="flex items-center gap-3">
                             <div className="relative">
                               <Avatar className="h-8 w-8 bg-[hsl(var(--platform-bg-hover))] border border-[hsl(var(--platform-border))]">
-                                <AvatarImage src={member.photo_url || undefined} alt={member.full_name || 'Team member')} />
+                                <AvatarImage src={member.photo_url || undefined} alt={member.full_name || 'Team member'} />
                                 <AvatarFallback className="bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))] text-xs">
                                   {getInitials(member.full_name, member.email)}
                                 </AvatarFallback>
@@ -229,7 +229,7 @@ export function PlatformTeamManager() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="font-medium text-sm text-[hsl(var(--platform-foreground))]">
-                                  {member.full_name || 'Unknown')}
+                                  {member.full_name || 'Unknown'}
                                   {isCurrentUser && (
                                     <span className="text-[hsl(var(--platform-foreground-subtle))] ml-1">(you)</span>
                                   )}

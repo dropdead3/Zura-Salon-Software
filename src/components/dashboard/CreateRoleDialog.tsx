@@ -173,7 +173,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
           <DialogDescription>
             {isEditing
               ? 'Update the role details. System roles can have their display properties changed but not their internal name.'
-              : 'Define a new role for your team. Choose a template to start with pre-configured permissions.')}
+              : 'Define a new role for your team. Choose a template to start with pre-configured permissions.'}
           </DialogDescription>
         </DialogHeader>
 

@@ -69,7 +69,7 @@ export function AccountIntegrationsCard({ organizationId }: AccountIntegrationsC
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {phorest?.connected 
                     ? `${phorest.branchCount} ${phorest.branchCount === 1 ? 'branch' : 'branches'}, ${phorest.staffMappingCount} staff`
-                    : '--')}
+                    : '--'}
                 </p>
               </div>
             </div>
