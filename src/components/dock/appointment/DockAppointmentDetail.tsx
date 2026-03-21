@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil } from 'lucide-react';
+import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
