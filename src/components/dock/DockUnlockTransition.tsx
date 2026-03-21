@@ -58,7 +58,7 @@ export function DockUnlockTransition({ unlocked, gate, children }: DockUnlockTra
             exit={{
               opacity: 0,
               scale: 1.03,
-              transition: { duration: 0.35, ease: EXIT_EASE as unknown as number[] },
+              transition: { duration: 0.35, ease: EXIT_EASE },
             }}
           >
             {gate}
