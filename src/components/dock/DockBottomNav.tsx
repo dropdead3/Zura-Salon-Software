@@ -33,46 +33,49 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className="relative flex flex-col items-center justify-center flex-1 h-12 z-10"
+              className="relative flex items-center justify-center flex-1 h-12 z-10"
             >
               {/* Sliding pill indicator */}
               {isActive && (
                 <motion.div
                   layoutId="dock-indicator"
                   transition={SPRING}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                  className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
                 />
               )}
 
-              {/* Icon with scale morph */}
-              <motion.div
-                animate={{ scale: isActive ? 1.2 : 1 }}
-                transition={SPRING}
-              >
-                <Icon
-                  className={cn(
-                    'w-5 h-5 transition-colors duration-150',
-                    isActive
-                      ? 'text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]'
-                      : 'text-white/40 hover:text-white/60'
-                  )}
-                />
-              </motion.div>
+              {/* Icon + label stack */}
+              <div className="flex flex-col items-center">
+                {/* Icon with scale morph */}
+                <motion.div
+                  animate={{ scale: isActive ? 1.15 : 1 }}
+                  transition={SPRING}
+                >
+                  <Icon
+                    className={cn(
+                      'w-5 h-5 transition-colors duration-150',
+                      isActive
+                        ? 'text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]'
+                        : 'text-white/40 hover:text-white/60'
+                    )}
+                  />
+                </motion.div>
 
-              {/* Label — only visible on active tab */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.span
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 4 }}
-                    transition={{ duration: 0.15 }}
-                    className="text-[9px] font-medium tracking-wide text-violet-300 mt-0.5"
-                  >
-                    {label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+                {/* Label — only visible on active tab */}
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: 0.15 }}
+                      className="text-[9px] font-medium tracking-wide text-violet-300 mt-0.5"
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
             </button>
           );
         })}
