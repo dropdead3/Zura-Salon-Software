@@ -85,10 +85,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
               close();
               onComplete?.(appointment);
             }}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-emerald-600 text-white shadow-lg active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center w-12 h-14 rounded-2xl bg-emerald-600 text-white shadow-lg active:scale-95 transition-transform"
             aria-label="Complete appointment"
           >
             <CheckCircle2 className="w-5 h-5" />
+            <span className="text-[9px] font-medium mt-0.5">Done</span>
           </button>
         )}
         <button
@@ -97,10 +98,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             close();
             onViewClient?.(appointment);
           }}
-          className="flex items-center justify-center w-11 h-11 rounded-full bg-blue-600 text-white shadow-lg active:scale-95 transition-transform"
+          className="flex flex-col items-center justify-center w-12 h-14 rounded-2xl bg-blue-600 text-white shadow-lg active:scale-95 transition-transform"
           aria-label="View client"
         >
           <UserCircle className="w-5 h-5" />
+          <span className="text-[9px] font-medium mt-0.5">Client</span>
         </button>
       </motion.div>
 
