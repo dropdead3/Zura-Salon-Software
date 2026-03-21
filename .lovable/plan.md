@@ -1,29 +1,63 @@
 
 
-## Fix Swipe UX — Static Text + Gap Between Card and Action Button
+## Enrich Dock Appointment Detail with Client Intelligence
 
-### Problem
-Currently the entire card (background + text) slides left together, which looks jarring. The text should stay in place while only the card background moves to reveal the action button. Also needs more visual gap between card and action button.
+### Current State
+When tapping into an appointment card, the detail screen shows 3 tabs: **Services** (mixing bowls), **Notes** (appointment notes only), and **Summary** (bowl stats). No client history, past formulas, visit count, or preferences are surfaced. A basic `DockClientQuickView` bottom sheet exists separately but only shows name, email, notes, and 5 recent visits.
 
-### Approach — Layered Structure
+### Proposed Enhancement — Add a "Client" Tab
 
-Restructure the card into 3 layers:
-1. **Action tray** (behind everything, right-aligned) — the "Finish Appt" button, moved further right with a gap
-2. **Sliding background** (`motion.div`) — the card's border, background, and rounded corners. This is what moves on swipe.
-3. **Static text overlay** — the appointment content sits on top, does NOT move. It's clipped by the outer container.
+Add a **4th tab** ("Client") to `DockAppointmentDetail` that serves as the stylist's memory panel — everything they need to know about this client before and during the appointment.
 
-The text stays fixed because it's positioned absolutely on top of the sliding background, not inside it.
+#### Client Tab Content (top to bottom)
 
-### File: `src/components/dock/schedule/DockAppointmentCard.tsx`
+1. **Client Identity Card**
+   - Avatar circle with initials, name, phone, email
+   - Visit count badge ("12 visits") and first-visit date
+   - CLV tier pill (Platinum/Gold/Silver/Bronze) if available
 
-1. **Outer container**: `relative overflow-hidden rounded-xl` — clips everything
-2. **Action button**: Move from `right-0` to `right-0` but add `pl-2` (8px gap between card edge and button). Increase `OPEN_OFFSET` from `-88` to `-96` to account for the gap.
-3. **Card background**: `motion.div` with `style={{ x }}` — carries the bg color, border, rounded corners, but **no text content**. Sized to fill the container.
-4. **Text content**: A separate `div` with `absolute inset-0 z-20 p-4 pointer-events-none` that holds all the appointment info. It does NOT move. The `pointer-events-none` lets drag events pass through to the background layer.
-5. **Drag + tap handling**: The drag is on the background layer. The outer container handles click/tap.
+2. **Last Formula Section**
+   - Service name + date of last formula
+   - Product lines with weights (e.g., "Koleston 7/0 — 30g, 6% Developer — 60g")
+   - Ratio display (e.g., "1:2")
+   - Source label ("Client's Last Visit")
+   - Uses existing `useInstantFormulaMemory` hook
 
-### Changes Summary
-- Split the single `motion.div` (card) into a sliding bg + static text overlay
-- Add 8px gap between card and action button
-- Adjust `OPEN_OFFSET` to `-96`
+3. **Visit History Timeline** (last 5-8 visits)
+   - Date, service name, stylist name, status
+   - Compact card rows, same styling as `DockClientQuickView`
+   - Uses existing `useClientVisitHistory` hook
+
+4. **Client Notes**
+   - Notes from client profile record (not appointment notes — those are on the Notes tab)
+   - Read-only display
+
+5. **Processing Time Hint**
+   - Average processing time from past completed visits
+   - "Avg. 45 min processing" — helps with scheduling awareness
+
+### Files to Create/Modify
+
+| Action | File | Change |
+|--------|------|--------|
+| Create | `src/components/dock/appointment/DockClientTab.tsx` | New tab component with all 5 sections above |
+| Modify | `src/components/dock/appointment/DockAppointmentDetail.tsx` | Add 4th "Client" tab with `User` icon to the tab bar |
+
+### Data Sources (all existing — no new DB queries needed)
+
+- **Client profile**: Query `phorest_clients` or `clients` by `phorest_client_id` / `client_id` from the appointment (same pattern as `DockClientQuickView`)
+- **Last formula**: `useInstantFormulaMemory(clientId, serviceName)` — already resolves the 3-priority hierarchy
+- **Visit history**: `useClientVisitHistory(phorestClientId)` — already fetches all past appointments with stylist names
+- **Processing time**: Computed from visit history start/end times (same as `useClientMemory`)
+
+### Design
+
+All sections use platform dark tokens (`--platform-bg-card`, `--platform-border`, `--platform-foreground`, etc.), `font-display` for headers, `rounded-xl` cards. Formula lines displayed in a compact table with product name and weight columns. The tab icon is `User` from lucide-react.
+
+### Suggestions for Future Enhancement
+
+- **Allergy/sensitivity flags** — surface any noted allergies or sensitivities prominently at the top with a warning tint
+- **Favorite products** — show retail products the client has purchased before (from checkout data)
+- **Photo timeline** — link to before/after transformation photos from `client_transformation_photos`
+- **No-show rate** — subtle indicator if client has a history of cancellations/no-shows
 
