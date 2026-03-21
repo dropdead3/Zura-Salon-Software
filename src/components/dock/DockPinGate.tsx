@@ -93,6 +93,8 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
 
   return (
     <div className="platform-theme platform-dark absolute inset-0 flex flex-col items-center justify-center bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]">
+      {/* Gradient accent */}
+      <div className="absolute top-0 left-0 w-[60%] h-[60%] bg-[radial-gradient(ellipse_at_top_left,rgba(139,92,246,0.12)_0%,rgba(59,130,246,0.06)_40%,transparent_70%)] pointer-events-none" />
       {/* Organization Logo / Name */}
       <div className="mb-8 text-center">
         {logoDarkUrl ? (
