@@ -84,6 +84,10 @@ export default function Dock() {
     }
     setActiveTab('schedule');
     setView({ screen: 'tabs' });
+
+    // Delay unlock to allow transition animation
+    if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
+    unlockTimerRef.current = setTimeout(() => setUnlocked(true), 100);
   }, [demoOrgId, canAccessDemo]);
 
   const handleLogout = useCallback(() => {
