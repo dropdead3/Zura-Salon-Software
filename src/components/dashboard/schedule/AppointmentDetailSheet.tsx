@@ -379,6 +379,8 @@ export function AppointmentDetailSheet({
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
   const { data: serviceLookup } = useServiceLookup();
   const { assignmentMap, upsertAssignments } = useServiceAssignments(appointment?.id || null);
+  const updateServicesMutation = useUpdateAppointmentServices();
+  const [editServicesOpen, setEditServicesOpen] = useState(false);
 
   // Location name + org lookup
   const { data: locationData } = useQuery({
