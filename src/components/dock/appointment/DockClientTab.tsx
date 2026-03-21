@@ -112,6 +112,47 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   // Favorite products (with repurchase analysis)
   const { data: affinities } = useClientProductAffinity(phorestClientId);
 
+  // Clone formula hook
+  const cloneFormula = useCloneFormula();
+
+  // Cross-sell product recommendations
+  const { data: crossSellProducts } = useQuery({
+    queryKey: ['dock-cross-sell', staff.organizationId, appointment.service_name, phorestClientId],
+    queryFn: async () => {
+      if (!appointment.service_name) return [];
+      // Get top 3 retail products bought by clients with same service, excluding this client's frequent buys
+      const { data } = await supabase
+        .from('phorest_transaction_items')
+        .select('item_name, phorest_client_id')
+        .eq('item_type', 'product')
+        .eq('organization_id', staff.organizationId)
+        .limit(500);
+
+      if (!data || data.length === 0) return [];
+
+      // Count products excluding current client
+      const countMap = new Map<string, number>();
+      const clientProducts = new Set<string>();
+      for (const item of data) {
+        if (item.phorest_client_id === phorestClientId) {
+          clientProducts.add(item.item_name || '');
+        } else if (item.item_name) {
+          countMap.set(item.item_name, (countMap.get(item.item_name) || 0) + 1);
+        }
+      }
+
+      // Remove products client already buys
+      for (const p of clientProducts) countMap.delete(p);
+
+      return [...countMap.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name, count]) => ({ name, buyerCount: count }));
+    },
+    enabled: !!staff.organizationId && !!appointment.service_name,
+    staleTime: 10 * 60 * 1000,
+  });
+
   // Transformation photos (last 4)
   const { data: photos } = useQuery({
     queryKey: ['dock-client-photos', phorestClientId, clientId],
