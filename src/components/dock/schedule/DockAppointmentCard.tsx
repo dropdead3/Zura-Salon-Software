@@ -26,7 +26,7 @@ const BORDER_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
-const OPEN_OFFSET = -88;
+const OPEN_OFFSET = -96;
 const SNAP_THRESHOLD = 50;
 
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
