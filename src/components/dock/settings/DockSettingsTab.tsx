@@ -8,6 +8,7 @@ import { LogOut, User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from
 import { toast } from 'sonner';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockMyStatsPanel } from './DockMyStatsPanel';
 import { DockTeamCompliancePanel } from './DockTeamCompliancePanel';
 import {
