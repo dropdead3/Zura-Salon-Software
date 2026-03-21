@@ -21,6 +21,11 @@ export function useCompleteDockSession() {
       locationId?: string;
       notes?: string;
     }) => {
+      // Guard demo sessions — no DB writes
+      if (params.sessionId.startsWith('demo-')) {
+        return;
+      }
+
       // Update session status
       const { error } = await supabase
         .from('mix_sessions')
