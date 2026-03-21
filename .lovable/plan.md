@@ -1,47 +1,62 @@
 
 
-## Three Client Intelligence Enhancements
+## Three Advanced Client Intelligence Enhancements
 
-### 1. Wire `stylist_user_id` onto DockAppointment
+### 1. Smart Formula Diffing
 
-**Problem:** `stylist_user_id` is already fetched from `phorest_appointments` but dropped during the mapping to `DockAppointment`. Line 203 in `DockClientTab` hardcodes `currentStylistDiffers = false`.
-
-**Fix:**
-- **`src/hooks/dock/useDockAppointments.ts`** — Add `stylist_user_id?: string | null` to the `DockAppointment` interface. Include `stylist_user_id: a.stylist_user_id || null` in all 3 mapping locations (lines ~120-134, ~157-172, and the personal query mapping ~200+).
-- **`src/components/dock/appointment/DockClientTab.tsx`** — Replace the hardcoded `const currentStylistDiffers = false` with an actual comparison: `const currentStylistDiffers = !!preferredStylistId && !!appointment.stylist_user_id && appointment.stylist_user_id !== preferredStylistId`. The amber warning UI is already built and will activate.
-
-### 2. Quick-Tap Formula Re-Use from History Timeline
-
-**Problem:** Formula history cards in the Client tab are read-only. Stylists should be able to tap a past formula to clone it into an active bowl.
+Show what changed between consecutive formula entries in the Formula History timeline.
 
 **Approach:**
-- Add a `Copy` icon button on each formula history card in `DockClientTab`
-- On tap, use the existing `useCloneFormula` hook which inserts formula lines into a target bowl
-- Need to know the active bowl ID — pass it via props from `DockAppointmentDetail` which has access to the current mix session context
-- If no active bowl exists, show a toast prompting the stylist to create a bowl first
+- Add a `computeFormulaDiff` helper function that compares two consecutive `FormulaLine[]` arrays and returns:
+  - Added products (in new but not old)
+  - Removed products (in old but not new)
+  - Changed quantities (same product, different amount — show delta)
+  - Ratio shift (compute total weight ratio between old/new)
+- In the Formula History section, render diff badges below each card (except the oldest):
+  - Green `+Product` pills for additions
+  - Rose `-Product` pills for removals
+  - Amber `↑30g → 45g` for quantity changes
+  - Violet `Ratio 1:2 → 1:3` if overall ratio shifted
+- Products matched by `product_id` first, fallback to `product_name`
+- Diff only shown between consecutive entries of the same `formula_type`
 
-**Changes:**
-- **`src/components/dock/appointment/DockClientTab.tsx`** — Add optional `activeBowlId` prop. Import `useCloneFormula`. Add a `Copy` button on each formula history card that calls `cloneFormula.mutate({ bowlId, formulaLines })`. Show loading state on the button while cloning.
-- **`src/components/dock/appointment/DockAppointmentDetail.tsx`** — Query the active mix session's first open bowl (from `mix_bowls` where `status = 'open'` for the appointment's session) and pass `activeBowlId` to `DockClientTab`.
+**File:** `src/components/dock/appointment/DockClientTab.tsx` — add helper + diff rendering in the formula history map
 
-### 3. Product Recommendations Based on Formula + Retail Cross-Sell Patterns
+### 2. Retail Conversion Tracking
 
-**Problem:** No product suggestions are surfaced. When a client uses specific color/treatment products, there are complementary retail products (e.g., color-safe shampoo for color services).
+Track whether cross-sell recommendations lead to actual purchases, feeding back into recommendation quality.
 
-**Approach — Lightweight, data-driven:**
-- Create a new section "Suggested Retail" in `DockClientTab` below Frequently Purchased
-- Query logic: Look at the client's current service name + formula products → match against `phorest_transaction_items` from *other clients* who had similar services and also bought retail
-- For MVP: use a simpler heuristic — surface the top 3 retail products purchased by clients who had the same `service_name` at this org, excluding products the client already buys frequently
-- Query `phorest_transaction_items` grouped by `item_name` where `item_type = 'product'`, joined to appointments with matching service names, limited to top 3 by count
+**Approach:**
+- **New table: `retail_recommendation_events`** — logs when a recommendation is surfaced and when it converts
+  - `id`, `organization_id`, `client_id` (phorest_client_id), `recommended_product_name`, `service_name`, `recommended_at`, `converted_at` (null until purchase detected), `recommended_by` (staff user_id)
+  - RLS: org members can read/write their org's data
+- **Log on render:** When cross-sell products are displayed, insert a row per product (debounced, deduplicated by client+product+date)
+- **Detect conversion:** A lightweight cron or on-demand check: when `phorest_transaction_items` shows a matching product purchase by the same client within 30 days of recommendation, stamp `converted_at`
+- **Surface conversion rate:** In the "Suggested Retail" section header, show a small "X% conversion" badge if enough data exists (10+ recommendations)
+- **Feed back into ranking:** Adjust cross-sell query to weight products by historical conversion rate (products that actually get bought rank higher)
 
-**Changes:**
-- **`src/components/dock/appointment/DockClientTab.tsx`** — Add a new `useQuery` for cross-sell recommendations. Render a "Suggested Retail" section with `Sparkles` icon, showing product name + "X clients with similar services bought this" subtitle. Cards styled as subtle recommendation pills with `bg-violet-500/5 border-violet-500/15`.
+**Files:**
+- Database migration — create `retail_recommendation_events` table with RLS
+- `src/components/dock/appointment/DockClientTab.tsx` — log recommendation events, show conversion badge
+
+### 3. Session-Aware Recommendations
+
+Factor in the current formula being mixed (not just service name) for more precise retail suggestions.
+
+**Approach:**
+- Pass `activeBowlId` (already available) to the cross-sell query
+- When `activeBowlId` exists, fetch current `mix_bowl_lines` to get the actual products being used right now
+- Use those product names/brands as additional filtering criteria: query `phorest_transaction_items` for retail products purchased in transactions that also included the same professional products
+- This creates a "clients who used Product X also bought Shampoo Y" pattern
+- Falls back to the existing service-name-based logic when no active bowl or no lines yet
+
+**Files:**
+- `src/components/dock/appointment/DockClientTab.tsx` — enhance cross-sell query to incorporate active bowl lines
 
 ### Files Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/hooks/dock/useDockAppointments.ts` — add `stylist_user_id` to interface + all mappings |
-| Modify | `src/components/dock/appointment/DockClientTab.tsx` — enable stylist diff warning, add formula clone button, add cross-sell section |
-| Modify | `src/components/dock/appointment/DockAppointmentDetail.tsx` — query active bowl ID, pass to Client tab |
+| Create | Migration for `retail_recommendation_events` table + RLS |
+| Modify | `src/components/dock/appointment/DockClientTab.tsx` — formula diffing, conversion tracking, session-aware cross-sell |
 
