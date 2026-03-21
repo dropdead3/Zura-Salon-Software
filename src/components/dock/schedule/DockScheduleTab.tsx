@@ -13,6 +13,8 @@ import { DockNewBookingSheet } from './DockNewBookingSheet';
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
+  onCompleteAppointment?: (appointment: DockAppointment) => void;
+  onViewClient?: (appointment: DockAppointment) => void;
   locationId: string;
   staffFilter?: string;
 }
