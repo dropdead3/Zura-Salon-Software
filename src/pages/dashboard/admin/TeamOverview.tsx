@@ -621,7 +621,7 @@ export default function TeamOverview() {
                               <p className="font-sans">
                                 {member.last_completion_date 
                                   ? formatDate(new Date(member.last_completion_date), 'MMM d')
-                                  : 'Never'}}
+                                  : 'Never'}
                               </p>
                             </div>
                           </div>
