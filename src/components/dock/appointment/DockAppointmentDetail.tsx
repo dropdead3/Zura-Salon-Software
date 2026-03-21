@@ -15,7 +15,7 @@ import { DockClientTab } from './DockClientTab';
 import { DockEditServicesSheet } from './DockEditServicesSheet';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 
-type DetailTab = 'services' | 'notes' | 'summary';
+type DetailTab = 'services' | 'notes' | 'summary' | 'client';
 
 interface DockAppointmentDetailProps {
   appointment: DockAppointment;
