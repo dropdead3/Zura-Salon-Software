@@ -749,6 +749,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                 {conversionRate}% conversion
               </span>
             )}
+          </div>
           <div className="space-y-1.5">
             {crossSellProducts.map((p) => (
               <div
