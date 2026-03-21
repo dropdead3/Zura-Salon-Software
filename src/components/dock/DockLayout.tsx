@@ -3,6 +3,7 @@
  * Applies platform dark theme. Supports device preview in demo mode.
  */
 
+import { useState } from 'react';
 import { DockBottomNav } from './DockBottomNav';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
 import { DockDemoBadge } from './DockDemoBadge';
@@ -15,6 +16,8 @@ import { DockClientsTab } from './clients/DockClientsTab';
 import { DockScaleTab } from './scale/DockScaleTab';
 import { DockSettingsTab } from './settings/DockSettingsTab';
 import { DockAppointmentDetail } from './appointment/DockAppointmentDetail';
+import { DockClientQuickView } from './appointment/DockClientQuickView';
+import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
 
 interface DockLayoutProps {
   activeTab: DockTab;
@@ -39,6 +42,17 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   const showingDetail = view.screen === 'appointment-detail';
   const isConstrained = device !== 'full';
 
+  const completeAppointment = useDockCompleteAppointment();
+  const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
+
+  const handleComplete = (appointment: DockAppointment) => {
+    completeAppointment.mutate({
+      appointmentId: appointment.id,
+      organizationId: staff.organizationId,
+      source: appointment.source,
+    });
+  };
+
   const dockContent = (
     <div
       className="flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
@@ -55,7 +69,16 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
           />
         ) : (
           <>
-            {activeTab === 'schedule' && <DockScheduleTab staff={staff} onOpenAppointment={onOpenAppointment} locationId={staff.locationId} staffFilter={staffFilter} />}
+            {activeTab === 'schedule' && (
+              <DockScheduleTab
+                staff={staff}
+                onOpenAppointment={onOpenAppointment}
+                onCompleteAppointment={handleComplete}
+                onViewClient={(appt) => setClientViewAppt(appt)}
+                locationId={staff.locationId}
+                staffFilter={staffFilter}
+              />
+            )}
             {activeTab === 'active' && <DockActiveTab staff={staff} />}
             {activeTab === 'clients' && <DockClientsTab staff={staff} />}
             {activeTab === 'scale' && <DockScaleTab />}
@@ -68,6 +91,15 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       {!showingDetail && (
         <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} />
       )}
+
+      {/* Client quick view sheet */}
+      <DockClientQuickView
+        open={!!clientViewAppt}
+        onClose={() => setClientViewAppt(null)}
+        phorestClientId={clientViewAppt?.phorest_client_id}
+        clientId={clientViewAppt?.client_id}
+        clientName={clientViewAppt?.client_name}
+      />
     </div>
   );
 
