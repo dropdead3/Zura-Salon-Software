@@ -27,6 +27,7 @@ const TABS: { id: DetailTab; label: string; icon: typeof FlaskConical }[] = [
   { id: 'services', label: 'Services', icon: FlaskConical },
   { id: 'notes', label: 'Notes', icon: StickyNote },
   { id: 'summary', label: 'Summary', icon: Receipt },
+  { id: 'client', label: 'Client', icon: User },
 ];
 
 export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppointmentDetailProps) {
