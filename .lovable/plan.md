@@ -1,21 +1,29 @@
 
 
-## Restyle Swipe Action — Single "Finish Appt" Button Matching Card Height
+## Fix Swipe UX — Static Text + Gap Between Card and Action Button
 
-**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+### Problem
+Currently the entire card (background + text) slides left together, which looks jarring. The text should stay in place while only the card background moves to reveal the action button. Also needs more visual gap between card and action button.
 
-### Changes
+### Approach — Layered Structure
 
-1. **Remove "Client Info" button entirely** — delete the second action div and the `onViewClient` callback usage from the tray (keep the prop for now to avoid breaking callers)
+Restructure the card into 3 layers:
+1. **Action tray** (behind everything, right-aligned) — the "Finish Appt" button, moved further right with a gap
+2. **Sliding background** (`motion.div`) — the card's border, background, and rounded corners. This is what moves on swipe.
+3. **Static text overlay** — the appointment content sits on top, does NOT move. It's clipped by the outer container.
 
-2. **Replace circle icon with a full-height button** that matches the card's dimensions:
-   - The button fills the entire tray height (`h-full`) and width (~80px)
-   - Same `rounded-xl` as the card
-   - `bg-emerald-500/15 border border-emerald-500/30` glass style
-   - Icon (`CheckCircle2`) and label ("Finish Appt") stacked vertically inside, centered
-   - Label: `text-[9px] tracking-wide uppercase font-display text-emerald-400`
+The text stays fixed because it's positioned absolutely on top of the sliding background, not inside it.
 
-3. **Shrink tray width** from 170px to ~88px (single button + padding). Update `OPEN_OFFSET` to `-88` and snap threshold accordingly.
+### File: `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-4. **Terminal status** — tray width becomes 0 (nothing to show since client info is removed and finish is hidden for terminal). Disable drag entirely for terminal appointments.
+1. **Outer container**: `relative overflow-hidden rounded-xl` — clips everything
+2. **Action button**: Move from `right-0` to `right-0` but add `pl-2` (8px gap between card edge and button). Increase `OPEN_OFFSET` from `-88` to `-96` to account for the gap.
+3. **Card background**: `motion.div` with `style={{ x }}` — carries the bg color, border, rounded corners, but **no text content**. Sized to fill the container.
+4. **Text content**: A separate `div` with `absolute inset-0 z-20 p-4 pointer-events-none` that holds all the appointment info. It does NOT move. The `pointer-events-none` lets drag events pass through to the background layer.
+5. **Drag + tap handling**: The drag is on the background layer. The outer container handles click/tap.
+
+### Changes Summary
+- Split the single `motion.div` (card) into a sliding bg + static text overlay
+- Add 8px gap between card and action button
+- Adjust `OPEN_OFFSET` to `-96`
 
