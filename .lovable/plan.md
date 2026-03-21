@@ -1,19 +1,17 @@
 
 
-## Always Populate Faux Appointments in Demo Mode
+## Fix Dock Nav Indicator to Full Round
 
-**Problem:** When entering demo mode with a real org ID (`?demo=<orgId>`), the hook queries real DB data. If no appointments exist for that org today, the schedule shows "No appointments today" — defeating the purpose of a demo.
+**Problem:** The indicator `div` uses `absolute inset-0` which inherits the button's wide rectangular shape (`flex-1 h-12`). Even with `rounded-full`, a wide rectangle just gets pill-shaped ends, not a circle.
 
-**Fix in `src/hooks/dock/useDockAppointments.ts`:**
+**Fix in `src/components/dock/DockBottomNav.tsx`:**
 
-In the `isDemoMode && usesRealData` branch (around line 42-183), after fetching real appointments, if the result is empty, fall back to returning `DEMO_APPOINTMENTS`. This ensures demo mode always has content to showcase.
+Change the indicator from `absolute inset-0` (fills entire button rectangle) to a centered, fixed-size circle that sits behind the icon:
 
-Change: After line 182 (`return appointments;`), replace with:
-```typescript
-return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;
-```
+- Remove `inset-0` from the indicator
+- Add fixed dimensions: `w-12 h-12` (matches button height)
+- Center it: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`
+- Keep `rounded-full` — now it's a perfect circle
 
-This single-line change means:
-- If the org has real appointments today → show them (more realistic demo)
-- If no real appointments → always fall back to the faux data so the demo is never empty
+This makes the active background a circular highlight behind the icon rather than a stretched pill across the full button width.
 
