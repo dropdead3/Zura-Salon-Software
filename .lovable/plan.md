@@ -1,14 +1,26 @@
 
 
-## Make Unlock Glow More Subtle
+## Change Delete Button to Clear Button
 
-**File:** `src/components/dock/DockUnlockTransition.tsx`
+**File:** `src/components/dock/DockPinGate.tsx`
 
-**Line 43** — Reduce the violet pulse opacity values:
-- Center color: `rgba(139,92,246,0.25)` → `rgba(139,92,246,0.10)`
-- Mid color: `rgba(59,130,246,0.08)` → `rgba(59,130,246,0.03)`
+Two changes:
 
-**Line 46** — Lower peak animated opacity from `1` to `0.7` so the glow never reaches full intensity.
+1. **Line 38-41** — Change the `'delete'` handler from removing the last digit to clearing the entire PIN:
+   ```ts
+   if (key === 'delete') {
+     setPin('');
+     setError(false);
+     return;
+   }
+   ```
 
-These two changes make the radial pulse a gentle hint rather than a prominent flash, while preserving the premium handoff feel.
+2. **Lines 139-145** — Replace the `Delete` icon with a text label "Clear" to communicate the new behavior:
+   ```tsx
+   <button ...>
+     <span className="text-sm font-medium tracking-wide">Clear</span>
+   </button>
+   ```
+
+Single file, two small edits.
 
