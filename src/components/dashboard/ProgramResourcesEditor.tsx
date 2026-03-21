@@ -117,7 +117,7 @@ export default function ProgramResourcesEditor() {
     setUploading(true);
 
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file';
-    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')`;
+    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const filePath = `program-resources/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
