@@ -36,13 +36,13 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
               className="relative flex items-center justify-center flex-1 h-12 z-10"
             >
               {/* Icon wrapper — serves as anchor for indicator */}
-              <div className="relative flex items-center justify-center">
+              <div className="relative flex h-11 w-11 items-center justify-center">
                 {/* Sliding circle indicator — centered on icon */}
                 {isActive && (
                   <motion.div
                     layoutId="dock-indicator"
                     transition={SPRING}
-                    className="absolute w-11 h-11 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                    className="absolute inset-0 rounded-full bg-violet-500/[0.12] shadow-[0_0_20px_rgba(139,92,246,0.15)]"
                   />
                 )}
 
@@ -50,6 +50,7 @@ export function DockBottomNav({ activeTab, onTabChange }: DockBottomNavProps) {
                 <motion.div
                   animate={{ scale: isActive ? 1.15 : 1 }}
                   transition={SPRING}
+                  className="relative z-10 flex items-center justify-center"
                 >
                   <Icon
                     className={cn(
