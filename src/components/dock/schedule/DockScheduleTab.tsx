@@ -13,6 +13,8 @@ import { DockNewBookingSheet } from './DockNewBookingSheet';
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
+  onCompleteAppointment?: (appointment: DockAppointment) => void;
+  onViewClient?: (appointment: DockAppointment) => void;
   locationId: string;
   staffFilter?: string;
 }
@@ -46,7 +48,7 @@ function formatTime(time: string) {
   return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFilter }: DockScheduleTabProps) {
+export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointment, onViewClient, locationId, staffFilter }: DockScheduleTabProps) {
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
@@ -94,13 +96,13 @@ export function DockScheduleTab({ staff, onOpenAppointment, locationId, staffFil
         ) : (
           <>
             {active.length > 0 && (
-              <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} />
+              <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
             )}
             {scheduled.length > 0 && (
-              <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} />
+              <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
             )}
             {completed.length > 0 && (
-              <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} />
+              <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
             )}
           </>
         )}
@@ -123,12 +125,16 @@ function AppointmentGroup({
   appointments,
   accentColor,
   onTap,
+  onComplete,
+  onViewClient,
 }: {
   label: string;
   count: number;
   appointments: DockAppointment[];
   accentColor: 'violet' | 'blue' | 'slate';
   onTap: (appointment: DockAppointment) => void;
+  onComplete?: (appointment: DockAppointment) => void;
+  onViewClient?: (appointment: DockAppointment) => void;
 }) {
   const dotColor = {
     violet: 'bg-violet-500',
@@ -149,7 +155,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-2">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onViewClient={onViewClient} />
         ))}
       </div>
     </div>

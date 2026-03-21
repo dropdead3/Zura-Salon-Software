@@ -1,9 +1,12 @@
 /**
  * DockAppointmentCard — Appointment card with colored left border accent.
+ * 3-dot kebab opens a popover menu with contextual actions.
  */
 
-import { Clock, FlaskConical, MoreVertical, User, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Clock, FlaskConical, MoreVertical, User, Users, CheckCircle2, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 
@@ -11,6 +14,8 @@ interface DockAppointmentCardProps {
   appointment: DockAppointment;
   accentColor: 'violet' | 'blue' | 'slate';
   onTap?: (appointment: DockAppointment) => void;
+  onComplete?: (appointment: DockAppointment) => void;
+  onViewClient?: (appointment: DockAppointment) => void;
 }
 
 const BORDER_COLORS = {
@@ -19,8 +24,12 @@ const BORDER_COLORS = {
   slate: 'border-l-slate-500',
 };
 
-export function DockAppointmentCard({ appointment, accentColor, onTap }: DockAppointmentCardProps) {
+const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
+
+export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
 
   return (
     <button
@@ -83,10 +92,56 @@ export function DockAppointmentCard({ appointment, accentColor, onTap }: DockApp
             </div>
           )}
 
-          {/* Kebab */}
-          <div className="text-[hsl(var(--platform-foreground-muted)/0.4)]">
-            <MoreVertical className="w-4 h-4" />
-          </div>
+          {/* Kebab menu */}
+          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+            <PopoverTrigger asChild>
+              <div
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((prev) => !prev);
+                }}
+                className="p-1 rounded-lg hover:bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted)/0.4)] hover:text-[hsl(var(--platform-foreground-muted))] transition-colors"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              side="bottom"
+              sideOffset={4}
+              className="w-52 p-1.5 rounded-xl bg-[hsl(var(--platform-bg-elevated))] border border-[hsl(var(--platform-border)/0.3)] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Complete Appointment */}
+              {!isTerminal && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    onComplete?.(appointment);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm text-[hsl(var(--platform-foreground))] hover:bg-violet-500/10 hover:text-violet-400 transition-colors"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Complete Appointment</span>
+                </button>
+              )}
+
+              {/* View Client Profile */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  onViewClient?.(appointment);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm text-[hsl(var(--platform-foreground))] hover:bg-violet-500/10 hover:text-violet-400 transition-colors"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span>View Client Profile</span>
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </button>
