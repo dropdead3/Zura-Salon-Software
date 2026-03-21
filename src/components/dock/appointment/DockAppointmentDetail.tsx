@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowLeft, FlaskConical, StickyNote, Receipt } from 'lucide-react';
+import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
@@ -11,6 +11,8 @@ import { formatTime } from '../schedule/DockScheduleTab';
 import { DockServicesTab } from './DockServicesTab';
 import { DockNotesTab } from './DockNotesTab';
 import { DockSummaryTab } from './DockSummaryTab';
+import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
+import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 
 type DetailTab = 'services' | 'notes' | 'summary';
 
@@ -28,6 +30,12 @@ const TABS: { id: DetailTab; label: string; icon: typeof FlaskConical }[] = [
 
 export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppointmentDetailProps) {
   const [tab, setTab] = useState<DetailTab>('services');
+  const [editServicesOpen, setEditServicesOpen] = useState(false);
+  const updateServicesMutation = useUpdateAppointmentServices();
+
+  const currentServices = appointment.service_name
+    ? appointment.service_name.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
 
   return (
     <div className="flex flex-col h-full">
@@ -44,10 +52,18 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             <h1 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
               {appointment.client_name || 'Walk-in'}
             </h1>
-            <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5">
-              {appointment.service_name && <span>{appointment.service_name} · </span>}
-              {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
-            </p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+                {appointment.service_name && <span>{appointment.service_name} · </span>}
+                {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
+              </p>
+              <button
+                onClick={() => setEditServicesOpen(true)}
+                className="shrink-0 p-0.5 rounded text-[hsl(var(--platform-foreground-muted)/0.6)] hover:text-[hsl(var(--platform-foreground))] transition-colors"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -77,6 +93,24 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         {tab === 'notes' && <DockNotesTab appointment={appointment} />}
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
       </div>
+
+      <EditServicesDialog
+        open={editServicesOpen}
+        onOpenChange={setEditServicesOpen}
+        currentServices={currentServices}
+        locationId={appointment.location_id}
+        isSaving={updateServicesMutation.isPending}
+        onSave={(newServices: ServiceEntry[]) => {
+          updateServicesMutation.mutate({
+            appointmentId: appointment.id,
+            organizationId: staff.organizationId,
+            services: newServices,
+            previousServiceName: appointment.service_name,
+          }, {
+            onSuccess: () => setEditServicesOpen(false),
+          });
+        }}
+      />
     </div>
   );
 }
