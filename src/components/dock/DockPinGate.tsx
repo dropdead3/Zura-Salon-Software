@@ -131,7 +131,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       </div>
 
       {/* Numpad */}
-      <div className="grid grid-cols-3 gap-4 w-72">
+      <div className="grid grid-cols-3 gap-3 w-80">
         {KEYS.map((key, i) => {
           if (key === '') return <div key={i} />;
           if (key === 'delete') {
@@ -139,7 +139,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
               <button
                 key={i}
                 onClick={() => handleKey('delete')}
-                className="flex items-center justify-center h-16 rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors"
+                className="flex items-center justify-center h-[72px] rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors"
               >
                 <Delete className="w-6 h-6" />
               </button>
@@ -150,7 +150,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
               key={i}
               onClick={() => handleKey(key)}
               disabled={loading}
-              className="flex items-center justify-center h-16 rounded-2xl text-xl font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center h-[72px] rounded-2xl text-2xl font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50"
             >
               {key}
             </button>
