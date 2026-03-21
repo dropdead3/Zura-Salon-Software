@@ -192,6 +192,7 @@ function exportCommissionsCSV(commissions: { name: string; retailRevenue: number
 
 // ─── Brand Performance Card ───
 function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data, filterContext }: { brands: BrandRow[]; totalRevenue: number; formatCurrencyWhole: (n: number) => string; data: RetailAnalyticsResult; filterContext?: FilterContext }) {
+  const { dashPath } = useOrgDashboardPath();
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const navigate = useNavigate();
 
