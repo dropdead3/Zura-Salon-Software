@@ -167,6 +167,7 @@ interface AnnouncementsPanelProps {
 }
 
 export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanelProps) {
+  const { dashPath } = useOrgDashboardPath();
   const [locationFilter, setLocationFilter] = useState('all');
   const { user } = useAuth();
   const queryClient = useQueryClient();

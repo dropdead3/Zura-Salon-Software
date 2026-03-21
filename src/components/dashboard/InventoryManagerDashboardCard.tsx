@@ -74,6 +74,7 @@ export function InventoryManagerDashboardCard() {
 }
 
 function InventoryManagerDashboardCardInner() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: stats, isLoading } = useInventoryManagerStats();
   const { data: nextAudit } = useNextPendingAudit();
   const isOverdue = nextAudit ? isPast(new Date(nextAudit.due_date + 'T23:59:59')) : false;
