@@ -1,63 +1,56 @@
 
 
-## Enhance DockClientTab with 4 Intelligence Sections
+## Implement 4 Client Intelligence Enhancements in DockClientTab
 
-### Overview
+### 1. Editable Medical Alerts
+Allow stylists to add/update allergy info directly from the Client tab.
 
-Add allergy/sensitivity flags, favorite products, photo timeline, and no-show rate to the existing `DockClientTab`. Since there's no dedicated allergy column on client tables, we'll parse the `notes` field for allergy/sensitivity keywords and add a new `medical_alerts` text column to `clients` and `phorest_clients` for structured storage.
+**Changes:**
+- Add an "Edit" pencil icon button next to the "Allergy / Sensitivity" section header
+- When no alert exists, show an "Add Medical Alert" button
+- On tap, open an inline editable textarea (not a sheet — keep it lightweight)
+- On save, update `phorest_clients.medical_alerts` or `clients.medical_alerts` via direct Supabase update
+- Invalidate the `dock-client-profile` query on success
+- Add a small `useMutation` inline in the component for the update
 
-### Changes
+### 2. Preferred Stylist Indicator
+Show which stylist the client visits most as a badge in the Identity Card.
 
-#### 1. Database Migration — Add `medical_alerts` Column
+**Changes:**
+- Fetch `preferred_stylist_id` in the existing client profile query (add it to the `select` for `phorest_clients`)
+- Use existing `usePreferredStylist(preferredStylistId)` hook to resolve the display name
+- Render a badge in the badges row: `"Prefers: [Stylist Name]"` with a `Heart` icon, violet tint
+- If the current appointment stylist differs from preferred, show a subtle amber "Different stylist" note
 
-Add a nullable `medical_alerts` text column to both `phorest_clients` and `clients` tables. This gives a dedicated field for allergy/sensitivity data rather than relying on free-text notes parsing.
+### 3. Retail Repurchase Reminders
+Flag products nearing typical repurchase cycles based on purchase frequency.
 
-```sql
-ALTER TABLE phorest_clients ADD COLUMN medical_alerts text;
-ALTER TABLE clients ADD COLUMN medical_alerts text;
-```
+**Changes:**
+- Extend the existing `useClientProductAffinity` data (already fetched) with repurchase logic
+- In the "Frequently Purchased" section, for products purchased 2+ times, compute the average days between purchases from `phorest_transaction_items`
+- If the last purchase was longer ago than 1.2× the average interval, show an amber "May need restock" pill next to the product
+- This is a UI-only computation on existing data — add a small helper function `computeRepurchaseStatus` in the component
 
-#### 2. Modify `DockClientTab.tsx`
+### 4. Color History Timeline — Formula Evolution View
+Dedicated section showing how formulas have changed across visits.
 
-Add 4 new sections between the Identity Card and Last Formula sections:
-
-**a. Allergy/Sensitivity Flags (top priority — warning banner)**
-- Check `client.medical_alerts` field first; fallback: scan `client.notes` for keywords (`allergy`, `allergic`, `sensitive`, `sensitivity`, `reaction`, `irritation`)
-- Render as a prominent amber/rose-tinted banner with `AlertTriangle` icon at the very top of the tab (before identity card) so it's impossible to miss
-- Styled: `bg-rose-500/10 border-rose-500/30 text-rose-400`
-
-**b. Favorite Products (after processing time)**
-- Use existing `useClientProductAffinity(phorestClientId)` hook
-- Render top 5 products as compact pill badges with purchase count
-- Section header: "Frequently Purchased" with `ShoppingBag` icon
-- Each pill: `bg-[hsl(var(--platform-bg-card))]` with purchase count badge
-
-**c. Photo Timeline (after favorite products)**
-- Query `client_transformation_photos` directly (lightweight query — just last 4 entries with `before_url`, `after_url`, `service_name`, `taken_at`)
-- Render as a horizontal scrollable row of thumbnail pairs (before/after)
-- Section header: "Transformations" with `Camera` icon
-- Each thumbnail: `w-16 h-16 rounded-lg object-cover`
-- If no photos: section hidden entirely
-
-**d. No-Show Rate (badge in Identity Card badges row)**
-- Computed from existing `visits` data already fetched: count visits with `status === 'cancelled'` or `status === 'no_show'` divided by total visits
-- Only show if rate > 10% (to avoid noise)
-- Render as a rose-tinted pill badge: "15% No-Show" with `AlertCircle` icon
-- Placed in the badges row alongside visit count and CLV tier
-
-#### 3. Data Sources
-
-| Feature | Source | New Query? |
-|---------|--------|-----------|
-| Allergy flags | `client.medical_alerts` + `client.notes` keyword scan | No — already fetched |
-| Favorite products | `useClientProductAffinity` hook | Yes — new hook call |
-| Photo timeline | `client_transformation_photos` table | Yes — lightweight query (last 4) |
-| No-show rate | Computed from `visits` array | No — already fetched |
+**Changes:**
+- Add a new "Formula History" section after "Last Formula" 
+- Use existing `useClientFormulaHistory(clientId)` hook (already built for `ClientFormulaHistoryTab`)
+- Render a compact vertical timeline: date → service name → key product lines (truncated to 2 lines max)
+- Show last 5 entries, collapsed with "Show more" if more exist
+- Reuse the same card styling as visit history rows
 
 ### Files
 
 | Action | File |
 |--------|------|
-| Migration | Add `medical_alerts` column to `phorest_clients` and `clients` |
-| Modify | `src/components/dock/appointment/DockClientTab.tsx` — add all 4 sections |
+| Modify | `src/components/dock/appointment/DockClientTab.tsx` — all 4 enhancements |
+| Modify | `src/hooks/useClientProductAffinity.ts` — add `lastPurchaseDate` + `avgDaysBetween` to return type (already has `lastPurchaseDate`, need interval calculation) |
+
+### No database changes needed
+- `medical_alerts` column already exists on both tables
+- `preferred_stylist_id` already exists on `phorest_clients`
+- `client_formula_history` table already exists
+- `phorest_transaction_items` already has the data for repurchase analysis
 
