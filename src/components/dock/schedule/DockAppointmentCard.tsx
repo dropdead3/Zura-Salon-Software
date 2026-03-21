@@ -26,14 +26,14 @@ const BORDER_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
-const OPEN_OFFSET = -140;
+const OPEN_OFFSET = -152;
 const SNAP_THRESHOLD = 60;
 
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
-  const trayWidth = isTerminal ? 64 : 140;
-  const openOffset = isTerminal ? -64 : OPEN_OFFSET;
+  const trayWidth = isTerminal ? 72 : 152;
+  const openOffset = isTerminal ? -72 : OPEN_OFFSET;
 
   const x = useMotionValue(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -85,10 +85,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
               close();
               onComplete?.(appointment);
             }}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-emerald-600 text-white shadow-lg active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center w-12 h-14 rounded-2xl bg-emerald-600 text-white shadow-lg active:scale-95 transition-transform"
             aria-label="Complete appointment"
           >
             <CheckCircle2 className="w-5 h-5" />
+            <span className="text-[9px] font-medium mt-0.5">Done</span>
           </button>
         )}
         <button
@@ -97,10 +98,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             close();
             onViewClient?.(appointment);
           }}
-          className="flex items-center justify-center w-11 h-11 rounded-full bg-blue-600 text-white shadow-lg active:scale-95 transition-transform"
+          className="flex flex-col items-center justify-center w-12 h-14 rounded-2xl bg-blue-600 text-white shadow-lg active:scale-95 transition-transform"
           aria-label="View client"
         >
           <UserCircle className="w-5 h-5" />
+          <span className="text-[9px] font-medium mt-0.5">Client</span>
         </button>
       </motion.div>
 
