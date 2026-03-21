@@ -6,6 +6,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Weight, WifiOff, Bluetooth, BluetoothSearching, BluetoothConnected, RefreshCw, Zap, Radio, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
 import type { WeightEvent } from '@/lib/backroom/weight-event-schema';
 import { createScaleAdapter, BLEScaleAdapter } from '@/lib/backroom/scale-adapter';
