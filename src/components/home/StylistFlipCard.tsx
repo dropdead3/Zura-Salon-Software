@@ -140,7 +140,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
                   const SocialTag = isPreview ? 'span' : 'a';
                   const socialProps = isPreview ? {} : {
                     href: isInstagram 
-                      ? `https://instagram.com/${handle.replace('@', ')}` 
+                      ? `https://instagram.com/${handle.replace('@', '')}` 
                       : `https://tiktok.com/@${handle.replace('@', ')}`,
                     target: "_blank",
                     rel: "noopener noreferrer",
@@ -208,7 +208,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
         >
           <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-6 text-center">
             {/* Name */}
-            <h3 className="text-2xl font-display text-background mb-1">{formatDisplayName(stylist.name, stylist.displayName)}</h3>
+            <h3 className="text-2xl font-display text-background mb-1">{formatDisplayName(stylist.name, stylist.displayName')}</h3>
             <p className="text-xs tracking-[0.2em] text-background/60 mb-5 uppercase">{stylist.level}</p>
 
             {/* Bio */}

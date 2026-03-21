@@ -87,8 +87,8 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
   };
 
   // Generate period labels
-  const periodALabel = `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy)}`;
-  const periodBLabel = `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy)}`;
+  const periodALabel = `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy')}`;
+  const periodBLabel = `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy')}`;
 
   // Generate insight text
   const insight = useMemo(() => {

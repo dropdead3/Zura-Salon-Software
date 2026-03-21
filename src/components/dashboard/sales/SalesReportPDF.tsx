@@ -85,7 +85,7 @@ export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
       doc.text(
-        `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} - ${formatDate(new Date(dateTo), 'MMM d, yyyy)}`,
+        `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} - ${formatDate(new Date(dateTo), 'MMM d, yyyy')}`,
         pageWidth / 2,
         y,
         { align: 'center' }
@@ -93,7 +93,7 @@ export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData
       
       y += 5;
       doc.text(
-        `Generated on ${formatDate(new Date(), 'MMM d, yyyy h:mm a)}`,
+        `Generated on ${formatDate(new Date(), 'MMM d, yyyy h:mm a')}`,
         pageWidth / 2,
         y,
         { align: 'center' }

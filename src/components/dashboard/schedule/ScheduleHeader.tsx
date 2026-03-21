@@ -246,7 +246,7 @@ export function ScheduleHeader({
               <SelectContent>
                 {locations.map((loc) => {
                   const cityState = loc.city 
-                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
+                    ? `${loc.city.split(',')[0]?.trim('')}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
                     : '';
                   
                   return (

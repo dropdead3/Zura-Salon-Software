@@ -19,11 +19,11 @@ import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurr
 
 const COLORS = [
   'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--muted-foreground))',
+  'hsl(var(--chart-2'))',
+  'hsl(var(--chart-3'))',
+  'hsl(var(--chart-4'))',
+  'hsl(var(--chart-5'))',
+  'hsl(var(--muted-foreground'))',
 ];
 
 interface ProductCategoryChartProps {

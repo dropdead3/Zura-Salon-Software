@@ -337,7 +337,7 @@ export function SupplyLibraryTab() {
       p.brand, p.name, p.category, p.default_depletion, p.default_unit,
       (p.size_options || []).join(';'),
     ]);
-    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join('\n');
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(',''))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1180,7 +1180,7 @@ function AddEditDialog({
     if (!brand.trim() || !name.trim()) return;
     setSaving(true);
     try {
-      const sizeArr = sizes.split(',').map((s) => s.trim()).filter(Boolean);
+      const sizeArr = sizes.split(',').map((s) => s.trim('')).filter(Boolean);
       const wpVal = wholesalePrice.trim() ? parseFloat(wholesalePrice) : null;
       const mpVal = markupPct.trim() ? parseFloat(markupPct) : null;
       const rrVal = wpVal != null && mpVal != null ? Math.round(wpVal * (1 + mpVal / 100) * 100) / 100 : null;

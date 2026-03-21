@@ -1158,7 +1158,7 @@ export default function ClientDirectory() {
                                 }}
                                 title="Click to see the matching profile"
                               >
-                                <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
+                                <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')}')` : ''}
                               </Badge>
                             )}
                             {(client as any)._linkedReason && (
@@ -1168,7 +1168,7 @@ export default function ClientDirectory() {
                               >
                                 <GitMerge className="w-3 h-3" /> 
                                 {(client as any)._linkedReason === 'canonical' ? 'Linked Original' : 'Linked Duplicate'}
-                                {(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
+                                {(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')}')` : ''}
                               </Badge>
                             )}
                             {!(client as any).is_duplicate && !(client as any)._linkedReason && (client as any)._linkedDuplicateId && (
@@ -1184,7 +1184,7 @@ export default function ClientDirectory() {
                                 }}
                                 title="Click to see the matching profile"
                               >
-                                <GitMerge className="w-3 h-3" /> Duplicate Match{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : ''}
+                                <GitMerge className="w-3 h-3" /> Duplicate Match{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')}')` : ''}
                               </Badge>
                             )}
                           </div>

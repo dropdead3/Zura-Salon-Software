@@ -240,7 +240,7 @@ export function BirthdayCalendarCard() {
                           "text-[10px] shrink-0 px-1.5 py-0",
                           person.daysUntil <= 1 && "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
                           person.daysUntil <= 3 && person.daysUntil > 1 && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-                        )}
+                        ')}
                       >
                         {person.daysUntil === 0 ? 'Today!' : 
                          person.daysUntil === 1 ? 'Tomorrow' : 

@@ -60,7 +60,7 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 const TIME_SLOTS: string[] = [];
 for (let h = 7; h < 21; h++) {
   for (let m = 0; m < 60; m += 15) {
-    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0)}`);
+    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
   }
 }
 
@@ -666,7 +666,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{getAttendeeNames().join(', ')}</span>
+                      <span>{getAttendeeNames().join(', '')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       {meetingMode === 'video' ? (

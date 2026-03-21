@@ -40,7 +40,7 @@ interface StylistStepProps {
 const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
   const hour = 8 + Math.floor(i / 2);
   const minute = (i % 2) * 30;
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0)}`;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 }).filter(t => {
   const [h] = t.split(':');
   return parseInt(h) < 20;

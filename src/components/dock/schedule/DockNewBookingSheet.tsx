@@ -59,7 +59,7 @@ function timeToMinutes(time: string): number {
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0)}`;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 }
 
 function formatTime12h(time: string) {
@@ -287,7 +287,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
 
   // Computed
   const selectedServiceDetails = useMemo(
-    () => effectiveServices.filter(s => selectedServices.includes(s.phorest_service_id)),
+    () => effectiveServices.filter(s => selectedServices.includes(s.phorest_service_id')),
     [effectiveServices, selectedServices],
   );
   const totalDuration = selectedServiceDetails.reduce((s, v) => s + v.duration_minutes, 0);
@@ -1198,7 +1198,7 @@ function ConfirmStepDock({
                       <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', ')}</div>
                     ) : (
                       <div className="text-sm text-violet-400">+ Add an assistant</div>
-                    )}
+                    ')}
                   </div>
                 </div>
               </button>

@@ -222,7 +222,7 @@ export function useSyncSupplyLibrary() {
       if (result.inserted > 0) parts.push(`${result.inserted} new products added`);
       if (result.backfilled > 0) parts.push(`${result.backfilled} product lines backfilled`);
       if (parts.length === 0) parts.push('Library is already up to date');
-      toast.success(parts.join(', '));
+      toast.success(parts.join(', ''));
     },
     onError: (error) => {
       toast.error('Sync failed: ' + error.message);

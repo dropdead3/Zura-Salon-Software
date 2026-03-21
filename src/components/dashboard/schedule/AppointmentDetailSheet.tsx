@@ -184,7 +184,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="font-medium truncate block">{client.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
-                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d)}`
+                      ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d')}`
                       : 'No visits yet'}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
@@ -529,7 +529,7 @@ export function AppointmentDetailSheet({
   // ─── Derived Data ─────────────────────────────────────────────
   const services = useMemo(() => {
     if (!appointment?.service_name) return [];
-    return appointment.service_name.split(',').map(s => s.trim()).filter(Boolean).map(name => {
+    return appointment.service_name.split(',').map(s => s.trim('')).filter(Boolean).map(name => {
       const info = serviceLookup?.get(name);
       return { name, duration: info?.duration_minutes || null, category: info?.category || null, price: info?.price ?? null };
     });
@@ -573,7 +573,7 @@ export function AppointmentDetailSheet({
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
-      .map(([name, count]) => ({ name, count }));
+      .map(([name, count]) => ({ name, count }'));
   }, [visitHistory]);
 
   const preferredStylistMismatch = useMemo(() => {

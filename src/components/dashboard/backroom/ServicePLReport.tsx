@@ -65,7 +65,7 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
         totals.revenue > 0 ? ((totals.margin / totals.revenue) * 100).toFixed(1) + '%' : '0%',
       ]);
     }
-    const csv = [headers.join(','), ...rows.map((r) => r.map(String).join(','))].join('\n');
+    const csv = [headers.join(','), ...rows.map((r) => r.map(String).join(',''))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

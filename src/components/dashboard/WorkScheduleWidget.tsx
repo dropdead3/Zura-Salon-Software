@@ -395,7 +395,7 @@ export function WorkScheduleWidget() {
                 .map(request => (
                   <div key={request.id} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      {request.requested_days.join(', ')}
+                      {request.requested_days.join(', '')}
                     </span>
                     <Badge
                       variant="outline"

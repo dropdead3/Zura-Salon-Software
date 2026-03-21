@@ -185,10 +185,10 @@ export function ReorderAnalyticsTab() {
 
   const CHART_COLORS = [
     'hsl(var(--primary))',
-    'hsl(var(--accent-foreground))',
-    'hsl(var(--warning))',
-    'hsl(var(--success))',
-    'hsl(var(--destructive))',
+    'hsl(var(--accent-foreground'))',
+    'hsl(var(--warning'))',
+    'hsl(var(--success'))',
+    'hsl(var(--destructive'))',
     'hsl(210 40% 60%)',
     'hsl(280 40% 60%)',
     'hsl(30 60% 55%)',

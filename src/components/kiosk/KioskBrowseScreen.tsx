@@ -33,7 +33,7 @@ const groupByTimeSlot = (appointments: any[]) => {
   });
   
   // Sort by time slot
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b'));
 };
 
 export function KioskBrowseScreen() {

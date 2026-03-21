@@ -68,7 +68,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
       // Filter by location if user doesn't have full access
       if (!canViewAllLocations && assignedLocationIds.length > 0) {
         // Show company-wide (null) OR user's assigned locations
-        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')}')`);
       }
 
       const { data, error } = await query

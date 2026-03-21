@@ -132,7 +132,7 @@ export function IndicatorCluster({
             {indicators.slice(max).map(ind => ind.label).join(', ')}
           </TooltipContent>
         </Tooltip>
-      )}
+      ')}
     </div>
   );
 }

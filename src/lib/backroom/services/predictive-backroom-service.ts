@@ -101,7 +101,7 @@ async function fetchUpcomingServices(
   }
 
   // Map local appointments (deduplicate by appointment_id)
-  const seenIds = new Set(services.map((s) => s.appointment_id));
+  const seenIds = new Set(services.map((s) => s.appointment_id'));
   for (const appt of localFiltered) {
     if (!seenIds.has(appt.id) && appt.service_name) {
       services.push({

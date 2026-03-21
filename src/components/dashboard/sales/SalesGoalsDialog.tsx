@@ -172,7 +172,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                             {formatCurrencyWhole(currentRevenue)} of {formatCurrencyWhole(monthlyGoal)} this month
                           </p>
                         </div>
-                      )}
+                      ')}
 
                       <div className="grid grid-cols-3 gap-3 pt-1">
                         {/* Monthly - Editable */}

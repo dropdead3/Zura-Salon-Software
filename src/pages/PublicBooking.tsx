@@ -315,7 +315,7 @@ export default function PublicBooking() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Services</span>
-                <span className="font-medium">{booking.services.map(s => s.name).join(', ')}</span>
+                <span className="font-medium">{booking.services.map(s => s.name).join(', '')}</span>
               </div>
             </div>
 
@@ -645,7 +645,7 @@ export default function PublicBooking() {
                   <Scissors className="w-5 h-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Services</p>
-                    <p className="font-medium">{booking.services.map(s => s.name).join(', ')}</p>
+                    <p className="font-medium">{booking.services.map(s => s.name).join(', '')}</p>
                     <p className="text-sm text-muted-foreground">{totalDuration} min • ${totalPrice}</p>
                   </div>
                 </div>

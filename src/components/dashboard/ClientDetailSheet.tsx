@@ -1230,7 +1230,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 </div>
               </CardContent>
             </Card>
-          )}
+          ')}
 
           {/* Upcoming Appointments Card */}
           {(() => {

@@ -207,7 +207,7 @@ export function useCreateRecurringShifts() {
         recurrence_pattern: patternStr,
         notes: input.notes || null,
         created_by: user.user?.id || null,
-      }));
+      }'));
 
       const { data, error } = await supabase
         .from('staff_shifts')

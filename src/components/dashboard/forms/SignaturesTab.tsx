@@ -63,7 +63,7 @@ export function SignaturesTab() {
         sig.form_template?.name || 'Unknown',
         sig.form_version,
         sig.typed_signature || '',
-      ].map(val => `"${val}"`).join(','))
+      ].map(val => `"${val}"`).join(',''))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });

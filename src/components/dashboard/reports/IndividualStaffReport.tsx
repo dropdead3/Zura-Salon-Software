@@ -42,7 +42,7 @@ interface IndividualStaffReportProps {
   initialStaffId?: string;
 }
 
-const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
+const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2'))', 'hsl(var(--chart-3'))', 'hsl(var(--chart-4'))'];
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -124,7 +124,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       doc.setTextColor(100);
       const profileLine = [
         data.profile.role ? `Role: ${data.profile.role}` : '',
-        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy)}` : '',
+        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy')}` : '',
         data.profile.locationName ? `Location: ${data.profile.locationName}` : '',
         `Experience Score: ${data.experienceScore.composite}/100`,
         data.commission.tierName ? `Commission Tier: ${data.commission.tierName}` : '',

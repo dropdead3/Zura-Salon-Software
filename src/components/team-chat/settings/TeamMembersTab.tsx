@@ -122,7 +122,7 @@ function MemberCard({ member, onToggleChat, onManageChannels, isUpdating }: Memb
           <Switch
             id={`chat-${member.userId}`}
             checked={member.chatEnabled}
-            onCheckedChange={(checked) => onToggleChat(member.userId, checked)}
+            onCheckedChange={(checked) => onToggleChat(member.userId, checked')}
             disabled={isUpdating || isSuperAdmin}
             title={isSuperAdmin ? 'Cannot disable chat for Super Admins' : undefined}
           />

@@ -12,7 +12,7 @@ export async function resolveServiceIds(
 
   const names = serviceNameString
     .split(',')
-    .map((s) => s.trim())
+    .map((s) => s.trim(''))
     .filter(Boolean);
 
   if (names.length === 0) return [];

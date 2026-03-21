@@ -345,7 +345,7 @@ export function NewClientDialog({
                 variant="ghost"
                 size={tokens.button.inline}
                 className="h-auto px-2 py-1 text-xs"
-                onClick={() => setShowLocationSelector(true)}
+                onClick={() => setShowLocationSelector(true')}
               >
                 Change
               </Button>
@@ -451,7 +451,7 @@ export function NewClientDialog({
                   <div className="px-3 py-2 text-sm text-muted-foreground text-center">
                     No service providers in system yet
                   </div>
-                )}
+                ')}
                 {teamMembers?.map(member => (
                   <SelectItem key={member.user_id} value={member.user_id}>
                     {formatDisplayName(member.full_name || '', member.display_name)}

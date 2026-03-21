@@ -42,7 +42,7 @@ function useLoadGoogleFont(fontName: string | undefined) {
   useEffect(() => {
     if (!fontName || !GOOGLE_FONTS.includes(fontName)) return;
     const id = `gfont-${fontName.replace(/\s+/g, '-)}`;
-    if (document.getElementById(id)) return;
+    if (document.getElementById(id')) return;
     const link = document.createElement('link');
     link.id = id;
     link.rel = 'stylesheet';

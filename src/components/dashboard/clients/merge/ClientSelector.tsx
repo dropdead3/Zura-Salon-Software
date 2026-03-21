@@ -191,7 +191,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
           )}
           {!isLoading && search && filteredResults.length === 0 && (
             <p className="text-center py-8 text-muted-foreground text-sm">No clients found</p>
-          )}
+          ')}
           {filteredResults.map(client => {
             const reasons = duplicateMatches.get(client.id);
             const hasPhoneMatch = reasons?.includes('phone');

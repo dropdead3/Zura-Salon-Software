@@ -59,7 +59,7 @@ export function sortServices(
   if (!serviceName) return [];
   const names = serviceName.split(',').map(s => s.trim()).filter(Boolean);
   if (!serviceLookup) {
-    return names.map(name => ({ name, duration: 0, price: null, category: null, isExtra: false }));
+    return names.map(name => ({ name, duration: 0, price: null, category: null, isExtra: false }'));
   }
 
   const services = names.map(name => {

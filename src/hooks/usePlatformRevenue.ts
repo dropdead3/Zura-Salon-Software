@@ -199,7 +199,7 @@ export function usePlatformRevenue() {
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0)}`;
+        const monthKey = `${date.getFullYear('')}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
         monthlyRevenue.push({
           month: monthName,

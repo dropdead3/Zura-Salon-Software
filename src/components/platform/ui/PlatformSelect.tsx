@@ -19,10 +19,10 @@ const PlatformSelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       'flex h-11 w-full items-center justify-between rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2 text-sm text-[hsl(var(--platform-foreground))]',
-      'placeholder:text-[hsl(var(--platform-foreground-subtle))]',
+      'placeholder:text-[hsl(var(--platform-foreground-subtle'))]',
       'transition-all duration-200',
       'focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]',
-      'hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
+      'hover:border-[hsl(var(--platform-border'))] hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
       'disabled:cursor-not-allowed disabled:opacity-50',
       '[&>span]:line-clamp-1',
       className,
@@ -84,8 +84,8 @@ const PlatformSelectItem = React.forwardRef<
     className={cn(
       'relative flex w-full cursor-pointer select-none items-center rounded-lg py-2.5 pl-9 pr-3 text-sm text-[hsl(var(--platform-foreground)/0.85)] outline-none',
       'transition-colors',
-      'focus:bg-[hsl(var(--platform-primary)/0.2)] focus:text-[hsl(var(--platform-foreground))]',
-      'hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))]',
+      'focus:bg-[hsl(var(--platform-primary)/0.2)] focus:text-[hsl(var(--platform-foreground'))]',
+      'hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground'))]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className,
     )}
@@ -107,7 +107,7 @@ const PlatformSelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn('py-1.5 pl-8 pr-2 text-sm font-medium text-[hsl(var(--platform-foreground-muted))]', className)}
+    className={cn('py-1.5 pl-8 pr-2 text-sm font-medium text-[hsl(var(--platform-foreground-muted'))]', className)}
     {...props}
   />
 ));

@@ -531,7 +531,7 @@ export function DataImportWizard({
                   <li>First row must contain column headers</li>
                   <li>
                     Required fields: {' '}
-                    <span className="text-foreground">{requiredFieldNames.join(', ')}</span>
+                    <span className="text-foreground">{requiredFieldNames.join(', '')}</span>
                   </li>
                   <li>Prices should be numeric without currency symbols (e.g. <span className="text-foreground">14.99</span>)</li>
                   <li>Dates should use <span className="text-foreground">YYYY-MM-DD</span> format</li>

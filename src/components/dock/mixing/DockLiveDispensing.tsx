@@ -306,7 +306,7 @@ function LineItemCard({
       disabled={isSealed}
       className={cn(
         'w-full text-left rounded-xl p-3 border transition-all duration-150',
-        'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.2)]',
+        'bg-[hsl(var(--platform-bg-card'))] border-[hsl(var(--platform-border)/0.2)]',
         !isSealed && 'hover:border-violet-500/30 active:scale-[0.98]',
         isSealed && 'opacity-70'
       )}

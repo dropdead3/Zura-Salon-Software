@@ -101,7 +101,7 @@ function exportProductsCsv(products: Product[]) {
     p.quantity_on_hand ?? '',
     p.reorder_level ?? '',
     p.available_online ? 'Yes' : 'No',
-  ].join(','));
+  ].join(',''));
   const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

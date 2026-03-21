@@ -351,7 +351,7 @@ export default function StylistLevels() {
                       <div className="flex-1 flex items-center gap-2">
                         <Input
                           value={level.label}
-                          onChange={(e) => handleRename(index, e.target.value)}
+                          onChange={(e) => handleRename(index, e.target.value')}
                           className="h-8 text-sm"
                           autoFocus
                           onKeyDown={(e) => {

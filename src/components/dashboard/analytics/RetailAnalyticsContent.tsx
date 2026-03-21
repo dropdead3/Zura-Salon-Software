@@ -102,8 +102,8 @@ const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 const BAR_COLORS = [
-  'hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--primary))',
+  'hsl(var(--chart-1))', 'hsl(var(--chart-2'))', 'hsl(var(--chart-3'))',
+  'hsl(var(--chart-4'))', 'hsl(var(--chart-5'))', 'hsl(var(--primary'))',
 ];
 
 function RedFlagRow({ flag }: { flag: RedFlag }) {
@@ -169,7 +169,7 @@ function exportInventoryAlertsCSV(alerts: ReturnType<typeof calculateInventoryAl
     a.productName, a.brand || '', a.category || '', a.currentStock, a.reorderLevel, a.deficit,
     a.salesVelocity.toFixed(1), a.daysUntilStockout >= 999 ? 'N/A' : a.daysUntilStockout, a.suggestedReorder, a.severity,
   ]);
-  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const csv = [headers, ...rows].map(r => r.join(','')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -181,7 +181,7 @@ function exportInventoryAlertsCSV(alerts: ReturnType<typeof calculateInventoryAl
 function exportCommissionsCSV(commissions: { name: string; retailRevenue: number; commissionRate: number; commissionEarned: number; isOverride: boolean }[]) {
   const headers = ['Stylist', 'Retail Revenue', 'Rate %', 'Override', 'Commission'];
   const rows = commissions.map(c => [c.name, c.retailRevenue.toFixed(2), c.commissionRate, c.isOverride ? 'Yes' : 'No', c.commissionEarned.toFixed(2)]);
-  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const csv = [headers, ...rows].map(r => r.join(','')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -324,7 +324,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                               {b.staleProducts.length > 0 && (
                                 <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-2">
                                   <AlertTriangle className="w-3 h-3" />
-                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', ')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
+                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', '')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
                                 </div>
                               )}
                             </div>

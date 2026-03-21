@@ -235,7 +235,7 @@ export function AlertsExceptionsSection() {
                 </div>
               );
             })
-          )}
+          ')}
         </CardContent>
       </Card>
     </div>

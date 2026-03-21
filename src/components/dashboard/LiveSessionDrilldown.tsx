@@ -176,7 +176,7 @@ function StylistRow({ stylist }: { stylist: StylistDetail }) {
             <span className="bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap">
               Assisted by {stylist.assistedBy.map(formatNameWithPeriod).join(', ')}
             </span>
-          )}
+          ')}
         </div>
         {stylist.currentService && (
           <p className="text-xs text-muted-foreground truncate">

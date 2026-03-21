@@ -31,7 +31,7 @@ export function exportRedoCsv(data: RedoAnalytics, formatCurrency: (n: number) =
   rows.push(['Reason', 'Count']);
   data.byReason.forEach(r => rows.push([r.reason, r.count.toString()]));
 
-  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const csvContent = [headers.join(','), ...rows.map(r => r.join(',''))].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

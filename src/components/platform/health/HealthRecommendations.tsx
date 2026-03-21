@@ -10,7 +10,7 @@ interface HealthRecommendationsProps {
 export function HealthRecommendations({ recommendations, className }: HealthRecommendationsProps) {
   if (!recommendations || recommendations.length === 0) {
     return (
-      <div className={cn('text-center py-6 text-[hsl(var(--platform-foreground-subtle))]', className)}>
+      <div className={cn('text-center py-6 text-[hsl(var(--platform-foreground-subtle'))]', className)}>
         <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No recommendations - this organization is performing well!</p>
       </div>

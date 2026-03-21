@@ -280,7 +280,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
             // Location filter
             if (locationId && locationId !== 'all') {
               const ids = locationId.split(',').filter(Boolean);
-              if (!ids.includes(sale.location_id)) return false;
+              if (!ids.includes(sale.location_id')) return false;
             }
             // Attach date and staff for downstream use
             item._saleDate = saleDate;

@@ -458,7 +458,7 @@ export default function TeamBirthdays() {
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={person.photo_url || undefined} />
                       <AvatarFallback className="bg-pink-100 text-pink-800">
-                        {(person.display_name || person.full_name)?.charAt(0)}
+                        {(person.display_name || person.full_name)?.charAt(0')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">

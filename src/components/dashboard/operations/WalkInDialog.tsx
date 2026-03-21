@@ -146,7 +146,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
       const endMinutes = hours * 60 + mins + totalDuration;
       const endHour = Math.floor(endMinutes / 60);
       const endMin = endMinutes % 60;
-      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0)}`;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
       const effectiveRedoReason = redoReason === 'Other' ? redoCustomReason : redoReason;
       const status = isRedo && redoPolicy?.redo_requires_approval && !isManagerOrAdmin ? 'pending' : 'checked_in';
 

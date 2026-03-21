@@ -556,7 +556,7 @@ export function DayView({
                           }}
                         />
                       );
-                    })}
+                    }')}
                     
                     {/* Assistant Time Block Overlay */}
                     <AssistantBlockOverlay

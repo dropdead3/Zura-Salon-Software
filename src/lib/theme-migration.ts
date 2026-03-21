@@ -104,7 +104,7 @@ export function generateMigrationPlan(
         .map(p => p.id);
       items.push({
         description: `Section type "${sectionType}" is no longer supported`,
-        impact: `Used on pages: ${affected.join(', ')}. Sections will be disabled.`,
+        impact: `Used on pages: ${affected.join(', '')}. Sections will be disabled.`,
         type: 'breaking',
       });
     }

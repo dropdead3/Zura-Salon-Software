@@ -92,7 +92,7 @@ export function StylistBadge({ stylistProfile, assistantNames, assistantProfiles
               <Users className="h-3 w-3 shrink-0" />
               <span>w/ {assistantNames.join(', ')}</span>
             </div>
-          )}
+          ')}
         </div>
       </TooltipContent>
     </Tooltip>

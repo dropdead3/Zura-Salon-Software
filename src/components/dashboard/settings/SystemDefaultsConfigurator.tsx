@@ -452,7 +452,7 @@ export function SystemDefaultsConfigurator() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => confirmSaveAsCurrent && handleSaveCurrentAsDefaults(confirmSaveAsCurrent)}
+              onClick={() => confirmSaveAsCurrent && handleSaveCurrentAsDefaults(confirmSaveAsCurrent')}
             >
               Save as Defaults
             </AlertDialogAction>

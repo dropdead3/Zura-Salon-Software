@@ -58,7 +58,7 @@ function exportBulkCsv(entries: BulkAuditEntry[]) {
     e.quantity_after ?? '',
     escape(e.changed_by_name ?? ''),
     escape(e.notes ?? ''),
-  ].join(','));
+  ].join(',''));
   const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

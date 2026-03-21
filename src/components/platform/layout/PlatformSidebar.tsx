@@ -249,7 +249,7 @@ export function PlatformSidebar() {
           className={cn(
             'w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200 active:scale-[0.98]',
             collapsed && 'justify-center',
-            'hover:bg-[hsl(var(--platform-bg-hover))] hover:ring-1 hover:ring-[hsl(var(--platform-primary)/0.2)]'
+            'hover:bg-[hsl(var(--platform-bg-hover'))] hover:ring-1 hover:ring-[hsl(var(--platform-primary)/0.2)]'
           )}
           title={collapsed ? (profile?.display_name || profile?.full_name || 'Account') : undefined}
         >

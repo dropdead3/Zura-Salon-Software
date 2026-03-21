@@ -340,7 +340,7 @@ export function WeekView({
                 >
                   {/* Time slot rows */}
                   {timeSlots.map((slot) => {
-                    const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0)}`;
+                    const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
                     const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
                     
                     // Check if this slot is in the past (only for today)
