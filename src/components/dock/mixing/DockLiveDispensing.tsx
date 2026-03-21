@@ -35,10 +35,35 @@ interface BowlLine {
   swatch_color?: string | null;
 }
 
+const DEMO_BOWL_LINES: BowlLine[] = [
+  {
+    id: 'demo-line-1',
+    product_id: 'demo-prod-1',
+    product_name_snapshot: 'Koleston Perfect 7/0',
+    brand_snapshot: 'Wella',
+    dispensed_quantity: 30,
+    dispensed_unit: 'g',
+    dispensed_cost_snapshot: 0.18,
+    swatch_color: '#8B6914',
+  },
+  {
+    id: 'demo-line-2',
+    product_id: 'demo-prod-2',
+    product_name_snapshot: 'Welloxon 6% 20vol',
+    brand_snapshot: 'Wella',
+    dispensed_quantity: 60,
+    dispensed_unit: 'g',
+    dispensed_cost_snapshot: 0.05,
+    swatch_color: null,
+  },
+];
+
 function useBowlLines(bowlId: string | null) {
   return useQuery({
     queryKey: ['dock-bowl-lines', bowlId],
     queryFn: async (): Promise<BowlLine[]> => {
+      if (bowlId?.startsWith('demo-')) return DEMO_BOWL_LINES;
+
       const { data, error } = await supabase
         .from('mix_bowl_lines')
         .select('id, product_id, product_name_snapshot, brand_snapshot, dispensed_quantity, dispensed_unit, dispensed_cost_snapshot')

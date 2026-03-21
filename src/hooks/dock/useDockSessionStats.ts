@@ -15,10 +15,21 @@ export interface SessionStats {
   totalCost: number;
 }
 
+const DEMO_SESSION_STATS: SessionStats = {
+  totalBowls: 2,
+  reweighedBowls: 1,
+  totalDispensed: 65,
+  totalLeftover: 8,
+  totalNetUsage: 57,
+  totalCost: 12.50,
+};
+
 export function useDockSessionStats(sessionId: string | null) {
   return useQuery({
     queryKey: ['dock-session-stats', sessionId],
     queryFn: async (): Promise<SessionStats> => {
+      if (sessionId?.startsWith('demo-')) return DEMO_SESSION_STATS;
+
       const { data, error } = await supabase
         .from('mix_bowl_projections')
         .select('dispensed_total, leftover_total, net_usage_total, estimated_cost, has_reweigh, current_status')

@@ -33,9 +33,14 @@ type SettingsView = 'main' | 'my-stats' | 'team-compliance';
 export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   const [view, setView] = useState<SettingsView>('main');
   const { data: locations } = useLocations(staff.organizationId);
+  const { isDemoMode } = useDockDemo();
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
 
   const handleMoveStation = () => {
+    if (isDemoMode) {
+      toast.info('Not available in demo mode');
+      return;
+    }
     try {
       localStorage.removeItem('dock-organization-id');
       localStorage.removeItem('dock-location-id');
