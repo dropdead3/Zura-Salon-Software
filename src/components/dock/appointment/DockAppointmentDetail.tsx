@@ -122,7 +122,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         {tab === 'services' && <DockServicesTab appointment={appointment} staff={staff} />}
         {tab === 'notes' && <DockNotesTab appointment={appointment} />}
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
-        {tab === 'client' && <DockClientTab appointment={appointment} staff={staff} />}
+        {tab === 'client' && <DockClientTab appointment={appointment} staff={staff} activeBowlId={activeBowlId} />}
       </div>
 
       <DockEditServicesSheet
