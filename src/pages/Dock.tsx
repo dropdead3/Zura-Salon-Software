@@ -63,10 +63,21 @@ export default function Dock() {
   const effectiveStaff = staff;
 
   const handlePinSuccess = useCallback((session: DockStaffSession) => {
-    setStaff(session);
+    // In demo mode, override with demo identifiers so DockDemoProvider recognizes it
+    if (demoOrgId && canAccessDemo) {
+      const isGenericPreview = demoOrgId === 'preview';
+      setStaff({
+        ...session,
+        userId: 'dev-bypass-000',
+        organizationId: isGenericPreview ? 'demo-org-000' : demoOrgId,
+        displayName: isGenericPreview ? 'Preview Mode' : session.displayName,
+      });
+    } else {
+      setStaff(session);
+    }
     setActiveTab('schedule');
     setView({ screen: 'tabs' });
-  }, []);
+  }, [demoOrgId, canAccessDemo]);
 
   const handleLogout = useCallback(() => {
     setStaff(null);
