@@ -2,18 +2,19 @@
  * DockClientTab — Client intelligence panel for the Dock appointment detail.
  * Surfaces identity, last formula, visit history, notes, processing time,
  * allergy flags, favorite products, photo timeline, no-show rate,
- * editable medical alerts, preferred stylist, repurchase reminders, and formula history.
+ * editable medical alerts, preferred stylist, repurchase reminders,
+ * formula history with smart diffing, conversion tracking, and session-aware recs.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   User, FlaskConical, Clock, FileText, CalendarDays, Loader2, Star,
   AlertTriangle, ShoppingBag, Camera, AlertCircle, Pencil, Plus, Check, X,
-  Heart, History, Copy, Sparkles,
+  Heart, History, Copy, Sparkles, ArrowUp, ArrowDown, TrendingUp,
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { useClientMemory } from '@/hooks/useClientMemory';
@@ -22,10 +23,12 @@ import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferred
 import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
 import { useCloneFormula } from '@/hooks/backroom/useCloneFormula';
 import { calculateCLV, assignCLVTier } from '@/lib/clv-calculator';
+import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { FormulaLine } from '@/lib/backroom/mix-calculations';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
 import { toast } from 'sonner';
-
+import { useDebounce } from '@/hooks/use-debounce';
 interface DockClientTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
