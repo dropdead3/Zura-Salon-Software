@@ -36,7 +36,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
     if (loading) return;
 
     if (key === 'delete') {
-      setPin((p) => p.slice(0, -1));
+      setPin('');
       setError(false);
       return;
     }
