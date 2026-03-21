@@ -133,7 +133,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
                     </button>
                   ) : null}
                   <h1 className="font-display text-base tracking-wide uppercase">
-                    {selectedBrand && !isSearching ? selectedBrand : 'Products'}
+                    {selectedBrand && !isSearching ? selectedBrand : 'Products')}
                   </h1>
                 </div>
                 <button
@@ -198,7 +198,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
                 <div className="space-y-5">
                   {grouped.size === 0 && (
                     <p className="text-sm text-[hsl(var(--platform-foreground-muted))] text-center pt-12">
-                      {loadingProducts ? 'Loading…' : 'No products found'}
+                      {loadingProducts ? 'Loading…' : 'No products found')}
                     </p>
                   )}
                   {Array.from(grouped.entries()).map(([category, products]) => (
@@ -255,7 +255,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
                   onClick={handleAdd}
                   className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
-                  Add {picked.size} Product{picked.size > 1 ? 's' : ''} to Formula
+                  Add {picked.size} Product{picked.size > 1 ? 's' : '')} to Formula
                 </button>
               </div>
             )}

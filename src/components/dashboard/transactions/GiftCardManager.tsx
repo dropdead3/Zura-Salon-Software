@@ -216,7 +216,7 @@ export function GiftCardManager() {
                 <TableCell colSpan={7} className="text-center py-8">
                   <Gift className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                   <p className="text-muted-foreground">
-                    {searchCode ? 'No gift cards match your search' : 'No gift cards created yet'}
+                    {searchCode ? 'No gift cards match your search' : 'No gift cards created yet')}
                   </p>
                 </TableCell>
               </TableRow>
@@ -252,10 +252,10 @@ export function GiftCardManager() {
                     {formatCurrency(Number(card.current_balance))}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {card.purchaser_name || '-'}
+                    {card.purchaser_name || '-')}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {card.recipient_name || '-'}
+                    {card.recipient_name || '-')}
                   </TableCell>
                   <TableCell>
                     {!card.is_active ? (
@@ -269,7 +269,7 @@ export function GiftCardManager() {
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(new Date(card.created_at), 'MMM d, yyyy'}
+                    {formatDate(new Date(card.created_at), 'MMM d, yyyy')}
                   </TableCell>
                 </TableRow>
               ))

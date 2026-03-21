@@ -115,7 +115,7 @@ function DayXAxisTick({ x, y, payload, days }: any) {
         textAnchor="middle" 
         className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}
       >
-        {day.gapHours > 0 ? `${Math.round(day.gapHours)}h open` : 'Full'}
+        {day.gapHours > 0 ? `${Math.round(day.gapHours)}h open` : 'Full')}
       </text>
     </g>
   );
@@ -381,8 +381,8 @@ export function CapacityUtilizationSection({
                     {chartData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
-                        fill={entry.isClosed ? 'transparent' : 'url(#capacity-glass-analytics)'}
-                        stroke={entry.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)'}
+                        fill={entry.isClosed ? 'transparent' : 'url(#capacity-glass-analytics)')}
+                        stroke={entry.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)')}
                       />
                     ))}
                   </Bar>
@@ -469,14 +469,14 @@ export function CapacityUtilizationSection({
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {lowDay && lowDay.utilizationPercent < 50 ? (
-                    <>{formatDate(parseISO(lowDay.date), 'EEEE'} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
+                    <>{formatDate(parseISO(lowDay.date), 'EEEE')} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
                   ) : (
                     <>Fill unused hours to capture {formatCurrencyWhole(gapRevenue)} in potential revenue</>
                   )}
                 </p>
                 {peakDay && peakDay.utilizationPercent >= 80 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatDate(parseISO(peakDay.date), 'EEEE'} was your strongest day ({peakDay.utilizationPercent}% utilized)
+                    {formatDate(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
                   </p>
                 )}
               </div>

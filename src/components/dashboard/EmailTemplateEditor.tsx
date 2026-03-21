@@ -626,10 +626,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     // Base styles WITHOUT borderRadius - only apply borderRadius to elements that use it in canvas
     const baseStyles = `
       ${bgStyle}
-      ${block.styles.textColor ? }`color: ${block.styles.textColor};` : ''}
-      ${block.styles.fontSize ? }`font-size: ${block.styles.fontSize};` : ''}
-      ${block.styles.fontWeight ? }`font-weight: ${block.styles.fontWeight};` : ''}
-      ${block.styles.textAlign ? }`text-align: ${block.styles.textAlign};` : ''}
+      ${block.styles.textColor ? }`color: ${block.styles.textColor};` : '')}
+      ${block.styles.fontSize ? }`font-size: ${block.styles.fontSize};` : '')}
+      ${block.styles.fontWeight ? }`font-weight: ${block.styles.fontWeight};` : '')}
+      ${block.styles.textAlign ? }`text-align: ${block.styles.textAlign};` : '')}
       padding: ${padding};
       ${borderStyles}
     `.trim();
@@ -640,14 +640,14 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     switch (block.type) {
       case 'heading':
         // Heading does NOT use borderRadius in canvas, so don't apply it here
-        return `<h1 style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '24px'}; line-height: 1.3;">${formatContent(block.content)}</h1>`;
+        return `<h1 style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '24px')}; line-height: 1.3;">${formatContent(block.content)}</h1>`;
       case 'text':
-        return `<p style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '16px'}; line-height: 1.6;">${formatContent(block.content)}</p>`;
+        return `<p style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '16px')}; line-height: 1.6;">${formatContent(block.content)}</p>`;
       case 'image': {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)};">
-          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : ''}" />
+        return `<div style="text-align: ${block.styles.textAlign || 'center')}; padding: ${computePadding(block.styles)};">
+          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image')}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : '')} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : '')}" />
         </div>`;
       }
       case 'button': {
@@ -664,17 +664,17 @@ function blocksToHtml(blocks: EmailBlock[]): string {
             </span>`
           : '';
         const buttonStyles = isSecondary
-          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8')}; color: ${block.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a')}; border-radius: ${shapeRadius};`
+          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6')}; color: ${block.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
-          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
+        return `<div style="text-align: ${block.styles.textAlign || 'center')}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : '')} font-size: 16px; line-height: 1.4;">
+          <a href="${block.linkUrl || '{{dashboard_url}}')}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
         </div>`;
       }
       case 'link': {
         const linkFontSize = Math.round(16 * ((block.styles.linkSize || 100) / 100));
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6; font-size: ${linkFontSize}px;">
-          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
+          <a href="${block.linkUrl || '#')}" style="color: ${block.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
         </p>`;
       }
       case 'divider': {
@@ -682,7 +682,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const style = block.styles.dividerStyle || 'solid';
         const width = block.styles.dividerWidth || 100;
         const color = block.styles.textColor || '#e5e7eb';
-        return `<div style="text-align: center; padding: ${block.styles.padding || '16px 0'};">
+        return `<div style="text-align: center; padding: ${block.styles.padding || '16px 0')};">
           <hr style="border: none; border-top: ${thickness}px ${style} ${color}; margin: 0 auto; width: ${width}%;" />
         </div>`;
       }
@@ -717,7 +717,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
         }).join('');
         
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
+        return `<div style="text-align: ${block.styles.textAlign || 'center')}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : '')} font-size: 14px; line-height: 1;">
           ${socialIcons}
         </div>`;
       }
@@ -776,7 +776,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           }
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${computePadding(block.styles)}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'}; font-size: 14px; line-height: 1.4;">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${computePadding(block.styles)}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px')}; font-size: 14px; line-height: 1.4;">
           ${logoHtml}
           ${socialHtml}
           <p style="margin: 0; font-size: 11px; opacity: 0.8; text-align: ${textAlign};">${footerConfig.copyrightText}</p>
@@ -819,7 +819,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const centerContent = (logoPosition === 'center' ? logoHtml : '') + (navLinksPosition === 'center' ? navHtml : '');
         const rightContent = (logoPosition === 'right' ? logoHtml : '') + (navLinksPosition === 'right' ? navHtml : '');
         
-        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'}; border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0')}; border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
           <tr>
             <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${leftContent}</td>
             <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${centerContent}</td>
@@ -859,7 +859,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const textHtml = `<div style="display: inline-block; vertical-align: middle;">
           <div style="font-weight: bold; font-size: 16px; line-height: 1.3;">${config.name}</div>
           <div style="font-size: 14px; opacity: 0.8; line-height: 1.3;">${config.title}</div>
-          ${contactLines.length > 0 ? }`<div style="margin-top: 4px;">${contactLines.join(''}</div>` : ''}
+          ${contactLines.length > 0 ? }`<div style="margin-top: 4px;">${contactLines.join('')}</div>` : '')}
         </div>`;
         
         let contentHtml = '';
@@ -870,21 +870,21 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         } else if (config.layout === 'horizontal-right') {
           contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
             <tr>
-              <td style="vertical-align: middle; padding-right: ${imageHtml ? '16px' : '0'};">${textHtml}</td>
-              ${imageHtml ? }`<td style="vertical-align: middle;">${imageHtml}</td>` : ''}
+              <td style="vertical-align: middle; padding-right: ${imageHtml ? '16px' : '0')};">${textHtml}</td>
+              ${imageHtml ? }`<td style="vertical-align: middle;">${imageHtml}</td>` : '')}
             </tr>
           </table>`;
         } else {
           // horizontal-left (default)
           contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
             <tr>
-              ${imageHtml ? }`<td style="vertical-align: middle; padding-right: 16px;">${imageHtml}</td>` : ''}
+              ${imageHtml ? }`<td style="vertical-align: middle; padding-right: 16px;">${imageHtml}</td>` : '')}
               <td style="vertical-align: middle;">${textHtml}</td>
             </tr>
           </table>`;
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; ${indent > 0 ? }`padding-left: ${horizontalPadding + indent}px;` : ''}">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; ${indent > 0 ? }`padding-left: ${horizontalPadding + indent}px;` : '')}">
           ${contentHtml}
         </div>`;
       }
@@ -907,9 +907,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           
           switch (columnBlock.type) {
             case 'heading':
-              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
+              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px')}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : '')}">${formatContent(columnBlock.content)}</h2>`;
             case 'text':
-              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
+              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px')}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : '')}">${formatContent(columnBlock.content)}</p>`;
             case 'button': {
               const isSecondary = columnBlock.styles.buttonVariant === 'secondary';
               const sizeScale = (columnBlock.styles.buttonSize || 100) / 100;
@@ -918,24 +918,24 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const baseFontSize = Math.round(14 * sizeScale);
               const shapeRadius = columnBlock.styles.buttonShape === 'pill' ? '9999px' : columnBlock.styles.buttonShape === 'rectangle' ? '0px' : '6px';
               const buttonStyles = isSecondary
-                ? `display: inline-block; background-color: transparent; color: ${columnBlock.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${columnBlock.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000'}; color: ${columnBlock.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
-              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
-                <a href="${columnBlock.linkUrl || '#'}" style="${buttonStyles}">${columnBlock.content}</a>
+                ? `display: inline-block; background-color: transparent; color: ${columnBlock.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${columnBlock.styles.buttonColor || '#1a1a1a')}; border-radius: ${shapeRadius};`
+                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000')}; color: ${columnBlock.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center')}; padding: ${blockPadding};">
+                <a href="${columnBlock.linkUrl || '#')}" style="${buttonStyles}">${columnBlock.content}</a>
               </div>`;
             }
             case 'image': {
               const imgUrl = columnBlock.imageUrl || '';
               if (!imgUrl) return '';
               const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
-                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image'}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? }`border-radius: ${columnBlock.styles.borderRadius};` : ''}" />
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center')}; padding: ${blockPadding};">
+                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image')}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? }`border-radius: ${columnBlock.styles.borderRadius};` : '')}" />
               </div>`;
             }
             case 'link': {
               const linkFontSize = Math.round(16 * ((columnBlock.styles.linkSize || 100) / 100));
-              return `<p style="margin: 0; padding: ${blockPadding}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.6;">
-                <a href="${columnBlock.linkUrl || '#'}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
+              return `<p style="margin: 0; padding: ${blockPadding}; text-align: ${columnBlock.styles.textAlign || 'center')}; line-height: 1.6;">
+                <a href="${columnBlock.linkUrl || '#')}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6')}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
               </p>`;
             }
             case 'divider': {
@@ -943,7 +943,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const divStyle = columnBlock.styles.dividerStyle || 'solid';
               const divWidth = columnBlock.styles.dividerWidth || 100;
               const divColor = columnBlock.styles.textColor || '#e5e7eb';
-              return `<div style="text-align: center; padding: ${columnBlock.styles.padding || '8px 0'};">
+              return `<div style="text-align: center; padding: ${columnBlock.styles.padding || '8px 0')};">
                 <hr style="border: none; border-top: ${thickness}px ${divStyle} ${divColor}; margin: 0 auto; width: ${divWidth}%;" />
               </div>`;
             }
@@ -974,7 +974,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
                 }
                 return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
               }).join('');
-              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding}; font-size: 14px; line-height: 1;">
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center')}; padding: ${blockPadding}; font-size: 14px; line-height: 1;">
                 ${socialIcons}
               </div>`;
             }
@@ -988,7 +988,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           const cellContent = columnBlocks.map(generateColumnBlockHtml).join('');
           
           return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? }`0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
-            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
+            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>')}
           </td>`;
         }).join('');
         
@@ -996,7 +996,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const legacyColumnCells = (!useBlocks ? config.columns : []).map((columnItems, colIndex) => {
           const cellContent = columnItems.map(item => {
             if (item.type === 'text') {
-              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px'}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center'}; line-height: 1.5;">${item.content}</p>`;
+              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px')}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center')}; line-height: 1.5;">${item.content}</p>`;
             } else if (item.type === 'button') {
               const isSecondary = item.styles.buttonVariant === 'secondary';
               const sizeScale = (item.styles.buttonSize || 100) / 100;
@@ -1005,26 +1005,26 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               const baseFontSize = Math.round(14 * sizeScale);
               const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
               const buttonStyles = isSecondary
-                ? `display: inline-block; background-color: transparent; color: ${item.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${item.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
-                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000'}; color: ${item.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
-              return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
-                <a href="${item.linkUrl || '#'}" style="${buttonStyles}">${item.content}</a>
+                ? `display: inline-block; background-color: transparent; color: ${item.styles.buttonColor || '#1a1a1a')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${item.styles.buttonColor || '#1a1a1a')}; border-radius: ${shapeRadius};`
+                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000')}; color: ${item.styles.buttonTextColor || '#ffffff')}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+              return `<div style="text-align: ${item.styles.textAlign || 'center')}; padding: 8px 0;">
+                <a href="${item.linkUrl || '#')}" style="${buttonStyles}">${item.content}</a>
               </div>`;
             } else if (item.type === 'image') {
               const imgUrl = item.imageUrl || '';
               if (!imgUrl) return '';
               const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-              return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
-                <img src="${absoluteImgUrl}" alt="${item.content || 'Image'}" style="max-width: 100%; height: auto;" />
+              return `<div style="text-align: ${item.styles.textAlign || 'center')}; padding: 8px 0;">
+                <img src="${absoluteImgUrl}" alt="${item.content || 'Image')}" style="max-width: 100%; height: auto;" />
               </div>`;
             } else if (item.type === 'spacer') {
-              return `<div style="height: ${item.styles.height || '16px'};"></div>`;
+              return `<div style="height: ${item.styles.height || '16px')};"></div>`;
             }
             return '';
           }).join('');
           
           return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? }`0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
-            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
+            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>')}
           </td>`;
         }).join('');
         
@@ -1960,7 +1960,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     
     // Select the first extracted block
     setSelectedBlockId(extractedBlocks[0].id);
-    toast.success(`Unwrapped ${extractedBlocks.length} block${extractedBlocks.length > 1 ? 's' : ''} from columns`);
+    toast.success(`Unwrapped ${extractedBlocks.length} block${extractedBlocks.length > 1 ? 's' : '')} from columns`);
   };
 
   // Helper to get section type for visual grouping
@@ -2866,29 +2866,29 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           {/* Horizontal Toolbar */}
           <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border shadow-sm">
             <Button
-              variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
+              variant={toolbarPanel === 'themes' ? 'default' : 'outline')}
               size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'themes' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes'}
+              onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes')}
             >
               <Palette className="w-4 h-4" />
               Themes
             </Button>
             <Button
-              variant={toolbarPanel === 'blocks' ? 'default' : 'outline'}
+              variant={toolbarPanel === 'blocks' ? 'default' : 'outline')}
               size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'blocks' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks'}
+              onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks')}
             >
               <Plus className="w-4 h-4" />
               Add Block
             </Button>
             {variables.length > 0 && (
               <Button
-                variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
+                variant={toolbarPanel === 'variables' ? 'default' : 'outline')}
                 size={tokens.button.inline}
                 className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'variables' && "bg-background border-border/80")}
-                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables'}
+                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables')}
               >
                 <Variable className="w-4 h-4" />
                 Variables
@@ -2924,7 +2924,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                               <Sparkles className="w-5 h-5" />
-                              {editingThemeId ? 'Edit Custom Theme' : 'Create Custom Theme'}
+                              {editingThemeId ? 'Edit Custom Theme' : 'Create Custom Theme')}
                             </DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
@@ -3007,7 +3007,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               ) : (
                                 <Save className="w-4 h-4 mr-2" />
                               )}
-                              {editingThemeId ? 'Update Theme' : 'Save Theme'}
+                              {editingThemeId ? 'Update Theme' : 'Save Theme')}
                             </Button>
                           </DialogFooter>
                         </DialogContent>
@@ -3023,7 +3023,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="flex gap-0.5 mb-1.5">
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
@@ -3044,7 +3044,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {customThemes.map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={(e) => { e.stopPropagation(); handleEditCustomTheme(theme.id); }}><Pencil className="w-2.5 h-2.5" /></Button>
                               <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCustomTheme(theme.id); }}><Trash2 className="w-2.5 h-2.5" /></Button>
@@ -3111,7 +3111,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   </button>
                   <button 
                     onClick={() => { addBlock('header'); setToolbarPanel(null); }} 
-                    disabled={blocks.some(b => b.type === 'header'}
+                    disabled={blocks.some(b => b.type === 'header')}
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
                       blocks.some(b => b.type === 'header') 
@@ -3124,7 +3124,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   </button>
                   <button 
                     onClick={() => { addBlock('footer'); setToolbarPanel(null); }} 
-                    disabled={blocks.some(b => b.type === 'footer'}
+                    disabled={blocks.some(b => b.type === 'footer')}
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
                       blocks.some(b => b.type === 'footer') 
@@ -3183,7 +3183,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   />
                   {variableSearchTerm && (
                     <button
-                      onClick={() => setVariableSearchTerm(''}
+                      onClick={() => setVariableSearchTerm('')}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       <X className="w-4 h-4" />
@@ -3309,7 +3309,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     return Object.entries(groupedVariables).map(([category, vars]) => (
                       <div key={category}>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm">{categoryStyles[category]?.icon || '📦'}</span>
+                          <span className="text-sm">{categoryStyles[category]?.icon || '📦')}</span>
                           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{category}</span>
                           <span className="text-[10px] text-muted-foreground/60">({vars.length})</span>
                         </div>
@@ -3384,7 +3384,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <div className="flex-1 space-y-1.5">
                             <Label className="text-xs text-muted-foreground">Font Size</Label>
                             <Select
-                              value={selectedBlock.styles.fontSize || '16px'}
+                              value={selectedBlock.styles.fontSize || '16px')}
                               onValueChange={(v) => updateBlockStyles(selectedBlock.id, { fontSize: v })}
                             >
                               <SelectTrigger className="h-8 text-xs">
@@ -3401,7 +3401,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             variant="outline"
                             size={tokens.button.inline}
                             className="h-8 w-8 p-0"
-                            onClick={() => applyInlineFormat(selectedBlock.id, 'strong'}
+                            onClick={() => applyInlineFormat(selectedBlock.id, 'strong')}
                             title="Bold selected text"
                           >
                             <Bold className="w-3.5 h-3.5" />
@@ -3410,7 +3410,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             variant="outline"
                             size={tokens.button.inline}
                             className="h-8 w-8 p-0"
-                            onClick={() => applyInlineFormat(selectedBlock.id, 'em'}
+                            onClick={() => applyInlineFormat(selectedBlock.id, 'em')}
                             title="Italic selected text"
                           >
                             <Italic className="w-3.5 h-3.5" />
@@ -3468,7 +3468,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="space-y-2">
                           <Label className="text-xs">Link URL</Label>
                           <Input
-                            value={selectedBlock.linkUrl || ''}
+                            value={selectedBlock.linkUrl || '')}
                             onChange={(e) => updateBlock(selectedBlock.id, { linkUrl: e.target.value })}
                             placeholder="https://... or {{variable}}"
                             className="h-8 text-sm font-mono"
@@ -3477,10 +3477,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex gap-4">
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">
-                              {selectedBlock.styles.buttonVariant === 'secondary' ? 'Border/Text Color' : 'Button Color'}
+                              {selectedBlock.styles.buttonVariant === 'secondary' ? 'Border/Text Color' : 'Button Color')}
                             </Label>
                             <ColorWheelPicker
-                              value={selectedBlock.styles.buttonColor || '#3b82f6'}
+                              value={selectedBlock.styles.buttonColor || '#3b82f6')}
                               colorType="primary"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                               themeColors={currentTheme.colors}
@@ -3490,7 +3490,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div className="flex items-center gap-2">
                               <Label className="text-xs text-muted-foreground">Text Color</Label>
                               <ColorWheelPicker
-                                value={selectedBlock.styles.buttonTextColor || '#ffffff'}
+                                value={selectedBlock.styles.buttonTextColor || '#ffffff')}
                                 colorType="white"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
                                 themeColors={currentTheme.colors}
@@ -3579,7 +3579,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="space-y-2">
                           <Label className="text-xs">Link URL</Label>
                           <Input
-                            value={selectedBlock.linkUrl || ''}
+                            value={selectedBlock.linkUrl || '')}
                             onChange={(e) => updateBlock(selectedBlock.id, { linkUrl: e.target.value })}
                             placeholder="https://... or {{variable}}"
                             className="h-8 text-sm font-mono"
@@ -3588,7 +3588,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex items-center gap-2">
                           <Label className="text-xs text-muted-foreground">Link Color</Label>
                           <ColorWheelPicker
-                            value={selectedBlock.styles.buttonColor || '#3b82f6'}
+                            value={selectedBlock.styles.buttonColor || '#3b82f6')}
                             colorType="primary"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             themeColors={currentTheme.colors}
@@ -3617,7 +3617,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <Label className="text-xs">Custom Image</Label>
                           <div className="flex gap-2">
                             <Input
-                              value={selectedBlock.imageUrl || ''}
+                              value={selectedBlock.imageUrl || '')}
                               onChange={(e) => updateBlock(selectedBlock.id, { imageUrl: e.target.value })}
                               placeholder="https://..."
                               className="h-8 text-sm flex-1"
@@ -3652,7 +3652,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="space-y-2">
                           <Label className="text-xs">Max Width</Label>
                           <Select
-                            value={selectedBlock.styles.width || 'auto'}
+                            value={selectedBlock.styles.width || 'auto')}
                             onValueChange={(v) => updateBlockStyles(selectedBlock.id, { width: v })}
                           >
                             <SelectTrigger className="h-8 text-xs">
@@ -3672,7 +3672,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       <div className="space-y-2">
                         <Label className="text-xs">Height</Label>
                         <Select
-                          value={selectedBlock.styles.height || '24px'}
+                          value={selectedBlock.styles.height || '24px')}
                           onValueChange={(v) => updateBlockStyles(selectedBlock.id, { height: v })}
                         >
                           <SelectTrigger className="h-8 text-xs">
@@ -3749,7 +3749,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex items-center gap-2">
                           <Label className="text-xs text-muted-foreground">Icon Color</Label>
                           <ColorWheelPicker
-                            value={selectedBlock.styles.buttonColor || '#1a1a1a'}
+                            value={selectedBlock.styles.buttonColor || '#1a1a1a')}
                             colorType="dark"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             themeColors={currentTheme.colors}
@@ -3824,7 +3824,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   <SelectContent>
                                     {brandLogos.map((logo) => (
                                       <SelectItem key={logo.id} value={logo.id}>
-                                        {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
+                                        {logo.name} ({logo.variant === 'black' ? 'Black' : 'White')})
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -3861,7 +3861,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       <Button
                                         key={pos}
                                         type="button"
-                                        variant={footerConfig.logoPosition === pos ? 'default' : 'outline'}
+                                        variant={footerConfig.logoPosition === pos ? 'default' : 'outline')}
                                         size={tokens.button.inline}
                                         className="flex-1 h-7 text-xs capitalize"
                                         onClick={() => {
@@ -3959,7 +3959,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div className="flex items-center gap-3 pt-2">
                               <Label className="text-xs whitespace-nowrap">Icon Color</Label>
                               <ColorWheelPicker
-                                value={selectedBlock.styles.buttonColor || '#f5f0e8'}
+                                value={selectedBlock.styles.buttonColor || '#f5f0e8')}
                                 colorType="light"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                                 themeColors={currentTheme.colors}
@@ -4012,7 +4012,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             {selectedBlock.headerConfig?.showLogo && (
                               <div className="space-y-2">
                                 <Select
-                                  value={selectedBlock.headerConfig?.logoId || 'brand-primary-black'}
+                                  value={selectedBlock.headerConfig?.logoId || 'brand-primary-black')}
                                   onValueChange={(v) => {
                                     updateBlock(selectedBlock.id, {
                                       headerConfig: {
@@ -4028,7 +4028,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   <SelectContent>
                                     {brandLogos.map((logo) => (
                                       <SelectItem key={logo.id} value={logo.id}>
-                                        {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
+                                        {logo.name} ({logo.variant === 'black' ? 'Black' : 'White')})
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -4036,7 +4036,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs text-muted-foreground">Size</span>
                                   <Select
-                                    value={selectedBlock.headerConfig?.logoSize || 'medium'}
+                                    value={selectedBlock.headerConfig?.logoSize || 'medium')}
                                     onValueChange={(v) => {
                                       updateBlock(selectedBlock.id, {
                                         headerConfig: {
@@ -4065,7 +4065,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       <Button
                                         key={pos}
                                         type="button"
-                                        variant={selectedBlock.headerConfig?.logoPosition === pos || (!selectedBlock.headerConfig?.logoPosition && pos === 'left') ? 'default' : 'outline'}
+                                        variant={selectedBlock.headerConfig?.logoPosition === pos || (!selectedBlock.headerConfig?.logoPosition && pos === 'left') ? 'default' : 'outline')}
                                         size={tokens.button.inline}
                                         className="flex-1 h-7 text-xs capitalize"
                                         onClick={() => {
@@ -4110,7 +4110,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     <Button
                                       key={pos}
                                       type="button"
-                                      variant={selectedBlock.headerConfig?.navLinksPosition === pos || (!selectedBlock.headerConfig?.navLinksPosition && pos === 'right') ? 'default' : 'outline'}
+                                      variant={selectedBlock.headerConfig?.navLinksPosition === pos || (!selectedBlock.headerConfig?.navLinksPosition && pos === 'right') ? 'default' : 'outline')}
                                       size={tokens.button.inline}
                                       className="flex-1 h-7 text-xs capitalize"
                                       onClick={() => {
@@ -4283,7 +4283,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               </div>
                               {config.showPhone && (
                                 <Input
-                                  value={config.phone || ''}
+                                  value={config.phone || '')}
                                   onChange={(e) => {
                                     updateBlock(selectedBlock.id, {
                                       signatureConfig: { ...config, phone: e.target.value }
@@ -4308,7 +4308,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               </div>
                               {config.showEmail && (
                                 <Input
-                                  value={config.email || ''}
+                                  value={config.email || '')}
                                   onChange={(e) => {
                                     updateBlock(selectedBlock.id, {
                                       signatureConfig: { ...config, email: e.target.value }
@@ -4364,7 +4364,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     <Button variant="outline" size={tokens.button.inline} className="w-full text-xs h-9" asChild>
                                       <span>
                                         <Upload className="w-3.5 h-3.5 mr-1.5" />
-                                        {isUploading ? 'Uploading...' : 'Upload Photo'}
+                                        {isUploading ? 'Uploading...' : 'Upload Photo')}
                                       </span>
                                     </Button>
                                     <input
@@ -4431,7 +4431,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 <Button
                                   key={option.value}
                                   type="button"
-                                  variant={config.layout === option.value ? 'default' : 'outline'}
+                                  variant={config.layout === option.value ? 'default' : 'outline')}
                                   size={tokens.button.inline}
                                   className="h-8 text-[10px]"
                                   onClick={() => {
@@ -4551,7 +4551,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div className="flex gap-2">
                               <Button
                                 type="button"
-                                variant={config.columnCount === 2 ? 'default' : 'outline'}
+                                variant={config.columnCount === 2 ? 'default' : 'outline')}
                                 size={tokens.button.inline}
                                 className="flex-1 h-8"
                                 onClick={() => {
@@ -4567,7 +4567,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               </Button>
                               <Button
                                 type="button"
-                                variant={config.columnCount === 3 ? 'default' : 'outline'}
+                                variant={config.columnCount === 3 ? 'default' : 'outline')}
                                 size={tokens.button.inline}
                                 className="flex-1 h-8"
                                 onClick={() => {
@@ -4620,56 +4620,56 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     <PopoverContent className="w-48 p-2" align="end">
                                       <div className="grid grid-cols-2 gap-1">
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'heading'}
+                                          onClick={() => addColumnBlock(colIndex, 'heading')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Type className="w-3 h-3" />
                                           Heading
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'text'}
+                                          onClick={() => addColumnBlock(colIndex, 'text')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <AlignLeft className="w-3 h-3" />
                                           Text
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'button'}
+                                          onClick={() => addColumnBlock(colIndex, 'button')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <MousePointerClick className="w-3 h-3" />
                                           Button
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'link'}
+                                          onClick={() => addColumnBlock(colIndex, 'link')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Link className="w-3 h-3" />
                                           Link
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'image'}
+                                          onClick={() => addColumnBlock(colIndex, 'image')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Image className="w-3 h-3" />
                                           Image
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'divider'}
+                                          onClick={() => addColumnBlock(colIndex, 'divider')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Minus className="w-3 h-3" />
                                           Divider
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'spacer'}
+                                          onClick={() => addColumnBlock(colIndex, 'spacer')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Square className="w-3 h-3" />
                                           Spacer
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'social'}
+                                          onClick={() => addColumnBlock(colIndex, 'social')}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Share2 className="w-3 h-3" />
@@ -4729,7 +4729,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                         <Textarea
                                           value={colBlock.content}
                                           onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
-                                          placeholder={colBlock.type === 'heading' ? 'Heading...' : 'Text content...'}
+                                          placeholder={colBlock.type === 'heading' ? 'Heading...' : 'Text content...')}
                                           className="min-h-[60px] text-xs resize-y"
                                         />
                                       )}
@@ -4743,7 +4743,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             className="h-7 text-xs"
                                           />
                                           <Input
-                                            value={colBlock.linkUrl || ''}
+                                            value={colBlock.linkUrl || '')}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { linkUrl: e.target.value })}
                                             placeholder="Button URL..."
                                             className="h-7 text-xs"
@@ -4751,7 +4751,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                           <div className="flex gap-1">
                                             <Button
                                               type="button"
-                                              variant={colBlock.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
+                                              variant={colBlock.styles.buttonVariant !== 'secondary' ? 'default' : 'outline')}
                                               size={tokens.button.inline}
                                               className="flex-1 h-6 text-[10px]"
                                               onClick={() => updateColumnBlock(colIndex, blockIndex, { 
@@ -4762,7 +4762,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             </Button>
                                             <Button
                                               type="button"
-                                              variant={colBlock.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
+                                              variant={colBlock.styles.buttonVariant === 'secondary' ? 'default' : 'outline')}
                                               size={tokens.button.inline}
                                               className="flex-1 h-6 text-[10px]"
                                               onClick={() => updateColumnBlock(colIndex, blockIndex, { 
@@ -4784,7 +4784,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             className="h-7 text-xs"
                                           />
                                           <Input
-                                            value={colBlock.linkUrl || ''}
+                                            value={colBlock.linkUrl || '')}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { linkUrl: e.target.value })}
                                             placeholder="URL..."
                                             className="h-7 text-xs"
@@ -4795,13 +4795,13 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       {colBlock.type === 'image' && (
                                         <div className="space-y-2">
                                           <Input
-                                            value={colBlock.imageUrl || ''}
+                                            value={colBlock.imageUrl || '')}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { imageUrl: e.target.value })}
                                             placeholder="Image URL..."
                                             className="h-7 text-xs"
                                           />
                                           <Input
-                                            value={colBlock.content || ''}
+                                            value={colBlock.content || '')}
                                             onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
                                             placeholder="Alt text..."
                                             className="h-7 text-xs"
@@ -4811,7 +4811,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       
                                       {colBlock.type === 'spacer' && (
                                         <Select
-                                          value={colBlock.styles.height || '16px'}
+                                          value={colBlock.styles.height || '16px')}
                                           onValueChange={(v) => updateColumnBlock(colIndex, blockIndex, { 
                                             styles: { ...colBlock.styles, height: v } 
                                           })}
@@ -4851,7 +4851,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                           {(['left', 'center', 'right'] as const).map(align => (
                                             <Button
                                               key={align}
-                                              variant={colBlock.styles.textAlign === align ? 'default' : 'ghost'}
+                                              variant={colBlock.styles.textAlign === align ? 'default' : 'ghost')}
                                               size={tokens.button.inline}
                                               className="h-6 w-6 p-0"
                                               onClick={() => updateColumnBlock(colIndex, blockIndex, { 
@@ -4945,7 +4945,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             {(['solid', 'dashed', 'dotted', 'double'] as const).map(style => (
                               <Button
                                 key={style}
-                                variant={(selectedBlock.styles.dividerStyle || 'solid') === style ? 'default' : 'outline'}
+                                variant={(selectedBlock.styles.dividerStyle || 'solid') === style ? 'default' : 'outline')}
                                 size={tokens.button.inline}
                                 className="h-7 flex-1 text-xs capitalize"
                                 onClick={() => updateBlockStyles(selectedBlock.id, { dividerStyle: style })}
@@ -4958,7 +4958,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <div className="flex items-center gap-2">
                           <Label className="text-xs text-muted-foreground">Color</Label>
                           <ColorWheelPicker
-                            value={selectedBlock.styles.textColor || '#e5e7eb'}
+                            value={selectedBlock.styles.textColor || '#e5e7eb')}
                             colorType="accent"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
                             themeColors={currentTheme.colors}
@@ -4997,7 +4997,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             {(['left', 'center', 'right'] as const).map(align => (
                               <Button
                                 key={align}
-                                variant={selectedBlock.styles.textAlign === align ? 'default' : 'outline'}
+                                variant={selectedBlock.styles.textAlign === align ? 'default' : 'outline')}
                                 size={tokens.button.inline}
                                 className="h-8 w-8 p-0"
                                 onClick={() => updateBlockStyles(selectedBlock.id, { textAlign: align })}
@@ -5074,7 +5074,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Background</Label>
                             <ColorWheelPicker
-                              value={selectedBlock.styles.backgroundColor || 'transparent'}
+                              value={selectedBlock.styles.backgroundColor || 'transparent')}
                               colorType="light"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
                               themeColors={currentTheme.colors}
@@ -5083,7 +5083,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Text Color</Label>
                             <ColorWheelPicker
-                              value={selectedBlock.styles.textColor || '#000000'}
+                              value={selectedBlock.styles.textColor || '#000000')}
                               colorType="text"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
                               themeColors={currentTheme.colors}
@@ -5132,7 +5132,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   {(['solid', 'dashed', 'dotted'] as const).map(style => (
                                     <Button
                                       key={style}
-                                      variant={(selectedBlock.styles.borderStyle || 'solid') === style ? 'default' : 'outline'}
+                                      variant={(selectedBlock.styles.borderStyle || 'solid') === style ? 'default' : 'outline')}
                                       size={tokens.button.inline}
                                       className="h-7 flex-1 text-xs capitalize"
                                       onClick={() => updateBlockStyles(selectedBlock.id, { borderStyle: style })}
@@ -5145,7 +5145,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <div className="flex items-center gap-2">
                                 <Label className="text-xs text-muted-foreground">Border Color</Label>
                                 <ColorWheelPicker
-                                  value={selectedBlock.styles.borderColor || '#e5e7eb'}
+                                  value={selectedBlock.styles.borderColor || '#e5e7eb')}
                                   colorType="accent"
                                   onChange={(v) => updateBlockStyles(selectedBlock.id, { borderColor: v })}
                                   themeColors={currentTheme.colors}
@@ -5382,7 +5382,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           textAlign: block.styles.textAlign,
                           padding: computePadding(block.styles),
                           border: (block.styles.borderWidth || 0) > 0 
-                            ? `${block.styles.borderWidth}px ${block.styles.borderStyle || 'solid'} ${block.styles.borderColor || '#e5e7eb'}`
+                            ? `${block.styles.borderWidth}px ${block.styles.borderStyle || 'solid')} ${block.styles.borderColor || '#e5e7eb')}`
                             : undefined,
                         }}
                       >
@@ -5403,7 +5403,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             {block.imageUrl ? (
                               <img 
                                 src={block.imageUrl} 
-                                alt={block.content || 'Email image'} 
+                                alt={block.content || 'Email image')} 
                                 style={{ maxWidth: '100%', borderRadius: block.styles.borderRadius }}
                               />
                             ) : (
@@ -5432,7 +5432,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     fontWeight: 'bold',
                                     fontSize: `${fontSize}px`,
                                     borderRadius: shapeRadius,
-                                    border: `2px solid ${block.styles.buttonColor || '#1a1a1a'}`,
+                                    border: `2px solid ${block.styles.buttonColor || '#1a1a1a')}`,
                                   }}
                                 >
                                   {block.content}
@@ -5485,7 +5485,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div style={{ textAlign: 'center', padding: '8px 0' }}>
                               <hr style={{ 
                                 border: 'none', 
-                                borderTop: `${thickness}px ${style} ${block.styles.textColor || '#e5e7eb'}`,
+                                borderTop: `${thickness}px ${style} ${block.styles.textColor || '#e5e7eb')}`,
                                 margin: '0 auto',
                                 width: `${width}%`
                               }} />
@@ -5561,7 +5561,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 </div>
                               )}
                               {footerConfig.showSocialIcons && enabledLinks.length > 0 && (
-                                <div className={`flex items-center gap-3 mb-3 ${logoPosition === 'center' ? 'justify-center' : logoPosition === 'right' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`flex items-center gap-3 mb-3 ${logoPosition === 'center' ? 'justify-center' : logoPosition === 'right' ? 'justify-end' : 'justify-start')}`}>
                                   {enabledLinks.map((link) => (
                                     <div 
                                       key={link.platform}
@@ -5768,7 +5768,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                                       fontWeight: 'bold',
                                                       fontSize: `${fontSize}px`,
                                                       borderRadius: shapeRadius,
-                                                      border: isSecondary ? `2px solid ${colBlock.styles.buttonColor || '#000000'}` : 'none',
+                                                      border: isSecondary ? `2px solid ${colBlock.styles.buttonColor || '#000000')}` : 'none',
                                                     }}
                                                   >
                                                     {colBlock.content}
@@ -5785,14 +5785,14 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             )}
                                             {colBlock.type === 'image' && colBlock.imageUrl && (
                                               <div style={{ textAlign: colBlock.styles.textAlign || 'center' }}>
-                                                <img src={colBlock.imageUrl} alt={colBlock.content || 'Image'} className="max-w-full h-auto" />
+                                                <img src={colBlock.imageUrl} alt={colBlock.content || 'Image')} className="max-w-full h-auto" />
                                               </div>
                                             )}
                                             {colBlock.type === 'divider' && (
                                               <div style={{ textAlign: 'center', padding: '4px 0' }}>
                                                 <hr style={{ 
                                                   border: 'none', 
-                                                  borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid'} ${colBlock.styles.textColor || '#e5e7eb'}`,
+                                                  borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid')} ${colBlock.styles.textColor || '#e5e7eb')}`,
                                                   margin: '0 auto',
                                                   width: `${colBlock.styles.dividerWidth || 100}%`
                                                 }} />
@@ -5924,7 +5924,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5">
                       <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 mb-1.5">
                         <AlertTriangle className="w-3.5 h-3.5" />
-                        {linkIssues.length} invalid {linkIssues.length === 1 ? 'link' : 'links'} detected
+                        {linkIssues.length} invalid {linkIssues.length === 1 ? 'link' : 'links')} detected
                       </div>
                       <ul className="space-y-1">
                         {linkIssues.map((issue, i) => (

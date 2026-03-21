@@ -109,7 +109,7 @@ export function StaffMatchingSuggestions({
             variant="ghost" 
             size={tokens.button.card} 
             className="gap-1 text-xs"
-            onClick={() => navigate(dashPath('/admin/phorest-settings'}
+            onClick={() => navigate(dashPath('/admin/phorest-settings')}
           >
             See All
             <ChevronRight className="w-3 h-3" />
@@ -200,7 +200,7 @@ export function StaffMatchingSuggestions({
           <Button 
             variant="ghost" 
             className="w-full text-sm text-muted-foreground"
-            onClick={() => navigate(dashPath('/admin/phorest-settings'}
+            onClick={() => navigate(dashPath('/admin/phorest-settings')}
           >
             +{moreCount} more suggestions
             <ChevronRight className="w-4 h-4 ml-1" />
@@ -209,7 +209,7 @@ export function StaffMatchingSuggestions({
 
         {unmappedCount > 0 && (
           <p className="text-xs text-muted-foreground text-center pt-2">
-            {unmappedCount} Phorest staff member{unmappedCount !== 1 ? 's' : ''} not yet linked
+            {unmappedCount} Phorest staff member{unmappedCount !== 1 ? 's' : '')} not yet linked
           </p>
         )}
       </CardContent>

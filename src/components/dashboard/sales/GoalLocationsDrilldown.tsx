@@ -60,7 +60,7 @@ function LocationMiniRow({ locationId, locationName, target, period, closedReaso
               {paceStatus === 'ahead' && <TrendingUp className="w-2.5 h-2.5" />}
               {paceStatus === 'on-track' && <Target className="w-2.5 h-2.5" />}
               {paceStatus === 'behind' && <TrendingDown className="w-2.5 h-2.5" />}
-              {paceStatus === 'ahead' ? 'Ahead' : paceStatus === 'on-track' ? 'On Track' : 'Behind'}
+              {paceStatus === 'ahead' ? 'Ahead' : paceStatus === 'on-track' ? 'On Track' : 'Behind')}
             </span>
           </div>
         </div>
@@ -107,7 +107,7 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-display mb-2">
               By Location
             </p>
-            <ScrollArea className={cn(showAll && sortedLocations.length > 8 && 'max-h-[280px]'}>
+            <ScrollArea className={cn(showAll && sortedLocations.length > 8 && 'max-h-[280px]')}>
               {visibleLocations.map(loc => {
                 const locObj = allLocations?.find(l => l.id === loc.locationId);
                 const closed = locObj ? isClosedOnDate(locObj.hours_json, locObj.holiday_closures, today) : null;
@@ -129,11 +129,11 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground pt-1 w-full"
               >
                 {showAll ? 'Show less' : `Show all ${sortedLocations.length} locations`}
-                <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
+                <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
               </button>
             )}
             <button
-              onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=goals'}
+              onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=goals')}
               className="flex items-center gap-1 text-xs text-primary hover:underline pt-2 w-full"
             >
               View full breakdown

@@ -73,7 +73,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-display text-base tracking-wide text-foreground truncate">
-                  {appointment.clientName || 'Walk-in'}
+                  {appointment.clientName || 'Walk-in')}
                 </h3>
                 {appointment.isNewClient && (
                   <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
@@ -90,7 +90,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                 {appointment.clvTier && <TierBadge tier={appointment.clvTier} />}
               </div>
               <p className="text-sm text-muted-foreground font-sans mt-0.5">
-                {appointment.serviceName || appointment.serviceCategory || 'Service'}
+                {appointment.serviceName || appointment.serviceCategory || 'Service')}
                 {appointment.totalPrice != null && ` · ${formatCurrency(appointment.totalPrice)}`}
               </p>
             </div>
@@ -118,7 +118,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
               <div>
                 <p className="text-xs text-muted-foreground font-sans">Avg Ticket</p>
                 <p className="font-display text-lg tracking-wide text-foreground">
-                  {appointment.visitCount > 0 ? formatCurrency(appointment.totalSpend / appointment.visitCount) : '—'}
+                  {appointment.visitCount > 0 ? formatCurrency(appointment.totalSpend / appointment.visitCount) : '—')}
                 </p>
               </div>
             </div>
@@ -158,8 +158,8 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                 <div key={`cn-${i}`} className="text-sm font-sans text-foreground bg-muted/40 rounded-md px-3 py-2 border border-border/40">
                   <p>{n.note}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d'}
-                    {n.isPrivate && ' · Private'}
+                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d')}
+                    {n.isPrivate && ' · Private')}
                   </p>
                 </div>
               ))}
@@ -169,7 +169,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                 <div key={`an-${i}`} className="text-sm font-sans text-muted-foreground bg-muted/20 rounded-md px-3 py-2 border border-border/40 italic">
                   <p>{n.note}</p>
                   <p className="text-xs mt-1">
-                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d'} · Appointment note
+                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d')} · Appointment note
                   </p>
                 </div>
               ))}
@@ -188,7 +188,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                   <div key={i} className="flex items-center justify-between text-sm font-sans">
                     <span className="text-foreground truncate">{s.name}</span>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {format(parseISO(s.date), 'MMM d'}
+                      {format(parseISO(s.date), 'MMM d')}
                       {s.staffName && ` · ${s.staffName}`}
                     </span>
                   </div>
@@ -209,7 +209,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                   <div key={i} className="flex items-center justify-between text-sm font-sans">
                     <span className="text-foreground truncate">{p.name}</span>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {format(parseISO(p.date), 'MMM d'}
+                      {format(parseISO(p.date), 'MMM d')}
                       {p.quantity > 1 && ` · ×${p.quantity}`}
                     </span>
                   </div>
@@ -266,7 +266,7 @@ export default function TodayPrep() {
         ) : (
           <>
             <p className="text-sm font-sans text-muted-foreground mb-6">
-              {appts.length} appointment{appts.length !== 1 ? 's' : ''} today
+              {appts.length} appointment{appts.length !== 1 ? 's' : '')} today
               {completedCount > 0 && ` · ${completedCount} completed`}
             </p>
             <div className="space-y-4">

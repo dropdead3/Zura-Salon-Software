@@ -192,7 +192,7 @@ export default function RenterPayRent() {
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{invoice.description || 'Rent Payment'}</p>
+                            <p className="font-medium">{invoice.description || 'Rent Payment')}</p>
                             {invoice.status === 'overdue' && (
                               <Badge variant="destructive" className="text-xs">
                                 <AlertCircle className="h-3 w-3 mr-1" />
@@ -201,7 +201,7 @@ export default function RenterPayRent() {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Due: {formatDate(new Date(invoice.due_date), 'MMM d, yyyy'}
+                            Due: {formatDate(new Date(invoice.due_date), 'MMM d, yyyy')}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -300,7 +300,7 @@ export default function RenterPayRent() {
                       <div>
                         <p className="font-medium">Rent Payment</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(new Date(payment.paid_at), 'MMM d, yyyy'}
+                          {formatDate(new Date(payment.paid_at), 'MMM d, yyyy')}
                         </p>
                       </div>
                     </div>

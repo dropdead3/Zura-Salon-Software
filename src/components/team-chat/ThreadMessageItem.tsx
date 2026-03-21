@@ -126,7 +126,7 @@ export function ThreadMessageItem({
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
       >
-        <Avatar className={cn(isParent ? 'h-10 w-10' : 'h-8 w-8'}>
+        <Avatar className={cn(isParent ? 'h-10 w-10' : 'h-8 w-8')}>
           <AvatarImage src={message.sender?.photo_url || undefined} />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>

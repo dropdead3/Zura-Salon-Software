@@ -136,7 +136,7 @@ export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? formatDate(date, 'EEEE, MMMM d, yyyy') : 'Select date'}
+                  {date ? formatDate(date, 'EEEE, MMMM d, yyyy') : 'Select date')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -204,16 +204,16 @@ export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
                 <Button
                   key={days}
                   type="button"
-                  variant={expiresInDays === days ? 'default' : 'outline'}
+                  variant={expiresInDays === days ? 'default' : 'outline')}
                   size={tokens.button.card}
                   onClick={() => setExpiresInDays(days)}
                 >
-                  {days} day{days > 1 ? 's' : ''}
+                  {days} day{days > 1 ? 's' : '')}
                 </Button>
               ))}
               <Button
                 type="button"
-                variant={expiresInDays === undefined ? 'default' : 'outline'}
+                variant={expiresInDays === undefined ? 'default' : 'outline')}
                 size={tokens.button.card}
                 onClick={() => setExpiresInDays(undefined)}
               >

@@ -53,7 +53,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
         <PlatformButton
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/platform/accounts?status=past_due'}
+          onClick={() => navigate('/platform/accounts?status=past_due')}
         >
           View All
         </PlatformButton>
@@ -72,7 +72,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">{org.name}</p>
-                <p className="text-xs text-slate-400 truncate">{org.billing_email || 'No billing email'}</p>
+                <p className="text-xs text-slate-400 truncate">{org.billing_email || 'No billing email')}</p>
               </div>
             </div>
 
@@ -84,7 +84,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
                     ? "bg-amber-500/20 text-amber-400"
                     : "bg-rose-500/20 text-rose-400"
                 )}>
-                  {org.subscription_status === 'past_due' ? 'Past due' : 'Cancelled'}
+                  {org.subscription_status === 'past_due' ? 'Past due' : 'Cancelled')}
                 </Badge>
                 {org.lastInvoice && (
                   <p className="text-xs text-slate-500 mt-1">

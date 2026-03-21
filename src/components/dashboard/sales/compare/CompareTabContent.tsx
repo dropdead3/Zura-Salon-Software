@@ -87,8 +87,8 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
   };
 
   // Generate period labels
-  const periodALabel = `${formatDate(new Date(periodA.dateFrom), 'MMM d'} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy}`;
-  const periodBLabel = `${formatDate(new Date(periodB.dateFrom), 'MMM d'} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy}`;
+  const periodALabel = `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy}`;
+  const periodBLabel = `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy}`;
 
   // Generate insight text
   const insight = useMemo(() => {
@@ -104,19 +104,19 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
     if (Math.abs(revChange) < 0.5) {
       parts.push('Revenue is flat between periods');
     } else {
-      parts.push(`Revenue ${revChange > 0 ? 'grew' : 'declined'} ${Math.abs(revChange).toFixed(1)}%`);
+      parts.push(`Revenue ${revChange > 0 ? 'grew' : 'declined')} ${Math.abs(revChange).toFixed(1)}%`);
     }
 
     // What drove it
     if (Math.abs(svcChange) > Math.abs(prdChange) && Math.abs(svcChange) > 1) {
-      parts.push(`services ${svcChange > 0 ? 'led the gain' : 'drove the decline'} (${svcChange > 0 ? '+' : ''}${svcChange.toFixed(1)}%)`);
+      parts.push(`services ${svcChange > 0 ? 'led the gain' : 'drove the decline')} (${svcChange > 0 ? '+' : '')}${svcChange.toFixed(1)}%)`);
     } else if (Math.abs(prdChange) > 1) {
-      parts.push(`products ${prdChange > 0 ? 'led the gain' : 'drove the decline'} (${prdChange > 0 ? '+' : ''}${prdChange.toFixed(1)}%)`);
+      parts.push(`products ${prdChange > 0 ? 'led the gain' : 'drove the decline')} (${prdChange > 0 ? '+' : '')}${prdChange.toFixed(1)}%)`);
     }
 
     // Transactions
     if (Math.abs(txnChange) > 2) {
-      parts.push(`transactions ${txnChange > 0 ? 'up' : 'down'} ${Math.abs(txnChange).toFixed(1)}%`);
+      parts.push(`transactions ${txnChange > 0 ? 'up' : 'down')} ${Math.abs(txnChange).toFixed(1)}%`);
     }
 
     return parts.join(' · ');

@@ -33,7 +33,7 @@ export default function PlatformAnalytics() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin text-violet-500 mx-auto mb-4" />
-            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+            <p className={isDark ? 'text-slate-400' : 'text-slate-500')}>
               Aggregating organization data...
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function PlatformAnalytics() {
     return (
       <PlatformPageContainer>
         <div className="flex items-center justify-center h-96">
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500')}>
             Unable to load analytics data
           </p>
         </div>

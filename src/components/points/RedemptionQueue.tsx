@@ -64,10 +64,10 @@ export function RedemptionQueue() {
               </div>
               <div>
                 <p className="font-medium">
-                  {redemption.reward?.name || 'Unknown Reward'}
+                  {redemption.reward?.name || 'Unknown Reward')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {format(new Date(redemption.created_at), 'MMM d, yyyy h:mm a'}
+                  {format(new Date(redemption.created_at), 'MMM d, yyyy h:mm a')}
                 </p>
               </div>
             </div>
@@ -85,7 +85,7 @@ export function RedemptionQueue() {
           <div className="space-y-3">
             <Textarea
               placeholder="Add notes (optional)..."
-              value={notes[redemption.id] || ''}
+              value={notes[redemption.id] || '')}
               onChange={(e) =>
                 setNotes((prev) => ({ ...prev, [redemption.id]: e.target.value }))
               }

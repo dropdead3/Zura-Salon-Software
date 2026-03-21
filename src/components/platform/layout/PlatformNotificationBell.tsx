@@ -173,7 +173,7 @@ export function PlatformNotificationBell() {
         {/* Footer */}
         <div className="border-t border-slate-700/50 p-2 grid grid-cols-2 gap-1">
           <Link
-            to={dashPath('/notifications'}
+            to={dashPath('/notifications')}
             onClick={() => setOpen(false)}
             className="flex items-center justify-center py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 rounded transition-colors"
           >

@@ -991,7 +991,7 @@ export default function Settings() {
           {/* Back button and header */}
           <div className="mb-6">
             <DashboardPageHeader
-              title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
+              title={categoriesMap[activeCategory]?.label.toUpperCase() ?? '')}
             />
           </div>
 
@@ -1300,7 +1300,7 @@ export default function Settings() {
                       <Label className="text-sm font-medium">Theme Mode</Label>
                       <div className="grid grid-cols-3 gap-3">
                         <button
-                          onClick={() => setTheme('light'}
+                          onClick={() => setTheme('light')}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
                             mounted && theme === 'light'
@@ -1318,7 +1318,7 @@ export default function Settings() {
                         </button>
                         
                         <button
-                          onClick={() => setTheme('dark'}
+                          onClick={() => setTheme('dark')}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
                             mounted && theme === 'dark'
@@ -1336,7 +1336,7 @@ export default function Settings() {
                         </button>
                         
                         <button
-                          onClick={() => setTheme('system'}
+                          onClick={() => setTheme('system')}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
                             mounted && theme === 'system'
@@ -1418,7 +1418,7 @@ export default function Settings() {
                 <p className="text-muted-foreground mb-4">
                   The Program Editor is a complex configuration tool.
                 </p>
-                <Button onClick={() => window.location.href = dashPath('/admin/program-editor'}>
+                <Button onClick={() => window.location.href = dashPath('/admin/program-editor')}>
                   Open Program Editor
                 </Button>
               </div>

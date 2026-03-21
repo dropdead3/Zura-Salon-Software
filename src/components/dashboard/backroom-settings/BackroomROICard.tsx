@@ -32,13 +32,13 @@ export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProp
               <BarChart3 className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className={cn(tokens.label.default, 'text-foreground'}>Your ROI</p>
+              <p className={cn(tokens.label.default, 'text-foreground')}>Your ROI</p>
               <p className="text-xs text-muted-foreground font-sans">Calculating…</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground font-sans">
             We'll calculate your ROI once you have at least 7 days of usage data.
-            {roi?.snapshotCount ? ` (${roi.snapshotCount} day${roi.snapshotCount !== 1 ? 's' : ''} so far)` : ''}
+            {roi?.snapshotCount ? ` (${roi.snapshotCount} day${roi.snapshotCount !== 1 ? 's' : '')} so far)` : '')}
           </p>
         </CardContent>
       </Card>
@@ -77,7 +77,7 @@ export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProp
             <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className={cn(tokens.label.default, 'text-foreground'}>Your ROI</p>
+            <p className={cn(tokens.label.default, 'text-foreground')}>Your ROI</p>
             <p className="text-xs text-muted-foreground font-sans">
               Based on {roi.snapshotCount} days of data • {roi.wasteReduction}% waste reduction vs industry baseline
             </p>
@@ -91,7 +91,7 @@ export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProp
                 <div className={cn('w-8 h-8 rounded-md flex items-center justify-center shrink-0', kpi.bgColor)}>
                   <kpi.icon className={cn('w-4 h-4', kpi.color)} />
                 </div>
-                <span className={cn(tokens.kpi.label, 'text-[10px]'}>{kpi.label}</span>
+                <span className={cn(tokens.kpi.label, 'text-[10px]')}>{kpi.label}</span>
               </div>
               <p className={cn('text-xl font-display tracking-wide', kpi.color)}>{kpi.value}</p>
             </div>

@@ -133,7 +133,7 @@ function formatTime(time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
   const period = hours >= 12 ? 'pm' : 'am';
   const displayHours = hours % 12 || 12;
-  return minutes === 0 ? `${displayHours}${period}` : `${displayHours}:${minutes.toString().padStart(2, '0'}${period}`;
+  return minutes === 0 ? `${displayHours}${period}` : `${displayHours}:${minutes.toString().padStart(2, '0')}${period}`;
 }
 
 // Check if a location is closed on a specific date (holiday or regular hours)

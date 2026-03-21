@@ -105,7 +105,7 @@ export default function TeamBirthdays() {
               <div className="flex items-center gap-3 mb-4">
                 <PartyPopper className="w-6 h-6" />
                 <h2 className="font-display text-lg tracking-wide">
-                  🎂 TODAY'S BIRTHDAY{todaysBirthdays.length > 1 ? 'S' : ''}!
+                  🎂 TODAY'S BIRTHDAY{todaysBirthdays.length > 1 ? 'S' : '')}!
                 </h2>
               </div>
               <div className="flex flex-wrap gap-4">
@@ -146,7 +146,7 @@ export default function TeamBirthdays() {
                     <p className="text-3xl font-display">{thisMonthCount}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Birthdays in {formatDate(currentMonth, 'MMMM'}
+                    Birthdays in {formatDate(currentMonth, 'MMMM')}
                   </p>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function TeamBirthdays() {
                     <p className="text-3xl font-display">{nextMonthCount}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Birthdays in {formatDate(nextMonth, 'MMMM'}
+                    Birthdays in {formatDate(nextMonth, 'MMMM')}
                   </p>
                 </div>
               </div>
@@ -221,7 +221,7 @@ export default function TeamBirthdays() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-medium">
-                        {person.display_name || person.full_name} — {person.years} year{person.years > 1 ? 's' : ''}
+                        {person.display_name || person.full_name} — {person.years} year{person.years > 1 ? 's' : '')}
                       </span>
                     </div>
                   ))}
@@ -279,7 +279,7 @@ export default function TeamBirthdays() {
                             {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {person.years} year{person.years > 1 ? 's' : ''} • {formatDate(person.anniversaryDate, 'MMM d'}
+                            {person.years} year{person.years > 1 ? 's' : '')} • {formatDate(person.anniversaryDate, 'MMM d')}
                           </p>
                         </div>
                         <Badge 
@@ -311,7 +311,7 @@ export default function TeamBirthdays() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="font-display tracking-wide">
-                  {formatDate(currentMonth, 'MMMM yyyy'}
+                  {formatDate(currentMonth, 'MMMM yyyy')}
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
@@ -400,7 +400,7 @@ export default function TeamBirthdays() {
                                     </p>
                                     {person.roles && person.roles.length > 0 && (
                                       <p className="text-xs text-muted-foreground">
-                                        {person.roles.map(role => ROLE_LABELS[role] || role).join(', '}
+                                        {person.roles.map(role => ROLE_LABELS[role] || role).join(', ')}
                                       </p>
                                     )}
                                   </div>
@@ -466,7 +466,7 @@ export default function TeamBirthdays() {
                         {person.display_name || person.full_name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(person.nextBirthday, 'MMMM d'}
+                        {formatDate(person.nextBirthday, 'MMMM d')}
                       </p>
                     </div>
                     <Badge 

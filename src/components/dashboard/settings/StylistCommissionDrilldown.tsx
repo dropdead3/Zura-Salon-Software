@@ -98,7 +98,7 @@ export function StylistCommissionDrilldown({
     assignLevel.mutate({ userId: member.user_id, levelSlug: targetSlug }, {
       onSuccess: () => {
         const lvl = targetSlug ? slugToLevel.get(targetSlug) : null;
-        toast.success(`${displayName} → ${lvl?.label || 'Unassigned'}`);
+        toast.success(`${displayName} → ${lvl?.label || 'Unassigned')}`);
       },
     });
   };
@@ -166,7 +166,7 @@ export function StylistCommissionDrilldown({
           <section className="space-y-2">
             <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Level</Label>
             <Select
-              value={member.stylist_level && slugToLevel.has(member.stylist_level) ? member.stylist_level : '__unassign'}
+              value={member.stylist_level && slugToLevel.has(member.stylist_level) ? member.stylist_level : '__unassign')}
               onValueChange={handleLevelChange}
             >
               <SelectTrigger className="h-9 text-sm">
@@ -268,7 +268,7 @@ export function StylistCommissionDrilldown({
               disabled={(!svcRate && !retailRate) || !reason.trim() || upsertOverride.isPending}
             >
               {upsertOverride.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-              {override ? 'Update Override' : 'Save Override'}
+              {override ? 'Update Override' : 'Save Override')}
             </Button>
           </section>
 

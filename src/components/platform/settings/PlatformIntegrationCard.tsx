@@ -39,7 +39,7 @@ export function PlatformIntegrationCard({
 
   return (
     <PlatformCard
-      variant={isComingSoon ? 'default' : 'interactive'}
+      variant={isComingSoon ? 'default' : 'interactive')}
       className={cn(
         'relative cursor-pointer transition-all duration-300',
         isComingSoon && 'opacity-60 cursor-not-allowed',

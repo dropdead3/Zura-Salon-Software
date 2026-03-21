@@ -125,7 +125,7 @@ export function RentIncreaseDialog({
                 "text-xs",
                 increaseAmount > 0 ? "text-green-600" : "text-red-600"
               )}>
-                {increaseAmount > 0 ? '+' : ''}{formatCurrency(increaseAmount)} ({increasePercent}%)
+                {increaseAmount > 0 ? '+' : '')}{formatCurrency(increaseAmount)} ({increasePercent}%)
               </p>
             )}
           </div>

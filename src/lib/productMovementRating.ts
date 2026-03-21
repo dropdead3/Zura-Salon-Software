@@ -98,19 +98,19 @@ export function getMovementRating(input: VelocityInput): MovementRating {
   if (velocityPercentile >= 90 && effectiveVelocity > 0.5) {
     return {
       ...TIER_CONFIG.best_seller,
-      tooltip: `Top 10% velocity · ${effectiveVelocity.toFixed(2)} units/day${weightedVelocity != null ? ' (weighted)' : ''}`,
+      tooltip: `Top 10% velocity · ${effectiveVelocity.toFixed(2)} units/day${weightedVelocity != null ? ' (weighted)' : '')}`,
     };
   }
   if (velocityPercentile >= 75 && effectiveVelocity > 0.2) {
     return {
       ...TIER_CONFIG.popular,
-      tooltip: `Top 25% velocity · ${effectiveVelocity.toFixed(2)} units/day${weightedVelocity != null ? ' (weighted)' : ''}`,
+      tooltip: `Top 25% velocity · ${effectiveVelocity.toFixed(2)} units/day${weightedVelocity != null ? ' (weighted)' : '')}`,
     };
   }
   if (effectiveVelocity > 0.05) {
     return {
       ...TIER_CONFIG.steady,
-      tooltip: `${effectiveVelocity.toFixed(2)} units/day — selling regularly${weightedVelocity != null ? ' (weighted)' : ''}`,
+      tooltip: `${effectiveVelocity.toFixed(2)} units/day — selling regularly${weightedVelocity != null ? ' (weighted)' : '')}`,
     };
   }
 

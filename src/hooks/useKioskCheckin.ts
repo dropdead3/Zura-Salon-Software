@@ -350,8 +350,8 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       const windowStart = Math.max(0, currentMinutes - 30);
       const windowEnd = currentMinutes + 60;
       
-      const startTimeStr = `${Math.floor(windowStart/60).toString().padStart(2,'0'}:${(windowStart%60).toString().padStart(2,'0'}:00`;
-      const endTimeStr = `${Math.floor(windowEnd/60).toString().padStart(2,'0'}:${(windowEnd%60).toString().padStart(2,'0'}:00`;
+      const startTimeStr = `${Math.floor(windowStart/60).toString().padStart(2,'0')}:${(windowStart%60).toString().padStart(2,'0')}:00`;
+      const endTimeStr = `${Math.floor(windowEnd/60).toString().padStart(2,'0')}:${(windowEnd%60).toString().padStart(2,'0')}:00`;
 
       const { data: appointments, error } = await supabase
         .from('phorest_appointments')

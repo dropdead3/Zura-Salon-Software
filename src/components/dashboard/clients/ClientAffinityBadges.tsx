@@ -47,7 +47,7 @@ export function ClientAffinityBadges({ phorestClientId, className, compact = fal
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
-                Purchased {a.purchaseCount} time{a.purchaseCount !== 1 ? 's' : ''}
+                Purchased {a.purchaseCount} time{a.purchaseCount !== 1 ? 's' : '')}
                 {recencyLabel && ` · Last: ${recencyLabel}`}
               </TooltipContent>
             </Tooltip>

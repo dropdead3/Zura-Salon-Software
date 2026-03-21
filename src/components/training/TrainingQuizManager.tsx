@@ -202,7 +202,7 @@ export function TrainingQuizManager() {
                   <div>
                     <p className="font-medium">{quiz.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {quiz.video?.title || 'Unknown video'} •{' '}
+                      {quiz.video?.title || 'Unknown video')} •{' ')}
                       {quiz.questions_count} questions • {quiz.passing_score}% to pass
                     </p>
                   </div>
@@ -241,7 +241,7 @@ export function TrainingQuizManager() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingQuiz ? 'Edit Quiz' : 'Create Quiz'}
+              {editingQuiz ? 'Edit Quiz' : 'Create Quiz')}
             </DialogTitle>
           </DialogHeader>
           {(selectedVideoId || editingQuiz) && (

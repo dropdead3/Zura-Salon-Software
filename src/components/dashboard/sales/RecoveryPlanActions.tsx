@@ -108,7 +108,7 @@ export function RecoveryPlanActions({
       });
       if (error) throw error;
       setReminderSet(true);
-      toast.success(`Reminder set for ${formatDate(date, 'MMM d, yyyy'});
+      toast.success(`Reminder set for ${formatDate(date, 'MMM d, yyyy')});
     } catch (err) {
       console.error('Reminder error:', err);
       toast.error('Failed to set reminder');
@@ -135,7 +135,7 @@ export function RecoveryPlanActions({
         ) : (
           <Bookmark className="w-3.5 h-3.5" />
         )}
-        {saved ? 'Saved' : 'Save Plan'}
+        {saved ? 'Saved' : 'Save Plan')}
       </Button>
 
       {/* Remind Me */}
@@ -154,7 +154,7 @@ export function RecoveryPlanActions({
             ) : (
               <Bell className="w-3.5 h-3.5" />
             )}
-            {reminderSet ? 'Reminder Set' : 'Remind Me'}
+            {reminderSet ? 'Reminder Set' : 'Remind Me')}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">

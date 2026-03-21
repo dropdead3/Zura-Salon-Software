@@ -113,7 +113,7 @@ function InventoryManagerDashboardCardInner() {
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" className="font-sans text-xs" asChild>
-            <Link to={dashPath('/admin/backroom-settings?section=inventory'}>
+            <Link to={dashPath('/admin/backroom-settings?section=inventory')}>
               View All <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Link>
           </Button>
@@ -147,23 +147,23 @@ function InventoryManagerDashboardCardInner() {
           <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2">
             <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
             <p className="text-xs text-destructive font-sans">
-              {stats!.lowStockAlerts} product{stats!.lowStockAlerts !== 1 ? 's' : ''} below reorder point
+              {stats!.lowStockAlerts} product{stats!.lowStockAlerts !== 1 ? 's' : '')} below reorder point
             </p>
             <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans text-destructive" asChild>
-              <Link to={dashPath('/admin/backroom-settings?section=inventory&tab=reorder'}>Review</Link>
+              <Link to={dashPath('/admin/backroom-settings?section=inventory&tab=reorder')}>Review</Link>
             </Button>
           </div>
         )}
 
         {/* Next Audit Due */}
         {nextAudit && (
-          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${isOverdue ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/20'}`}>
-            <CalendarCheck className={`w-4 h-4 shrink-0 ${isOverdue ? 'text-destructive' : 'text-primary'}`} />
-            <p className={`text-xs font-sans ${isOverdue ? 'text-destructive' : 'text-foreground'}`}>
-              Next audit {isOverdue ? 'overdue' : 'due'}: {format(new Date(nextAudit.due_date), 'MMM d, yyyy'}
+          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${isOverdue ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/20')}`}>
+            <CalendarCheck className={`w-4 h-4 shrink-0 ${isOverdue ? 'text-destructive' : 'text-primary')}`} />
+            <p className={`text-xs font-sans ${isOverdue ? 'text-destructive' : 'text-foreground')}`}>
+              Next audit {isOverdue ? 'overdue' : 'due')}: {format(new Date(nextAudit.due_date), 'MMM d, yyyy')}
             </p>
             <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans" asChild>
-              <Link to={dashPath('/admin/backroom-settings?section=inventory&tab=counts'}>View</Link>
+              <Link to={dashPath('/admin/backroom-settings?section=inventory&tab=counts')}>View</Link>
             </Button>
           </div>
         )}

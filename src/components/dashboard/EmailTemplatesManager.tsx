@@ -585,7 +585,7 @@ export function EmailTemplatesManager() {
           {/* Sticky Footer */}
           <div className="sticky bottom-0 px-6 py-4 bg-background border-t mt-4 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {hasUnsavedChanges && 'Remember to save your changes'}
+              {hasUnsavedChanges && 'Remember to save your changes')}
             </div>
             <div className="flex gap-2">
               <Button 
@@ -635,7 +635,7 @@ export function EmailTemplatesManager() {
               <Button 
                 onClick={handleSave} 
                 disabled={updateTemplate.isPending || !hasUnsavedChanges}
-                className={cn(hasUnsavedChanges && 'animate-pulse'}
+                className={cn(hasUnsavedChanges && 'animate-pulse')}
               >
                 {updateTemplate.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -681,7 +681,7 @@ export function EmailTemplatesManager() {
                   )}
                 />
                 <button
-                  onClick={() => setPreviewMode('desktop'}
+                  onClick={() => setPreviewMode('desktop')}
                   className={cn(
                     "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-sans font-medium transition-colors duration-200",
                     previewMode === 'desktop' 
@@ -693,7 +693,7 @@ export function EmailTemplatesManager() {
                   Desktop
                 </button>
                 <button
-                  onClick={() => setPreviewMode('mobile'}
+                  onClick={() => setPreviewMode('mobile')}
                   className={cn(
                     "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-sans font-medium transition-colors duration-200",
                     previewMode === 'mobile' 
@@ -750,7 +750,7 @@ export function EmailTemplatesManager() {
                 letterSpacing: '-0.02em'
               }}
             >
-              {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject'}
+              {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject')}
             </h2>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-[15px]">

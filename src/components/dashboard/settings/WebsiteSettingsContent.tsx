@@ -278,7 +278,7 @@ function GeneralTab() {
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={annLocal.bg_color || '#e8e3da'}
+                value={annLocal.bg_color || '#e8e3da')}
                 onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
                 className="w-8 h-8 rounded-full border border-border cursor-pointer p-0 overflow-hidden"
                 style={{ WebkitAppearance: 'none' }}
@@ -287,7 +287,7 @@ function GeneralTab() {
                 placeholder="#hexcolor"
                 autoCapitalize="off"
                 className="flex-1 font-mono text-xs"
-                value={annLocal.bg_color || ''}
+                value={annLocal.bg_color || '')}
                 onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
               />
             </div>
@@ -312,9 +312,9 @@ function GeneralTab() {
                 style={annLocal.bg_color ? { backgroundColor: annLocal.bg_color } : undefined}
               >
                 <div className={cn("font-sans", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white/80" : "text-foreground/80")}>
-                  <span>{annLocal.message_prefix || 'Are you a salon'}</span>{' '}
-                  <span className="font-medium">{annLocal.message_highlight || 'professional'}</span>{' '}
-                  <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
+                  <span>{annLocal.message_prefix || 'Are you a salon')}</span>{' ')}
+                  <span className="font-medium">{annLocal.message_highlight || 'professional')}</span>{' ')}
+                  <span>{annLocal.message_suffix || 'looking for our extensions?')}</span>
                 </div>
                 {annLocal.cta_text && (
                   <div className={cn("flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
@@ -345,7 +345,7 @@ function GeneralTab() {
                 placeholder={placeholder}
                 autoCapitalize="off"
                 className="flex-1"
-                value={socialLocal[key] || ''}
+                value={socialLocal[key] || '')}
                 onChange={(e) => setSocialLocal(prev => ({ ...prev, [key]: e.target.value }))}
               />
             </div>
@@ -396,7 +396,7 @@ function GeneralTab() {
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => window.location.href = dashPath('/admin/website-hub'}
+            onClick={() => window.location.href = dashPath('/admin/website-hub')}
           >
             <ExternalLink className="w-4 h-4" />
             Open Footer Editor
@@ -511,7 +511,7 @@ function ThemeTab() {
         {/* Editor header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size={tokens.button.card} onClick={() => setMode('overview'} className="gap-2">
+            <Button variant="ghost" size={tokens.button.card} onClick={() => setMode('overview')} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Back to Themes
             </Button>
@@ -519,13 +519,13 @@ function ThemeTab() {
             <div className="flex items-center gap-2">
               <LayoutGrid className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">
-                {TAB_LABELS[editorTab] || 'Website Editor'}
+                {TAB_LABELS[editorTab] || 'Website Editor')}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant={showPreview ? 'default' : 'outline'}
+              variant={showPreview ? 'default' : 'outline')}
               size={tokens.button.card}
               onClick={() => setShowPreview(!showPreview)}
             >
@@ -535,7 +535,7 @@ function ThemeTab() {
                 <><PanelRightOpen className="h-4 w-4 mr-1" />Preview</>
               )}
             </Button>
-            <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank'}>
+            <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
               <ExternalLink className="h-4 w-4 mr-1" />
               Open Site
             </Button>
@@ -568,7 +568,7 @@ function ThemeTab() {
                     </Button>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    Editing: {activeTheme?.name ?? 'Theme'}
+                    Editing: {activeTheme?.name ?? 'Theme')}
                   </span>
                 </div>
                 <div className="flex-1 overflow-auto p-6">
@@ -603,7 +603,7 @@ function ThemeTab() {
       {activeTheme && (
         <ActiveThemeCard
           theme={activeTheme}
-          onCustomize={() => setMode('editor'}
+          onCustomize={() => setMode('editor')}
           onPreview={() => handlePreview()}
         />
       )}
@@ -1043,10 +1043,10 @@ function SeoLegalTab() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Don't have legal pages yet? Free generators like{' '}
-            <a href="https://www.termsfeed.com" target="_blank" rel="noopener noreferrer" className="underline">TermsFeed</a>{' '}
-            or{' '}
-            <a href="https://www.freeprivacypolicy.com" target="_blank" rel="noopener noreferrer" className="underline">FreePrivacyPolicy</a>{' '}
+            Don't have legal pages yet? Free generators like{' ')}
+            <a href="https://www.termsfeed.com" target="_blank" rel="noopener noreferrer" className="underline">TermsFeed</a>{' ')}
+            or{' ')}
+            <a href="https://www.freeprivacypolicy.com" target="_blank" rel="noopener noreferrer" className="underline">FreePrivacyPolicy</a>{' ')}
             can help you create them.
           </p>
         </CardContent>
@@ -1097,7 +1097,7 @@ export function WebsiteSettingsContent() {
               Editor
             </a>
           </Button>
-          <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank'}>
+          <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
             <Eye className="w-4 h-4 mr-1.5" />
             Preview
           </Button>

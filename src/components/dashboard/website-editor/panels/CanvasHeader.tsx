@@ -125,7 +125,7 @@ export function CanvasHeader({
               variant="ghost"
               size="icon"
               className="h-8 w-8 flex-shrink-0"
-              onClick={() => navigate(dashPath('/'}
+              onClick={() => navigate(dashPath('/')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -140,7 +140,7 @@ export function CanvasHeader({
             isDirty ? 'bg-amber-500' : 'bg-emerald-500'
           )} />
           <span className="text-[11px] text-muted-foreground font-sans">
-            {isDirty ? 'Draft' : 'Published'}
+            {isDirty ? 'Draft' : 'Published')}
           </span>
           <SavedIndicator visible={showSaved} />
         </div>
@@ -153,7 +153,7 @@ export function CanvasHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onCanvasModeChange('edit'}
+                onClick={() => onCanvasModeChange('edit')}
                 className={cn(
                   editorTokens.segmented.button,
                   'inline-flex items-center gap-1.5 px-2.5',
@@ -169,7 +169,7 @@ export function CanvasHeader({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onCanvasModeChange('view'}
+                onClick={() => onCanvasModeChange('view')}
                 className={cn(
                   editorTokens.segmented.button,
                   'inline-flex items-center gap-1.5 px-2.5',
@@ -207,7 +207,7 @@ export function CanvasHeader({
         </div>
 
         {/* Zoom controls */}
-        <div className={cn(editorTokens.segmented.container, 'hidden sm:flex'}>
+        <div className={cn(editorTokens.segmented.container, 'hidden sm:flex')}>
           {zoomOptions.map(({ level, label }) => (
             <button
               key={level}

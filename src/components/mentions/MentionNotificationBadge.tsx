@@ -111,13 +111,13 @@ export function MentionNotificationBadge() {
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={mention.author?.photo_url || undefined} />
                         <AvatarFallback>
-                          {mention.author?.display_name?.[0] || mention.author?.full_name?.[0] || '?'}
+                          {mention.author?.display_name?.[0] || mention.author?.full_name?.[0] || '?')}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm truncate">
-                            {mention.author?.display_name || mention.author?.full_name || 'Unknown'}
+                            {mention.author?.display_name || mention.author?.full_name || 'Unknown')}
                           </span>
                           <Badge variant="outline" className="text-xs shrink-0">
                             <Icon className="h-3 w-3 mr-1" />

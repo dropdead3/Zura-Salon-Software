@@ -123,7 +123,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
         </CardHeader>
         <CardContent>
           {/* Hero skeleton */}
-          <div className={cn(tokens.kpi.tile, 'mb-3'}>
+          <div className={cn(tokens.kpi.tile, 'mb-3')}>
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-8 w-28 mt-2" />
           </div>
@@ -313,8 +313,8 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
           <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/40">
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <p className="text-xs text-muted-foreground">
-              Staff names unavailable —{' '}
-              <Link to={dashPath('/admin/settings/staff-mapping'} className="text-primary hover:underline">
+              Staff names unavailable —{' ')}
+              <Link to={dashPath('/admin/settings/staff-mapping')} className="text-primary hover:underline">
                 connect staff profiles in Settings
               </Link>
             </p>
@@ -372,7 +372,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                 onClick={() => setShowAll(prev => !prev)}
                 className="flex items-center gap-1 mt-2 text-xs text-primary hover:underline mx-auto"
               >
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180'} />
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180')} />
                 {showAll ? 'Show less' : `Show all ${rankedStaff.length} stylists`}
               </button>
             )}
@@ -382,7 +382,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
               <div className="mt-4 flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/40">
                 <Award className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
-                  {needsAttentionCount} {needsAttentionCount === 1 ? 'stylist' : 'stylists'} may benefit from coaching on client experience fundamentals.
+                  {needsAttentionCount} {needsAttentionCount === 1 ? 'stylist' : 'stylists')} may benefit from coaching on client experience fundamentals.
                 </p>
               </div>
             )}
@@ -446,7 +446,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                 onClick={() => setShowAll(prev => !prev)}
                 className="flex items-center gap-1 mt-2 text-xs text-primary hover:underline mx-auto"
               >
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180'} />
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180')} />
                 {showAll ? 'Show less' : `Show all ${allChartData.length} stylists`}
               </button>
             )}

@@ -110,7 +110,7 @@ export default function AccountDetail() {
           <p className="text-slate-500 mb-4">
             The organization you're looking for doesn't exist or you don't have access.
           </p>
-          <PlatformButton onClick={() => navigate('/platform/accounts'} className="gap-1.5">
+          <PlatformButton onClick={() => navigate('/platform/accounts')} className="gap-1.5">
             <ArrowLeft className="w-4 h-4" />
             Back to Accounts
           </PlatformButton>
@@ -300,7 +300,7 @@ export default function AccountDetail() {
                       rel="noopener noreferrer"
                       className="text-violet-400 hover:text-violet-300 hover:underline transition-colors"
                     >
-                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, ''}
+                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     </a>
                   </div>
                 )}
@@ -324,7 +324,7 @@ export default function AccountDetail() {
                 )}
                 <div className="flex items-center gap-3">
                   <Calendar className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Created {format(new Date(organization.created_at), 'MMM d, yyyy'}</span>
+                  <span className="text-slate-300">Created {format(new Date(organization.created_at), 'MMM d, yyyy')}</span>
                 </div>
                 {organization.go_live_date && (
                   <div className="flex items-center gap-3">
@@ -342,15 +342,15 @@ export default function AccountDetail() {
                           ? 'text-red-400'
                           : 'text-slate-300'
                     }`}>
-                      Go-Live {format(parseISO(organization.go_live_date), 'MMM d, yyyy'}
-                      {organization.onboarding_stage !== 'live' && isBefore(parseISO(organization.go_live_date), startOfDay(new Date())) && ' (overdue)'}
+                      Go-Live {format(parseISO(organization.go_live_date), 'MMM d, yyyy')}
+                      {organization.onboarding_stage !== 'live' && isBefore(parseISO(organization.go_live_date), startOfDay(new Date())) && ' (overdue)')}
                     </span>
                   </div>
                 )}
                 {organization.activated_at && (
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span className="text-slate-300">Activated {format(new Date(organization.activated_at), 'MMM d, yyyy'}</span>
+                    <span className="text-slate-300">Activated {format(new Date(organization.activated_at), 'MMM d, yyyy')}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-3">
@@ -359,11 +359,11 @@ export default function AccountDetail() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Globe className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Source: <span className="capitalize">{organization.source_software || 'Not specified'}</span></span>
+                  <span className="text-slate-300">Source: <span className="capitalize">{organization.source_software || 'Not specified')}</span></span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Building2 className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Plan: <span className="capitalize">{organization.subscription_tier || 'Standard'}</span></span>
+                  <span className="text-slate-300">Plan: <span className="capitalize">{organization.subscription_tier || 'Standard')}</span></span>
                 </div>
                 
                 {/* Contract Term Information - Always visible for quick view */}
@@ -439,7 +439,7 @@ export default function AccountDetail() {
         <TabsContent value="billing">
           <BillingConfigurationPanel
             organizationId={organization.id}
-            billingStatus={(organization as any).billing_status as BillingStatus || 'draft'}
+            billingStatus={(organization as any).billing_status as BillingStatus || 'draft')}
             locationCount={organization.locationCount}
           />
         </TabsContent>
@@ -581,8 +581,8 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
                       </p>
                     </div>
                   </div>
-                  <PlatformBadge variant={location.is_active ? 'success' : 'default'}>
-                    {location.is_active ? 'Active' : 'Inactive'}
+                  <PlatformBadge variant={location.is_active ? 'success' : 'default')}>
+                    {location.is_active ? 'Active' : 'Inactive')}
                   </PlatformBadge>
                 </div>
               ))}

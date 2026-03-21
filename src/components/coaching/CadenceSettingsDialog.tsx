@@ -107,7 +107,7 @@ export function CadenceSettingsDialog({ staff, cadence, onUpdateCadence, onRemov
                 onClick={handleSaveGlobal}
                 disabled={isUpdating || globalDays === cadence.globalDefault || globalDays < 1}
               >
-                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save')}
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
@@ -150,7 +150,7 @@ export function CadenceSettingsDialog({ staff, cadence, onUpdateCadence, onRemov
                           min={1}
                           max={365}
                           placeholder={globalDays.toString()}
-                          value={overrides[s.userId] ?? ''}
+                          value={overrides[s.userId] ?? '')}
                           onChange={(e) => setOverrides(prev => ({ ...prev, [s.userId]: e.target.value }))}
                           onBlur={() => {
                             const val = parseInt(overrides[s.userId] || '');

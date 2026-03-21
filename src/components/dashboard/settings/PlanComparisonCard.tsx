@@ -80,7 +80,7 @@ export function PlanComparisonCard() {
                   <p className="text-xs text-muted-foreground line-clamp-2">{plan.description}</p>
                   <div className="pt-2 border-t border-border/50">
                     <p className="text-xs text-muted-foreground">
-                      Up to {plan.max_locations} location{plan.max_locations !== 1 ? 's' : ''} · {plan.max_users} users
+                      Up to {plan.max_locations} location{plan.max_locations !== 1 ? 's' : '')} · {plan.max_users} users
                     </p>
                   </div>
                 </div>

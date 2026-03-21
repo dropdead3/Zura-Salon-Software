@@ -119,12 +119,12 @@ function AdminRequestRow({ request, onManualAssign }: { request: AssistantReques
           {statusBadge()}
           {declinedCount > 0 && (
             <Badge variant="outline" className="text-destructive border-destructive/30">
-              {declinedCount} decline{declinedCount > 1 ? 's' : ''}
+              {declinedCount} decline{declinedCount > 1 ? 's' : '')}
             </Badge>
           )}
         </div>
         <div className="text-sm text-muted-foreground mt-1">
-          <span>{formatDate(parseISO(request.request_date), 'MMM d'} • </span>
+          <span>{formatDate(parseISO(request.request_date), 'MMM d')} • </span>
           <span>{request.salon_services?.name}</span>
           {request.locations?.name && (
             <span className="flex items-center gap-1 inline-flex ml-2">
@@ -137,7 +137,7 @@ function AdminRequestRow({ request, onManualAssign }: { request: AssistantReques
       <div className="flex items-center gap-3">
         <div className="text-right text-sm">
           <div className={tokens.body.emphasis}>
-            {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown'}
+            {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown')}
           </div>
           {request.assistant_profile && (
             <div className="text-muted-foreground">
@@ -491,8 +491,8 @@ export default function AssistantSchedule() {
     <DashboardLayout>
       <div className={cn("p-6 mx-auto", isAdmin ? "max-w-6xl" : "max-w-4xl")}>
         <DashboardPageHeader
-          title={isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
-          description={isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant request activity'}
+          title={isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule')}
+          description={isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant request activity')}
           className="mb-6"
           actions={
             <div className="flex items-center gap-2">
@@ -526,7 +526,7 @@ export default function AssistantSchedule() {
               <ToggleGroup 
                 type="single" 
                 value={viewMode} 
-                onValueChange={(v) => v && setViewMode(v as 'list' | 'calendar'}
+                onValueChange={(v) => v && setViewMode(v as 'list' | 'calendar')}
                 className="border rounded-lg"
               >
                 <ToggleGroupItem value="list" aria-label="List view" className="px-3">
@@ -608,21 +608,21 @@ export default function AssistantSchedule() {
                         value={stats.pending}
                         icon={Clock}
                         description="Waiting for assistant"
-                        variant={stats.pending > 0 ? 'warning' : 'default'}
+                        variant={stats.pending > 0 ? 'warning' : 'default')}
                       />
                       <StatCard 
                         title="Awaiting Response" 
                         value={stats.awaitingResponse}
                         icon={AlertCircle}
                         description="Assistant hasn't responded"
-                        variant={stats.awaitingResponse > 0 ? 'warning' : 'default'}
+                        variant={stats.awaitingResponse > 0 ? 'warning' : 'default')}
                       />
                       <StatCard 
                         title="Acceptance Rate" 
                         value={`${stats.acceptanceRate}%`}
                         icon={TrendingUp}
                         description={`${stats.accepted} accepted`}
-                        variant={stats.acceptanceRate >= 80 ? 'success' : stats.acceptanceRate >= 50 ? 'warning' : 'danger'}
+                        variant={stats.acceptanceRate >= 80 ? 'success' : stats.acceptanceRate >= 50 ? 'warning' : 'danger')}
                       />
                     </div>
 

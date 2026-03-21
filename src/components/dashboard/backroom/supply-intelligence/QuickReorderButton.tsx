@@ -33,7 +33,7 @@ export function QuickReorderButton({ productId }: QuickReorderButtonProps) {
         organization_id: orgId,
         product_id: productId,
         quantity: qty,
-        notes: `Auto-created from Supply Intelligence. ${suggestion?.reasoning ?? ''}`,
+        notes: `Auto-created from Supply Intelligence. ${suggestion?.reasoning ?? '')}`,
       },
       {
         onSuccess: () => {

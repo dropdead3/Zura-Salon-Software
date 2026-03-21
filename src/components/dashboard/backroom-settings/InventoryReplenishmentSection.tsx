@@ -74,7 +74,7 @@ export function InventoryReplenishmentSection() {
         <CardContent className="space-y-4">
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
             <div>
-              <p className={cn(tokens.body.emphasis, 'text-foreground'}>Inventory Tracking</p>
+              <p className={cn(tokens.body.emphasis, 'text-foreground')}>Inventory Tracking</p>
               <p className="text-sm text-muted-foreground">Enable automatic inventory tracking from backroom sessions</p>
             </div>
             <Switch checked={current.tracking_enabled} onCheckedChange={v => update('tracking_enabled', v)} />
@@ -98,7 +98,7 @@ export function InventoryReplenishmentSection() {
             </div>
             <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground'}>Forecast Participation</p><MetricInfoTooltip description="Uses upcoming appointment data to predict demand and adjust reorder quantities." /></div>
+                <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Forecast Participation</p><MetricInfoTooltip description="Uses upcoming appointment data to predict demand and adjust reorder quantities." /></div>
                 <p className="text-sm text-muted-foreground">Include demand forecasting in reorder calculations</p>
               </div>
               <Switch checked={current.forecast_participation} onCheckedChange={v => update('forecast_participation', v)} />
@@ -107,7 +107,7 @@ export function InventoryReplenishmentSection() {
 
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
             <div>
-              <p className={cn(tokens.body.emphasis, 'text-foreground'}>Stockout Alerts</p>
+              <p className={cn(tokens.body.emphasis, 'text-foreground')}>Stockout Alerts</p>
               <p className="text-sm text-muted-foreground">Receive alerts when products are completely out of stock</p>
             </div>
             <Switch checked={current.stockout_alerts_enabled} onCheckedChange={v => update('stockout_alerts_enabled', v)} />
@@ -125,19 +125,19 @@ export function InventoryReplenishmentSection() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className={tokens.label.tiny}>Alerts Enabled</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground'}>{alertSettings.enabled ? 'Yes' : 'No'}</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.enabled ? 'Yes' : 'No')}</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Default Threshold</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground'}>{alertSettings.default_threshold_pct}%</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.default_threshold_pct}%</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Auto-Create PO</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground'}>{alertSettings.auto_create_draft_po ? 'Yes' : 'No'}</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.auto_create_draft_po ? 'Yes' : 'No')}</p>
               </div>
               <div>
                 <p className={tokens.label.tiny}>Auto-Reorder</p>
-                <p className={cn(tokens.body.emphasis, 'text-foreground'}>{alertSettings.auto_reorder_enabled ? alertSettings.auto_reorder_mode : 'Disabled'}</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{alertSettings.auto_reorder_enabled ? alertSettings.auto_reorder_mode : 'Disabled')}</p>
               </div>
             </div>
           </CardContent>

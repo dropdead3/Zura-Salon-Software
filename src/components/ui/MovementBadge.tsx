@@ -32,7 +32,7 @@ function TrendIndicator({ change }: { change: number }) {
       'inline-flex items-center gap-0.5 text-[9px] tabular-nums font-medium ml-0.5',
       isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
     )}>
-      {isUp ? '↑' : '↓'}{Math.abs(Math.round(change))}%
+      {isUp ? '↑' : '↓')}{Math.abs(Math.round(change))}%
     </span>
   );
 }
@@ -43,7 +43,7 @@ export function MovementBadge({ rating, compact = false, positiveOnly = false, v
   const Icon = TIER_ICONS[rating.tier] || Minus;
 
   const tooltipText = velocityChange != null && Math.abs(velocityChange) >= 5
-    ? `${rating.tooltip} · ${velocityChange > 0 ? '+' : ''}${Math.round(velocityChange)}% vs prior 90 days`
+    ? `${rating.tooltip} · ${velocityChange > 0 ? '+' : '')}${Math.round(velocityChange)}% vs prior 90 days`
     : rating.tooltip;
 
   return (
@@ -60,7 +60,7 @@ export function MovementBadge({ rating, compact = false, positiveOnly = false, v
             className,
           )}
         >
-          <Icon className={cn(compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+          <Icon className={cn(compact ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
           {rating.label}
           {velocityChange != null && <TrendIndicator change={velocityChange} />}
         </Badge>

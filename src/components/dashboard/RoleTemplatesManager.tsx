@@ -287,12 +287,12 @@ export function RoleTemplatesManager() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editDialog.template ? 'Edit Template' : 'Create Template'}
+              {editDialog.template ? 'Edit Template' : 'Create Template')}
             </DialogTitle>
             <DialogDescription>
               {editDialog.template
                 ? 'Update the template settings and permissions.'
-                : 'Define a new template with pre-configured permissions.'}
+                : 'Define a new template with pre-configured permissions.')}
             </DialogDescription>
           </DialogHeader>
 

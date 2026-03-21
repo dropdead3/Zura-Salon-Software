@@ -58,7 +58,7 @@ export function RoleHistoryPanel({ userId, isOpen, onToggle }: RoleHistoryPanelP
       <CollapsibleTrigger asChild>
         <Button variant="ghost" size={tokens.button.inline} className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
           <History className="w-3 h-3" />
-          {isOpen ? 'Hide History' : 'View History'}
+          {isOpen ? 'Hide History' : 'View History')}
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>

@@ -59,8 +59,8 @@ export function BackroomControlTower({ locationId, className }: BackroomControlT
         <div className="flex flex-wrap gap-1.5">
           {CATEGORY_FILTERS.map((f) => (
             <Badge
-              key={f.key ?? 'all'}
-              variant={category === f.key ? 'default' : 'outline'}
+              key={f.key ?? 'all')}
+              variant={category === f.key ? 'default' : 'outline')}
               className="cursor-pointer"
               onClick={() => setCategory(f.key)}
             >

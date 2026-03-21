@@ -181,7 +181,7 @@ export function EditAppointmentDialog({
         <DialogHeader>
           <DialogTitle>Edit Appointment</DialogTitle>
           <DialogDescription>
-            Update appointment details for {appointment.client_name || 'Walk-in'}
+            Update appointment details for {appointment.client_name || 'Walk-in')}
           </DialogDescription>
         </DialogHeader>
 
@@ -190,7 +190,7 @@ export function EditAppointmentDialog({
           <div className="p-4 rounded-lg bg-muted/50 border space-y-2">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{appointment.client_name || 'Walk-in Client'}</span>
+              <span className="font-medium">{appointment.client_name || 'Walk-in Client')}</span>
             </div>
             {appointment.client_phone && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -204,7 +204,7 @@ export function EditAppointmentDialog({
           <div className="p-4 rounded-lg bg-muted/50 border">
             <div className="flex items-center gap-2">
               <Scissors className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{appointment.service_name || 'Service'}</span>
+              <span className="font-medium">{appointment.service_name || 'Service')}</span>
             </div>
             {appointment.total_price && (
               <p className="text-sm text-muted-foreground mt-1">
@@ -226,7 +226,7 @@ export function EditAppointmentDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? formatDate(selectedDate, 'PPP') : 'Select date'}
+                  {selectedDate ? formatDate(selectedDate, 'PPP') : 'Select date')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -251,7 +251,7 @@ export function EditAppointmentDialog({
               <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map(time => (
                   <SelectItem key={time} value={time}>
-                    {formatDate(parse(time, 'HH:mm', new Date()), 'h:mm a'}
+                    {formatDate(parse(time, 'HH:mm', new Date()), 'h:mm a')}
                   </SelectItem>
                 ))}
               </SelectContent>

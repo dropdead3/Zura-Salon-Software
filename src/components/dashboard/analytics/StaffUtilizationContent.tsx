@@ -88,7 +88,7 @@ export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizat
           <CardDescription>
             {isLoading
               ? 'Loading service provider metrics...'
-              : `Tracking ${workload.length} service provider${workload.length !== 1 ? 's' : ''} for the selected period`}
+              : `Tracking ${workload.length} service provider${workload.length !== 1 ? 's' : '')} for the selected period`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -340,7 +340,7 @@ export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizat
                         )}
                         {staff.averageTicket > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            avg{' '}
+                            avg{' ')}
                             <AnimatedBlurredAmount
                               value={staff.averageTicket}
                               currency={currency}

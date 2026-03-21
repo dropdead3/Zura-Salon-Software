@@ -221,12 +221,12 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   return (
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>
-                        Overall Avg Tip Rate:{' '}
+                        Overall Avg Tip Rate:{' ')}
                         <span className="font-sans tabular-nums text-foreground">{avgTipRate.toFixed(1)}%</span>
                       </span>
                       <span className="text-border">|</span>
                       <span>
-                        Total Tips:{' '}
+                        Total Tips:{' ')}
                         <span className="font-sans tabular-nums text-foreground">
                           <BlurredAmount>{formatCurrencyWhole(Math.round(totalTipsSum))}</BlurredAmount>
                         </span>
@@ -599,8 +599,8 @@ function StylistAppointmentList({ stylistKey, rawAppointments, locations, client
                 <span className="text-muted-foreground">
                   Services: <span className="text-foreground"><BlurredAmount>{fmtCurrency(visit.totalPrice)}</BlurredAmount></span>
                 </span>
-                <span className={visit.tip === 0 ? 'text-destructive' : 'text-muted-foreground'}>
-                  Tip: <span className={visit.tip > 0 ? 'text-foreground' : ''}><BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount></span>
+                <span className={visit.tip === 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                  Tip: <span className={visit.tip > 0 ? 'text-foreground' : '')}><BlurredAmount>{fmtCurrency(visit.tip)}</BlurredAmount></span>
                 </span>
                 <span className="text-muted-foreground">
                   Total Paid: <span className="text-foreground font-medium"><BlurredAmount>{fmtCurrency(visit.totalPayment)}</BlurredAmount></span>
@@ -612,7 +612,7 @@ function StylistAppointmentList({ stylistKey, rawAppointments, locations, client
                   {visit.services.map((svc, j) => (
                     <div key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="text-border/60">
-                        {j === visit.services.length - 1 ? '└' : '├'}
+                        {j === visit.services.length - 1 ? '└' : '├')}
                       </span>
                       <span className="truncate flex-1">{svc.name}</span>
                       <span className="tabular-nums text-right min-w-[50px]">

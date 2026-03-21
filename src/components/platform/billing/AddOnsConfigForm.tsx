@@ -104,7 +104,7 @@ export function AddOnsConfigForm({
             <PlatformInput
               type="number"
               min="0"
-              value={includedLocations ?? ''}
+              value={includedLocations ?? '')}
               onChange={(e) => onIncludedLocationsChange(e.target.value ? parseInt(e.target.value) : null)}
               placeholder={planMaxLocations === -1 ? 'Unlimited' : String(planMaxLocations)}
               className="max-w-32"
@@ -164,7 +164,7 @@ export function AddOnsConfigForm({
             <PlatformInput
               type="number"
               min="0"
-              value={includedUsers ?? ''}
+              value={includedUsers ?? '')}
               onChange={(e) => onIncludedUsersChange(e.target.value ? parseInt(e.target.value) : null)}
               placeholder={planMaxUsers === -1 ? 'Unlimited' : String(planMaxUsers)}
               className="max-w-32"

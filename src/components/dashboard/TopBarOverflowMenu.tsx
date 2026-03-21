@@ -73,7 +73,7 @@ export function TopBarOverflowMenu({
               className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors duration-150 text-sm"
             >
               {hideNumbers ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
-              <span className="flex-1 text-left">{hideNumbers ? 'Show Numbers' : 'Hide Numbers'}</span>
+              <span className="flex-1 text-left">{hideNumbers ? 'Show Numbers' : 'Hide Numbers')}</span>
             </button>
             {showThemeToggle && (
               <div className="flex items-center gap-3 px-2.5 py-2">

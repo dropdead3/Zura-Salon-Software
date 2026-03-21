@@ -252,8 +252,8 @@ export function AIInsightsSection() {
               </CardTitle>
             </div>
             <Button variant="ghost" size={tokens.button.inline} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
-              <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin'} />
-              {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
+              <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+              {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh')}
             </Button>
           </div>
         </CardHeader>
@@ -280,7 +280,7 @@ export function AIInsightsSection() {
                       <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5" />
                         Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                        {isStale && ' · Stale'}
+                        {isStale && ' · Stale')}
                       </p>
                     )}
                   </div>

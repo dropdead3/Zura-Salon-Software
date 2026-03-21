@@ -68,7 +68,7 @@ export function PinnedMessagesSheet({ open, onOpenChange }: PinnedMessagesSheetP
                         <div className="mt-2 space-y-1">
                           <Badge variant="secondary" className="text-xs">
                             <MessageSquare className="h-3 w-3 mr-1" />
-                            {pm.replyCount} {pm.replyCount === 1 ? 'reply' : 'replies'}
+                            {pm.replyCount} {pm.replyCount === 1 ? 'reply' : 'replies')}
                           </Badge>
 
                           {pm.threadPreviews.length > 0 && (
@@ -76,8 +76,8 @@ export function PinnedMessagesSheet({ open, onOpenChange }: PinnedMessagesSheetP
                               {pm.threadPreviews.map((preview) => (
                                 <div key={preview.id} className="text-xs text-muted-foreground">
                                   <span className="font-medium text-foreground">
-                                    {preview.sender?.display_name || preview.sender?.full_name || 'Unknown'}:
-                                  </span>{' '}
+                                    {preview.sender?.display_name || preview.sender?.full_name || 'Unknown')}:
+                                  </span>{' ')}
                                   <span className="line-clamp-1">{preview.content}</span>
                                 </div>
                               ))}

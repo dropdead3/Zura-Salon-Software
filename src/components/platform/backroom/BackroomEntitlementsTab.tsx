@@ -382,7 +382,7 @@ export function BackroomEntitlementsTab() {
                 <DialogHeader>
                   <DialogTitle>Backfill Location Entitlements</DialogTitle>
                   <DialogDescription>
-                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has'} Backroom enabled but no per-location
+                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has')} Backroom enabled but no per-location
                     entitlements. This will create a Starter entitlement for every active location in these orgs.
                   </DialogDescription>
                 </DialogHeader>
@@ -422,7 +422,7 @@ export function BackroomEntitlementsTab() {
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : filtered.length === 0 ? (
-          <div className={cn(tokens.empty.container, 'py-16'}>
+          <div className={cn(tokens.empty.container, 'py-16')}>
             <Building2 className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No organizations found</h3>
           </div>
@@ -484,7 +484,7 @@ export function BackroomEntitlementsTab() {
                             )}
                           </TableCell>
                           <TableCell className="font-sans text-xs text-slate-500 capitalize">
-                            {org.subscription_tier || '—'}
+                            {org.subscription_tier || '—')}
                           </TableCell>
                           <TableCell className="font-sans text-xs">
                             {(() => {
@@ -520,7 +520,7 @@ export function BackroomEntitlementsTab() {
                                           ) : (
                                             <Send className="w-3 h-3" />
                                           )}
-                                          {cooldownActive ? 'Cooldown active' : 'Send Setup Link'}
+                                          {cooldownActive ? 'Cooldown active' : 'Send Setup Link')}
                                         </button>
                                       </TooltipContent>
                                     </Tooltip>
@@ -539,7 +539,7 @@ export function BackroomEntitlementsTab() {
                           <TableCell className="font-sans text-xs text-slate-500">
                             {org.flag_created_at
                               ? new Date(org.flag_created_at).toLocaleDateString()
-                              : '—'}
+                              : '—')}
                           </TableCell>
                           <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                             <Switch
@@ -841,7 +841,7 @@ function LocationEntitlementPanel({
             <DialogTitle>Process Refund</DialogTitle>
             <DialogDescription className="space-y-2">
               <p>
-                This will <strong>immediately revoke</strong> Backroom access for{' '}
+                This will <strong>immediately revoke</strong> Backroom access for{' ')}
                 <strong>{refundTarget?.locName}</strong>, cancel the Stripe subscription, and issue a
                 full refund for the most recent payment.
               </p>

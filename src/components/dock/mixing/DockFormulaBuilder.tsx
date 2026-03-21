@@ -79,7 +79,7 @@ export function DockFormulaBuilder({ lines, onLinesChange, baseWeight, onBaseWei
           <div className="relative">
             <input
               type="number"
-              value={WEIGHT_PRESETS.includes(baseWeight) ? '' : baseWeight || ''}
+              value={WEIGHT_PRESETS.includes(baseWeight) ? '' : baseWeight || '')}
               onChange={(e) => {
                 const v = parseFloat(e.target.value);
                 if (!isNaN(v) && v > 0) onBaseWeightChange(v);
@@ -187,7 +187,7 @@ function FormulaLineCard({
           </button>
           <input
             type="number"
-            value={line.targetWeight || ''}
+            value={line.targetWeight || '')}
             onChange={(e) => onUpdate({ targetWeight: parseFloat(e.target.value) || 0 })}
             className="w-12 h-full text-center text-xs bg-transparent text-[hsl(var(--platform-foreground))] focus:outline-none"
           />

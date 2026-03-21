@@ -137,7 +137,7 @@ export function ThemeLibraryGrid({
                           <AlertDialogHeader>
                             <AlertDialogTitle>Activate "{theme.name}"?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will change your website's color scheme to{' '}
+                              This will change your website's color scheme to{' ')}
                               <span className="capitalize font-medium">{theme.color_scheme}</span>.
                               Your section content and customizations will be preserved.
                             </AlertDialogDescription>

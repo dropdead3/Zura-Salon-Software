@@ -149,10 +149,10 @@ export function TransactionList({
             {sortedTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell className={tokens.body.emphasis}>
-                  {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy'}
+                  {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>
-                  <span className={tokens.body.emphasis}>{transaction.client_name || 'Walk-in'}</span>
+                  <span className={tokens.body.emphasis}>{transaction.client_name || 'Walk-in')}</span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -186,11 +186,11 @@ export function TransactionList({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className={cn(tokens.body.emphasis, 'text-right'}>
+                <TableCell className={cn(tokens.body.emphasis, 'text-right')}>
                   {formatCurrency(Number(transaction.total_amount) || 0)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {transaction.branch_name || '-'}
+                  {transaction.branch_name || '-')}
                 </TableCell>
                 <TableCell>
                   {transaction.refund_status ? (
@@ -240,7 +240,7 @@ export function TransactionList({
         </Table>
       </div>
       <div className="border-t p-3 text-sm text-muted-foreground">
-        Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+        Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : '')}
       </div>
     </Card>
   );

@@ -71,7 +71,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
     if (!value) return;
     await navigator.clipboard.writeText(value);
     setCopiedField(field);
-    toast.success(`${field === 'username' ? 'Username' : 'Password'} copied to clipboard`);
+    toast.success(`${field === 'username' ? 'Username' : 'Password')} copied to clipboard`);
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -95,7 +95,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
         <div>
           <label className="text-sm text-slate-400 block mb-1">Previous Software</label>
           <p className="text-slate-300 capitalize">
-            {organization.source_software || 'Not specified'}
+            {organization.source_software || 'Not specified')}
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
             {username && (
               <button
                 type="button"
-                onClick={() => handleCopy(username, 'username'}
+                onClick={() => handleCopy(username, 'username')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
               >
                 {copiedField === 'username' ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
@@ -128,7 +128,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
           <label className="text-sm text-slate-400 block mb-1">CRM Password</label>
           <div className="relative">
             <PlatformInput
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? 'text' : 'password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter CRM password"
@@ -139,7 +139,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
               {password && (
                 <button
                   type="button"
-                  onClick={() => handleCopy(password, 'password'}
+                  onClick={() => handleCopy(password, 'password')}
                   className="text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   {copiedField === 'password' ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}

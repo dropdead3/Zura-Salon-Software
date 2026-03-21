@@ -124,7 +124,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
       {
         onSuccess: () => {
           showUndoToast(
-            `${newState ? 'Enabled' : 'Disabled'} '${service.name}'`,
+            `${newState ? 'Enabled' : 'Disabled')} '${service.name}'`,
             () => toggleService.mutate({ userId: selectedUserId, serviceId: service.id, isActive: currentlyChecked })
           );
         },
@@ -144,7 +144,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
       {
         onSuccess: () => {
           showUndoToast(
-            `${newActive ? 'Enabled' : 'Disabled'} all ${categoryName} services`,
+            `${newActive ? 'Enabled' : 'Disabled')} all ${categoryName} services`,
             () => bulkToggle.mutate({ userId: selectedUserId, serviceIds, isActive: !newActive })
           );
         },
@@ -162,7 +162,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
           </div>
           {stylists && stylists.length > 0 && (
             <Badge variant="outline" className="text-xs font-normal">
-              {filteredStylists.length} stylist{filteredStylists.length !== 1 ? 's' : ''}
+              {filteredStylists.length} stylist{filteredStylists.length !== 1 ? 's' : '')}
             </Badge>
           )}
         </div>
@@ -211,7 +211,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                           {(s.display_name || s.full_name || '?').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{s.display_name || s.full_name || 'Unnamed'}</span>
+                      <span>{s.display_name || s.full_name || 'Unnamed')}</span>
                     </div>
                   </SelectItem>
                 ))
@@ -228,7 +228,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
             return (
               <Button
                 key={letter}
-                variant={isActive ? 'default' : 'ghost'}
+                variant={isActive ? 'default' : 'ghost')}
                 size="sm"
                 className={cn(
                   'h-7 w-7 p-0 text-xs font-medium rounded-md',
@@ -271,7 +271,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
         {selectedUserId && !qualsLoading && (
           <div className="space-y-1">
             {!hasAnyQualifications && (
-              <p className={cn(tokens.body.muted, 'text-xs italic px-1 pb-2'}>
+              <p className={cn(tokens.body.muted, 'text-xs italic px-1 pb-2')}>
                 No assignments configured yet — all services default to available. Toggle services off to restrict what this stylist can be booked for.
               </p>
             )}
@@ -286,7 +286,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                   <AccordionItem key={cat.id} value={cat.id} className="border-b-0">
                     <div className="flex items-center gap-2">
                       <Checkbox
-                        checked={checkState === 'all'}
+                        checked={checkState === 'all')}
                         {...(checkState === 'some' ? { 'data-state': 'indeterminate' as any } : {})}
                         onCheckedChange={() => handleToggleCategory(cat.category_name)}
                         className="ml-1"
@@ -309,7 +309,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                             }).length;
                             return overrideCount > 0 ? (
                               <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">
-                                {overrideCount} override{overrideCount !== 1 ? 's' : ''}
+                                {overrideCount} override{overrideCount !== 1 ? 's' : '')}
                               </Badge>
                             ) : null;
                           })()}
@@ -336,7 +336,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                   onCheckedChange={() => handleToggleService(svc, checked)}
                                   disabled={toggleService.isPending || bulkToggle.isPending}
                                 />
-                                <span className={cn(tokens.body.default, 'text-sm select-none flex-1'}>{svc.name}</span>
+                                <span className={cn(tokens.body.default, 'text-sm select-none flex-1')}>{svc.name}</span>
                                 {hasOverride && (
                                   <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" title="Has overrides" />
                                 )}
@@ -348,8 +348,8 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                     <DollarSign className="w-3 h-3 text-muted-foreground shrink-0" />
                                     <Input
                                       type="number"
-                                      placeholder={svc.price != null ? `${svc.price}` : '--'}
-                                      value={qual?.custom_price ?? ''}
+                                      placeholder={svc.price != null ? `${svc.price}` : '--')}
+                                      value={qual?.custom_price ?? '')}
                                       className="h-7 text-xs px-2 rounded-md w-20"
                                       min={0}
                                       step={1}
@@ -364,7 +364,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                       autoCapitalize="off"
                                     />
                                     {svc.price != null && qual?.custom_price != null && (
-                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap'}>
+                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap')}>
                                         (salon: ${svc.price})
                                       </span>
                                     )}
@@ -373,8 +373,8 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                     <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
                                     <Input
                                       type="number"
-                                      placeholder={svc.duration_minutes ? `${svc.duration_minutes}` : '--'}
-                                      value={qual?.custom_duration_minutes ?? ''}
+                                      placeholder={svc.duration_minutes ? `${svc.duration_minutes}` : '--')}
+                                      value={qual?.custom_duration_minutes ?? '')}
                                       className="h-7 text-xs px-2 rounded-md w-20"
                                       min={5}
                                       step={5}
@@ -389,7 +389,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                       autoCapitalize="off"
                                     />
                                     {svc.duration_minutes && qual?.custom_duration_minutes != null && (
-                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap'}>
+                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap')}>
                                         (salon: {svc.duration_minutes}m)
                                       </span>
                                     )}

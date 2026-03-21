@@ -346,7 +346,7 @@ export default function PlatformFeatureFlags() {
         <PlatformCard className="p-12 text-center">
           <Flag className="w-12 h-12 mx-auto mb-4 text-slate-600" />
           <p className="text-slate-400">
-            {searchQuery ? 'No flags match your search' : 'No feature flags yet'}
+            {searchQuery ? 'No flags match your search' : 'No feature flags yet')}
           </p>
           {!searchQuery && (
             <PlatformButton onClick={handleCreate} variant="outline" className="mt-4">
@@ -409,12 +409,12 @@ export default function PlatformFeatureFlags() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {editingFlag ? 'Edit Feature Flag' : 'Create Feature Flag'}
+              {editingFlag ? 'Edit Feature Flag' : 'Create Feature Flag')}
             </DialogTitle>
             <DialogDescription>
               {editingFlag
                 ? 'Update the feature flag settings'
-                : 'Create a new feature flag to control feature rollouts'}
+                : 'Create a new feature flag to control feature rollouts')}
             </DialogDescription>
           </DialogHeader>
 
@@ -518,7 +518,7 @@ export default function PlatformFeatureFlags() {
               {createFlag.isPending || updateFlag.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              {editingFlag ? 'Save Changes' : 'Create Flag'}
+              {editingFlag ? 'Save Changes' : 'Create Flag')}
             </PlatformButton>
           </DialogFooter>
         </DialogContent>

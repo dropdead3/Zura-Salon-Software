@@ -141,7 +141,7 @@ export function CategoryAddonManager({
             placeholder="Label (e.g. Scalp Treatment)"
             value={addLabel}
             onChange={e => { setAddLabel(e.target.value); setLabelTouched(true); }}
-            className={cn('h-8 text-xs', labelTouched && !addLabel.trim() && 'border-destructive focus-visible:ring-destructive'}
+            className={cn('h-8 text-xs', labelTouched && !addLabel.trim() && 'border-destructive focus-visible:ring-destructive')}
             autoFocus
             onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') resetForm(); }}
           />
@@ -151,17 +151,17 @@ export function CategoryAddonManager({
             <span className="text-[11px] text-muted-foreground mr-1">Link to:</span>
             <Button
               size="sm"
-              variant={linkMode === 'service' ? 'default' : 'outline'}
+              variant={linkMode === 'service' ? 'default' : 'outline')}
               className="h-6 text-xs px-2"
-              onClick={() => setLinkMode('service'}
+              onClick={() => setLinkMode('service')}
             >
               Specific Service
             </Button>
             <Button
               size="sm"
-              variant={linkMode === 'category' ? 'default' : 'outline'}
+              variant={linkMode === 'category' ? 'default' : 'outline')}
               className="h-6 text-xs px-2"
-              onClick={() => setLinkMode('category'}
+              onClick={() => setLinkMode('category')}
             >
               Full Category
             </Button>
@@ -220,7 +220,7 @@ export function CategoryAddonManager({
               onClick={handleCreate}
               disabled={!addLabel.trim() || createAddon.isPending}
             >
-              {createAddon.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
+              {createAddon.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save')}
             </Button>
             <Button
               size="sm"

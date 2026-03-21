@@ -98,7 +98,7 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border/50">
             <Clock className="h-3 w-3" />
-            Submitted {formatDate(new Date(submission.submitted_at), 'MMM d, h:mm a'}
+            Submitted {formatDate(new Date(submission.submitted_at), 'MMM d, h:mm a')}
           </div>
         </div>
       </div>
@@ -107,8 +107,8 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
         <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Status</h3>
         <div className="flex gap-2">
           <Button 
-            variant={submission.status === 'approved' ? 'default' : 'outline'}
-            className={submission.status === 'approved' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+            variant={submission.status === 'approved' ? 'default' : 'outline')}
+            className={submission.status === 'approved' ? 'bg-emerald-600 hover:bg-emerald-700' : '')}
             onClick={() => updateStatus.mutate({ submissionId: submission.id, status: 'approved' })}
             disabled={updateStatus.isPending}
           >
@@ -116,8 +116,8 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
             Approve
           </Button>
           <Button 
-            variant={submission.status === 'rejected' ? 'default' : 'outline'}
-            className={submission.status === 'rejected' ? 'bg-destructive hover:bg-destructive/90' : ''}
+            variant={submission.status === 'rejected' ? 'default' : 'outline')}
+            className={submission.status === 'rejected' ? 'bg-destructive hover:bg-destructive/90' : '')}
             onClick={() => updateStatus.mutate({ submissionId: submission.id, status: 'rejected' })}
             disabled={updateStatus.isPending}
           >
@@ -136,13 +136,13 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
               <div key={item.id} className="flex gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={item.coach?.photo_url || undefined} />
-                  <AvatarFallback>{item.coach?.full_name?.[0] || 'U'}</AvatarFallback>
+                  <AvatarFallback>{item.coach?.full_name?.[0] || 'U')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.coach?.full_name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(new Date(item.created_at), 'MMM d'}
+                      {formatDate(new Date(item.created_at), 'MMM d')}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">{item.feedback}</p>
@@ -185,7 +185,7 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
         <div className="flex items-center gap-4 p-4 rounded-xl border bg-card/50">
           <Avatar className="h-10 w-10">
             <AvatarImage src={assistant.photo_url || undefined} />
-            <AvatarFallback>{assistant.full_name?.[0] || '?'}</AvatarFallback>
+            <AvatarFallback>{assistant.full_name?.[0] || '?')}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
                 </div>
                 {submission && (
                   <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[submission.status as keyof typeof STATUS_COLORS])}>
-                    {submission.status.replace('_', ' '}
+                    {submission.status.replace('_', ' ')}
                   </Badge>
                 )}
               </div>
@@ -252,7 +252,7 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
           <div className="p-5">
             <SubmissionReviewPanel
               submission={selectedSubmission}
-              requirementTitle={requirements.find(r => r.id === selectedSubmission.requirement_id)?.title || 'Unknown'}
+              requirementTitle={requirements.find(r => r.id === selectedSubmission.requirement_id)?.title || 'Unknown')}
             />
           </div>
         )}

@@ -211,7 +211,7 @@ export default function StaffLogin() {
               className="h-6 w-auto mx-auto mb-8"
             />
             <h1 className="font-display text-2xl tracking-wide">
-              {isForgotPassword ? 'RESET PASSWORD' : isLogin ? 'STAFF LOGIN' : 'CREATE ACCOUNT'}
+              {isForgotPassword ? 'RESET PASSWORD' : isLogin ? 'STAFF LOGIN' : 'CREATE ACCOUNT')}
             </h1>
             <p className="text-sm text-muted-foreground mt-2 font-sans">
               {isForgotPassword
@@ -294,7 +294,7 @@ export default function StaffLogin() {
                   }}
                   placeholder="you@yoursalon.com"
                   required
-                  className={`h-12 bg-card border-border pr-10 ${emailError ? 'border-destructive' : ''} ${invitation && !isLogin ? 'border-green-500' : ''}`}
+                  className={`h-12 bg-card border-border pr-10 ${emailError ? 'border-destructive' : '')} ${invitation && !isLogin ? 'border-green-500' : '')}`}
                 />
                 {!isLogin && checkingInvitation && debouncedEmail.includes('@') && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -326,7 +326,7 @@ export default function StaffLogin() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? 'text' : 'password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -353,7 +353,7 @@ export default function StaffLogin() {
                 <div className="relative">
                   <Input
                     id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? 'text' : 'password')}
                     value={confirmPassword}
                     onChange={(e) => {
                       const newValue = e.target.value;
@@ -374,7 +374,7 @@ export default function StaffLogin() {
                     placeholder="••••••••"
                     required
                     minLength={6}
-                    className={`h-12 bg-card border-border pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500' : 'border-destructive') : ''}`}
+                    className={`h-12 bg-card border-border pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500' : 'border-destructive') : '')}`}
                   />
                   <button
                     type="button"
@@ -385,8 +385,8 @@ export default function StaffLogin() {
                   </button>
                 </div>
                 {confirmPassword.length >= 6 && (
-                  <p className={`text-xs ${confirmPassword === password ? 'text-green-600' : 'text-destructive'}`}>
-                    {confirmPassword === password ? 'Passwords match ✓' : 'Passwords do not match'}
+                  <p className={`text-xs ${confirmPassword === password ? 'text-green-600' : 'text-destructive')}`}>
+                    {confirmPassword === password ? 'Passwords match ✓' : 'Passwords do not match')}
                   </p>
                 )}
               </div>

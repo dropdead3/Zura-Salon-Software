@@ -491,7 +491,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
           )}
           <Button onClick={goNext} disabled={isSaving} className="font-sans">
             {isSaving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-            {step === STEP_COUNT - 1 ? 'Complete Setup' : 'Next'}
+            {step === STEP_COUNT - 1 ? 'Complete Setup' : 'Next')}
             {step < STEP_COUNT - 1 && <ArrowRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
@@ -517,8 +517,8 @@ function WelcomeStep() {
           <Sparkles className="w-7 h-7 text-primary" />
         </div>
         <div>
-          <h2 className={cn(tokens.heading.page, 'mb-2'}>Set Up Backroom</h2>
-          <p className={cn(tokens.body.muted, 'max-w-md mx-auto'}>
+          <h2 className={cn(tokens.heading.page, 'mb-2')}>Set Up Backroom</h2>
+          <p className={cn(tokens.body.muted, 'max-w-md mx-auto')}>
             This wizard will guide you through configuring products, services, allowances, and mixing stations
             so Zura Backroom can start tracking usage and protecting your margins.
           </p>
@@ -636,7 +636,7 @@ function SuppliersStep({
           ) : (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className={cn(tokens.body.emphasis, 'text-foreground text-sm'}>Secondary Contact</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
                 <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); onSecondaryNameChange(''); onSecondaryEmailChange(''); onSecondaryPhoneChange(''); }}>
                   <X className="w-3.5 h-3.5 mr-1" /> Remove
                 </Button>
@@ -692,10 +692,10 @@ function SuppliersStep({
 
         {/* Product assignment */}
         <div className="border-t border-border/60 pt-4 mt-4 space-y-3">
-          <p className={cn(tokens.body.emphasis, 'text-foreground'}>Link Products to This Supplier</p>
+          <p className={cn(tokens.body.emphasis, 'text-foreground')}>Link Products to This Supplier</p>
           <div className="flex gap-1 p-0.5 bg-muted rounded-full w-fit">
             <button
-              onClick={() => onAssignModeChange('brand'}
+              onClick={() => onAssignModeChange('brand')}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
                 assignMode === 'brand' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
@@ -705,7 +705,7 @@ function SuppliersStep({
               By Brand
             </button>
             <button
-              onClick={() => onAssignModeChange('product'}
+              onClick={() => onAssignModeChange('product')}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
                 assignMode === 'product' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
@@ -716,9 +716,9 @@ function SuppliersStep({
             </button>
           </div>
 
-          <p className={cn(tokens.body.muted, 'text-xs'}>
-            {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
-            {assignMode === 'brand' && ' • Check a brand to assign all its products'}
+          <p className={cn(tokens.body.muted, 'text-xs')}>
+            {selectedIds.size} product{selectedIds.size !== 1 ? 's' : '')} selected
+            {assignMode === 'brand' && ' • Check a brand to assign all its products')}
           </p>
 
           {assignMode === 'product' && (
@@ -732,7 +732,7 @@ function SuppliersStep({
             <div className="p-2 space-y-0.5">
               {assignMode === 'brand' ? (
                 brands.length === 0 ? (
-                  <p className={cn(tokens.body.muted, 'text-center py-8'}>No tracked products yet. Go back and select products first.</p>
+                  <p className={cn(tokens.body.muted, 'text-center py-8')}>No tracked products yet. Go back and select products first.</p>
                 ) : (
                   brands.map(({ brand, products: prods }) => {
                     const counts = brandCounts.get(brand);
@@ -741,7 +741,7 @@ function SuppliersStep({
                     return (
                       <label key={brand} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                         <Checkbox checked={allSelected ? true : someSelected ? 'indeterminate' : false} onCheckedChange={() => onToggleBrand(prods)} />
-                        <span className={cn(tokens.body.default, 'truncate flex-1'}>{brand}</span>
+                        <span className={cn(tokens.body.default, 'truncate flex-1')}>{brand}</span>
                         <Badge variant="outline" className="text-xs shrink-0">
                           {counts?.selected || 0}/{counts?.total || 0}
                         </Badge>
@@ -751,13 +751,13 @@ function SuppliersStep({
                 )
               ) : (
                 filteredProducts.length === 0 ? (
-                  <p className={cn(tokens.body.muted, 'text-center py-8'}>No matching products</p>
+                  <p className={cn(tokens.body.muted, 'text-center py-8')}>No matching products</p>
                 ) : (
                   filteredProducts.map(p => (
                     <label key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                       <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => onToggleProduct(p.id)} />
                       <div className="min-w-0 flex-1">
-                        <span className={cn(tokens.body.default, 'truncate block'}>{p.name}</span>
+                        <span className={cn(tokens.body.default, 'truncate block')}>{p.name}</span>
                         {p.brand && <span className="text-xs text-muted-foreground">{p.brand}</span>}
                       </div>
                     </label>
@@ -837,7 +837,7 @@ function ProductsStep({
                       disabled={p.is_backroom_tracked}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className={cn(tokens.body.default, 'truncate'}>{p.name}</p>
+                      <p className={cn(tokens.body.default, 'truncate')}>{p.name}</p>
                       {p.brand && <p className="text-xs text-muted-foreground">{p.brand}</p>}
                     </div>
                     {(selectedIds.has(p.id) || p.is_backroom_tracked) && (
@@ -845,7 +845,7 @@ function ProductsStep({
                         type="number"
                         placeholder="Cost/g"
                         className="w-24 h-8 text-xs"
-                        value={costs[p.id] ?? (p.cost_per_gram?.toString() || ''}
+                        value={costs[p.id] ?? (p.cost_per_gram?.toString() || '')}
                         onChange={(e) => onCostChange(p.id, e.target.value)}
                       />
                     )}
@@ -911,11 +911,11 @@ function ServicesStep({
                 disabled={s.is_backroom_tracked}
               />
               <div className="flex-1 min-w-0">
-                <p className={cn(tokens.body.default, 'truncate'}>{s.name}</p>
+                <p className={cn(tokens.body.default, 'truncate')}>{s.name}</p>
                 {s.category && <p className="text-xs text-muted-foreground">{s.category}</p>}
               </div>
               {isSelected && trackedProducts.length > 0 && (
-                <Select value={productMap[s.id] || ''} onValueChange={(v) => onProductMap(s.id, v)}>
+                <Select value={productMap[s.id] || '')} onValueChange={(v) => onProductMap(s.id, v)}>
                   <SelectTrigger className="w-40 h-8 text-xs">
                     <SelectValue placeholder="Map product" />
                   </SelectTrigger>
@@ -1063,7 +1063,7 @@ function StationStep({
               </SelectContent>
             </Select>
           ) : (
-            <p className={cn(tokens.body.muted, 'mt-1'}>No locations found. You can skip this step.</p>
+            <p className={cn(tokens.body.muted, 'mt-1')}>No locations found. You can skip this step.</p>
           )}
         </div>
         <div className="rounded-lg bg-muted/50 p-4 mt-4">

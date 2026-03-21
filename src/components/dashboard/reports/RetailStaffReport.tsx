@@ -155,7 +155,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
             <CardTitle className="font-display text-base tracking-wide">RETAIL SALES BY STAFF</CardTitle>
             <MetricInfoTooltip description="Per-stylist retail sales metrics ranked by product revenue. Attachment rate is the percentage of each stylist's service transactions that included a product sale." />
           </div>
-          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}</CardDescription>
+          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -180,7 +180,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
                 staffSorted.map((s, idx) => {
                   const isTop = idx === 0;
                   return (
-                    <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]'}>
+                    <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]')}>
                       <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">

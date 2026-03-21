@@ -215,7 +215,7 @@ export function HandbooksContent() {
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="font-display">{editingHandbook ? 'EDIT HANDBOOK' : 'NEW HANDBOOK'}</DialogTitle>
+              <DialogTitle className="font-display">{editingHandbook ? 'EDIT HANDBOOK' : 'NEW HANDBOOK')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
@@ -249,14 +249,14 @@ export function HandbooksContent() {
                 <Label>Visible To</Label>
                 <div className="flex flex-wrap gap-2">
                   {roleOptions.map(role => (
-                    <Button key={role.value} type="button" size={tokens.button.inline} variant={visibleToRoles.includes(role.value) ? 'default' : 'outline'} onClick={() => toggleRoleVisibility(role.value)}>
+                    <Button key={role.value} type="button" size={tokens.button.inline} variant={visibleToRoles.includes(role.value) ? 'default' : 'outline')} onClick={() => toggleRoleVisibility(role.value)}>
                       {role.label}
                     </Button>
                   ))}
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingHandbook ? 'Update' : 'Create'}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingHandbook ? 'Update' : 'Create')}
               </Button>
             </form>
           </DialogContent>
@@ -278,12 +278,12 @@ export function HandbooksContent() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {items.map(handbook => (
-                  <div key={handbook.id} className={`flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30 ${!handbook.is_active ? 'opacity-50' : ''}`}>
+                  <div key={handbook.id} className={`flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30 ${!handbook.is_active ? 'opacity-50' : '')}`}>
                     <div className="flex items-start gap-3">
                       <div className="p-2 bg-muted rounded"><FileText className="w-4 h-4" /></div>
                       <div>
                         <h3 className="font-medium text-sm">{handbook.title}</h3>
-                        <p className="text-xs text-muted-foreground">v{handbook.version} • {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy'}</p>
+                        <p className="text-xs text-muted-foreground">v{handbook.version} • {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">

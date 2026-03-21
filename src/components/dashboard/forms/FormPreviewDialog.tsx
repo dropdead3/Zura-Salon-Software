@@ -48,7 +48,7 @@ export function FormPreviewDialog({ open, onOpenChange, template }: FormPreviewD
       }
       // Numbered list items
       if (/^\d+\.\s/.test(line)) {
-        return <li key={idx} className="ml-4 mb-1 list-decimal">{line.replace(/^\d+\.\s/, ''}</li>;
+        return <li key={idx} className="ml-4 mb-1 list-decimal">{line.replace(/^\d+\.\s/, '')}</li>;
       }
       // Empty lines
       if (!line.trim()) {

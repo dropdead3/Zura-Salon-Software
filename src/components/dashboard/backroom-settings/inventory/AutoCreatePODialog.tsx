@@ -142,7 +142,7 @@ export function AutoCreatePODialog({
         created++;
       }
 
-      toast.success(`Created ${created} draft PO${created !== 1 ? 's' : ''}`, {
+      toast.success(`Created ${created} draft PO${created !== 1 ? 's' : '')}`, {
         description: 'Review them in the Orders tab before sending.',
       });
       onOpenChange(false);
@@ -197,7 +197,7 @@ export function AutoCreatePODialog({
                 )}
               </div>
               <div className="text-right shrink-0">
-                <div className="text-sm tabular-nums font-medium">{group.lineCount} item{group.lineCount !== 1 ? 's' : ''}</div>
+                <div className="text-sm tabular-nums font-medium">{group.lineCount} item{group.lineCount !== 1 ? 's' : '')}</div>
                 <div className="text-xs text-muted-foreground tabular-nums">~{formatCurrency(group.estimatedCost)}</div>
               </div>
             </div>
@@ -209,7 +209,7 @@ export function AutoCreatePODialog({
                 <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                 <div>
                   <span className="font-sans text-sm font-medium text-warning">
-                    {unassigned.length} product{unassigned.length !== 1 ? 's' : ''} without supplier
+                    {unassigned.length} product{unassigned.length !== 1 ? 's' : '')} without supplier
                   </span>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     These will be skipped. Assign a supplier below to include them.
@@ -240,7 +240,7 @@ export function AutoCreatePODialog({
 
         {totalPOs > 0 && (
           <div className="flex items-center justify-between px-1 text-sm text-muted-foreground">
-            <span>{totalPOs} PO{totalPOs !== 1 ? 's' : ''} · {totalLines} line{totalLines !== 1 ? 's' : ''}</span>
+            <span>{totalPOs} PO{totalPOs !== 1 ? 's' : '')} · {totalLines} line{totalLines !== 1 ? 's' : '')}</span>
             <span className="tabular-nums">Est. total: {formatCurrency(totalCost)}</span>
           </div>
         )}
@@ -256,7 +256,7 @@ export function AutoCreatePODialog({
                 Creating...
               </>
             ) : (
-              `Create ${totalPOs} Draft PO${totalPOs !== 1 ? 's' : ''}`
+              `Create ${totalPOs} Draft PO${totalPOs !== 1 ? 's' : '')}`
             )}
           </Button>
         </DialogFooter>

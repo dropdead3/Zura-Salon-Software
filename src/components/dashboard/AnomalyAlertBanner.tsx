@@ -87,9 +87,9 @@ function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
                     </Badge>
                   </div>
                   <p className="text-sm opacity-80">
-                    {topAnomaly.deviation_percent > 0 ? '+' : ''}
+                    {topAnomaly.deviation_percent > 0 ? '+' : '')}
                     {Math.round(topAnomaly.deviation_percent)}% deviation from expected
-                    {hasMultiple && ` · ${sortedAnomalies.length - 1} more alert${sortedAnomalies.length > 2 ? 's' : ''}`}
+                    {hasMultiple && ` · ${sortedAnomalies.length - 1} more alert${sortedAnomalies.length > 2 ? 's' : '')}`}
                   </p>
                 </div>
               </div>
@@ -144,14 +144,14 @@ function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
                           </Badge>
                         </div>
                         <p className="text-xs opacity-70">
-                          {formatDate(parseISO(anomaly.detected_at), 'MMM d, h:mm a'}
+                          {formatDate(parseISO(anomaly.detected_at), 'MMM d, h:mm a')}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-mono">
-                        {anomaly.deviation_percent > 0 ? '+' : ''}
+                        {anomaly.deviation_percent > 0 ? '+' : '')}
                         {Math.round(anomaly.deviation_percent)}%
                       </span>
                       <Button

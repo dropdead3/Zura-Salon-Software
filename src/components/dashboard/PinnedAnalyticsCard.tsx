@@ -418,13 +418,13 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'operational_health': {
         const locCount = accessibleLocations?.length ?? 0;
-        metricValue = locCount > 0 ? `${locCount} location${locCount !== 1 ? 's' : ''} monitored` : 'Healthy';
+        metricValue = locCount > 0 ? `${locCount} location${locCount !== 1 ? 's' : '')} monitored` : 'Healthy';
         metricLabel = 'Monitoring status across all locations';
         break;
       }
       case 'locations_rollup': {
         const locRollupCount = accessibleLocations?.length ?? 0;
-        metricValue = `${locRollupCount} location${locRollupCount !== 1 ? 's' : ''}`;
+        metricValue = `${locRollupCount} location${locRollupCount !== 1 ? 's' : '')}`;
         metricLabel = '';
         break;
       }
@@ -521,13 +521,13 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           dateRange={filters.dateRange}
           locationName={selectedLocationName}
         >
-          <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5 relative'}>
+          <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5 relative')}>
             {description && <MetricInfoTooltip description={description} className={tokens.kpi.infoIcon} />}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                 <Icon className="w-5 h-5 text-primary" />
               </div>
-              <span className={cn(tokens.kpi.label, 'flex-1'}>{meta.label}</span>
+              <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
             </div>
             <div className="mt-4 flex-1">
               <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>

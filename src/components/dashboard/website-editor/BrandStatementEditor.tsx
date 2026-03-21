@@ -292,7 +292,7 @@ export function BrandStatementEditor() {
                 Advanced Settings
               </span>
               <span className="text-xs text-muted-foreground">
-                {showAdvanced ? 'Hide' : 'Show'}
+                {showAdvanced ? 'Hide' : 'Show')}
               </span>
             </Button>
           </CollapsibleTrigger>

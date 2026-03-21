@@ -83,7 +83,7 @@ export function PrepModeBanner({
               Assistant Prep — Ready for Review
             </p>
             <p className="font-sans text-xs text-muted-foreground">
-              {reviewBowls.length} bowl{reviewBowls.length !== 1 ? 's' : ''} prepared and awaiting your approval
+              {reviewBowls.length} bowl{reviewBowls.length !== 1 ? 's' : '')} prepared and awaiting your approval
             </p>
           </div>
           {reviewBowls.length > 1 && onApproveAll && (

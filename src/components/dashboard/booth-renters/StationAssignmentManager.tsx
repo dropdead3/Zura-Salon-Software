@@ -120,7 +120,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingStation ? 'Edit Station' : 'Add Station'}</DialogTitle>
+              <DialogTitle>{editingStation ? 'Edit Station' : 'Add Station')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -162,7 +162,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
 
               <div className="space-y-2">
                 <Label>Notes</Label>
-                <Textarea {...register('notes'} placeholder="Additional details..." />
+                <Textarea {...register('notes')} placeholder="Additional details..." />
               </div>
 
               <DialogFooter>
@@ -170,7 +170,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
                   Cancel
                 </Button>
                 <Button type="submit" disabled={createStation.isPending || updateStation.isPending}>
-                  {editingStation ? 'Update' : 'Create'}
+                  {editingStation ? 'Update' : 'Create')}
                 </Button>
               </DialogFooter>
             </form>
@@ -182,7 +182,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
         {stations?.map((station) => (
           <Card 
             key={station.id} 
-            className={`relative ${station.current_assignment ? 'border-primary bg-primary/5' : 'border-dashed'}`}
+            className={`relative ${station.current_assignment ? 'border-primary bg-primary/5' : 'border-dashed')}`}
           >
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
@@ -193,8 +193,8 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
                     <p className="text-xs text-muted-foreground capitalize">{station.station_type}</p>
                   </div>
                 </div>
-                <Badge variant={station.is_available ? 'outline' : 'default'}>
-                  {station.is_available ? 'Available' : 'Occupied'}
+                <Badge variant={station.is_available ? 'outline' : 'default')}>
+                  {station.is_available ? 'Available' : 'Occupied')}
                 </Badge>
               </div>
             </CardHeader>

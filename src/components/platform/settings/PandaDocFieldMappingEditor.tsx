@@ -221,7 +221,7 @@ export function PandaDocFieldMappingEditor() {
             className="gap-2 bg-violet-600 hover:bg-violet-700"
           >
             <Save className="h-4 w-4" />
-            {updateMapping.isPending ? 'Saving...' : 'Save Mappings'}
+            {updateMapping.isPending ? 'Saving...' : 'Save Mappings')}
           </Button>
         </div>
 

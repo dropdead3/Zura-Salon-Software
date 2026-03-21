@@ -87,14 +87,14 @@ function formatCountdown(
   if (daysRemaining >= 1) {
     const remainingHours = (hoursRemaining ?? 0) - (daysRemaining * 24);
     if (remainingHours > 0) {
-      return `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}, ${remainingHours} hour${remainingHours !== 1 ? 's' : ''} remaining`;
+      return `${daysRemaining} day${daysRemaining !== 1 ? 's' : '')}, ${remainingHours} hour${remainingHours !== 1 ? 's' : '')} remaining`;
     }
-    return `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`;
+    return `${daysRemaining} day${daysRemaining !== 1 ? 's' : '')} remaining`;
   }
   
   // Less than 24 hours
   if (hoursRemaining !== null && hoursRemaining > 0) {
-    return `${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''} remaining`;
+    return `${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : '')} remaining`;
   }
   
   return 'Less than 1 hour remaining';
@@ -197,7 +197,7 @@ export function TrialCountdownBanner() {
             </div>
             <div>
               <span className={cn('font-display text-sm tracking-wide', textClasses.primary)}>
-                {isExpired ? '⚠️ TRIAL EXPIRED' : '✨ TRIAL PERIOD'}
+                {isExpired ? '⚠️ TRIAL EXPIRED' : '✨ TRIAL PERIOD')}
               </span>
               <span className={cn('mx-2', textClasses.secondary)}>—</span>
               <span className={cn('font-mono text-sm font-medium tabular-nums', textClasses.secondary)}>
@@ -213,8 +213,8 @@ export function TrialCountdownBanner() {
               size={tokens.button.card}
               className={cn('gap-1.5', buttonClasses)}
             >
-              <Link to={dashPath('/settings/billing'}>
-                {isExpired ? 'Contact Sales' : 'Upgrade Now'}
+              <Link to={dashPath('/settings/billing')}>
+                {isExpired ? 'Contact Sales' : 'Upgrade Now')}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </Button>

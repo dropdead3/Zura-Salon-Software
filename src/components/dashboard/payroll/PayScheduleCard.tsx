@@ -208,7 +208,7 @@ export function PayScheduleCard() {
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {biWeeklyAnchor 
                       ? formatDate(biWeeklyAnchor, 'PPP') 
-                      : 'Select a pay week Friday'}
+                      : 'Select a pay week Friday')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -283,7 +283,7 @@ export function PayScheduleCard() {
             <SelectContent>
               {[0, 1, 2, 3, 4, 5, 6, 7, 10, 14].map((days) => (
                 <SelectItem key={days} value={String(days)}>
-                  {days} day{days !== 1 ? 's' : ''} after period end
+                  {days} day{days !== 1 ? 's' : '')} after period end
                 </SelectItem>
               ))}
             </SelectContent>
@@ -298,12 +298,12 @@ export function PayScheduleCard() {
           <h4 className="font-medium text-sm">Schedule Summary</h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              <span className="font-medium text-foreground">Next Pay Day:</span>{' '}
-              {formatDate(nextPayDay, 'EEEE, MMMM d, yyyy'}
+              <span className="font-medium text-foreground">Next Pay Day:</span>{' ')}
+              {formatDate(nextPayDay, 'EEEE, MMMM d, yyyy')}
             </p>
             <p>
-              <span className="font-medium text-foreground">Current Period:</span>{' '}
-              {formatDate(currentPeriod.periodStart, 'MMM d'} – {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy'}
+              <span className="font-medium text-foreground">Current Period:</span>{' ')}
+              {formatDate(currentPeriod.periodStart, 'MMM d')} – {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy')}
             </p>
           </div>
         </div>

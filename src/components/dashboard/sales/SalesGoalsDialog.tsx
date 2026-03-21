@@ -182,7 +182,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
                             <Input
                               type="number"
-                              value={locationTargets[location.id]?.monthly || ''}
+                              value={locationTargets[location.id]?.monthly || '')}
                               onChange={(e) => updateLocationTarget(location.id, Number(e.target.value))}
                               placeholder="0"
                               className="pl-5 h-8 text-sm"

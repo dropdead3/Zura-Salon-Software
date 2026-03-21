@@ -76,11 +76,11 @@ export function GoalCard({ goal, currentValue = null, onEdit, onDelete }: GoalCa
   }
 
   return (
-    <Card className={cn(tokens.card.wrapper, 'group relative'}>
+    <Card className={cn(tokens.card.wrapper, 'group relative')}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <p className={cn(tokens.kpi.label, 'mb-0.5'}>{goal.display_name}</p>
+            <p className={cn(tokens.kpi.label, 'mb-0.5')}>{goal.display_name}</p>
             {goal.description && (
               <p className="text-xs text-muted-foreground line-clamp-1">{goal.description}</p>
             )}
@@ -106,7 +106,7 @@ export function GoalCard({ goal, currentValue = null, onEdit, onDelete }: GoalCa
                 )}
               </span>
             ) : (
-              <span className={cn(tokens.kpi.value, 'text-muted-foreground'}>—</span>
+              <span className={cn(tokens.kpi.value, 'text-muted-foreground')}>—</span>
             )}
           </div>
           <div className="text-right">

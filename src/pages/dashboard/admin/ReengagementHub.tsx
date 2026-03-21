@@ -207,7 +207,7 @@ export default function ReengagementHub() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to={dashPath('/admin/management'}>
+              <Link to={dashPath('/admin/management')}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>
@@ -340,13 +340,13 @@ export default function ReengagementHub() {
                           <div>
                             <p className="font-medium">{client.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {client.email || 'No email'}
+                              {client.email || 'No email')}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-medium flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : 'Never'}
+                              {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : 'Never')}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {client.visit_count} total visits

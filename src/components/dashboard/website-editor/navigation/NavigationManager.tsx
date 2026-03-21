@@ -107,7 +107,7 @@ export function NavigationManager() {
       }
       
       toast({
-        title: added > 0 ? `Synced ${added} page${added !== 1 ? 's' : ''} to menu` : 'No new pages to sync',
+        title: added > 0 ? `Synced ${added} page${added !== 1 ? 's' : '')} to menu` : 'No new pages to sync',
         description: added > 0 ? 'Remember to publish when ready.' : 'All nav pages are already in the menu.',
       });
     } catch (err) {
@@ -127,7 +127,7 @@ export function NavigationManager() {
       <div className="px-3 py-8 text-center space-y-3">
         <AlertTriangle className="h-8 w-8 text-destructive mx-auto" />
         <p className="text-sm text-destructive">Failed to load menus</p>
-        <p className="text-xs text-muted-foreground">{menusError instanceof Error ? menusError.message : 'Unknown error'}</p>
+        <p className="text-xs text-muted-foreground">{menusError instanceof Error ? menusError.message : 'Unknown error')}</p>
         <Button variant="outline" size="sm" onClick={() => refetchMenus()}>
           <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
           Retry
@@ -171,7 +171,7 @@ export function NavigationManager() {
         </div>
         <label className="text-xs text-muted-foreground font-medium">Select Menu</label>
         <Select
-          value={selectedMenuId ?? ''}
+          value={selectedMenuId ?? '')}
           onValueChange={(v) => { setSelectedMenuId(v); setSelectedItemId(null); }}
         >
           <SelectTrigger className="h-9 text-sm">
@@ -247,7 +247,7 @@ export function NavigationManager() {
           <div className="border-t border-border/40" />
           <MenuPublishBar
             menuId={selectedMenuId}
-            menuName={selectedMenu?.name ?? ''}
+            menuName={selectedMenu?.name ?? '')}
             errors={errors}
             warnings={warnings}
           />

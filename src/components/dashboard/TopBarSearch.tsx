@@ -130,7 +130,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
     
     // Filter navigation items
     navigationResults.forEach(item => {
-      const haystack = `${item.title} ${item.subtitle ?? ''}`.toLowerCase();
+      const haystack = `${item.title} ${item.subtitle ?? '')}`.toLowerCase();
       if (haystack.includes(lowerQuery)) results.push(item);
     });
     

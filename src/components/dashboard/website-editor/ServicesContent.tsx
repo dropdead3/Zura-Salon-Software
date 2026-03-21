@@ -276,8 +276,8 @@ export function ServicesContent() {
       <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/60 border border-border">
         <Settings2 className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
-          Services and categories are managed in{' '}
-          <Link to={dashPath('/admin/services'} className="underline font-medium text-foreground hover:text-primary">
+          Services and categories are managed in{' ')}
+          <Link to={dashPath('/admin/services')} className="underline font-medium text-foreground hover:text-primary">
             Services Settings
           </Link>
           . Use this editor to control website display, descriptions, and popular badges.
@@ -318,7 +318,7 @@ export function ServicesContent() {
             </div>
           </CardContent>
         </Card>
-        <Link to={dashPath('/admin/stylist-levels'}>
+        <Link to={dashPath('/admin/stylist-levels')}>
           <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30 h-full">
             <CardContent className="p-2.5 flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -594,7 +594,7 @@ export function ServicesContent() {
                                   <div className="space-y-2">
                                     <Label>Description</Label>
                                     <Textarea 
-                                      value={editingService.item.description || ''}
+                                      value={editingService.item.description || '')}
                                       onChange={(e) => setEditingService(prev => 
                                         prev ? { ...prev, item: { ...prev.item, description: e.target.value } } : null
                                       )}
@@ -612,7 +612,7 @@ export function ServicesContent() {
                                       Marketing copy shown on the public website. If empty, the operational description above will be used.
                                     </p>
                                     <Textarea 
-                                      value={editingService.item.websiteDescription || ''}
+                                      value={editingService.item.websiteDescription || '')}
                                       onChange={(e) => setEditingService(prev => 
                                         prev ? { ...prev, item: { ...prev.item, websiteDescription: e.target.value } } : null
                                       )}
@@ -633,7 +633,7 @@ export function ServicesContent() {
                                             <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                             <Input 
                                               className="pl-7 font-mono"
-                                              value={editingService.item.levelPrices[level.id]?.toString() || ''}
+                                              value={editingService.item.levelPrices[level.id]?.toString() || '')}
                                               onChange={(e) => {
                                                 const value = e.target.value;
                                                 setEditingService(prev => 
@@ -702,7 +702,7 @@ export function ServicesContent() {
                                           <Label>Restriction Reason</Label>
                                           <Textarea 
                                             placeholder="e.g., Extensions require 7-day custom order"
-                                            value={(editingService.item as any).restrictionReason || ''}
+                                            value={(editingService.item as any).restrictionReason || '')}
                                             onChange={(e) => setEditingService(prev => 
                                               prev ? { ...prev, item: { ...prev.item, restrictionReason: e.target.value } } : null
                                             )}

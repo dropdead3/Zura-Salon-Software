@@ -156,7 +156,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                     <Trophy className="w-3 h-3 text-chart-1" /> Top Performer
                   </p>
                   <p className="text-lg font-medium truncate">
-                    {data?.summary.topPerformer?.name || 'N/A'}
+                    {data?.summary.topPerformer?.name || 'N/A')}
                   </p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3">
@@ -173,7 +173,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
-                    <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} />
+                    <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')} />
                     <YAxis 
                       type="category" 
                       dataKey="name" 

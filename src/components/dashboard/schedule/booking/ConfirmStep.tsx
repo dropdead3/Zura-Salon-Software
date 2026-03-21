@@ -86,7 +86,7 @@ export function ConfirmStep({
               <div>
                 <div className="font-medium">{client?.name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {client?.phone || client?.email || 'No contact info'}
+                  {client?.phone || client?.email || 'No contact info')}
                 </div>
               </div>
             </div>
@@ -129,7 +129,7 @@ export function ConfirmStep({
                 <div>
                   <div className="text-xs text-muted-foreground">Date & Time</div>
                   <div className="font-medium text-sm">
-                    {formatDate(date, 'EEEE, MMMM d, yyyy'} at {formatTime12h(time)}
+                    {formatDate(date, 'EEEE, MMMM d, yyyy')} at {formatTime12h(time)}
                   </div>
                 </div>
               </div>

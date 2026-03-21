@@ -246,8 +246,8 @@ export default function AnalyticsHub() {
     <DashboardLayout>
       <div className="w-full max-w-none p-4 md:p-6 lg:p-8 space-y-6 overflow-x-hidden">
         <DashboardPageHeader
-          title={t('analytics.title'}
-          description={t('analytics.subtitle'}
+          title={t('analytics.title')}
+          description={t('analytics.subtitle')}
           actions={activeTab !== 'leadership' ? (
             <div className="flex flex-wrap items-center gap-3">
               {/* Location Filter - conditionally rendered based on access */}
@@ -255,11 +255,11 @@ export default function AnalyticsHub() {
                 <Select value={locationId} onValueChange={setLocationId}>
                   <SelectTrigger className="w-[200px]">
                     <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                    <SelectValue placeholder={t('sales.select_location'} />
+                    <SelectValue placeholder={t('sales.select_location')} />
                   </SelectTrigger>
                   <SelectContent>
                     {canViewAggregate && (
-                      <SelectItem value="all">{t('sales.all_locations_option'}</SelectItem>
+                      <SelectItem value="all">{t('sales.all_locations_option')}</SelectItem>
                     )}
                     {accessibleLocations.map(loc => (
                       <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
@@ -283,18 +283,18 @@ export default function AnalyticsHub() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="today">{tc('date_range.today'}</SelectItem>
-                  <SelectItem value="yesterday">{tc('date_range.yesterday'}</SelectItem>
-                  <SelectItem value="7d">{tc('date_range.last_7_days'}</SelectItem>
-                  <SelectItem value="30d">{tc('date_range.last_30_days'}</SelectItem>
-                  <SelectItem value="90d">{tc('date_range.last_90_days'}</SelectItem>
-                  <SelectItem value="thisWeek">{tc('date_range.this_week'}</SelectItem>
-                  <SelectItem value="thisMonth">{tc('date_range.this_month'}</SelectItem>
-                  <SelectItem value="todayToEom">{tc('date_range.today_to_eom'}</SelectItem>
-                  <SelectItem value="todayToPayday">{tc('date_range.today_to_payday'}</SelectItem>
-                  <SelectItem value="lastMonth">{tc('date_range.last_month'}</SelectItem>
-                  <SelectItem value="ytd">{tc('date_range.year_to_date'}</SelectItem>
-                  <SelectItem value="custom">{tc('date_range.custom_range'}</SelectItem>
+                  <SelectItem value="today">{tc('date_range.today')}</SelectItem>
+                  <SelectItem value="yesterday">{tc('date_range.yesterday')}</SelectItem>
+                  <SelectItem value="7d">{tc('date_range.last_7_days')}</SelectItem>
+                  <SelectItem value="30d">{tc('date_range.last_30_days')}</SelectItem>
+                  <SelectItem value="90d">{tc('date_range.last_90_days')}</SelectItem>
+                  <SelectItem value="thisWeek">{tc('date_range.this_week')}</SelectItem>
+                  <SelectItem value="thisMonth">{tc('date_range.this_month')}</SelectItem>
+                  <SelectItem value="todayToEom">{tc('date_range.today_to_eom')}</SelectItem>
+                  <SelectItem value="todayToPayday">{tc('date_range.today_to_payday')}</SelectItem>
+                  <SelectItem value="lastMonth">{tc('date_range.last_month')}</SelectItem>
+                  <SelectItem value="ytd">{tc('date_range.year_to_date')}</SelectItem>
+                  <SelectItem value="custom">{tc('date_range.custom_range')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -304,7 +304,7 @@ export default function AnalyticsHub() {
                   <PopoverTrigger asChild>
                     <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
                       <CalendarIcon className="w-4 h-4 mr-2" />
-                      {formatDate(customDateRange.from, 'MMM d'} - {formatDate(customDateRange.to, 'MMM d, yyyy'}
+                      {formatDate(customDateRange.from, 'MMM d')} - {formatDate(customDateRange.to, 'MMM d, yyyy')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="end">
@@ -318,7 +318,7 @@ export default function AnalyticsHub() {
                             to: endOfMonth(new Date()),
                           })}
                         >
-                          {tc('date_range.this_month'}
+                          {tc('date_range.this_month')}
                         </Button>
                         <Button
                           variant="outline"
@@ -328,7 +328,7 @@ export default function AnalyticsHub() {
                             to: endOfMonth(subMonths(new Date(), 1)),
                           })}
                         >
-                          {tc('date_range.last_month'}
+                          {tc('date_range.last_month')}
                         </Button>
                       </div>
                       <Calendar

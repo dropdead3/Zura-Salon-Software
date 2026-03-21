@@ -99,7 +99,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
       if (failedSyncs.length === syncTypes.length) {
         toast.error('All syncs failed. The sync will retry automatically.');
       } else if (failedSyncs.length > 0) {
-        toast.warning(`Sync completed with errors in: ${failedSyncs.join(', '}`);
+        toast.warning(`Sync completed with errors in: ${failedSyncs.join(', ')}`);
       } else {
         toast.success('Full sync completed successfully');
       }
@@ -224,7 +224,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
             {syncLabel}
           </h4>
           <Link 
-            to={dashPath('/admin/phorest-settings'} 
+            to={dashPath('/admin/phorest-settings')} 
             className="flex items-center gap-1 font-display text-[10px] uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
           >
             Settings

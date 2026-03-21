@@ -60,7 +60,7 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 const TIME_SLOTS: string[] = [];
 for (let h = 7; h < 21; h++) {
   for (let m = 0; m < 60; m += 15) {
-    TIME_SLOTS.push(`${h.toString().padStart(2, '0'}:${m.toString().padStart(2, '0}`);
+    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`);
   }
 }
 
@@ -320,7 +320,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
           <AnimatePresence mode="wait">
             <motion.div
-              key={step + (showTemplates ? '-templates' : ''}
+              key={step + (showTemplates ? '-templates' : '')}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -564,12 +564,12 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                         return (
                           <div key={uid} className="text-xs font-sans text-muted-foreground pl-6">
                             <span className="text-foreground">{member?.display_name || member?.full_name}</span>
-                            {' has '}
+                            {' has ')}
                             {userConflicts.map((c, i) => (
                               <span key={i}>
-                                {i > 0 && ', '}
-                                {c.type === 'appointment' ? 'a client' : 'a meeting'}
-                                {' '}
+                                {i > 0 && ', ')}
+                                {c.type === 'appointment' ? 'a client' : 'a meeting')}
+                                {' ')}
                                 {formatTime12(c.startTime)}–{formatTime12(c.endTime)}
                               </span>
                             ))}
@@ -658,7 +658,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                   <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-sans">
                       <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                      <span>{format(selectedDate, 'EEEE, MMMM d, yyyy'}</span>
+                      <span>{format(selectedDate, 'EEEE, MMMM d, yyyy')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       <span className="w-4 h-4 text-center text-muted-foreground">🕐</span>
@@ -666,7 +666,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{getAttendeeNames().join(', '}</span>
+                      <span>{getAttendeeNames().join(', ')}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-sans">
                       {meetingMode === 'video' ? (
@@ -678,8 +678,8 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                       )}
                       <span>
                         {meetingMode === 'video' ? 'Video Call' :
-                         meetingMode === 'hybrid' ? 'Hybrid' : 'In Person'}
-                        {locationId && ` — ${locations.find(l => l.id === locationId)?.name || ''}`}
+                         meetingMode === 'hybrid' ? 'Hybrid' : 'In Person')}
+                        {locationId && ` — ${locations.find(l => l.id === locationId)?.name || '')}`}
                       </span>
                     </div>
                   </div>
@@ -719,7 +719,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                         disabled={!templateName || createTemplate.isPending}
                         onClick={handleSaveTemplate}
                       >
-                        {createTemplate.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                        {createTemplate.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save')}
                       </Button>
                       <Button
                         size="sm"
@@ -737,7 +737,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
                       <div className="flex items-center gap-2 text-destructive">
                         <AlertTriangle className="w-4 h-4" />
                         <span className="text-xs font-sans">
-                          {conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''} detected — meeting can still be scheduled
+                          {conflicts.length} conflict{conflicts.length !== 1 ? 's' : '')} detected — meeting can still be scheduled
                         </span>
                       </div>
                     </div>
@@ -757,7 +757,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
             className="font-sans"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
-            {stepIndex === 0 ? 'Cancel' : 'Back'}
+            {stepIndex === 0 ? 'Cancel' : 'Back')}
           </Button>
 
           {step === 'confirm' ? (

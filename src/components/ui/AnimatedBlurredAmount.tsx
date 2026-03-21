@@ -104,7 +104,7 @@ export function AnimatedBlurredAmount({
             {displayContent}
           </span>
         </TooltipTrigger>
-        <TooltipContent>{hideNumbers ? 'Click to reveal' : 'Double-click to hide'}</TooltipContent>
+        <TooltipContent>{hideNumbers ? 'Click to reveal' : 'Double-click to hide')}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

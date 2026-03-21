@@ -232,11 +232,11 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         <div className="p-6 pb-4 border-b border-border">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="min-w-0">
-              <h2 className={cn(tokens.heading.card, 'truncate'}>
+              <h2 className={cn(tokens.heading.card, 'truncate')}>
                 {clientName}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {appointment.service_name || 'Service'}
+                {appointment.service_name || 'Service')}
               </p>
             </div>
             <Badge className={cn('shrink-0', statusBadge.bg, statusBadge.text, statusBadge.border)} variant="outline">
@@ -352,7 +352,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                         </span>
                       </div>
                       <div className="text-xs text-muted-foreground pl-6">
-                        {format(parseISO(thisApptReview.responded_at), 'MMM d, yyyy'}
+                        {format(parseISO(thisApptReview.responded_at), 'MMM d, yyyy')}
                         {thisApptReview.nps_score !== null && ` · NPS: ${thisApptReview.nps_score}`}
                       </div>
                       {thisApptReview.comments && (
@@ -369,7 +369,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                       <div className="flex items-center gap-2 text-sm">
                         <Star className="w-4 h-4 text-amber-500 shrink-0" />
                         <span className="text-foreground">
-                          {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews'}
+                          {reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'Review' : 'Reviews')}
                           {reviewSummary.averageRating !== null && (
                             <span className="text-muted-foreground"> · Avg {reviewSummary.averageRating} ★</span>
                           )}
@@ -377,15 +377,15 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                       </div>
                       {reviewSummary.lastReviewDate && (
                         <div className="text-xs text-muted-foreground pl-6">
-                          Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy'}
+                          Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy')}
                           {appointment.appointment_date && (() => {
                             const days = differenceInCalendarDays(
                               parseISO(reviewSummary.lastReviewDate!),
                               parseISO(appointment.appointment_date)
                             );
                             if (days === 0) return ' · Same day as visit';
-                            if (days > 0) return ` · ${days} day${days !== 1 ? 's' : ''} after visit`;
-                            return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} before visit`;
+                            if (days > 0) return ` · ${days} day${days !== 1 ? 's' : '')} after visit`;
+                            return ` · ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : '')} before visit`;
                           })()}
                         </div>
                       )}
@@ -445,7 +445,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="w-4 h-4 shrink-0" />
-                  <span>{appointment.stylist_name || 'Unassigned'}</span>
+                  <span>{appointment.stylist_name || 'Unassigned')}</span>
                 </div>
                 {appointment.location_name && (
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -496,12 +496,12 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   {formatFullDateTime(appointment.created_at)}
                 </DetailRow>
                 <DetailRow icon={UserCheck} label="Created By">
-                  {appointment.created_by_name || '—'}
+                  {appointment.created_by_name || '—')}
                 </DetailRow>
                 <DetailRow icon={Info} label="Source">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[10px]">
-                      {appointment._source === 'phorest' ? 'Phorest' : 'Local'}
+                      {appointment._source === 'phorest' ? 'Phorest' : 'Local')}
                     </Badge>
                     {appointment.import_source && appointment.import_source !== 'manual' && (
                       <Badge variant="outline" className="text-[10px]">
@@ -554,7 +554,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               <>
                 <Separator />
                 <div className="text-xs text-muted-foreground">
-                  <span className={tokens.label.default}>Moved from:</span>{' '}
+                  <span className={tokens.label.default}>Moved from:</span>{' ')}
                   {formatDateDisplay(appointment.rescheduled_from_date)} at {appointment.rescheduled_from_time}
                 </div>
               </>
@@ -666,7 +666,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                   }
                 }}
               >
-                {cancelling ? 'Cancelling…' : 'Cancel Appointment'}
+                {cancelling ? 'Cancelling…' : 'Cancel Appointment')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

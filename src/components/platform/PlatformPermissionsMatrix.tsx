@@ -98,7 +98,7 @@ export function PlatformPermissionsMatrix() {
               <Icon className={cn("w-4 h-4", isSelected && "text-violet-400")} />
               <span className="font-medium text-sm">{role.label}</span>
               <PlatformBadge 
-                variant={isOwner ? 'success' : 'default'} 
+                variant={isOwner ? 'success' : 'default')} 
                 size="sm"
                 className={cn(isOwner && "bg-amber-500/20 text-amber-400 border-amber-500/30")}
               >

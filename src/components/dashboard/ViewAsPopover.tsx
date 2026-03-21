@@ -193,7 +193,7 @@ export function ViewAsPopover() {
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
                 ) : filteredUsers.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">
-                    {teamFilter ? 'No matches found' : 'No team members'}
+                    {teamFilter ? 'No matches found' : 'No team members')}
                   </p>
                 ) : (
                   filteredUsers.map(member => {

@@ -77,7 +77,7 @@ export function VouchersList({ organizationId }: VouchersListProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `vouchers-${format(new Date(), 'yyyy-MM-dd'}.csv`;
+    a.download = `vouchers-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -155,7 +155,7 @@ export function VouchersList({ organizationId }: VouchersListProps) {
                           ? `${voucher.value}%`
                           : voucher.value 
                           ? formatCurrency(voucher.value)
-                          : '-'}
+                          : '-')}
                       </TableCell>
                       <TableCell>
                         {voucher.issued_to_name || voucher.issued_to_email || (

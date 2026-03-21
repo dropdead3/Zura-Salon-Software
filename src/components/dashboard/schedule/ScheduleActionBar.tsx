@@ -78,7 +78,7 @@ export function ScheduleActionBar({
         <Calendar className="h-4 w-4" />
         <span>
           <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-          {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
+          {' ')}appt{todayAppointmentCount !== 1 ? 's' : '')}
         </span>
       </div>
 
@@ -133,7 +133,7 @@ export function ScheduleActionBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to={dashPath('/appointments-hub'}
+            to={dashPath('/appointments-hub')}
             className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
           >
             <Receipt className="h-4 w-4 text-muted-foreground" />

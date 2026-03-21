@@ -151,7 +151,7 @@ export function PagesManager() {
     };
     try {
       await updatePages.mutateAsync(updated);
-      toast.success(`"${page.title}" ${page.enabled ? 'disabled' : 'enabled'}`);
+      toast.success(`"${page.title}" ${page.enabled ? 'disabled' : 'enabled')}`);
     } catch {
       toast.error('Failed to update page');
     }
@@ -196,12 +196,12 @@ export function PagesManager() {
             {(['all', 'enabled', 'disabled'] as StatusFilter[]).map(f => (
               <Button
                 key={f}
-                variant={filter === f ? 'default' : 'ghost'}
+                variant={filter === f ? 'default' : 'ghost')}
                 size="sm"
                 className="h-7 text-[10px] px-2"
                 onClick={() => setFilter(f)}
               >
-                {f === 'all' ? 'All' : f === 'enabled' ? 'Live' : 'Draft'}
+                {f === 'all' ? 'All' : f === 'enabled' ? 'Live' : 'Draft')}
               </Button>
             ))}
           </div>
@@ -224,14 +224,14 @@ export function PagesManager() {
                 <TableRow key={page.id}>
                   <TableCell className="text-sm font-medium">{page.title}</TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">
-                    /{page.slug || '(home)'}
+                    /{page.slug || '(home)')}
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={page.enabled ? 'default' : 'secondary'}
+                      variant={page.enabled ? 'default' : 'secondary')}
                       className="text-[10px]"
                     >
-                      {page.enabled ? 'Live' : 'Draft'}
+                      {page.enabled ? 'Live' : 'Draft')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground capitalize">
@@ -247,7 +247,7 @@ export function PagesManager() {
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem onClick={() => handleToggleEnabled(page)}>
                           <Archive className="h-3.5 w-3.5 mr-2" />
-                          {page.enabled ? 'Disable' : 'Enable'}
+                          {page.enabled ? 'Disable' : 'Enable')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDuplicate(page)}>
                           <Copy className="h-3.5 w-3.5 mr-2" />

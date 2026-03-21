@@ -198,7 +198,7 @@ export function PermissionsTab({ canManage }: PermissionsTabProps) {
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
                           <span className="font-display text-sm uppercase tracking-wider">
-                            {category.replace(/_/g, ' '}
+                            {category.replace(/_/g, ' ')}
                           </span>
                           <Badge variant="secondary" className="text-xs">
                             {grantedCount}/{categoryPermissions.length}

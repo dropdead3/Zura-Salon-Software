@@ -38,7 +38,7 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const TIME_SLOTS: string[] = [];
 for (let h = 6; h < 22; h++) {
   for (let m = 0; m < 60; m += 30) {
-    TIME_SLOTS.push(`${h.toString().padStart(2, '0'}:${m.toString().padStart(2, '0}`);
+    TIME_SLOTS.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`);
   }
 }
 
@@ -83,7 +83,7 @@ export function ShiftEditorDialog({
     const [h, m] = t.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
     const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${h12}:${m.toString().padStart(2, '0'} ${ampm}`;
+    return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
   };
 
   // Conflict detection
@@ -146,7 +146,7 @@ export function ShiftEditorDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-base tracking-wide">
-            {existingShift ? 'Edit Shift' : 'Create Shift'}
+            {existingShift ? 'Edit Shift' : 'Create Shift')}
           </DialogTitle>
         </DialogHeader>
 
@@ -190,9 +190,9 @@ export function ShiftEditorDialog({
             <label className="text-xs font-sans text-muted-foreground mb-1.5 block">Date</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn('w-full justify-start text-left font-sans', !shiftDate && 'text-muted-foreground'}>
+                <Button variant="outline" className={cn('w-full justify-start text-left font-sans', !shiftDate && 'text-muted-foreground')}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(shiftDate, 'PPP'}
+                  {format(shiftDate, 'PPP')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -286,9 +286,9 @@ export function ShiftEditorDialog({
                   <label className="text-xs font-sans text-muted-foreground mb-1.5 block">Until</label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn('w-full justify-start text-left font-sans'}>
+                      <Button variant="outline" className={cn('w-full justify-start text-left font-sans')}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(untilDate, 'PPP'}
+                        {format(untilDate, 'PPP')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -327,7 +327,7 @@ export function ShiftEditorDialog({
             className="font-sans"
           >
             {isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-            {existingShift ? 'Save Changes' : recurrence !== 'none' ? 'Create Series' : 'Create Shift'}
+            {existingShift ? 'Save Changes' : recurrence !== 'none' ? 'Create Series' : 'Create Shift')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -46,9 +46,9 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
     <div className="px-5 py-4 space-y-4">
       {/* Appointment info */}
       <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 space-y-2">
-        <InfoRow label="Client" value={appointment.client_name || 'Walk-in'} />
-        <InfoRow label="Service" value={appointment.service_name || '—'} />
-        <InfoRow label="Status" value={appointment.status || 'Pending'} />
+        <InfoRow label="Client" value={appointment.client_name || 'Walk-in')} />
+        <InfoRow label="Service" value={appointment.service_name || '—')} />
+        <InfoRow label="Status" value={appointment.status || 'Pending')} />
         <InfoRow label="Stylist" value={staff.displayName} />
       </div>
 
@@ -135,7 +135,7 @@ function StatTile({ icon: Icon, label, value, highlight }: {
         <Icon className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
         <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide">{label}</span>
       </div>
-      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]'}`}>
+      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]')}`}>
         {value}
       </p>
     </div>

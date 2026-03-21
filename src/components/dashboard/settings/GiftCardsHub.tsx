@@ -162,7 +162,7 @@ function ActiveCardsTab() {
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <Gift className={tokens.empty.icon} />
-                  <p className={tokens.empty.description}>{searchCode ? 'No cards match your search' : 'No gift cards created yet'}</p>
+                  <p className={tokens.empty.description}>{searchCode ? 'No cards match your search' : 'No gift cards created yet')}</p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -180,8 +180,8 @@ function ActiveCardsTab() {
                   <TableCell className={cn("text-sm tabular-nums font-medium", Number(card.current_balance) === 0 && "text-muted-foreground")}>
                     <BlurredAmount>{formatCurrency(Number(card.current_balance))}</BlurredAmount>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{card.purchaser_name || '—'}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{card.recipient_name || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{card.purchaser_name || '—')}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{card.recipient_name || '—')}</TableCell>
                   <TableCell>
                     {!card.is_active ? (
                       <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
@@ -191,7 +191,7 @@ function ActiveCardsTab() {
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 text-[10px]">Active</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{formatDate(new Date(card.created_at), 'MMM d, yyyy'}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(new Date(card.created_at), 'MMM d, yyyy')}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => setEditCard(card)}>
                       <Edit2 className="w-3.5 h-3.5" />
@@ -246,7 +246,7 @@ function EditGiftCardDialog({ card, onClose }: { card: GiftCard; onClose: () => 
     });
     setBalanceAdjust('');
     setAdjustReason('');
-    toast.success(`Balance adjusted by ${amount > 0 ? '+' : ''}${formatCurrency(amount)}`);
+    toast.success(`Balance adjusted by ${amount > 0 ? '+' : '')}${formatCurrency(amount)}`);
   };
 
   return (
@@ -295,7 +295,7 @@ function EditGiftCardDialog({ card, onClose }: { card: GiftCard; onClose: () => 
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
                 {transactions.map(tx => (
                   <div key={tx.id} className="flex items-center justify-between text-xs p-2 rounded bg-muted/30 border border-border/40">
-                    <span className="text-muted-foreground">{formatDate(new Date(tx.created_at), 'MMM d, yyyy'}</span>
+                    <span className="text-muted-foreground">{formatDate(new Date(tx.created_at), 'MMM d, yyyy')}</span>
                     <span className="font-medium tabular-nums"><BlurredAmount>{formatCurrency(Number(tx.amount))}</BlurredAmount></span>
                   </div>
                 ))}
@@ -398,7 +398,7 @@ function GiftCardSettingsTab() {
         </div>
         {settings.include_terms && (
           <Input
-            value={settings.terms_text || ''}
+            value={settings.terms_text || '')}
             onChange={e => updateSettings.mutate({ organizationId: organizationId!, settings: { terms_text: e.target.value } })}
             placeholder="Terms and conditions text"
             className="h-9 text-sm"

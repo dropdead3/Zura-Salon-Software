@@ -146,7 +146,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{client.first_name} {client.last_name}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {client.email || client.phone || client.mobile || 'No contact info'}
+                            {client.email || client.phone || client.mobile || 'No contact info')}
                           </p>
                         </div>
                       </button>
@@ -166,7 +166,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                   "flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50",
                   balanceType === 'salon_credit' && "border-primary bg-primary/5"
                 )}
-                onClick={() => setBalanceType('salon_credit'}
+                onClick={() => setBalanceType('salon_credit')}
               >
                 <RadioGroupItem value="salon_credit" id="salon_credit" className="mt-0.5" />
                 <div className="flex-1">
@@ -185,7 +185,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                   "flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50",
                   balanceType === 'gift_card' && "border-primary bg-primary/5"
                 )}
-                onClick={() => setBalanceType('gift_card'}
+                onClick={() => setBalanceType('gift_card')}
               >
                 <RadioGroupItem value="gift_card" id="gift_card" className="mt-0.5" />
                 <div className="flex-1">

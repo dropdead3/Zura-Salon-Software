@@ -51,19 +51,19 @@ export function DayRateWidget() {
 
   if (isLoading) {
     return (
-      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
         <Skeleton className="h-32 w-full" />
       </Card>
     );
   }
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Armchair className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1'}>DAY RATE</span>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>DAY RATE</span>
       </div>
 
       <div className="mt-4 flex-1 space-y-4">
@@ -124,10 +124,10 @@ export function DayRateWidget() {
                   </div>
                 </div>
                 <Badge 
-                  variant={booking.status === 'checked_in' ? 'default' : 'secondary'}
+                  variant={booking.status === 'checked_in' ? 'default' : 'secondary')}
                   className="capitalize text-xs"
                 >
-                  {booking.status.replace('_', ' '}
+                  {booking.status.replace('_', ' ')}
                 </Badge>
               </div>
             ))}
@@ -148,7 +148,7 @@ export function DayRateWidget() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to={dashPath('/admin/day-rate-calendar'}
+          to={dashPath('/admin/day-rate-calendar')}
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           View All <ChevronRight className="w-3 h-3" />

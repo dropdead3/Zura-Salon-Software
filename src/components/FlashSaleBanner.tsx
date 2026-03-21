@@ -154,7 +154,7 @@ function TimeBlock({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex items-center">
       <span className="bg-white/20 px-1.5 py-0.5 rounded font-mono font-medium">
-        {value.toString().padStart(2, '0'}
+        {value.toString().padStart(2, '0')}
       </span>
       <span className="text-xs ml-0.5 mr-1.5">{label}</span>
     </div>

@@ -124,7 +124,7 @@ export function ScheduledReportsSubTab() {
         <div>
           <h3 className="text-lg font-medium">Scheduled Reports</h3>
           <p className="text-sm text-muted-foreground">
-            {reports.length} report{reports.length !== 1 ? 's' : ''} configured
+            {reports.length} report{reports.length !== 1 ? 's' : '')} configured
           </p>
         </div>
         <Button>
@@ -157,7 +157,7 @@ export function ScheduledReportsSubTab() {
                     
                     <span className="flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5" />
-                      {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : ''}
+                      {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : '')}
                     </span>
                     
                     {report.format && (
@@ -175,7 +175,7 @@ export function ScheduledReportsSubTab() {
                     )}
                     {report.next_run_at && report.is_active && (
                       <span>
-                        Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a'}
+                        Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     )}
                   </div>
@@ -262,7 +262,7 @@ export function ScheduledReportsSubTab() {
                 <div className="flex-1">
                   <p className="text-sm font-medium capitalize">{run.status}</p>
                   <p className="text-xs text-muted-foreground">
-                    {run.started_at && formatDate(new Date(run.started_at), 'MMM d, yyyy h:mm a'}
+                    {run.started_at && formatDate(new Date(run.started_at), 'MMM d, yyyy h:mm a')}
                   </p>
                   {run.error_message && (
                     <p className="text-xs text-destructive mt-1">{run.error_message}</p>

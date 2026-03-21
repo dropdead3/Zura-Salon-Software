@@ -208,14 +208,14 @@ export function GoalSetupDialog({
       <DialogContent className="sm:max-w-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className={tokens.heading.card}>
-            {isEditing ? 'Edit Goal' : step === 'select' ? 'Choose Your Goals' : 'Set Your Targets'}
+            {isEditing ? 'Edit Goal' : step === 'select' ? 'Choose Your Goals' : 'Set Your Targets')}
           </DialogTitle>
           <DialogDescription className={tokens.body.muted}>
             {isEditing
               ? 'Update the target for this goal.'
               : step === 'select'
                 ? 'Tap to select the goals that matter most to your salon.'
-                : 'Review and customize your targets. Targets are personalized from your data when available.'}
+                : 'Review and customize your targets. Targets are personalized from your data when available.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -282,7 +282,7 @@ export function GoalSetupDialog({
                 if (!templates?.length) return null;
                 return (
                   <div key={cat}>
-                    <h3 className={cn(tokens.heading.subsection, 'mb-3'}>
+                    <h3 className={cn(tokens.heading.subsection, 'mb-3')}>
                       {GOAL_CATEGORY_LABELS[cat]}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -324,7 +324,7 @@ export function GoalSetupDialog({
                             <span className="font-display text-base font-medium tracking-wide text-primary mt-1 block">
                               {formatTarget(tmpl, bm)}
                               <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
-                                /{tmpl.goal_period === 'weekly' ? 'wk' : 'mo'}
+                                /{tmpl.goal_period === 'weekly' ? 'wk' : 'mo')}
                               </span>
                             </span>
                             {/* Show actual from historical data */}
@@ -462,18 +462,18 @@ export function GoalSetupDialog({
           ) : (
             <div className="flex items-center justify-between w-full">
               {!isEditing && (
-                <Button variant="ghost" onClick={() => setStep('select'}>
+                <Button variant="ghost" onClick={() => setStep('select')}>
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Back
                 </Button>
               )}
-              <div className={cn(!isEditing ? '' : 'ml-auto'}>
+              <div className={cn(!isEditing ? '' : 'ml-auto')}>
                 <Button onClick={handleSave} disabled={isPending}>
                   {isPending
                     ? 'Saving...'
                     : isEditing
                       ? 'Update Goal'
-                      : `Save ${selectedKeys.size} Goal${selectedKeys.size === 1 ? '' : 's'}`}
+                      : `Save ${selectedKeys.size} Goal${selectedKeys.size === 1 ? '' : 's')}`}
                 </Button>
               </div>
             </div>

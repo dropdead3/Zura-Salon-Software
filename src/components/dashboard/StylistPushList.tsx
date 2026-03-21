@@ -82,7 +82,7 @@ export function StylistPushList() {
               <MetricInfoTooltip description="Products that need a push — slow-moving inventory with stock on hand. Recommend these to clients during appointments to keep inventory healthy and free up capital." />
             </div>
             <CardDescription className="text-xs">
-              {pushProducts.length} product{pushProducts.length !== 1 ? 's' : ''} to actively recommend today
+              {pushProducts.length} product{pushProducts.length !== 1 ? 's' : '')} to actively recommend today
             </CardDescription>
           </div>
         </div>

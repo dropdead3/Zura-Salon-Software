@@ -132,7 +132,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
               if (key === '') return <div key={i} />;
               if (key === 'delete') {
                 return (
-                  <button key={i} onClick={() => handleKey('delete'}
+                  <button key={i} onClick={() => handleKey('delete')}
                     className="flex items-center justify-center h-14 rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors">
                     <Delete className="w-5 h-5" />
                   </button>
@@ -324,9 +324,9 @@ function ComplianceDashboard({ staff, onBack }: { staff: DockStaffSession; onBac
           {/* KPI strip */}
           <div className="grid grid-cols-3 gap-3">
             <KpiTile icon={Scale} label="Reweigh" value={`${data.reweighPct}%`}
-              color={data.reweighPct >= 80 ? 'text-emerald-400' : data.reweighPct >= 50 ? 'text-amber-400' : 'text-red-400'} />
+              color={data.reweighPct >= 80 ? 'text-emerald-400' : data.reweighPct >= 50 ? 'text-amber-400' : 'text-red-400')} />
             <KpiTile icon={Droplets} label="Waste" value={`${data.wastePct}%`}
-              color={data.wastePct <= 3 ? 'text-emerald-400' : data.wastePct <= 7 ? 'text-amber-400' : 'text-red-400'} />
+              color={data.wastePct <= 3 ? 'text-emerald-400' : data.wastePct <= 7 ? 'text-amber-400' : 'text-red-400')} />
             <KpiTile icon={Activity} label="Sessions" value={String(data.totalSessions)}
               color="text-[hsl(var(--platform-foreground))]" />
           </div>

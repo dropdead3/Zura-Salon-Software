@@ -337,14 +337,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/40", isCollapsed ? "p-3" : "px-5 py-4")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col-reverse gap-2" : "justify-between")}>
-          <Link to={dashPath('/'} className="block min-w-0">
+          <Link to={dashPath('/')} className="block min-w-0">
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   {hasCustomIcon(true) ? (
                     <img 
                       src={getIcon(true)} 
-                      alt={businessSettings?.business_name || 'Salon'} 
+                      alt={businessSettings?.business_name || 'Salon')} 
                       className="h-6 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
@@ -353,17 +353,17 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     </div>
                   )}
                 </TooltipTrigger>
-                <TooltipContent side="right">{businessSettings?.business_name || 'Salon'}</TooltipContent>
+                <TooltipContent side="right">{businessSettings?.business_name || 'Salon')}</TooltipContent>
               </Tooltip>
             ) : hasCustomLogo() ? (
               <img
                 src={getLogo()} 
-                alt={businessSettings?.business_name || 'Salon'} 
+                alt={businessSettings?.business_name || 'Salon')} 
                 className="h-7 w-auto max-w-[160px] object-contain" 
               />
             ) : (
               <span className="font-display text-sm uppercase tracking-wider text-foreground">
-                {businessSettings?.business_name || 'Salon'}
+                {businessSettings?.business_name || 'Salon')}
               </span>
             )}
           </Link>
@@ -424,7 +424,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    to={dashPath('/onboarding'}
+                    to={dashPath('/onboarding')}
                     onClick={onNavClick}
                     className={cn(
                       "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
@@ -443,7 +443,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               </Tooltip>
             ) : (
               <Link
-                to={dashPath('/onboarding'}
+                to={dashPath('/onboarding')}
                 onClick={onNavClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 mx-3 text-sm font-sans",

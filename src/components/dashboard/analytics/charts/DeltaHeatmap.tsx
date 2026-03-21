@@ -133,7 +133,7 @@ export function DeltaHeatmap({
                             >
                               {Math.abs(changePercent) >= 10 && (
                                 <span className="text-[10px] font-medium text-foreground">
-                                  {changePercent > 0 ? '+' : ''}{changePercent.toFixed(0)}%
+                                  {changePercent > 0 ? '+' : '')}{changePercent.toFixed(0)}%
                                 </span>
                               )}
                             </div>
@@ -143,8 +143,8 @@ export function DeltaHeatmap({
                               <p className="font-medium">{dim} - {sub}</p>
                               <p>Previous: {formatCurrencyWholeUtil(cell?.periodA ?? 0)}</p>
                               <p>Current: {formatCurrencyWholeUtil(cell?.periodB ?? 0)}</p>
-                              <p className={changePercent >= 0 ? 'text-chart-2' : 'text-destructive'}>
-                                Change: {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(1)}%
+                              <p className={changePercent >= 0 ? 'text-chart-2' : 'text-destructive')}>
+                                Change: {changePercent >= 0 ? '+' : '')}{changePercent.toFixed(1)}%
                               </p>
                             </div>
                           </TooltipContent>

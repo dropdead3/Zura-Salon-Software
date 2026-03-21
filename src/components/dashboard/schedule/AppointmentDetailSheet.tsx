@@ -135,7 +135,7 @@ function ScheduledCoverageSection({
             <div key={block.id} className="flex items-center gap-2 text-sm">
               <UsersIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="truncate">
-                {name || 'Unassigned'}
+                {name || 'Unassigned')}
               </span>
               <span className="text-xs text-muted-foreground">
                 {formatTime12h(block.start_time)}–{formatTime12h(block.end_time)}
@@ -144,7 +144,7 @@ function ScheduledCoverageSection({
                 'text-[10px]',
                 block.status === 'confirmed' ? 'text-green-700 dark:text-green-300 border-green-300' : 'text-amber-700 dark:text-amber-300 border-amber-300'
               )}>
-                {block.status === 'confirmed' ? 'Confirmed' : 'Requested'}
+                {block.status === 'confirmed' ? 'Confirmed' : 'Requested')}
               </Badge>
             </div>
           );
@@ -166,7 +166,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
       <motion.div variants={staggerItem} className="space-y-2">
         <h4 className={tokens.heading.subsection}>
           <Home className="h-3.5 w-3.5 inline mr-1.5" />
-          {householdData.household_name || 'Household'}
+          {householdData.household_name || 'Household')}
         </h4>
         <div className="space-y-2">
           {householdData.members.map((member: any) => {
@@ -185,7 +185,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
                       ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d}`
-                      : 'No visits yet'}
+                      : 'No visits yet')}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
                 </div>
@@ -653,7 +653,7 @@ export function AppointmentDetailSheet({
 
   // Recurrence
   const recurrenceLabel = appointment.recurrence_group_id && appointment.recurrence_rule
-    ? `Recurring (${(appointment.recurrence_index ?? 0) + 1} of ${(appointment.recurrence_rule as any)?.occurrences ?? '?'})`
+    ? `Recurring (${(appointment.recurrence_index ?? 0) + 1} of ${(appointment.recurrence_rule as any)?.occurrences ?? '?')})`
     : null;
 
   // ─── Handlers ─────────────────────────────────────────────────
@@ -911,7 +911,7 @@ export function AppointmentDetailSheet({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link to={dashPath('/appointments-hub'}>
+                          <Link to={dashPath('/appointments-hub')}>
                             <Receipt className="h-3.5 w-3.5 mr-2" />
                             Transactions
                           </Link>
@@ -923,13 +923,13 @@ export function AppointmentDetailSheet({
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Status Override</DropdownMenuLabel>
                             {availableTransitions.includes('no_show') && (
-                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('no_show'} disabled={isUpdating}>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
                                 <AlertTriangle className="h-3.5 w-3.5 mr-2" />
                                 No Show
                               </DropdownMenuItem>
                             )}
                             {availableTransitions.includes('cancelled') && canCancel && (
-                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('cancelled'} disabled={isUpdating}>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('cancelled')} disabled={isUpdating}>
                                 <XCircle className="h-3.5 w-3.5 mr-2" />
                                 Cancel
                               </DropdownMenuItem>
@@ -978,7 +978,7 @@ export function AppointmentDetailSheet({
                     )}
                     {lastVisitDate && (
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d'}
+                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
                       </p>
                     )}
                     {/* View Client Profile */}
@@ -1004,7 +1004,7 @@ export function AppointmentDetailSheet({
                     <span className="text-xs text-muted-foreground">
                       {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method]
                         ? `via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
-                        : '(method unknown)'}
+                        : '(method unknown)')}
                     </span>
                   )}
 
@@ -1099,7 +1099,7 @@ export function AppointmentDetailSheet({
                       <motion.div variants={staggerItem} className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200 dark:border-blue-800">
                         <RotateCcw className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                         <span className="text-sm text-blue-700 dark:text-blue-300">
-                          Redo scheduled: {linkedRedos[0].service_name || 'Service'} on {linkedRedos[0].appointment_date}
+                          Redo scheduled: {linkedRedos[0].service_name || 'Service')} on {linkedRedos[0].appointment_date}
                           {linkedRedos[0].staff_name && ` with ${linkedRedos[0].staff_name}`}
                         </span>
                       </motion.div>
@@ -1121,7 +1121,7 @@ export function AppointmentDetailSheet({
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-3">
                           <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span>{formatDate(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy'}</span>
+                          <span>{formatDate(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy')}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -1137,7 +1137,7 @@ export function AppointmentDetailSheet({
                           <div className="flex items-center gap-3">
                             <ArrowRightLeft className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
                             <span className="text-blue-600 dark:text-blue-400">
-                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d'} at ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
+                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d')} at ` : '')}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
                             </span>
                           </div>
                         )}
@@ -1209,7 +1209,7 @@ export function AppointmentDetailSheet({
                                 'text-red-600 border-red-300': (appointment as any).deposit_status === 'refunded' || (appointment as any).deposit_status === 'forfeited',
                               })}
                             >
-                              {((appointment as any).deposit_status || 'pending').replace('_', ' '}
+                              {((appointment as any).deposit_status || 'pending').replace('_', ' ')}
                             </Badge>
                           </div>
                         </div>
@@ -1287,7 +1287,7 @@ export function AppointmentDetailSheet({
                                   {canManageAssistants && (
                                     <input
                                       type="number" min={0} max={480} placeholder="min"
-                                      defaultValue={a.assist_duration_minutes ?? ''}
+                                      defaultValue={a.assist_duration_minutes ?? '')}
                                       className="w-14 h-6 text-xs text-center border rounded bg-background px-1"
                                       onBlur={e => {
                                         const val = e.target.value ? parseInt(e.target.value) : null;
@@ -1345,7 +1345,7 @@ export function AppointmentDetailSheet({
                                     </div>
                                     {conflicts.map((c, i) => (
                                       <span key={i} className="text-[11px] text-orange-600 dark:text-orange-400 pl-7 leading-tight">
-                                        {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName} for {c.clientName})
+                                        {c.role === 'assistant' ? 'Assisting' : 'Busy')} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName} for {c.clientName})
                                       </span>
                                     ))}
                                   </button>
@@ -1422,7 +1422,7 @@ export function AppointmentDetailSheet({
                             <Collapsible open={clientNotesExpanded} onOpenChange={setClientNotesExpanded}>
                               <div className="space-y-1.5">
                                 {clientNotes.slice(0, 3).map(note => (
-                                  <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
+                                  <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
                                     <div className="flex items-center gap-1.5">
                                       <Avatar className="h-4 w-4">
                                         <AvatarImage src={note.author?.photo_url || undefined} />
@@ -1430,7 +1430,7 @@ export function AppointmentDetailSheet({
                                       </Avatar>
                                       <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
                                       {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
-                                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d'}</span>
+                                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
                                     </div>
                                     <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
                                   </div>
@@ -1442,7 +1442,7 @@ export function AppointmentDetailSheet({
                                     <ScrollArea className="max-h-48 mt-1.5">
                                       <div className="space-y-1.5">
                                         {clientNotes.slice(3).map(note => (
-                                          <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
+                                          <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
                                             <div className="flex items-center gap-1.5">
                                               <Avatar className="h-4 w-4">
                                                 <AvatarImage src={note.author?.photo_url || undefined} />
@@ -1450,7 +1450,7 @@ export function AppointmentDetailSheet({
                                               </Avatar>
                                               <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
                                               {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
-                                              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d'}</span>
+                                              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
                                             </div>
                                             <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
                                           </div>
@@ -1484,7 +1484,7 @@ export function AppointmentDetailSheet({
                           </h4>
                           <div className="space-y-1.5">
                             {notes.slice(0, 2).map(note => (
-                              <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
+                              <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
                                 <div className="flex items-center gap-1.5">
                                   <Avatar className="h-4 w-4">
                                     <AvatarImage src={note.author?.photo_url || undefined} />
@@ -1492,7 +1492,7 @@ export function AppointmentDetailSheet({
                                   </Avatar>
                                   <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
                                   {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
-                                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d'}</span>
+                                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
                                 </div>
                                 <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
                               </div>
@@ -1500,7 +1500,7 @@ export function AppointmentDetailSheet({
                           </div>
                           {notes.length > 2 && (
                             <button
-                              onClick={() => setActiveTab('notes'}
+                              onClick={() => setActiveTab('notes')}
                               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                             >
                               View all {notes.length} notes in Notes tab
@@ -1554,7 +1554,7 @@ export function AppointmentDetailSheet({
                         <p className={tokens.kpi.label}>
                           {visitStats.tenure != null
                             ? visitStats.tenure < 30 ? 'New' : `${Math.floor(visitStats.tenure / 30)}mo`
-                            : '—'}
+                            : '—')}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Tenure</p>
                       </div>
@@ -1562,7 +1562,7 @@ export function AppointmentDetailSheet({
                         <p className={tokens.kpi.label}>
                           {visitStats.avgFrequencyWeeks != null
                             ? `${visitStats.avgFrequencyWeeks}w`
-                            : '—'}
+                            : '—')}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Avg Frequency</p>
                       </div>
@@ -1600,7 +1600,7 @@ export function AppointmentDetailSheet({
                               <div className="flex-1 min-w-0">
                                 <p className="truncate font-medium">{visit.service_name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatDate(parseISO(visit.appointment_date), 'MMM d, yyyy'}
+                                  {formatDate(parseISO(visit.appointment_date), 'MMM d, yyyy')}
                                   {visit.stylist_name && ` · ${visit.stylist_name}`}
                                 </p>
                               </div>
@@ -1628,7 +1628,7 @@ export function AppointmentDetailSheet({
                       {notes.length > 0 ? (
                         <div className="space-y-2">
                           {notes.map(note => (
-                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
+                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-5 w-5">
@@ -1645,7 +1645,7 @@ export function AppointmentDetailSheet({
                                 )}
                               </div>
                               <p className="mt-1">{note.note}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a'}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a')}</p>
                             </div>
                           ))}
                         </div>
@@ -1682,7 +1682,7 @@ export function AppointmentDetailSheet({
                       ) : clientNotes.length > 0 ? (
                         <div className="space-y-2">
                           {clientNotes.map(note => (
-                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
+                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-5 w-5">
@@ -1699,7 +1699,7 @@ export function AppointmentDetailSheet({
                                 )}
                               </div>
                               <p className="mt-1">{note.note}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a'}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a')}</p>
                             </div>
                           ))}
                         </div>
@@ -1764,7 +1764,7 @@ export function AppointmentDetailSheet({
                   <TabsContent value="backroom" className="p-6 pt-4 mt-0">
                     <BackroomTab
                       appointment={appointment}
-                      organizationId={effectiveOrganization?.id ?? ''}
+                      organizationId={effectiveOrganization?.id ?? '')}
                     />
                   </TabsContent>
                 </ScrollArea>
@@ -1776,13 +1776,13 @@ export function AppointmentDetailSheet({
                   <div className="flex items-center gap-2">
                     {/* Confirm */}
                     {availableTransitions.includes('confirmed') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed'} disabled={isUpdating} className="flex-1">
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating} className="flex-1">
                         <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
                       </Button>
                     )}
                     {/* Check In */}
                     {availableTransitions.includes('checked_in') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in'} disabled={isUpdating} className="flex-1">
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating} className="flex-1">
                         <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
                       </Button>
                     )}
@@ -1794,7 +1794,7 @@ export function AppointmentDetailSheet({
                     )}
                     {/* Complete (if no pay handler) */}
                     {availableTransitions.includes('completed') && !onPay && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed'} disabled={isUpdating} className="flex-1">
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed')} disabled={isUpdating} className="flex-1">
                         <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
                       </Button>
                     )}
@@ -1809,17 +1809,17 @@ export function AppointmentDetailSheet({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction === 'cancelled' ? 'Cancel Appointment?' : 'Mark as No Show?'}
+              {confirmAction === 'cancelled' ? 'Cancel Appointment?' : 'Mark as No Show?')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction === 'cancelled'
                 ? 'This will cancel the appointment. The client may need to be notified.'
-                : 'This will mark the client as a no-show for this appointment.'}
+                : 'This will mark the client as a no-show for this appointment.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="px-6 pb-2">
             <Textarea
-              placeholder={confirmAction === 'cancelled' ? 'Reason for cancellation (optional)...' : 'Reason for no-show (optional)...'}
+              placeholder={confirmAction === 'cancelled' ? 'Reason for cancellation (optional)...' : 'Reason for no-show (optional)...')}
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
               rows={2}
@@ -1830,7 +1830,7 @@ export function AppointmentDetailSheet({
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmStatusChange}
-              className={confirmAction === 'no_show' ? 'bg-destructive text-destructive-foreground' : ''}
+              className={confirmAction === 'no_show' ? 'bg-destructive text-destructive-foreground' : '')}
             >
               Confirm
             </AlertDialogAction>
@@ -1878,7 +1878,7 @@ export function AppointmentDetailSheet({
             <AlertDialogDescription>
               {isManagerOrAdmin
                 ? 'This will permanently remove this appointment from all records. This is not a cancellation — no fee or notification will be applied.'
-                : 'This will remove this appointment as a data entry correction. This action cannot be undone.'}
+                : 'This will remove this appointment as a data entry correction. This action cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1959,7 +1959,7 @@ export function AppointmentDetailSheet({
             <DialogDescription>
               {services.length > 1
                 ? 'Reassign the entire appointment or individual services.'
-                : 'Select a new stylist for this appointment.'}
+                : 'Select a new stylist for this appointment.')}
             </DialogDescription>
           </DialogHeader>
 
@@ -2009,13 +2009,13 @@ export function AppointmentDetailSheet({
                             <span className="font-medium">{member.display_name || member.full_name}</span>
                             {conflicts.length > 0 && (
                               <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
-                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}
+                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : '')}
                               </Badge>
                             )}
                           </div>
                           {conflicts.map((c, ci) => (
                             <span key={ci} className="text-[11px] text-amber-600 dark:text-amber-400 pl-9 leading-tight mt-0.5">
-                              {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
+                              {c.role === 'assistant' ? 'Assisting' : 'Busy')} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName})
                             </span>
                           ))}
                         </button>
@@ -2123,7 +2123,7 @@ export function AppointmentDetailSheet({
                         const oldName = oldAssignment?.assigned_staff_name || appointment.stylist_profile?.display_name || 'Default';
                         fireAuditLog('service_reassigned', { service: a.serviceName, stylist: oldName }, { service: a.serviceName, stylist: a.staffName });
                       }
-                      toast.success(`${assignments.length} service${assignments.length > 1 ? 's' : ''} reassigned`);
+                      toast.success(`${assignments.length} service${assignments.length > 1 ? 's' : '')} reassigned`);
                       setShowReassignDialog(false);
                       setPerServiceSelections({});
                     } catch (err: any) {

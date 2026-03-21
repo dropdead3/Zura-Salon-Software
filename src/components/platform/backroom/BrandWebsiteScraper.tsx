@@ -243,7 +243,7 @@ export function BrandWebsiteScraper({
         </div>
         <div className="flex items-center gap-1.5">
           <PlatformButton variant="ghost" size="sm" onClick={() => toggleAllInCategory(categoryFilter)}>
-            {filteredProducts.every((p) => p.selected) ? 'Deselect All' : 'Select All'}
+            {filteredProducts.every((p) => p.selected) ? 'Deselect All' : 'Select All')}
           </PlatformButton>
           <PlatformButton variant="ghost" size="sm" onClick={handleScrape}>
             <RotateCcw className="w-3 h-3 mr-1" /> Re-scan
@@ -255,7 +255,7 @@ export function BrandWebsiteScraper({
       {categories.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => setCategoryFilter('all'}
+            onClick={() => setCategoryFilter('all')}
             className={cn(
               'h-7 px-2.5 rounded-md font-sans text-[11px] transition-colors',
               categoryFilter === 'all'
@@ -322,14 +322,14 @@ export function BrandWebsiteScraper({
                     </PlatformBadge>
                   </TableCell>
                   <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                    {p.product_line || '—'}
+                    {p.product_line || '—')}
                   </TableCell>
                   <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                    {p.sizes?.join(', ') || '—'}
+                    {p.sizes?.join(', ') || '—')}
                   </TableCell>
                   <TableCell>
                     <PlatformBadge
-                      variant={p.confidence === 'high' ? 'success' : p.confidence === 'medium' ? 'warning' : 'default'}
+                      variant={p.confidence === 'high' ? 'success' : p.confidence === 'medium' ? 'warning' : 'default')}
                       size="sm"
                     >
                       {p.confidence}

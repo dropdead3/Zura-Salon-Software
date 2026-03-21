@@ -91,7 +91,7 @@ export function MultiClientResolutionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md'} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
+      <DialogContent className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md')} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
         <DialogHeader className="p-6 pb-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/15">
@@ -131,7 +131,7 @@ export function MultiClientResolutionDialog({
                           </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">
-                          · {group.appointments.length} appt{group.appointments.length !== 1 ? 's' : ''}
+                          · {group.appointments.length} appt{group.appointments.length !== 1 ? 's' : '')}
                         </span>
                       </div>
                     </div>
@@ -147,7 +147,7 @@ export function MultiClientResolutionDialog({
                         <div key={appt.id} className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>{formatApptTime(appt)}</span>
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize">
-                            {appt.status || 'booked'}
+                            {appt.status || 'booked')}
                           </Badge>
                         </div>
                       ))}

@@ -215,7 +215,7 @@ export function BlurredAmount({
         <Tooltip>
           <TooltipTrigger asChild>
             <Component 
-              className={cn(className, 'cursor-pointer'} 
+              className={cn(className, 'cursor-pointer')} 
               onDoubleClick={handleDoubleClick}
             >
               {children}
@@ -232,7 +232,7 @@ export function BlurredAmount({
       <Tooltip>
         <TooltipTrigger asChild>
           <Component 
-            className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200'} 
+            className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
             tabIndex={0}
             onClick={requestUnhide}
             onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}

@@ -117,7 +117,7 @@ export default function ProgramResourcesEditor() {
     setUploading(true);
 
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file';
-    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_'}`;
+    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const filePath = `program-resources/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -278,7 +278,7 @@ export default function ProgramResourcesEditor() {
                 ) : (
                   <Upload className="w-4 h-4 mr-2" />
                 )}
-                {newResource.file_url ? 'Change File' : 'Upload File'}
+                {newResource.file_url ? 'Change File' : 'Upload File')}
               </Button>
 
               {newResource.file_url && (
@@ -358,7 +358,7 @@ export default function ProgramResourcesEditor() {
             const linkedWeek = weeks.find(w => w.id === resource.week_id);
 
             return (
-              <Card key={resource.id} className={`p-4 ${!resource.is_active ? 'opacity-50' : ''}`}>
+              <Card key={resource.id} className={`p-4 ${!resource.is_active ? 'opacity-50' : '')}`}>
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                     <Icon className="w-5 h-5 text-muted-foreground" />
@@ -456,7 +456,7 @@ export default function ProgramResourcesEditor() {
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
-                  value={editingResource.description || ''}
+                  value={editingResource.description || '')}
                   onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
                   rows={2}
                 />
@@ -464,7 +464,7 @@ export default function ProgramResourcesEditor() {
               <div className="space-y-2">
                 <Label>Link to Week</Label>
                 <Select
-                  value={editingResource.week_id || ''}
+                  value={editingResource.week_id || '')}
                   onValueChange={(v) => setEditingResource({ ...editingResource, week_id: v || null })}
                 >
                   <SelectTrigger>

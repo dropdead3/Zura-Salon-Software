@@ -111,7 +111,7 @@ export function useBulkUpsertLocationProductSettings() {
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       toast.success(
-        `${vars.is_tracked ? 'Enabled' : 'Disabled'} tracking for ${vars.productIds.length} products`
+        `${vars.is_tracked ? 'Enabled' : 'Disabled')} tracking for ${vars.productIds.length} products`
       );
     },
     onError: (error) => toast.error('Bulk update failed: ' + error.message),

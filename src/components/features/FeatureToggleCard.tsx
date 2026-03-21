@@ -109,7 +109,7 @@ export function FeatureToggleCard({
             </p>
             {!feature.is_enabled && feature.disabled_at && (
               <p className="mt-1.5 text-xs text-muted-foreground/60">
-                Data preserved • Disabled{' '}
+                Data preserved • Disabled{' ')}
                 {new Date(feature.disabled_at).toLocaleDateString()}
               </p>
             )}

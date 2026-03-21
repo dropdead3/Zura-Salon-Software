@@ -122,7 +122,7 @@ export function FeatureCategorySection({
                       disabled={isUpdating}
                       className="text-xs"
                     >
-                      {allEnabled ? 'Disable All' : 'Enable All'}
+                      {allEnabled ? 'Disable All' : 'Enable All')}
                     </Button>
                   )}
                 </>

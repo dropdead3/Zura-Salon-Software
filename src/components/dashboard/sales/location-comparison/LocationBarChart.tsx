@@ -48,7 +48,7 @@ const AnimatedBar = (props: any) => {
       <rect
         x={x} y={y} width={animWidth} height={h}
         fill={fill}
-        stroke={animWidth > 0 ? stroke : 'none'}
+        stroke={animWidth > 0 ? stroke : 'none')}
         strokeWidth={strokeWidth}
         clipPath={`url(#${clipId})`}
         style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
@@ -86,7 +86,7 @@ export function LocationBarChart({ locations, colors, totalRevenue }: LocationBa
   // Unique gradient defs for each color
   const gradientDefs = useMemo(() => {
     const unique = [...new Set(colors.slice(0, data.length))];
-    return unique.map(hex => ({ id: `loc-glass-${hex.replace('#', ''}`, hex }));
+    return unique.map(hex => ({ id: `loc-glass-${hex.replace('#', '')}`, hex }));
   }, [colors, data.length]);
 
   const barHeight = 36;
@@ -119,7 +119,7 @@ export function LocationBarChart({ locations, colors, totalRevenue }: LocationBa
         <Bar dataKey="totalRevenue" radius={[0, 4, 4, 0]} shape={<AnimatedBar />} isAnimationActive={false}>
           {data.map((_, i) => {
             const hex = colors[i % colors.length];
-            const gradId = `loc-glass-${hex.replace('#', ''}`;
+            const gradId = `loc-glass-${hex.replace('#', '')}`;
             return (
               <Cell key={i} fill={`url(#${gradId})`} stroke={`${hex}50`} strokeWidth={1} />
             );

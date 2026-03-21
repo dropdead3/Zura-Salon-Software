@@ -177,10 +177,10 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-[hsl(var(--platform-foreground)/0.85)]">
-          <span className="font-medium text-[hsl(var(--platform-foreground))]">{log.user_name || 'System'}</span>
-          {' '}
+          <span className="font-medium text-[hsl(var(--platform-foreground))]">{log.user_name || 'System')}</span>
+          {' ')}
           <span className="text-[hsl(var(--platform-foreground-muted))]">{config.verb}</span>
-          {' '}
+          {' ')}
           {log.organization_name && (
             <span className="font-medium text-[hsl(var(--platform-primary))] group-hover/feed:text-[hsl(var(--platform-primary-hover))] transition-colors duration-200">
               {log.organization_name}

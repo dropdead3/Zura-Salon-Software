@@ -365,7 +365,7 @@ export default function HomepageStylists() {
             {showActions && stylist.homepage_requested_at && (
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy'}
+                Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
               </p>
             )}
           </div>
@@ -393,7 +393,7 @@ export default function HomepageStylists() {
           ) : (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                {stylist.homepage_visible ? 'Visible' : 'Hidden'}
+                {stylist.homepage_visible ? 'Visible' : 'Hidden')}
               </span>
               <Switch
                 checked={stylist.homepage_visible ?? false}

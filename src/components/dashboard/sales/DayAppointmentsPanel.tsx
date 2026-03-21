@@ -31,7 +31,7 @@ function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
   const period = hours >= 12 ? 'PM' : 'AM';
   const hour12 = hours % 12 || 12;
-  return `${hour12}:${minutes.toString().padStart(2, '0'} ${period}`;
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
 function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSummary; onClick?: () => void }) {
@@ -68,14 +68,14 @@ function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSum
         <div className="flex items-center gap-2">
           <User className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="font-medium text-sm">
-            {appointment.client_name || 'Walk-in'}
+            {appointment.client_name || 'Walk-in')}
           </span>
         </div>
         
         <div className="flex items-center gap-2 text-muted-foreground">
           <Scissors className="w-3.5 h-3.5" />
           <span className="text-sm">
-            {appointment.service_name || 'Service'}
+            {appointment.service_name || 'Service')}
           </span>
         </div>
         
@@ -118,10 +118,10 @@ export function DayAppointmentsPanel({ day, open, onOpenChange }: DayAppointment
     <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
       <div className="p-5 pb-3 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase">
-          {formatDate(parseISO(day.date), 'EEEE, MMMM d'}
+          {formatDate(parseISO(day.date), 'EEEE, MMMM d')}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-          <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}</span>
+          <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : '')}</span>
           <span>·</span>
           <span className="font-display">
             <BlurredAmount>{fmtWhole(day.revenue)}</BlurredAmount> projected

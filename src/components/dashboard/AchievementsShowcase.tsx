@@ -126,11 +126,11 @@ export function AchievementsShowcase({ userId, compact = false }: AchievementsSh
                       p-3 rounded-lg border transition-all
                       ${isEarned 
                         ? 'bg-primary/5 border-primary/20' 
-                        : 'bg-muted/30 border-muted opacity-60'}
+                        : 'bg-muted/30 border-muted opacity-60')}
                     `}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={isEarned ? '' : 'grayscale'}>
+                      <div className={isEarned ? '' : 'grayscale')}>
                         <AchievementBadge 
                           achievement={achievement} 
                           earnedAt={userAch?.earned_at}
@@ -147,7 +147,7 @@ export function AchievementsShowcase({ userId, compact = false }: AchievementsSh
                         </p>
                         {isEarned && userAch && (
                           <p className="text-[10px] text-primary mt-1">
-                            Earned {formatDate(new Date(userAch.earned_at), 'MMM d'}
+                            Earned {formatDate(new Date(userAch.earned_at), 'MMM d')}
                           </p>
                         )}
                         {!isEarned && (

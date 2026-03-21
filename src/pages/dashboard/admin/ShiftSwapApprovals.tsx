@@ -98,7 +98,7 @@ export default function ShiftSwapApprovals() {
                 {typeConfig.label}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                Requested {formatDate(new Date(swap.created_at), 'MMM d'}
+                Requested {formatDate(new Date(swap.created_at), 'MMM d')}
               </span>
             </div>
 
@@ -134,7 +134,7 @@ export default function ShiftSwapApprovals() {
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  {formatDate(new Date(swap.original_date), 'EEE, MMM d'} • {formatTime(swap.original_start_time)} - {formatTime(swap.original_end_time)}
+                  {formatDate(new Date(swap.original_date), 'EEE, MMM d')} • {formatTime(swap.original_start_time)} - {formatTime(swap.original_end_time)}
                 </span>
               </div>
               {swap.location && (
@@ -150,7 +150,7 @@ export default function ShiftSwapApprovals() {
               <div className="mt-3 bg-blue-500/5 rounded-lg p-3 border border-blue-500/10">
                 <p className="text-xs font-medium text-blue-600 mb-1">In Exchange For</p>
                 <p className="text-sm">
-                  {formatDate(new Date(swap.claimer_date), 'EEE, MMM d'} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
+                  {formatDate(new Date(swap.claimer_date), 'EEE, MMM d')} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
                 </p>
               </div>
             )}
@@ -168,7 +168,7 @@ export default function ShiftSwapApprovals() {
               <div className="flex gap-2 mt-4 pt-3 border-t">
                 <Button
                   className="flex-1"
-                  onClick={() => handleAction(swap, 'approve'}
+                  onClick={() => handleAction(swap, 'approve')}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Approve
@@ -176,7 +176,7 @@ export default function ShiftSwapApprovals() {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => handleAction(swap, 'deny'}
+                  onClick={() => handleAction(swap, 'deny')}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Deny
@@ -276,12 +276,12 @@ export default function ShiftSwapApprovals() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {actionType === 'approve' ? 'Approve Swap' : 'Deny Swap'}
+                {actionType === 'approve' ? 'Approve Swap' : 'Deny Swap')}
               </DialogTitle>
               <DialogDescription>
                 {actionType === 'approve'
                   ? 'This will notify both parties and update their schedules.'
-                  : 'This will notify both parties that the swap was not approved.'}
+                  : 'This will notify both parties that the swap was not approved.')}
               </DialogDescription>
             </DialogHeader>
 
@@ -302,12 +302,12 @@ export default function ShiftSwapApprovals() {
                 Cancel
               </Button>
               <Button
-                variant={actionType === 'deny' ? 'destructive' : 'default'}
+                variant={actionType === 'deny' ? 'destructive' : 'default')}
                 onClick={handleConfirmAction}
                 disabled={approveSwap.isPending}
               >
                 {approveSwap.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {actionType === 'approve' ? 'Approve' : 'Deny'}
+                {actionType === 'approve' ? 'Approve' : 'Deny')}
               </Button>
             </DialogFooter>
           </DialogContent>

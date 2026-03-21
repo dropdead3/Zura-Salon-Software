@@ -184,7 +184,7 @@ export function SeasonalForecastCard({ products, velocityMap, filterContext }: S
                 </div>
                 <CardDescription className="text-xs flex items-center gap-1.5">
                   <SeasonIcon className={cn('w-3.5 h-3.5', seasonCfg.color)} />
-                  {seasonCfg.label} → {nextSeasonCfg.label} outlook · {forecastData.length} active product{forecastData.length !== 1 ? 's' : ''}
+                  {seasonCfg.label} → {nextSeasonCfg.label} outlook · {forecastData.length} active product{forecastData.length !== 1 ? 's' : '')}
                 </CardDescription>
               </div>
             </div>

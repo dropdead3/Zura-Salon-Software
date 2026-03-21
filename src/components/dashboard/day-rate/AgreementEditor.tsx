@@ -104,7 +104,7 @@ export function AgreementEditor() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Created {formatDate(new Date(agreement.created_at), 'MMM d, yyyy'}
+                      Created {formatDate(new Date(agreement.created_at), 'MMM d, yyyy')}
                     </p>
                   </div>
                 </div>
@@ -298,7 +298,7 @@ By proceeding with this booking, you acknowledge that you have read, understood,
 
       <div className="flex justify-end gap-2">
         <Button type="submit" disabled={createAgreement.isPending}>
-          {createAgreement.isPending ? 'Creating...' : 'Create Agreement'}
+          {createAgreement.isPending ? 'Creating...' : 'Create Agreement')}
         </Button>
       </div>
     </form>

@@ -64,8 +64,8 @@ export function BundleSuggestionsCard({ locationId, filterContext, movementRatin
                   <MetricInfoTooltip description="Products frequently purchased together in the same transaction over the last 90 days. Strategic bundles pair a best seller with a slow mover to boost movement." />
                 </div>
                 <CardDescription className="text-xs">
-                  {data.pairs.length} co-purchase pair{data.pairs.length !== 1 ? 's' : ''} detected
-                  {strategicPairs.length > 0 && <span className="text-primary"> · {strategicPairs.length} strategic bundle{strategicPairs.length !== 1 ? 's' : ''}</span>}
+                  {data.pairs.length} co-purchase pair{data.pairs.length !== 1 ? 's' : '')} detected
+                  {strategicPairs.length > 0 && <span className="text-primary"> · {strategicPairs.length} strategic bundle{strategicPairs.length !== 1 ? 's' : '')}</span>}
                 </CardDescription>
               </div>
             </div>
@@ -97,7 +97,7 @@ export function BundleSuggestionsCard({ locationId, filterContext, movementRatin
                 {data.pairs.slice(0, 15).map((pair, idx) => {
                   const isStrategic = strategicPairs.includes(pair);
                   return (
-                    <TableRow key={idx} className={cn(isStrategic && 'bg-primary/[0.02]'}>
+                    <TableRow key={idx} className={cn(isStrategic && 'bg-primary/[0.02]')}>
                       <TableCell className="font-medium text-sm">{titleCase(pair.productA)}</TableCell>
                       <TableCell className="font-medium text-sm">{titleCase(pair.productB)}</TableCell>
                       <TableCell className="text-right tabular-nums">{pair.count}</TableCell>

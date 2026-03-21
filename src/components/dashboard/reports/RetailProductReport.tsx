@@ -60,7 +60,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
       autoTable(doc, {
         ...branding, startY: y,
         head: [['Product', 'Category', 'Units', 'Revenue', 'Avg Price', 'Discount', 'Trend']],
-        body: data.products.map(p => [p.name, p.category || '--', p.unitsSold.toString(), formatCurrencyWhole(p.revenue), formatCurrencyWhole(p.avgPrice), p.discount > 0 ? formatCurrencyWhole(p.discount) : '--', `${p.revenueTrend >= 0 ? '+' : ''}${Math.round(p.revenueTrend)}%`]),
+        body: data.products.map(p => [p.name, p.category || '--', p.unitsSold.toString(), formatCurrencyWhole(p.revenue), formatCurrencyWhole(p.avgPrice), p.discount > 0 ? formatCurrencyWhole(p.discount) : '--', `${p.revenueTrend >= 0 ? '+' : '')}${Math.round(p.revenueTrend)}%`]),
         theme: 'striped', headStyles: { fillColor: [51, 51, 51] }, margin: { ...branding.margin, left: 14, right: 14 },
       });
 
@@ -112,7 +112,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
   const exportCSV = () => {
     if (!data) return;
     let csv = 'Product,Category,Units,Revenue,Avg Price,Discount,Trend %\n';
-    data.products.forEach(p => { csv += `"${p.name}","${p.category || ''}",${p.unitsSold},${p.revenue},${p.avgPrice},${p.discount},${Math.round(p.revenueTrend)}\n`; });
+    data.products.forEach(p => { csv += `"${p.name}","${p.category || '')}",${p.unitsSold},${p.revenue},${p.avgPrice},${p.discount},${Math.round(p.revenueTrend)}\n`; });
     csv += `\nRed Flags\nProduct,Issue,Detail\n`;
     data.redFlags.forEach(f => { csv += `"${f.product}","${f.label}","${f.detail}"\n`; });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -146,7 +146,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
         <Card><CardContent className="p-4">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Product Revenue</p>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(data.summary.totalRevenue)}</BlurredAmount></p>
-          {data.summary.revenueChange !== 0 && <p className={cn('text-xs tabular-nums', data.summary.revenueChange > 0 ? 'text-emerald-600' : 'text-red-500'}>{data.summary.revenueChange > 0 ? '+' : ''}{Math.round(data.summary.revenueChange)}% vs prior</p>}
+          {data.summary.revenueChange !== 0 && <p className={cn('text-xs tabular-nums', data.summary.revenueChange > 0 ? 'text-emerald-600' : 'text-red-500')}>{data.summary.revenueChange > 0 ? '+' : '')}{Math.round(data.summary.revenueChange)}% vs prior</p>}
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Units Sold</p>
@@ -169,7 +169,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
             <CardTitle className="font-display text-base tracking-wide">ALL PRODUCTS</CardTitle>
             <MetricInfoTooltip description="All retail products sold in the selected period with trend comparison to prior period." />
           </div>
-          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy'} - {formatDate(new Date(dateTo), 'MMM d, yyyy'}</CardDescription>
+          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -189,13 +189,13 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
                 <TableRow key={p.name}>
                   <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014'}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014')}</TableCell>
                   <TableCell className="text-right tabular-nums">{p.unitsSold}</TableCell>
                   <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
                   <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(p.avgPrice)}</BlurredAmount></TableCell>
                   <TableCell className="text-right">
-                    <span className={cn('text-xs tabular-nums', p.revenueTrend > 0 ? 'text-emerald-600' : p.revenueTrend < 0 ? 'text-red-500' : 'text-muted-foreground'}>
-                      {p.revenueTrend > 0 ? '+' : ''}{Math.round(p.revenueTrend)}%
+                    <span className={cn('text-xs tabular-nums', p.revenueTrend > 0 ? 'text-emerald-600' : p.revenueTrend < 0 ? 'text-red-500' : 'text-muted-foreground')}>
+                      {p.revenueTrend > 0 ? '+' : '')}{Math.round(p.revenueTrend)}%
                     </span>
                   </TableCell>
                 </TableRow>
@@ -226,7 +226,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
           <CardContent>
             <div className="space-y-2">
               {data.redFlags.map((f, i) => (
-                <div key={i} className={cn('flex items-center gap-3 rounded-lg border px-3 py-2', f.severity === 'danger' ? 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20' : 'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20'}>
+                <div key={i} className={cn('flex items-center gap-3 rounded-lg border px-3 py-2', f.severity === 'danger' ? 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20' : 'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20')}>
                   <Package className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div className="flex-1"><p className="text-sm font-medium">{f.product}</p><p className="text-xs text-muted-foreground">{f.detail}</p></div>
                   <Badge variant="outline" className="text-[10px]">{f.label}</Badge>

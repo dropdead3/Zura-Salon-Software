@@ -241,7 +241,7 @@ export function ScheduleToolbar({
               <div>
                 <h4 className="font-medium text-sm mb-2">Location</h4>
                 <Select
-                  value={filters.locationIds[0] || 'all'}
+                  value={filters.locationIds[0] || 'all')}
                   onValueChange={(v) => setFilters({
                     ...filters,
                     locationIds: v === 'all' ? [] : [v],
@@ -264,7 +264,7 @@ export function ScheduleToolbar({
               <div>
                 <h4 className="font-medium text-sm mb-2">Stylist</h4>
                 <Select
-                  value={filters.stylistIds[0] || 'all'}
+                  value={filters.stylistIds[0] || 'all')}
                   onValueChange={(v) => setFilters({
                     ...filters,
                     stylistIds: v === 'all' ? [] : [v],
@@ -297,7 +297,7 @@ export function ScheduleToolbar({
                         onCheckedChange={() => toggleStatus(status)}
                       />
                       <Label htmlFor={status} className="text-sm capitalize">
-                        {status.replace('_', ' '}
+                        {status.replace('_', ' ')}
                       </Label>
                     </div>
                   ))}
@@ -367,7 +367,7 @@ export function ScheduleToolbar({
       {/* Sync Status */}
       {lastSync && (
         <div className="text-xs text-muted-foreground hidden lg:block">
-          Last synced: {formatDate(lastSync, 'h:mm a'}
+          Last synced: {formatDate(lastSync, 'h:mm a')}
         </div>
       )}
     </div>

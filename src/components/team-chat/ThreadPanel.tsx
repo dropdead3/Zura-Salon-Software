@@ -104,7 +104,7 @@ export function ThreadPanel() {
         </div>
         {!isLoading && (
           <div className="text-xs text-muted-foreground mt-1">
-            {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+            {participantCount} {participantCount === 1 ? 'participant' : 'participants')}
             {lastActivity && (
               <> · Last reply {formatDistanceToNow(new Date(lastActivity), { addSuffix: true })}</>
             )}
@@ -139,7 +139,7 @@ export function ThreadPanel() {
               {replies.length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <div className="flex-1 h-px bg-border" />
-                  <span>{replies.length} {replies.length === 1 ? 'reply' : 'replies'}</span>
+                  <span>{replies.length} {replies.length === 1 ? 'reply' : 'replies')}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
               )}
@@ -178,7 +178,7 @@ export function ThreadPanel() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-primary mb-0.5">
-                        Replying to {quotedMessage.sender?.display_name || quotedMessage.sender?.full_name || 'Unknown'}
+                        Replying to {quotedMessage.sender?.display_name || quotedMessage.sender?.full_name || 'Unknown')}
                       </div>
                       <div className="text-xs text-muted-foreground line-clamp-2">
                         {quotedMessage.content}

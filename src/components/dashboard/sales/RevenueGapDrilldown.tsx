@@ -91,7 +91,7 @@ function GapItemRow({ item, showDates, formatCurrency }: {
             item.serviceName,
             item.stylistName ? `w/ ${item.stylistName}` : null,
             showDates ? item.appointmentDate : null,
-          ].filter(Boolean).join(' · '}
+          ].filter(Boolean).join(' · ')}
         </span>
         {showAmountShift && (
           <span className="flex items-center gap-0.5 shrink-0 ml-auto">
@@ -137,7 +137,7 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
                         "font-medium",
                         data.gapAmount <= 0 ? "text-success-foreground" : "text-warning"
                       )}>
-                        {data.gapAmount <= 0 ? '+' : '-'}{formatCurrency(Math.abs(data.gapAmount))}
+                        {data.gapAmount <= 0 ? '+' : '-')}{formatCurrency(Math.abs(data.gapAmount))}
                       </span>
                     </BlurredAmount>
                   </div>

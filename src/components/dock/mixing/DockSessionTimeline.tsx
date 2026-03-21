@@ -130,7 +130,7 @@ export function DockSessionTimeline({ sessionId }: DockSessionTimelineProps) {
               >
                 {/* Timeline dot + line */}
                 <div className="flex flex-col items-center w-5 flex-shrink-0">
-                  <div className={cn('w-2 h-2 rounded-full', display.color.replace('text-', 'bg-'} />
+                  <div className={cn('w-2 h-2 rounded-full', display.color.replace('text-', 'bg-')} />
                   {!isLast && <div className="w-px flex-1 min-h-[12px] bg-[hsl(var(--platform-border)/0.15)]" />}
                 </div>
 
@@ -154,7 +154,7 @@ export function DockSessionTimeline({ sessionId }: DockSessionTimelineProps) {
                   {Object.entries(event.event_payload).map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between gap-2">
                       <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
-                        {key.replace(/_/g, ' '}
+                        {key.replace(/_/g, ' ')}
                       </span>
                       <span className="text-[10px] text-[hsl(var(--platform-foreground))] truncate max-w-[140px]">
                         {typeof value === 'number' ? value.toFixed(2) : String(value)}

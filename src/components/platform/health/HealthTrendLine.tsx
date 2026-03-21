@@ -29,7 +29,7 @@ export function HealthTrendLine({ data, height = 100, className }: HealthTrendLi
         <LineChart data={chartData}>
           <XAxis
             dataKey="date"
-            tickFormatter={(value) => format(parseISO(value), 'MMM d'}
+            tickFormatter={(value) => format(parseISO(value), 'MMM d')}
             tick={{ fill: '#64748b', fontSize: 10 }}
             axisLine={{ stroke: '#475569' }}
             tickLine={false}
@@ -47,7 +47,7 @@ export function HealthTrendLine({ data, height = 100, className }: HealthTrendLi
                 const data = payload[0].payload;
                 return (
                   <div className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 shadow-lg">
-                    <p className="text-slate-400 text-xs">{format(parseISO(data.date), 'MMM d, yyyy'}</p>
+                    <p className="text-slate-400 text-xs">{format(parseISO(data.date), 'MMM d, yyyy')}</p>
                     <p className="text-white font-medium">Score: {data.score}</p>
                   </div>
                 );

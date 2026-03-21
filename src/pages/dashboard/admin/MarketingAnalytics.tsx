@@ -142,7 +142,7 @@ export default function MarketingAnalytics() {
               <div className="flex flex-col items-center text-center">
                 <Award className="h-5 w-5 text-muted-foreground mb-2" />
                 <span className="text-lg font-medium truncate max-w-full px-2">
-                  {analytics?.summary.topCampaign || '—'}
+                  {analytics?.summary.topCampaign || '—')}
                 </span>
                 <span className="text-xs text-muted-foreground">Top Campaign</span>
               </div>
@@ -184,7 +184,7 @@ export default function MarketingAnalytics() {
                   <span className="text-2xl font-medium tabular-nums">
                     {analytics?.summary.avgCPL !== null 
                       ? formatCurrency(analytics.summary.avgCPL) 
-                      : '—'}
+                      : '—')}
                   </span>
                   <span className="text-xs text-muted-foreground">Avg Cost Per Lead</span>
                 </div>
@@ -206,7 +206,7 @@ export default function MarketingAnalytics() {
                   }`}>
                     {analytics?.summary.overallROAS !== null 
                       ? `${analytics.summary.overallROAS.toFixed(2)}x` 
-                      : '—'}
+                      : '—')}
                   </span>
                   <span className="text-xs text-muted-foreground">Overall ROAS</span>
                 </div>

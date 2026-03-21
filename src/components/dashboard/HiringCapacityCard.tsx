@@ -292,7 +292,7 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
 
                 {forecast.averageGrowthRate !== 0 && (
                   <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Avg. appointment growth: <span className="tabular-nums">{forecast.averageGrowthRate > 0 ? '+' : ''}{forecast.averageGrowthRate}%</span>
+                    Avg. appointment growth: <span className="tabular-nums">{forecast.averageGrowthRate > 0 ? '+' : '')}{forecast.averageGrowthRate}%</span>
                   </p>
                 )}
               </div>

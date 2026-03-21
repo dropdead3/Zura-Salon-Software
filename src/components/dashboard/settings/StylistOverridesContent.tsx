@@ -131,9 +131,9 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
               return (
                 <div key={emp.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'truncate'}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
+                    <p className={cn(tokens.body.emphasis, 'truncate')}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
                     <p className={tokens.body.muted}>
-                      {emp.stylist_level || 'No level'}
+                      {emp.stylist_level || 'No level')}
                       {levelPrice != null && ` · Level: $${levelPrice.toFixed(2)}`}
                     </p>
                   </div>
@@ -180,8 +180,8 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
           </div>
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {availableEmployees.length === 0 ? (
-              <p className={cn(tokens.body.muted, 'text-center py-3'}>
-                {search ? 'No matching stylists' : 'All stylists have overrides'}
+              <p className={cn(tokens.body.muted, 'text-center py-3')}>
+                {search ? 'No matching stylists' : 'All stylists have overrides')}
               </p>
             ) : (
               availableEmployees.map(emp => (
@@ -194,8 +194,8 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                   onClick={() => { setAddingEmployeeId(emp.id); setNewPrice(''); }}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'truncate'}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
-                    <p className={tokens.body.muted}>{emp.stylist_level || 'No level'}</p>
+                    <p className={cn(tokens.body.emphasis, 'truncate')}>{formatDisplayName(emp.full_name, emp.display_name)}</p>
+                    <p className={tokens.body.muted}>{emp.stylist_level || 'No level')}</p>
                   </div>
                   {addingEmployeeId === emp.id && (
                     <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                           step="0.01"
                           min="0"
                           className="pl-7 rounded-lg h-8 text-sm"
-                          placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00'}
+                          placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00')}
                           value={newPrice}
                           onChange={e => setNewPrice(e.target.value)}
                           onClick={e => e.stopPropagation()}

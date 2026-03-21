@@ -131,7 +131,7 @@ export function AttendeeAvailabilityOverlay({
               className="absolute text-[10px] text-muted-foreground -translate-x-1/2 font-sans"
               style={{ left: `${(i / TOTAL_HOURS) * 100}%` }}
             >
-              {hour > 12 ? hour - 12 : hour}{hour >= 12 ? 'p' : 'a'}
+              {hour > 12 ? hour - 12 : hour}{hour >= 12 ? 'p' : 'a')}
             </span>
           );
         })}

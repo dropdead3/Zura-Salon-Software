@@ -205,7 +205,7 @@ export function FooterEditor() {
         <div className="space-y-2">
           <Label>Copyright Text</Label>
           <Input value={config.copyright_text} onChange={e => handleChange('copyright_text', e.target.value)} />
-          <p className="text-xs text-muted-foreground">{'{year}'} will be replaced with the current year</p>
+          <p className="text-xs text-muted-foreground">{'{year}')} will be replaced with the current year</p>
         </div>
         <div className="space-y-2">
           <Label>Contact Email</Label>
@@ -239,7 +239,7 @@ export function FooterEditor() {
               <Icon className="w-4 h-4" />
             </div>
             <Input
-              value={(config[key] as string) || ''}
+              value={(config[key] as string) || '')}
               onChange={e => handleChange(key, e.target.value)}
               placeholder={placeholder}
               autoCapitalize="off"

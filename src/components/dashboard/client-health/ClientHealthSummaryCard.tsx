@@ -56,7 +56,7 @@ export function ClientHealthSummaryCard() {
             </div>
           </div>
           <Button variant="ghost" size={tokens.button.card} asChild className="gap-1 text-xs">
-            <Link to={dashPath('/admin/client-health'}>
+            <Link to={dashPath('/admin/client-health')}>
               View Hub <ChevronRight className="h-3 w-3" />
             </Link>
           </Button>

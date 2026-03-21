@@ -101,7 +101,7 @@ export function EditorSectionCard({
             data-editor-control
             onClick={handleToggle}
             className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors"
-            title={enabled ? 'Hide section' : 'Show section'}
+            title={enabled ? 'Hide section' : 'Show section')}
           >
             {enabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
           </button>
@@ -133,7 +133,7 @@ export function EditorSectionCard({
       </div>
 
       {/* Section content */}
-      <div className={cn(!enabled && 'pointer-events-none'}>
+      <div className={cn(!enabled && 'pointer-events-none')}>
         {children}
       </div>
     </div>

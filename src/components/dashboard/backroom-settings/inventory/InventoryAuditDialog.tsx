@@ -47,7 +47,7 @@ function getFieldLabel(field: string): string {
 
 function exportAuditCsv(entries: AuditEntry[], productName: string) {
   const headers = ['Timestamp', 'Type', 'Field', 'Change', 'After', 'User', 'Notes'];
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const rows = entries.map(e => [
     new Date(e.created_at).toISOString(),
     e.type,
@@ -62,7 +62,7 @@ function exportAuditCsv(entries: AuditEntry[], productName: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `audit-trail-${productName.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd'}.csv`;
+  a.download = `audit-trail-${productName.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -121,11 +121,11 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-2xl'}>
+      <DialogContent className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-2xl')}>
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/60">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <DialogTitle className={cn(tokens.card.title, 'text-sm'}>Audit Trail</DialogTitle>
+              <DialogTitle className={cn(tokens.card.title, 'text-sm')}>Audit Trail</DialogTitle>
               <p className="text-muted-foreground text-xs mt-0.5">{productName}</p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -143,7 +143,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
                 size="sm"
                 className="h-7 px-2 text-xs gap-1"
                 disabled={entries.length === 0}
-                onClick={() => exportAuditPdf(entries, productName, 'Organization'}
+                onClick={() => exportAuditPdf(entries, productName, 'Organization')}
               >
                 <FileText className="w-3.5 h-3.5" /> PDF
               </Button>
@@ -167,7 +167,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-normal">
                   <CalendarIcon className="w-3 h-3" />
-                  {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
+                  {dateFrom ? format(dateFrom, 'MMM d') : 'From')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -185,7 +185,7 @@ export function InventoryAuditDialog({ open, onOpenChange, productId, productNam
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-normal">
                   <CalendarIcon className="w-3 h-3" />
-                  {dateTo ? format(dateTo, 'MMM d') : 'To'}
+                  {dateTo ? format(dateTo, 'MMM d') : 'To')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -256,7 +256,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
 
   return (
     <div
-      className={cn('relative flex gap-3 pb-4 cursor-pointer rounded-lg px-1 -mx-1 hover:bg-muted/30 transition-colors', isLast && 'pb-0'}
+      className={cn('relative flex gap-3 pb-4 cursor-pointer rounded-lg px-1 -mx-1 hover:bg-muted/30 transition-colors', isLast && 'pb-0')}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -293,7 +293,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
               'text-xs font-medium tabular-nums',
               isPositive ? 'text-success' : isNegative ? 'text-destructive' : 'text-muted-foreground'
             )}>
-              {isPositive ? '+' : ''}{entry.quantity_change}
+              {isPositive ? '+' : '')}{entry.quantity_change}
             </span>
           )}
 
@@ -305,7 +305,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
 
           {!isStock && (
             <span className="text-xs text-muted-foreground tabular-nums">
-              {entry.old_value ?? '—'} → {entry.quantity_after ?? '—'}
+              {entry.old_value ?? '—')} → {entry.quantity_after ?? '—')}
             </span>
           )}
         </div>
@@ -321,7 +321,7 @@ function AuditRow({ entry, isLast, onClick }: { entry: AuditEntry; isLast: boole
               {entry.changed_by_name}
             </span>
           )}
-          <span title={format(new Date(entry.created_at), 'MMM d, yyyy h:mm a'}>
+          <span title={format(new Date(entry.created_at), 'MMM d, yyyy h:mm a')}>
             {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
           </span>
         </div>

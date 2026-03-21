@@ -179,7 +179,7 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
           </Button>
         </div>
         <h3 className="font-medium text-lg">
-          {format(weekDays[0], 'MMM d'} - {format(weekDays[6], 'MMM d, yyyy'}
+          {format(weekDays[0], 'MMM d')} - {format(weekDays[6], 'MMM d, yyyy')}
         </h3>
       </div>
 
@@ -218,13 +218,13 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
                 )}
               >
                 <div className="text-xs text-muted-foreground uppercase">
-                  {format(day, 'EEE'}
+                  {format(day, 'EEE')}
                 </div>
                 <div className={cn(
                   'text-lg font-medium',
                   isToday(day) && 'text-primary'
                 )}>
-                  {format(day, 'd'}
+                  {format(day, 'd')}
                 </div>
               </div>
             ))}

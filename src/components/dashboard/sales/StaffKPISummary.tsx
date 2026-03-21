@@ -37,7 +37,7 @@ export function StaffKPISummary({ dateFrom, dateTo, locationId, onTileClick }: S
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className={cn(tokens.kpi.tile, 'space-y-2'}>
+          <div key={i} className={cn(tokens.kpi.tile, 'space-y-2')}>
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-7 w-16" />
           </div>

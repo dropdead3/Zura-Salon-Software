@@ -182,7 +182,7 @@ export function DockMyStatsPanel({ staff, onBack }: DockMyStatsPanelProps) {
                 <Progress
                   value={stat.pct}
                   className="h-1.5 bg-[hsl(var(--platform-bg-hover))]"
-                  indicatorClassName={stat.barColor ?? ''}
+                  indicatorClassName={stat.barColor ?? '')}
                 />
               )}
             </div>

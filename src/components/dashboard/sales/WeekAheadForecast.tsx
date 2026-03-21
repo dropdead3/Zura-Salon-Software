@@ -114,7 +114,7 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick, closedDate
                 onDayClick(day);
               }}
             >
-              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
+              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : '')}
             </text>
             {isClosed && (
               <text x={0} dy={39} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
@@ -366,7 +366,7 @@ export function WeekAheadForecast() {
         <CardContent className="space-y-4">
           {/* Scheduled / Predicted toggle */}
           <div className="flex items-center gap-3">
-            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted'}>
+            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted')}>
               <FilterTabsList>
                 <FilterTabsTrigger value="scheduled">Scheduled</FilterTabsTrigger>
                 <UITooltip>
@@ -407,7 +407,7 @@ export function WeekAheadForecast() {
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
-              onClick={() => handleStatCardClick('revenue'}
+              onClick={() => handleStatCardClick('revenue')}
             >
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -419,21 +419,21 @@ export function WeekAheadForecast() {
               />
               <div className="flex items-center gap-1 justify-center">
                 <p className="text-xs text-muted-foreground">
-                  {isPredictedMode ? '7-Day Predicted' : '7-Day Total'}
+                  {isPredictedMode ? '7-Day Predicted' : '7-Day Total')}
                 </p>
                 <MetricInfoTooltip description={isPredictedMode
                   ? `Scheduled revenue adjusted by ${Math.round(realizationRate!)}% realization rate. Accounts for cancellations, no-shows, and pricing differences.`
                   : "Sum of projected revenue from all scheduled appointments over the next 7 days."
                 } />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary'} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
             </div>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
-              onClick={() => handleStatCardClick('dailyAvg'}
+              onClick={() => handleStatCardClick('dailyAvg')}
             >
               <div className="flex justify-center mb-1">
                 <Calendar className="w-4 h-4 text-chart-2" />
@@ -445,14 +445,14 @@ export function WeekAheadForecast() {
               />
               <p className="text-xs text-muted-foreground">Daily Operating Avg</p>
               <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-tight">Only counts days open</p>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary'} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
             </div>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
-              onClick={() => handleStatCardClick('count'}
+              onClick={() => handleStatCardClick('count')}
             >
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-chart-3" />
@@ -462,7 +462,7 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">Appointments</p>
                 <MetricInfoTooltip description="Total count of scheduled appointments across the next 7 days." />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary'} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
             </div>
           </div>
 
@@ -470,7 +470,7 @@ export function WeekAheadForecast() {
           {byCategory && (
             <CategoryBreakdownPanel
               data={byCategory}
-              mode={selectedStatCard || 'revenue'}
+              mode={selectedStatCard || 'revenue')}
               dayCount={7}
               isOpen={selectedStatCard !== null}
             />
@@ -492,7 +492,7 @@ export function WeekAheadForecast() {
               </div>
             )}
             {!operatingDailyAvg && <div />}
-            <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid'}>
+            <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
               <FilterTabsList>
                 <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
                 <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
@@ -579,7 +579,7 @@ export function WeekAheadForecast() {
                           <Cell
                             key={`solid-${index}`}
                             fill="url(#solid-glass-week)"
-                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)'}
+                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)')}
                             strokeOpacity={isSelected ? 1 : 1}
                             strokeWidth={isSelected ? 1.5 : 1}
                           />
@@ -656,7 +656,7 @@ export function WeekAheadForecast() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'}
+                            stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)')}
                             strokeDasharray={lineLength}
                             strokeDashoffset={lineLength}
                             strokeWidth={1}
@@ -693,7 +693,7 @@ export function WeekAheadForecast() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(parseISO(peakDay.date), 'EEEE, MMM d'}</span>
+                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(parseISO(peakDay.date), 'EEEE, MMM d')}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrencyWhole(peakDay.revenue)}</BlurredAmount>

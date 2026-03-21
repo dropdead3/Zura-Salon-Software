@@ -23,7 +23,7 @@ interface PayrollKPICardsProps {
 }
 
 function formatPercent(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  return `${value >= 0 ? '+' : '')}${value.toFixed(1)}%`;
 }
 
 interface KPICardProps {

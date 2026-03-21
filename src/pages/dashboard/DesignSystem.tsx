@@ -283,7 +283,7 @@ const DesignSystem = () => {
             <Button
               variant="outline"
               size={tokens.button.card}
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark'}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -672,8 +672,8 @@ const DesignSystem = () => {
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">{type.usage}</p>
                       {type.rule && (
-                        <div className={`mt-3 p-2 rounded ${type.class === 'font-display' ? 'bg-destructive/10 border border-destructive/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
-                          <p className={`text-xs font-medium ${type.class === 'font-display' ? 'text-destructive' : 'text-amber-600'}`}>
+                        <div className={`mt-3 p-2 rounded ${type.class === 'font-display' ? 'bg-destructive/10 border border-destructive/20' : 'bg-amber-500/10 border border-amber-500/20')}`}>
+                          <p className={`text-xs font-medium ${type.class === 'font-display' ? 'text-destructive' : 'text-amber-600')}`}>
                             ⚠️ {type.rule}
                           </p>
                         </div>

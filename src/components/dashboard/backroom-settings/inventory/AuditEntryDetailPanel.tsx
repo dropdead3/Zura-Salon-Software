@@ -93,7 +93,7 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md'}
+        className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md')}
         overlayClassName={DRILLDOWN_OVERLAY_CLASS}
       >
         {/* Hero header */}
@@ -104,11 +104,11 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
             </div>
             <div className="flex-1 min-w-0">
               <DialogHeader className="p-0 space-y-0">
-                <DialogTitle className={cn(tokens.card.title, 'text-sm'}>
+                <DialogTitle className={cn(tokens.card.title, 'text-sm')}>
                   {getFieldLabel(entry.field)}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  {isStock ? 'Stock Change' : 'Setting Change'}
+                  {isStock ? 'Stock Change' : 'Setting Change')}
                 </DialogDescription>
               </DialogHeader>
             </div>
@@ -116,7 +116,7 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
               'text-[10px] shrink-0',
               isStock ? 'bg-muted/50 text-foreground/70' : 'bg-primary/5 text-primary border-primary/20'
             )}>
-              {isStock ? 'Stock' : 'Setting'}
+              {isStock ? 'Stock' : 'Setting')}
             </Badge>
           </div>
 
@@ -137,25 +137,25 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
                   )}>
                     {entry.quantity_change != null
                       ? (isPositive ? '+' : '') + entry.quantity_change
-                      : '—'}
+                      : '—')}
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-muted-foreground mt-1" />
                 </div>
                 <div className="text-left">
                   <p className="text-[10px] text-muted-foreground">After</p>
-                  <p className="text-lg tabular-nums font-medium">{entry.quantity_after ?? '—'}</p>
+                  <p className="text-lg tabular-nums font-medium">{entry.quantity_after ?? '—')}</p>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-4">
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground">Previous</p>
-                  <p className="text-lg tabular-nums">{entry.old_value ?? '—'}</p>
+                  <p className="text-lg tabular-nums">{entry.old_value ?? '—')}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <div className="text-left">
                   <p className="text-[10px] text-muted-foreground">New Value</p>
-                  <p className="text-lg tabular-nums font-medium">{entry.quantity_after ?? '—'}</p>
+                  <p className="text-lg tabular-nums font-medium">{entry.quantity_after ?? '—')}</p>
                 </div>
               </div>
             )}
@@ -176,14 +176,14 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
           <DetailRow
             icon={Clock}
             label="Timestamp"
-            value={format(new Date(entry.created_at), 'EEEE, MMM d, yyyy · h:mm:ss a'}
+            value={format(new Date(entry.created_at), 'EEEE, MMM d, yyyy · h:mm:ss a')}
             className="tabular-nums"
           />
 
           <DetailRow
             icon={User}
             label="Changed By"
-            value={entry.changed_by_name ?? 'System'}
+            value={entry.changed_by_name ?? 'System')}
           />
 
           <DetailRow

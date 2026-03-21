@@ -94,7 +94,7 @@ export function BackroomProductAnalyticsCard({ startDate, endDate, rangeLabel, l
   const SortButton = ({ label, field }: { label: string; field: ProductSortKey }) => (
     <button className="flex items-center gap-1 group" onClick={() => handleSort(field)}>
       <span>{label}</span>
-      <ArrowUpDown className={cn('w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity', sortKey === field && 'opacity-100'} />
+      <ArrowUpDown className={cn('w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity', sortKey === field && 'opacity-100')} />
     </button>
   );
 
@@ -133,7 +133,7 @@ export function BackroomProductAnalyticsCard({ startDate, endDate, rangeLabel, l
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Categories */}
               <div>
-                <h3 className={cn(tokens.heading.subsection, 'mb-4'}>Top Categories</h3>
+                <h3 className={cn(tokens.heading.subsection, 'mb-4')}>Top Categories</h3>
                 <div style={{ height: Math.max(categoryChartData.length * 36, 120) }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={categoryChartData} layout="vertical" margin={{ left: 8, right: 16, top: 0, bottom: 0 }}>
@@ -153,7 +153,7 @@ export function BackroomProductAnalyticsCard({ startDate, endDate, rangeLabel, l
 
               {/* Top Products */}
               <div>
-                <h3 className={cn(tokens.heading.subsection, 'mb-4'}>Top Products</h3>
+                <h3 className={cn(tokens.heading.subsection, 'mb-4')}>Top Products</h3>
                 <div style={{ height: Math.max(productChartData.length * 36, 120) }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={productChartData} layout="vertical" margin={{ left: 8, right: 16, top: 0, bottom: 0 }}>
@@ -208,7 +208,7 @@ export function BackroomProductAnalyticsCard({ startDate, endDate, rangeLabel, l
                           {formatNumber(p.dispensedQty, { maximumFractionDigits: 1 })}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          <span className={p.wasteQty > 0 ? 'text-destructive' : ''}>
+                          <span className={p.wasteQty > 0 ? 'text-destructive' : '')}>
                             {formatNumber(p.wasteQty, { maximumFractionDigits: 1 })}
                           </span>
                         </TableCell>

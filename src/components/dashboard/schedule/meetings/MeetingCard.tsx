@@ -90,7 +90,7 @@ export function MeetingGridCard({
       {height > 70 && (
         <div className="flex items-center gap-1 mt-1">
           <Badge variant="outline" className="text-[9px] h-4 px-1 border-chart-1/30 text-chart-1">
-            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting'}
+            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting')}
           </Badge>
         </div>
       )}
@@ -118,7 +118,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
       )}
     >
       <div className="text-center shrink-0 w-16">
-        <div className="text-sm font-medium font-sans">{formatTime12h(meeting.start_time).replace(' ', ''}</div>
+        <div className="text-sm font-medium font-sans">{formatTime12h(meeting.start_time).replace(' ', '')}</div>
         <div className="text-xs text-muted-foreground font-sans">
           {formatMinutesToDuration(meeting.duration_minutes)}
         </div>
@@ -129,7 +129,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
           <Users className="h-3.5 w-3.5 text-chart-1 shrink-0" />
           <span className="text-sm font-medium font-sans truncate">{meeting.title}</span>
           <Badge variant="outline" className="text-[10px] border-chart-1/30 text-chart-1 shrink-0">
-            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting'}
+            {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting')}
           </Badge>
         </div>
         <div className="flex items-center gap-2 mt-1">
@@ -139,7 +139,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
           </span>
           {attendees.length > 0 && (
             <span className="text-xs text-muted-foreground font-sans">
-              · {attendees.length} attendee{attendees.length !== 1 ? 's' : ''}
+              · {attendees.length} attendee{attendees.length !== 1 ? 's' : '')}
             </span>
           )}
         </div>
@@ -151,7 +151,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
                 <Avatar key={att.user_id} className="w-5 h-5">
                   <AvatarImage src={profile?.photo_url || undefined} />
                   <AvatarFallback className="text-[8px]">
-                    {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?'}
+                    {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?')}
                   </AvatarFallback>
                 </Avatar>
               );

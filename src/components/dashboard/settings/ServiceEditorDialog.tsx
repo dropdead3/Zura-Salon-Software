@@ -130,12 +130,12 @@ export function ServiceEditorDialog({
       <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {isCreateMode ? 'Add Service' : `Edit ${initialData?.name || 'Service'}`}
+            {isCreateMode ? 'Add Service' : `Edit ${initialData?.name || 'Service')}`}
           </DialogTitle>
           <DialogDescription>
             {isCreateMode
               ? 'Create a new service for your menu.'
-              : 'Update service details, level pricing, and stylist overrides.'}
+              : 'Update service details, level pricing, and stylist overrides.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -279,15 +279,15 @@ export function ServiceEditorDialog({
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
                               <Label className="text-xs">
-                                {depositType === 'percentage' ? 'Percentage (%)' : 'Amount ($)'}
+                                {depositType === 'percentage' ? 'Percentage (%)' : 'Amount ($)')}
                               </Label>
                               <Input
                                 type="number"
                                 min="0"
-                                step={depositType === 'percentage' ? '1' : '0.01'}
+                                step={depositType === 'percentage' ? '1' : '0.01')}
                                 value={depositAmount}
                                 onChange={e => setDepositAmount(e.target.value)}
-                                placeholder={depositType === 'percentage' ? 'e.g. 25' : 'e.g. 50'}
+                                placeholder={depositType === 'percentage' ? 'e.g. 25' : 'e.g. 50')}
                               />
                             </div>
                             {depositType === 'percentage' && (
@@ -354,7 +354,7 @@ export function ServiceEditorDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" form="service-details-form" disabled={!name.trim() || isPending}>
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isCreateMode ? 'Create Service' : 'Save Changes'}
+              {isCreateMode ? 'Create Service' : 'Save Changes')}
             </Button>
           </DialogFooter>
         )}

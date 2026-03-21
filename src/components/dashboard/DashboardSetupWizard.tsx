@@ -141,7 +141,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
                     selectedTemplate === template.role_name
                       ? 'border-primary ring-2 ring-primary/20'
                       : 'border-transparent hover:border-muted-foreground/20',
-                    `bg-gradient-to-br ${TEMPLATE_COLORS[template.role_name] || 'from-muted/50 to-muted/30'}`
+                    `bg-gradient-to-br ${TEMPLATE_COLORS[template.role_name] || 'from-muted/50 to-muted/30')}`
                   )}
                   onClick={() => handleSelectTemplate(template.role_name)}
                 >
@@ -169,7 +169,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
                               key={section}
                               className="text-xs bg-background/60 px-2 py-0.5 rounded-full"
                             >
-                              {section.replace(/_/g, ' '}
+                              {section.replace(/_/g, ' ')}
                             </span>
                           ))}
                           {(template.layout.sections?.length || 0) > 4 && (
@@ -194,7 +194,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
                 disabled={!selectedTemplate || completeSetup.isPending}
                 className="gap-2"
               >
-                {completeSetup.isPending ? 'Setting up...' : 'Apply & Continue'}
+                {completeSetup.isPending ? 'Setting up...' : 'Apply & Continue')}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>

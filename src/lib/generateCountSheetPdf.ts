@@ -151,7 +151,7 @@ export async function generateCountSheetPdf({
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${filtered.length} product${filtered.length !== 1 ? 's' : ''} to count`, 14, bodyStartY);
+  doc.text(`${filtered.length} product${filtered.length !== 1 ? 's' : '')} to count`, 14, bodyStartY);
   bodyStartY += 4;
 
   // Sort products by brand then name

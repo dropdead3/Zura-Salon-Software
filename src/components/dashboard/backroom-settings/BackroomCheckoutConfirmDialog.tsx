@@ -82,13 +82,13 @@ export function BackroomCheckoutConfirmDialog({
 
           {/* ── 2. What You Pay Right Now ── */}
           <div className="space-y-1.5">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground'}>What You Pay Right Now</p>
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>What You Pay Right Now</p>
             <div className="rounded-lg border border-border/60 divide-y divide-border/40">
               {hardwareOneTime > 0 && (
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
                     <Weight className="w-3.5 h-3.5 text-muted-foreground" />
-                    {scaleCount} scale{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_HARDWARE_PRICE)}
+                    {scaleCount} scale{scaleCount !== 1 ? 's' : '')} × {formatCurrency(SCALE_HARDWARE_PRICE)}
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(hardwareOneTime)}</span>
                 </div>
@@ -96,7 +96,7 @@ export function BackroomCheckoutConfirmDialog({
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <MapPin className="w-3.5 h-3.5 text-primary" />
-                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}
+                  {locationCount} location{locationCount !== 1 ? 's' : '')} × {formatCurrency(BACKROOM_BASE_PRICE)}
                 </span>
                 <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
               </div>
@@ -104,7 +104,7 @@ export function BackroomCheckoutConfirmDialog({
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
                     <Weight className="w-3.5 h-3.5 text-primary" />
-                    {scaleCount} scale license{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}
+                    {scaleCount} scale license{scaleCount !== 1 ? 's' : '')} × {formatCurrency(SCALE_LICENSE_MONTHLY)}
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
                 </div>
@@ -128,12 +128,12 @@ export function BackroomCheckoutConfirmDialog({
 
           {/* ── 3. Recurring Every 30 Days ── */}
           <div className="space-y-1.5">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground'}>Recurring Every 30 Days</p>
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Recurring Every 30 Days</p>
             <div className="rounded-lg border border-border/60 divide-y divide-border/40">
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <MapPin className="w-3.5 h-3.5 text-primary" />
-                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}/mo
+                  {locationCount} location{locationCount !== 1 ? 's' : '')} × {formatCurrency(BACKROOM_BASE_PRICE)}/mo
                 </span>
                 <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
               </div>
@@ -141,7 +141,7 @@ export function BackroomCheckoutConfirmDialog({
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <span className="flex items-center gap-2 text-sm font-sans">
                     <Weight className="w-3.5 h-3.5 text-primary" />
-                    {scaleCount} scale license{scaleCount !== 1 ? 's' : ''} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
+                    {scaleCount} scale license{scaleCount !== 1 ? 's' : '')} × {formatCurrency(SCALE_LICENSE_MONTHLY)}/mo
                   </span>
                   <span className="text-sm font-sans font-medium">{formatCurrency(scaleLicenseCost)}</span>
                 </div>

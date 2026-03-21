@@ -255,7 +255,7 @@ export function AchievementsConfigPanel() {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {achievement.description || 'No description'}
+                            {achievement.description || 'No description')}
                           </p>
                           {achievement.requirement_type && (
                             <p className="text-xs text-muted-foreground mt-1">

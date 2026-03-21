@@ -104,7 +104,7 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
                 : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you — let's grow! 🌱`}
             </p>
           </div>
-          <Link to={dashPath('/'}>
+          <Link to={dashPath('/')}>
             <Button size={tokens.button.card} variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
               View Insights
             </Button>

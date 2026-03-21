@@ -617,7 +617,7 @@ export default function Schedule() {
                 closureReason={hoursInfo.closureReason}
                 assistedAppointmentIds={assistedAppointmentIds}
                 appointmentsWithAssistants={appointmentsWithAssistants}
-                colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+                colorBy={preferences.color_by as 'status' | 'service' | 'stylist')}
                 serviceLookup={serviceLookup}
                 assistantNamesMap={assistantNamesMap}
                 assistantProfilesMap={assistantProfilesMap}
@@ -641,7 +641,7 @@ export default function Schedule() {
               selectedAppointmentId={selectedAppointment?.id}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+              colorBy={preferences.color_by as 'status' | 'service' | 'stylist')}
               serviceLookup={serviceLookup}
                assistantNamesMap={assistantNamesMap}
                  assistantProfilesMap={assistantProfilesMap}
@@ -666,7 +666,7 @@ export default function Schedule() {
               locationHolidayClosures={selectedLocationData?.holiday_closures}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+              colorBy={preferences.color_by as 'status' | 'service' | 'stylist')}
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}
@@ -835,7 +835,7 @@ export default function Schedule() {
         isUpdating={isUpdating}
         taxRate={effectiveTaxRate}
         businessSettings={businessSettings || null}
-        locationName={selectedLocationData?.name || ''}
+        locationName={selectedLocationData?.name || '')}
         locationAddress={selectedLocationData?.address}
         locationPhone={selectedLocationData?.phone}
         onScheduleNext={handleCheckoutScheduleNext}
@@ -853,7 +853,7 @@ export default function Schedule() {
           }
         }}
         date={bookingDefaults.date || currentDate}
-        time={bookingDefaults.time || '09:00'}
+        time={bookingDefaults.time || '09:00')}
         defaultLocationId={selectedLocation}
         defaultStylistId={bookingDefaults.stylistId}
         onBookingComplete={(bookedDate) => {
@@ -907,7 +907,7 @@ export default function Schedule() {
           closedDayWarning.pendingAction?.();
         }}
         date={closedDayWarning.date}
-        locationName={selectedLocationData?.name || 'This location'}
+        locationName={selectedLocationData?.name || 'This location')}
         reason={closedDayWarning.reason}
         isOutsideHours={closedDayWarning.isOutsideHours}
       />
@@ -962,7 +962,7 @@ export default function Schedule() {
             date={currentDate}
             time={breakDefaults.time}
             requestingUserId={breakDefaults.stylistId}
-            requestingUserName={allStylists.find(s => s.user_id === breakDefaults.stylistId)?.display_name || allStylists.find(s => s.user_id === breakDefaults.stylistId)?.full_name || 'Stylist'}
+            requestingUserName={allStylists.find(s => s.user_id === breakDefaults.stylistId)?.display_name || allStylists.find(s => s.user_id === breakDefaults.stylistId)?.full_name || 'Stylist')}
             appointments={appointments}
             locationId={selectedLocation}
             onBack={() => setAssistantDialogOpen(false)}

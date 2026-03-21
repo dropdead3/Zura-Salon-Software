@@ -19,7 +19,7 @@ export function LocationCapacityBar({ capacity, onAddSeats }: LocationCapacityBa
         <div className="flex items-center gap-3">
           <Infinity className="h-5 w-5 text-emerald-500" />
           <span className="text-sm">
-            <span className="font-medium">{locations.used}</span> location{locations.used !== 1 ? 's' : ''} (unlimited plan)
+            <span className="font-medium">{locations.used}</span> location{locations.used !== 1 ? 's' : '')} (unlimited plan)
           </span>
         </div>
       </div>

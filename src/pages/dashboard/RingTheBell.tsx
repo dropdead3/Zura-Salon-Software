@@ -522,7 +522,7 @@ export default function RingTheBell() {
               className="font-display tracking-wide"
             >
               <Bell className="w-4 h-4 mr-2" />
-              {showForm ? 'CANCEL' : 'RING IT'}
+              {showForm ? 'CANCEL' : 'RING IT')}
             </Button>
           }
         />
@@ -723,7 +723,7 @@ export default function RingTheBell() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Bell Entry?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently remove this {entryToDelete ? formatCurrency(entryToDelete.ticket_value) : ''} booking from the bell feed. This action cannot be undone.
+                This will permanently remove this {entryToDelete ? formatCurrency(entryToDelete.ticket_value) : '')} booking from the bell feed. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

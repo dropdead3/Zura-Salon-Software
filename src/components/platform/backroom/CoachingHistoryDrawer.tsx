@@ -80,7 +80,7 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : !entries || entries.length === 0 ? (
-          <div className={cn(tokens.empty.container, 'py-12'}>
+          <div className={cn(tokens.empty.container, 'py-12')}>
             <Mail className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No coaching history</h3>
             <p className={tokens.empty.description}>No coaching emails have been sent to this organization yet.</p>
@@ -104,7 +104,7 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
                     <div className="flex items-center gap-2">
                       <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                       <span className="font-sans text-sm text-foreground truncate">
-                        {entry.senderName || 'Platform Admin'}
+                        {entry.senderName || 'Platform Admin')}
                       </span>
                     </div>
                     <p className="font-sans text-xs text-muted-foreground">{reason}</p>

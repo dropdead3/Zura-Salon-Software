@@ -121,7 +121,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
               <XCircle className="w-4 h-4 text-destructive" />
               <span className="text-xs text-muted-foreground">No-Shows</span>
             </div>
-            <p className={cn('font-medium text-lg tabular-nums', noShow > 0 && 'text-destructive'}>
+            <p className={cn('font-medium text-lg tabular-nums', noShow > 0 && 'text-destructive')}>
               {noShow}
             </p>
             {total > 0 && (

@@ -127,7 +127,7 @@ export function OverviewContent({
                   <Gauge className="w-4 h-4 text-chart-3" />
                 </div>
                 <span className="text-lg font-display tabular-nums">
-                  {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
+                  {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA')}
                 </span>
                 <div className="flex items-center gap-1 justify-center">
                   <p className="text-xs text-muted-foreground">Capacity Utilization</p>
@@ -145,7 +145,7 @@ export function OverviewContent({
         {/* Appointments Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('appointments'}
+          onClick={() => onNavigateToTab('appointments')}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -170,7 +170,7 @@ export function OverviewContent({
                 <p className="text-xs text-muted-foreground">
                   {peakDay.date
                     ? `Peak: ${new Date(peakDay.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} (${peakDay.count})`
-                    : 'No peak day data'}
+                    : 'No peak day data')}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Rebook rate: <span className="tabular-nums text-foreground">{summary.rebookRate.toFixed(1)}%</span>
@@ -184,7 +184,7 @@ export function OverviewContent({
         {/* Clients Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('clients'}
+          onClick={() => onNavigateToTab('clients')}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -204,13 +204,13 @@ export function OverviewContent({
               <div className="space-y-1.5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-display tabular-nums">
-                    {retention ? formatNumber(retention.totalClients) : '0'}
+                    {retention ? formatNumber(retention.totalClients) : '0')}
                   </span>
                   <span className="text-xs text-muted-foreground">total clients</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   <span className="tabular-nums text-foreground">{retention?.newClients || 0}</span> new
-                  {' / '}
+                  {' / ')}
                   Retention: <span className="tabular-nums text-foreground">{retention?.retentionRate.toFixed(0) || 0}%</span>
                 </p>
                 {(retention?.atRiskClients || 0) > 0 ? (
@@ -231,7 +231,7 @@ export function OverviewContent({
         {/* Staffing Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('staffing'}
+          onClick={() => onNavigateToTab('staffing')}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -288,7 +288,7 @@ export function OverviewContent({
         {/* Staff Utilization Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('staff-utilization'}
+          onClick={() => onNavigateToTab('staff-utilization')}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -308,14 +308,14 @@ export function OverviewContent({
               <div className="space-y-1.5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-display tabular-nums">
-                    {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
+                    {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA')}
                   </span>
                   <span className="text-xs text-muted-foreground">capacity</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {capacityData
                     ? `${capacityData.totalBookedHours}h booked / ${capacityData.gapHours.toFixed(0)}h unused`
-                    : 'No capacity data'}
+                    : 'No capacity data')}
                 </p>
               </div>
             )}

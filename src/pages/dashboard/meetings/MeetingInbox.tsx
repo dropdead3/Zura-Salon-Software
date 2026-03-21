@@ -26,7 +26,7 @@ export default function MeetingInbox() {
                 <ManagerMeetingRequest />
               </div>
             )}
-            <PendingMeetingRequests viewAs={isCoach ? 'manager' : 'team_member'} />
+            <PendingMeetingRequests viewAs={isCoach ? 'manager' : 'team_member')} />
           </div>
         </div>
       </PlatformPageContainer>

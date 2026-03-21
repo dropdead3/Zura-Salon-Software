@@ -421,7 +421,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
               <Label className="text-sm font-medium">Color Theme</Label>
               <Select 
                 value={themePreset} 
-                onValueChange={(v) => applyPreset(v as ColorTheme | 'custom'}
+                onValueChange={(v) => applyPreset(v as ColorTheme | 'custom')}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose theme" />
@@ -480,7 +480,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
               <Label className="text-sm font-medium">Button Style</Label>
               <Select 
                 value={localSettings.button_style} 
-                onValueChange={(v) => updateField('button_style', v as 'rounded' | 'pill' | 'square'}
+                onValueChange={(v) => updateField('button_style', v as 'rounded' | 'pill' | 'square')}
               >
                 <SelectTrigger className="max-w-xs">
                   <SelectValue />
@@ -557,8 +557,8 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="color" value={localSettings.logo_color || '#000000'} onChange={(e) => updateField('logo_color', e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
-                  <Input value={localSettings.logo_color || ''} onChange={(e) => updateField('logo_color', e.target.value || null)} placeholder="No color overlay" className="font-mono text-sm" />
+                  <input type="color" value={localSettings.logo_color || '#000000')} onChange={(e) => updateField('logo_color', e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
+                  <Input value={localSettings.logo_color || '')} onChange={(e) => updateField('logo_color', e.target.value || null)} placeholder="No color overlay" className="font-mono text-sm" />
                 </div>
               </div>
             </div>
@@ -608,14 +608,14 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                           )}
                           onClick={() => updateField('location_badge_position', pos)}
                         >
-                          {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '}
+                          {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm">Style</Label>
-                    <Select value={localSettings.location_badge_style} onValueChange={(v) => updateField('location_badge_style', v as 'glass' | 'solid' | 'outline'}>
+                    <Select value={localSettings.location_badge_style} onValueChange={(v) => updateField('location_badge_style', v as 'glass' | 'solid' | 'outline')}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="glass">Glass (blur effect)</SelectItem>
@@ -637,7 +637,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
             </div>
             <div className="space-y-2">
               <Label>Welcome Subtitle</Label>
-              <Input value={localSettings.welcome_subtitle || ''} onChange={(e) => updateField('welcome_subtitle', e.target.value || null)} placeholder="Optional tagline or instructions" />
+              <Input value={localSettings.welcome_subtitle || '')} onChange={(e) => updateField('welcome_subtitle', e.target.value || null)} placeholder="Optional tagline or instructions" />
             </div>
             <div className="space-y-2">
               <Label>Check-In Prompt</Label>
@@ -680,7 +680,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
       <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
         <Button onClick={handleSave} disabled={updateSettings.isPending}>
           {updateSettings.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-          Save {!locationId ? 'Defaults' : 'Settings'}
+          Save {!locationId ? 'Defaults' : 'Settings')}
         </Button>
 
         {locationId && locations.length > 1 && (

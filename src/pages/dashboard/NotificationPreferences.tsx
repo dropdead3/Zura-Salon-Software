@@ -362,7 +362,7 @@ export default function NotificationPreferences() {
                       How often would you like to receive your insights?
                     </p>
                     <Select
-                      value={localPrefs['insights_email_frequency'] || 'weekly'}
+                      value={localPrefs['insights_email_frequency'] || 'weekly')}
                       onValueChange={(value) => handleToggle('insights_email_frequency', value)}
                     >
                       <SelectTrigger className="w-full">

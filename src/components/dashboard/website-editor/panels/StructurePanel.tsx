@@ -105,12 +105,12 @@ export function StructurePanel({
 
   // ─── Expanded Panel ───
   return (
-    <div className={cn(editorTokens.panel.structure, 'h-full flex flex-col'} style={style}>
+    <div className={cn(editorTokens.panel.structure, 'h-full flex flex-col')} style={style}>
       {/* Header with AI banner + tabs */}
       <div className="px-3 pt-3 pb-2 border-b border-border/40 space-y-2">
         {/* AI Insights standalone banner */}
         <button
-          onClick={() => onModeChange('insights'}
+          onClick={() => onModeChange('insights')}
           className={cn(
             'w-full flex items-center gap-2 px-3 py-2 rounded-lg font-display text-xs uppercase tracking-[0.08em] transition-all duration-150',
             mode === 'insights'
@@ -123,7 +123,7 @@ export function StructurePanel({
         </button>
 
         <div className="flex items-center gap-1">
-          <div className={cn(editorTokens.segmented.container, 'flex-1'}>
+          <div className={cn(editorTokens.segmented.container, 'flex-1')}>
             {TABS.map(({ mode: tabMode, label, icon: Icon }) => (
               <button
                 key={tabMode}

@@ -146,7 +146,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
       const endMinutes = hours * 60 + mins + totalDuration;
       const endHour = Math.floor(endMinutes / 60);
       const endMin = endMinutes % 60;
-      const endTime = `${endHour.toString().padStart(2, '0'}:${endMin.toString().padStart(2, '0}`;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0}`;
       const effectiveRedoReason = redoReason === 'Other' ? redoCustomReason : redoReason;
       const status = isRedo && redoPolicy?.redo_requires_approval && !isManagerOrAdmin ? 'pending' : 'checked_in';
 
@@ -232,7 +232,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           {isRedo && (
             <div className="space-y-3 border-l-2 border-amber-300 dark:border-amber-700 ml-2 pl-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Reason{redoPolicy?.redo_reason_required ? ' *' : ''}</Label>
+                <Label className="text-xs text-muted-foreground">Reason{redoPolicy?.redo_reason_required ? ' *' : '')}</Label>
                 <Select value={redoReason} onValueChange={setRedoReason}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select reason..." /></SelectTrigger>
                   <SelectContent>
@@ -254,7 +254,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                   <button onClick={() => setActiveCategory(null)} className="flex items-center gap-1 hover:text-primary transition-colors">
                     <ChevronLeft className="w-4 h-4" />{activeCategory}
                   </button>
-                ) : 'Pick a Service Category'}
+                ) : 'Pick a Service Category')}
               </Label>
               {selectedServiceIds.length > 0 && (
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{selectedServiceIds.length} selected • {totalDuration} min</span>
@@ -344,7 +344,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center pt-1">
-                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price'}` : 'Estimated price, not including overages'}
+                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price')}` : 'Estimated price, not including overages')}
               </p>
             </div>
           )}
@@ -354,7 +354,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={() => createWalkIn.mutate()} disabled={createWalkIn.isPending || selectedServiceIds.length === 0 || !redoReasonValid}>
             {createWalkIn.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isRedo ? 'Add Redo to Queue' : 'Add to Queue'}
+            {isRedo ? 'Add Redo to Queue' : 'Add to Queue')}
           </Button>
         </div>
       </DialogContent>

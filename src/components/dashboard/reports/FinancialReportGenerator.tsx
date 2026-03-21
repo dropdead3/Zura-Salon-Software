@@ -183,19 +183,19 @@ export function FinancialReportGenerator({
               'Total Revenue',
               formatCurrency(yoyData.periodA.totalRevenue),
               formatCurrency(yoyData.periodB.totalRevenue),
-              `${yoyData.changes.totalRevenue >= 0 ? '+' : ''}${yoyData.changes.totalRevenue.toFixed(1)}%`,
+              `${yoyData.changes.totalRevenue >= 0 ? '+' : '')}${yoyData.changes.totalRevenue.toFixed(1)}%`,
             ],
             [
               'Transactions',
               yoyData.periodA.totalTransactions.toString(),
               yoyData.periodB.totalTransactions.toString(),
-              `${yoyData.changes.totalTransactions >= 0 ? '+' : ''}${yoyData.changes.totalTransactions.toFixed(1)}%`,
+              `${yoyData.changes.totalTransactions >= 0 ? '+' : '')}${yoyData.changes.totalTransactions.toFixed(1)}%`,
             ],
             [
               'Avg Ticket',
               formatCurrency(Math.round(yoyData.periodA.averageTicket)),
               formatCurrency(Math.round(yoyData.periodB.averageTicket)),
-              `${yoyData.changes.averageTicket >= 0 ? '+' : ''}${yoyData.changes.averageTicket.toFixed(1)}%`,
+              `${yoyData.changes.averageTicket >= 0 ? '+' : '')}${yoyData.changes.averageTicket.toFixed(1)}%`,
             ],
           ],
           theme: 'striped',
@@ -263,7 +263,7 @@ export function FinancialReportGenerator({
     if (reportType === 'revenue-trend' && trendData?.overall?.length) {
       csvContent = 'Date,Revenue,Transactions\n';
       trendData.overall.slice(-31).forEach((row: { date: string; revenue: number; transactions: number }) => {
-        csvContent += `"${formatDate(new Date(row.date), 'yyyy-MM-dd'}",${row.revenue},${row.transactions}\n`;
+        csvContent += `"${formatDate(new Date(row.date), 'yyyy-MM-dd')}",${row.revenue},${row.transactions}\n`;
       });
     }
 
@@ -314,7 +314,7 @@ export function FinancialReportGenerator({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
-          <CardDescription>{formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}</CardDescription>
+          <CardDescription>{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-64 w-full" />
@@ -342,7 +342,7 @@ export function FinancialReportGenerator({
                 .reverse()
                 .map((row: { date: string; revenue: number; transactions: number }) => (
                   <TableRow key={row.date}>
-                    <TableCell>{formatDate(new Date(row.date), 'MMM d, yyyy'}</TableCell>
+                    <TableCell>{formatDate(new Date(row.date), 'MMM d, yyyy')}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       <BlurredAmount>{formatCurrency(row.revenue)}</BlurredAmount>
                     </TableCell>
@@ -379,7 +379,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(weeklyRevenue ?? 0)}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {goals.weeklyTarget > 0 ? `${(((weeklyRevenue ?? 0) / goals.weeklyTarget) * 100).toFixed(1)}%` : '—'}
+                  {goals.weeklyTarget > 0 ? `${(((weeklyRevenue ?? 0) / goals.weeklyTarget) * 100).toFixed(1)}%` : '—')}
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -391,7 +391,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(monthlyRevenue ?? 0)}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {goals.monthlyTarget > 0 ? `${(((monthlyRevenue ?? 0) / goals.monthlyTarget) * 100).toFixed(1)}%` : '—'}
+                  {goals.monthlyTarget > 0 ? `${(((monthlyRevenue ?? 0) / goals.monthlyTarget) * 100).toFixed(1)}%` : '—')}
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -420,7 +420,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(yoyData.periodB.totalRevenue)}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {yoyData.changes.totalRevenue >= 0 ? '+' : ''}
+                  {yoyData.changes.totalRevenue >= 0 ? '+' : '')}
                   {yoyData.changes.totalRevenue.toFixed(1)}%
                 </TableCell>
               </TableRow>
@@ -429,7 +429,7 @@ export function FinancialReportGenerator({
                 <TableCell className="text-right tabular-nums">{yoyData.periodA.totalTransactions}</TableCell>
                 <TableCell className="text-right tabular-nums">{yoyData.periodB.totalTransactions}</TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {yoyData.changes.totalTransactions >= 0 ? '+' : ''}
+                  {yoyData.changes.totalTransactions >= 0 ? '+' : '')}
                   {yoyData.changes.totalTransactions.toFixed(1)}%
                 </TableCell>
               </TableRow>
@@ -442,7 +442,7 @@ export function FinancialReportGenerator({
                   <BlurredAmount>{formatCurrency(Math.round(yoyData.periodB.averageTicket))}</BlurredAmount>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {yoyData.changes.averageTicket >= 0 ? '+' : ''}
+                  {yoyData.changes.averageTicket >= 0 ? '+' : '')}
                   {yoyData.changes.averageTicket.toFixed(1)}%
                 </TableCell>
               </TableRow>
@@ -520,7 +520,7 @@ export function FinancialReportGenerator({
             <div>
               <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
               </CardDescription>
             </div>
             <div className="flex gap-2">

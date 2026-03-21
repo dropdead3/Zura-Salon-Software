@@ -185,7 +185,7 @@ export function AddRenterDialog({
                   />
                   <CommandList>
                     <CommandEmpty>
-                      {isLoadingEmployees ? 'Loading...' : 'No available employees found.'}
+                      {isLoadingEmployees ? 'Loading...' : 'No available employees found.')}
                     </CommandEmpty>
                     <CommandGroup>
                       {availableEmployees.map((employee) => (
@@ -232,7 +232,7 @@ export function AddRenterDialog({
                 <Input
                   id="business_name"
                   placeholder="e.g., Jane's Hair Studio"
-                  {...form.register('business_name'}
+                  {...form.register('business_name')}
                 />
               </div>
               <div className="space-y-2">
@@ -240,7 +240,7 @@ export function AddRenterDialog({
                 <Input
                   id="business_license_number"
                   placeholder="CO123456"
-                  {...form.register('business_license_number'}
+                  {...form.register('business_license_number')}
                 />
               </div>
               <div className="space-y-2">
@@ -249,7 +249,7 @@ export function AddRenterDialog({
                   id="license_state"
                   placeholder="CO"
                   maxLength={2}
-                  {...form.register('license_state'}
+                  {...form.register('license_state')}
                 />
               </div>
               <div className="space-y-2">
@@ -257,7 +257,7 @@ export function AddRenterDialog({
                 <Input
                   id="ein_number"
                   placeholder="XX-XXXXXXX"
-                  {...form.register('ein_number'}
+                  {...form.register('ein_number')}
                 />
               </div>
               <div className="space-y-2">
@@ -265,7 +265,7 @@ export function AddRenterDialog({
                 <Input
                   id="start_date"
                   type="date"
-                  {...form.register('start_date'}
+                  {...form.register('start_date')}
                 />
               </div>
             </div>
@@ -281,7 +281,7 @@ export function AddRenterDialog({
                   id="billing_email"
                   type="email"
                   placeholder="billing@example.com"
-                  {...form.register('billing_email'}
+                  {...form.register('billing_email')}
                 />
               </div>
               <div className="space-y-2">
@@ -289,7 +289,7 @@ export function AddRenterDialog({
                 <Input
                   id="billing_phone"
                   placeholder="(555) 123-4567"
-                  {...form.register('billing_phone'}
+                  {...form.register('billing_phone')}
                 />
               </div>
               <div className="col-span-2 space-y-2">
@@ -297,7 +297,7 @@ export function AddRenterDialog({
                 <Input
                   id="billing_street"
                   placeholder="123 Main St"
-                  {...form.register('billing_street'}
+                  {...form.register('billing_street')}
                 />
               </div>
               <div className="space-y-2">
@@ -305,7 +305,7 @@ export function AddRenterDialog({
                 <Input
                   id="billing_city"
                   placeholder="Denver"
-                  {...form.register('billing_city'}
+                  {...form.register('billing_city')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -315,7 +315,7 @@ export function AddRenterDialog({
                     id="billing_state"
                     placeholder="CO"
                     maxLength={2}
-                    {...form.register('billing_state'}
+                    {...form.register('billing_state')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -323,7 +323,7 @@ export function AddRenterDialog({
                   <Input
                     id="billing_zip"
                     placeholder="80202"
-                    {...form.register('billing_zip'}
+                    {...form.register('billing_zip')}
                   />
                 </div>
               </div>

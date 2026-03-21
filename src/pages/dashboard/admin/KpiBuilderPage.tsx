@@ -224,7 +224,7 @@ export default function KpiBuilderPage() {
               disabled={createKpi.isPending || updateKpi.isPending}
             >
               {(createKpi.isPending || updateKpi.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingKpi ? 'Update' : 'Adopt KPI'}
+              {editingKpi ? 'Update' : 'Adopt KPI')}
             </Button>
           </DialogFooter>
         </DialogContent>

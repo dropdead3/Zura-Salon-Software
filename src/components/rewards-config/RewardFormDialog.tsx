@@ -125,10 +125,10 @@ export function RewardFormDialog({
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">
-            {isEdit ? 'EDIT REWARD' : 'CREATE REWARD'}
+            {isEdit ? 'EDIT REWARD' : 'CREATE REWARD')}
           </DialogTitle>
           <DialogDescription>
-            {isEdit ? 'Update this reward in your catalog.' : 'Add a new reward to your catalog.'}
+            {isEdit ? 'Update this reward in your catalog.' : 'Add a new reward to your catalog.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -194,7 +194,7 @@ export function RewardFormDialog({
               id="quantity"
               type="number"
               min={0}
-              value={formData.quantity_available ?? ''}
+              value={formData.quantity_available ?? '')}
               onChange={(e) => setFormData(prev => ({ 
                 ...prev, 
                 quantity_available: e.target.value ? parseInt(e.target.value) : null 
@@ -271,7 +271,7 @@ export function RewardFormDialog({
             </Button>
             <Button type="submit" disabled={isLoading || !formData.name}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEdit ? 'Save Changes' : 'Create Reward'}
+              {isEdit ? 'Save Changes' : 'Create Reward')}
             </Button>
           </DialogFooter>
         </form>

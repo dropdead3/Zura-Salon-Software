@@ -301,7 +301,7 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
       <div className="flex items-center justify-between pt-2">
         <Button variant="ghost" size="sm" onClick={step === 0 ? onClose : goBack}>
           <ArrowLeft className="w-4 h-4 mr-1.5" />
-          {step === 0 ? 'Cancel' : 'Back'}
+          {step === 0 ? 'Cancel' : 'Back')}
         </Button>
 
         {step < 3 ? (
@@ -312,7 +312,7 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
         ) : (
           <Button size="sm" onClick={handleSubmit} disabled={isPending}>
             {isPending && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-            {isEditMode ? 'Update Station' : 'Create Station'}
+            {isEditMode ? 'Update Station' : 'Create Station')}
           </Button>
         )}
       </div>
@@ -369,7 +369,7 @@ function StepStationIdentity({
               </SelectContent>
             </Select>
             {isEditMode && (
-              <p className={cn(tokens.body.muted, 'text-xs mt-1'}>Location cannot be changed after creation.</p>
+              <p className={cn(tokens.body.muted, 'text-xs mt-1')}>Location cannot be changed after creation.</p>
             )}
           </div>
         </div>
@@ -441,7 +441,7 @@ function StepDeviceAssignment({
                   </div>
                   <span className={tokens.body.emphasis}>{opt.title}</span>
                 </div>
-                <p className={cn(tokens.body.muted, 'text-xs'}>{opt.desc}</p>
+                <p className={cn(tokens.body.muted, 'text-xs')}>{opt.desc}</p>
               </button>
             );
           })}
@@ -458,8 +458,8 @@ function StepDeviceAssignment({
                 className="mt-1"
               />
             </div>
-            <div className={cn(tokens.card.inner, 'p-3'}>
-              <p className={cn(tokens.body.muted, 'text-xs'}>
+            <div className={cn(tokens.card.inner, 'p-3')}>
+              <p className={cn(tokens.body.muted, 'text-xs')}>
                 Install the <span className="text-foreground font-medium">Zura Backroom</span> app
                 on your iPad, then enter the device name shown in the app settings.
               </p>
@@ -504,7 +504,7 @@ function StepScalePairing({
           </div>
           <button
             onClick={() => setState((s) => ({ ...s, useManualFallback: false }))}
-            className={cn(tokens.body.muted, 'underline text-xs hover:text-foreground transition-colors'}
+            className={cn(tokens.body.muted, 'underline text-xs hover:text-foreground transition-colors')}
           >
             Try connecting a scale instead
           </button>
@@ -519,15 +519,15 @@ function StepScalePairing({
         <div className="flex items-center justify-between">
           <div>
             <h3 className={tokens.heading.section}>
-              {isBle ? 'Pair Bluetooth Scale' : 'Connect Scale'}
+              {isBle ? 'Pair Bluetooth Scale' : 'Connect Scale')}
             </h3>
             <p className={tokens.body.muted}>
               {isBle
                 ? 'Scan for nearby BLE scales and pair.'
-                : 'Enter the scale identifier shown in your iPad app.'}
+                : 'Enter the scale identifier shown in your iPad app.')}
             </p>
           </div>
-          <ScaleConnectionStatus state={isBle ? bleState : (state.pairingCode ? 'connected' : 'disconnected'} />
+          <ScaleConnectionStatus state={isBle ? bleState : (state.pairingCode ? 'connected' : 'disconnected')} />
         </div>
 
         {isBle ? (
@@ -613,7 +613,7 @@ function StepScalePairing({
 
         <button
           onClick={() => setState((s) => ({ ...s, useManualFallback: true }))}
-          className={cn(tokens.body.muted, 'underline text-xs hover:text-foreground transition-colors'}
+          className={cn(tokens.body.muted, 'underline text-xs hover:text-foreground transition-colors')}
         >
           Use manual entry instead
         </button>
@@ -658,15 +658,15 @@ function StepConfirmation({
     <Card>
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-center gap-3">
-          <div className={cn(tokens.card.iconBox, 'bg-primary/10'}>
+          <div className={cn(tokens.card.iconBox, 'bg-primary/10')}>
             <CheckCircle2 className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className={tokens.heading.section}>
-              {isEditMode ? 'Review Changes' : 'Ready to Create'}
+              {isEditMode ? 'Review Changes' : 'Ready to Create')}
             </h3>
             <p className={tokens.body.muted}>
-              {isEditMode ? 'Review your updated station configuration.' : 'Review your station configuration.'}
+              {isEditMode ? 'Review your updated station configuration.' : 'Review your station configuration.')}
             </p>
           </div>
         </div>

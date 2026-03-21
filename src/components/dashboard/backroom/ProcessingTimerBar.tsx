@@ -20,7 +20,7 @@ interface ProcessingTimerBarProps {
 function formatElapsed(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0'}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function formatStartTime(startedAt: number): string {
@@ -28,7 +28,7 @@ function formatStartTime(startedAt: number): string {
   const h = d.getHours();
   const m = d.getMinutes();
   const ampm = h >= 12 ? 'PM' : 'AM';
-  return `${h % 12 || 12}:${m.toString().padStart(2, '0'} ${ampm}`;
+  return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
 export function ProcessingTimerBar({

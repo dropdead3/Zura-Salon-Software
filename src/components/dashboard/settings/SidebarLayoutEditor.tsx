@@ -1121,7 +1121,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
                       </TooltipTrigger>
                       <TooltipContent>
                         {role.display_name}
-                        {hasOverrides && ' (has overrides)'}
+                        {hasOverrides && ' (has overrides)')}
                       </TooltipContent>
                     </Tooltip>
                   );

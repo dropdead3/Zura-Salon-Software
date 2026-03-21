@@ -634,12 +634,12 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       client.daysSinceVisit && client.daysSinceVisit > 60 && "text-destructive",
                       client.daysSinceVisit && client.daysSinceVisit > 30 && client.daysSinceVisit <= 60 && "text-amber-600 dark:text-amber-400"
                     )}>
-                      {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
+                      {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A')}
                     </p>
                     <p className="text-xs text-muted-foreground">Since Visit</p>
                     {client.last_visit && (
                       <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                        {formatDate(new Date(client.last_visit), 'MMM d, yyyy'}
+                        {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}
                       </p>
                     )}
                   </Card>
@@ -700,7 +700,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       <Home className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <CardTitle className={tokens.heading.subsection}>
-                      {householdData.household_name || 'Household'}
+                      {householdData.household_name || 'Household')}
                     </CardTitle>
                   </div>
                 </CardHeader>
@@ -819,7 +819,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   {client.last_visit && (
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy'}</span>
+                      <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
                     </div>
                   )}
                   {/* Source badge in contact section */}
@@ -929,8 +929,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <Cake className="w-4 h-4 text-muted-foreground" />
                     <span>
                       {client.birthday 
-                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d'}
-                        : 'No birthday on file'}
+                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
+                        : 'No birthday on file')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -938,16 +938,16 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <span>
                       {client.client_since ? (
                         <>
-                          Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy'}
-                          {' — '}
+                          Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                          {' — ')}
                           {(() => {
                             const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
-                            if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
+                            if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : '')}`;
                             const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
-                            return months === 0 ? 'Less than 1 month' : `${months} month${months !== 1 ? 's' : ''}`;
+                            return months === 0 ? 'Less than 1 month' : `${months} month${months !== 1 ? 's' : '')}`;
                           })()}
                         </>
-                      ) : 'No start date on file'}
+                      ) : 'No start date on file')}
                     </span>
                   </div>
                 </>
@@ -1007,11 +1007,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span>Email: {client.reminder_email_opt_in !== false ? 'On' : 'Off'}</span>
+                      <span>Email: {client.reminder_email_opt_in !== false ? 'On' : 'Off')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <span>SMS: {client.reminder_sms_opt_in !== false ? 'On' : 'Off'}</span>
+                      <span>SMS: {client.reminder_sms_opt_in !== false ? 'On' : 'Off')}</span>
                     </div>
                   </div>
                 )}
@@ -1098,7 +1098,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   {client.referred_by && <p><span className="text-muted-foreground">Referred by:</span> {client.referred_by}</p>}
                   {client.external_client_id && <p><span className="text-muted-foreground">External ID:</span> {client.external_client_id}</p>}
                   <p>
-                    <span className="text-muted-foreground">Preferred Stylist:</span>{' '}
+                    <span className="text-muted-foreground">Preferred Stylist:</span>{' ')}
                     {client.preferred_stylist_id ? (
                       <>
                         {getStylistDisplayName(preferredStylist)}
@@ -1145,8 +1145,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <p>Client notes: {client.prompt_client_notes ? 'Prompt enabled' : 'Off'}</p>
-                  <p>Appointment notes: {client.prompt_appointment_notes ? 'Prompt enabled' : 'Off'}</p>
+                  <p>Client notes: {client.prompt_client_notes ? 'Prompt enabled' : 'Off')}</p>
+                  <p>Appointment notes: {client.prompt_appointment_notes ? 'Prompt enabled' : 'Off')}</p>
                 </div>
               )}
             </CardContent>
@@ -1201,7 +1201,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       <div>
                         {client.address_line1 && <p>{client.address_line1}</p>}
                         {client.address_line2 && <p>{client.address_line2}</p>}
-                        <p>{[client.city, client.state, client.zip].filter(Boolean).join(', '}</p>
+                        <p>{[client.city, client.state, client.zip].filter(Boolean).join(', ')}</p>
                         {client.country && <p>{client.country}</p>}
                       </div>
                     </div>
@@ -1268,9 +1268,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       >
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-sans text-sm text-foreground">{formatDate(visit.appointment_date, 'EEE, MMM d'}</span>
+                            <span className="font-sans text-sm text-foreground">{formatDate(visit.appointment_date, 'EEE, MMM d')}</span>
                             <span className="text-xs text-muted-foreground">
-                              {(() => { const [h, m] = visit.start_time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })()}
+                              {(() => { const [h, m] = visit.start_time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM')}`; })()}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">

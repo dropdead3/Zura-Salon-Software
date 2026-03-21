@@ -40,12 +40,12 @@ const EVENT_LABELS: Record<string, string> = {
 
 function formatChange(entry: AuditLogEntry): string | null {
   if (entry.event_type === 'rescheduled' && entry.previous_value && entry.new_value) {
-    const from = `${entry.previous_value.date || ''} ${entry.previous_value.time || ''}`.trim();
-    const to = `${entry.new_value.date || ''} ${entry.new_value.time || ''}`.trim();
+    const from = `${entry.previous_value.date || '')} ${entry.previous_value.time || '')}`.trim();
+    const to = `${entry.new_value.date || '')} ${entry.new_value.time || '')}`.trim();
     if (from && to) return `${from} → ${to}`;
   }
   if (entry.event_type === 'status_changed' && entry.previous_value && entry.new_value) {
-    return `${entry.previous_value.status || '?'} → ${entry.new_value.status || '?'}`;
+    return `${entry.previous_value.status || '?')} → ${entry.new_value.status || '?')}`;
   }
   return null;
 }
@@ -89,9 +89,9 @@ export function AppointmentAuditTimeline({ appointmentId }: { appointmentId: str
             
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className={cn(tokens.body.emphasis, 'text-xs'}>{label}</span>
+                <span className={cn(tokens.body.emphasis, 'text-xs')}>{label}</span>
                 <span className="text-[10px] text-muted-foreground">
-                  {format(parseISO(entry.created_at), 'MMM d, yyyy h:mm a'}
+                  {format(parseISO(entry.created_at), 'MMM d, yyyy h:mm a')}
                 </span>
               </div>
               {entry.actor_name && (

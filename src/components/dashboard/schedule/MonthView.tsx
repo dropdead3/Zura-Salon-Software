@@ -129,7 +129,7 @@ export function MonthView({
                       'text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full',
                       isCurrentDay && 'bg-primary text-primary-foreground'
                     )}>
-                      {format(day, 'd'}
+                      {format(day, 'd')}
                     </div>
                     {closureInfo.isClosed && isCurrentMonth && (
                       <ClosedBadge reason={closureInfo.reason} />

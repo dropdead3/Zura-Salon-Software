@@ -55,14 +55,14 @@ export function OrgBillingHistoryCard() {
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="min-w-0">
                     <p className="font-sans text-sm text-foreground truncate">
-                      {inv.number || 'Draft Invoice'}
+                      {inv.number || 'Draft Invoice')}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {inv.date ? new Date(inv.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
-                      }) : '—'}
+                      }) : '—')}
                     </p>
                   </div>
                 </div>
@@ -71,7 +71,7 @@ export function OrgBillingHistoryCard() {
                     {formatCurrency(inv.amount)}
                   </span>
                   <Badge variant="outline" className={STATUS_STYLES[inv.status || 'draft'] || STATUS_STYLES.draft}>
-                    {inv.status || 'draft'}
+                    {inv.status || 'draft')}
                   </Badge>
                   {inv.pdf_url && (
                     <Button

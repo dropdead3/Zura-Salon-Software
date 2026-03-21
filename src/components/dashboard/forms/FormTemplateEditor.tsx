@@ -98,7 +98,7 @@ export function FormTemplateEditor({ open, onOpenChange, template }: FormTemplat
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {template ? 'Edit Form Template' : 'Create New Form Template'}
+            {template ? 'Edit Form Template' : 'Create New Form Template')}
           </DialogTitle>
         </DialogHeader>
 
@@ -186,7 +186,7 @@ export function FormTemplateEditor({ open, onOpenChange, template }: FormTemplat
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !name.trim() || !content.trim()}>
-              {isSubmitting ? 'Saving...' : template ? 'Save Changes' : 'Create Template'}
+              {isSubmitting ? 'Saving...' : template ? 'Save Changes' : 'Create Template')}
             </Button>
           </DialogFooter>
         </form>

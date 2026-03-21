@@ -113,7 +113,7 @@ export function GenerateTestAccountsButton() {
                   r.status === 'already_exists' ? 'text-amber-600' :
                   'text-red-600'
                 }>
-                  {r.status === 'created' ? '✓' : r.status === 'already_exists' ? '○' : '✗'}
+                  {r.status === 'created' ? '✓' : r.status === 'already_exists' ? '○' : '✗')}
                 </span>
                 <span className="truncate">{r.email}</span>
               </div>

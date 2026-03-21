@@ -95,7 +95,7 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
             <CardTitle className="font-display flex items-center gap-2">
               {labelA} vs {labelB}
               <MetricInfoTooltip description="Plots two metrics against each other to reveal correlations. Each point represents a daily observation. The correlation coefficient (r) indicates strength and direction of the relationship." />
-              <Badge variant={direction === 'positive' ? 'default' : 'destructive'}>
+              <Badge variant={direction === 'positive' ? 'default' : 'destructive')}>
                 {direction === 'positive' ? (
                   <TrendingUp className="w-3 h-3 mr-1" />
                 ) : (
@@ -126,13 +126,13 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
                 <XAxis 
                   dataKey="x" 
                   type="number"
-                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
+                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
                   label={{ value: labelA, position: 'bottom', offset: 0 }}
                 />
                 <YAxis 
                   dataKey="y"
                   type="number"
-                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
+                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
                   label={{ value: labelB, angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 
@@ -159,7 +159,7 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
                       { x: trendLine.start.x, y: trendLine.start.y },
                       { x: trendLine.end.x, y: trendLine.end.y },
                     ]}
-                    stroke={direction === 'positive' ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))'}
+                    stroke={direction === 'positive' ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))')}
                     strokeDasharray="5 5"
                     strokeWidth={2}
                   />

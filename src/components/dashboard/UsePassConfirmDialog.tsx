@@ -49,8 +49,8 @@ export function UsePassConfirmDialog({
           
           <AlertDialogDescription className="text-center space-y-4 pt-2">
             <p className="text-muted-foreground">
-              This will use <strong className="text-foreground font-medium">1 of your {passesRemaining}</strong> remaining{' '}
-              {passesRemaining === 1 ? 'pass' : 'passes'}.
+              This will use <strong className="text-foreground font-medium">1 of your {passesRemaining}</strong> remaining{' ')}
+              {passesRemaining === 1 ? 'pass' : 'passes')}.
             </p>
             
             {passesRemaining === 1 && (
@@ -87,7 +87,7 @@ export function UsePassConfirmDialog({
             disabled={isLoading}
             className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl"
           >
-            {isLoading ? 'Using...' : 'Yes, Use Pass'}
+            {isLoading ? 'Using...' : 'Yes, Use Pass')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

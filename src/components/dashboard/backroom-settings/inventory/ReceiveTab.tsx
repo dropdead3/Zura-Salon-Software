@@ -293,7 +293,7 @@ export function ReceiveTab() {
     <div className="space-y-4">
       <div>
         <p className={tokens.body.emphasis}>
-          {receivablePOs.length} shipment{receivablePOs.length !== 1 ? 's' : ''} awaiting receiving
+          {receivablePOs.length} shipment{receivablePOs.length !== 1 ? 's' : '')} awaiting receiving
         </p>
         <p className={tokens.body.muted}>
           Expand a shipment to receive items line by line and update stock levels.
@@ -305,7 +305,7 @@ export function ReceiveTab() {
           const isExpanded = expandedPoId === po.id;
 
           return (
-            <Card key={po.id} className={cn(isExpanded && 'ring-1 ring-primary/30'}>
+            <Card key={po.id} className={cn(isExpanded && 'ring-1 ring-primary/30')}>
               {/* ── PO Header ── */}
               <CardHeader
                 className="pb-3 cursor-pointer select-none"
@@ -317,20 +317,20 @@ export function ReceiveTab() {
                       <Package className={tokens.card.icon} />
                     </div>
                     <div>
-                      <CardTitle className={cn(tokens.card.title, 'text-sm flex items-center gap-2'}>
+                      <CardTitle className={cn(tokens.card.title, 'text-sm flex items-center gap-2')}>
                         {getPoLabel(po)}
                         {getReceivingBadge(po)}
                       </CardTitle>
                       <CardDescription>
-                        {po.supplier_name || 'Unknown Supplier'}
-                        {po.line_count != null && ` · ${po.line_count} item${po.line_count !== 1 ? 's' : ''}`}
+                        {po.supplier_name || 'Unknown Supplier')}
+                        {po.line_count != null && ` · ${po.line_count} item${po.line_count !== 1 ? 's' : '')}`}
                         {po.grand_total != null && ` · ${formatCurrency(po.grand_total)}`}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground hidden sm:inline">
-                      Sent {po.sent_at ? format(new Date(po.sent_at), 'MMM d') : '—'}
+                      Sent {po.sent_at ? format(new Date(po.sent_at), 'MMM d') : '—')}
                     </span>
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -358,7 +358,7 @@ export function ReceiveTab() {
                       {/* Receivable lines */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className={cn(tokens.label.default, 'text-xs'}>Items to Receive</span>
+                          <span className={cn(tokens.label.default, 'text-xs')}>Items to Receive</span>
                           <MetricInfoTooltip description="Enter the quantity actually received for each product. Mark damaged items separately — they won't be added to stock." />
                         </div>
 
@@ -484,7 +484,7 @@ export function ReceiveTab() {
                       {alreadyReceivedLines.length > 0 && (
                         <div className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
                           <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                          {alreadyReceivedLines.length} item{alreadyReceivedLines.length !== 1 ? 's' : ''} already fully received
+                          {alreadyReceivedLines.length} item{alreadyReceivedLines.length !== 1 ? 's' : '')} already fully received
                         </div>
                       )}
 
@@ -504,10 +504,10 @@ export function ReceiveTab() {
                         <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-4 py-3">
                           <div className="flex items-center gap-3 text-xs">
                             <span>
-                              Receiving{' '}
+                              Receiving{' ')}
                               <span className="text-foreground">
                                 {receivingSummary.totalReceiving}
-                              </span>{' '}
+                              </span>{' ')}
                               of {receivingSummary.totalOrdered} outstanding
                             </span>
                             {receivingSummary.totalDamaged > 0 && (

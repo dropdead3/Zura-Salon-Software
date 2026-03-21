@@ -259,8 +259,8 @@ export default function DataImport() {
         <DataImportWizard
           open={wizardOpen}
           onOpenChange={setWizardOpen}
-          sourceType={selectedSource || 'csv'}
-          dataType={selectedDataType || 'clients'}
+          sourceType={selectedSource || 'csv')}
+          dataType={selectedDataType || 'clients')}
         />
       </div>
     </DashboardLayout>

@@ -88,13 +88,13 @@ export function SmartActionToast({
           </div>
           
           <p className="text-sm font-medium">
-            <span className="text-primary">{senderName}</span>{' '}
+            <span className="text-primary">{senderName}</span>{' ')}
             <span className="text-muted-foreground">{config.description}</span>
           </p>
           
           {details.length > 0 && (
             <p className="text-sm text-foreground mt-0.5">
-              {details.join(' '}
+              {details.join(' ')}
             </p>
           )}
           

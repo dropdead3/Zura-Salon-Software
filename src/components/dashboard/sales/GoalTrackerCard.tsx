@@ -80,7 +80,7 @@ export function GoalTrackerCard() {
               <CardTitle className="font-display text-base tracking-wide">GOAL TRACKER</CardTitle>
               <MetricInfoTooltip description="Tracks whether you're on pace to hit your revenue targets for the current period." />
             </div>
-            <Tabs value={period} onValueChange={(v) => v && setPeriod(v as 'weekly' | 'monthly'}>
+            <Tabs value={period} onValueChange={(v) => v && setPeriod(v as 'weekly' | 'monthly')}>
               <FilterTabsList>
                 <FilterTabsTrigger value="weekly">Weekly</FilterTabsTrigger>
                 <FilterTabsTrigger value="monthly">Monthly</FilterTabsTrigger>
@@ -156,7 +156,7 @@ export function GoalTrackerCard() {
                       {orgMetrics.paceStatus === 'ahead' && <TrendingUp className="w-3 h-3" />}
                       {orgMetrics.paceStatus === 'on-track' && <Target className="w-3 h-3" />}
                       {orgMetrics.paceStatus === 'behind' && <TrendingDown className="w-3 h-3" />}
-                      {orgMetrics.paceStatus === 'ahead' ? 'Ahead of Pace' : orgMetrics.paceStatus === 'on-track' ? 'On Track' : 'Behind Pace'}
+                      {orgMetrics.paceStatus === 'ahead' ? 'Ahead of Pace' : orgMetrics.paceStatus === 'on-track' ? 'On Track' : 'Behind Pace')}
                     </div>
                     {orgMetrics.daysRemaining > 0 && orgMetrics.target > orgMetrics.revenue && (
                       <p className="text-[10px] text-muted-foreground pl-0.5">
@@ -180,7 +180,7 @@ export function GoalTrackerCard() {
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Projected</p>
-                      <p className={cn('text-sm md:text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive'}>
+                      <p className={cn('text-sm md:text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
                         <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} />
                       </p>
                     </div>
@@ -225,7 +225,7 @@ export function GoalTrackerCard() {
                       className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <ChevronsUpDown className="w-3 h-3" />
-                      {allExpanded ? 'Collapse all' : 'Expand all'}
+                      {allExpanded ? 'Collapse all' : 'Expand all')}
                     </button>
                   </div>
                   <div className="space-y-1.5">
@@ -250,7 +250,7 @@ export function GoalTrackerCard() {
                       onClick={() => setShowAllLocations(v => !v)}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground pt-2 w-full transition-colors"
                     >
-                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAllLocations && 'rotate-180'} />
+                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAllLocations && 'rotate-180')} />
                       {showAllLocations ? 'Show less' : `Show all ${locationScaffold.length} locations`}
                     </button>
                   )}

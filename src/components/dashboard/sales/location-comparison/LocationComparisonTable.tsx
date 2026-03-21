@@ -123,13 +123,13 @@ export function LocationComparisonTable({
             }}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
           >
-            {expandAll ? 'Collapse All' : 'Expand All'}
+            {expandAll ? 'Collapse All' : 'Expand All')}
           </button>
         </div>
       )}
 
       {/* Table */}
-      <ScrollArea className={cn(showAll && sorted.length > 12 && 'max-h-[600px]'}>
+      <ScrollArea className={cn(showAll && sorted.length > 12 && 'max-h-[600px]')}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -237,7 +237,7 @@ export function LocationComparisonTable({
           onClick={() => setShowAll(!showAll)}
           className="w-full text-xs text-primary hover:underline flex items-center justify-center gap-1 py-1.5"
         >
-          <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
+          <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
           {showAll ? 'Show less' : `Show all ${sorted.length} locations`}
         </button>
       )}

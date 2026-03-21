@@ -29,7 +29,7 @@ function buildSummary(policy: any, buckets: any[]): string {
     return 'Parts & Labor — actual product cost passed through';
   }
   if (!buckets.length) {
-    return `${policy.included_allowance_qty}${policy.allowance_unit || 'g'} included, overage at $${policy.overage_rate}/${policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit || 'g'}`;
+    return `${policy.included_allowance_qty}${policy.allowance_unit || 'g')} included, overage at $${policy.overage_rate}/${policy.overage_rate_type === 'flat' ? 'flat' : policy.allowance_unit || 'g')}`;
   }
   return buckets.map(b =>
     `${b.bucket_name}: ${b.included_quantity}${b.included_unit} included, overage $${b.overage_rate}/${b.overage_rate_type === 'flat' ? 'flat' : b.included_unit}`
@@ -218,11 +218,11 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
             <div className="flex items-center gap-2">
               <MetricInfoTooltip description="When enabled, supply cost recovery metrics appear in the Command Center KPI strip. This tracks how much of your product costs are being recouped through client charges." />
               <div>
-                <p className={cn(tokens.body.emphasis, 'text-foreground'}>Supply Cost Recovery Tracking</p>
+                <p className={cn(tokens.body.emphasis, 'text-foreground')}>Supply Cost Recovery Tracking</p>
                 <p className="text-xs text-muted-foreground">
                   {billingSettings?.enable_supply_cost_recovery
                     ? 'Recovery rate and recouped costs are visible in the Command Center.'
-                    : 'Enable to track how much product cost is recovered through client billing.'}
+                    : 'Enable to track how much product cost is recovered through client billing.')}
                 </p>
               </div>
             </div>
@@ -245,7 +245,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
               <h3 className={tokens.empty.heading}>No allowance policies</h3>
               <p className={tokens.empty.description}>Allowances are created per tracked service. Track services first in Service Tracking, then define billing rules here.</p>
               {onNavigate && (
-                <Button variant="outline" size="sm" className="mt-2" onClick={() => onNavigate('services'}>
+                <Button variant="outline" size="sm" className="mt-2" onClick={() => onNavigate('services')}>
                   Go to Service Tracking
                 </Button>
               )}
@@ -266,16 +266,16 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                          <p className={cn(tokens.body.emphasis, 'text-foreground'}>{getServiceName(policy.service_id)}</p>
-                          <Badge variant={policy.is_active ? 'default' : 'secondary'}>{policy.is_active ? 'Active' : 'Inactive'}</Badge>
+                          <p className={cn(tokens.body.emphasis, 'text-foreground')}>{getServiceName(policy.service_id)}</p>
+                          <Badge variant={policy.is_active ? 'default' : 'secondary')}>{policy.is_active ? 'Active' : 'Inactive')}</Badge>
                           {isPartsAndLabor && (
                             <Badge variant="default" className="text-xs">Parts & Labor</Badge>
                           )}
                         </div>
-                        <p className={cn('text-sm text-muted-foreground', 'ml-6 mt-1'}>{buildSummary(policy, buckets)}</p>
+                        <p className={cn('text-sm text-muted-foreground', 'ml-6 mt-1')}>{buildSummary(policy, buckets)}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">{buckets.length} bucket{buckets.length !== 1 ? 's' : ''}</span>
+                        <span className="text-sm text-muted-foreground">{buckets.length} bucket{buckets.length !== 1 ? 's' : '')}</span>
                       </div>
                     </button>
 
@@ -286,11 +286,11 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                           <div className="flex items-center gap-2">
                             <MetricInfoTooltip description="Parts & Labor passes through the actual product cost to the client instead of using a fixed allowance." />
                             <div>
-                              <p className={cn(tokens.body.emphasis, 'text-foreground'}>Parts & Labor Mode</p>
+                              <p className={cn(tokens.body.emphasis, 'text-foreground')}>Parts & Labor Mode</p>
                               <p className="text-xs text-muted-foreground">
                                 {isPartsAndLabor
                                   ? 'Actual product cost is passed through to the client.'
-                                  : 'Fixed allowance with overage billing.'}
+                                  : 'Fixed allowance with overage billing.')}
                               </p>
                             </div>
                           </div>
@@ -308,21 +308,21 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                   <p className={tokens.label.tiny}>Included Qty</p>
                                   <MetricInfoTooltip description="Amount of product included in the service price at no extra charge." />
                                 </div>
-                                <p className={cn(tokens.body.emphasis, 'text-foreground'}>{policy.included_allowance_qty} {policy.allowance_unit}</p>
+                                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{policy.included_allowance_qty} {policy.allowance_unit}</p>
                               </div>
                               <div>
                                 <div className="flex items-center gap-1">
                                   <p className={tokens.label.tiny}>Overage Rate</p>
                                   <MetricInfoTooltip description="Price charged per unit when usage exceeds the included quantity." />
                                 </div>
-                                <p className={cn(tokens.body.emphasis, 'text-foreground'}>${policy.overage_rate} / {policy.overage_rate_type}</p>
+                                <p className={cn(tokens.body.emphasis, 'text-foreground')}>${policy.overage_rate} / {policy.overage_rate_type}</p>
                               </div>
                               <div>
                                 <div className="flex items-center gap-1">
                                   <p className={tokens.label.tiny}>Overage Cap</p>
                                   <MetricInfoTooltip description="Maximum overage charge per service, regardless of how much extra was used." />
                                 </div>
-                                <p className={cn(tokens.body.emphasis, 'text-foreground'}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap'}</p>
+                                <p className={cn(tokens.body.emphasis, 'text-foreground')}>{policy.overage_cap ? `$${policy.overage_cap}` : 'No cap')}</p>
                               </div>
                               <div className="flex gap-2">
                                 <Button variant="destructive" size="sm" onClick={() => deletePolicy.mutate(policy.id)}>
@@ -345,11 +345,11 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                               {buckets.map(bucket => (
                                 <div key={bucket.id} className="rounded-lg border bg-muted/20 p-3 flex items-center justify-between">
                                   <div>
-                                    <p className={cn(tokens.body.emphasis, 'text-foreground'}>{bucket.bucket_name}</p>
+                                    <p className={cn(tokens.body.emphasis, 'text-foreground')}>{bucket.bucket_name}</p>
                                     <p className="text-sm text-muted-foreground">
                                       {bucket.included_quantity}{bucket.included_unit} included · ${bucket.overage_rate}/{bucket.overage_rate_type}
-                                      {bucket.is_taxable && ' · Taxable'}
-                                      {bucket.requires_manager_override && ' · Manager override required'}
+                                      {bucket.is_taxable && ' · Taxable')}
+                                      {bucket.requires_manager_override && ' · Manager override required')}
                                     </p>
                                   </div>
                                   <Button variant="ghost" size="icon" onClick={() => deleteBucket.mutate(bucket.id)} className="h-8 w-8">
@@ -380,7 +380,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                           <Button
                                             key={w}
                                             type="button"
-                                            variant={bucketForm.included_quantity === w ? 'default' : 'outline'}
+                                            variant={bucketForm.included_quantity === w ? 'default' : 'outline')}
                                             size="sm"
                                             className="h-7 px-2 text-xs"
                                             onClick={() => setBucketForm(f => ({ ...f, included_quantity: w }))}
@@ -413,7 +413,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
                                           <Button
                                             key={r.value}
                                             type="button"
-                                            variant={selectedDevRatio === r.value ? 'default' : 'outline'}
+                                            variant={selectedDevRatio === r.value ? 'default' : 'outline')}
                                             size="sm"
                                             className="h-7 px-3 text-xs"
                                             onClick={() => setSelectedDevRatio(r.value)}
@@ -497,7 +497,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
               {/* Next step hint */}
               {onNavigate && (
                 <div className="flex justify-end pt-2 border-t">
-                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('stations'}>
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('stations')}>
                     Next: Stations & Hardware <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>

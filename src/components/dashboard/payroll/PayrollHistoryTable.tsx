@@ -94,12 +94,12 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
         </TableCell>
         <TableCell>
           <div className="font-medium">
-            {formatDate(new Date(run.pay_period_start), 'MMM d'} -{' '}
-            {formatDate(new Date(run.pay_period_end), 'MMM d, yyyy'}
+            {formatDate(new Date(run.pay_period_start), 'MMM d')} -{' ')}
+            {formatDate(new Date(run.pay_period_end), 'MMM d, yyyy')}
           </div>
         </TableCell>
         <TableCell>
-          {formatDate(new Date(run.check_date), 'MMM d, yyyy'}
+          {formatDate(new Date(run.check_date), 'MMM d, yyyy')}
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
@@ -115,7 +115,7 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
         </TableCell>
         <TableCell>
           <Badge className={cn('border', status.className)}>
-            <StatusIcon className={cn('h-3 w-3 mr-1', status.icon === Loader2 && 'animate-spin'} />
+            <StatusIcon className={cn('h-3 w-3 mr-1', status.icon === Loader2 && 'animate-spin')} />
             {status.label}
           </Badge>
         </TableCell>
@@ -161,10 +161,10 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
                   
                   {run.submitted_at && (
                     <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
-                      Submitted on {formatDate(new Date(run.submitted_at), 'MMMM d, yyyy at h:mm a'}
+                      Submitted on {formatDate(new Date(run.submitted_at), 'MMMM d, yyyy at h:mm a')}
                       {run.processed_at && (
                         <span>
-                          {' • '}Processed on {formatDate(new Date(run.processed_at), 'MMMM d, yyyy at h:mm a'}
+                          {' • ')}Processed on {formatDate(new Date(run.processed_at), 'MMMM d, yyyy at h:mm a')}
                         </span>
                       )}
                     </div>

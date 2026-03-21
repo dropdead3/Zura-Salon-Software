@@ -112,14 +112,14 @@ export function UserRolesTableView({
                 <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
               </TableHead>
             )}
-            <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Name</TableHead>
-            <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Email</TableHead>
+            <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium')}>Name</TableHead>
+            <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium')}>Email</TableHead>
             {locations.length > 1 && (
-              <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Location</TableHead>
+              <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium')}>Location</TableHead>
             )}
-            <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Roles</TableHead>
+            <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium')}>Roles</TableHead>
             {canManage && (
-              <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm font-medium', 'w-[80px]'}>Actions</TableHead>
+              <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm font-medium', 'w-[80px]')}>Actions</TableHead>
             )}
           </TableRow>
         </TableHeader>
@@ -162,12 +162,12 @@ export function UserRolesTableView({
                               : "bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
                           )}>
                             <Crown className="w-2.5 h-2.5" />
-                            {isPrimaryOwner ? 'Account Owner' : 'Super Admin'}
+                            {isPrimaryOwner ? 'Account Owner' : 'Super Admin')}
                           </Badge>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.email || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{user.email || '—')}</TableCell>
                     {locations.length > 1 && (
                       <TableCell className="text-sm text-muted-foreground max-w-[180px] truncate">{getUserLocationNames(user)}</TableCell>
                     )}
@@ -276,7 +276,7 @@ export function UserRolesTableView({
                                   {isLocked && (
                                     <Tooltip>
                                       <TooltipTrigger><Lock className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                                      <TooltipContent>{isLockedBySuperAdmin ? 'Super Admins have full access' : 'Super Admin required'}</TooltipContent>
+                                      <TooltipContent>{isLockedBySuperAdmin ? 'Super Admins have full access' : 'Super Admin required')}</TooltipContent>
                                     </Tooltip>
                                   )}
                                   <Switch

@@ -248,7 +248,7 @@ export default function BillingGuide() {
                     <PlatformCardDescription>Step-by-step breakdown of how an invoice amount is calculated.</PlatformCardDescription>
                   </div>
                 </div>
-                <ChevronDown className={`w-5 h-5 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200 ${billingOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200 ${billingOpen ? 'rotate-180' : '')}`} />
               </div>
             </PlatformCardHeader>
           </button>
@@ -379,7 +379,7 @@ export default function BillingGuide() {
                     <PlatformCardDescription>History of billing logic and pricing changes.</PlatformCardDescription>
                   </div>
                 </div>
-                <ChevronDown className={`w-5 h-5 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200 ${changelogOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-[hsl(var(--platform-foreground-muted))] transition-transform duration-200 ${changelogOpen ? 'rotate-180' : '')}`} />
               </div>
             </PlatformCardHeader>
           </button>
@@ -512,7 +512,7 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
               <Label className="text-xs text-[hsl(var(--platform-foreground-muted))]">Extra Users (beyond {includedUsers} included)</Label>
               <PlatformInput type="number" min="0" value={extraUsers} onChange={e => setExtraUsers(e.target.value)} />
               <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
-                +$25/mo each{maxUsers ? ` (max ${maxUsers - 1} extra for Operator)` : ''}
+                +$25/mo each{maxUsers ? ` (max ${maxUsers - 1} extra for Operator)` : '')}
                 {cappedExtraUsers > 0 && ` = ${formatCurrency(userFees)}/mo`}
               </p>
             </div>
@@ -563,7 +563,7 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
                 <div className="border-t border-[hsl(var(--platform-border)/0.3)] my-2" />
                 <ResultRow label="First Invoice" value={formatCurrency(calc.firstInvoiceAmount)} highlight />
                 <p className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-2">
-                  Includes {includedUsers} user{includedUsers !== 1 ? 's' : ''} in plan
+                  Includes {includedUsers} user{includedUsers !== 1 ? 's' : '')} in plan
                   {!setupFeePaid && parseFloat(setupFee) > 0 && ` + ${formatCurrency(parseFloat(setupFee))} setup fee`}
                 </p>
               </div>

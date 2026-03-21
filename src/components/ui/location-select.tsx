@@ -42,7 +42,7 @@ export function LocationSelect({
         {locations.map(loc => {
           // Parse city, state from the city field (format: "City, State ZIP")
           const cityState = loc.city 
-            ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
+            ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || '')}`
             : '';
           
           return (

@@ -31,7 +31,7 @@ export function OnlineIndicator({
           : 'bg-slate-500',
         className
       )}
-      title={isOnline ? 'Online' : 'Offline'}
+      title={isOnline ? 'Online' : 'Offline')}
     />
   );
 }

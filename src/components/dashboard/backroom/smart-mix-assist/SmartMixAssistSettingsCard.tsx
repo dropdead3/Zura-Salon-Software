@@ -100,7 +100,7 @@ export function SmartMixAssistSettingsCard() {
               <Label htmlFor="ratio-lock-enable" className={tokens.body.default}>
                 Ratio Lock
               </Label>
-              <p className={cn(tokens.body.muted, 'text-xs'}>
+              <p className={cn(tokens.body.muted, 'text-xs')}>
                 Auto-adjust ingredient targets when base weight changes
               </p>
             </div>

@@ -723,7 +723,7 @@ export default function ClientDirectory() {
           title="Client Directory"
           description={primaryTab === 'all' 
             ? 'View and manage all salon clients.' 
-            : 'Track your client relationships and identify opportunities.'}
+            : 'Track your client relationships and identify opportunities.')}
           actions={
             <div className="flex items-center gap-2">
               {canMerge && selectedForMerge.size >= 2 && (
@@ -785,10 +785,10 @@ export default function ClientDirectory() {
           <Card className="p-4 text-center">
             <Megaphone className="w-5 h-5 text-primary mx-auto mb-2" />
             <p className="font-display text-lg truncate">
-              {stats.topSource ? getLeadSourceLabel(stats.topSource.source) : '—'}
+              {stats.topSource ? getLeadSourceLabel(stats.topSource.source) : '—')}
             </p>
             <p className="text-xs text-muted-foreground">
-              {stats.topSource ? `Top Source (${stats.topSource.count})` : 'Top Source'}
+              {stats.topSource ? `Top Source (${stats.topSource.count})` : 'Top Source')}
             </p>
           </Card>
         </BentoGrid>
@@ -914,17 +914,17 @@ export default function ClientDirectory() {
         {/* Alphabetical Filter */}
         <div className="flex flex-wrap gap-1 mb-6">
           <Button
-            variant={selectedLetter === 'all' ? 'default' : 'ghost'}
+            variant={selectedLetter === 'all' ? 'default' : 'ghost')}
             size="sm"
             className="h-8 px-3 text-xs font-medium rounded-full"
-            onClick={() => setSelectedLetter('all'}
+            onClick={() => setSelectedLetter('all')}
           >
             All
           </Button>
           {ALPHABET.map(letter => (
             <Button
               key={letter}
-              variant={selectedLetter === letter ? 'default' : 'ghost'}
+              variant={selectedLetter === letter ? 'default' : 'ghost')}
               size="sm"
               className={cn(
                 "h-8 w-8 p-0 text-xs font-medium rounded-full",
@@ -943,7 +943,7 @@ export default function ClientDirectory() {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="font-display text-lg">
-                {activeTab === 'duplicates' ? `${duplicatePairs.length} Duplicate Pairs` : `${filteredClients.length} ${activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : activeTab === 'new' ? 'New Clients' : activeTab === 'banned' ? 'Banned Clients' : activeTab === 'archived' ? 'Archived Clients' : 'Clients'}`}
+                {activeTab === 'duplicates' ? `${duplicatePairs.length} Duplicate Pairs` : `${filteredClients.length} ${activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : activeTab === 'new' ? 'New Clients' : activeTab === 'banned' ? 'Banned Clients' : activeTab === 'archived' ? 'Archived Clients' : 'Clients')}`}
                 {selectedLocation !== 'all' && (
                   <Badge variant="outline" className="ml-2 font-sans font-normal">
                     <MapPin className="w-3 h-3 mr-1" />
@@ -961,7 +961,7 @@ export default function ClientDirectory() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('name'}
+                  onClick={() => handleSort('name')}
                   className={cn("text-xs", sortField === 'name' && "bg-muted")}
                 >
                   Name
@@ -970,7 +970,7 @@ export default function ClientDirectory() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('total_spend'}
+                  onClick={() => handleSort('total_spend')}
                   className={cn("text-xs", sortField === 'total_spend' && "bg-muted")}
                 >
                   Spend
@@ -979,7 +979,7 @@ export default function ClientDirectory() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('visit_count'}
+                  onClick={() => handleSort('visit_count')}
                   className={cn("text-xs", sortField === 'visit_count' && "bg-muted")}
                 >
                   Visits
@@ -988,7 +988,7 @@ export default function ClientDirectory() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('last_visit'}
+                  onClick={() => handleSort('last_visit')}
                   className={cn("text-xs", sortField === 'last_visit' && "bg-muted")}
                 >
                   Recent
@@ -1004,7 +1004,7 @@ export default function ClientDirectory() {
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  {searchQuery ? 'No clients match your search.' : selectedLetter !== 'all' ? `No clients starting with "${selectedLetter}".` : 'No client data available yet. Sync with Phorest to populate.'}
+                  {searchQuery ? 'No clients match your search.' : selectedLetter !== 'all' ? `No clients starting with "${selectedLetter}".` : 'No client data available yet. Sync with Phorest to populate.')}
                 </p>
               </div>
             ) : activeTab === 'households' ? (
@@ -1158,7 +1158,7 @@ export default function ClientDirectory() {
                                 }}
                                 title="Click to see the matching profile"
                               >
-                                <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', '})` : ''}
+                                <GitMerge className="w-3 h-3" /> Duplicate{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : '')}
                               </Badge>
                             )}
                             {(client as any)._linkedReason && (
@@ -1167,8 +1167,8 @@ export default function ClientDirectory() {
                                 className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 gap-1"
                               >
                                 <GitMerge className="w-3 h-3" /> 
-                                {(client as any)._linkedReason === 'canonical' ? 'Linked Original' : 'Linked Duplicate'}
-                                {(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', '})` : ''}
+                                {(client as any)._linkedReason === 'canonical' ? 'Linked Original' : 'Linked Duplicate')}
+                                {(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : '')}
                               </Badge>
                             )}
                             {!(client as any).is_duplicate && !(client as any)._linkedReason && (client as any)._linkedDuplicateId && (
@@ -1184,7 +1184,7 @@ export default function ClientDirectory() {
                                 }}
                                 title="Click to see the matching profile"
                               >
-                                <GitMerge className="w-3 h-3" /> Duplicate Match{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', '})` : ''}
+                                <GitMerge className="w-3 h-3" /> Duplicate Match{(client as any).duplicateReasons?.length > 0 && (client as any).duplicateReasons[0] !== 'match' ? ` (${(client as any).duplicateReasons.map((r: string) => r === 'phone' ? 'Same Phone' : r === 'email' ? 'Same Email' : r === 'name' ? 'Same Name' : r).join(', ')})` : '')}
                               </Badge>
                             )}
                           </div>
@@ -1193,7 +1193,7 @@ export default function ClientDirectory() {
                             {client.last_visit && (
                               <>
                                 <span>•</span>
-                                <span>Last: {formatDate(new Date(client.last_visit), 'MMM d, yyyy'}</span>
+                                <span>Last: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
                               </>
                             )}
                             {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (

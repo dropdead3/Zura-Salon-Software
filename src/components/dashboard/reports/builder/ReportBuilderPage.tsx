@@ -259,7 +259,7 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
                   return (
                     <Button
                       key={viz.id}
-                      variant={visualization === viz.id ? 'default' : 'outline'}
+                      variant={visualization === viz.id ? 'default' : 'outline')}
                       size={tokens.button.inline}
                       onClick={() => setVisualization(viz.id as any)}
                     >

@@ -491,7 +491,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
               <div>
                 <h2 className="text-xl font-medium text-white">Kiosk Settings</h2>
                 <p className="text-sm text-white/60">
-                  {isAuthenticated ? 'Configure your kiosk' : 'Enter PIN to access'}
+                  {isAuthenticated ? 'Configure your kiosk' : 'Enter PIN to access')}
                 </p>
               </div>
             </div>
@@ -566,7 +566,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    {pinErrorMessage || 'Incorrect PIN'}. Please try again.
+                    {pinErrorMessage || 'Incorrect PIN')}. Please try again.
                   </motion.p>
                 )}
 
@@ -585,14 +585,14 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 <div className="grid grid-cols-3 gap-3">
                   {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key) => (
                     <motion.button
-                      key={key || 'empty'}
+                      key={key || 'empty')}
                       className={`w-16 h-16 rounded-xl text-xl font-medium transition-colors ${
                         key === '' 
                           ? 'invisible' 
                           : key === 'del'
                           ? 'bg-white/5 text-white/60 hover:bg-white/10'
                           : 'bg-white/10 text-white hover:bg-white/15'
-                      } ${isValidating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${isValidating ? 'opacity-50 cursor-not-allowed' : '')}`}
                       onClick={() => {
                         if (key === 'del') handlePinDelete();
                         else if (key) handlePinDigit(key);
@@ -612,7 +612,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                   disabled={pinInput.length < 4 || isValidating}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {isValidating ? 'Validating...' : 'Unlock Settings'}
+                  {isValidating ? 'Validating...' : 'Unlock Settings')}
                 </motion.button>
               </div>
             ) : (
@@ -673,7 +673,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                             ? 'Follows device system preference' 
                             : localSettings.theme_mode === 'dark'
                             ? 'Always display in dark mode'
-                            : 'Always display in light mode'}
+                            : 'Always display in light mode')}
                         </p>
                       </SettingGroup>
 
@@ -704,7 +704,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                         <p className="text-xs text-white/40 mt-2">
                           {localSettings.display_orientation === 'portrait' 
                             ? 'Vertical tablet placement (taller than wide)' 
-                            : 'Horizontal tablet placement (wider than tall)'}
+                            : 'Horizontal tablet placement (wider than tall)')}
                         </p>
                       </SettingGroup>
 
@@ -748,7 +748,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 : 'border-white/10 hover:border-white/20'
                             }`}
                             style={themePreset === 'custom' ? { borderColor: accentColor } : undefined}
-                            onClick={() => setThemePreset('custom'}
+                            onClick={() => setThemePreset('custom')}
                             whileTap={{ scale: 0.98 }}
                           >
                             <Palette className="w-4 h-4 text-white/60" />
@@ -822,7 +822,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   : 'border-white/10 hover:border-white/20'
                               }`}
                               style={logoSource === 'auto' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('auto'}
+                              onClick={() => handleLogoSourceChange('auto')}
                               whileTap={{ scale: 0.98 }}
                             >
                               <Image className="w-4 h-4 text-white/60" />
@@ -833,9 +833,9 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 logoSource === 'org-light' 
                                   ? 'border-2' 
                                   : 'border-white/10 hover:border-white/20'
-                              } ${!businessSettings?.logo_light_url ? 'opacity-50' : ''}`}
+                              } ${!businessSettings?.logo_light_url ? 'opacity-50' : '')}`}
                               style={logoSource === 'org-light' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('org-light'}
+                              onClick={() => handleLogoSourceChange('org-light')}
                               whileTap={{ scale: 0.98 }}
                               disabled={!businessSettings?.logo_light_url}
                             >
@@ -847,9 +847,9 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 logoSource === 'org-dark' 
                                   ? 'border-2' 
                                   : 'border-white/10 hover:border-white/20'
-                              } ${!businessSettings?.logo_dark_url ? 'opacity-50' : ''}`}
+                              } ${!businessSettings?.logo_dark_url ? 'opacity-50' : '')}`}
                               style={logoSource === 'org-dark' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('org-dark'}
+                              onClick={() => handleLogoSourceChange('org-dark')}
                               whileTap={{ scale: 0.98 }}
                               disabled={!businessSettings?.logo_dark_url}
                             >
@@ -863,7 +863,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   : 'border-white/10 hover:border-white/20'
                               }`}
                               style={logoSource === 'custom' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('custom'}
+                              onClick={() => handleLogoSourceChange('custom')}
                               whileTap={{ scale: 0.98 }}
                             >
                               <Palette className="w-4 h-4 text-white/60" />
@@ -919,7 +919,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   whileTap={{ scale: 0.98 }}
                                 >
                                   <span className="text-white/80">
-                                    {size === 'xs' ? 'XS' : size === 'sm' ? 'S' : size === 'md' ? 'M' : size === 'lg' ? 'L' : 'XL'}
+                                    {size === 'xs' ? 'XS' : size === 'sm' ? 'S' : size === 'md' ? 'M' : size === 'lg' ? 'L' : 'XL')}
                                   </span>
                                 </motion.button>
                               ))}
@@ -928,7 +928,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                               {localSettings.logo_size === 'xs' ? 'Extra small' : 
                                localSettings.logo_size === 'sm' ? 'Small' : 
                                localSettings.logo_size === 'md' ? 'Medium (default)' : 
-                               localSettings.logo_size === 'lg' ? 'Large' : 'Extra large'}
+                               localSettings.logo_size === 'lg' ? 'Large' : 'Extra large')}
                             </p>
                           </div>
 
@@ -948,13 +948,13 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                             <div className="flex items-center gap-2">
                               <input
                                 type="color"
-                                value={localSettings.logo_color || '#000000'}
+                                value={localSettings.logo_color || '#000000')}
                                 onChange={(e) => updateLocalSetting('logo_color', e.target.value)}
                                 className="w-10 h-10 rounded-lg border border-white/20 cursor-pointer bg-transparent"
                               />
                               <input
                                 type="text"
-                                value={localSettings.logo_color || ''}
+                                value={localSettings.logo_color || '')}
                                 onChange={(e) => updateLocalSetting('logo_color', e.target.value || null)}
                                 placeholder="No color overlay"
                                 className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-mono"

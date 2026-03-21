@@ -24,7 +24,7 @@ export function PrimarySelector({ clients, primaryClientId, onSelectPrimary }: P
         The primary client keeps their ID. All records from secondary profiles will be merged into this client.
       </p>
 
-      <RadioGroup value={primaryClientId || ''} onValueChange={onSelectPrimary}>
+      <RadioGroup value={primaryClientId || '')} onValueChange={onSelectPrimary}>
         <div className="grid gap-3">
           {clients.map(client => {
             const counts = recordCounts?.[client.id];
@@ -36,7 +36,7 @@ export function PrimarySelector({ clients, primaryClientId, onSelectPrimary }: P
                 htmlFor={`primary-${client.id}`}
                 className="cursor-pointer"
               >
-                <Card className={`transition-all ${isPrimary ? 'border-primary ring-1 ring-primary' : 'hover:border-muted-foreground/30'}`}>
+                <Card className={`transition-all ${isPrimary ? 'border-primary ring-1 ring-primary' : 'hover:border-muted-foreground/30')}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                       <RadioGroupItem value={client.id} id={`primary-${client.id}`} className="mt-1" />

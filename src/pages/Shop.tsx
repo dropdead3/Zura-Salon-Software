@@ -153,7 +153,7 @@ export default function Shop() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground text-center mt-6">
-                {products.length} product{products.length !== 1 ? 's' : ''}
+                {products.length} product{products.length !== 1 ? 's' : '')}
               </p>
             </>
           ) : (
@@ -163,7 +163,7 @@ export default function Shop() {
               <p className="text-sm text-muted-foreground">
                 {search || category !== 'all' || brand !== 'all'
                   ? 'No products match your filters. Try adjusting your search.'
-                  : 'Check back soon — new products are on the way.'}
+                  : 'Check back soon — new products are on the way.')}
               </p>
             </div>
           )}

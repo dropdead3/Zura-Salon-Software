@@ -110,7 +110,7 @@ export function TransactionBreakdownPanel({
   if (!breakdown?.hasTransaction) {
     return (
       <div className={tokens.empty.container}>
-        <Receipt className={cn(tokens.empty.icon, 'text-primary'} />
+        <Receipt className={cn(tokens.empty.icon, 'text-primary')} />
         <h3 className={tokens.empty.heading}>No Transaction Data</h3>
         <p className={tokens.empty.description}>
           Transaction data will appear after POS sync
@@ -143,7 +143,7 @@ export function TransactionBreakdownPanel({
     if (summary.taxTotal > 0) lines.push(`Tax: $${summary.taxTotal.toFixed(2)}`);
     if (summary.tip > 0) lines.push(`Tip: $${summary.tip.toFixed(2)}`);
     lines.push(`Total: $${summary.grandTotal.toFixed(2)}`);
-    lines.push(`Paid via: ${summary.paymentMethods.join(', ') || 'Unknown'}`);
+    lines.push(`Paid via: ${summary.paymentMethods.join(', ') || 'Unknown')}`);
     navigator.clipboard.writeText(lines.join('\n'));
     toast.success('Receipt copied to clipboard');
   };
@@ -205,7 +205,7 @@ export function TransactionBreakdownPanel({
           <div className="pt-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
               <CreditCard className="w-3 h-3" />
-              {summary.paymentMethods.join(', '}
+              {summary.paymentMethods.join(', ')}
             </span>
           </div>
         )}
@@ -226,7 +226,7 @@ export function TransactionBreakdownPanel({
               <div key={r.id} className="rounded-lg bg-muted/20 px-3 py-2">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex items-center gap-2">
-                    <span className="text-sm text-foreground">{r.originalItemName || 'Refund'}</span>
+                    <span className="text-sm text-foreground">{r.originalItemName || 'Refund')}</span>
                     <Badge variant="outline" className={cn('text-[10px] px-2 py-0.5', badge.bg, badge.text)}>
                       {badge.label}
                     </Badge>
@@ -242,7 +242,7 @@ export function TransactionBreakdownPanel({
                     )}
                     {r.createdAt && (
                       <span className="text-xs text-muted-foreground/60">
-                        {format(new Date(r.createdAt), 'MMM d, yyyy'}
+                        {format(new Date(r.createdAt), 'MMM d, yyyy')}
                       </span>
                     )}
                   </div>

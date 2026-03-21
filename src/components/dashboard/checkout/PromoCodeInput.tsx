@@ -125,7 +125,7 @@ export function PromoCodeInput({
       {validatePromo.isError && (
         <div className="flex items-center gap-1 text-xs text-destructive">
           <AlertCircle className="h-3 w-3" />
-          <span>{(validatePromo.error as any)?.message || 'Invalid promo code'}</span>
+          <span>{(validatePromo.error as any)?.message || 'Invalid promo code')}</span>
         </div>
       )}
     </div>

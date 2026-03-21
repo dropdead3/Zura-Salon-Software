@@ -75,13 +75,13 @@ function ChangeBadge({ value, suffix = '%' }: { value: number; suffix?: string }
       positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
     )}>
       {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-      {positive ? '+' : ''}{Math.round(value)}{suffix}
+      {positive ? '+' : '')}{Math.round(value)}{suffix}
     </span>
   );
 }
 
 function TrendArrow({ value }: { value: number }) {
-  if (value === 0) return <span className="text-muted-foreground">{'\u2014'}</span>;
+  if (value === 0) return <span className="text-muted-foreground">{'\u2014')}</span>;
   const positive = value > 0;
   return (
     <span className={cn(
@@ -89,7 +89,7 @@ function TrendArrow({ value }: { value: number }) {
       positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
     )}>
       {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-      {positive ? '+' : ''}{Math.round(value)}%
+      {positive ? '+' : '')}{Math.round(value)}%
     </span>
   );
 }
@@ -208,13 +208,13 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                   <CardTitle className={tokens.card.title}>SALES BY BRAND</CardTitle>
                   <MetricInfoTooltip description="Revenue breakdown by product brand. Click a row to see full product-level drill-down with margin, stock, and trend data. Brands are resolved from the product catalog." />
                 </div>
-                <CardDescription className="text-xs">{brands.length} brand{brands.length !== 1 ? 's' : ''} with sales</CardDescription>
+                <CardDescription className="text-xs">{brands.length} brand{brands.length !== 1 ? 's' : '')} with sales</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="brands" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -268,10 +268,10 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                         {brands.some(br => br.margin > 0) && (
                           <TableCell className="text-right">
                             {b.margin > 0 ? (
-                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400'}>
+                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400')}>
                                 {b.margin.toFixed(0)}%
                               </Badge>
-                            ) : '—'}
+                            ) : '—')}
                           </TableCell>
                         )}
                         <TableCell className="text-right"><TrendArrow value={b.revenueTrend} /></TableCell>
@@ -313,10 +313,10 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                                               p.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' :
                                               'text-red-500 border-red-200 dark:text-red-400'
                                             )}>{p.margin.toFixed(0)}%</Badge>
-                                          ) : '—'}
+                                          ) : '—')}
                                         </TableCell>
                                       )}
-                                      <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.quantityOnHand ?? '—'}</TableCell>
+                                      <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.quantityOnHand ?? '—')}</TableCell>
                                     </TableRow>
                                   ))}
                                 </TableBody>
@@ -324,7 +324,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                               {b.staleProducts.length > 0 && (
                                 <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-2">
                                   <AlertTriangle className="w-3 h-3" />
-                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', '}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
+                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', ')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : '')}
                                 </div>
                               )}
                             </div>
@@ -389,7 +389,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground text-center py-4">
-              {newProductCount} new product{newProductCount !== 1 ? 's' : ''} excluded (added within 7 days).
+              {newProductCount} new product{newProductCount !== 1 ? 's' : '')} excluded (added within 7 days).
             </p>
           </CardContent>
         </Card>
@@ -420,7 +420,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="deadstock" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -450,7 +450,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
                     <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(d.retailPrice)}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums">{d.quantityOnHand}</TableCell>
                     <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(d.capitalTiedUp)}</BlurredAmount></TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">{d.lastSoldDate || 'Never'}</TableCell>
+                    <TableCell className="text-right text-sm text-muted-foreground">{d.lastSoldDate || 'Never')}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant="outline" className={cn('text-[10px] tabular-nums',
                         d.daysStale >= 90 ? 'text-red-500 border-red-200 dark:text-red-400' :
@@ -827,19 +827,19 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     <TableHead>Product</TableHead>
                     <TableHead>Brand</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('unitsSold'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('unitsSold')}>
                       <span className="inline-flex items-center gap-1">Units <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenue'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenue')}>
                       <span className="inline-flex items-center gap-1">Revenue <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgPrice'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgPrice')}>
                       <span className="inline-flex items-center gap-1">Avg Price <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('discount'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('discount')}>
                       <span className="inline-flex items-center gap-1">Discount <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenueTrend'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenueTrend')}>
                       <span className="inline-flex items-center gap-1">Trend <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
                     <TableHead className="text-center">Sparkline</TableHead>
@@ -849,7 +849,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   {filteredProducts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                        {search ? 'No products match your search' : 'No product sales in this period'}
+                        {search ? 'No products match your search' : 'No product sales in this period')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -857,7 +857,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       const realRank = data.products.findIndex(pp => pp.name === p.name);
                       const isBestSeller = realRank >= 0 && realRank < 3;
                       return (
-                        <TableRow key={p.name} className={cn(isBestSeller && 'bg-chart-2/[0.03]'}>
+                        <TableRow key={p.name} className={cn(isBestSeller && 'bg-chart-2/[0.03]')}>
                           <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -870,13 +870,13 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                               })()}
                             </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014'}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014'}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014')}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014')}</TableCell>
                           <TableCell className="text-right tabular-nums">{p.unitsSold}</TableCell>
                           <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
                           <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(p.avgPrice)}</BlurredAmount></TableCell>
                           <TableCell className="text-right tabular-nums text-muted-foreground">
-                            {p.discount > 0 ? <BlurredAmount>{formatCurrencyWhole(p.discount)}</BlurredAmount> : '\u2014'}
+                            {p.discount > 0 ? <BlurredAmount>{formatCurrencyWhole(p.discount)}</BlurredAmount> : '\u2014')}
                           </TableCell>
                           <TableCell className="text-right"><TrendArrow value={p.revenueTrend} /></TableCell>
                           <TableCell className="text-center">
@@ -900,7 +900,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <TableCell className="text-right font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(summary.totalRevenue)}</BlurredAmount></TableCell>
                       <TableCell />
                       <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {summary.totalDiscount > 0 ? <BlurredAmount>{formatCurrencyWhole(summary.totalDiscount)}</BlurredAmount> : '\u2014'}
+                        {summary.totalDiscount > 0 ? <BlurredAmount>{formatCurrencyWhole(summary.totalDiscount)}</BlurredAmount> : '\u2014')}
                       </TableCell>
                       <TableCell />
                     </TableRow>
@@ -927,10 +927,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <CardTitle className="font-display text-base tracking-wide">RED FLAGS & ALERTS</CardTitle>
                       <MetricInfoTooltip description="Products needing attention: declining sales (revenue down >20% vs prior period), heavy discounting (>15% of retail value discounted), or slow movers (<3 units sold in the period)." />
                     </div>
-                    <CardDescription className="text-xs">{data.redFlags.length} issue{data.redFlags.length !== 1 ? 's' : ''} detected</CardDescription>
+                    <CardDescription className="text-xs">{data.redFlags.length} issue{data.redFlags.length !== 1 ? 's' : '')} detected</CardDescription>
                   </div>
                 </div>
-                <Badge variant="destructive" className="text-xs">{data.redFlags.length} alert{data.redFlags.length !== 1 ? 's' : ''}</Badge>
+                <Badge variant="destructive" className="text-xs">{data.redFlags.length} alert{data.redFlags.length !== 1 ? 's' : '')}</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -1146,7 +1146,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <div className="flex items-center gap-2 text-xs">
                         <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
                         <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">{deadWeight.count} Dead Weight</span> product{deadWeight.count !== 1 ? 's' : ''} — consider discontinuing or running a clearance promotion.
+                          <span className="font-medium text-foreground">{deadWeight.count} Dead Weight</span> product{deadWeight.count !== 1 ? 's' : '')} — consider discontinuing or running a clearance promotion.
                         </span>
                       </div>
                     )}
@@ -1154,7 +1154,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <div className="flex items-center gap-2 text-xs">
                         <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                         <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">{stagnant.count} Stagnant</span> product{stagnant.count !== 1 ? 's' : ''} — have stylists actively recommend these during appointments.
+                          <span className="font-medium text-foreground">{stagnant.count} Stagnant</span> product{stagnant.count !== 1 ? 's' : '')} — have stylists actively recommend these during appointments.
                         </span>
                       </div>
                     )}
@@ -1162,7 +1162,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <div className="flex items-center gap-2 text-xs">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">{slowMovers.count} Slow Mover</span> product{slowMovers.count !== 1 ? 's' : ''} — consider bundling or promotional pricing.
+                          <span className="font-medium text-foreground">{slowMovers.count} Slow Mover</span> product{slowMovers.count !== 1 ? 's' : '')} — consider bundling or promotional pricing.
                         </span>
                       </div>
                     )}
@@ -1217,7 +1217,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                         <MetricInfoTooltip description="Dead Weight and Stagnant products with more than $50 in capital at risk. Consider discounting these to free up capital and shelf space. 'Capital freed at 30%' estimates recovery if marked down by 30%." />
                       </div>
                       <CardDescription className="text-xs">
-                        <BlurredAmount>{formatCurrencyWhole(totalCapital)}</BlurredAmount> in capital at risk across {candidates.length} product{candidates.length !== 1 ? 's' : ''}
+                        <BlurredAmount>{formatCurrencyWhole(totalCapital)}</BlurredAmount> in capital at risk across {candidates.length} product{candidates.length !== 1 ? 's' : '')}
                       </CardDescription>
                     </div>
                   </div>
@@ -1248,7 +1248,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(c.cost_price ?? 0)}</BlurredAmount></TableCell>
                           <TableCell className="text-right tabular-nums">{c.quantity_on_hand}</TableCell>
                           <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(c.capitalAtRisk)}</BlurredAmount></TableCell>
-                          <TableCell className="text-right text-sm text-muted-foreground">{c.daysSinceLastSale != null ? `${c.daysSinceLastSale}d` : 'Never'}</TableCell>
+                          <TableCell className="text-right text-sm text-muted-foreground">{c.daysSinceLastSale != null ? `${c.daysSinceLastSale}d` : 'Never')}</TableCell>
                           <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400"><BlurredAmount>{formatCurrencyWhole(c.markdownSavings)}</BlurredAmount></TableCell>
                         </TableRow>
                       ))}
@@ -1344,19 +1344,19 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">#</TableHead>
-                    <TableHead className="cursor-pointer select-none" onClick={() => toggleStaffSort('name'}>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleStaffSort('name')}>
                       <span className="inline-flex items-center gap-1">Stylist <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('productRevenue'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('productRevenue')}>
                       <span className="inline-flex items-center gap-1">Product Revenue <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('unitsSold'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('unitsSold')}>
                       <span className="inline-flex items-center gap-1">Units Sold <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('attachmentRate'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('attachmentRate')}>
                       <span className="inline-flex items-center gap-1">Attachment Rate <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('avgTicket'}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('avgTicket')}>
                       <span className="inline-flex items-center gap-1">Avg Ticket <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
                   </TableRow>
@@ -1365,14 +1365,14 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   {filteredStaff.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        {staffSearch ? 'No staff match your search' : 'No staff retail data in this period'}
+                        {staffSearch ? 'No staff match your search' : 'No staff retail data in this period')}
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredStaff.map((s, idx) => {
                       const isTop = idx === 0 && staffSortKey === 'productRevenue' && staffSortDir === 'desc';
                       return (
-                        <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]'}>
+                        <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]')}>
                           <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2.5">
@@ -1545,7 +1545,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   {topDriver && (
                     <div className="mb-4 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground space-y-1">
                       <p>
-                        <span className="font-medium text-foreground">{topDriver.serviceName}</span> drives the most retail revenue at{' '}
+                        <span className="font-medium text-foreground">{topDriver.serviceName}</span> drives the most retail revenue at{' ')}
                         <span className="font-medium text-foreground">{formatCurrencyWhole(topDriver.retailRevenue)}</span> ({topDriver.attachmentRate}% attach rate).
                       </p>
                       {highVolumeLowest && highVolumeLowest.serviceName !== topDriver.serviceName && highVolumeLowest.attachmentRate < 40 && (
@@ -1572,7 +1572,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                         {filtered.slice(0, 20).map(row => (
                           <TableRow key={row.serviceName}>
                             <TableCell className="font-medium text-sm">{row.serviceName}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{row.serviceCategory || '\u2014'}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{row.serviceCategory || '\u2014')}</TableCell>
                             <TableCell className="text-right tabular-nums font-medium">
                               <BlurredAmount>{formatCurrencyWhole(row.retailRevenue)}</BlurredAmount>
                             </TableCell>
@@ -1627,7 +1627,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Set Goals
                   </Button>
                 </div>
@@ -1680,7 +1680,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="text-xs text-muted-foreground">Actual</div>
-                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500'} />
+                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500')} />
                       <div className="text-[10px] tabular-nums text-muted-foreground">{Math.round(goalProgress.progressPct)}%</div>
                     </div>
                   </div>
@@ -1825,7 +1825,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                        <Download className="w-3.5 h-3.5" /> Export Movements
                      </Button>
                    )}
-                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                      <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
                    </Button>
                 </div>
@@ -1848,9 +1848,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </TableHeader>
                   <TableBody>
                     {inventoryAlerts.slice(0, 15).map(a => (
-                      <TableRow key={a.productId} className={cn(a.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10'}>
+                      <TableRow key={a.productId} className={cn(a.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10')}>
                         <TableCell className="font-medium text-sm">{a.productName}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{a.brand || '—'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{a.brand || '—')}</TableCell>
                         <TableCell className="text-right tabular-nums font-medium">{a.currentStock}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">{a.reorderLevel}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
@@ -1867,7 +1867,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-medium">{a.suggestedReorder}</TableCell>
                         <TableCell className="text-right">
-                          <Badge variant={a.severity === 'critical' ? 'destructive' : a.severity === 'warning' ? 'outline' : 'outline'} className={cn('text-[10px]',
+                          <Badge variant={a.severity === 'critical' ? 'destructive' : a.severity === 'warning' ? 'outline' : 'outline')} className={cn('text-[10px]',
                             a.severity === 'warning' && 'text-amber-600 border-amber-200 dark:text-amber-400 dark:border-amber-800'
                           )}>
                             {a.severity}
@@ -1899,7 +1899,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <MetricInfoTooltip description="Estimated retail commission payouts based on your commission configuration. Override rates are marked. Configure rates in Settings → Retail Products." />
                     </div>
                     <CardDescription className="text-xs">
-                      {commissionConfig?.commission_type === 'tiered' ? 'Tiered' : commissionConfig?.commission_type === 'per_employee' ? 'Per-Employee' : 'Flat Rate'} @ {commissionConfig?.default_rate}% default
+                      {commissionConfig?.commission_type === 'tiered' ? 'Tiered' : commissionConfig?.commission_type === 'per_employee' ? 'Per-Employee' : 'Flat Rate')} @ {commissionConfig?.default_rate}% default
                     </CardDescription>
                   </div>
                 </div>
@@ -1908,7 +1908,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportCommissionsCSV(staffCommissions)}>
                     <Download className="w-3.5 h-3.5" /> Export
                   </Button>
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -1981,7 +1981,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -1991,11 +1991,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
               <div className="p-4 rounded-lg bg-muted/30 space-y-2">
                 <div className="flex items-center gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Type:</span>{' '}
-                    <span className="font-medium capitalize">{commissionConfig.commission_type === 'flat_rate' ? 'Flat Rate' : commissionConfig.commission_type === 'tiered' ? 'Tiered' : 'Per-Employee'}</span>
+                    <span className="text-muted-foreground">Type:</span>{' ')}
+                    <span className="font-medium capitalize">{commissionConfig.commission_type === 'flat_rate' ? 'Flat Rate' : commissionConfig.commission_type === 'tiered' ? 'Tiered' : 'Per-Employee')}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Default Rate:</span>{' '}
+                    <span className="text-muted-foreground">Default Rate:</span>{' ')}
                     <span className="font-medium">{commissionConfig.default_rate}%</span>
                   </div>
                 </div>
@@ -2029,7 +2029,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       <CardTitle className="font-display text-base tracking-wide">SUPPLIER PERFORMANCE</CardTitle>
                       <MetricInfoTooltip description="Supplier scorecard based on purchase order data. Grade combines fill rate (50%), on-time delivery accuracy (30%), and price consistency (20%). A = 90%+, B = 75%+, C = 60%+, D = below 60%." />
                     </div>
-                    <CardDescription className="text-xs">{supplierMetrics.length} supplier{supplierMetrics.length !== 1 ? 's' : ''} tracked</CardDescription>
+                    <CardDescription className="text-xs">{supplierMetrics.length} supplier{supplierMetrics.length !== 1 ? 's' : '')} tracked</CardDescription>
                   </div>
                 </div>
                 {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
@@ -2073,14 +2073,14 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           </TableCell>
                           <TableCell className="text-right tabular-nums">{s.totalOrders}</TableCell>
                           <TableCell className="text-right tabular-nums">{s.fillRate}%</TableCell>
-                          <TableCell className="text-right tabular-nums">{s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—'}</TableCell>
-                          <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—'}</TableCell>
+                          <TableCell className="text-right tabular-nums">{s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—')}</TableCell>
+                          <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—')}</TableCell>
                           <TableCell className="text-right tabular-nums">
                             {s.priceConsistency != null ? (
-                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}>
+                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400')}>
                                 {s.priceConsistency}%
                               </span>
-                            ) : '—'}
+                            ) : '—')}
                           </TableCell>
                           <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalSpend)}</BlurredAmount></TableCell>
                         </TableRow>

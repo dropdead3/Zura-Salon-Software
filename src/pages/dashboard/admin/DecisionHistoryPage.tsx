@@ -90,7 +90,7 @@ export default function DecisionHistoryPage() {
                     </p>
                   )}
                   <div className="flex items-center gap-3 text-xs text-[hsl(var(--platform-foreground-muted))]">
-                    <span>{formatDate(new Date(rec.created_at), 'MMM d, yyyy'}</span>
+                    <span>{formatDate(new Date(rec.created_at), 'MMM d, yyyy')}</span>
                     {rec.estimated_monthly_impact && (
                       <span>
                         Est. impact: {formatCurrencyWhole(rec.estimated_monthly_impact)}/mo

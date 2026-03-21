@@ -138,7 +138,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
       count++;
     }
     if (count > 0) {
-      toast.success(`Assigned to ${count} categor${count === 1 ? 'y' : 'ies'}`);
+      toast.success(`Assigned to ${count} categor${count === 1 ? 'y' : 'ies')}`);
     } else {
       toast.info('Already assigned to all categories');
     }
@@ -176,7 +176,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
         <CardContent>
           <div className="px-3 py-4 text-center">
             <p className="text-sm text-muted-foreground">
-              Create add-ons in the library {isMobile ? 'above' : 'to the left'} first, then assign them to categories and services here.
+              Create add-ons in the library {isMobile ? 'above' : 'to the left')} first, then assign them to categories and services here.
             </p>
           </div>
         </CardContent>
@@ -255,11 +255,11 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                     {abbr}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'truncate'}>{cat.category_name}</p>
+                    <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
                     {totalForCat > 0 ? (
-                      <p className={cn(tokens.body.muted, 'flex items-center gap-1'}>
+                      <p className={cn(tokens.body.muted, 'flex items-center gap-1')}>
                         <Sparkles className="h-3 w-3 text-primary" />
-                        {totalForCat} add-on{totalForCat !== 1 ? 's' : ''} assigned
+                        {totalForCat} add-on{totalForCat !== 1 ? 's' : '')} assigned
                       </p>
                     ) : (
                       <p className={tokens.body.muted}>No add-ons assigned</p>

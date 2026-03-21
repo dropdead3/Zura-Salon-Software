@@ -62,7 +62,7 @@ export function KioskMediaUploader({
     if (file.size > maxSize) {
       toast({
         title: 'File too large',
-        description: `Please upload ${isVideo ? 'a video under 50MB' : 'an image under 10MB'}.`,
+        description: `Please upload ${isVideo ? 'a video under 50MB' : 'an image under 10MB')}.`,
         variant: 'destructive',
       });
       return;
@@ -73,7 +73,7 @@ export function KioskMediaUploader({
     try {
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `kiosk-bg-${organizationId || 'default'}-${Date.now()}.${fileExt}`;
+      const fileName = `kiosk-bg-${organizationId || 'default')}-${Date.now()}.${fileExt}`;
 
       // Upload to kiosk-assets bucket
       const { error: uploadError } = await supabase.storage
@@ -101,7 +101,7 @@ export function KioskMediaUploader({
 
       toast({
         title: 'Media uploaded',
-        description: `Your ${isVideo ? 'video' : 'image'} has been uploaded successfully.`,
+        description: `Your ${isVideo ? 'video' : 'image')} has been uploaded successfully.`,
       });
     } catch (error) {
       console.error('Upload error:', error);
@@ -195,7 +195,7 @@ export function KioskMediaUploader({
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-white text-sm font-medium bg-black/30 px-3 py-1 rounded-full">
-                {currentMediaType === 'video' ? 'Video with overlay' : 'Image with overlay'}
+                {currentMediaType === 'video' ? 'Video with overlay' : 'Image with overlay')}
               </span>
             </div>
             {/* Remove button */}
@@ -227,7 +227,7 @@ export function KioskMediaUploader({
             disabled={isUploading}
             className="w-full text-center text-sm text-primary hover:text-primary/80 transition-colors py-2"
           >
-            {isUploading ? 'Uploading...' : 'Replace media'}
+            {isUploading ? 'Uploading...' : 'Replace media')}
           </button>
         </div>
       ) : (
@@ -271,7 +271,7 @@ export function KioskMediaUploader({
       <p className="text-xs text-muted-foreground">
         {currentMediaType === 'video' 
           ? 'Video will loop automatically. Use object-cover for full-screen display.'
-          : 'For best results, use high-resolution images that fill the tablet screen.'}
+          : 'For best results, use high-resolution images that fill the tablet screen.')}
       </p>
     </div>
   );

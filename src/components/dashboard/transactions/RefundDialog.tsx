@@ -104,7 +104,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
             <p className="font-medium">{transaction.item_name}</p>
             <div className="flex justify-between items-center mt-1">
               <span className="text-sm text-muted-foreground">
-                {transaction.client_name || 'Walk-in'} • {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy'}
+                {transaction.client_name || 'Walk-in')} • {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
               </span>
               <span className="font-medium">{formatCurrency(maxAmount)}</span>
             </div>
@@ -137,7 +137,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
           <div className="space-y-3">
             <Label>Refund Method</Label>
             <RadioGroup value={refundType} onValueChange={(v) => setRefundType(v as typeof refundType)}>
-              <div className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => setRefundType('original_payment'}>
+              <div className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => setRefundType('original_payment')}>
                 <RadioGroupItem value="original_payment" id="original" className="mt-0.5" />
                 <div className="flex-1">
                   <Label htmlFor="original" className="cursor-pointer flex items-center gap-2">
@@ -150,7 +150,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
                 </div>
               </div>
 
-              <div className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => setRefundType('salon_credit'}>
+              <div className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => setRefundType('salon_credit')}>
                 <RadioGroupItem value="salon_credit" id="credit" className="mt-0.5" />
                 <div className="flex-1">
                   <Label htmlFor="credit" className="cursor-pointer flex items-center gap-2">
@@ -163,7 +163,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
                 </div>
               </div>
 
-              <div className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => setRefundType('gift_card'}>
+              <div className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => setRefundType('gift_card')}>
                 <RadioGroupItem value="gift_card" id="giftcard" className="mt-0.5" />
                 <div className="flex-1">
                   <Label htmlFor="giftcard" className="cursor-pointer flex items-center gap-2">

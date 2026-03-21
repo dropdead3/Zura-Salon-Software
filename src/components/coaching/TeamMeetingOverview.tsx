@@ -161,7 +161,7 @@ export function TeamMeetingOverview() {
                     <TableCell>
                       {s.lastMeetingDate ? (
                         <div>
-                          <span className="text-sm">{formatDate(new Date(s.lastMeetingDate), 'MMM d, yyyy'}</span>
+                          <span className="text-sm">{formatDate(new Date(s.lastMeetingDate), 'MMM d, yyyy')}</span>
                           {daysSinceText && (
                             <span className={cn(
                               'text-[10px] ml-1.5',
@@ -180,7 +180,7 @@ export function TeamMeetingOverview() {
                     <TableCell>
                       {s.nextMeetingDate ? (
                         <Link to={`/dashboard/meeting/${s.nextMeetingId}`} className="text-sm text-primary hover:underline">
-                          {formatDate(new Date(s.nextMeetingDate), 'MMM d'}
+                          {formatDate(new Date(s.nextMeetingDate), 'MMM d')}
                         </Link>
                       ) : (
                         <span className="text-sm text-muted-foreground italic">None</span>

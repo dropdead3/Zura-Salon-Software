@@ -159,7 +159,7 @@ export function PriceQueueTab() {
             <div>
               <PlatformCardTitle>Price Review Queue</PlatformCardTitle>
               <PlatformCardDescription>
-                {pendingCount} pending review{pendingCount !== 1 ? 's' : ''} · {filteredItems.length} total
+                {pendingCount} pending review{pendingCount !== 1 ? 's' : '')} · {filteredItems.length} total
               </PlatformCardDescription>
             </div>
           </div>
@@ -199,7 +199,7 @@ export function PriceQueueTab() {
               </>
             )}
             <PlatformButton variant="outline" size="sm" onClick={handleSync} disabled={syncMutation.isPending}>
-              <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin'} />
+              <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin')} />
               Sync Now
             </PlatformButton>
           </div>
@@ -210,7 +210,7 @@ export function PriceQueueTab() {
               <Loader2 className={tokens.loading.spinner} />
             </div>
           ) : items.length === 0 ? (
-            <div className={cn(tokens.empty.container, 'py-16'}>
+            <div className={cn(tokens.empty.container, 'py-16')}>
               <Check className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>Queue is clear</h3>
               <p className={tokens.empty.description}>No price updates awaiting review.</p>
@@ -244,7 +244,7 @@ export function PriceQueueTab() {
                         <Checkbox
                           checked={selected.has(item.id)}
                           onCheckedChange={() => toggleSelect(item.id)}
-                          disabled={item.status !== 'pending'}
+                          disabled={item.status !== 'pending')}
                         />
                       </TableCell>
                       <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
@@ -280,8 +280,8 @@ export function PriceQueueTab() {
                       </TableCell>
                       <TableCell className="font-sans text-sm tabular-nums">
                         {item.price_delta_pct != null ? (
-                          <span className={item.price_delta_pct > 0 ? 'text-red-400' : 'text-emerald-400'}>
-                            {item.price_delta_pct > 0 ? '+' : ''}
+                          <span className={item.price_delta_pct > 0 ? 'text-red-400' : 'text-emerald-400')}>
+                            {item.price_delta_pct > 0 ? '+' : '')}
                             {item.price_delta_pct.toFixed(1)}%
                           </span>
                         ) : (
@@ -352,7 +352,7 @@ export function PriceQueueTab() {
       <RejectNoteDialog
         open={!!rejectTarget}
         onOpenChange={(v) => { if (!v) setRejectTarget(null); }}
-        productName={rejectTarget?.product_name || ''}
+        productName={rejectTarget?.product_name || '')}
         onConfirm={handleRejectConfirm}
         isPending={rejectMutation.isPending}
       />
@@ -360,8 +360,8 @@ export function PriceQueueTab() {
       <PriceHistoryDialog
         open={!!historyTarget}
         onOpenChange={(v) => { if (!v) setHistoryTarget(null); }}
-        productName={historyTarget?.productName || ''}
-        brand={historyTarget?.brand || ''}
+        productName={historyTarget?.productName || '')}
+        brand={historyTarget?.brand || '')}
       />
     </>
   );

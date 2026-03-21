@@ -76,7 +76,7 @@ export function CustomPricingForm({
                 min="0"
                 step="0.01"
                 placeholder={basePrice.toString()}
-                value={customPrice ?? ''}
+                value={customPrice ?? '')}
                 onChange={(e) => onCustomPriceChange(e.target.value ? parseFloat(e.target.value) : null)}
                 className="pl-7"
               />
@@ -96,7 +96,7 @@ export function CustomPricingForm({
             <div className="space-y-2">
               <PlatformLabel>Discount Type</PlatformLabel>
               <Select
-                value={discountType ?? 'none'}
+                value={discountType ?? 'none')}
                 onValueChange={(v) => onDiscountTypeChange(v === 'none' ? null : v as DiscountType)}
               >
                 <SelectTrigger>
@@ -115,14 +115,14 @@ export function CustomPricingForm({
                 <PlatformLabel>Discount Value</PlatformLabel>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--platform-foreground-muted))]">
-                    {discountType === 'percentage' ? '%' : '$'}
+                    {discountType === 'percentage' ? '%' : '$')}
                   </span>
                   <PlatformInput
                     type="number"
                     min="0"
                     max={discountType === 'percentage' ? 100 : undefined}
                     step={discountType === 'percentage' ? 1 : 0.01}
-                    value={discountValue ?? ''}
+                    value={discountValue ?? '')}
                     onChange={(e) => onDiscountValueChange(e.target.value ? parseFloat(e.target.value) : null)}
                     className="pl-7"
                   />
@@ -136,7 +136,7 @@ export function CustomPricingForm({
             <div className="space-y-2">
               <PlatformLabel>Reason for Discount</PlatformLabel>
               <Select
-                value={discountReason ?? 'none'}
+                value={discountReason ?? 'none')}
                 onValueChange={(v) => onDiscountReasonChange(v === 'none' ? null : v)}
               >
                 <SelectTrigger>

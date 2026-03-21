@@ -121,8 +121,8 @@ export function ReviewStep({
             <div>
               <p className="text-sm text-muted-foreground">Pay Period</p>
               <p className="font-medium">
-                {formatDate(new Date(payPeriodStart), 'MMM d'} -{' '}
-                {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy'}
+                {formatDate(new Date(payPeriodStart), 'MMM d')} -{' ')}
+                {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
               </p>
             </div>
           </div>
@@ -130,7 +130,7 @@ export function ReviewStep({
             <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm text-muted-foreground">Check Date</p>
-              <p className="font-medium">{formatDate(new Date(checkDate), 'MMM d, yyyy'}</p>
+              <p className="font-medium">{formatDate(new Date(checkDate), 'MMM d, yyyy')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -328,7 +328,7 @@ export function ReviewStep({
         </Button>
         <Button className="flex-1" onClick={onFinalize} disabled={isSubmitting}>
           <Send className="h-4 w-4 mr-2" />
-          {isSubmitting ? 'Processing...' : 'Finalize Payroll'}
+          {isSubmitting ? 'Processing...' : 'Finalize Payroll')}
         </Button>
       </div>
 

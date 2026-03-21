@@ -149,7 +149,7 @@ export default function PlatformImport() {
                         Import Data for {selectedOrg.name}
                       </PlatformCardTitle>
                       <PlatformCardDescription>
-                        Source software: {selectedOrg.source_software || 'Not specified'}
+                        Source software: {selectedOrg.source_software || 'Not specified')}
                       </PlatformCardDescription>
                     </div>
                     <PlatformBadge variant="outline">{selectedOrg.status}</PlatformBadge>
@@ -239,7 +239,7 @@ export default function PlatformImport() {
         <DataImportWizard
           open={wizardOpen}
           onOpenChange={setWizardOpen}
-          sourceType={selectedOrg.source_software || 'csv'}
+          sourceType={selectedOrg.source_software || 'csv')}
           dataType={selectedDataType}
           organizationId={selectedOrgId}
         />

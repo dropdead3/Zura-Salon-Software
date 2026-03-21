@@ -49,7 +49,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
 
   const generateReportContent = () => {
     let content = `# Check-in Report\n\n`;
-    content += `**Meeting Date:** ${formatDate(new Date(), 'MMMM d, yyyy'}\n`;
+    content += `**Meeting Date:** ${formatDate(new Date(), 'MMMM d, yyyy')}\n`;
     content += `**Team Member:** ${teamMemberName}\n\n`;
 
     if (selectedNotes.length > 0) {
@@ -71,7 +71,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
           const status = item.status === 'completed' ? '✅' : item.status === 'in_progress' ? '🔄' : '⏳';
           content += `- ${status} **${item.title}**`;
           if (item.due_date) {
-            content += ` (Due: ${formatDate(new Date(item.due_date), 'MMM d'})`;
+            content += ` (Due: ${formatDate(new Date(item.due_date), 'MMM d')})`;
           }
           content += '\n';
           if (item.description) {
@@ -239,7 +239,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                         <span className="font-medium">{item.title}</span>
                         {item.due_date && (
                           <span className="text-muted-foreground ml-2">
-                            Due: {formatDate(new Date(item.due_date), 'MMM d'}
+                            Due: {formatDate(new Date(item.due_date), 'MMM d')}
                           </span>
                         )}
                       </label>
@@ -261,7 +261,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                   <label htmlFor="include-compliance" className="text-sm cursor-pointer flex-1">
                     <span className="font-medium">Include Backroom Performance</span>
                     <span className="text-muted-foreground ml-2">
-                      ({complianceSummaryParts.join(' · '})
+                      ({complianceSummaryParts.join(' · ')})
                     </span>
                   </label>
                 </div>
@@ -305,7 +305,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    Sent {formatDate(new Date(report.sent_at!), 'MMM d, yyyy h:mm a'}
+                    Sent {formatDate(new Date(report.sent_at!), 'MMM d, yyyy h:mm a')}
                   </span>
                   {report.acknowledged_at && (
                     <Badge variant="outline" className="bg-chart-2/10 text-chart-2">

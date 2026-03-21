@@ -134,7 +134,7 @@ export function ComparisonBreakdownTable({
                     'text-right font-medium tabular-nums',
                     isNeutral ? 'text-muted-foreground' : isPositive ? 'text-chart-2' : 'text-destructive'
                   )}>
-                    {isPositive ? '+' : ''}{row.change.toFixed(1)}%
+                    {isPositive ? '+' : '')}{row.change.toFixed(1)}%
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

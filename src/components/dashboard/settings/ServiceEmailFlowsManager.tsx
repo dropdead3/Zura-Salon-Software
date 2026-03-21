@@ -79,7 +79,7 @@ function formatTimingLabel(hours: number, type: 'before_appointment' | 'after_ap
     if (days === 14) return `2 weeks ${direction}`;
     if (days === 21) return `3 weeks ${direction}`;
     if (days === 42) return `6 weeks ${direction}`;
-    return `${days} day${days > 1 ? 's' : ''} ${direction}`;
+    return `${days} day${days > 1 ? 's' : '')} ${direction}`;
   }
   return `${days}d ${remaining}h ${direction}`;
 }
@@ -181,7 +181,7 @@ function ServiceFlowsList() {
           {groupFlowsByCategory(flows).map(([category, categoryFlows]) => (
             <div key={category}>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                {category || 'Uncategorized'}
+                {category || 'Uncategorized')}
               </p>
               {categoryFlows.map(flow => (
                 <FlowCard
@@ -286,7 +286,7 @@ function CreateFlowDialog({ onClose }: { onClose: () => void }) {
 
         <div className="space-y-2">
           <Label>Scope</Label>
-          <Select value={scope} onValueChange={(v) => setScope(v as 'service' | 'category'}>
+          <Select value={scope} onValueChange={(v) => setScope(v as 'service' | 'category')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="category">All services in a category</SelectItem>
@@ -349,7 +349,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
       <div className="flex items-center gap-3">
         <Button variant="ghost" size={tokens.button.inline} onClick={onBack}>← Back</Button>
         <div>
-          <h3 className="font-medium">{flow?.name || 'Flow'}</h3>
+          <h3 className="font-medium">{flow?.name || 'Flow')}</h3>
           <p className="text-xs text-muted-foreground">
             {flow?.service?.name || `All ${flow?.service_category} services`}
           </p>
@@ -821,12 +821,12 @@ function QueueItemRow({ item }: { item: ServiceEmailQueueItem }) {
           <StatusIcon className={cn('w-4 h-4 shrink-0', config.color)} />
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium truncate">{appt?.client_name || 'Unknown'}</span>
+              <span className="font-medium truncate">{appt?.client_name || 'Unknown')}</span>
               <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground truncate">{appt?.service_name || 'Service'}</span>
+              <span className="text-muted-foreground truncate">{appt?.service_name || 'Service')}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{step?.subject || 'Email'}</span>
+              <span>{step?.subject || 'Email')}</span>
               {item.error_message && (
                 <>
                   <span>·</span>
@@ -841,7 +841,7 @@ function QueueItemRow({ item }: { item: ServiceEmailQueueItem }) {
             {config.label}
           </Badge>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {format(new Date(item.scheduled_at), 'MMM d, h:mm a'}
+            {format(new Date(item.scheduled_at), 'MMM d, h:mm a')}
           </p>
         </div>
       </CardContent>
@@ -929,7 +929,7 @@ function AddStepDialog({
               onChange={e => setHtmlBody(e.target.value)}
               rows={8}
               className="font-mono text-sm"
-              placeholder={'<p>Hi {{first_name}},</p>\n<p>Your {{service_name}} appointment is coming up!</p>'}
+              placeholder={'<p>Hi {{first_name}},</p>\n<p>Your {{service_name}} appointment is coming up!</p>')}
             />
           </div>
 

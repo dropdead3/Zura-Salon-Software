@@ -38,7 +38,7 @@ function ClientMixPanel({ stylist }: { stylist: CategoryStylistData }) {
       <div className="pl-6 border-l-2 border-primary/20 mt-2 space-y-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Users className="w-3 h-3" />
-          <span>{stylist.totalClients} unique client{stylist.totalClients !== 1 ? 's' : ''}</span>
+          <span>{stylist.totalClients} unique client{stylist.totalClients !== 1 ? 's' : '')}</span>
         </div>
         {/* New vs Returning bar */}
         <div className="space-y-1.5">
@@ -91,7 +91,7 @@ function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: n
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{stylist.staffName}</p>
           <p className="text-xs text-muted-foreground">
-            {stylist.count} appointment{stylist.count !== 1 ? 's' : ''} · {stylist.sharePercent}% of category
+            {stylist.count} appointment{stylist.count !== 1 ? 's' : '')} · {stylist.sharePercent}% of category
           </p>
         </div>
         <span className="text-sm font-display tabular-nums">
@@ -187,7 +187,7 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
                       onClick={(e) => { e.stopPropagation(); setShowAll(!showAll); }}
                       className="text-xs text-primary hover:underline mt-2 flex items-center gap-1"
                     >
-                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
+                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
                       {showAll ? 'Show less' : `Show all ${category.stylists.length}`}
                     </button>
                   )}
@@ -252,7 +252,7 @@ export function RevenueByCategoryPanel({ isOpen, dateFrom, dateTo, locationId }:
                     onClick={() => setShowAll(!showAll)}
                     className="text-xs text-primary hover:underline flex items-center gap-1 mx-auto"
                   >
-                    <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
                     {showAll ? 'Show less' : `Show all ${categories.length} categories`}
                   </button>
                 )}

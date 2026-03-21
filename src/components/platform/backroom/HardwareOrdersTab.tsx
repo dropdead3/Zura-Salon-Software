@@ -162,7 +162,7 @@ function OrderRow({ order, onUpdate }: { order: HardwareOrder; onUpdate: ReturnT
         <PlatformBadge variant={cfg.variant}>{cfg.label}</PlatformBadge>
       </PlatformTableCell>
       <PlatformTableCell className="font-sans text-sm">
-        {format(new Date(order.created_at), 'MMM d, yyyy'}
+        {format(new Date(order.created_at), 'MMM d, yyyy')}
       </PlatformTableCell>
       <PlatformTableCell>
         {editTracking ? (
@@ -188,7 +188,7 @@ function OrderRow({ order, onUpdate }: { order: HardwareOrder; onUpdate: ReturnT
             className="font-sans text-sm text-slate-400 cursor-pointer hover:text-white"
             onClick={() => setEditTracking(true)}
           >
-            {order.tracking_number ? `${order.shipping_carrier || ''} ${order.tracking_number}` : '—'}
+            {order.tracking_number ? `${order.shipping_carrier || '')} ${order.tracking_number}` : '—')}
           </span>
         )}
       </PlatformTableCell>

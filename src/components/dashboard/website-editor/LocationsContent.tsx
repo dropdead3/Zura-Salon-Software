@@ -89,7 +89,7 @@ export function LocationsContent() {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate(dashPath('/admin/settings'}
+            onClick={() => navigate(dashPath('/admin/settings')}
             className="h-7 w-7 text-muted-foreground"
             title="Settings"
           >
@@ -132,7 +132,7 @@ export function LocationsContent() {
               variant="outline" 
               size="sm"
               className="mt-3"
-              onClick={() => navigate(dashPath('/admin/settings'}
+              onClick={() => navigate(dashPath('/admin/settings')}
             >
               Go to Settings
             </Button>
@@ -195,7 +195,7 @@ export function LocationsContent() {
                     </p>
                     <p className="flex items-center gap-1.5 min-w-0">
                       <Clock className="w-3 h-3 shrink-0" />
-                      <span className="truncate [overflow-wrap:anywhere]">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}</span>
+                      <span className="truncate [overflow-wrap:anywhere]">{formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set')}</span>
                     </p>
                   </div>
                   {/* Toggle */}
@@ -220,7 +220,7 @@ export function LocationsContent() {
         <p className="text-xs text-muted-foreground text-center">
           Drag locations to reorder how they appear on the website. 
           Edit location details in <button 
-            onClick={() => navigate(dashPath('/admin/settings'}
+            onClick={() => navigate(dashPath('/admin/settings')}
             className="underline hover:text-foreground transition-colors"
           >
             Settings → Locations

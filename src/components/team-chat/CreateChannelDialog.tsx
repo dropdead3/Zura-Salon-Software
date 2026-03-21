@@ -196,7 +196,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
                     </>
                   ) : availableMembers.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-4">
-                      {memberSearch ? 'No members found' : 'No more members to add'}
+                      {memberSearch ? 'No members found' : 'No more members to add')}
                     </p>
                   ) : (
                     availableMembers.map((member) => (
@@ -216,7 +216,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {member.displayName || member.fullName || 'Unknown'}
+                            {member.displayName || member.fullName || 'Unknown')}
                           </p>
                           {member.email && (
                             <p className="text-xs text-muted-foreground truncate">
@@ -226,7 +226,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
                         </div>
                         {member.role && (
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {member.role.replace('_', ' '}
+                            {member.role.replace('_', ' ')}
                           </Badge>
                         )}
                       </button>
@@ -237,7 +237,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
 
               {selectedMembers.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : ''} will be added
+                  {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : '')} will be added
                 </p>
               )}
             </div>
@@ -248,7 +248,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim() || isCreating}>
-              {isCreating ? 'Creating...' : 'Create Channel'}
+              {isCreating ? 'Creating...' : 'Create Channel')}
             </Button>
           </DialogFooter>
         </form>

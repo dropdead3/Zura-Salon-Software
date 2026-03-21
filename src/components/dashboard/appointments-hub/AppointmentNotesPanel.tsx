@@ -95,7 +95,7 @@ export function AppointmentNotesPanel({ appointmentId }: AppointmentNotesPanelPr
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-xs">{authorName}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {format(parseISO(note.created_at), 'MMM d, h:mm a'}
+                      {format(parseISO(note.created_at), 'MMM d, h:mm a')}
                     </span>
                     {note.is_private && (
                       <Lock className="h-3 w-3 text-muted-foreground" />

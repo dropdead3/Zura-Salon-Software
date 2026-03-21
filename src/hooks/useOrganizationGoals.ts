@@ -320,7 +320,7 @@ export function useBatchUpsertOrganizationGoals() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['organization-goals', orgId] });
-      toast.success(`${variables.length} goal${variables.length === 1 ? '' : 's'} saved`);
+      toast.success(`${variables.length} goal${variables.length === 1 ? '' : 's')} saved`);
     },
     onError: (error: Error) => {
       toast.error('Failed to save goals', { description: error.message });

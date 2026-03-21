@@ -22,7 +22,7 @@ export function LeadershipTabContent() {
           </div>
           <span className="font-medium">Executive Brief</span>
           <ChevronDown
-            className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : '')}`}
           />
         </button>
 

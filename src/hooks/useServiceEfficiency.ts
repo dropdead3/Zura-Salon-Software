@@ -236,7 +236,7 @@ export function useServiceEfficiency(
       const slotEntries = [...data.slotMap.entries()].sort((a, b) => b[1] - a[1]);
       const peakSlot = slotEntries.length > 0 ? slotEntries[0][0] : '';
       const peakHour = peakDays.length > 0 && peakSlot
-        ? `${peakDays.join(' & '} ${peakSlot}s`
+        ? `${peakDays.join(' & ')} ${peakSlot}s`
         : peakDays.length > 0 ? peakDays.join(' & ') : '—';
 
       services.push({

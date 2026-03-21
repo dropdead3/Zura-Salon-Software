@@ -160,7 +160,7 @@ export function PromotionalServiceFormDialog({
             {selectedService && (
               <div className="p-3 bg-muted rounded-lg text-sm">
                 <p>
-                  <span className="text-muted-foreground">Original Price:</span>{' '}
+                  <span className="text-muted-foreground">Original Price:</span>{' ')}
                   <span className="font-medium">{formatCurrency(selectedService.price)}</span>
                 </p>
               </div>

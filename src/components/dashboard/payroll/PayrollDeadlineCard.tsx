@@ -82,12 +82,12 @@ export function PayrollDeadlineCard() {
                 <Settings className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">{t('payroll.pay_schedule_not_configured'}</p>
-                <p className="text-xs">{t('payroll.setup_pay_schedule_desc'}</p>
+                <p className="text-sm font-medium text-foreground">{t('payroll.pay_schedule_not_configured')}</p>
+                <p className="text-xs">{t('payroll.setup_pay_schedule_desc')}</p>
               </div>
               <Button variant="ghost" size={tokens.button.inline} asChild>
-                <Link to={dashPath('/admin/payroll?tab=settings'}>
-                  {tc('configure'} <ChevronRight className="h-3 w-3 ml-1" />
+                <Link to={dashPath('/admin/payroll?tab=settings')}>
+                  {tc('configure')} <ChevronRight className="h-3 w-3 ml-1" />
                 </Link>
               </Button>
               <button
@@ -150,10 +150,10 @@ export function PayrollDeadlineCard() {
                   ? t('payroll.auto_payroll_scheduled')
                   : isPastDeadline
                     ? t('payroll.payroll_overdue_title')
-                    : t('payroll.payroll_submission'}
+                    : t('payroll.payroll_submission')}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                {formatDate(currentPeriod.periodStart, 'MMM d'} – {formatDate(periodEndDate, 'MMM d'}
+                {formatDate(currentPeriod.periodStart, 'MMM d')} – {formatDate(periodEndDate, 'MMM d')}
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export function PayrollDeadlineCard() {
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                  <p className="text-xs font-medium text-primary">{t('payroll.auto_run_enabled'}</p>
+                  <p className="text-xs font-medium text-primary">{t('payroll.auto_run_enabled')}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {autoRunDate && daysUntilAutoRun !== null
@@ -174,19 +174,19 @@ export function PayrollDeadlineCard() {
                       : daysUntilAutoRun === 1
                         ? t('payroll.runs_tomorrow', { date: formatDate(autoRunDate, 'MMM d') })
                         : t('payroll.runs_in_days', { date: formatDate(autoRunDate, 'MMM d'), days: daysUntilAutoRun })
-                    : t('payroll.scheduled_via_provider'}
+                    : t('payroll.scheduled_via_provider')}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-muted-foreground mb-1">{t('payroll.check_date'}</p>
-                <p className="text-sm font-medium">{formatDate(checkDate, 'MMM d'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('payroll.check_date')}</p>
+                <p className="text-sm font-medium">{formatDate(checkDate, 'MMM d')}</p>
               </div>
             </div>
           ) : isPastDeadline ? (
             /* Manual mode — overdue */
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-destructive font-medium mb-1">{t('payroll.deadline_passed'}</p>
+                <p className="text-xs text-destructive font-medium mb-1">{t('payroll.deadline_passed')}</p>
                 <p className="text-sm font-medium text-destructive">
                   {Math.abs(daysUntilDeadline) === 1
                     ? t('payroll.days_overdue_one', { count: Math.abs(daysUntilDeadline) })
@@ -194,15 +194,15 @@ export function PayrollDeadlineCard() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-muted-foreground mb-1">{t('payroll.check_date'}</p>
-                <p className="text-sm font-medium">{formatDate(checkDate, 'MMM d'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('payroll.check_date')}</p>
+                <p className="text-sm font-medium">{formatDate(checkDate, 'MMM d')}</p>
               </div>
             </div>
           ) : (
             /* Manual mode — upcoming */
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">{t('payroll.manual_submission_due'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('payroll.manual_submission_due')}</p>
                 <LiveCountdown
                   expiresAt={periodEndDate}
                   displayMode="days"
@@ -212,24 +212,24 @@ export function PayrollDeadlineCard() {
                 />
               </div>
               <div className="text-right">
-                <p className="text-xs text-muted-foreground mb-1">{t('payroll.check_date'}</p>
-                <p className="text-sm font-medium">{formatDate(checkDate, 'MMM d'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('payroll.check_date')}</p>
+                <p className="text-sm font-medium">{formatDate(checkDate, 'MMM d')}</p>
               </div>
             </div>
           )}
 
           <Button
-            variant={isPastDeadline && !isAutomatic ? 'destructive' : 'outline'}
+            variant={isPastDeadline && !isAutomatic ? 'destructive' : 'outline')}
             size={tokens.button.card}
             className="w-full"
             asChild
           >
-            <Link to={dashPath('/admin/payroll'}>
+            <Link to={dashPath('/admin/payroll')}>
               {isAutomatic
                 ? t('payroll.view_payroll')
                 : isPastDeadline
                   ? t('payroll.run_payroll_now')
-                  : t('payroll.run_payroll'}{' '}
+                  : t('payroll.run_payroll')}{' ')}
               <ChevronRight className="h-3 w-3 ml-1" />
             </Link>
           </Button>

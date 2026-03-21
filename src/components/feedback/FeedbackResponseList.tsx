@@ -23,7 +23,7 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-3 w-3 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`}
+          className={`h-3 w-3 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30')}`}
         />
       ))}
     </div>
@@ -42,7 +42,7 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
             <StarRating rating={response.overall_rating} />
           )}
           <p className="text-xs text-muted-foreground">
-            {response.responded_at && formatDate(new Date(response.responded_at), 'MMM d, yyyy h:mm a'}
+            {response.responded_at && formatDate(new Date(response.responded_at), 'MMM d, yyyy h:mm a')}
           </p>
         </div>
         <div className="flex items-center gap-2">

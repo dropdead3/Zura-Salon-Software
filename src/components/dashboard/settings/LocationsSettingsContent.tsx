@@ -390,12 +390,12 @@ export function LocationsSettingsContent() {
                         </p>
                         <p className="flex items-center gap-2">
                           <Clock className="w-3 h-3 shrink-0" />
-                          {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}
+                          {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set')}
                         </p>
                         {location.holiday_closures && location.holiday_closures.length > 0 && (
                           <p className="flex items-center gap-2">
                             <Calendar className="w-3 h-3 shrink-0" />
-                            {location.holiday_closures.length} holiday closure{location.holiday_closures.length !== 1 ? 's' : ''}
+                            {location.holiday_closures.length} holiday closure{location.holiday_closures.length !== 1 ? 's' : '')}
                           </p>
                         )}
                       </div>
@@ -451,7 +451,7 @@ export function LocationsSettingsContent() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingLocation ? 'Edit Location' : 'Add Location'}
+              {editingLocation ? 'Edit Location' : 'Add Location')}
             </DialogTitle>
             <DialogDescription>
               {editingLocation 
@@ -568,7 +568,7 @@ export function LocationsSettingsContent() {
                       step="0.01"
                       min="0"
                       max="100"
-                      value={formData.tax_rate != null ? (formData.tax_rate * 100).toString() : ''}
+                      value={formData.tax_rate != null ? (formData.tax_rate * 100).toString() : '')}
                       onChange={(e) => {
                         const value = e.target.value;
                         setFormData(f => ({
@@ -605,7 +605,7 @@ export function LocationsSettingsContent() {
                         id="stylist_capacity"
                         type="number"
                         min="0"
-                        value={formData.stylist_capacity ?? ''}
+                        value={formData.stylist_capacity ?? '')}
                         onChange={(e) => setFormData(f => ({ 
                           ...f, 
                           stylist_capacity: e.target.value ? parseInt(e.target.value) : null 
@@ -624,7 +624,7 @@ export function LocationsSettingsContent() {
                         step="0.1"
                         min="0"
                         max="5"
-                        value={formData.assistant_ratio ?? ''}
+                        value={formData.assistant_ratio ?? '')}
                         onChange={(e) => setFormData(f => ({ 
                           ...f, 
                           assistant_ratio: e.target.value ? parseFloat(e.target.value) : null 
@@ -814,21 +814,21 @@ export function LocationsSettingsContent() {
                           }}
                         />
                         <span className="text-xs text-muted-foreground w-12">
-                          {isClosed ? 'Closed' : 'Open'}
+                          {isClosed ? 'Closed' : 'Open')}
                         </span>
                       </div>
                       {!isClosed && (
                         <div className="flex items-center gap-2">
                           <Input
                             type="time"
-                            value={dayHours?.open || '10:00'}
+                            value={dayHours?.open || '10:00')}
                             onChange={(e) => updateDayHours(day, 'open', e.target.value)}
                             className="w-28 h-8 text-sm"
                           />
                           <span className="text-muted-foreground">to</span>
                           <Input
                             type="time"
-                            value={dayHours?.close || '18:00'}
+                            value={dayHours?.close || '18:00')}
                             onChange={(e) => updateDayHours(day, 'close', e.target.value)}
                             className="w-28 h-8 text-sm"
                           />
@@ -892,7 +892,7 @@ export function LocationsSettingsContent() {
                         <div>
                           <p className="text-sm font-medium">{holiday.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDate(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy'}
+                            {formatDate(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
                           </p>
                         </div>
                         <button
@@ -926,7 +926,7 @@ export function LocationsSettingsContent() {
               onClick={handleSave}
               disabled={!formData.name || !formData.address || !formData.city || !formData.phone}
             >
-              {editingLocation ? 'Save Changes' : 'Add Location'}
+              {editingLocation ? 'Save Changes' : 'Add Location')}
             </Button>
           </DialogFooter>
         </DialogContent>

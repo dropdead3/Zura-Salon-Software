@@ -96,7 +96,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
     <div className="space-y-6">
       {/* Month indicator */}
       <p className="text-muted-foreground">
-        {formatDate(now, 'MMMM yyyy'} rent payments
+        {formatDate(now, 'MMMM yyyy')} rent payments
       </p>
 
       {/* Summary Cards */}
@@ -170,7 +170,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
           <CardContent className="py-12 text-center text-muted-foreground">
             {searchQuery || statusFilter !== 'all'
               ? 'No payments match your filters'
-              : 'No rent payments for this period'}
+              : 'No rent payments for this period')}
           </CardContent>
         </Card>
       ) : (
@@ -194,7 +194,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                     <tr key={payment.id} className="border-b border-border/50 hover:bg-card/70">
                       <td className="p-4">
                         <div>
-                          <p className="font-medium text-foreground">{payment.renter_name || 'Unknown'}</p>
+                          <p className="font-medium text-foreground">{payment.renter_name || 'Unknown')}</p>
                           {payment.renter_business_name && (
                             <p className="text-sm text-muted-foreground">{payment.renter_business_name}</p>
                           )}
@@ -203,7 +203,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                       <td className="p-4 text-sm">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {formatDate(new Date(payment.due_date), 'MMM d, yyyy'}
+                          {formatDate(new Date(payment.due_date), 'MMM d, yyyy')}
                         </div>
                       </td>
                       <td className="p-4 text-right font-medium">{formatCurrency(payment.total_due)}</td>
@@ -262,7 +262,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="font-medium">{selectedPayment.renter_name}</p>
                 <p className="text-sm text-muted-foreground">
-                  Due: {formatDate(new Date(selectedPayment.due_date), 'MMM d, yyyy'}
+                  Due: {formatDate(new Date(selectedPayment.due_date), 'MMM d, yyyy')}
                 </p>
                 <p className="text-sm">
                   Balance: <span className="font-medium text-amber-400">{formatCurrency(selectedPayment.balance)}</span>
@@ -314,7 +314,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
               Cancel
             </Button>
             <Button onClick={handleRecordPayment} disabled={recordPayment.isPending}>
-              {recordPayment.isPending ? 'Recording...' : 'Record Payment'}
+              {recordPayment.isPending ? 'Recording...' : 'Record Payment')}
             </Button>
           </DialogFooter>
         </DialogContent>

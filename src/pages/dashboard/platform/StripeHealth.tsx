@@ -74,7 +74,7 @@ export default function StripeHealthPage() {
           </div>
           <div>
             <h2 className="text-lg font-medium text-[hsl(var(--platform-foreground))]">
-              {hasIssues ? 'Payment Issues Detected' : 'All Payments Healthy'}
+              {hasIssues ? 'Payment Issues Detected' : 'All Payments Healthy')}
             </h2>
             <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
               {hasIssues 

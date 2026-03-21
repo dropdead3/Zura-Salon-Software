@@ -37,11 +37,11 @@ function DiffCell({ label, valueA, valueB, renderValue }: {
 
   return (
     <>
-      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10'}>
+      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10')}>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-display">{label}</span>
         <div className="text-sm font-sans mt-0.5">{render(valueA)}</div>
       </div>
-      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10'}>
+      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10')}>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-display">{label}</span>
         <div className="text-sm font-sans mt-0.5">{render(valueB)}</div>
       </div>
@@ -56,7 +56,7 @@ function StepDots({ stepReached }: { stepReached: string | null }) {
       {WIZARD_STEPS.map((s, i) => (
         <div
           key={s}
-          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted'}
+          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted')}
           title={s}
         />
       ))}
@@ -74,7 +74,7 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50">
           <DialogTitle className="font-display tracking-wide text-base">COMPARE DRAFTS</DialogTitle>
           <DialogDescription className="font-sans text-sm">
-            Side-by-side comparison for {draftA.client_name || 'No Client Selected'}. Fields that differ are highlighted.
+            Side-by-side comparison for {draftA.client_name || 'No Client Selected')}. Fields that differ are highlighted.
           </DialogDescription>
         </DialogHeader>
 
@@ -119,8 +119,8 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
             {/* Date & Time */}
             <DiffCell
               label="Date & Time"
-              valueA={`${draftA.appointment_date || '—'} ${draftA.start_time || ''}`}
-              valueB={`${draftB.appointment_date || '—'} ${draftB.start_time || ''}`}
+              valueA={`${draftA.appointment_date || '—')} ${draftA.start_time || '')}`}
+              valueB={`${draftB.appointment_date || '—')} ${draftB.start_time || '')}`}
             />
 
             {/* Notes */}
@@ -132,8 +132,8 @@ export function DraftCompareDialog({ open, onOpenChange, draftA, draftB, onResum
             {/* Redo */}
             <DiffCell
               label="Redo"
-              valueA={draftA.is_redo ? 'Yes' : 'No'}
-              valueB={draftB.is_redo ? 'Yes' : 'No'}
+              valueA={draftA.is_redo ? 'Yes' : 'No')}
+              valueB={draftB.is_redo ? 'Yes' : 'No')}
             />
 
             {/* Resume buttons */}

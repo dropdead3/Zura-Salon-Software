@@ -158,7 +158,7 @@ export function ProgramAchievementStack({
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{remaining} more achievement{remaining > 1 ? 's' : ''}</p>
+            <p>{remaining} more achievement{remaining > 1 ? 's' : '')}</p>
           </TooltipContent>
         </Tooltip>
       )}

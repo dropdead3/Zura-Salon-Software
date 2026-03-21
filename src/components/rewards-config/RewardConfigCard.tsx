@@ -92,7 +92,7 @@ export function RewardConfigCard({
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-sm truncate">{reward.name}</h3>
             <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-              {reward.description || 'No description'}
+              {reward.description || 'No description')}
             </p>
             
             <div className="flex items-center gap-2 mt-2">
@@ -140,7 +140,7 @@ export function RewardConfigCard({
         
         <div className="flex items-center justify-between mt-4 pt-3 border-t">
           <span className="text-xs text-muted-foreground">
-            {reward.is_active ? 'Active' : 'Inactive'}
+            {reward.is_active ? 'Active' : 'Inactive')}
           </span>
           <Switch 
             checked={reward.is_active} 

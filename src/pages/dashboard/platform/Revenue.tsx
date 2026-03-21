@@ -102,7 +102,7 @@ export default function Revenue() {
           value={atRiskCount}
           icon={AlertTriangle}
           description={`${metrics?.pastDueSubscriptions || 0} past due`}
-          variant={atRiskCount > 0 ? 'warning' : 'default'}
+          variant={atRiskCount > 0 ? 'warning' : 'default')}
         />
       </div>
 

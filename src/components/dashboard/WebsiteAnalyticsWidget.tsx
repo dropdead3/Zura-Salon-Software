@@ -32,9 +32,9 @@ function TrendBadge({ value, inverted = false }: TrendBadgeProps) {
   }
 
   return (
-    <span className={`inline-flex items-center gap-1 text-xs ${isPositive ? 'text-success-foreground' : 'text-destructive'}`}>
+    <span className={`inline-flex items-center gap-1 text-xs ${isPositive ? 'text-success-foreground' : 'text-destructive')}`}>
       {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-      <span>{value > 0 ? '+' : ''}{value.toFixed(1)}%</span>
+      <span>{value > 0 ? '+' : '')}{value.toFixed(1)}%</span>
     </span>
   );
 }
@@ -148,7 +148,7 @@ export function WebsiteAnalyticsWidget() {
             onClick={() => refreshAnalytics()}
             disabled={isRefreshing}
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : '')}`} />
           </Button>
         </div>
       </CardHeader>

@@ -66,7 +66,7 @@ export function PriceSourcesTab() {
   const toggleActive = (source: typeof sources[0]) => {
     updateMutation.mutate(
       { id: source.id, updates: { is_active: !source.is_active } },
-      { onSuccess: () => toast.success(`${source.brand} ${source.is_active ? 'disabled' : 'enabled'}`) }
+      { onSuccess: () => toast.success(`${source.brand} ${source.is_active ? 'disabled' : 'enabled')}`) }
     );
   };
 
@@ -174,7 +174,7 @@ export function PriceSourcesTab() {
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : sources.length === 0 ? (
-          <div className={cn(tokens.empty.container, 'py-16'}>
+          <div className={cn(tokens.empty.container, 'py-16')}>
             <Database className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No sources configured</h3>
             <p className={tokens.empty.description}>Add a distributor API to start syncing wholesale prices.</p>
@@ -197,14 +197,14 @@ export function PriceSourcesTab() {
                   <TableCell className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">{source.brand}</TableCell>
                   <TableCell>
                     <PlatformBadge variant="outline" size="sm">
-                      {source.source_type === 'api' ? 'API' : 'CSV'}
+                      {source.source_type === 'api' ? 'API' : 'CSV')}
                     </PlatformBadge>
                   </TableCell>
                   <TableCell className="font-sans text-sm capitalize text-[hsl(var(--platform-foreground)/0.85)]">{source.scrape_frequency}</TableCell>
                   <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground-subtle))]">
                     {source.last_polled_at
                       ? new Date(source.last_polled_at).toLocaleDateString()
-                      : 'Never'}
+                      : 'Never')}
                   </TableCell>
                   <TableCell>
                     <Switch
@@ -220,7 +220,7 @@ export function PriceSourcesTab() {
                         onClick={() => handleSync(source.id)}
                         disabled={syncMutation.isPending}
                       >
-                        <RefreshCw className={cn('w-3.5 h-3.5', syncMutation.isPending && 'animate-spin'} />
+                        <RefreshCw className={cn('w-3.5 h-3.5', syncMutation.isPending && 'animate-spin')} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"

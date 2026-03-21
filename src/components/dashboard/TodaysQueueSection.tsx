@@ -166,7 +166,7 @@ export function TodaysQueueSection({
               onClick={() => refetch()}
               disabled={isFetching}
             >
-              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : '')}`} />
             </Button>
             
             <WalkInDialog locationId={locationId} />
@@ -280,7 +280,7 @@ export function TodaysQueueSection({
                 <p className="text-sm mt-1">
                   {queueData.completed.length > 0 
                     ? `${queueData.completed.length} completed today` 
-                    : 'Add a walk-in or wait for scheduled appointments'}
+                    : 'Add a walk-in or wait for scheduled appointments')}
                 </p>
               </div>
             )}
@@ -288,7 +288,7 @@ export function TodaysQueueSection({
             {/* View Full Schedule Link */}
             <div className="flex justify-center pt-2">
               <Button variant="ghost" asChild className="text-muted-foreground">
-                <Link to={dashPath('/schedule'}>
+                <Link to={dashPath('/schedule')}>
                   View Full Schedule
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
@@ -337,7 +337,7 @@ export function TodaysQueueSection({
           isUpdating={updateStatus.isPending}
           taxRate={taxRate}
           businessSettings={businessSettings as any}
-          locationName={selectedLocation?.name || ''}
+          locationName={selectedLocation?.name || '')}
           locationAddress={(selectedLocation as any)?.address}
           locationPhone={(selectedLocation as any)?.phone}
         />

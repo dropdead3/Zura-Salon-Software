@@ -134,7 +134,7 @@ export function AdjustmentsStep({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={emp.employee?.photo_url || undefined} />
                       <AvatarFallback>
-                        {getInitials(emp.employee?.full_name || ''}
+                        {getInitials(emp.employee?.full_name || '')}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium">
@@ -149,7 +149,7 @@ export function AdjustmentsStep({
                     </span>
                     <Input
                       type="number"
-                      value={empAdjustments.bonus || ''}
+                      value={empAdjustments.bonus || '')}
                       onChange={(e) =>
                         updateAdjustment(emp.employee_id, 'bonus', Number(e.target.value) || 0)
                       }
@@ -167,7 +167,7 @@ export function AdjustmentsStep({
                     </span>
                     <Input
                       type="number"
-                      value={empAdjustments.tips || ''}
+                      value={empAdjustments.tips || '')}
                       onChange={(e) =>
                         updateAdjustment(emp.employee_id, 'tips', Number(e.target.value) || 0)
                       }
@@ -185,7 +185,7 @@ export function AdjustmentsStep({
                     </span>
                     <Input
                       type="number"
-                      value={empAdjustments.deductions || ''}
+                      value={empAdjustments.deductions || '')}
                       onChange={(e) =>
                         updateAdjustment(emp.employee_id, 'deductions', Number(e.target.value) || 0)
                       }
@@ -206,7 +206,7 @@ export function AdjustmentsStep({
                         : ''
                     }
                   >
-                    {netAdjustment >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netAdjustment))}
+                    {netAdjustment >= 0 ? '+' : '-')}{formatCurrency(Math.abs(netAdjustment))}
                   </span>
                 </TableCell>
               </TableRow>

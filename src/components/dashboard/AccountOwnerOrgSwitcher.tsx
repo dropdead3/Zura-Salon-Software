@@ -88,7 +88,7 @@ export function AccountOwnerOrgSwitcher({ className, isCollapsed = false }: Acco
               "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30",
               className
             )}
-            title={currentOrg?.name || 'Select Organization'}
+            title={currentOrg?.name || 'Select Organization')}
           >
             <Building2 className="h-4 w-4 text-amber-600" />
           </Button>
@@ -124,7 +124,7 @@ export function AccountOwnerOrgSwitcher({ className, isCollapsed = false }: Acco
             <Building2 className="h-4 w-4 shrink-0 text-amber-600" />
             <div className="flex flex-col min-w-0 flex-1">
               <span className="truncate text-sm font-medium">
-                {currentOrg?.name || 'Select Organization'}
+                {currentOrg?.name || 'Select Organization')}
               </span>
               {organizations.length > 1 && (
                 <span className="text-xs text-muted-foreground">
@@ -169,7 +169,7 @@ function OrgSwitcherContent({
       <CommandInput placeholder="Search organizations..." />
       <CommandList className="max-h-[300px]">
         <CommandEmpty>
-          {isLoading ? 'Loading...' : 'No organizations found.'}
+          {isLoading ? 'Loading...' : 'No organizations found.')}
         </CommandEmpty>
         <CommandGroup heading="Your Organizations">
           {organizations.map((org) => (

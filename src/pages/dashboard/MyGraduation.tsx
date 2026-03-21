@@ -81,9 +81,9 @@ function FeedbackSection({ submissionId }: { submissionId: string }) {
           {feedback.map((fb) => (
             <div key={fb.id} className="text-sm border-b border-border/50 pb-2 last:border-0">
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                <span className="font-medium">{fb.coach?.full_name || 'Coach'}</span>
+                <span className="font-medium">{fb.coach?.full_name || 'Coach')}</span>
                 <span>•</span>
-                <span>{formatDate(new Date(fb.created_at), 'MMM d, h:mm a'}</span>
+                <span>{formatDate(new Date(fb.created_at), 'MMM d, h:mm a')}</span>
               </div>
               <p className="text-foreground">{fb.feedback}</p>
             </div>
@@ -172,7 +172,7 @@ function SubmissionDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {canResubmit ? 'Resubmit for Review' : 'Request Check'}
+            {canResubmit ? 'Resubmit for Review' : 'Request Check')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
@@ -204,7 +204,7 @@ function SubmissionDialog({
                   <Button 
                     variant="ghost" 
                     size={tokens.button.inline} 
-                    onClick={() => setProofUrl(''}
+                    onClick={() => setProofUrl('')}
                   >
                     Remove
                   </Button>
@@ -217,7 +217,7 @@ function SubmissionDialog({
                   className="w-full"
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Uploading...' : 'Upload File'}
+                  {isUploading ? 'Uploading...' : 'Upload File')}
                 </Button>
               )}
             </div>
@@ -243,7 +243,7 @@ function SubmissionDialog({
             className="w-full"
           >
             <Send className="h-4 w-4 mr-2" />
-            {canResubmit ? 'Resubmit for Review' : 'Submit for Check'}
+            {canResubmit ? 'Resubmit for Review' : 'Submit for Check')}
           </Button>
         </div>
       </DialogContent>
@@ -284,7 +284,7 @@ function RequirementCard({
                 <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
               )}
               <div>
-                <p className={`font-medium ${status === 'approved' ? 'line-through text-muted-foreground' : ''}`}>
+                <p className={`font-medium ${status === 'approved' ? 'line-through text-muted-foreground' : '')}`}>
                   {requirement.title}
                 </p>
               </div>
@@ -292,7 +292,7 @@ function RequirementCard({
             <div className="flex items-center gap-3">
               <SubmissionDialog requirement={requirement} existingSubmission={submission} />
               {(hasNeedsRevision || submission) && (
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : '')}`} />
               )}
             </div>
           </div>
@@ -309,7 +309,7 @@ function RequirementCard({
                 <div className="mt-3 space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>Submitted {formatDate(new Date(submission.submitted_at), 'PPP'}</span>
+                    <span>Submitted {formatDate(new Date(submission.submitted_at), 'PPP')}</span>
                   </div>
                   
                   {submission.proof_url && (
@@ -380,7 +380,7 @@ export default function MyGraduation() {
         />
 
         {/* Progress Overview */}
-        <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : ''}>
+        <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : '')}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Overall Progress</span>

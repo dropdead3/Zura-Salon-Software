@@ -22,7 +22,7 @@ export function AnniversaryWidget() {
 
   if (isLoading) {
     return (
-      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
         <div className="flex items-center gap-3">
           <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="w-32 h-4" />
@@ -41,12 +41,12 @@ export function AnniversaryWidget() {
   const isMilestone = (years: number) => MILESTONE_YEARS.includes(years);
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Award className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1'}>WORK ANNIVERSARIES</span>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>WORK ANNIVERSARIES</span>
       </div>
 
       <div className="mt-4 flex-1">
@@ -91,7 +91,7 @@ export function AnniversaryWidget() {
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {person.years}yr{person.years > 1 ? 's' : ''}
+                    {person.years}yr{person.years > 1 ? 's' : '')}
                   </Badge>
                 </div>
               ))}

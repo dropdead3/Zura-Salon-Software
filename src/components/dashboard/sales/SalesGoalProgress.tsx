@@ -214,7 +214,7 @@ export function SalesGoalProgress({
           type: 'insight',
           category: 'goal-recovery',
           title: `${label} Recovery Plan`,
-          description: `We are behind pace on our ${goalPeriod} sales goal. Current revenue: $${current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Target: $${target.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Shortfall: $${remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. We need $${neededPerDay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per day over the next ${daysLeft} open business day${daysLeft !== 1 ? 's' : ''} to hit the goal. Goal period: ${goalPeriod}. Provide specific, immediate action items including promotions, ad campaigns, rebooking pushes, retail initiatives, and upselling strategies calibrated to close this gap.`,
+          description: `We are behind pace on our ${goalPeriod} sales goal. Current revenue: $${current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Target: $${target.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Shortfall: $${remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. We need $${neededPerDay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per day over the next ${daysLeft} open business day${daysLeft !== 1 ? 's' : '')} to hit the goal. Goal period: ${goalPeriod}. Provide specific, immediate action items including promotions, ad campaigns, rebooking pushes, retail initiatives, and upselling strategies calibrated to close this gap.`,
         },
       });
       if (error) throw error;
@@ -314,7 +314,7 @@ export function SalesGoalProgress({
           {paceStatus === 'behind' && (
             <>
               <TrendingDown className="w-3 h-3" />
-              <span>Behind pace · <BlurredAmount>{formatCurrencyWhole(Math.round(neededPerDay))}/day</BlurredAmount> needed ({daysLeft} open day{daysLeft !== 1 ? 's' : ''} left)</span>
+              <span>Behind pace · <BlurredAmount>{formatCurrencyWhole(Math.round(neededPerDay))}/day</BlurredAmount> needed ({daysLeft} open day{daysLeft !== 1 ? 's' : '')} left)</span>
               <Button
                 variant="ghost"
                 size={tokens.button.inline}
@@ -372,7 +372,7 @@ export function SalesGoalProgress({
                           }
                           className="text-[11px] text-primary hover:underline"
                         >
-                          {allTasksSelected ? 'Deselect all' : 'Select all'}
+                          {allTasksSelected ? 'Deselect all' : 'Select all')}
                         </button>
                       </div>
                       <div className="space-y-1.5">
@@ -392,7 +392,7 @@ export function SalesGoalProgress({
                                 className="mt-0.5"
                               />
                               <div className="flex-1 min-w-0">
-                                <p className={cn('text-sm leading-snug', !selected && 'line-through text-muted-foreground'}>
+                                <p className={cn('text-sm leading-snug', !selected && 'line-through text-muted-foreground')}>
                                   {task.title}
                                 </p>
                                 {task.description && selected && (
@@ -402,7 +402,7 @@ export function SalesGoalProgress({
                                 )}
                                 {selected && (
                                   <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                                    Due in {task.dueDays} day{task.dueDays !== 1 ? 's' : ''}
+                                    Due in {task.dueDays} day{task.dueDays !== 1 ? 's' : '')}
                                   </p>
                                 )}
                               </div>

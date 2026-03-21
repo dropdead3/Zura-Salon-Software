@@ -334,7 +334,7 @@ export default function PlatformAccounts() {
                         {org.primaryLocation ? (
                           <span className="text-sm text-slate-300">
                             {org.primaryLocation.state_province && `${org.primaryLocation.state_province}, `}
-                            {org.primaryLocation.country || 'US'}
+                            {org.primaryLocation.country || 'US')}
                           </span>
                         ) : (
                           <span className="text-sm text-slate-500">—</span>
@@ -365,8 +365,8 @@ export default function PlatformAccounts() {
                             
                             return (
                               <PlatformBadge variant={variant} size="sm">
-                                {format(goLiveDate, 'MMM d'}
-                                {isPast && !isLive && ' 🚨'}
+                                {format(goLiveDate, 'MMM d')}
+                                {isPast && !isLive && ' 🚨')}
                               </PlatformBadge>
                             );
                           })()
@@ -376,7 +376,7 @@ export default function PlatformAccounts() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-slate-300">
-                          {planLabels[org.subscription_tier || 'standard'] || org.subscription_tier || 'Standard'}
+                          {planLabels[org.subscription_tier || 'standard'] || org.subscription_tier || 'Standard')}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -468,7 +468,7 @@ export default function PlatformAccounts() {
               <p className="text-slate-500 mb-4">
                 {searchQuery || statusFilter !== 'all' 
                   ? 'Try adjusting your search or filters'
-                  : 'Create your first account to get started'}
+                  : 'Create your first account to get started')}
               </p>
               {!searchQuery && statusFilter === 'all' && (
                 <PlatformButton onClick={() => setCreateDialogOpen(true)}>

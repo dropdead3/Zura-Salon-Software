@@ -233,7 +233,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className={tokens.body.emphasis}>
-                    {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
+                    {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : 'No date')}
                   </span>
                   {t.service_name && (
                     <Badge variant="secondary" className="text-[10px]">{t.service_name}</Badge>
@@ -244,7 +244,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
-                    variant={isCompareSelected ? 'default' : 'ghost'}
+                    variant={isCompareSelected ? 'default' : 'ghost')}
                     size="icon"
                     className="h-7 w-7"
                     onClick={() => toggleCompareEntry(t)}
@@ -270,7 +270,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                     <img src={t.before_url} alt="Before" className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className={cn(tokens.body.muted, 'text-xs'}>No before</span>
+                      <span className={cn(tokens.body.muted, 'text-xs')}>No before</span>
                     </div>
                   )}
                 </div>
@@ -279,7 +279,7 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                     <img src={t.after_url} alt="After" className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className={cn(tokens.body.muted, 'text-xs'}>No after</span>
+                      <span className={cn(tokens.body.muted, 'text-xs')}>No after</span>
                     </div>
                   )}
                 </div>
@@ -304,10 +304,10 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                               {f.service_name && <span className={tokens.body.emphasis}>{f.service_name}</span>}
                               {f.formula_data?.map((line, i) => (
                                 <div key={i} className={tokens.body.muted}>
-                                  {line.product_name} — {line.quantity}{line.unit || 'g'}
+                                  {line.product_name} — {line.quantity}{line.unit || 'g')}
                                 </div>
                               ))}
-                              {f.notes && <div className={cn(tokens.body.muted, 'italic'}>{f.notes}</div>}
+                              {f.notes && <div className={cn(tokens.body.muted, 'italic')}>{f.notes}</div>}
                             </div>
                           ))}
                         </div>
@@ -318,24 +318,24 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
                     {t.notes && (
                       <div>
                         <span className={tokens.label.tiny}>Notes</span>
-                        <p className={cn(tokens.body.muted, 'mt-1'}>{t.notes}</p>
+                        <p className={cn(tokens.body.muted, 'mt-1')}>{t.notes}</p>
                       </div>
                     )}
 
                     {/* Portfolio toggle */}
                     <div className="flex items-center justify-between">
                       <Button
-                        variant={t.portfolio_approved ? 'default' : 'outline'}
+                        variant={t.portfolio_approved ? 'default' : 'outline')}
                         size="sm"
                         onClick={() => togglePortfolio(t)}
                         className="gap-1.5 text-xs"
                       >
-                        <Star className={cn('w-3 h-3', t.portfolio_approved && 'fill-current'} />
-                        {t.portfolio_approved ? 'Portfolio Approved' : 'Add to Portfolio'}
+                        <Star className={cn('w-3 h-3', t.portfolio_approved && 'fill-current')} />
+                        {t.portfolio_approved ? 'Portfolio Approved' : 'Add to Portfolio')}
                       </Button>
                       {t.portfolio_approved && (
                         <select
-                          value={t.portfolio_category || ''}
+                          value={t.portfolio_category || '')}
                           onChange={e =>
                             updateTransformation.mutate({
                               id: t.id,

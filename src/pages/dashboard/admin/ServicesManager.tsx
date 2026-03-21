@@ -351,7 +351,7 @@ export default function ServicesManager() {
               </div>
             </CardContent>
           </Card>
-          <Link to={dashPath('/admin/stylist-levels'}>
+          <Link to={dashPath('/admin/stylist-levels')}>
             <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -504,7 +504,7 @@ export default function ServicesManager() {
                                   Are you sure you want to delete "{category.category}"? 
                                   {category.items.length > 0 && (
                                     <span className="block mt-2 text-destructive font-medium">
-                                      This will also delete {category.items.length} service{category.items.length > 1 ? 's' : ''} in this category.
+                                      This will also delete {category.items.length} service{category.items.length > 1 ? 's' : '')} in this category.
                                     </span>
                                   )}
                                 </AlertDialogDescription>
@@ -635,7 +635,7 @@ export default function ServicesManager() {
                                     <div className="space-y-2">
                                       <Label>Description</Label>
                                       <Textarea 
-                                        value={editingService.item.description || ''}
+                                        value={editingService.item.description || '')}
                                         onChange={(e) => setEditingService(prev => 
                                           prev ? { ...prev, item: { ...prev.item, description: e.target.value } } : null
                                         )}
@@ -654,7 +654,7 @@ export default function ServicesManager() {
                                               <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                               <Input 
                                                 className="pl-7 font-mono"
-                                                value={editingService.item.levelPrices[level.id]?.toString() || ''}
+                                                value={editingService.item.levelPrices[level.id]?.toString() || '')}
                                                 onChange={(e) => {
                                                   const value = e.target.value;
                                                   setEditingService(prev => 
@@ -723,7 +723,7 @@ export default function ServicesManager() {
                                             <Label>Restriction Reason</Label>
                                             <Textarea 
                                               placeholder="e.g., Extensions require 7-day custom order"
-                                              value={(editingService.item as any).restrictionReason || ''}
+                                              value={(editingService.item as any).restrictionReason || '')}
                                               onChange={(e) => setEditingService(prev => 
                                                 prev ? { ...prev, item: { ...prev.item, restrictionReason: e.target.value } } : null
                                               )}

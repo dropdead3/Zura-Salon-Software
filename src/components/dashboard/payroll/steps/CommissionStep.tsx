@@ -97,11 +97,11 @@ export function CommissionStep({
       <div>
         <h3 className="text-lg font-medium mb-2">Commission Review</h3>
         <p className="text-sm text-muted-foreground">
-          Review commissions calculated from sales data for{' '}
+          Review commissions calculated from sales data for{' ')}
           {payPeriodStart && payPeriodEnd && (
             <>
-              {formatDate(new Date(payPeriodStart), 'MMM d'} -{' '}
-              {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy'}
+              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' ')}
+              {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
             </>
           )}
         </p>
@@ -164,7 +164,7 @@ export function CommissionStep({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={emp.employee?.photo_url || undefined} />
                       <AvatarFallback>
-                        {getInitials(emp.employee?.full_name || ''}
+                        {getInitials(emp.employee?.full_name || '')}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium">
@@ -197,12 +197,12 @@ export function CommissionStep({
                 <TableCell>
                   <Input
                     type="number"
-                    value={overrides[emp.employee_id] ?? ''}
+                    value={overrides[emp.employee_id] ?? '')}
                     onChange={(e) => handleOverride(emp.employee_id, e.target.value)}
                     placeholder="Override"
                     min={0}
                     step={0.01}
-                    className={hasOverride ? 'border-primary' : ''}
+                    className={hasOverride ? 'border-primary' : '')}
                   />
                 </TableCell>
               </TableRow>

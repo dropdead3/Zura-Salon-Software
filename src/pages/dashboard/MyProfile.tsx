@@ -422,7 +422,7 @@ export default function MyProfile() {
       <div className="p-6 lg:p-8 max-w-3xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-display font-medium mb-2">
-            {isReadOnly ? `${impersonatedUser?.full_name}'s Profile` : 'My Profile'}
+            {isReadOnly ? `${impersonatedUser?.full_name}'s Profile` : 'My Profile')}
           </h1>
           <p className="text-muted-foreground">
             {isReadOnly 
@@ -437,10 +437,10 @@ export default function MyProfile() {
           <Alert className="mb-6 border-primary/50 bg-primary/5">
             <Eye className="h-4 w-4" />
             <AlertDescription>
-              You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' '}
+              You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' ')}
               <a href={dashPath(`/admin/team/${impersonatedUser?.id}`)} className="underline font-medium">
                 View Profile
-              </a>{' '}
+              </a>{' ')}
               page from Team Overview.
             </AlertDescription>
           </Alert>
@@ -523,7 +523,7 @@ export default function MyProfile() {
           <Card className="mb-6">
             <CardContent className="p-4">
               <Link 
-                to={dashPath('/onboarding'}
+                to={dashPath('/onboarding')}
                 className="flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
@@ -653,7 +653,7 @@ export default function MyProfile() {
                       onClick={handlePhotoClick}
                       disabled={uploadPhoto.isPending}
                     >
-                      {uploadPhoto.isPending ? 'Uploading...' : profile?.photo_url ? 'Change Photo' : 'Upload Photo'}
+                      {uploadPhoto.isPending ? 'Uploading...' : profile?.photo_url ? 'Change Photo' : 'Upload Photo')}
                     </Button>
                     <p className="text-[10px] text-muted-foreground">JPG, PNG. Max 5MB.</p>
                   </div>
@@ -780,7 +780,7 @@ export default function MyProfile() {
                     </div>
                     <Input
                       id="instagram"
-                      value={formData.instagram.replace(/^@/, ''}
+                      value={formData.instagram.replace(/^@/, '')}
                       onChange={(e) => {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
                         setFormData(prev => ({ ...prev, instagram: clean ? `@${clean}` : '' }));
@@ -806,7 +806,7 @@ export default function MyProfile() {
                     </div>
                     <Input
                       id="tiktok"
-                      value={formData.tiktok.replace(/^@/, ''}
+                      value={formData.tiktok.replace(/^@/, '')}
                       onChange={(e) => {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
                         setFormData(prev => ({ ...prev, tiktok: clean ? `@${clean}` : '' }));
@@ -831,7 +831,7 @@ export default function MyProfile() {
                   </p>
                   <div className="flex gap-2">
                     <Badge
-                      variant={formData.preferred_social_handle === 'instagram' ? 'default' : 'outline'}
+                      variant={formData.preferred_social_handle === 'instagram' ? 'default' : 'outline')}
                       className={cn(
                         "cursor-pointer transition-all px-4 py-2",
                         !formData.instagram && "opacity-50 cursor-not-allowed"
@@ -849,7 +849,7 @@ export default function MyProfile() {
                       )}
                     </Badge>
                     <Badge
-                      variant={formData.preferred_social_handle === 'tiktok' ? 'default' : 'outline'}
+                      variant={formData.preferred_social_handle === 'tiktok' ? 'default' : 'outline')}
                       className={cn(
                         "cursor-pointer transition-all px-4 py-2",
                         !formData.tiktok && "opacity-50 cursor-not-allowed"
@@ -914,7 +914,7 @@ export default function MyProfile() {
                     return (
                       <Badge
                         key={loc.id}
-                        variant={isSelected ? 'default' : 'outline'}
+                        variant={isSelected ? 'default' : 'outline')}
                         className="cursor-pointer transition-all"
                         onClick={() => {
                           setFormData(prev => ({
@@ -1011,12 +1011,12 @@ export default function MyProfile() {
                         <span className="font-medium text-sm">{location.name}</span>
                         {currentSchedule.length > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : ''}
+                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : '')}
                           </Badge>
                         )}
                         {closedDays.length > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            Closed {closedDays.join(' & '}
+                            Closed {closedDays.join(' & ')}
                           </span>
                         )}
                       </div>
@@ -1084,7 +1084,7 @@ export default function MyProfile() {
                 {Object.values(formData.location_schedules).flat().length > 0 && (
                   <div className="pt-3 border-t">
                     <p className="text-xs text-muted-foreground">
-                      Total: {Object.values(formData.location_schedules).flat().length} day{Object.values(formData.location_schedules).flat().length !== 1 ? 's' : ''} per week across all locations
+                      Total: {Object.values(formData.location_schedules).flat().length} day{Object.values(formData.location_schedules).flat().length !== 1 ? 's' : '')} per week across all locations
                     </p>
                   </div>
                 )}
@@ -1122,7 +1122,7 @@ export default function MyProfile() {
                 <CardTitle className="text-lg">Professional Details</CardTitle>
                 {(roles.includes('super_admin') || roles.includes('admin')) && (
                   <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
-                    <Link to={dashPath('/admin/website-hub'}>
+                    <Link to={dashPath('/admin/website-hub')}>
                       Manage Specialties <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>

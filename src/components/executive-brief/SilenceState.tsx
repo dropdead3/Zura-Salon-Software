@@ -43,7 +43,7 @@ export function SilenceState({ compact = false }: SilenceStateProps) {
             variant="link"
             size={tokens.button.inline}
             className="ml-auto h-auto p-0 text-xs"
-            onClick={() => navigate(dashPath('/admin/kpi-builder'}
+            onClick={() => navigate(dashPath('/admin/kpi-builder')}
           >
             Build KPIs <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
@@ -82,7 +82,7 @@ export function SilenceState({ compact = false }: SilenceStateProps) {
           </p>
           <Button
             className="mt-6"
-            onClick={() => navigate(dashPath('/admin/kpi-builder'}
+            onClick={() => navigate(dashPath('/admin/kpi-builder')}
           >
             Build KPI Architecture
           </Button>

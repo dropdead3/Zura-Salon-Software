@@ -159,7 +159,7 @@ export function BookingWizard({
       const branchId = selectedLoc?.phorest_branch_id;
       if (!branchId) throw new Error('No Phorest branch ID for selected location');
 
-      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd'}T${selectedTime}:00Z`;
+      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
@@ -280,7 +280,7 @@ export function BookingWizard({
                 title={getStepTitle()}
                 subtitle={
                   step !== 'service' && selectedServices.length > 0
-                    ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
+                    ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : '')} selected`
                     : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
                 }
                 onClose={handleClose}
@@ -353,7 +353,7 @@ export function BookingWizard({
                     onNotesChange={setNotes}
                     onConfirm={() => createBooking.mutate()}
                     isLoading={createBooking.isPending}
-                    locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
+                    locationName={locations.find(l => l.id === selectedLocation)?.name || '')}
                     recurrenceRule={recurrenceRule}
                     onRecurrenceChange={setRecurrenceRule}
                   />

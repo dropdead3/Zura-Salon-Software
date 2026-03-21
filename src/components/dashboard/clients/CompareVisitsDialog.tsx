@@ -84,7 +84,7 @@ export function CompareVisitsDialog({
                   <div key={f.id} className="mt-1 text-xs space-y-0.5">
                     {f.formula_data?.map((line, i) => (
                       <div key={i} className={tokens.body.muted}>
-                        {line.product_name} — {line.quantity}{line.unit || 'g'}
+                        {line.product_name} — {line.quantity}{line.unit || 'g')}
                       </div>
                     ))}
                   </div>
@@ -95,7 +95,7 @@ export function CompareVisitsDialog({
             {entryA.notes && (
               <div>
                 <span className={tokens.label.tiny}>Notes</span>
-                <p className={cn(tokens.body.muted, 'mt-1 text-xs'}>{entryA.notes}</p>
+                <p className={cn(tokens.body.muted, 'mt-1 text-xs')}>{entryA.notes}</p>
               </div>
             )}
           </div>
@@ -142,7 +142,7 @@ export function CompareVisitsDialog({
                   <div key={f.id} className="mt-1 text-xs space-y-0.5">
                     {f.formula_data?.map((line, i) => (
                       <div key={i} className={tokens.body.muted}>
-                        {line.product_name} — {line.quantity}{line.unit || 'g'}
+                        {line.product_name} — {line.quantity}{line.unit || 'g')}
                       </div>
                     ))}
                   </div>
@@ -153,7 +153,7 @@ export function CompareVisitsDialog({
             {entryB.notes && (
               <div>
                 <span className={tokens.label.tiny}>Notes</span>
-                <p className={cn(tokens.body.muted, 'mt-1 text-xs'}>{entryB.notes}</p>
+                <p className={cn(tokens.body.muted, 'mt-1 text-xs')}>{entryB.notes}</p>
               </div>
             )}
           </div>

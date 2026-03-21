@@ -135,7 +135,7 @@ function SortableResourceItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 border rounded-lg bg-muted/30 ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''} ${!resource.is_active ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-3 p-3 border rounded-lg bg-muted/30 ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!resource.is_active ? 'opacity-50' : '')}`}
     >
       {/* Drag Handle */}
       <button
@@ -283,7 +283,7 @@ export function WeekResourcesManager({ weekId, resources, assignments, onResourc
     setUploading(true);
 
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
-    const fileName = `program-resources/${weekId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_'}`;
+    const fileName = `program-resources/${weekId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
     const { error: uploadError } = await supabase.storage
       .from('proof-uploads')
@@ -579,7 +579,7 @@ export function WeekResourcesManager({ weekId, resources, assignments, onResourc
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Input
-                  value={editingResource.description || ''}
+                  value={editingResource.description || '')}
                   onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
                 />
               </div>
@@ -587,7 +587,7 @@ export function WeekResourcesManager({ weekId, resources, assignments, onResourc
                 <div className="space-y-2">
                   <Label>Link to Assignment</Label>
                   <Select
-                    value={editingResource.assignment_id || 'none'}
+                    value={editingResource.assignment_id || 'none')}
                     onValueChange={(v) => setEditingResource({ ...editingResource, assignment_id: v === 'none' ? null : v })}
                   >
                     <SelectTrigger>

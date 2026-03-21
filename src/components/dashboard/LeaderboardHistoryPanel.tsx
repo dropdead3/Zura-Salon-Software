@@ -111,7 +111,7 @@ export function LeaderboardHistoryPanel({
           <ChevronLeft className="w-4 h-4" />
         </Button>
         <span className="font-sans text-sm">
-          Week of {formatDate(new Date(selectedWeek), 'MMM d, yyyy'}
+          Week of {formatDate(new Date(selectedWeek), 'MMM d, yyyy')}
         </span>
         <Button
           variant="ghost"

@@ -46,7 +46,7 @@ export function RejectNoteDialog({ open, onOpenChange, productName, onConfirm, i
             Cancel
           </Button>
           <Button variant="destructive" onClick={handleConfirm} disabled={isPending} className="font-sans">
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reject'}
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reject')}
           </Button>
         </DialogFooter>
       </DialogContent>

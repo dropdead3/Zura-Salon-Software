@@ -254,7 +254,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
         })
       );
       setSelectedUsers(new Set());
-      toast.success(`Bulk ${type === 'assign' ? 'assignment' : 'removal'} complete`);
+      toast.success(`Bulk ${type === 'assign' ? 'assignment' : 'removal')} complete`);
     } catch (err) {
       console.error('Bulk action error:', err);
     }
@@ -292,11 +292,11 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                           : "bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
                       )}>
                         <Crown className="w-3 h-3" />
-                        {isPrimaryOwner ? 'Account Owner' : 'Super Admin'}
+                        {isPrimaryOwner ? 'Account Owner' : 'Super Admin')}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {isPrimaryOwner ? 'Account owner - cannot be revoked' : 'Can approve admin roles'}
+                      {isPrimaryOwner ? 'Account owner - cannot be revoked' : 'Can approve admin roles')}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -426,7 +426,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                         <TooltipTrigger>
                           <Lock className="w-3 h-3 text-muted-foreground" />
                         </TooltipTrigger>
-                        <TooltipContent>{isLockedBySuperAdmin ? 'Super Admins have full access' : 'Super Admin required'}</TooltipContent>
+                        <TooltipContent>{isLockedBySuperAdmin ? 'Super Admins have full access' : 'Super Admin required')}</TooltipContent>
                       </Tooltip>
                     )}
                     <Switch
@@ -535,7 +535,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                   isSuperAdminRole ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"
                 )}>
                   <RoleIcon className="w-3 h-3" />
-                  {role.display_name}{!isSuperAdminRole && 's'}
+                  {role.display_name}{!isSuperAdminRole && 's')}
                 </p>
               </CardContent>
             </Card>
@@ -591,7 +591,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                         {role.display_name}
                       </Badge>
                       <span className="text-sm text-muted-foreground leading-snug">
-                        {role.description || 'No description'}
+                        {role.description || 'No description')}
                         {role.name === 'admin' && !canApproveAdmin && (
                           <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
                         )}
@@ -659,7 +659,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
       ) : filteredUsers.length === 0 ? (
         <Card>
           <CardContent className={tokens.empty?.container || "p-8 text-center text-muted-foreground"}>
-            {showUnassigned ? 'No unassigned users found.' : 'No users found matching your filters.'}
+            {showUnassigned ? 'No unassigned users found.' : 'No users found matching your filters.')}
           </CardContent>
         </Card>
       ) : groupedByLocation ? (
@@ -704,18 +704,18 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Crown className="w-5 h-5 text-amber-600" />
-              {superAdminConfirm?.isSuperAdmin ? 'Revoke' : 'Grant'} Super Admin
+              {superAdminConfirm?.isSuperAdmin ? 'Revoke' : 'Grant')} Super Admin
             </AlertDialogTitle>
             <AlertDialogDescription>
               {superAdminConfirm?.isSuperAdmin ? (
                 <>
-                  Are you sure you want to <strong>revoke</strong> Super Admin status from{' '}
+                  Are you sure you want to <strong>revoke</strong> Super Admin status from{' ')}
                   <strong>{superAdminConfirm?.userName}</strong>? They will no longer be able to 
                   assign or remove Admin roles.
                 </>
               ) : (
                 <>
-                  Are you sure you want to <strong>grant</strong> Super Admin status to{' '}
+                  Are you sure you want to <strong>grant</strong> Super Admin status to{' ')}
                   <strong>{superAdminConfirm?.userName}</strong>? They will be able to assign and 
                   remove Admin roles for all users.
                 </>
@@ -732,7 +732,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                   : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
               )}
             >
-              {superAdminConfirm?.isSuperAdmin ? 'Revoke Access' : 'Grant Access'}
+              {superAdminConfirm?.isSuperAdmin ? 'Revoke Access' : 'Grant Access')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

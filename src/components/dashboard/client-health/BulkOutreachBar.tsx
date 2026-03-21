@@ -35,13 +35,13 @@ export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelectio
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `client-health-${segmentLabel.toLowerCase().replace(/\s+/g, '-'}.csv`;
+    a.download = `client-health-${segmentLabel.toLowerCase().replace(/\s+/g, '-')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const shareContent = selectedClients.slice(0, 10).map(c =>
-    `• ${c.name} — last visit ${c.last_visit || 'unknown'}, ${formatCurrencyWhole(c.total_spend)} total`
+    `• ${c.name} — last visit ${c.last_visit || 'unknown')}, ${formatCurrencyWhole(c.total_spend)} total`
   ).join('\n') + (selectedClients.length > 10 ? `\n...and ${selectedClients.length - 10} more` : '');
 
   return (

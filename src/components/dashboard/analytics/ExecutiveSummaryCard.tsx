@@ -101,7 +101,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
               ) : (
                 <TrendingDown className="w-3 h-3" />
               )}
-              {kpi.change >= 0 ? '+' : ''}
+              {kpi.change >= 0 ? '+' : '')}
               {kpi.change.toFixed(1)}%
             </span>
           )}
@@ -316,7 +316,7 @@ export function ExecutiveSummaryCard() {
   const collectionRate = rentData?.collectionRate ?? 0;
 
   // Pay period label
-  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d'} - ${format(currentPeriod.periodEnd, 'MMM d'};
+  const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d')};
 
   const allKpis: KpiData[] = [
     {
@@ -485,7 +485,7 @@ export function ExecutiveSummaryCard() {
               </div>
               {locations.length > 5 && (
                 <Link
-                  to={dashPath('/admin/analytics?tab=sales'}
+                  to={dashPath('/admin/analytics?tab=sales')}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
                 >
                   View all
@@ -524,7 +524,7 @@ export function ExecutiveSummaryCard() {
         )}
         <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-end">
           <span className="text-[10px] text-muted-foreground/50">
-            Updated {format(new Date(), 'h:mm a'}
+            Updated {format(new Date(), 'h:mm a')}
           </span>
         </div>
       </CardContent>

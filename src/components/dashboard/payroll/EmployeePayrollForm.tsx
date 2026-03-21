@@ -181,7 +181,7 @@ export function EmployeePayrollForm({
                       placeholder="0.00"
                       className="pl-7"
                       {...field}
-                      value={field.value ?? ''}
+                      value={field.value ?? '')}
                     />
                   </div>
                 </FormControl>
@@ -210,7 +210,7 @@ export function EmployeePayrollForm({
                       placeholder="0"
                       className="pl-7"
                       {...field}
-                      value={field.value ?? ''}
+                      value={field.value ?? '')}
                     />
                   </div>
                 </FormControl>

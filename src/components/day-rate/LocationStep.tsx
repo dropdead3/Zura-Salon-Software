@@ -102,7 +102,7 @@ function LocationCard({
               </span>
             </div>
             <span className="text-muted-foreground">
-              {availableChairCount} chair{availableChairCount !== 1 ? 's' : ''} available
+              {availableChairCount} chair{availableChairCount !== 1 ? 's' : '')} available
             </span>
           </div>
         </div>

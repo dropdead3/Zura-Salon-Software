@@ -12,7 +12,7 @@ import { orgDashboardPath } from '@/lib/org-path';
  *
  * Usage:
  *   const { dashPath } = useOrgDashboardPath();
- *   <Link to={dashPath('/admin/analytics'} />
+ *   <Link to={dashPath('/admin/analytics')} />
  *   navigate(dashPath('/schedule'))
  */
 export function useOrgDashboardPath() {

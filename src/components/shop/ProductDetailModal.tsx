@@ -125,7 +125,7 @@ export function ProductDetailModal({ product, open, onOpenChange, movementRating
             disabled={!inStock}
           >
             <MessageCircle className="w-4 h-4 mr-2" />
-            {inStock ? 'Inquire to Purchase' : 'Out of Stock'}
+            {inStock ? 'Inquire to Purchase' : 'Out of Stock')}
           </Button>
 
           <p className="text-[11px] text-muted-foreground text-center">

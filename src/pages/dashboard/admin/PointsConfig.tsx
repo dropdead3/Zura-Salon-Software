@@ -115,7 +115,7 @@ export default function PointsConfig() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="font-medium capitalize">
-                          {rule.action_type.replace(/_/g, ' '}
+                          {rule.action_type.replace(/_/g, ' ')}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {rule.description}
@@ -151,7 +151,7 @@ export default function PointsConfig() {
                               id={`daily-${rule.id}`}
                               type="number"
                               className="w-16"
-                              value={rule.max_daily || ''}
+                              value={rule.max_daily || '')}
                               onChange={(e) =>
                                 updateRule.mutate({
                                   ruleId: rule.id,
@@ -254,7 +254,7 @@ export default function PointsConfig() {
                       <Label>Quantity (leave empty for unlimited)</Label>
                       <Input
                         type="number"
-                        value={newReward.quantity_available || ''}
+                        value={newReward.quantity_available || '')}
                         onChange={(e) =>
                           setNewReward((prev) => ({
                             ...prev,
@@ -301,10 +301,10 @@ export default function PointsConfig() {
                       <div>
                         <p className="font-medium">{reward.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatNumber(reward.points_cost)} pts •{' '}
+                          {formatNumber(reward.points_cost)} pts •{' ')}
                           {reward.quantity_available !== null
                             ? `${reward.quantity_available} available`
-                            : 'Unlimited'}
+                            : 'Unlimited')}
                         </p>
                       </div>
                       <Switch

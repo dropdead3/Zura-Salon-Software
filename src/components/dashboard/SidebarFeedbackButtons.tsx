@@ -28,7 +28,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => openDialog('feature_request'}
+              onClick={() => openDialog('feature_request')}
               className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200 ease-out"
             >
               <Lightbulb className="h-4 w-4" />
@@ -40,7 +40,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => openDialog('bug_report'}
+              onClick={() => openDialog('bug_report')}
               className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200 ease-out"
             >
               <Bug className="h-4 w-4" />
@@ -52,7 +52,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
-              to={dashPath('/help'}
+              to={dashPath('/help')}
               className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200 ease-out"
             >
               <HelpCircle className="h-4 w-4" />

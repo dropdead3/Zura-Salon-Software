@@ -495,7 +495,7 @@ export function DataImportWizard({
                 <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               )}
               <p className="text-lg font-medium mb-2">
-                {file ? file.name : 'Upload your CSV file'}
+                {file ? file.name : 'Upload your CSV file')}
               </p>
               <p className="text-sm text-muted-foreground mb-4">
                 Drag and drop or click to browse
@@ -530,8 +530,8 @@ export function DataImportWizard({
                   <li>File must be <span className="text-foreground">.csv</span> format (comma-separated values)</li>
                   <li>First row must contain column headers</li>
                   <li>
-                    Required fields: {' '}
-                    <span className="text-foreground">{requiredFieldNames.join(', '}</span>
+                    Required fields: {' ')}
+                    <span className="text-foreground">{requiredFieldNames.join(', ')}</span>
                   </li>
                   <li>Prices should be numeric without currency symbols (e.g. <span className="text-foreground">14.99</span>)</li>
                   <li>Dates should use <span className="text-foreground">YYYY-MM-DD</span> format</li>
@@ -550,7 +550,7 @@ export function DataImportWizard({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Assign to Location {requiresLocation ? '(required)' : '(optional)'}
+                Assign to Location {requiresLocation ? '(required)' : '(optional)')}
                 {requiresLocation && <span className="text-destructive ml-1">*</span>}
               </Label>
               <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
@@ -583,7 +583,7 @@ export function DataImportWizard({
             {file && csvData.length > 0 && (
               <div className="flex justify-end pt-4">
                 <Button
-                  onClick={() => setStep('mapping'}
+                  onClick={() => setStep('mapping')}
                   disabled={requiresLocation && !selectedLocationId}
                 >
                   Continue to Mapping
@@ -622,7 +622,7 @@ export function DataImportWizard({
                       </span>
                     </div>
                     <Select
-                      value={fieldMapping[field.field] || '_none'}
+                      value={fieldMapping[field.field] || '_none')}
                       onValueChange={(v) => handleMappingChange(field.field, v)}
                     >
                       <SelectTrigger className="w-2/3">
@@ -792,7 +792,7 @@ export function DataImportWizard({
                     <TableRow key={i}>
                       {fields.filter(f => fieldMapping[f.field]).map(f => (
                         <TableCell key={f.field} className="whitespace-nowrap">
-                          {row[f.field] || '-'}
+                          {row[f.field] || '-')}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -821,7 +821,7 @@ export function DataImportWizard({
               </div>
               
               <p className="text-sm">
-                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported'} to{' '}
+                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported')} to{' ')}
                 <strong className="capitalize">{dataType}</strong>
                 {selectedLocationId && locations && (
                   <> at <strong>{locations.find(l => l.id === selectedLocationId)?.name}</strong></>
@@ -837,7 +837,7 @@ export function DataImportWizard({
             <Loader2 className="w-16 h-16 mx-auto animate-spin text-primary" />
             <div>
               <p className="text-lg font-medium mb-2">
-                {isDryRun ? 'Validating your data...' : 'Importing your data...'}
+                {isDryRun ? 'Validating your data...' : 'Importing your data...')}
               </p>
               <p className="text-sm text-muted-foreground">
                 Please don't close this window
@@ -860,7 +860,7 @@ export function DataImportWizard({
             )}
             <div>
               <p className="text-lg font-medium mb-2">
-                {isDryRunResult ? 'Dry Run Complete' : 'Import Complete'}
+                {isDryRunResult ? 'Dry Run Complete' : 'Import Complete')}
               </p>
               {isDryRunResult && (
                 <Badge variant="secondary" className="mb-3">
@@ -956,12 +956,12 @@ export function DataImportWizard({
             Import {dataType.charAt(0).toUpperCase() + dataType.slice(1)}
           </DialogTitle>
           <DialogDescription>
-            {step === 'upload' && 'Upload your CSV file to begin'}
-            {step === 'mapping' && 'Map your CSV columns to the correct fields'}
-            {step === 'reconcile' && 'Match categories and types to existing values'}
-            {step === 'preview' && 'Review your data before importing'}
-            {step === 'importing' && 'Processing your import...'}
-            {step === 'complete' && 'Your import has finished'}
+            {step === 'upload' && 'Upload your CSV file to begin')}
+            {step === 'mapping' && 'Map your CSV columns to the correct fields')}
+            {step === 'reconcile' && 'Match categories and types to existing values')}
+            {step === 'preview' && 'Review your data before importing')}
+            {step === 'importing' && 'Processing your import...')}
+            {step === 'complete' && 'Your import has finished')}
           </DialogDescription>
         </DialogHeader>
 
@@ -996,7 +996,7 @@ export function DataImportWizard({
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={step === 'upload' || step === 'importing' || step === 'complete'}
+            disabled={step === 'upload' || step === 'importing' || step === 'complete')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -1014,7 +1014,7 @@ export function DataImportWizard({
                 </Button>
                 {step !== 'upload' && step !== 'importing' && (
                   <Button onClick={handleNext} disabled={!canGoNext()}>
-                    {step === 'preview' ? 'Import Data' : 'Next'}
+                    {step === 'preview' ? 'Import Data' : 'Next')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 )}

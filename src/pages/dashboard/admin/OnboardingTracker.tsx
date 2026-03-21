@@ -567,7 +567,7 @@ export default function OnboardingTracker() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'}
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
               >
                 <ArrowUpDown className={cn("w-4 h-4 transition-transform", sortOrder === 'desc' && "rotate-180")} />
               </Button>
@@ -596,14 +596,14 @@ export default function OnboardingTracker() {
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={item.profile.photo_url || undefined} />
                         <AvatarFallback className="font-display text-xs">
-                          {item.profile.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??'}
+                          {item.profile.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '??')}
                         </AvatarFallback>
                       </Avatar>
 
                       {/* Name and roles */}
                       <div className="flex-1 text-left min-w-0">
                         <p className="font-sans font-medium text-sm truncate">
-                          {item.profile.full_name || 'Unnamed'}
+                          {item.profile.full_name || 'Unnamed')}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.roles.map(role => (
@@ -645,7 +645,7 @@ export default function OnboardingTracker() {
                               {getStatusIcon(item.businessCardStatus)}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>Business Card: {item.businessCardStatus || 'Not requested'}</TooltipContent>
+                          <TooltipContent>Business Card: {item.businessCardStatus || 'Not requested')}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger>
@@ -654,7 +654,7 @@ export default function OnboardingTracker() {
                               {getStatusIcon(item.headshotStatus)}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>Headshot: {item.headshotStatus || 'Not requested'}</TooltipContent>
+                          <TooltipContent>Headshot: {item.headshotStatus || 'Not requested')}</TooltipContent>
                         </Tooltip>
                       </div>
 

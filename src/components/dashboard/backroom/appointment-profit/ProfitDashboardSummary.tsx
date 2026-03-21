@@ -62,7 +62,7 @@ export function ProfitDashboardSummary({ summary, className }: ProfitDashboardSu
   return (
     <div className={cn('grid grid-cols-2 lg:grid-cols-4 gap-4', className)}>
       {tiles.map((tile) => (
-        <Card key={tile.label} className={cn(tokens.kpi.tile, 'relative'}>
+        <Card key={tile.label} className={cn(tokens.kpi.tile, 'relative')}>
           <span className={tokens.kpi.label}>{tile.label}</span>
           <span className={cn(tokens.kpi.value, tile.accent)}>{tile.value}</span>
           {tile.sub && (

@@ -189,7 +189,7 @@ export function NewBookingSheet({
       const stylistMapping = stylists.find(s => s.user_id === selectedStylist);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
-      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd'}T${selectedTime}:00Z`;
+      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
@@ -270,10 +270,10 @@ export function NewBookingSheet({
       <div className="p-5 pb-4 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase">New Booking</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {step === 'client' && 'Select or search for a client'}
-          {step === 'service' && 'Choose services for this appointment'}
-          {step === 'datetime' && 'Pick a stylist, date, and time'}
-          {step === 'confirm' && 'Review and confirm the booking'}
+          {step === 'client' && 'Select or search for a client')}
+          {step === 'service' && 'Choose services for this appointment')}
+          {step === 'datetime' && 'Pick a stylist, date, and time')}
+          {step === 'confirm' && 'Review and confirm the booking')}
         </p>
         
         {/* Step Indicators */}
@@ -347,7 +347,7 @@ export function NewBookingSheet({
                       <div>
                         <div className="font-medium">{client.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {client.phone || client.email || 'No contact info'}
+                          {client.phone || client.email || 'No contact info')}
                         </div>
                       </div>
                     </div>
@@ -520,7 +520,7 @@ export function NewBookingSheet({
                   {availableSlots.map((slot) => (
                     <Button
                       key={slot.start_time}
-                      variant={selectedTime === slot.start_time ? 'default' : 'outline'}
+                      variant={selectedTime === slot.start_time ? 'default' : 'outline')}
                       className="text-sm"
                       onClick={() => setSelectedTime(slot.start_time)}
                     >
@@ -574,8 +574,8 @@ export function NewBookingSheet({
               <div className="flex items-center gap-3">
                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy'}</p>
-                  <p className="text-sm text-muted-foreground">at {selectedTime ? formatTime12h(selectedTime) : 'TBD'}</p>
+                  <p className="font-medium">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
+                  <p className="text-sm text-muted-foreground">at {selectedTime ? formatTime12h(selectedTime) : 'TBD')}</p>
                 </div>
               </div>
 

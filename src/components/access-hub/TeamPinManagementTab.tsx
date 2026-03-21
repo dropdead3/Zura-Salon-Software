@@ -150,7 +150,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                   <strong>Your PIN:</strong> As the Account Owner, you can manage your own PIN in your personal settings.
                 </p>
                 <Link 
-                  to={dashPath('/admin/settings?category=system'}
+                  to={dashPath('/admin/settings?category=system')}
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
                 >
                   Go to PIN Settings
@@ -204,13 +204,13 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            PIN: {member.has_pin ? 'Set' : 'Not set'}
+                            PIN: {member.has_pin ? 'Set' : 'Not set')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={member.has_pin ? 'default' : 'secondary'}>
-                          {member.has_pin ? 'Active' : 'None'}
+                        <Badge variant={member.has_pin ? 'default' : 'secondary')}>
+                          {member.has_pin ? 'Active' : 'None')}
                         </Badge>
                         {canReset && (
                           <>
@@ -218,7 +218,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                               <Button
                                 variant="outline"
                                 size={tokens.button.card}
-                                onClick={() => handleOpenResetDialog(member, 'set'}
+                                onClick={() => handleOpenResetDialog(member, 'set')}
                                 className="gap-1.5"
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -233,12 +233,12 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleOpenResetDialog(member, 'set'}>
+                                  <DropdownMenuItem onClick={() => handleOpenResetDialog(member, 'set')}>
                                     <Pencil className="w-4 h-4 mr-2" />
                                     Change PIN
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
-                                    onClick={() => handleOpenResetDialog(member, 'clear'}
+                                    onClick={() => handleOpenResetDialog(member, 'clear')}
                                     className="text-destructive focus:text-destructive"
                                   >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -286,11 +286,11 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 {changelog.slice(0, 10).map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="text-sm">
-                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a'}
+                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
                     </TableCell>
                     <TableCell className="text-sm">{entry.changer_name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {entry.reason || '—'}
+                      {entry.reason || '—')}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -327,7 +327,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 ? 'This will remove the PIN and disable quick login for this user.'
                 : selectedMember?.has_pin 
                   ? 'Enter a new 4-digit PIN to replace the existing one.'
-                  : 'Create a 4-digit PIN to enable quick login for this user.'}
+                  : 'Create a 4-digit PIN to enable quick login for this user.')}
             </DialogDescription>
           </DialogHeader>
 
@@ -338,7 +338,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 <div className="relative">
                   <Input
                     id="reset-pin"
-                    type={showPin ? 'text' : 'password'}
+                    type={showPin ? 'text' : 'password')}
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={4}
@@ -388,7 +388,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
             <Button 
               onClick={handleResetPin}
               disabled={(actionMode !== 'clear' && newPin.length > 0 && newPin.length < 4) || adminSetPin.isPending}
-              variant={actionMode === 'clear' ? 'destructive' : 'default'}
+              variant={actionMode === 'clear' ? 'destructive' : 'default')}
             >
               {adminSetPin.isPending 
                 ? 'Saving...' 
@@ -396,7 +396,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                   ? 'Clear PIN' 
                   : selectedMember?.has_pin 
                     ? 'Update PIN' 
-                    : 'Set PIN'}
+                    : 'Set PIN')}
             </Button>
           </DialogFooter>
         </DialogContent>

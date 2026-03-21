@@ -77,7 +77,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         <div className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)] text-white/60">
           <MapPin className="w-3 h-3 shrink-0" />
           <select
-            value={locationId || ''}
+            value={locationId || '')}
             onChange={handleLocationChange}
             className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[120px] truncate"
           >
@@ -98,7 +98,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
         <div className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[hsl(0_0%_14%)] border border-[hsl(0_0%_20%)] text-white/60">
           <User className="w-3 h-3 shrink-0" />
           <select
-            value={staffFilter || 'all'}
+            value={staffFilter || 'all')}
             onChange={(e) => onStaffFilterChange?.(e.target.value)}
             className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[120px] truncate"
           >
@@ -117,11 +117,11 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
       {showRotate && (
         <button
           type="button"
-          onClick={() => onOrientationChange(orientation === 'portrait' ? 'landscape' : 'portrait'}
+          onClick={() => onOrientationChange(orientation === 'portrait' ? 'landscape' : 'portrait')}
           className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-md text-foreground/60 hover:text-foreground/80 transition-colors"
-          title={orientation === 'portrait' ? 'Switch to landscape' : 'Switch to portrait'}
+          title={orientation === 'portrait' ? 'Switch to landscape' : 'Switch to portrait')}
         >
-          <RotateCcw className={`w-3.5 h-3.5 transition-transform duration-300 ${orientation === 'landscape' ? 'rotate-90' : ''}`} />
+          <RotateCcw className={`w-3.5 h-3.5 transition-transform duration-300 ${orientation === 'landscape' ? 'rotate-90' : '')}`} />
         </button>
       )}
       <TogglePill

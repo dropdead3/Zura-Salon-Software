@@ -161,11 +161,11 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
   return (
     <div className="flex-1 relative min-h-0">
       <ScrollArea className="h-full">
-        <div className={cn('p-2', showStrip && 'pr-8'}>
+        <div className={cn('p-2', showStrip && 'pr-8')}>
           {isLoading ? (
             <DashboardLoader size="sm" className="py-8" />
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search'}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
+            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search')}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
           ) : (
             <div className="space-y-0.5">
               {filteredClients.map((client) => {
@@ -174,12 +174,12 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
                 return (
                   <div key={client.id}>
                     {isFirst && (<div ref={(el) => setLetterRef(letter, el)} className="px-3 pt-2 pb-1"><span className="font-sans text-[11px] text-muted-foreground tracking-wide">{letter}</span></div>)}
-                    <div className={cn('flex items-center gap-2 p-2.5 rounded-lg', 'hover:bg-muted/70 transition-colors', client.is_banned && 'border border-destructive/30 bg-destructive/5'}>
+                    <div className={cn('flex items-center gap-2 p-2.5 rounded-lg', 'hover:bg-muted/70 transition-colors', client.is_banned && 'border border-destructive/30 bg-destructive/5')}>
                       <button className="flex items-center gap-3 flex-1 min-w-0 text-left" onClick={() => onSelectClient(client)}>
                         <Avatar className="h-9 w-9 bg-muted shrink-0"><AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">{gi(client.name)}</AvatarFallback></Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2"><span className="font-medium text-sm truncate">{client.name}</span>{client.is_banned && <BannedClientBadge />}</div>
-                          <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info'}</div>
+                          <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info')}</div>
                         </div>
                       </button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); onViewProfile(client); }}><Info className="h-4 w-4" /></Button>
@@ -196,7 +196,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
           {ALPHABET.map((letter) => {
             const available = availableLetters.has(letter);
             const active = activeLetter === letter;
-            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none'} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
+            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
           })}
         </div>
       )}
@@ -722,7 +722,7 @@ export function QuickBookingPopover({
         || allStylists.find(s => s.user_id === effectiveStylistId && s.phorest_branch_id === selectedLocationBranchId);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
-      const startDateTime = `${format(date, 'yyyy-MM-dd'}T${time}:00Z`;
+      const startDateTime = `${format(date, 'yyyy-MM-dd')}T${time}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
@@ -774,7 +774,7 @@ export function QuickBookingPopover({
         const endMinutes = startH * 60 + startM + totalDuration;
         const endH = Math.floor(endMinutes / 60);
         const endM = endMinutes % 60;
-        const endTime = `${endH.toString().padStart(2, '0'}:${endM.toString().padStart(2, '0'}:00`;
+        const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
 
         supabase.from('assistant_time_blocks').insert({
           organization_id: effectiveOrganization.id,
@@ -829,7 +829,7 @@ export function QuickBookingPopover({
           redo_metadata: isRedo ? { reason: redoReason, originalAppointmentId } : undefined,
         });
         toast.success('Draft saved', {
-          description: `${selectedClient?.name || 'No client'} · ${selectedServices.length} service(s)`,
+          description: `${selectedClient?.name || 'No client')} · ${selectedServices.length} service(s)`,
         });
       }
     }
@@ -1109,7 +1109,7 @@ export function QuickBookingPopover({
                 <>
                   <h2 className="font-medium text-sm">New Booking</h2>
                   <p className="text-xs text-muted-foreground">
-                    {formatDateLocale(date, 'EEE, MMM d'} at {formatTime12h(time)}
+                    {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
                   </p>
                 </>
               )}
@@ -1212,7 +1212,7 @@ export function QuickBookingPopover({
             }}
           />
         ) : (
-          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
             <div className="p-3 border-b border-border">
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1247,7 +1247,7 @@ export function QuickBookingPopover({
 
       {/* Step: Service Selection */}
       {step === 'service' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           {showBreakForm ? (
             <AddTimeBlockForm
               date={date}
@@ -1595,7 +1595,7 @@ export function QuickBookingPopover({
             {/* Add-on toast — lives above the footer buttons */}
             <ServiceAddonToast
               visible={showAddonToast && addonSuggestions.length > 0}
-              categoryName={selectedCategory || ''}
+              categoryName={selectedCategory || '')}
               suggestions={addonSuggestions}
               onAdd={(addonId) => {
                 const addon = addonSuggestions.find(a => a.id === addonId);
@@ -1658,7 +1658,7 @@ export function QuickBookingPopover({
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
                       </Badge>
                       <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                     </div>
@@ -1701,7 +1701,7 @@ export function QuickBookingPopover({
                 </Button>
               )}
               <Button className="w-full h-9" onClick={handleServicesComplete}>
-                {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
+                {selectedServices.length === 0 ? 'Skip Services' : 'Continue')}
               </Button>
             </div>
           </div>
@@ -1712,7 +1712,7 @@ export function QuickBookingPopover({
 
       {/* Step: Location Selection */}
       {step === 'location' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-3">
               <div className="flex items-center gap-2 mb-3">
@@ -1736,7 +1736,7 @@ export function QuickBookingPopover({
                     >
                       <div className="flex-1 min-w-0 mr-2">
                         <div className="font-medium text-sm">{loc.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{[loc.address, loc.city].filter(Boolean).join(', '}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{[loc.address, loc.city].filter(Boolean).join(', ')}</div>
                       </div>
                       <div className={cn(
                         'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
@@ -1756,7 +1756,7 @@ export function QuickBookingPopover({
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
                     </Badge>
                     <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
@@ -1791,7 +1791,7 @@ export function QuickBookingPopover({
 
       {/* Step: Stylist Selection */}
       {step === 'stylist' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-4">
               {!stylistFirstMode && autoSelectReason === 'previous' && selectedClient && (
@@ -1807,7 +1807,7 @@ export function QuickBookingPopover({
                 </div>
               )}
               <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
-                {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
+                {stylistFirstMode ? 'All Stylists' : 'Available Stylists')}
                 {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
                   <span className="text-xs font-normal text-muted-foreground ml-2">
                     ({filteredStylists.length} qualified)
@@ -1896,7 +1896,7 @@ export function QuickBookingPopover({
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
                     </Badge>
                     <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
@@ -1934,7 +1934,7 @@ export function QuickBookingPopover({
 
       {/* Step: Confirmation */}
       {step === 'confirm' && (
-        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : ''} style={mode === 'popover' ? { height: '550px' } : undefined}>
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-3">
               <div className="bg-muted/50 rounded-lg p-3">
@@ -1968,7 +1968,7 @@ export function QuickBookingPopover({
                   </div>
                   <div>
                     <div className="text-[10px] text-muted-foreground">Date & Time</div>
-                    <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d'} at {formatTime12h(time)}</div>
+                    <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 p-2.5">
@@ -2009,7 +2009,7 @@ export function QuickBookingPopover({
                         <div>
                           <div className="font-medium text-xs">{addon.name}</div>
                           <div className="text-[10px] text-muted-foreground">
-                            {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on'}
+                            {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on')}
                           </div>
                         </div>
                       </div>
@@ -2054,7 +2054,7 @@ export function QuickBookingPopover({
                             <div className="text-[10px] text-muted-foreground">
                               {est.hasBaselines
                                 ? `${est.markupPct.toFixed(0)}% markup`
-                                : 'Estimate unavailable'}
+                                : 'Estimate unavailable')}
                             </div>
                           </div>
                         </div>
@@ -2157,9 +2157,9 @@ export function QuickBookingPopover({
                                 }}
                               >
                                 <div className="min-w-0 flex-1">
-                                  <div className="font-medium truncate">{apt.service_name || 'Service'}</div>
+                                  <div className="font-medium truncate">{apt.service_name || 'Service')}</div>
                                   <div className="text-[10px] text-muted-foreground">
-                                    {apt.appointment_date} · {apt.staff_name || 'Unknown'}
+                                    {apt.appointment_date} · {apt.staff_name || 'Unknown')}
                                   </div>
                                 </div>
                                 {apt.total_price != null && (
@@ -2190,9 +2190,9 @@ export function QuickBookingPopover({
                           <span className="text-muted-foreground">Redo pricing</span>
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-[10px]">
-                              {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary'}
+                              {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary')}
                               {redoPolicy?.redo_pricing_policy === 'percentage' && `${redoPolicy.redo_pricing_percentage}% of original`}
-                              {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price'}
+                              {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price')}
                             </Badge>
                             {displayPrice != null && (
                               <span className="font-medium tabular-nums">{formatCurrencyWhole(displayPrice)}</span>
@@ -2212,7 +2212,7 @@ export function QuickBookingPopover({
                           type="number"
                           min={0}
                           placeholder="Leave empty to use policy"
-                          value={redoPriceOverride ?? ''}
+                          value={redoPriceOverride ?? '')}
                           onChange={(e) => setRedoPriceOverride(e.target.value ? parseFloat(e.target.value) : null)}
                           className="h-8 text-xs"
                         />
@@ -2347,7 +2347,7 @@ export function QuickBookingPopover({
                   }, {
                     onSuccess: () => {
                       toast.success('Draft saved', {
-                        description: `${selectedClient?.name || 'No client'} · ${selectedServices.length} service(s)`,
+                        description: `${selectedClient?.name || 'No client')} · ${selectedServices.length} service(s)`,
                       });
                       handleClose(true);
                     },
@@ -2400,7 +2400,7 @@ export function QuickBookingPopover({
       <BannedClientWarningDialog
         open={!!pendingBannedClient}
         onOpenChange={(open) => !open && setPendingBannedClient(null)}
-        clientName={pendingBannedClient?.name || ''}
+        clientName={pendingBannedClient?.name || '')}
         banReason={pendingBannedClient?.ban_reason}
         onProceed={handleProceedWithBannedClient}
         onCancel={() => setPendingBannedClient(null)}

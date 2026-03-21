@@ -49,7 +49,7 @@ export default function CoachRequests() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <div>
-            <Link to={dashPath('/schedule-meeting'}>
+            <Link to={dashPath('/schedule-meeting')}>
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
@@ -87,7 +87,7 @@ export default function CoachRequests() {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm font-medium">
-                            {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy'}
+                            {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export default function CoachRequests() {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm">
-                            With: {meeting.requester?.display_name || meeting.requester?.full_name || 'Unknown'}
+                            With: {meeting.requester?.display_name || meeting.requester?.full_name || 'Unknown')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">

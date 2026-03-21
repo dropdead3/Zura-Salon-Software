@@ -42,7 +42,7 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
             <Lightbulb className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
           </div>
           <span className="text-xs font-display tracking-wide">
-            {type === 'insight' ? 'How to Improve' : 'What You Should Do'}
+            {type === 'insight' ? 'How to Improve' : 'What You Should Do')}
           </span>
         </div>
         <p className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">{title}</p>

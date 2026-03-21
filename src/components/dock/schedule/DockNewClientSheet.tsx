@@ -327,7 +327,7 @@ export function DockNewClientSheet({
                           {dup.first_name} {dup.last_name}
                         </div>
                         <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-                          {dup.email || dup.mobile || ''} · Match: {dup.match_type}
+                          {dup.email || dup.mobile || '')} · Match: {dup.match_type}
                         </div>
                       </div>
                       <button

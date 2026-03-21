@@ -437,7 +437,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           .select('phorest_client_id, first_name, last_name')
           .in('phorest_client_id', clientIds.slice(0, 50));
         (clients || []).forEach((c: any) => {
-          clientNameMap.set(c.phorest_client_id, `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown');
+          clientNameMap.set(c.phorest_client_id, `${c.first_name || '')} ${c.last_name || '')}`.trim() || 'Unknown');
         });
       }
 

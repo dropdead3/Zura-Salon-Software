@@ -86,7 +86,7 @@ export function ChangeDatesDialog({
               <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <p className="text-xs text-slate-500">Current Start</p>
                 <p className="text-sm text-slate-300">
-                  {formatDate(parseISO(currentStartDate), 'MMM d, yyyy'}
+                  {formatDate(parseISO(currentStartDate), 'MMM d, yyyy')}
                 </p>
               </div>
             )}
@@ -94,7 +94,7 @@ export function ChangeDatesDialog({
               <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <p className="text-xs text-slate-500">Current End</p>
                 <p className="text-sm text-slate-300">
-                  {formatDate(parseISO(currentEndDate), 'MMM d, yyyy'}
+                  {formatDate(parseISO(currentEndDate), 'MMM d, yyyy')}
                 </p>
               </div>
             )}
@@ -154,7 +154,7 @@ export function ChangeDatesDialog({
               disabled={!reason.trim() || !hasChanges || changeDates.isPending}
               className="bg-violet-600 hover:bg-violet-700"
             >
-              {changeDates.isPending ? 'Updating...' : 'Update Dates'}
+              {changeDates.isPending ? 'Updating...' : 'Update Dates')}
             </Button>
           </DialogFooter>
         </form>

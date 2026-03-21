@@ -135,7 +135,7 @@ export function GoalLocationRow({
                 paceStatus === 'on-track' && 'bg-primary/10 text-primary',
                 paceStatus === 'behind' && 'bg-destructive/10 text-destructive',
               )}>
-                {paceStatus === 'on-track' ? 'On Track' : paceStatus === 'ahead' ? 'Ahead' : 'Behind'}
+                {paceStatus === 'on-track' ? 'On Track' : paceStatus === 'ahead' ? 'Ahead' : 'Behind')}
               </span>
             </>
           )}
@@ -179,7 +179,7 @@ export function GoalLocationRow({
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Projected</p>
-                  <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive'}>
+                  <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive')}>
                     <AnimatedBlurredAmount value={projectedRevenue} currency={currency} />
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export function GoalLocationRow({
                   className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <BarChart3 className="w-3 h-3" />
-                  {showTrend ? 'Hide pace trend' : 'Show pace trend'}
+                  {showTrend ? 'Hide pace trend' : 'Show pace trend')}
                 </button>
                 <AnimatePresence>
                   {showTrend && (

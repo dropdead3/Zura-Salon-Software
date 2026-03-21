@@ -60,7 +60,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium min-w-[100px] text-center">
-              {formatDate(currentDate, 'MMMM yyyy'}
+              {formatDate(currentDate, 'MMMM yyyy')}
             </span>
             <Button variant="ghost" size="icon" onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
               <ChevronRight className="h-4 w-4" />
@@ -99,7 +99,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
                   "hover:bg-muted"
                 )}
               >
-                <span>{format(day, 'd'}</span>
+                <span>{format(day, 'd')}</span>
                 {dayEvents.length > 0 && (
                   <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
                     {dayEvents.slice(0, 3).map((event, i) => (
@@ -121,7 +121,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
           <div className="mt-3 pt-3 border-t">
             <div className="flex items-center justify-between mb-2">
               <h5 className="font-medium text-sm">
-                {formatDate(selectedDate, 'MMMM d, yyyy'}
+                {formatDate(selectedDate, 'MMMM d, yyyy')}
               </h5>
               {showCreateButton && (
                 <Button variant="ghost" size={tokens.button.inline} onClick={() => setCreateDialogOpen(true)}>
@@ -152,7 +152,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
                     </div>
                     {!event.all_day && event.start_time && (
                       <p className="text-xs text-muted-foreground mt-1 ml-4">
-                        {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD'}
+                        {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD')}
                       </p>
                     )}
                   </button>

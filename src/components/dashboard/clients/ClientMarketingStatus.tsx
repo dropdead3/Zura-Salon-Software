@@ -102,13 +102,13 @@ export function ClientMarketingStatus({ clientId, organizationId }: ClientMarket
           <Mail className="w-4 h-4 text-muted-foreground" />
           <Label className="text-sm">Email</Label>
           <Badge
-            variant={emailOptOut ? 'destructive' : 'default'}
+            variant={emailOptOut ? 'destructive' : 'default')}
             className={emailOptOut 
               ? 'text-xs bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400' 
               : 'text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
             }
           >
-            {emailOptOut ? 'Unsubscribed' : 'Subscribed'}
+            {emailOptOut ? 'Unsubscribed' : 'Subscribed')}
           </Badge>
         </div>
         {canToggle && (
@@ -128,13 +128,13 @@ export function ClientMarketingStatus({ clientId, organizationId }: ClientMarket
           <MessageSquare className="w-4 h-4 text-muted-foreground" />
           <Label className="text-sm">SMS</Label>
           <Badge
-            variant={smsOptOut ? 'destructive' : 'default'}
+            variant={smsOptOut ? 'destructive' : 'default')}
             className={smsOptOut 
               ? 'text-xs bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400' 
               : 'text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
             }
           >
-            {smsOptOut ? 'Unsubscribed' : 'Subscribed'}
+            {smsOptOut ? 'Unsubscribed' : 'Subscribed')}
           </Badge>
         </div>
         {canToggle && (

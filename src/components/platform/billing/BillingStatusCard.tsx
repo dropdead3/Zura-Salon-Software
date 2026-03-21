@@ -69,7 +69,7 @@ export function BillingStatusCard({
           {/* Current Plan */}
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Current Plan</p>
-            <p className="text-lg font-medium text-white">{planName || 'No Plan'}</p>
+            <p className="text-lg font-medium text-white">{planName || 'No Plan')}</p>
           </div>
 
           {/* Billing Cycle */}
@@ -96,7 +96,7 @@ export function BillingStatusCard({
               </p>
             ) : nextInvoiceDate ? (
               <p className="text-lg font-medium text-white">
-                {formatDate(new Date(nextInvoiceDate), 'MMM d, yyyy'}
+                {formatDate(new Date(nextInvoiceDate), 'MMM d, yyyy')}
               </p>
             ) : (
               <p className="text-lg font-medium text-slate-500">Not scheduled</p>

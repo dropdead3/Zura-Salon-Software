@@ -51,11 +51,11 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmit, isPending, in
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'New Category' : 'Rename Category'}</DialogTitle>
+          <DialogTitle>{mode === 'create' ? 'New Category' : 'Rename Category')}</DialogTitle>
           <DialogDescription>
             {mode === 'create' 
               ? 'Add a new service category for organizing your menu.'
-              : 'Update the category name.'}
+              : 'Update the category name.')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,7 +79,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmit, isPending, in
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={!name.trim() || isPending}>
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {mode === 'create' ? 'Create' : 'Save'}
+              {mode === 'create' ? 'Create' : 'Save')}
             </Button>
           </DialogFooter>
         </form>

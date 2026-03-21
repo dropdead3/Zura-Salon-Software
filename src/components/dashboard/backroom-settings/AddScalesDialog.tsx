@@ -69,7 +69,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
                 <Weight className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className={cn(tokens.label.default, 'text-foreground text-sm'}><p className={cn(tokens.label.default, 'text-foreground text-sm'}>Precision Scale</p></p>
+                <p className={cn(tokens.label.default, 'text-foreground text-sm')}><p className={cn(tokens.label.default, 'text-foreground text-sm')}>Precision Scale</p></p>
                 <p className="text-xs text-muted-foreground font-sans">
                   ${SCALE_HARDWARE_PRICE} one-time + ${SCALE_LICENSE_MONTHLY}/mo each
                 </p>
@@ -85,7 +85,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
               >
                 <Minus className="w-3.5 h-3.5" />
               </Button>
-              <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground'}>{qty}</span>
+              <span className={cn(tokens.stat.large, 'w-8 text-center text-foreground')}>{qty}</span>
               <Button
                 variant="outline"
                 size="icon"
@@ -122,7 +122,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
               </>
             ) : (
               <>
-                Add {qty} Scale{qty > 1 ? 's' : ''} — ${qty * SCALE_HARDWARE_PRICE} + ${qty * SCALE_LICENSE_MONTHLY}/mo
+                Add {qty} Scale{qty > 1 ? 's' : '')} — ${qty * SCALE_HARDWARE_PRICE} + ${qty * SCALE_LICENSE_MONTHLY}/mo
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

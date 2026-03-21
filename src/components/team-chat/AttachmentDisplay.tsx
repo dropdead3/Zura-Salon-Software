@@ -22,7 +22,7 @@ export function AttachmentDisplay({ fileName, fileUrl, fileType, fileSize, onRem
 
   if (isImage) {
     return (
-      <div className={cn('relative group', compact ? 'max-w-[200px]' : 'max-w-sm'}>
+      <div className={cn('relative group', compact ? 'max-w-[200px]' : 'max-w-sm')}>
         <a href={fileUrl} target="_blank" rel="noopener noreferrer">
           <img
             src={fileUrl}

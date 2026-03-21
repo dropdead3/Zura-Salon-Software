@@ -144,7 +144,7 @@ export function CreateAdminAccountDialog({ onSuccess }: CreateAdminAccountDialog
                 onClick={copyCredentials}
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Copied!' : 'Copy Credentials'}
+                {copied ? 'Copied!' : 'Copy Credentials')}
               </Button>
               <p className="text-xs text-muted-foreground">
                 Share these credentials securely with the user. They can change their password after logging in.

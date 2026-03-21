@@ -109,10 +109,10 @@ export default function AuditLogPage() {
                 </PlatformButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExport('csv'}>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
                   Export as CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('json'}>
+                <DropdownMenuItem onClick={() => handleExport('json')}>
                   Export as JSON
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -134,7 +134,7 @@ export default function AuditLogPage() {
             />
           </div>
           
-          <Select value={filters.actions?.[0] || 'all'} onValueChange={(v) => handleFilterChange('actions', v === 'all' ? undefined : [v])}>
+          <Select value={filters.actions?.[0] || 'all')} onValueChange={(v) => handleFilterChange('actions', v === 'all' ? undefined : [v])}>
             <SelectTrigger className="bg-background">
               <SelectValue placeholder="All Actions" />
             </SelectTrigger>
@@ -233,19 +233,19 @@ export default function AuditLogPage() {
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={log.user_photo || undefined} />
                             <AvatarFallback className="text-xs bg-muted">
-                              {log.user_name?.[0] || 'S'}
+                              {log.user_name?.[0] || 'S')}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-foreground">
-                            {log.user_name || 'System'}
+                            {log.user_name || 'System')}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {log.organization_name || '-'}
+                        {log.organization_name || '-')}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {format(new Date(log.created_at), 'MMM d, h:mm a'}
+                        {format(new Date(log.created_at), 'MMM d, h:mm a')}
                       </td>
                       <td className="px-4 py-3">
                         <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
@@ -315,15 +315,15 @@ export default function AuditLogPage() {
             </div>
             <div>
               <label className={tokens.heading.subsection}>User</label>
-              <p className="mt-1 text-foreground">{selectedLog.user_name || 'System'}</p>
+              <p className="mt-1 text-foreground">{selectedLog.user_name || 'System')}</p>
             </div>
             <div>
               <label className={tokens.heading.subsection}>Organization</label>
-              <p className="mt-1 text-foreground">{selectedLog.organization_name || '-'}</p>
+              <p className="mt-1 text-foreground">{selectedLog.organization_name || '-')}</p>
             </div>
             <div>
               <label className={tokens.heading.subsection}>Timestamp</label>
-              <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp'}</p>
+              <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp')}</p>
             </div>
             {selectedLog.entity_type && (
               <div>

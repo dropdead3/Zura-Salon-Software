@@ -70,7 +70,7 @@ export function LevelPricingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2'}>
+          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2')}>
             <Layers className="w-4 h-4" /> Price by Stylist Level
           </DialogTitle>
           <DialogDescription className={tokens.body.muted}>
@@ -84,7 +84,7 @@ export function LevelPricingDialog({
           <div className="space-y-3 max-h-[50vh] overflow-y-auto p-1">
             {activeLevels.map(level => (
               <div key={level.id} className="flex items-center gap-3">
-                <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate'}>
+                <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate')}>
                   {level.label}
                 </Label>
                 <div className="relative flex-1">
@@ -95,7 +95,7 @@ export function LevelPricingDialog({
                     min="0"
                     className="pl-7 rounded-lg"
                     placeholder="0.00"
-                    value={prices[level.id] || ''}
+                    value={prices[level.id] || '')}
                     onChange={e => setPrices(prev => ({ ...prev, [level.id]: e.target.value }))}
                     autoCapitalize="off"
                   />

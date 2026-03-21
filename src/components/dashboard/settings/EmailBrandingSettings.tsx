@@ -454,7 +454,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://instagram.com/yoursalon"
-                value={socialLinks.instagram || ''}
+                value={socialLinks.instagram || '')}
                 onChange={(e) => updateSocialLink('instagram', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -466,7 +466,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://facebook.com/yoursalon"
-                value={socialLinks.facebook || ''}
+                value={socialLinks.facebook || '')}
                 onChange={(e) => updateSocialLink('facebook', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -478,7 +478,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://tiktok.com/@yoursalon"
-                value={socialLinks.tiktok || ''}
+                value={socialLinks.tiktok || '')}
                 onChange={(e) => updateSocialLink('tiktok', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -490,7 +490,7 @@ export function EmailBrandingSettings() {
               </Label>
               <Input
                 placeholder="https://yoursalon.com"
-                value={socialLinks.website || ''}
+                value={socialLinks.website || '')}
                 onChange={(e) => updateSocialLink('website', e.target.value)}
                 autoCapitalize="off"
                 type="url"
@@ -556,7 +556,7 @@ export function EmailBrandingSettings() {
                   disabled={sendingTest || !testEmail}
                 >
                   {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {sendingTest ? 'Sending...' : 'Send Test Email'}
+                  {sendingTest ? 'Sending...' : 'Send Test Email')}
                 </Button>
               </div>
             </PopoverContent>
@@ -605,7 +605,7 @@ export function EmailBrandingSettings() {
               </Select>
               <div className="flex items-center gap-1 border rounded-full p-0.5">
                 <button
-                  onClick={() => setPreviewMode('desktop'}
+                  onClick={() => setPreviewMode('desktop')}
                   className={cn(
                     "p-1.5 rounded-full transition-colors",
                     previewMode === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -615,7 +615,7 @@ export function EmailBrandingSettings() {
                   <Monitor className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => setPreviewMode('mobile'}
+                  onClick={() => setPreviewMode('mobile')}
                   className={cn(
                     "p-1.5 rounded-full transition-colors",
                     previewMode === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -766,7 +766,7 @@ export function EmailBrandingSettings() {
                   {/* Attribution */}
                   {showAttribution && (
                     <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
-                      Sent via{' '}
+                      Sent via{' ')}
                       <a href={PLATFORM_URL} style={{ color: '#a1a1aa', textDecoration: 'underline' }} onClick={(e) => e.preventDefault()}>
                         {PLATFORM_NAME}
                       </a>

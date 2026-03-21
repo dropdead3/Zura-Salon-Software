@@ -29,7 +29,7 @@ export function LeverDetailPanel({ recommendation }: LeverDetailPanelProps) {
           {Object.entries(evidence).map(([key, value]) => (
             <div key={key} className="space-y-1">
               <p className="text-xs font-medium capitalize text-[hsl(var(--platform-foreground))]">
-                {key.replace(/_/g, ' '}
+                {key.replace(/_/g, ' ')}
               </p>
               <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
                 {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}

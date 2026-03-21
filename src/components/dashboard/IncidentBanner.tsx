@@ -74,7 +74,7 @@ export function IncidentBanner() {
         animate={{ height: 'auto', opacity: 1 }}
         exit={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className={cn(config.bg, config.text, 'relative overflow-hidden shadow-lg z-[60]'}
+        className={cn(config.bg, config.text, 'relative overflow-hidden shadow-lg z-[60]')}
       >
         {/* Animated stripe pattern */}
         <motion.div
@@ -109,7 +109,7 @@ export function IncidentBanner() {
                 config.text
               )}
             >
-              {incident.link_text || 'Learn more'}
+              {incident.link_text || 'Learn more')}
               <ExternalLink className="w-3 h-3" />
             </a>
           )}

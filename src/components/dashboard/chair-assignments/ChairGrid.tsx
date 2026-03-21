@@ -29,7 +29,7 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
           Add stations in your location settings to enable chair assignments
         </p>
         <Button variant="outline" size="sm" asChild className="mt-4">
-          <Link to={dashPath('/admin/settings?category=locations'}>
+          <Link to={dashPath('/admin/settings?category=locations')}>
             Manage Location Stations
           </Link>
         </Button>
@@ -55,7 +55,7 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
             )}
           >
             {/* Chair label */}
-            <span className={cn(tokens.label.tiny, 'text-center'}>
+            <span className={cn(tokens.label.tiny, 'text-center')}>
               {chair.station_name}
               {chair.station_number != null && ` #${chair.station_number}`}
             </span>
@@ -65,10 +65,10 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={stylist.photo_url ?? undefined} />
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {formatDisplayName(stylist.full_name || '', stylist.display_name).slice(0, 2).toUpperCase() || '?'}
+                    {formatDisplayName(stylist.full_name || '', stylist.display_name).slice(0, 2).toUpperCase() || '?')}
                   </AvatarFallback>
                 </Avatar>
-                <span className={cn(tokens.body.emphasis, 'text-center text-xs leading-tight'}>
+                <span className={cn(tokens.body.emphasis, 'text-center text-xs leading-tight')}>
                   {formatDisplayName(stylist.full_name || '', stylist.display_name)}
                 </span>
                 <TooltipProvider>
@@ -92,7 +92,7 @@ export function ChairGrid({ chairs, assignments, stylists, onRemoveAssignment }:
                 <div className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
                   <User className="h-4 w-4 text-muted-foreground/40" />
                 </div>
-                <span className={cn(tokens.body.muted, 'text-xs'}>Unassigned</span>
+                <span className={cn(tokens.body.muted, 'text-xs')}>Unassigned</span>
               </div>
             )}
           </div>

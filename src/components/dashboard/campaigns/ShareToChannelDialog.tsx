@@ -156,7 +156,7 @@ export function ShareToChannelDialog({ open, onOpenChange, campaignName, content
             className="gap-1.5"
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : sent ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-            {sent ? 'Posted!' : 'Post'}
+            {sent ? 'Posted!' : 'Post')}
           </Button>
         </DialogFooter>
       </DialogContent>

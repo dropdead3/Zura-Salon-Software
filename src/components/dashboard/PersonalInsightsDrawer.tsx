@@ -177,7 +177,7 @@ export function PersonalInsightsDrawer({ label, expanded: controlledExpanded, on
         <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
           <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <span className="truncate">{label ?? 'My Insights'}</span>
+        <span className="truncate">{label ?? 'My Insights')}</span>
         {sentiment && SentimentIcon && (
           <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
             <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
@@ -198,7 +198,7 @@ export function PersonalInsightsDrawer({ label, expanded: controlledExpanded, on
       <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center shrink-0">
         <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
       </div>
-      <span className="truncate">{label ?? 'My Insights'}</span>
+      <span className="truncate">{label ?? 'My Insights')}</span>
       <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
     </SilverShineButton>
   );
@@ -270,7 +270,7 @@ export function PersonalInsightsPanel({ onClose }: { onClose: () => void }) {
             </div>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
-                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin'} />
+                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
                 <X className="w-3.5 h-3.5" />
@@ -305,7 +305,7 @@ export function PersonalInsightsPanel({ onClose }: { onClose: () => void }) {
                         <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
                           Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                          {isStale && ' · Stale'}
+                          {isStale && ' · Stale')}
                           {cooldown > 0 && ` · ${cooldown}s cooldown`}
                         </p>
                       )}

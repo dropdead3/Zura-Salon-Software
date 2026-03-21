@@ -58,7 +58,7 @@ export function AssistantActivityCard() {
           </div>
           <div className="flex items-center gap-1">
             <Button
-              variant={period === 30 ? 'secondary' : 'ghost'}
+              variant={period === 30 ? 'secondary' : 'ghost')}
               size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => setPeriod(30)}
@@ -66,7 +66,7 @@ export function AssistantActivityCard() {
               30d
             </Button>
             <Button
-              variant={period === 90 ? 'secondary' : 'ghost'}
+              variant={period === 90 ? 'secondary' : 'ghost')}
               size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => setPeriod(90)}

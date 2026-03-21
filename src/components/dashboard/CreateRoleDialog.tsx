@@ -168,12 +168,12 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Edit Role' : 'Create New Role'}
+            {isEditing ? 'Edit Role' : 'Create New Role')}
           </DialogTitle>
           <DialogDescription>
             {isEditing
               ? 'Update the role details. System roles can have their display properties changed but not their internal name.'
-              : 'Define a new role for your team. Choose a template to start with pre-configured permissions.'}
+              : 'Define a new role for your team. Choose a template to start with pre-configured permissions.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -190,7 +190,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
                   <div className="flex items-center gap-2">
                     <Files className="w-4 h-4 text-muted-foreground" />
                     <span className="font-medium text-sm">
-                      {selectedTemplate ? `Template: ${selectedTemplate.display_name}` : 'Choose Template'}
+                      {selectedTemplate ? `Template: ${selectedTemplate.display_name}` : 'Choose Template')}
                     </span>
                     {selectedTemplate && (
                       <span className="text-xs text-muted-foreground">
@@ -227,7 +227,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
               placeholder="e.g., Senior Stylist"
               value={displayName}
               onChange={(e) => handleDisplayNameChange(e.target.value)}
-              className={errors.displayName ? 'border-destructive' : ''}
+              className={errors.displayName ? 'border-destructive' : '')}
               disabled={isPending}
             />
             {errors.displayName && (
@@ -242,7 +242,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
               placeholder="e.g., senior_stylist"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={errors.name ? 'border-destructive' : ''}
+              className={errors.name ? 'border-destructive' : '')}
               disabled={isEditing || isPending}
             />
             {errors.name && (
@@ -307,7 +307,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
               {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {isEditing ? 'Saving...' : 'Creating...'}
+                  {isEditing ? 'Saving...' : 'Creating...')}
                 </>
               ) : (
                 isEditing ? 'Save Changes' : selectedTemplate ? 'Create with Template' : 'Create Role'

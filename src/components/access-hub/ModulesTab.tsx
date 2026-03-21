@@ -119,25 +119,25 @@ export function ModulesTab({ canManage }: ModulesTabProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
-              {filterState === 'all' ? 'All' : filterState === 'enabled' ? 'Enabled' : 'Disabled'}
+              {filterState === 'all' ? 'All' : filterState === 'enabled' ? 'Enabled' : 'Disabled')}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuCheckboxItem
-              checked={filterState === 'all'}
-              onCheckedChange={() => setFilterState('all'}
+              checked={filterState === 'all')}
+              onCheckedChange={() => setFilterState('all')}
             >
               All Modules
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
-              checked={filterState === 'enabled'}
-              onCheckedChange={() => setFilterState('enabled'}
+              checked={filterState === 'enabled')}
+              onCheckedChange={() => setFilterState('enabled')}
             >
               Enabled Only
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
-              checked={filterState === 'disabled'}
-              onCheckedChange={() => setFilterState('disabled'}
+              checked={filterState === 'disabled')}
+              onCheckedChange={() => setFilterState('disabled')}
             >
               Disabled Only
             </DropdownMenuCheckboxItem>

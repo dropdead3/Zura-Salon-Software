@@ -164,15 +164,15 @@ function LocationChairCard({
         </div>
         
         <div className="flex items-center gap-4">
-          <Badge variant={dayRateEnabled ? 'default' : 'secondary'}>
-            {dayRateEnabled ? 'Enabled' : 'Disabled'}
+          <Badge variant={dayRateEnabled ? 'default' : 'secondary')}>
+            {dayRateEnabled ? 'Enabled' : 'Disabled')}
           </Badge>
           {dayRateEnabled && chairs && (
             <span className="text-sm text-muted-foreground">
               {chairs.filter(c => c.is_available).length} of {chairs.length} chairs
             </span>
           )}
-          <Settings2 className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+          <Settings2 className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : '')}`} />
         </div>
       </div>
 

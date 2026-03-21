@@ -145,7 +145,7 @@ export default function DocumentTracker() {
                   <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
                 </div>
                 <Button onClick={handleSubmit} disabled={createDocument.isPending} className="w-full">
-                  {createDocument.isPending ? 'Adding...' : 'Add Document'}
+                  {createDocument.isPending ? 'Adding...' : 'Add Document')}
                 </Button>
               </div>
             </DialogContent>
@@ -212,13 +212,13 @@ export default function DocumentTracker() {
                         <TableCell>
                           <Badge variant="outline">{DOCUMENT_TYPES.find(t => t.value === doc.document_type)?.label || doc.document_type}</Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{doc.license_number || '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">{doc.license_number || '—')}</TableCell>
                         <TableCell>
                           {doc.expiration_date ? (
-                            <Badge variant={docStatus.variant}>{docStatus.label} · {formatDate(parseISO(doc.expiration_date), 'MMM d, yyyy'}</Badge>
-                          ) : '—'}
+                            <Badge variant={docStatus.variant}>{docStatus.label} · {formatDate(parseISO(doc.expiration_date), 'MMM d, yyyy')}</Badge>
+                          ) : '—')}
                         </TableCell>
-                        <TableCell className="text-muted-foreground max-w-[200px] truncate">{doc.notes || '—'}</TableCell>
+                        <TableCell className="text-muted-foreground max-w-[200px] truncate">{doc.notes || '—')}</TableCell>
                       </TableRow>
                     );
                   })}

@@ -27,7 +27,7 @@ export function StationSelector({ locationId, value, onValueChange }: StationSel
   }
 
   return (
-    <Select value={value ?? ''} onValueChange={(v) => onValueChange(v || null)}>
+    <Select value={value ?? '')} onValueChange={(v) => onValueChange(v || null)}>
       <SelectTrigger className="h-10 font-sans">
         <SelectValue placeholder="Select station (optional)" />
       </SelectTrigger>

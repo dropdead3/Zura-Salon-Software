@@ -72,7 +72,7 @@ export function RebalancingCard({ filterContext }: RebalancingCardProps) {
                   <MetricInfoTooltip description="Suggests stock transfers when one location has surplus (>1.5× par) and another is below reorder level. Creates pending transfers for manager approval." />
                 </div>
                 <CardDescription className="text-xs">
-                  {result.totalOpportunities} opportunity{result.totalOpportunities !== 1 ? 'ies' : 'y'} · <BlurredAmount>{formatCurrencyWhole(result.totalStuckCapital)}</BlurredAmount> rebalanceable value
+                  {result.totalOpportunities} opportunity{result.totalOpportunities !== 1 ? 'ies' : 'y')} · <BlurredAmount>{formatCurrencyWhole(result.totalStuckCapital)}</BlurredAmount> rebalanceable value
                 </CardDescription>
               </div>
             </div>
@@ -91,12 +91,12 @@ export function RebalancingCard({ filterContext }: RebalancingCardProps) {
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={tokens.table.columnHeader}>From</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell'} />
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')} />
                   <TableHead className={tokens.table.columnHeader}>To</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Qty</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell'}>Value</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Priority</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Action</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Value</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Priority</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

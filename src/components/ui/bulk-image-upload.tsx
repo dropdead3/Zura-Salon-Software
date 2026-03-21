@@ -150,7 +150,7 @@ export function BulkImageUpload({
     setIsUploading(false);
 
     if (results.length > 0) {
-      toast.success(`${results.length} image${results.length > 1 ? 's' : ''} uploaded successfully`);
+      toast.success(`${results.length} image${results.length > 1 ? 's' : '')} uploaded successfully`);
       onComplete(results);
     } else {
       toast.error('No images were uploaded successfully');
@@ -263,7 +263,7 @@ export function BulkImageUpload({
               <span>Uploading... {overallProgress}%</span>
             ) : (
               <span>
-                {files.length} image{files.length !== 1 ? 's' : ''} selected
+                {files.length} image{files.length !== 1 ? 's' : '')} selected
                 {completedCount > 0 && ` • ${completedCount} complete`}
                 {errorCount > 0 && ` • ${errorCount} failed`}
               </span>
@@ -287,7 +287,7 @@ export function BulkImageUpload({
               ) : (
                 <>
                   <Upload className="h-4 w-4" />
-                  Upload {pendingCount} Image{pendingCount !== 1 ? 's' : ''}
+                  Upload {pendingCount} Image{pendingCount !== 1 ? 's' : '')}
                 </>
               )}
             </Button>

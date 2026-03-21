@@ -243,7 +243,7 @@ export function TeamMembersTab() {
           <div className="text-center py-8 text-muted-foreground">
             {searchQuery || roleFilter !== 'all' 
               ? 'No members match your filters'
-              : 'No team members found'}
+              : 'No team members found')}
           </div>
         ) : (
           filteredMembers.map(member => (

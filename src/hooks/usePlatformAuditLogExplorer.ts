@@ -148,7 +148,7 @@ export function exportAuditLogs(logs: AuditLogEntry[], format: 'csv' | 'json') {
       log.entity_id || '-',
       JSON.stringify(log.details),
     ]);
-    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""'}"`).join(','))].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     downloadBlob(blob, `audit-log-${new Date().toISOString().split('T')[0]}.csv`);
   }

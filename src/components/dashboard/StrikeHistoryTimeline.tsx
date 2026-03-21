@@ -86,7 +86,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
               <CardDescription>
                 {strikes.length === 0 
                   ? 'No strikes on record'
-                  : `${strikes.length} total strike${strikes.length !== 1 ? 's' : ''}`}
+                  : `${strikes.length} total strike${strikes.length !== 1 ? 's' : '')}`}
               </CardDescription>
             </div>
             {unresolvedCount > 0 && (
@@ -150,7 +150,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
                             </div>
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatDate(new Date(strike.incident_date), 'MMM d, yyyy'}
+                            {formatDate(new Date(strike.incident_date), 'MMM d, yyyy')}
                           </span>
                         </div>
                         
@@ -184,7 +184,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
                             <div className="flex items-center gap-1 text-xs text-primary">
                               <CheckCircle2 className="w-3 h-3" />
                               <span>
-                                Resolved on {formatDate(new Date(strike.resolved_at!), 'MMM d, yyyy'}
+                                Resolved on {formatDate(new Date(strike.resolved_at!), 'MMM d, yyyy')}
                                 {strike.resolved_by_name && ` by ${strike.resolved_by_name}`}
                               </span>
                             </div>
@@ -253,7 +253,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
               onClick={handleResolveSubmit}
               disabled={resolveStrike.isPending}
             >
-              {resolveStrike.isPending ? 'Resolving...' : 'Resolve Strike'}
+              {resolveStrike.isPending ? 'Resolving...' : 'Resolve Strike')}
             </Button>
           </DialogFooter>
         </DialogContent>

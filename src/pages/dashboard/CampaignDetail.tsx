@@ -150,7 +150,7 @@ function SortableTaskCard({
           )}
           {task.due_date && (
             <p className="text-[11px] text-muted-foreground/60 mt-1">
-              Due {formatDate(new Date(task.due_date), 'MMM d'}
+              Due {formatDate(new Date(task.due_date), 'MMM d')}
             </p>
           )}
         </div>
@@ -238,7 +238,7 @@ export default function CampaignDetail() {
     tasks.forEach((t, i) => {
       const icon = t.status === 'done' ? '✅' : t.status === 'in_progress' ? '🔄' : '⬜';
       text += `${icon} ${i + 1}. ${t.title}`;
-      if (t.due_date) text += ` (due ${formatDate(new Date(t.due_date), 'MMM d'})`;
+      if (t.due_date) text += ` (due ${formatDate(new Date(t.due_date), 'MMM d')})`;
       text += '\n';
     });
     if (campaign.leadership_note) {
@@ -307,7 +307,7 @@ export default function CampaignDetail() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(dashPath('/campaigns'}
+            onClick={() => navigate(dashPath('/campaigns')}
             className="mt-1 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -349,7 +349,7 @@ export default function CampaignDetail() {
               )}
               <Badge variant="outline" className="text-[10px] gap-1">
                 <Calendar className="w-2.5 h-2.5" />
-                {formatDate(new Date(campaign.created_at), 'MMM d'}
+                {formatDate(new Date(campaign.created_at), 'MMM d')}
               </Badge>
             </div>
 

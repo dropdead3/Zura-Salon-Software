@@ -49,8 +49,8 @@ export function ActiveCampaignsCard() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-xs tracking-[0.15em]">ACTIVE CAMPAIGNS</h2>
-        <Link to={dashPath('/campaigns'} className="text-[11px] text-primary hover:underline">
-          {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all'}
+        <Link to={dashPath('/campaigns')} className="text-[11px] text-primary hover:underline">
+          {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all')}
         </Link>
       </div>
 
@@ -82,7 +82,7 @@ export function ActiveCampaignsCard() {
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="text-[10px] gap-1">
                           <Calendar className="w-2.5 h-2.5" />
-                          {formatDate(new Date(campaign.created_at), 'MMM d'}
+                          {formatDate(new Date(campaign.created_at), 'MMM d')}
                         </Badge>
                         {campaign.goal_period && (
                           <span className="text-[11px] text-muted-foreground">{campaign.goal_period}</span>

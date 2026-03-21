@@ -121,7 +121,7 @@ export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
             />
             {search && (
               <button
-                onClick={() => setSearch(''}
+                onClick={() => setSearch('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
               >
                 <X className="h-4 w-4 text-muted-foreground" />
@@ -138,7 +138,7 @@ export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
               <div className="text-center py-8 text-muted-foreground text-sm">
                 {search || locationFilter !== 'all' || roleFilter !== 'all' 
                   ? 'No members found' 
-                  : 'Type to search team members'}
+                  : 'Type to search team members')}
               </div>
             ) : (
               <div className="space-y-1">

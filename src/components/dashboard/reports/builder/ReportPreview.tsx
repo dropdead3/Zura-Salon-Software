@@ -73,7 +73,7 @@ export function ReportPreview({ config }: ReportPreviewProps) {
           <PieChart>
             <Pie
               data={chartData}
-              dataKey={config.metrics[0]?.label || 'value'}
+              dataKey={config.metrics[0]?.label || 'value')}
               nameKey="name"
               cx="50%"
               cy="50%"
@@ -98,11 +98,11 @@ export function ReportPreview({ config }: ReportPreviewProps) {
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-            <YAxis tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} tick={{ fontSize: 10 }} />
+            <YAxis tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')} tick={{ fontSize: 10 }} />
             <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
             <Line 
               type="monotone" 
-              dataKey={config.metrics[0]?.label || 'value'} 
+              dataKey={config.metrics[0]?.label || 'value')} 
               stroke="hsl(var(--primary))" 
               strokeWidth={2} 
             />
@@ -117,11 +117,11 @@ export function ReportPreview({ config }: ReportPreviewProps) {
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical">
-          <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} tick={{ fontSize: 10 }} />
+          <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')} tick={{ fontSize: 10 }} />
           <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={70} />
           <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
           <Bar 
-            dataKey={config.metrics[0]?.label || 'value'} 
+            dataKey={config.metrics[0]?.label || 'value')} 
             fill="hsl(var(--primary))" 
             radius={[0, 4, 4, 0]} 
           />

@@ -318,7 +318,7 @@ export default function PhorestSettings() {
               variant="outline"
               disabled={connectionLoading}
             >
-              <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : '')}`} />
               <span className="ml-2">Test Connection</span>
             </Button>
           }
@@ -347,7 +347,7 @@ export default function PhorestSettings() {
                     ? 'CHECKING CONNECTION...' 
                     : connection?.connected 
                       ? 'CONNECTED TO PHOREST' 
-                      : 'NOT CONNECTED'}
+                      : 'NOT CONNECTED')}
                 </h2>
                 {connection?.connected && connection.business && (
                   <p className="text-muted-foreground text-sm">
@@ -379,12 +379,12 @@ export default function PhorestSettings() {
                 <Users className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Staff</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('staff'}
+                  onClick={() => triggerSync.mutate('staff')}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff'}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff')}
                 </Button>
               </Card>
 
@@ -392,12 +392,12 @@ export default function PhorestSettings() {
                 <Calendar className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Appointments</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('appointments'}
+                  onClick={() => triggerSync.mutate('appointments')}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appts'}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appts')}
                 </Button>
               </Card>
 
@@ -405,12 +405,12 @@ export default function PhorestSettings() {
                 <DollarSign className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Sales</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('sales'}
+                  onClick={() => triggerSync.mutate('sales')}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales'}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales')}
                 </Button>
               </Card>
 
@@ -418,12 +418,12 @@ export default function PhorestSettings() {
                 <BarChart3 className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Reports</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('reports'}
+                  onClick={() => triggerSync.mutate('reports')}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports'}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports')}
                 </Button>
               </Card>
             </div>
@@ -434,11 +434,11 @@ export default function PhorestSettings() {
                 <RefreshCw className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Full Sync</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('all'}
+                  onClick={() => triggerSync.mutate('all')}
                   disabled={triggerSync.isPending}
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All'}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All')}
                 </Button>
               </Card>
             </div>
@@ -560,8 +560,8 @@ export default function PhorestSettings() {
                               {suggestion.phorestStaff.branchName}
                             </Badge>
                           )}
-                          <Badge variant={suggestion.confidence === 'high' ? 'default' : 'secondary'}>
-                            {suggestion.confidence === 'high' ? 'Exact Match' : 'Partial Match'}
+                          <Badge variant={suggestion.confidence === 'high' ? 'default' : 'secondary')}>
+                            {suggestion.confidence === 'high' ? 'Exact Match' : 'Partial Match')}
                           </Badge>
                         </div>
                         <Button
@@ -598,7 +598,7 @@ export default function PhorestSettings() {
                 </Select>
 
                 <Select 
-                  value={selectedPhorestStaff ? `${selectedPhorestStaff.id}:${selectedPhorestStaff.branchId}` : ''} 
+                  value={selectedPhorestStaff ? `${selectedPhorestStaff.id}:${selectedPhorestStaff.branchId}` : '')} 
                   onValueChange={(value) => {
                     const [staffId, branchId] = value.split(':');
                     const staff = filteredPhorestStaff.find(s => s.id === staffId && s.branchId === branchId);
@@ -613,7 +613,7 @@ export default function PhorestSettings() {
                       <SelectItem value="_none" disabled>
                         {phorestStaffList.length === 0 
                           ? 'Test connection to load staff' 
-                          : 'All staff are mapped'}
+                          : 'All staff are mapped')}
                       </SelectItem>
                     ) : (
                       filteredPhorestStaff.map((staff) => (
@@ -692,7 +692,7 @@ export default function PhorestSettings() {
                                   <div className="flex items-center gap-2">
                                     <CollapsibleTrigger asChild>
                                       <Button variant="ghost" size={tokens.button.inline} className="h-6 w-6 p-0">
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90')}`} />
                                       </Button>
                                     </CollapsibleTrigger>
                                     <div>
@@ -716,15 +716,15 @@ export default function PhorestSettings() {
                                 <TableCell>
                                   <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
                                     {mappings.length} Locations
-                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? '' : '-rotate-90')}`} />
                                   </CollapsibleTrigger>
                                 </TableCell>
                                 <TableCell>
                                   <span className="text-muted-foreground">-</span>
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant={allActive ? 'default' : 'secondary'}>
-                                    {allActive ? 'Active' : 'Mixed'}
+                                  <Badge variant={allActive ? 'default' : 'secondary')}>
+                                    {allActive ? 'Active' : 'Mixed')}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -744,7 +744,7 @@ export default function PhorestSettings() {
                                         <div className="flex items-center gap-2">
                                           {visibleMappings.has(mapping.id) ? (
                                             <div>
-                                              <p className="text-sm font-medium">{mapping.phorest_staff_name || '-'}</p>
+                                              <p className="text-sm font-medium">{mapping.phorest_staff_name || '-')}</p>
                                               <p className="text-xs text-muted-foreground font-mono">
                                                 {mapping.phorest_staff_id}
                                               </p>
@@ -767,7 +767,7 @@ export default function PhorestSettings() {
                                       <TableCell>
                                         <span className="flex items-center gap-1 text-sm">
                                           <MapPin className="w-3 h-3 text-muted-foreground" />
-                                          {mapping.phorest_branch_name || '-'}
+                                          {mapping.phorest_branch_name || '-')}
                                         </span>
                                       </TableCell>
                                       <TableCell>
@@ -818,7 +818,7 @@ export default function PhorestSettings() {
                             <div className="flex items-center gap-2">
                               {visibleMappings.has(mapping.id) ? (
                                 <div>
-                                  <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
+                                  <p className="font-medium">{mapping.phorest_staff_name || '-')}</p>
                                   <p className="text-xs text-muted-foreground font-mono">
                                     {mapping.phorest_staff_id}
                                   </p>
@@ -862,8 +862,8 @@ export default function PhorestSettings() {
                             />
                           </TableCell>
                           <TableCell>
-                            <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
-                              {mapping.is_active ? 'Active' : 'Inactive'}
+                            <Badge variant={mapping.is_active ? 'default' : 'secondary')}>
+                              {mapping.is_active ? 'Active' : 'Inactive')}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
@@ -931,19 +931,19 @@ export default function PhorestSettings() {
                         </TableCell>
                         <TableCell>{log.records_synced}</TableCell>
                         <TableCell>
-                          {formatDate(new Date(log.started_at), 'MMM d, HH:mm'}
+                          {formatDate(new Date(log.started_at), 'MMM d, HH:mm')}
                         </TableCell>
                         <TableCell>
                           {log.completed_at 
                             ? formatDate(new Date(log.completed_at), 'MMM d, HH:mm')
-                            : '-'}
+                            : '-')}
                         </TableCell>
                         <TableCell>
                           {log.error_message ? (
                             <span className="text-destructive text-sm truncate max-w-xs block">
                               {log.error_message}
                             </span>
-                          ) : '-'}
+                          ) : '-')}
                         </TableCell>
                       </TableRow>
                     ))}

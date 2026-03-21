@@ -49,7 +49,7 @@ export function SortableSidebarSection({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(isDragging && 'opacity-50 z-50'}
+      className={cn(isDragging && 'opacity-50 z-50')}
     >
       <Collapsible open={isOpen} onOpenChange={onToggle}>
         <div className="group flex items-center justify-between px-3 py-1">

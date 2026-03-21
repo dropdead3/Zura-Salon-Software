@@ -184,7 +184,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <div className="flex items-center gap-1.5 mb-1"><Target className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Goal Progress</p></div>
-          <p className="text-xl font-display tabular-nums">{goalTarget > 0 ? `${Math.round(goalProgress)}%` : 'N/A'}</p>
+          <p className="text-xl font-display tabular-nums">{goalTarget > 0 ? `${Math.round(goalProgress)}%` : 'N/A')}</p>
           {goalTarget > 0 && <p className="text-[10px] text-muted-foreground mt-0.5">of {formatCurrencyWhole(goalTarget)}</p>}
         </CardContent></Card>
       </div>
@@ -215,7 +215,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
               </TableHeader>
               <TableBody>
                 {staffKpi.slice(0, 15).map((s, idx) => (
-                  <TableRow key={s.staffId} className={cn(idx === 0 && 'bg-chart-2/[0.03]'}>
+                  <TableRow key={s.staffId} className={cn(idx === 0 && 'bg-chart-2/[0.03]')}>
                     <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                     <TableCell className="font-medium">{s.staffName}</TableCell>
                     <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalRevenue)}</BlurredAmount></TableCell>

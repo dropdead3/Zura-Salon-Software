@@ -213,7 +213,7 @@ export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons
               {data.last_visit && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {formatDate(new Date(data.last_visit), 'MMM d, yyyy'}
+                  {formatDate(new Date(data.last_visit), 'MMM d, yyyy')}
                 </span>
               )}
             </div>

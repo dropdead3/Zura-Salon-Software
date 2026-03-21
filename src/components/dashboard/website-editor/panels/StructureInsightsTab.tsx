@@ -131,7 +131,7 @@ function CategorySection({
               >
                 <button
                   onClick={() => finding.actionTarget && onFindingClick?.(finding.actionTarget)}
-                  disabled={!finding.actionTarget || finding.severity === 'pass'}
+                  disabled={!finding.actionTarget || finding.severity === 'pass')}
                   className={cn(
                     'flex-1 flex items-start gap-2 text-left min-w-0',
                     finding.actionTarget && finding.severity !== 'pass'
@@ -209,7 +209,7 @@ export function StructureInsightsTab({
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <h3 className="font-display text-sm tracking-wide uppercase mb-2">Website Intelligence</h3>
-        <p className={cn(tokens.body.muted, 'mb-6 max-w-[200px]'}>
+        <p className={cn(tokens.body.muted, 'mb-6 max-w-[200px]')}>
           Analyze your website for SEO, conversion, content quality, and structure improvements.
         </p>
         <Button
@@ -265,7 +265,7 @@ export function StructureInsightsTab({
                 'font-sans text-xs mt-0.5',
                 data.score >= 75 ? 'text-emerald-600' : data.score >= 50 ? 'text-amber-600' : 'text-destructive'
               )}>
-                {data.score >= 75 ? 'Strong' : data.score >= 50 ? 'Needs work' : 'Critical issues'}
+                {data.score >= 75 ? 'Strong' : data.score >= 50 ? 'Needs work' : 'Critical issues')}
               </p>
             </div>
           </div>
@@ -276,7 +276,7 @@ export function StructureInsightsTab({
             disabled={isLoading}
             className="font-sans h-8 w-8 p-0"
           >
-            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin'} />
+            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
         </div>
 

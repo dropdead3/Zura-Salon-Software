@@ -141,7 +141,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
             {showViewToggle && (
               <div className="flex items-center border rounded-md overflow-hidden ml-1">
                 <button
-                  onClick={() => setViewMode('cards'}
+                  onClick={() => setViewMode('cards')}
                   className={cn(
                     'p-1.5 transition-colors',
                     viewMode === 'cards' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
@@ -150,7 +150,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
                   <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => setViewMode('table'}
+                  onClick={() => setViewMode('table')}
                   className={cn(
                     'p-1.5 transition-colors',
                     viewMode === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'

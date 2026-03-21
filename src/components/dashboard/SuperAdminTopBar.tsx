@@ -214,7 +214,7 @@ export function SuperAdminTopBar({
                   {isStylistAdmin
                     ? "This user is an admin who also performs services. Managed via the 'I also perform services' toggle in Profile Settings."
                     : roleBadges.length > 1
-                      ? `Roles: ${roleBadges.map(b => b.label).join(', '}`
+                      ? `Roles: ${roleBadges.map(b => b.label).join(', ')}`
                       : badge.label}
                 </TooltipContent>
               </Tooltip>
@@ -267,7 +267,7 @@ export function SuperAdminTopBar({
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to={dashPath('/profile'} className="flex items-center gap-2 cursor-pointer">
+                <Link to={dashPath('/profile')} className="flex items-center gap-2 cursor-pointer">
                   <UserCircle className="w-4 h-4" />
                   View/Edit Profile
                 </Link>

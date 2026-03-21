@@ -96,7 +96,7 @@ function KpiTile({ icon: Icon, label, value, subtitle, isLoading, isExpanded, on
   }
   return (
     <Card
-      className={cn('transition-colors', onClick && 'cursor-pointer hover:bg-muted/30'}
+      className={cn('transition-colors', onClick && 'cursor-pointer hover:bg-muted/30')}
       onClick={onClick}
     >
       <CardContent className="p-5">
@@ -106,7 +106,7 @@ function KpiTile({ icon: Icon, label, value, subtitle, isLoading, isExpanded, on
           </div>
           <span className="text-xs font-display font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
           {onClick && (
-            <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform', isExpanded && 'rotate-180'} />
+            <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform', isExpanded && 'rotate-180')} />
           )}
         </div>
         <div className="text-2xl font-display font-medium tracking-tight">
@@ -313,12 +313,12 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   sections.kpi_tiles = (
     <div className="space-y-2" key="kpi_tiles">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue'} onClick={() => toggleKpi('revenue'} />
-        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active'} onClick={() => toggleKpi('active'} />
-        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket'} onClick={() => toggleKpi('ticket'} />
-        <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph'} onClick={() => toggleKpi('rph'} />
+        <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue')} onClick={() => toggleKpi('revenue')} />
+        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active')} onClick={() => toggleKpi('active')} />
+        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket')} onClick={() => toggleKpi('ticket')} />
+        <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph')} onClick={() => toggleKpi('rph')} />
       </div>
-      <DrillDown open={expandedKpi === 'revenue'}>
+      <DrillDown open={expandedKpi === 'revenue')}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <p className="text-xs font-medium text-muted-foreground mb-3">Revenue by Category</p>
           <div className="space-y-2">
@@ -334,13 +334,13 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           </div>
         </CardContent></Card>
       </DrillDown>
-      <DrillDown open={expandedKpi === 'active'}>
+      <DrillDown open={expandedKpi === 'active')}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <p className="text-xs font-medium text-muted-foreground mb-2">Services booked this period: <span className="font-medium">{data?.activeServiceCount || 0}</span></p>
           <p className="text-xs text-muted-foreground">The count of distinct services that had at least one booking. Review your full service menu to identify dormant services that may be candidates for retirement or promotion.</p>
         </CardContent></Card>
       </DrillDown>
-      <DrillDown open={expandedKpi === 'ticket'}>
+      <DrillDown open={expandedKpi === 'ticket')}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -354,7 +354,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           </div>
         </CardContent></Card>
       </DrillDown>
-      <DrillDown open={expandedKpi === 'rph'}>
+      <DrillDown open={expandedKpi === 'rph')}>
         <Card className="border-primary/20"><CardContent className="p-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -431,7 +431,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                               <div className="flex items-center gap-2">
                                 <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
                                 <span className="font-medium text-sm">{cat.category}</span>
-                                <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExpanded && 'rotate-180'} />
+                                <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
                               </div>
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrencyWhole(cat.revenue)}</BlurredAmount></TableCell>
@@ -461,8 +461,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                           <div className="flex items-center gap-4">
                                             <span className="tabular-nums">{svc.bookings} bookings</span>
                                             <span className="tabular-nums font-medium"><BlurredAmount>{formatCurrency(svc.avgRevenue)}</BlurredAmount></span>
-                                            <span className={cn('tabular-nums font-medium', svcAbove && 'text-emerald-600 dark:text-emerald-400', svcBelow && 'text-red-500 dark:text-red-400'}>
-                                              <BlurredAmount>{svc.revPerHour > 0 ? `${formatCurrency(svc.revPerHour)}/hr` : '—'}</BlurredAmount>
+                                            <span className={cn('tabular-nums font-medium', svcAbove && 'text-emerald-600 dark:text-emerald-400', svcBelow && 'text-red-500 dark:text-red-400')}>
+                                              <BlurredAmount>{svc.revPerHour > 0 ? `${formatCurrency(svc.revPerHour)}/hr` : '—')}</BlurredAmount>
                                             </span>
                                             <span className="tabular-nums text-muted-foreground">{cat.revenue > 0 ? Math.round((svc.totalRevenue / cat.revenue) * 100) : 0}%</span>
                                           </div>
@@ -497,17 +497,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">{clientView === 'magnets' ? 'NEW CLIENT MAGNETS' : 'RETENTION DRIVERS'}</CardTitle>
+                  <CardTitle className="font-display text-base tracking-wide">{clientView === 'magnets' ? 'NEW CLIENT MAGNETS' : 'RETENTION DRIVERS')}</CardTitle>
                   <MetricInfoTooltip description="Shows the mix of new vs. returning clients for each service. 'Magnets' ranks by new client volume; 'Retention' ranks by returning client percentage. Services need 3+ bookings to appear." />
                 </div>
-                <CardDescription>{clientView === 'magnets' ? 'Which services attract the most new clients?' : 'Which services have the highest returning client percentage?'}</CardDescription>
+                <CardDescription>{clientView === 'magnets' ? 'Which services attract the most new clients?' : 'Which services have the highest returning client percentage?')}</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
               <div className="flex gap-1">
-                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'} onClick={() => setClientView('magnets'}>New Clients</button>
-                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'retention' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'} onClick={() => setClientView('retention'}>Retention</button>
+                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('magnets')}>New Clients</button>
+                <button className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'retention' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')} onClick={() => setClientView('retention')}>Retention</button>
               </div>
             </div>
           </div>
@@ -578,12 +578,12 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('serviceName'}><span className="flex items-center gap-1">Service <ArrowUpDown className="w-3 h-3" /></span></TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('serviceName')}><span className="flex items-center gap-1">Service <ArrowUpDown className="w-3 h-3" /></span></TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgDuration'}><span className="flex items-center justify-end gap-1">Avg Min <ArrowUpDown className="w-3 h-3" /></span></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgRevenue'}><span className="flex items-center justify-end gap-1">Avg Rev <ArrowUpDown className="w-3 h-3" /></span></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revPerHour'}><span className="flex items-center justify-end gap-1">Rev/Hr <ArrowUpDown className="w-3 h-3" /></span></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('bookings'}><span className="flex items-center justify-end gap-1">Bookings <ArrowUpDown className="w-3 h-3" /></span></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgDuration')}><span className="flex items-center justify-end gap-1">Avg Min <ArrowUpDown className="w-3 h-3" /></span></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgRevenue')}><span className="flex items-center justify-end gap-1">Avg Rev <ArrowUpDown className="w-3 h-3" /></span></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revPerHour')}><span className="flex items-center justify-end gap-1">Rev/Hr <ArrowUpDown className="w-3 h-3" /></span></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('bookings')}><span className="flex items-center justify-end gap-1">Bookings <ArrowUpDown className="w-3 h-3" /></span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -599,14 +599,14 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             <div className="flex items-center gap-1.5">
                               {s.serviceName}
                               {s.concentrationRisk && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
-                              <ChevronDown className={cn('w-3 h-3 text-muted-foreground ml-1 transition-transform shrink-0', isExp && 'rotate-180'} />
+                              <ChevronDown className={cn('w-3 h-3 text-muted-foreground ml-1 transition-transform shrink-0', isExp && 'rotate-180')} />
                             </div>
                           </TableCell>
                           <TableCell><Badge variant="secondary" className="text-xs">{s.category}</Badge></TableCell>
-                          <TableCell className="text-right tabular-nums text-sm">{s.avgDuration > 0 ? s.avgDuration : '—'}</TableCell>
+                          <TableCell className="text-right tabular-nums text-sm">{s.avgDuration > 0 ? s.avgDuration : '—')}</TableCell>
                           <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrency(s.avgRevenue)}</BlurredAmount></TableCell>
-                          <TableCell className={cn('text-right tabular-nums text-sm font-medium', isAbove && 'text-emerald-600 dark:text-emerald-400', isBelow && 'text-red-500 dark:text-red-400'}>
-                            <BlurredAmount>{s.revPerHour > 0 ? formatCurrency(s.revPerHour) : '—'}</BlurredAmount>
+                          <TableCell className={cn('text-right tabular-nums text-sm font-medium', isAbove && 'text-emerald-600 dark:text-emerald-400', isBelow && 'text-red-500 dark:text-red-400')}>
+                            <BlurredAmount>{s.revPerHour > 0 ? formatCurrency(s.revPerHour) : '—')}</BlurredAmount>
                           </TableCell>
                           <TableCell className="text-right tabular-nums text-sm">{formatNumber(s.bookings)}</TableCell>
                         </TableRow>
@@ -633,7 +633,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                             <div className="flex items-center gap-4">
                                               <span className="tabular-nums">{st.bookings} bookings</span>
                                               <span className="tabular-nums font-medium"><BlurredAmount>{formatCurrency(st.revPerHour)}</BlurredAmount>/hr</span>
-                                              <div className="w-16"><div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={cn('h-full rounded-full', st.revShare > 70 ? 'bg-amber-500' : 'bg-primary/60'} style={{ width: `${st.revShare}%` }} /></div></div>
+                                              <div className="w-16"><div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={cn('h-full rounded-full', st.revShare > 70 ? 'bg-amber-500' : 'bg-primary/60')} style={{ width: `${st.revShare}%` }} /></div></div>
                                               <span className="tabular-nums text-muted-foreground w-10 text-right">{Math.round(st.revShare)}%</span>
                                             </div>
                                           </div>
@@ -738,7 +738,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                     <div className="flex items-center gap-3 py-2 px-2 rounded-md cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setExpandedRebook(isExp ? null : s.serviceName)}>
                       <span className="text-sm truncate w-[200px] shrink-0 flex items-center gap-1.5">
                         {s.serviceName}
-                        <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isExp && 'rotate-180'} />
+                        <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isExp && 'rotate-180')} />
                       </span>
                       <div className="flex-1"><RebookBar rate={s.rebookRate} /></div>
                       <span className="text-xs text-muted-foreground tabular-nums w-16">{s.totalCount} appointments</span>
@@ -808,7 +808,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                     <Bar dataKey="menuPrice" fill="hsl(var(--muted-foreground) / 0.3)" name="Menu Price" radius={[0, 3, 3, 0]} barSize={14} />
                     <Bar dataKey="avgCollected" name="Avg Collected" radius={[0, 3, 3, 0]} barSize={14}>
                       {priceRealizationData.map((entry, i) => (
-                        <Cell key={i} fill={entry.rate < 85 ? 'hsl(0 84% 60%)' : entry.rate > 105 ? 'hsl(142 76% 36%)' : 'hsl(var(--primary))'} />
+                        <Cell key={i} fill={entry.rate < 85 ? 'hsl(0 84% 60%)' : entry.rate > 105 ? 'hsl(142 76% 36%)' : 'hsl(var(--primary))')} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -853,14 +853,14 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                   return (
                     <div key={s.fullName}>
                       <div
-                        className={cn('flex items-center justify-between text-xs px-3 py-1.5 rounded-md bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors', isRealExp && 'bg-muted/50'}
+                        className={cn('flex items-center justify-between text-xs px-3 py-1.5 rounded-md bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors', isRealExp && 'bg-muted/50')}
                         onClick={() => setExpandedRealization(isRealExp ? null : s.fullName)}
                       >
                         <span className="truncate max-w-[160px] flex items-center gap-1">
                           {s.fullName}
-                          <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isRealExp && 'rotate-180'} />
+                          <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isRealExp && 'rotate-180')} />
                         </span>
-                        <span className={cn('font-medium tabular-nums', s.rate < 85 && 'text-red-500', s.rate > 105 && 'text-emerald-600 dark:text-emerald-400'}>{Math.round(s.rate)}%</span>
+                        <span className={cn('font-medium tabular-nums', s.rate < 85 && 'text-red-500', s.rate > 105 && 'text-emerald-600 dark:text-emerald-400')}>{Math.round(s.rate)}%</span>
                       </div>
                       <DrillDown open={isRealExp}>
                         {serviceData && serviceData.stylistBreakdown.length > 0 && (
@@ -928,7 +928,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                 const totalAllBookings = demandTrends.reduce((s, t) => s + t.totalBookings, 0);
                 const shareOfBookings = totalAllBookings > 0 ? (service.totalBookings / totalAllBookings) * 100 : 0;
                 return (
-                  <div key={service.serviceName} className={cn('border border-border/50 rounded-lg p-3 space-y-2 cursor-pointer hover:bg-muted/30 transition-colors', isExp && 'col-span-full'} onClick={() => setExpandedDemand(isExp ? null : service.serviceName)}>
+                  <div key={service.serviceName} className={cn('border border-border/50 rounded-lg p-3 space-y-2 cursor-pointer hover:bg-muted/30 transition-colors', isExp && 'col-span-full')} onClick={() => setExpandedDemand(isExp ? null : service.serviceName)}>
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-sm font-medium truncate leading-tight">{service.serviceName}</span>
                       <TrendIndicator trend={service.trend} />
@@ -938,7 +938,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                         <div className="h-12">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={service.weeks}>
-                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--muted-foreground))'} strokeWidth={1.5} dot={false} />
+                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--muted-foreground))')} strokeWidth={1.5} dot={false} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
@@ -953,7 +953,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                               <XAxis dataKey="weekStart" tick={{ fontSize: 9 }} tickFormatter={(v) => v.slice(5)} />
                               <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: 12 }} />
-                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--primary))'} strokeWidth={2} dot={{ r: 2 }} />
+                              <Line type="monotone" dataKey="count" stroke={service.trend === 'rising' ? 'hsl(142 76% 36%)' : service.trend === 'declining' ? 'hsl(0 84% 60%)' : 'hsl(var(--primary))')} strokeWidth={2} dot={{ r: 2 }} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
@@ -965,8 +965,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             const prevWeek = service.weeks[service.weeks.length - 2]?.count || 0;
                             const wowChange = prevWeek > 0 ? ((lastWeek - prevWeek) / prevWeek) * 100 : 0;
                             return (
-                              <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground'}>
-                                WoW: <span className="font-medium">{wowChange > 0 ? '+' : ''}{wowChange.toFixed(0)}%</span>
+                              <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground')}>
+                                WoW: <span className="font-medium">{wowChange > 0 ? '+' : '')}{wowChange.toFixed(0)}%</span>
                               </span>
                             );
                           })()}

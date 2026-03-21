@@ -94,7 +94,7 @@ export function PhorestWriteGateCard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={writeEnabled ? 'default' : 'secondary'} className="gap-1.5">
+          <Badge variant={writeEnabled ? 'default' : 'secondary')} className="gap-1.5">
             {writeEnabled ? (
               <><ShieldCheck className="w-3.5 h-3.5" /> Live</>
             ) : (

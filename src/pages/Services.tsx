@@ -38,9 +38,9 @@ function StylistLevelSelector({
             : 'bg-card text-foreground border-border hover:border-foreground/30'
         }`}
       >
-        <span className={isSticky ? 'text-white/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
-        <span className={`font-medium ${isSticky ? 'text-white' : ''}`}>{selectedClientLabel} Stylist — {selectedLabel}</span>
-        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`} />
+        <span className={isSticky ? 'text-white/70' : 'text-muted-foreground')}>Service Pricing Level:</span>
+        <span className={`font-medium ${isSticky ? 'text-white' : '')}`}>{selectedClientLabel} Stylist — {selectedLabel}</span>
+        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : '')} ${isSticky ? 'text-white/70' : 'text-muted-foreground')}`} />
       </button>
       
       <AnimatePresence>
@@ -116,7 +116,7 @@ function ServiceCard({
           </span>
         </div>
       )}
-      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''} ${service.isPopular ? 'border-primary/30' : ''}`}>
+      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : '')} ${service.isPopular ? 'border-primary/30' : '')}`}>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
@@ -184,7 +184,7 @@ function CategorySection({
       animate={isInView ? { opacity: 1 } : {}}
       transition={{ duration: 0.6, ease: editorialEasing }}
       className="scroll-mt-32"
-      id={category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and'}
+      id={category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}
     >
       {/* Category Header */}
       <div className="mb-10 lg:mb-12">
@@ -196,7 +196,7 @@ function CategorySection({
         >
           <div>
             <Eyebrow className="text-muted-foreground mb-3">
-              {category.category === "New-Client Consultations" ? "New-Client" : String(categoryIndex + 1).padStart(2, '0'}
+              {category.category === "New-Client Consultations" ? "New-Client" : String(categoryIndex + 1).padStart(2, '0')}
             </Eyebrow>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground leading-tight">
               {category.category === "New-Client Consultations" ? "Consultations" : category.category}
@@ -347,8 +347,8 @@ export default function Services() {
                 isSticky={isSticky}
                 levels={levels}
               />
-              <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`}>
-                <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground'}`}>Pricing varies by stylist level</span>
+              <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground')}`}>
+                <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground')}`}>Pricing varies by stylist level</span>
               </p>
             </motion.div>
           </div>
@@ -401,7 +401,7 @@ export default function Services() {
                 href={`#${category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and}`}
                 className="group inline-flex items-center gap-2 px-5 py-3 text-sm font-sans text-foreground bg-card border border-border rounded-full transition-all duration-300 hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105"
               >
-                <span className="text-xs text-muted-foreground group-hover:text-background/70 font-display">{String(index + 1).padStart(2, '0'}</span>
+                <span className="text-xs text-muted-foreground group-hover:text-background/70 font-display">{String(index + 1).padStart(2, '0')}</span>
                 {category.category}
               </a>
             ))}

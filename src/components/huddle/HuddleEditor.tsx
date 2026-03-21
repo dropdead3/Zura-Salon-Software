@@ -211,7 +211,7 @@ export function HuddleEditor({
             <Input
               id="retail-goal"
               type="number"
-              value={formData.sales_goals.retail || ''}
+              value={formData.sales_goals.retail || '')}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -228,7 +228,7 @@ export function HuddleEditor({
             <Input
               id="service-goal"
               type="number"
-              value={formData.sales_goals.service || ''}
+              value={formData.sales_goals.service || '')}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,

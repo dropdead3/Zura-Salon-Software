@@ -42,7 +42,7 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
     if (!rankings.length) return;
     const esc = (v: string | number) => {
       const s = String(v);
-      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""'}"` : s;
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const headers = ['Service', 'Appointments', 'Revenue', 'Chemical Cost', 'Labor Est.', 'Gross Margin', 'Margin %'];
     const rows = rankings.map((r) => [
@@ -105,13 +105,13 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border/60">
-                <th className={cn(tokens.table.columnHeader, 'text-left py-2'}>Service</th>
-                <th className={cn(tokens.table.columnHeader, 'text-right py-2'}>Appts</th>
-                <th className={cn(tokens.table.columnHeader, 'text-right py-2'}>Revenue</th>
-                <th className={cn(tokens.table.columnHeader, 'text-right py-2'}>Chemical</th>
-                <th className={cn(tokens.table.columnHeader, 'text-right py-2'}>Labor Est.</th>
-                <th className={cn(tokens.table.columnHeader, 'text-right py-2'}>Margin</th>
-                <th className={cn(tokens.table.columnHeader, 'text-right py-2'}>Margin %</th>
+                <th className={cn(tokens.table.columnHeader, 'text-left py-2')}>Service</th>
+                <th className={cn(tokens.table.columnHeader, 'text-right py-2')}>Appts</th>
+                <th className={cn(tokens.table.columnHeader, 'text-right py-2')}>Revenue</th>
+                <th className={cn(tokens.table.columnHeader, 'text-right py-2')}>Chemical</th>
+                <th className={cn(tokens.table.columnHeader, 'text-right py-2')}>Labor Est.</th>
+                <th className={cn(tokens.table.columnHeader, 'text-right py-2')}>Margin</th>
+                <th className={cn(tokens.table.columnHeader, 'text-right py-2')}>Margin %</th>
               </tr>
             </thead>
             <tbody>
@@ -127,7 +127,7 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
                   <td className="py-2 text-right tabular-nums"><BlurredAmount>{formatCurrency(totals.laborCost)}</BlurredAmount></td>
                   <td className="py-2 text-right tabular-nums"><BlurredAmount>{formatCurrency(totals.margin)}</BlurredAmount></td>
                   <td className="py-2 text-right tabular-nums">
-                    {totals.revenue > 0 ? ((totals.margin / totals.revenue) * 100).toFixed(1) : '0'}%
+                    {totals.revenue > 0 ? ((totals.margin / totals.revenue) * 100).toFixed(1) : '0')}%
                   </td>
                 </tr>
               )}

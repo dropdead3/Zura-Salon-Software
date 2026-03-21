@@ -207,13 +207,13 @@ function StylistRow({
         </TableCell>
         <TableCell>
           {row.mixSessionCount > 0
-            ? <span className={cn(row.reweighComplianceRate < 80 && 'text-destructive'}>{row.reweighComplianceRate}%</span>
+            ? <span className={cn(row.reweighComplianceRate < 80 && 'text-destructive')}>{row.reweighComplianceRate}%</span>
             : <span className="text-muted-foreground">—</span>
           }
         </TableCell>
         <TableCell>
           {row.mixSessionCount > 0
-            ? <span className={cn(row.wasteRate > 15 && 'text-destructive'}>{Math.round(row.wasteRate)}%</span>
+            ? <span className={cn(row.wasteRate > 15 && 'text-destructive')}>{Math.round(row.wasteRate)}%</span>
             : <span className="text-muted-foreground">—</span>
           }
         </TableCell>

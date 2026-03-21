@@ -102,7 +102,7 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
             <div>
               <Label>Template Style</Label>
               <Select
-                value={localSettings.print_template || 'elegant'}
+                value={localSettings.print_template || 'elegant')}
                 onValueChange={(value: 'elegant' | 'modern' | 'minimal') => 
                   setLocalSettings({ ...localSettings, print_template: value })
                 }
@@ -124,12 +124,12 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="color"
-                    value={localSettings.card_background_color || '#1a1a1a'}
+                    value={localSettings.card_background_color || '#1a1a1a')}
                     onChange={(e) => setLocalSettings({ ...localSettings, card_background_color: e.target.value })}
                     className="h-9 w-12 p-1 cursor-pointer"
                   />
                   <Input
-                    value={localSettings.card_background_color || '#1a1a1a'}
+                    value={localSettings.card_background_color || '#1a1a1a')}
                     onChange={(e) => setLocalSettings({ ...localSettings, card_background_color: e.target.value })}
                     className="h-9 font-mono text-xs"
                   />
@@ -140,12 +140,12 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="color"
-                    value={localSettings.card_text_color || '#ffffff'}
+                    value={localSettings.card_text_color || '#ffffff')}
                     onChange={(e) => setLocalSettings({ ...localSettings, card_text_color: e.target.value })}
                     className="h-9 w-12 p-1 cursor-pointer"
                   />
                   <Input
-                    value={localSettings.card_text_color || '#ffffff'}
+                    value={localSettings.card_text_color || '#ffffff')}
                     onChange={(e) => setLocalSettings({ ...localSettings, card_text_color: e.target.value })}
                     className="h-9 font-mono text-xs"
                   />
@@ -156,12 +156,12 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="color"
-                    value={localSettings.card_accent_color || '#d4af37'}
+                    value={localSettings.card_accent_color || '#d4af37')}
                     onChange={(e) => setLocalSettings({ ...localSettings, card_accent_color: e.target.value })}
                     className="h-9 w-12 p-1 cursor-pointer"
                   />
                   <Input
-                    value={localSettings.card_accent_color || '#d4af37'}
+                    value={localSettings.card_accent_color || '#d4af37')}
                     onChange={(e) => setLocalSettings({ ...localSettings, card_accent_color: e.target.value })}
                     className="h-9 font-mono text-xs"
                   />
@@ -202,7 +202,7 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
               <div>
                 <Label>Terms Text</Label>
                 <Textarea
-                  value={localSettings.terms_text || ''}
+                  value={localSettings.terms_text || '')}
                   onChange={(e) => setLocalSettings({ ...localSettings, terms_text: e.target.value })}
                   placeholder="Valid at all locations. No cash value."
                   rows={2}

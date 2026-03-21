@@ -122,7 +122,7 @@ export function GoalCardWithData({ goal, onEdit, onDelete }: GoalCardWithDataPro
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className={cn(tokens.kpi.label, 'mb-0'}>{goal.display_name}</p>
+              <p className={cn(tokens.kpi.label, 'mb-0')}>{goal.display_name}</p>
               {achieved && (
                 <Trophy className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               )}
@@ -155,7 +155,7 @@ export function GoalCardWithData({ goal, onEdit, onDelete }: GoalCardWithDataPro
                 )}
               </span>
             ) : (
-              <span className={cn(tokens.kpi.value, 'text-muted-foreground'}>—</span>
+              <span className={cn(tokens.kpi.value, 'text-muted-foreground')}>—</span>
             )}
           </div>
           <div className="text-right">
@@ -199,7 +199,7 @@ export function GoalCardWithData({ goal, onEdit, onDelete }: GoalCardWithDataPro
               <TrendingDown className="w-3 h-3 text-amber-500 shrink-0" />
             )}
             <span className="text-[11px] text-muted-foreground">
-              Projected:{' '}
+              Projected:{' ')}
               {goal.unit === '$' ? (
                 <BlurredAmount>{formatGoalValue(projectedValue!, goal.unit)}</BlurredAmount>
               ) : (

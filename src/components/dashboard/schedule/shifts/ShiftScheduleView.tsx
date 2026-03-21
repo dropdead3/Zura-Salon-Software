@@ -106,7 +106,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
     const [h, m] = t.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
     const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${h12}:${m.toString().padStart(2, '0'} ${ampm}`;
+    return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
   };
 
   const handleNewShift = (date?: Date) => {
@@ -136,7 +136,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
           <div>
             <CardTitle className="font-display text-base tracking-wide">Staff Shifts</CardTitle>
             <CardDescription className="font-sans text-sm">
-              {format(weekStart, 'MMM d'} — {format(weekEnd, 'MMM d, yyyy'}
+              {format(weekStart, 'MMM d')} — {format(weekEnd, 'MMM d, yyyy')}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
                       'font-sans text-sm mt-0.5',
                       shiftIsToday(day) && 'text-primary'
                     )}>
-                      {format(day, 'd'}
+                      {format(day, 'd')}
                     </p>
                   </div>
                 ))}
@@ -204,7 +204,7 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
               ) : (
                 userIds.map(uid => {
                   const hours = weeklyHours[uid] || 0;
-                  const hoursDisplay = `${Math.floor(hours / 60)}h${hours % 60 > 0 ? }` ${hours % 60}m` : ''}`;
+                  const hoursDisplay = `${Math.floor(hours / 60)}h${hours % 60 > 0 ? }` ${hours % 60}m` : '')}`;
 
                   return (
                     <div key={uid} className="grid grid-cols-[160px_repeat(7,1fr)] border-b border-border last:border-b-0">
@@ -276,24 +276,24 @@ export function ShiftScheduleView({ locationId }: ShiftScheduleViewProps) {
             <AlertDialogDescription className="font-sans">
               {deleteTarget?.is_recurring
                 ? 'This shift is part of a recurring series. How would you like to proceed?'
-                : 'Are you sure you want to cancel this shift?'}
+                : 'Are you sure you want to cancel this shift?')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel className="font-sans">Keep Shift</AlertDialogCancel>
             {deleteTarget?.is_recurring && (
               <AlertDialogAction
-                onClick={() => handleDeleteConfirm('series'}
+                onClick={() => handleDeleteConfirm('series')}
                 className="font-sans bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Cancel All Future
               </AlertDialogAction>
             )}
             <AlertDialogAction
-              onClick={() => handleDeleteConfirm('single'}
+              onClick={() => handleDeleteConfirm('single')}
               className="font-sans"
             >
-              {deleteTarget?.is_recurring ? 'This Shift Only' : 'Cancel Shift'}
+              {deleteTarget?.is_recurring ? 'This Shift Only' : 'Cancel Shift')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

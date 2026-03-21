@@ -582,7 +582,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                       Supply Library
                     </button>
                     <ChevronLeft className="w-3 h-3 text-muted-foreground rotate-180" />
-                    <DialogTitle className={cn(tokens.card.title, 'truncate'}>{selectedBrand}</DialogTitle>
+                    <DialogTitle className={cn(tokens.card.title, 'truncate')}>{selectedBrand}</DialogTitle>
                   </div>
                   <DialogDescription className={tokens.body.muted}>
                     Select products to add to your backroom catalog
@@ -619,7 +619,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder={selectedBrand ? `Search ${selectedBrand} products...` : 'Search brands...'}
+              placeholder={selectedBrand ? `Search ${selectedBrand} products...` : 'Search brands...')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 font-sans"
@@ -729,7 +729,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                     </motion.div>
                   ) : (
                     <motion.div
-                      key={`products-${selectedCategory}-${selectedLine ?? 'all'}`}
+                      key={`products-${selectedCategory}-${selectedLine ?? 'all')}`}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -860,8 +860,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
           <div className="px-6 py-4 border-t border-border/40 flex items-center justify-between bg-muted/20 shadow-[0_-4px_12px_-4px_hsl(var(--foreground)/0.04)] shrink-0">
             <span className="text-sm font-sans text-muted-foreground">
               {selected.size > 0
-                ? `${selected.size} product${selected.size === 1 ? '' : 's'} selected`
-                : 'No products selected'}
+                ? `${selected.size} product${selected.size === 1 ? '' : 's')} selected`
+                : 'No products selected')}
             </span>
             <Button
               onClick={handleAdd}
@@ -874,7 +874,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                   Adding...
                 </>
               ) : (
-                `Add ${selected.size || ''} Product${selected.size === 1 ? '' : 's'}`
+                `Add ${selected.size || '')} Product${selected.size === 1 ? '' : 's')}`
               )}
             </Button>
           </div>

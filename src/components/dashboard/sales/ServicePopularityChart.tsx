@@ -65,7 +65,7 @@ const AnimatedBar = (props: any) => {
         width={animWidth}
         height={h}
         fill={fill}
-        stroke={animWidth > 0 ? stroke : 'none'}
+        stroke={animWidth > 0 ? stroke : 'none')}
         strokeWidth={strokeWidth}
         clipPath={`url(#${clipId})`}
         style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
@@ -201,7 +201,7 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
                 onClick={() => setShowAll(!showAll)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-2 pl-3"
               >
-                <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : '')}`} />
                 {showAll ? 'Show less' : `Show all ${stylists.length} stylists`}
               </button>
             )}
@@ -276,7 +276,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const serviceGradientDefs = useMemo(() => {
     const unique = [...new Set(serviceColors)];
     return unique.map(hex => ({
-      id: `glass-${hex.replace('#', ''}`,
+      id: `glass-${hex.replace('#', '')}`,
       hex,
     }));
   }, [serviceColors]);
@@ -300,7 +300,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const categoryGradientDefs = useMemo(() => {
     const unique = [...new Set(categoryColors)];
     return unique.map(hex => ({
-      id: `cat-glass-${hex.replace('#', ''}`,
+      id: `cat-glass-${hex.replace('#', '')}`,
       hex,
     }));
   }, [categoryColors]);
@@ -374,7 +374,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               >
                 {sortedServiceData.map((_, i) => {
                   const hex = serviceColors[i];
-                  const gradId = `glass-${hex.replace('#', ''}`;
+                  const gradId = `glass-${hex.replace('#', '')}`;
                   return (
                     <Cell
                       key={i}
@@ -482,7 +482,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               >
                 {sortedCategoryData.map((_, i) => {
                   const hex = categoryColors[i];
-                  const gradId = `cat-glass-${hex.replace('#', ''}`;
+                  const gradId = `cat-glass-${hex.replace('#', '')}`;
                   return (
                     <Cell
                       key={i}
@@ -577,8 +577,8 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             <FilterTabsList>
               <FilterTabsTrigger
                 value="service"
-                data-state={viewMode === 'service' ? 'active' : 'inactive'}
-                onClick={() => setViewMode('service'}
+                data-state={viewMode === 'service' ? 'active' : 'inactive')}
+                onClick={() => setViewMode('service')}
                 className="flex items-center gap-1"
               >
                 <Scissors className="w-3 h-3" />
@@ -586,8 +586,8 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               </FilterTabsTrigger>
               <FilterTabsTrigger
                 value="category"
-                data-state={viewMode === 'category' ? 'active' : 'inactive'}
-                onClick={() => setViewMode('category'}
+                data-state={viewMode === 'category' ? 'active' : 'inactive')}
+                onClick={() => setViewMode('category')}
                 className="flex items-center gap-1"
               >
                 <Users className="w-3 h-3" />
@@ -602,7 +602,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
         {/* Service view */}
         {viewMode === 'service' && (
           <>
-            <Tabs value={serviceSortBy} onValueChange={(v) => setServiceSortBy(v as 'frequency' | 'revenue'}>
+            <Tabs value={serviceSortBy} onValueChange={(v) => setServiceSortBy(v as 'frequency' | 'revenue')}>
               <FilterTabsList className="mb-4">
                 <FilterTabsTrigger value="revenue" className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3" />
@@ -649,7 +649,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">{svc.frequency}× · {formatCurrencyWhole(svc.totalRevenue)} · avg {formatCurrencyWhole(Math.round(svc.avgPrice))}</span>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedService === svc.name ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedService === svc.name ? 'rotate-180' : '')}`} />
                       </div>
                     </button>
                     <AnimatePresence>
@@ -672,7 +672,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
         {/* Category view */}
         {viewMode === 'category' && (
           <>
-            <Tabs value={categorySortBy} onValueChange={(v) => setCategorySortBy(v as 'revenue' | 'frequency'}>
+            <Tabs value={categorySortBy} onValueChange={(v) => setCategorySortBy(v as 'revenue' | 'frequency')}>
               <FilterTabsList className="mb-4">
                 <FilterTabsTrigger value="revenue" className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3" />
@@ -728,7 +728,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           <span className="text-xs text-muted-foreground">
                             {cat.count}× · <BlurredAmount>{formatCurrencyWhole(cat.revenue)}</BlurredAmount> · {cat.sharePercent}%
                           </span>
-                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : '')}`} />
                         </div>
                       </button>
                       <AnimatePresence>

@@ -250,7 +250,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
           textAnchor="middle" 
           className="text-[10px] fill-muted-foreground"
         >
-          {formatDate(day.date, 'MMM d'}
+          {formatDate(day.date, 'MMM d')}
         </text>
         {day.appointmentCount > 0 ? (
           <>
@@ -267,7 +267,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
                 onDayClick(day);
               }}
             >
-              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
+              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : '')}
             </text>
             {isClosed && (
               <text x={0} dy={50} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
@@ -371,9 +371,9 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
           <Target className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">Yearly Goal Progress</span>
         </div>
-        <Badge variant={isOnTrack ? 'default' : 'secondary'} className="text-xs">
+        <Badge variant={isOnTrack ? 'default' : 'secondary')} className="text-xs">
           <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />
-          {isOnTrack ? 'On Track' : 'Behind'}
+          {isOnTrack ? 'On Track' : 'Behind')}
         </Badge>
       </div>
 
@@ -383,7 +383,7 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
           <Progress 
             value={Math.min(percentComplete, 100)} 
             className="h-3"
-            indicatorClassName={isOnTrack ? 'bg-chart-2' : 'bg-chart-4'}
+            indicatorClassName={isOnTrack ? 'bg-chart-2' : 'bg-chart-4')}
           />
           {/* Expected progress marker */}
           <div 
@@ -678,7 +678,7 @@ export function ForecastingCard() {
         <CardContent className="space-y-4">
           {/* Scheduled / Predicted toggle */}
           <div className="flex items-center gap-3">
-            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted'}>
+            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted')}>
               <FilterTabsList>
                 <FilterTabsTrigger value="scheduled">Scheduled</FilterTabsTrigger>
                 <UITooltip>
@@ -713,13 +713,13 @@ export function ForecastingCard() {
           </div>
 
           {/* Summary Stats */}
-          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3'}>
+          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
-              onClick={() => handleStatCardClick('revenue'}
+              onClick={() => handleStatCardClick('revenue')}
             >
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -733,7 +733,7 @@ export function ForecastingCard() {
                 <p className="text-xs text-muted-foreground">{PERIOD_TOTAL_LABELS[period]}</p>
                 <MetricInfoTooltip description={totalTooltip} />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary'} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
             </div>
             {period !== 'tomorrow' && (
               <div
@@ -741,7 +741,7 @@ export function ForecastingCard() {
                   "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                   selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
                 )}
-                onClick={() => handleStatCardClick('dailyAvg'}
+                onClick={() => handleStatCardClick('dailyAvg')}
               >
                 <div className="flex justify-center mb-1">
                   <Calendar className="w-4 h-4 text-primary" />
@@ -755,7 +755,7 @@ export function ForecastingCard() {
                 {(period === '7days' || period === 'todayToEom') && (
                   <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-tight">Only counts days open</p>
                 )}
-                <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary'} />
+                <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
               </div>
             )}
             <div
@@ -763,7 +763,7 @@ export function ForecastingCard() {
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
-              onClick={() => handleStatCardClick('count'}
+              onClick={() => handleStatCardClick('count')}
             >
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-primary" />
@@ -773,7 +773,7 @@ export function ForecastingCard() {
                 <p className="text-xs text-muted-foreground">Appointments</p>
                 <MetricInfoTooltip description={apptTooltip} />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary'} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
             </div>
           </div>
 
@@ -854,7 +854,7 @@ export function ForecastingCard() {
                 breakdownType={breakdownType}
               />
             ) : (
-              <p className="text-sm text-muted-foreground py-3">No {breakdownType === 'location' ? 'location' : breakdownType === 'stylist' ? 'service provider' : 'category'} data for this period</p>
+              <p className="text-sm text-muted-foreground py-3">No {breakdownType === 'location' ? 'location' : breakdownType === 'stylist' ? 'service provider' : 'category')} data for this period</p>
             );
           })()}
 
@@ -880,7 +880,7 @@ export function ForecastingCard() {
                   </div>
                 );
               })()}
-              <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid'}>
+              <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
                 <FilterTabsList>
                   <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
                   <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
@@ -979,7 +979,7 @@ export function ForecastingCard() {
                           <Cell
                             key={`solid-${index}`}
                             fill="url(#solid-glass-forecast)"
-                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)'}
+                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)')}
                             strokeOpacity={isSelected ? 1 : 1}
                             strokeWidth={isSelected ? 1.5 : 1}
                           />
@@ -1039,7 +1039,7 @@ export function ForecastingCard() {
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
-                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)'} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke={isDark ? 'rgb(202 138 4)' : 'hsl(35 60% 55% / 0.4)')} strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                         </g>
                       );
                     }} />
@@ -1088,10 +1088,10 @@ export function ForecastingCard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    {formatDate(days[0].date, 'EEEE, MMMM d'}
+                    {formatDate(days[0].date, 'EEEE, MMMM d')}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Click to view {days[0].appointmentCount} appointment{days[0].appointmentCount !== 1 ? 's' : ''}
+                    Click to view {days[0].appointmentCount} appointment{days[0].appointmentCount !== 1 ? 's' : '')}
                   </p>
                 </div>
                 <div className="text-right">
@@ -1126,7 +1126,7 @@ export function ForecastingCard() {
           {showWeeklyChart && peakWeek && peakWeek.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground">
-                {period === '60days' ? 'Peak week (next 60 days)' : 'Peak week (next 30 days)'}: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
+                {period === '60days' ? 'Peak week (next 60 days)' : 'Peak week (next 30 days)')}: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrency(peakWeek.revenue)}</BlurredAmount>
@@ -1137,7 +1137,7 @@ export function ForecastingCard() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE, MMM d'}</span>
+                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE, MMM d')}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrency(peakDay.revenue)}</BlurredAmount>

@@ -71,7 +71,7 @@ export function SectionStyleWrapper({ styleOverrides, children, className }: Sec
 
   return (
     <div style={outerStyle} className={cn('relative', className)}>
-      <div className={cn(maxWidthClass, maxWidthClass && 'mx-auto'}>
+      <div className={cn(maxWidthClass, maxWidthClass && 'mx-auto')}>
         {children}
       </div>
     </div>

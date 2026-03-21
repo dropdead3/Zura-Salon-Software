@@ -337,7 +337,7 @@ export default function ViewProfile() {
               <p className="text-muted-foreground mb-4">
                 Only super admins can view and edit team member profiles.
               </p>
-              <Button onClick={() => navigate(dashPath('/directory'}>
+              <Button onClick={() => navigate(dashPath('/directory')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Directory
               </Button>
@@ -359,7 +359,7 @@ export default function ViewProfile() {
               <p className="text-muted-foreground mb-4">
                 The requested user profile could not be found.
               </p>
-              <Button onClick={() => navigate(dashPath('/directory'}>
+              <Button onClick={() => navigate(dashPath('/directory')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Directory
               </Button>
@@ -504,7 +504,7 @@ export default function ViewProfile() {
                 </div>
                 <div>
                   <Button type="button" variant="outline" onClick={handlePhotoClick} disabled={uploadPhoto.isPending}>
-                    {uploadPhoto.isPending ? 'Uploading...' : 'Change Photo'}
+                    {uploadPhoto.isPending ? 'Uploading...' : 'Change Photo')}
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">JPG, PNG. Max 5MB.</p>
                 </div>
@@ -635,7 +635,7 @@ export default function ViewProfile() {
                     return (
                       <Badge
                         key={loc.id}
-                        variant={isSelected ? 'default' : 'outline'}
+                        variant={isSelected ? 'default' : 'outline')}
                         className="cursor-pointer transition-all"
                         onClick={() => {
                           setFormData(prev => ({
@@ -689,7 +689,7 @@ export default function ViewProfile() {
                         <span className="font-medium text-sm">{location.name}</span>
                         {currentSchedule.length > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : ''}
+                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : '')}
                           </Badge>
                         )}
                       </div>
@@ -771,7 +771,7 @@ export default function ViewProfile() {
                       return (
                         <Badge
                           key={specialty}
-                          variant={isSelected ? 'default' : 'outline'}
+                          variant={isSelected ? 'default' : 'outline')}
                           className={cn("cursor-pointer transition-all", isDisabled && "opacity-50 cursor-not-allowed")}
                           onClick={() => !isDisabled && toggleSpecialty(specialty)}
                         >

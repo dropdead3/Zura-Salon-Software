@@ -176,7 +176,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
 
       toast.success(
         varianceSummary.discrepancyCount > 0
-          ? `Count complete — ${varianceSummary.discrepancyCount} discrepanc${varianceSummary.discrepancyCount === 1 ? 'y' : 'ies'} adjusted`
+          ? `Count complete — ${varianceSummary.discrepancyCount} discrepanc${varianceSummary.discrepancyCount === 1 ? 'y' : 'ies')} adjusted`
           : 'Count complete — no discrepancies found'
       );
       onClose();
@@ -238,7 +238,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
       {countedCount > 0 && (
         <div className="flex items-center gap-4 rounded-lg border border-border/60 bg-muted/20 px-4 py-2.5 text-xs">
           <span>
-            Variance:{' '}
+            Variance:{' ')}
             <span
               className={cn(
                 'tabular-nums',
@@ -249,7 +249,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
                   : 'text-muted-foreground'
               )}
             >
-              {varianceSummary.totalVarianceUnits > 0 ? '+' : ''}
+              {varianceSummary.totalVarianceUnits > 0 ? '+' : '')}
               {varianceSummary.totalVarianceUnits} units
             </span>
           </span>
@@ -258,7 +258,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
               <span className="text-muted-foreground">·</span>
               <span>
                 {varianceSummary.discrepancyCount} discrepanc
-                {varianceSummary.discrepancyCount === 1 ? 'y' : 'ies'}
+                {varianceSummary.discrepancyCount === 1 ? 'y' : 'ies')}
               </span>
               <span className="text-muted-foreground">·</span>
               <span className="text-destructive">
@@ -285,7 +285,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
         {brandGroups.map(([brand, brandProducts]) => (
           <div key={brand}>
             <div className="flex items-center gap-2 mb-2">
-              <span className={cn(tokens.label.default, 'text-xs'}>{brand}</span>
+              <span className={cn(tokens.label.default, 'text-xs')}>{brand}</span>
               <span className="text-xs text-muted-foreground">
                 ({brandProducts.filter((p) => entries[p.id]?.counted != null).length}/
                 {brandProducts.length})
@@ -331,7 +331,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
                         type="number"
                         min={0}
                         placeholder="—"
-                        value={entry?.counted ?? ''}
+                        value={entry?.counted ?? '')}
                         onChange={(e) => {
                           const val = e.target.value;
                           updateEntry(product.id, val === '' ? null : Number(val));
@@ -356,7 +356,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
                                 : 'bg-success/10 text-success border-success/20'
                             )}
                           >
-                            {variance! > 0 ? '+' : ''}
+                            {variance! > 0 ? '+' : '')}
                             {variance}
                           </Badge>
                         ) : (

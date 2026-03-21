@@ -223,7 +223,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                   />
                   <Label htmlFor="private" className="flex items-center gap-1">
                     {isPrivate ? <Lock className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    {isPrivate ? 'Private' : 'Shared'}
+                    {isPrivate ? 'Private' : 'Shared')}
                   </Label>
                 </div>
               </div>
@@ -307,7 +307,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={(!content.trim() && photoUrls.length === 0) || createNote.isPending || updateNote.isPending}>
                 <Save className="h-4 w-4 mr-1" />
-                {editingId ? 'Update' : 'Save'}
+                {editingId ? 'Update' : 'Save')}
               </Button>
               <Button variant="ghost" onClick={resetForm}>
                 <X className="h-4 w-4 mr-1" />
@@ -319,7 +319,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
 
         {notes?.length === 0 && !isAdding && (
           <p className="text-muted-foreground text-sm text-center py-4">
-            No notes yet. {isCoach && 'Click "Add Note" to get started.'}
+            No notes yet. {isCoach && 'Click "Add Note" to get started.')}
           </p>
         )}
 
@@ -338,7 +338,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a'}
+                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
                   </span>
                   {isCoach && note.coach_id === user?.id && (
                     <div className="flex gap-1">

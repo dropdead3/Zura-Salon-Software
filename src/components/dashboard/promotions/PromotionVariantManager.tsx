@@ -104,7 +104,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
 
               <div className="space-y-2">
                 <Label>Variant Code (Optional)</Label>
-                <Input {...register('variant_code'} placeholder="e.g., SUMMER25B" />
+                <Input {...register('variant_code')} placeholder="e.g., SUMMER25B" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -114,7 +114,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                     name="discount_type"
                     control={control}
                     render={({ field }) => (
-                      <Select value={field.value || 'percentage'} onValueChange={field.onChange}>
+                      <Select value={field.value || 'percentage')} onValueChange={field.onChange}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -135,9 +135,9 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                     <Input
                       type="number"
                       step="0.01"
-                      className={discountType === 'fixed' ? 'pl-7' : ''}
+                      className={discountType === 'fixed' ? 'pl-7' : '')}
                       {...register('discount_value', { valueAsNumber: true })}
-                      placeholder={discountType === 'percentage' ? '25' : '10.00'}
+                      placeholder={discountType === 'percentage' ? '25' : '10.00')}
                     />
                     {discountType === 'percentage' && (
                       <span className="absolute right-3 top-2.5 text-muted-foreground">%</span>
@@ -148,7 +148,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
 
               <div className="space-y-2">
                 <Label>Description (Optional)</Label>
-                <Input {...register('description'} placeholder="What makes this variant different?" />
+                <Input {...register('description')} placeholder="What makes this variant different?" />
               </div>
 
               <div className="flex items-center justify-between rounded-lg border p-3">
@@ -182,7 +182,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
 
       {/* A/B Test Results Summary */}
       {testResults && (
-        <Card className={testResults.is_significant ? 'border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30' : ''}>
+        <Card className={testResults.is_significant ? 'border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30' : '')}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Test Results</CardTitle>
             <CardDescription>
@@ -225,9 +225,9 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
             </div>
 
             {testResults.lift_percentage !== 0 && (
-              <div className={`text-sm ${testResults.lift_percentage > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                Challenger is {testResults.lift_percentage > 0 ? '+' : ''}{testResults.lift_percentage.toFixed(1)}% 
-                {testResults.lift_percentage > 0 ? ' better' : ' worse'} than control
+              <div className={`text-sm ${testResults.lift_percentage > 0 ? 'text-green-600' : 'text-red-600')}`}>
+                Challenger is {testResults.lift_percentage > 0 ? '+' : '')}{testResults.lift_percentage.toFixed(1)}% 
+                {testResults.lift_percentage > 0 ? ' better' : ' worse')} than control
               </div>
             )}
           </CardContent>
@@ -244,7 +244,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
       ) : (
         <div className="space-y-4">
           {variants?.map((variant) => (
-            <Card key={variant.id} className={variant.is_control ? 'border-primary' : ''}>
+            <Card key={variant.id} className={variant.is_control ? 'border-primary' : '')}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">

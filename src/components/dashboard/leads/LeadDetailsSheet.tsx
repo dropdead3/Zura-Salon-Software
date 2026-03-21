@@ -177,7 +177,7 @@ export function LeadDetailsSheet({
                 Created
               </div>
               <p className="text-sm font-medium">
-                {formatDate(new Date(lead.created_at), 'MMM d, yyyy'}
+                {formatDate(new Date(lead.created_at), 'MMM d, yyyy')}
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
@@ -315,7 +315,7 @@ export function LeadDetailsSheet({
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.performer_name || 'System'} • {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                          {item.performer_name || 'System')} • {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                         </p>
                       </div>
                     </div>

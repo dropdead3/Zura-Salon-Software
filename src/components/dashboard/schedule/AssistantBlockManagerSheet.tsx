@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: string }) {
     declined: 'bg-destructive/10 text-destructive',
   };
   return (
-    <Badge variant="outline" className={variants[status] || ''}>
+    <Badge variant="outline" className={variants[status] || '')}>
       {status}
     </Badge>
   );
@@ -209,7 +209,7 @@ function BlocksByDate({
       {grouped.map(([dateStr, dateBlocks]) => (
         <div key={dateStr} className="space-y-2">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {format(new Date(dateStr + 'T12:00:00'), 'EEEE, MMM d, yyyy'}
+            {format(new Date(dateStr + 'T12:00:00'), 'EEEE, MMM d, yyyy')}
           </h4>
           {dateBlocks
             .sort((a, b) => a.start_time.localeCompare(b.start_time))
@@ -288,7 +288,7 @@ export function AssistantBlockManagerSheet({
       queryClient2.invalidateQueries({ queryKey: ['assistant-time-blocks'] });
       queryClient2.invalidateQueries({ queryKey: ['assistant-time-blocks-range'] });
       queryClient2.invalidateQueries({ queryKey: ['assistant-pending-blocks'] });
-      toast.success(`${expiredIds.length} expired block${expiredIds.length > 1 ? 's' : ''} cleared`);
+      toast.success(`${expiredIds.length} expired block${expiredIds.length > 1 ? 's' : '')} cleared`);
     }
     setIsClearingExpired(false);
   };
@@ -354,7 +354,7 @@ export function AssistantBlockManagerSheet({
                     disabled={isClearingExpired}
                   >
                     {isClearingExpired ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Trash2 className="h-3 w-3 mr-1" />}
-                    Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : ''}
+                    Clear {expiredRequestCount} expired request{expiredRequestCount > 1 ? 's' : '')}
                   </Button>
                 )}
                 <BlocksByDate

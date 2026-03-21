@@ -233,14 +233,14 @@ export function ClearancePanel({ organizationId }: ClearancePanelProps) {
                           min="1"
                           max="99"
                           placeholder="%"
-                          value={discountInputs[p.id] || ''}
+                          value={discountInputs[p.id] || '')}
                           onChange={e => setDiscountInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
                           className="w-16 h-7 text-xs text-center"
                         />
                         <Button
                           size={tokens.button.inline}
                           variant="outline"
-                          onClick={() => handleApplyDiscount(p, parseInt(discountInputs[p.id] || '30'}
+                          onClick={() => handleApplyDiscount(p, parseInt(discountInputs[p.id] || '30')}
                           className="text-xs"
                         >
                           Apply
@@ -248,7 +248,7 @@ export function ClearancePanel({ organizationId }: ClearancePanelProps) {
                       </div>
                     ) : discountPct ? (
                       <span className="text-sm tabular-nums font-medium">{discountPct}% off</span>
-                    ) : '—'}
+                    ) : '—')}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

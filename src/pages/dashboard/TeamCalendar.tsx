@@ -133,7 +133,7 @@ export default function TeamCalendar() {
               <span className="font-medium min-w-[150px] text-center">
                 {view === 'month' 
                   ? format(currentDate, 'MMMM yyyy')
-                  : `${format(rangeStart, 'MMM d'} - ${format(rangeEnd, 'MMM d, yyyy}`
+                  : `${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy}`
                 }
               </span>
               <Button variant="ghost" size="icon" onClick={handleNext}>
@@ -191,7 +191,7 @@ export default function TeamCalendar() {
                       "font-medium text-sm mb-1",
                       isToday && "text-primary"
                     )}>
-                      {format(day, 'd'}
+                      {format(day, 'd')}
                     </div>
                     <div className="space-y-1">
                       {dayEvents.slice(0, 3).map((event) => (
@@ -221,7 +221,7 @@ export default function TeamCalendar() {
           {/* Selected Date Panel */}
           <Card className="p-4">
             <h3 className="font-medium mb-4">
-              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date'}
+              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date')}
             </h3>
             
             {selectedDate ? (
@@ -258,7 +258,7 @@ export default function TeamCalendar() {
                         </div>
                         {!event.all_day && event.start_time && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD'}
+                            {event.start_time.slice(0, 5)} - {event.end_time?.slice(0, 5) || 'TBD')}
                           </p>
                         )}
                         {event.all_day && (

@@ -130,10 +130,10 @@ export function VoucherQRCode({
           <div class="voucher-card">
             <h2>${voucherType}</h2>
             <div class="value">${formatCurrency(voucherValue)}</div>
-            ${recipientName ? }`<p>For: ${recipientName}</p>` : ''}
+            ${recipientName ? }`<p>For: ${recipientName}</p>` : '')}
             <div class="qr-container">${svg}</div>
             <div class="code">${voucherCode}</div>
-            ${expiresAt ? }`<p class="meta">Expires: ${new Date(expiresAt).toLocaleDateString()}</p>` : ''}
+            ${expiresAt ? }`<p class="meta">Expires: ${new Date(expiresAt).toLocaleDateString()}</p>` : '')}
           </div>
           <script>
             window.onload = () => {
@@ -244,12 +244,12 @@ export function BulkQRGenerator({ vouchers }: BulkQRGeneratorProps) {
       const qrData = JSON.stringify({ type: 'voucher', code: v.code, id: v.id });
       return `
         <div class="voucher-card">
-          <h3>${v.type || 'Gift Card'}</h3>
+          <h3>${v.type || 'Gift Card')}</h3>
           <div class="value">${formatCurrency(v.value)}</div>
           <div class="qr-placeholder" data-qr="${encodeURIComponent(qrData)}"></div>
           <div class="code">${v.code}</div>
-          ${v.recipient_name ? }`<p class="recipient">For: ${v.recipient_name}</p>` : ''}
-          ${v.expires_at ? }`<p class="meta">Expires: ${new Date(v.expires_at).toLocaleDateString()}</p>` : ''}
+          ${v.recipient_name ? }`<p class="recipient">For: ${v.recipient_name}</p>` : '')}
+          ${v.expires_at ? }`<p class="meta">Expires: ${new Date(v.expires_at).toLocaleDateString()}</p>` : '')}
         </div>
       `;
     }).join('');

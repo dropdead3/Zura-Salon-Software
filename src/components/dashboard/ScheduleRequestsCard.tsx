@@ -86,7 +86,7 @@ export function ScheduleRequestsCard() {
                 Schedule Change Requests
               </CardTitle>
               <CardDescription>
-                {requests.length} pending request{requests.length !== 1 ? 's' : ''}
+                {requests.length} pending request{requests.length !== 1 ? 's' : '')}
               </CardDescription>
             </div>
             <Badge variant="secondary">{requests.length}</Badge>
@@ -111,10 +111,10 @@ export function ScheduleRequestsCard() {
                   </Avatar>
                   <div>
                     <p className="text-sm font-medium">
-                      {member?.display_name || member?.full_name || 'Unknown'}
+                      {member?.display_name || member?.full_name || 'Unknown')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {location?.name || 'Unknown location'} • {formatDate(new Date(request.created_at), 'MMM d'}
+                      {location?.name || 'Unknown location')} • {formatDate(new Date(request.created_at), 'MMM d')}
                     </p>
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export function ScheduleRequestsCard() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {reviewAction === 'approve' ? 'Approve' : 'Deny'} Schedule Change
+              {reviewAction === 'approve' ? 'Approve' : 'Deny')} Schedule Change
             </DialogTitle>
             <DialogDescription>
               Review {currentMember?.display_name || currentMember?.full_name}'s schedule change request for {currentLocation?.name}
@@ -179,7 +179,7 @@ export function ScheduleRequestsCard() {
                     {DAYS_OF_WEEK.map(day => (
                       <Badge
                         key={day}
-                        variant={currentRequest.current_days.includes(day) ? 'default' : 'outline'}
+                        variant={currentRequest.current_days.includes(day) ? 'default' : 'outline')}
                         className={cn(
                           "text-xs",
                           !currentRequest.current_days.includes(day) && "opacity-40"
@@ -197,7 +197,7 @@ export function ScheduleRequestsCard() {
                     {DAYS_OF_WEEK.map(day => (
                       <Badge
                         key={day}
-                        variant={currentRequest.requested_days.includes(day) ? 'default' : 'outline'}
+                        variant={currentRequest.requested_days.includes(day) ? 'default' : 'outline')}
                         className={cn(
                           "text-xs",
                           !currentRequest.requested_days.includes(day) && "opacity-40"
@@ -240,8 +240,8 @@ export function ScheduleRequestsCard() {
               Cancel
             </Button>
             <Button
-              variant={reviewAction === 'approve' ? 'default' : 'destructive'}
-              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied'}
+              variant={reviewAction === 'approve' ? 'default' : 'destructive')}
+              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied')}
               disabled={reviewRequest.isPending}
             >
               {reviewRequest.isPending ? (

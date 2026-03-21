@@ -146,7 +146,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
 
       toast({
         title: 'Team member added',
-        description: `${existingUser.fullName || email} has been granted ${role.replace('platform_', ''} access.`,
+        description: `${existingUser.fullName || email} has been granted ${role.replace('platform_', '')} access.`,
       });
 
       handleClose(false);
@@ -201,12 +201,12 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {flowState === 'input' && 'Add Platform Team Member'}
-            {flowState === 'existing_user' && 'Assign Platform Role'}
-            {flowState === 'new_user' && 'Send Invitation'}
+            {flowState === 'input' && 'Add Platform Team Member')}
+            {flowState === 'existing_user' && 'Assign Platform Role')}
+            {flowState === 'new_user' && 'Send Invitation')}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            {flowState === 'input' && 'Enter an email address to add a new team member or invite someone new.'}
+            {flowState === 'input' && 'Enter an email address to add a new team member or invite someone new.')}
             {flowState === 'existing_user' && `${existingUser?.fullName || existingUser?.email} already has an account.`}
             {flowState === 'new_user' && `No account found for ${email}. Send an invitation to create one.`}
           </DialogDescription>
@@ -268,7 +268,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               </div>
               <div>
                 <p className="text-sm font-medium text-white">
-                  {existingUser?.fullName || 'Unknown'}
+                  {existingUser?.fullName || 'Unknown')}
                 </p>
                 <p className="text-xs text-slate-400">{existingUser?.email}</p>
               </div>
@@ -283,7 +283,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               <div>
                 <p className="text-sm font-medium text-white">Invitation Email</p>
                 <p className="text-xs text-slate-400">
-                  They'll receive a link to create an account with {role.replace('platform_', ''} access.
+                  They'll receive a link to create an account with {role.replace('platform_', '')} access.
                 </p>
               </div>
             </div>
@@ -294,7 +294,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               <PlatformButton 
                 type="button" 
                 variant="secondary" 
-                onClick={() => setFlowState('input'}
+                onClick={() => setFlowState('input')}
               >
                 Back
               </PlatformButton>
@@ -308,9 +308,9 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
             </PlatformButton>
             <PlatformButton type="submit" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {flowState === 'input' && 'Continue'}
-              {flowState === 'existing_user' && 'Assign Role'}
-              {flowState === 'new_user' && 'Send Invitation'}
+              {flowState === 'input' && 'Continue')}
+              {flowState === 'existing_user' && 'Assign Role')}
+              {flowState === 'new_user' && 'Send Invitation')}
             </PlatformButton>
           </DialogFooter>
         </form>

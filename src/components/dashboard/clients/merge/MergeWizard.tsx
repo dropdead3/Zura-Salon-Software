@@ -82,7 +82,7 @@ export function MergeWizard({ preselectedClientIds, onComplete, onCancel }: Merg
             }`}>
               {i < step ? <Check className="w-4 h-4" /> : i + 1}
             </div>
-            <span className={`text-sm hidden sm:inline ${i === step ? 'font-medium' : 'text-muted-foreground'}`}>
+            <span className={`text-sm hidden sm:inline ${i === step ? 'font-medium' : 'text-muted-foreground')}`}>
               {label}
             </span>
             {i < STEPS.length - 1 && <div className="w-8 h-px bg-border" />}
@@ -98,10 +98,10 @@ export function MergeWizard({ preselectedClientIds, onComplete, onCancel }: Merg
             {STEPS[step]}
           </CardTitle>
           <CardDescription>
-            {step === 0 && 'Search and select 2 or more client profiles to merge.'}
-            {step === 1 && 'Choose which profile will be the primary (surviving) record.'}
-            {step === 2 && 'Review and resolve field conflicts between the selected profiles.'}
-            {step === 3 && 'Review the merge summary and confirm by typing MERGE.'}
+            {step === 0 && 'Search and select 2 or more client profiles to merge.')}
+            {step === 1 && 'Choose which profile will be the primary (surviving) record.')}
+            {step === 2 && 'Review and resolve field conflicts between the selected profiles.')}
+            {step === 3 && 'Review the merge summary and confirm by typing MERGE.')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,7 +146,7 @@ export function MergeWizard({ preselectedClientIds, onComplete, onCancel }: Merg
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          {step === 0 ? 'Cancel' : 'Back'}
+          {step === 0 ? 'Cancel' : 'Back')}
         </Button>
         {step < 3 && (
           <Button

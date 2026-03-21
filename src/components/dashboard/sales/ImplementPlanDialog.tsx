@@ -216,7 +216,7 @@ export function ImplementPlanDialog({
 
     activeSteps.forEach((step, i) => {
       text += `${i + 1}. ${step.title}`;
-      text += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d'})`;
+      text += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d')})`;
       text += '\n';
       if (step.description) text += `   ${step.description}\n`;
     });
@@ -232,7 +232,7 @@ export function ImplementPlanDialog({
     let md = `**📋 ${campaignName}**\n\n`;
     activeSteps.forEach((step, i) => {
       md += `**${i + 1}. ${step.title}**`;
-      md += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d'})`;
+      md += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d')})`;
       md += '\n';
       if (step.description) md += `${step.description}\n`;
     });
@@ -272,7 +272,7 @@ export function ImplementPlanDialog({
           .map((step) => ({
             user_id: user.id,
             title: step.title,
-            description: `From campaign: ${campaignName}${step.description ? }`\n${step.description}` : ''}`,
+            description: `From campaign: ${campaignName}${step.description ? }`\n${step.description}` : '')}`,
             due_date: addDays(new Date(), step.dueDays).toISOString(),
             priority: 'high',
             source: 'ai_recovery_plan',
@@ -335,7 +335,7 @@ export function ImplementPlanDialog({
             <p className="text-xs text-muted-foreground">
               {executed
                 ? 'Campaign launched!'
-                : 'Name your campaign, review the actions, and launch it'}
+                : 'Name your campaign, review the actions, and launch it')}
             </p>
           </DialogHeader>
 
@@ -385,7 +385,7 @@ export function ImplementPlanDialog({
                       }
                       className="text-[11px] text-primary hover:underline"
                     >
-                      {allSelected ? 'Deselect all' : 'Select all'}
+                      {allSelected ? 'Deselect all' : 'Select all')}
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -419,7 +419,7 @@ export function ImplementPlanDialog({
                               </p>
                             )}
                             <p className="text-[11px] text-muted-foreground/60 mt-1">
-                              Due {formatDate(addDays(new Date(), step.dueDays), 'MMM d'}
+                              Due {formatDate(addDays(new Date(), step.dueDays), 'MMM d')}
                             </p>
                           </div>
                         </label>
@@ -438,7 +438,7 @@ export function ImplementPlanDialog({
                           noteOpen && 'rotate-180'
                         )}
                       />
-                      {noteOpen ? 'Leadership note' : '+ Add leadership note'}
+                      {noteOpen ? 'Leadership note' : '+ Add leadership note')}
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-2">

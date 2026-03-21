@@ -97,7 +97,7 @@ export function EmailOutreachDialog({ open, onOpenChange, clients, segmentLabel 
               <label className="text-sm font-medium">Preview</label>
               <div className="border rounded-lg p-3 bg-muted/30 space-y-1">
                 <p className="text-sm font-medium">Subject: {selectedTemplateData.subject}</p>
-                <p className="text-xs text-muted-foreground">{selectedTemplateData.description || 'No description'}</p>
+                <p className="text-xs text-muted-foreground">{selectedTemplateData.description || 'No description')}</p>
               </div>
             </div>
           )}

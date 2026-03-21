@@ -161,14 +161,14 @@ export function ProductTable({ products, isLoading, onEdit }: ProductTableProps)
                 <TableCell className="text-right font-medium">
                   {product.retail_price 
                     ? formatCurrency(product.retail_price) 
-                    : '—'}
+                    : '—')}
                 </TableCell>
                 <TableCell className="text-right">
                   <span className={cn(
                     "font-medium",
                     isLowStock && "text-amber-600"
                   )}>
-                    {product.quantity_on_hand ?? '—'}
+                    {product.quantity_on_hand ?? '—')}
                     {isLowStock && <AlertTriangle className="inline ml-1 h-4 w-4" />}
                   </span>
                 </TableCell>

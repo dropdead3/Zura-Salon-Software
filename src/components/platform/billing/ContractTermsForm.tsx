@@ -122,7 +122,7 @@ export function ContractTermsForm({
           <PlatformInput
             id="contractStart"
             type="date"
-            value={contractStartDate ?? ''}
+            value={contractStartDate ?? '')}
             onChange={(e) => onContractStartDateChange(e.target.value || null)}
           />
         </div>

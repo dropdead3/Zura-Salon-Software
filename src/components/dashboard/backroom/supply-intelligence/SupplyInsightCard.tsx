@@ -76,14 +76,14 @@ export function SupplyInsightCard({ insight }: SupplyInsightCardProps) {
           </div>
 
           {/* Title */}
-          <h4 className={cn(tokens.body.emphasis, 'mb-1'}>{insight.title}</h4>
+          <h4 className={cn(tokens.body.emphasis, 'mb-1')}>{insight.title}</h4>
 
           {/* Description */}
           <p className={tokens.body.muted}>{insight.description}</p>
 
           {/* Suggested action */}
           {insight.suggested_action && (
-            <p className={cn(tokens.body.muted, 'mt-1.5 italic'}>
+            <p className={cn(tokens.body.muted, 'mt-1.5 italic')}>
               → {insight.suggested_action}
             </p>
           )}

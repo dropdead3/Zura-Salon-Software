@@ -143,8 +143,8 @@ export function RoleTemplateSelector({ selectedTemplate, onSelect }: RoleTemplat
                   </Badge>
                   {permNames.length > 0 && (
                     <span className="text-[10px] text-muted-foreground truncate">
-                      {permNames.join(', '}
-                      {permCount > 5 && '...'}
+                      {permNames.join(', ')}
+                      {permCount > 5 && '...')}
                     </span>
                   )}
                 </div>

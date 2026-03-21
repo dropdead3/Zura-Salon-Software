@@ -236,7 +236,7 @@ export function NoShowReport({
                     <TableCell className="text-right">{day.total}</TableCell>
                     <TableCell className="text-right">{day.noShows}</TableCell>
                     <TableCell className="text-right">
-                      <span className={day.rate > 10 ? 'text-destructive' : day.rate > 5 ? 'text-warning-foreground' : ''}>
+                      <span className={day.rate > 10 ? 'text-destructive' : day.rate > 5 ? 'text-warning-foreground' : '')}>
                         {day.rate.toFixed(1)}%
                       </span>
                     </TableCell>
@@ -266,7 +266,7 @@ export function NoShowReport({
                 {getReportTitle()}
               </CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} - {formatDate(new Date(dateTo), 'MMM d, yyyy'}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

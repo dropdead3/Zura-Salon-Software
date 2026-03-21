@@ -92,7 +92,7 @@ export function CategoryComparisonTable({
                     'text-right font-medium',
                     isNeutral ? 'text-muted-foreground' : isPositive ? 'text-chart-2' : 'text-destructive'
                   )}>
-                    {isPositive ? '+' : ''}{cat.changePercent.toFixed(1)}%
+                    {isPositive ? '+' : '')}{cat.changePercent.toFixed(1)}%
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

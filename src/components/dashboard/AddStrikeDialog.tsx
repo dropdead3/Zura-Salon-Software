@@ -132,7 +132,7 @@ export function AddStrikeDialog({
             <Input
               id="title"
               placeholder="Brief summary of the issue"
-              {...register('title'}
+              {...register('title')}
             />
             {errors.title && (
               <p className="text-sm text-destructive">{errors.title.message}</p>
@@ -191,7 +191,7 @@ export function AddStrikeDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date'}
+                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -212,7 +212,7 @@ export function AddStrikeDialog({
               id="description"
               placeholder="Detailed description of the incident..."
               rows={4}
-              {...register('description'}
+              {...register('description')}
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description.message}</p>

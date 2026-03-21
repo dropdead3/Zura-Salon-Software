@@ -91,7 +91,7 @@ export function AppointmentsContent({
   const { formatDate } = useFormatDate();
   // Build heatmap data
   const heatmapData = HOURS.map(hour => {
-    const row: Record<string, number | string> = { hour: `${hour % 12 || 12}${hour >= 12 ? 'p' : 'a'}` };
+    const row: Record<string, number | string> = { hour: `${hour % 12 || 12}${hour >= 12 ? 'p' : 'a')}` };
     DAYS.forEach((day, idx) => {
       const match = hourlyDistribution.find(d => d.hour === hour && d.dayOfWeek === idx);
       row[day] = match?.count || 0;
@@ -283,12 +283,12 @@ export function AppointmentsContent({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tickFormatter={(date) => formatDate(parseISO(date), 'MMM d'}
+                    tickFormatter={(date) => formatDate(parseISO(date), 'MMM d')}
                     tick={{ fontSize: 11 }}
                   />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip 
-                    labelFormatter={(date) => formatDate(parseISO(date as string), 'EEEE, MMM d'}
+                    labelFormatter={(date) => formatDate(parseISO(date as string), 'EEEE, MMM d')}
                     formatter={(value: number, name: string) => {
                       const labels: Record<string, string> = {
                         count: 'Total',
@@ -345,7 +345,7 @@ export function AppointmentsContent({
                     {statusBreakdown.map((entry) => (
                       <Cell 
                         key={entry.status} 
-                        fill={STATUS_COLORS[entry.status] || 'hsl(var(--muted))'} 
+                        fill={STATUS_COLORS[entry.status] || 'hsl(var(--muted))')} 
                       />
                     ))}
                   </Pie>
@@ -356,7 +356,7 @@ export function AppointmentsContent({
                     ]}
                   />
                   <Legend 
-                    formatter={(value) => value.replace('_', ' '}
+                    formatter={(value) => value.replace('_', ' ')}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -411,7 +411,7 @@ export function AppointmentsContent({
                                 color: intensity > 0.5 ? 'white' : 'inherit'
                               }}
                             >
-                              {value > 0 ? value : ''}
+                              {value > 0 ? value : '')}
                             </div>
                           </td>
                         );

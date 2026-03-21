@@ -83,11 +83,11 @@ export function ReorderDialog({ open, onOpenChange, product, organizationId, onO
             </div>
             <div className="p-3 rounded-lg bg-muted/50 text-center">
               <div className="text-xs text-muted-foreground mb-0.5">Min. Stock</div>
-              <div className="text-lg tabular-nums font-medium">{product.reorder_level ?? '—'}</div>
+              <div className="text-lg tabular-nums font-medium">{product.reorder_level ?? '—')}</div>
             </div>
             <div className="p-3 rounded-lg bg-muted/50 text-center">
               <div className="text-xs text-muted-foreground mb-0.5">Unit Cost</div>
-              <div className="text-lg tabular-nums font-medium">{product.cost_price != null ? `$${product.cost_price.toFixed(2)}` : '—'}</div>
+              <div className="text-lg tabular-nums font-medium">{product.cost_price != null ? `$${product.cost_price.toFixed(2)}` : '—')}</div>
             </div>
           </div>
 
@@ -194,7 +194,7 @@ export function ReorderDialog({ open, onOpenChange, product, organizationId, onO
               </TooltipTrigger>
               {!canSendEmail && (
                 <TooltipContent>
-                  {!hasSupplier ? 'Add a supplier first' : 'Supplier email required to send'}
+                  {!hasSupplier ? 'Add a supplier first' : 'Supplier email required to send')}
                 </TooltipContent>
               )}
             </Tooltip>

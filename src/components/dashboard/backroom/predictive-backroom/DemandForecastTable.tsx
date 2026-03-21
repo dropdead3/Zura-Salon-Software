@@ -176,7 +176,7 @@ function ForecastRow({ forecast }: { forecast: ProductDemandForecast }) {
         <div>
           <span className={tokens.body.emphasis}>{forecast.product_name}</span>
           {forecast.brand && (
-            <span className={cn(tokens.body.muted, 'ml-1'}>({forecast.brand})</span>
+            <span className={cn(tokens.body.muted, 'ml-1')}>({forecast.brand})</span>
           )}
         </div>
       </TableCell>
@@ -208,7 +208,7 @@ function ForecastRow({ forecast }: { forecast: ProductDemandForecast }) {
       <TableCell className={tokens.body.default}>
         {forecast.recommended_order_qty > 0
           ? `${forecast.recommended_order_qty} ${forecast.unit}`
-          : '—'}
+          : '—')}
       </TableCell>
     </TableRow>
   );

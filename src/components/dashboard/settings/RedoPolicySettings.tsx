@@ -148,7 +148,7 @@ export function RedoPolicySettings() {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            {local.redo_custom_reasons && local.redo_custom_reasons.length > 0 ? 'Custom reasons configured.' : 'Using defaults. Add custom reasons to tailor to your salon.'}
+            {local.redo_custom_reasons && local.redo_custom_reasons.length > 0 ? 'Custom reasons configured.' : 'Using defaults. Add custom reasons to tailor to your salon.')}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {effectiveReasons.map(reason => (

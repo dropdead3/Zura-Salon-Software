@@ -105,7 +105,7 @@ export function StockMovementHistory({ productId }: StockMovementHistoryProps) {
                             'text-sm tabular-nums font-medium',
                             m.quantity_change > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                           )}>
-                            {m.quantity_change > 0 ? '+' : ''}{m.quantity_change}
+                            {m.quantity_change > 0 ? '+' : '')}{m.quantity_change}
                           </span>
                           {refType && REFERENCE_TYPE_LABELS[refType] && (
                             <Badge

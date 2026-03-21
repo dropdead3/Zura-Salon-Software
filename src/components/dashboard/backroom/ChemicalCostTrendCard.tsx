@@ -81,7 +81,7 @@ export function ChemicalCostTrendCard({ days = 28 }: ChemicalCostTrendCardProps)
         <div className="flex items-center justify-between mt-2 font-sans text-[10px] text-muted-foreground">
           <span>{days}-day rolling avg: <BlurredAmount>${trend.rollingAvg.toFixed(2)}</BlurredAmount></span>
           {trend.spikeRatio > 1 && (
-            <span className={trend.hasCostSpike ? 'text-destructive' : ''}>
+            <span className={trend.hasCostSpike ? 'text-destructive' : '')}>
               {((trend.spikeRatio - 1) * 100).toFixed(0)}% above avg
             </span>
           )}

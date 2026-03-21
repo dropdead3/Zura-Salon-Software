@@ -167,7 +167,7 @@ export function ChallengeCard({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>
-              {formatDate(new Date(challenge.start_date), 'MMM d'} - {formatDate(new Date(challenge.end_date), 'MMM d, yyyy'}
+              {formatDate(new Date(challenge.start_date), 'MMM d')} - {formatDate(new Date(challenge.end_date), 'MMM d, yyyy')}
             </span>
             {!isEnded && (
               <Badge variant="secondary" className="ml-auto">
@@ -216,11 +216,11 @@ export function ChallengeCard({
             )}
             {onView && (
               <Button 
-                variant={isJoined ? 'default' : 'outline'} 
+                variant={isJoined ? 'default' : 'outline')} 
                 onClick={onView}
-                className={isJoined ? 'flex-1' : ''}
+                className={isJoined ? 'flex-1' : '')}
               >
-                {isJoined ? 'View Leaderboard' : 'Details'}
+                {isJoined ? 'View Leaderboard' : 'Details')}
               </Button>
             )}
           </div>

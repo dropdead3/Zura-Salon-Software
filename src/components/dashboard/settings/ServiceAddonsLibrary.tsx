@@ -361,7 +361,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
       {/* Service drill-down: only when exactly 1 category selected */}
       {selectedCategoryIds.length === 1 && (
         <Select
-          value={assignMode === 'service' && linkedServiceId ? linkedServiceId : '_entire'}
+          value={assignMode === 'service' && linkedServiceId ? linkedServiceId : '_entire')}
           onValueChange={v => {
             if (v === '_entire') {
               setAssignMode('category');
@@ -411,7 +411,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
 
   const renderForm = (isNew: boolean) => (
     <div className="mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-      <p className="text-xs font-medium text-primary uppercase tracking-wider">{isNew ? 'New Add-On' : 'Edit Add-On'}</p>
+      <p className="text-xs font-medium text-primary uppercase tracking-wider">{isNew ? 'New Add-On' : 'Edit Add-On')}</p>
       <div className="grid grid-cols-2 gap-2">
         <Input
           placeholder="Name (e.g. Olaplex Treatment)"

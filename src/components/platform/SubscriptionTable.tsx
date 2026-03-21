@@ -95,25 +95,25 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
                 </TableCell>
                 <TableCell>
                   <span className="text-slate-300">
-                    {tierLabels[subscription.subscription_tier || 'starter'] || 'Starter'}
+                    {tierLabels[subscription.subscription_tier || 'starter'] || 'Starter')}
                   </span>
                 </TableCell>
                 <TableCell>
                   <PlatformBadge variant={statusColors[subscription.subscription_status || 'inactive']}>
-                    {subscription.subscription_status || 'inactive'}
+                    {subscription.subscription_status || 'inactive')}
                   </PlatformBadge>
                 </TableCell>
                 <TableCell>
                   {subscription.current_period_start && subscription.current_period_end ? (
                     <span className="text-slate-400 text-sm">
-                      {formatDate(new Date(subscription.current_period_start), 'MMM d'} - {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy'}
+                      {formatDate(new Date(subscription.current_period_start), 'MMM d')} - {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy')}
                     </span>
                   ) : (
                     <span className="text-slate-500">—</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className="text-slate-400">{subscription.billing_email || '—'}</span>
+                  <span className="text-slate-400">{subscription.billing_email || '—')}</span>
                 </TableCell>
               </TableRow>
             ))
@@ -157,10 +157,10 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
                 <TableCell>
                   <div>
                     <p className="font-medium text-white">
-                      {invoice.organization?.name || 'Unknown'}
+                      {invoice.organization?.name || 'Unknown')}
                     </p>
                     <p className="text-sm text-slate-500">
-                      {invoice.organization?.slug || '—'}
+                      {invoice.organization?.slug || '—')}
                     </p>
                   </div>
                 </TableCell>
@@ -176,13 +176,13 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
                 </TableCell>
                 <TableCell>
                   <span className="text-slate-400">
-                    {formatDate(new Date(invoice.created_at), 'MMM d, yyyy'}
+                    {formatDate(new Date(invoice.created_at), 'MMM d, yyyy')}
                   </span>
                 </TableCell>
                 <TableCell>
                   {invoice.period_start && invoice.period_end ? (
                     <span className="text-slate-400 text-sm">
-                      {formatDate(new Date(invoice.period_start), 'MMM d'} - {formatDate(new Date(invoice.period_end), 'MMM d'}
+                      {formatDate(new Date(invoice.period_start), 'MMM d')} - {formatDate(new Date(invoice.period_end), 'MMM d')}
                     </span>
                   ) : (
                     <span className="text-slate-500">—</span>
@@ -233,18 +233,18 @@ export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
               <TableCell>
                 <div>
                   <p className="font-medium text-white">{subscription.name}</p>
-                  <p className="text-sm text-slate-500">{subscription.billing_email || '—'}</p>
+                  <p className="text-sm text-slate-500">{subscription.billing_email || '—')}</p>
                 </div>
               </TableCell>
               <TableCell>
                 <PlatformBadge variant={statusColors[subscription.subscription_status || 'inactive']}>
-                  {subscription.subscription_status === 'past_due' ? 'Payment Failed' : 'Cancelled'}
+                  {subscription.subscription_status === 'past_due' ? 'Payment Failed' : 'Cancelled')}
                 </PlatformBadge>
               </TableCell>
               <TableCell>
                 {subscription.current_period_end ? (
                   <span className="text-slate-400">
-                    {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy'}
+                    {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy')}
                   </span>
                 ) : (
                   <span className="text-slate-500">—</span>

@@ -26,7 +26,7 @@ export function RatioLockIndicator({
 
   return (
     <Badge
-      variant={isLocked ? 'default' : 'outline'}
+      variant={isLocked ? 'default' : 'outline')}
       className={cn(
         'gap-1 text-[10px] font-sans',
         isLocked ? 'bg-primary/10 text-primary border-primary/20' : '',

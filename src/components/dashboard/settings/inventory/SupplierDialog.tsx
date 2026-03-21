@@ -166,7 +166,7 @@ export function SupplierDialog({ open, onOpenChange, productId, productName, org
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSave} disabled={!form.supplier_name.trim() || upsert.isPending}>
             {upsert.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
-            {existing ? 'Update' : 'Add'} Supplier
+            {existing ? 'Update' : 'Add')} Supplier
           </Button>
         </DialogFooter>
       </DialogContent>

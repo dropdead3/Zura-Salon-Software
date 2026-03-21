@@ -108,12 +108,12 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <Badge variant="outline" className="text-[10px] border-chart-1/30 text-chart-1 mb-2">
-                {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting'}
+                {MEETING_TYPE_LABELS[meeting.meeting_type] || 'Meeting')}
               </Badge>
               <h2 className="font-display text-base tracking-wide truncate">{meeting.title}</h2>
               <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground font-sans">
                 <CalendarIcon className="w-3.5 h-3.5" />
-                <span>{format(new Date(meeting.start_date + 'T12:00:00'), 'EEEE, MMMM d, yyyy'}</span>
+                <span>{format(new Date(meeting.start_date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}</span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground font-sans">
                 <Clock className="w-3.5 h-3.5" />
@@ -166,11 +166,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               <Avatar className="w-8 h-8">
                 <AvatarImage src={organizerProfile?.photo_url || undefined} />
                 <AvatarFallback className="text-xs">
-                  {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name).slice(0, 2).toUpperCase() || '?'}
+                  {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name).slice(0, 2).toUpperCase() || '?')}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-sans">
-                {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name) || 'Unknown'}
+                {formatDisplayName(organizerProfile?.full_name || '', organizerProfile?.display_name) || 'Unknown')}
                 {isOrganizer && <span className="text-muted-foreground ml-1">(you)</span>}
               </span>
             </div>
@@ -192,11 +192,11 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
                     <Avatar className="w-7 h-7">
                       <AvatarImage src={profile?.photo_url || undefined} />
                       <AvatarFallback className="text-[10px]">
-                        {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?'}
+                        {formatDisplayName(profile?.full_name || '', profile?.display_name).slice(0, 2).toUpperCase() || '?')}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-sans flex-1 truncate">
-                      {formatDisplayName(profile?.full_name || '', profile?.display_name) || 'Unknown'}
+                      {formatDisplayName(profile?.full_name || '', profile?.display_name) || 'Unknown')}
                       {att.user_id === user?.id && <span className="text-muted-foreground ml-1">(you)</span>}
                     </span>
                     <div className={cn('flex items-center gap-1', rsvp.className)}>
@@ -228,9 +228,9 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant={myAttendee.rsvp_status === 'accepted' ? 'default' : 'outline'}
+                variant={myAttendee.rsvp_status === 'accepted' ? 'default' : 'outline')}
                 className="flex-1 gap-1"
-                onClick={() => handleRsvp('accepted'}
+                onClick={() => handleRsvp('accepted')}
                 disabled={updateRsvp.isPending}
               >
                 <CheckCircle className="w-3.5 h-3.5" />
@@ -238,9 +238,9 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               </Button>
               <Button
                 size="sm"
-                variant={myAttendee.rsvp_status === 'declined' ? 'destructive' : 'outline'}
+                variant={myAttendee.rsvp_status === 'declined' ? 'destructive' : 'outline')}
                 className="flex-1 gap-1"
-                onClick={() => handleRsvp('declined'}
+                onClick={() => handleRsvp('declined')}
                 disabled={updateRsvp.isPending}
               >
                 <XCircle className="w-3.5 h-3.5" />

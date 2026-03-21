@@ -142,10 +142,10 @@ export default function RewardShop() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">
-                          {redemption.reward?.name || 'Unknown Reward'}
+                          {redemption.reward?.name || 'Unknown Reward')}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(new Date(redemption.created_at), 'MMM d, yyyy'}
+                          {formatDate(new Date(redemption.created_at), 'MMM d, yyyy')}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -154,7 +154,7 @@ export default function RewardShop() {
                         </span>
                         <Badge
                           variant="secondary"
-                          className={statusColors[redemption.status] || ''}
+                          className={statusColors[redemption.status] || '')}
                         >
                           {redemption.status}
                         </Badge>
@@ -188,12 +188,12 @@ export default function RewardShop() {
               <AlertDialogDescription>
                 {confirmingReward && (
                   <>
-                    Are you sure you want to redeem{' '}
-                    <strong>{confirmingReward.name}</strong> for{' '}
+                    Are you sure you want to redeem{' ')}
+                    <strong>{confirmingReward.name}</strong> for{' ')}
                     <strong>{formatNumber(confirmingReward.points_cost)} points</strong>?
                     <br />
                     <br />
-                    Your remaining balance will be{' '}
+                    Your remaining balance will be{' ')}
                     <strong>
                       {formatNumber(balance - confirmingReward.points_cost)} points
                     </strong>

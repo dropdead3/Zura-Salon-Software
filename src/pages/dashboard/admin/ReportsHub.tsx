@@ -216,7 +216,7 @@ export default function ReportsHub() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {format(dateRange.from, 'MMM d'} - {format(dateRange.to, 'MMM d, yyyy'}
+                  {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">

@@ -72,7 +72,7 @@ export function FormulaAssistanceSection() {
         <CardContent className="space-y-4">
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 pr-0 flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground'}>Ratio Lock</p><MetricInfoTooltip description="When enabled, Smart Mix Assist enforces the same product ratios used in previous formulas, preventing ratio drift between sessions." /></div>
+              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Ratio Lock</p><MetricInfoTooltip description="When enabled, Smart Mix Assist enforces the same product ratios used in previous formulas, preventing ratio drift between sessions." /></div>
               <p className="text-sm text-muted-foreground">Enforce consistent ratios when suggesting formulas</p>
             </div>
             <Switch checked={settings?.ratio_lock_enabled ?? false} onCheckedChange={(checked) => updateSettings.mutate({ ratio_lock_enabled: checked })} />
@@ -99,7 +99,7 @@ export function FormulaAssistanceSection() {
               <div className="flex items-center gap-3">
                 <span className="font-display text-sm text-muted-foreground w-6">{index + 1}.</span>
                 <div>
-                  <p className={cn(tokens.body.emphasis, 'text-foreground'}>{item.label}</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{item.label}</p>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 </div>
               </div>
@@ -107,7 +107,7 @@ export function FormulaAssistanceSection() {
           ))}
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground'}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or formula baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
+              <div className="flex items-center gap-1"><p className={cn(tokens.body.emphasis, 'text-foreground')}>Auto-Populate Formulas</p><MetricInfoTooltip description="When a formula match is found (via client history or formula baseline), automatically fills in the product fields instead of requiring manual entry." /></div>
               <p className="text-sm text-muted-foreground">Automatically fill formula fields when a match is found</p>
             </div>
             <Switch checked={(currentRecall.auto_populate as boolean) ?? true} onCheckedChange={(checked) => setRecallConfig({ ...currentRecall, auto_populate: checked })} />

@@ -114,7 +114,7 @@ export function ReviewShareScreen({
               {settings.publicReviewPromptTitle || "We're Thrilled You Loved Your Visit!"}
             </h2>
             <p className="text-muted-foreground">
-              {settings.publicReviewPromptMessage || 'Would you mind taking a moment to share your experience?'}
+              {settings.publicReviewPromptMessage || 'Would you mind taking a moment to share your experience?')}
             </p>
           </div>
 
@@ -161,7 +161,7 @@ export function ReviewShareScreen({
                 {platformButtons.map((platform) => (
                   <Button
                     key={platform.id}
-                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'yelp' | 'facebook'}
+                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'yelp' | 'facebook')}
                     className={cn(
                       'text-white gap-2',
                       platform.color,

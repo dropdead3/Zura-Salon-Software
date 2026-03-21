@@ -41,7 +41,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
         <Button
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => handleQuickAction('approved'}
+          onClick={() => handleQuickAction('approved')}
           disabled={decide.isPending}
         >
           {decide.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
@@ -51,7 +51,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
           variant="outline"
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => setDialogType('modified'}
+          onClick={() => setDialogType('modified')}
         >
           <PenLine className="h-3.5 w-3.5" />
           Modify
@@ -60,7 +60,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
           variant="outline"
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => setDialogType('declined'}
+          onClick={() => setDialogType('declined')}
         >
           <XCircle className="h-3.5 w-3.5" />
           Decline
@@ -69,7 +69,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
           variant="ghost"
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => handleQuickAction('snoozed'}
+          onClick={() => handleQuickAction('snoozed')}
           disabled={decide.isPending}
         >
           <Clock className="h-3.5 w-3.5" />
@@ -78,11 +78,11 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
       </div>
 
       {/* Modify / Decline dialog */}
-      <Dialog open={!!dialogType && dialogType !== 'approved' && dialogType !== 'snoozed'} onOpenChange={() => setDialogType(null)}>
+      <Dialog open={!!dialogType && dialogType !== 'approved' && dialogType !== 'snoozed')} onOpenChange={() => setDialogType(null)}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>
-              {dialogType === 'modified' ? 'Modify Recommendation' : 'Decline Recommendation'}
+              {dialogType === 'modified' ? 'Modify Recommendation' : 'Decline Recommendation')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -99,12 +99,12 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
             )}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {dialogType === 'declined' ? 'Reason for declining' : 'Notes (optional)'}
+                {dialogType === 'declined' ? 'Reason for declining' : 'Notes (optional)')}
               </label>
               <Textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder={dialogType === 'declined' ? 'Why is this not the right lever?' : 'Any additional context...'}
+                placeholder={dialogType === 'declined' ? 'Why is this not the right lever?' : 'Any additional context...')}
                 rows={2}
               />
             </div>

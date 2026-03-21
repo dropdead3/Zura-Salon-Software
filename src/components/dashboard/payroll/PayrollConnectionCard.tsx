@@ -157,12 +157,12 @@ export function PayrollConnectionCard() {
           <div>
             <p className="text-muted-foreground">Company ID</p>
             <p className="font-mono text-xs truncate">
-              {connection.external_company_id || 'Not linked'}
+              {connection.external_company_id || 'Not linked')}
             </p>
           </div>
           <div>
             <p className="text-muted-foreground">Connected</p>
-            <p>{connectedAt || 'N/A'}</p>
+            <p>{connectedAt || 'N/A')}</p>
           </div>
         </div>
 
@@ -181,7 +181,7 @@ export function PayrollConnectionCard() {
             variant="outline"
             className="flex-1"
             onClick={() => syncPayrolls({})}
-            disabled={isSyncing || connection.connection_status !== 'connected'}
+            disabled={isSyncing || connection.connection_status !== 'connected')}
           >
             {isSyncing ? (
               <>

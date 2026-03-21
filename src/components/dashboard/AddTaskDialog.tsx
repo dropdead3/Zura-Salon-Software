@@ -127,7 +127,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, 'MMM d, yyyy') : 'Pick a date'}
+                    {dueDate ? format(dueDate, 'MMM d, yyyy') : 'Pick a date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -143,7 +143,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
             </div>
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as 'low' | 'normal' | 'high'}>
+              <Select value={priority} onValueChange={(v) => setPriority(v as 'low' | 'normal' | 'high')}>
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>
@@ -174,7 +174,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
               Cancel
             </Button>
             <Button type="submit" disabled={isPending || !title.trim()}>
-              {isPending ? 'Adding...' : 'Add Task'}
+              {isPending ? 'Adding...' : 'Add Task')}
             </Button>
           </div>
         </form>

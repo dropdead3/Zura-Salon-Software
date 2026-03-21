@@ -141,7 +141,7 @@ export function InviteStaffDialog() {
                   setEmail(e.target.value);
                   setEmailError(null);
                 }}
-                className={emailError ? 'border-destructive' : ''}
+                className={emailError ? 'border-destructive' : '')}
               />
               {emailError && (
                 <p className="text-xs text-destructive">{emailError}</p>

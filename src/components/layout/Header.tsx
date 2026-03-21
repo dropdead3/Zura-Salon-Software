@@ -284,12 +284,12 @@ export function Header() {
         >
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
             <p className={cn("text-sm text-center md:text-left", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white/80" : "text-foreground/80")}>
-              {announcementSettings.message_prefix}{' '}
-              <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
+              {announcementSettings.message_prefix}{' ')}
+              <span className="font-medium">{announcementSettings.message_highlight}</span>{' ')}
               {announcementSettings.message_suffix}
             </p>
             <a 
-              href={announcementSettings.cta_url || '#'} 
+              href={announcementSettings.cta_url || '#')} 
               target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
               rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
               className={cn("group inline-flex items-center gap-1.5 text-sm font-sans font-medium uppercase tracking-wider hover:opacity-70 transition-opacity", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white" : "text-foreground")}

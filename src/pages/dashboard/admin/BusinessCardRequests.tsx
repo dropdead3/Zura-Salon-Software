@@ -283,7 +283,7 @@ export default function BusinessCardRequests() {
               <p className="text-muted-foreground font-sans">
                 {requests.length === 0 
                   ? 'No business card requests yet' 
-                  : 'No requests match your filters'}
+                  : 'No requests match your filters')}
               </p>
             </div>
           ) : (
@@ -303,10 +303,10 @@ export default function BusinessCardRequests() {
                     <TableCell>
                       <div>
                         <p className="font-sans font-medium">
-                          {request.employee_profile?.display_name || request.employee_profile?.full_name || 'Unknown'}
+                          {request.employee_profile?.display_name || request.employee_profile?.full_name || 'Unknown')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {request.employee_profile?.email || '—'}
+                          {request.employee_profile?.email || '—')}
                         </p>
                       </div>
                     </TableCell>
@@ -316,7 +316,7 @@ export default function BusinessCardRequests() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy'}
+                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(request.status)}
@@ -352,7 +352,7 @@ export default function BusinessCardRequests() {
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Team Member</p>
                     <p className="font-sans font-medium">
-                      {selectedRequest.employee_profile?.display_name || selectedRequest.employee_profile?.full_name || 'Unknown'}
+                      {selectedRequest.employee_profile?.display_name || selectedRequest.employee_profile?.full_name || 'Unknown')}
                     </p>
                     {selectedRequest.employee_profile?.email && (
                       <p className="text-sm text-muted-foreground">{selectedRequest.employee_profile.email}</p>
@@ -374,7 +374,7 @@ export default function BusinessCardRequests() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Requested</p>
                     <p className="text-sm font-sans">
-                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a'}
+                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a')}
                     </p>
                   </div>
 
@@ -412,7 +412,7 @@ export default function BusinessCardRequests() {
                   {/* Processed Info */}
                   {selectedRequest.processed_at && (
                     <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy'}
+                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy')}
                     </div>
                   )}
                 </div>
@@ -422,7 +422,7 @@ export default function BusinessCardRequests() {
                     Cancel
                   </Button>
                   <Button onClick={handleUpdateRequest} disabled={updating} className="font-display">
-                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'UPDATE REQUEST'}
+                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'UPDATE REQUEST')}
                   </Button>
                 </DialogFooter>
               </>

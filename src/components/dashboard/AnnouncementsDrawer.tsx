@@ -110,7 +110,7 @@ export function AnnouncementsDrawer({
         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
           <Megaphone className="w-3 h-3 text-primary" />
         </div>
-        {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
+        {!iconOnly && <span className="truncate">{label ?? 'Announcements')}</span>}
         {unreadCount > 0 && (
           <span className="min-w-[18px] h-[18px] rounded-full bg-destructive/20 text-destructive border border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)] text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -141,7 +141,7 @@ export function AnnouncementsDrawer({
           <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
             <Megaphone className="w-3 h-3 text-primary" />
           </div>
-          {!iconOnly && <span className="truncate">{label ?? 'Announcements'}</span>}
+          {!iconOnly && <span className="truncate">{label ?? 'Announcements')}</span>}
           {unreadCount > 0 && (
             <span className="min-w-[18px] h-[18px] rounded-full bg-destructive/20 text-destructive border border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)] text-[10px] font-medium flex items-center justify-center px-1 shrink-0">
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -183,7 +183,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
         .or('expires_at.is.null,expires_at.gt.now()');
 
       if (!canViewAllLocations && assignedLocationIds.length > 0) {
-        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(','})`);
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
       }
 
       const { data, error } = await query
@@ -274,12 +274,12 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
             {isLeadership && (
               <>
                 <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                  <Link to={dashPath('/announcements'}>
+                  <Link to={dashPath('/announcements')}>
                     <Settings className="w-3.5 h-3.5" />
                   </Link>
                 </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                  <Link to={dashPath('/announcements/create'}>
+                  <Link to={dashPath('/announcements/create')}>
                     <Plus className="w-3.5 h-3.5" />
                   </Link>
                 </Button>
@@ -326,7 +326,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
                         >
-                          {announcement.link_label || 'Learn more'}
+                          {announcement.link_label || 'Learn more')}
                           <ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       )}
@@ -348,7 +348,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
       {/* Footer */}
       <div className="px-4 pb-4 pt-1">
         <Button variant="ghost" className="w-full justify-center text-xs h-9 text-muted-foreground hover:text-foreground" asChild>
-          <Link to={dashPath('/announcements'}>
+          <Link to={dashPath('/announcements')}>
             View All Announcements
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Link>

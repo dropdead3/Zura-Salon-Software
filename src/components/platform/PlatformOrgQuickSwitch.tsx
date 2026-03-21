@@ -82,7 +82,7 @@ export function PlatformOrgQuickSwitch({ className }: PlatformOrgQuickSwitchProp
           />
           <CommandList className="max-h-[340px]">
             <CommandEmpty className="text-slate-500 py-6 text-center text-sm">
-              {isLoading ? 'Loading...' : 'No accounts found.'}
+              {isLoading ? 'Loading...' : 'No accounts found.')}
             </CommandEmpty>
 
             {pinnedOrgs.length > 0 && (

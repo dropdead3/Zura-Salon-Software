@@ -76,7 +76,7 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
                   <MetricInfoTooltip description="Products classified by cumulative revenue contribution. A = top 80% of revenue (cycle count weekly), B = next 15% (monthly), C = bottom 5% (quarterly). Drives reorder priority and stocktake frequency." />
                 </div>
                 <CardDescription className="text-xs">
-                  {abcResult.products.length} product{abcResult.products.length !== 1 ? 's' : ''} classified
+                  {abcResult.products.length} product{abcResult.products.length !== 1 ? 's' : '')} classified
                 </CardDescription>
               </div>
             </div>
@@ -131,7 +131,7 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
                       <Badge variant="outline" className={cn('text-[10px]', cfg.color, cfg.borderColor, cfg.bgColor)}>
                         {s.class}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{s.count} product{s.count !== 1 ? 's' : ''}</span>
+                      <span className="text-xs text-muted-foreground">{s.count} product{s.count !== 1 ? 's' : '')}</span>
                     </div>
                     <p className="text-sm font-medium tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.revenue)}</BlurredAmount></p>
                     <p className="text-[11px] text-muted-foreground tabular-nums">{s.revenuePercent}% of revenue</p>
@@ -148,7 +148,7 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
             >
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {expanded ? 'Hide' : 'Show'} product breakdown
+              {expanded ? 'Hide' : 'Show')} product breakdown
               {activeClass && <span className="ml-1">(Class {activeClass})</span>}
             </button>
 
@@ -157,12 +157,12 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className={cn(tokens.table.columnHeader, 'w-10'}>#</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'w-10')}>#</TableHead>
                       <TableHead className={tokens.table.columnHeader}>Class</TableHead>
                       <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Revenue</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Cumulative %</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Stock</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Revenue</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Cumulative %</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Stock</TableHead>
                       <TableHead className={tokens.table.columnHeader}>Cycle Count</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -188,7 +188,7 @@ export function AbcClassificationCard({ abcResult, filterContext }: AbcClassific
                             </div>
                           </TableCell>
                           <TableCell className="text-right tabular-nums text-sm">
-                            {p.quantityOnHand != null ? p.quantityOnHand : '—'}
+                            {p.quantityOnHand != null ? p.quantityOnHand : '—')}
                           </TableCell>
                           <TableCell>
                             <span className={cn(

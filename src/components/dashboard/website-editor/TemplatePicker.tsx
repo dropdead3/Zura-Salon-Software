@@ -52,7 +52,7 @@ export function TemplatePicker({ open, onOpenChange, onSelect, filterType }: Tem
         {!filterType && (
           <div className="flex gap-1.5 flex-wrap">
             <Button
-              variant={activeCategory === null ? 'default' : 'outline'}
+              variant={activeCategory === null ? 'default' : 'outline')}
               size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => setActiveCategory(null)}
@@ -62,7 +62,7 @@ export function TemplatePicker({ open, onOpenChange, onSelect, filterType }: Tem
             {TEMPLATE_CATEGORIES.map(cat => (
               <Button
                 key={cat.id}
-                variant={activeCategory === cat.id ? 'default' : 'outline'}
+                variant={activeCategory === cat.id ? 'default' : 'outline')}
                 size={tokens.button.inline}
                 className="h-7 text-xs"
                 onClick={() => setActiveCategory(cat.id)}

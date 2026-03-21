@@ -86,7 +86,7 @@ export function RandomAssignModal({
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className={tokens.heading.card}>
-            {mode === 'idle' ? 'Assign Chairs' : 'Preview Assignments'}
+            {mode === 'idle' ? 'Assign Chairs' : 'Preview Assignments')}
           </DialogTitle>
           <DialogDescription>
             {mode === 'idle'
@@ -100,7 +100,7 @@ export function RandomAssignModal({
             <div className="space-y-4">
               {/* Exclude list */}
               <div>
-                <h4 className={cn(tokens.label.default, 'mb-2'}>Exclude stylists</h4>
+                <h4 className={cn(tokens.label.default, 'mb-2')}>Exclude stylists</h4>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {stylists.map(s => (
                     <label
@@ -112,7 +112,7 @@ export function RandomAssignModal({
                         onCheckedChange={() => toggleExclude(s.user_id)}
                       />
                       <span className={tokens.body.default}>
-                        {s.display_name || s.full_name || 'Unknown'}
+                        {s.display_name || s.full_name || 'Unknown')}
                       </span>
                     </label>
                   ))}
@@ -129,8 +129,8 @@ export function RandomAssignModal({
                 <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <UserX className="h-4 w-4 text-destructive" />
-                    <span className={cn(tokens.label.default, 'text-destructive'}>
-                      {result.exclusions.length} stylist{result.exclusions.length > 1 ? 's' : ''} excluded
+                    <span className={cn(tokens.label.default, 'text-destructive')}>
+                      {result.exclusions.length} stylist{result.exclusions.length > 1 ? 's' : '')} excluded
                     </span>
                   </div>
                   {result.exclusions.map(ex => (
@@ -149,7 +149,7 @@ export function RandomAssignModal({
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <AlertTriangle className="h-4 w-4" />
                   <span className={tokens.body.muted}>
-                    {result.unassignedChairs.length} chair{result.unassignedChairs.length > 1 ? 's' : ''} will remain unassigned
+                    {result.unassignedChairs.length} chair{result.unassignedChairs.length > 1 ? 's' : '')} will remain unassigned
                   </span>
                 </div>
               )}
@@ -158,7 +158,7 @@ export function RandomAssignModal({
               <div className="flex items-center gap-2 text-primary">
                 <CheckCircle2 className="h-4 w-4" />
                 <span className={tokens.body.default}>
-                  {result.assignments.length} assignment{result.assignments.length !== 1 ? 's' : ''} ready
+                  {result.assignments.length} assignment{result.assignments.length !== 1 ? 's' : '')} ready
                 </span>
               </div>
             </div>
@@ -179,11 +179,11 @@ export function RandomAssignModal({
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setMode('idle'}>
+              <Button variant="outline" onClick={() => setMode('idle')}>
                 Back
               </Button>
               <Button onClick={handleApply} disabled={isApplying || !result?.assignments.length}>
-                {isApplying ? 'Saving...' : 'Apply Assignments'}
+                {isApplying ? 'Saving...' : 'Apply Assignments')}
               </Button>
             </>
           )}

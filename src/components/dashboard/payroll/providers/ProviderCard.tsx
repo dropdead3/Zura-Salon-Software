@@ -75,7 +75,7 @@ export function ProviderCard({
 
           <Button
             size="sm"
-            variant={isAvailable ? 'default' : 'outline'}
+            variant={isAvailable ? 'default' : 'outline')}
             onClick={isAvailable ? onConnect : onLearnMore}
             disabled={isConnecting}
             className="shrink-0"

@@ -110,7 +110,7 @@ export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrend
               interval={period === 'monthly' ? 4 : 0}
             />
             <YAxis
-              tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
+              tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
               tick={{ fontSize: 10 }}
               tickLine={false}
               axisLine={false}

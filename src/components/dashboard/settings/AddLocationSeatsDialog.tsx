@@ -37,7 +37,7 @@ export function AddLocationSeatsDialog({
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['organization-billing', organizationId] });
       queryClient.invalidateQueries({ queryKey: ['organization-usage', organizationId] });
-      toast.success(`Location seat${seatsToAdd > 1 ? 's' : ''} added!`, {
+      toast.success(`Location seat${seatsToAdd > 1 ? 's' : '')} added!`, {
         description: `You now have ${result.newSeats + (capacity.locations.total - capacity.additionalLocationsPurchased)} available location seats.`,
       });
       onOpenChange(false);
@@ -90,7 +90,7 @@ export function AddLocationSeatsDialog({
           <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Current plan</span>
-              <span className="font-medium">{capacity.planName || 'Standard'}</span>
+              <span className="font-medium">{capacity.planName || 'Standard')}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Included locations</span>
@@ -172,7 +172,7 @@ export function AddLocationSeatsDialog({
             />
             <div>
               <Label htmlFor="agree" className="text-sm font-normal cursor-pointer">
-                I agree to the updated billing terms. My monthly cost will increase by{' '}
+                I agree to the updated billing terms. My monthly cost will increase by{' ')}
                 <span className="font-medium">{formatCurrency(costIncrease)}</span>.
               </Label>
             </div>
@@ -195,7 +195,7 @@ export function AddLocationSeatsDialog({
             onClick={() => addSeatsMutation.mutate()}
             disabled={!agreed || addSeatsMutation.isPending}
           >
-            {addSeatsMutation.isPending ? 'Adding...' : `Confirm & Add ${seatsToAdd} Seat${seatsToAdd > 1 ? 's' : ''}`}
+            {addSeatsMutation.isPending ? 'Adding...' : `Confirm & Add ${seatsToAdd} Seat${seatsToAdd > 1 ? 's' : '')}`}
           </Button>
         </DialogFooter>
       </DialogContent>

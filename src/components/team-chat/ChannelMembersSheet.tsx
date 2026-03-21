@@ -229,7 +229,7 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
           <div className="text-center py-8 text-muted-foreground text-sm">
             {memberSearchQuery || roleFilter !== 'all' 
               ? 'No members match your filters' 
-              : 'No members in this channel'}
+              : 'No members in this channel')}
           </div>
         ) : (
           <ScrollArea className="flex-1">
@@ -258,8 +258,8 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
                       </div>
                       <span className="text-xs text-muted-foreground">
                         {primaryRole}
-                        {member.role === 'owner' && ' (Channel Owner)'}
-                        {member.role === 'admin' && ' (Channel Admin)'}
+                        {member.role === 'owner' && ' (Channel Owner)')}
+                        {member.role === 'admin' && ' (Channel Admin)')}
                       </span>
                     </div>
 

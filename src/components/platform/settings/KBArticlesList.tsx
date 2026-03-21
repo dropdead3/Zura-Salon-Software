@@ -117,7 +117,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
         <div className="text-[hsl(var(--platform-foreground-subtle))] text-sm">Loading articles...</div>
       ) : filteredArticles.length === 0 ? (
         <div className="text-center py-8 text-[hsl(var(--platform-foreground-subtle))]">
-          {articles?.length === 0 ? 'No articles yet. Create your first article!' : 'No articles match your filters.'}
+          {articles?.length === 0 ? 'No articles yet. Create your first article!' : 'No articles match your filters.')}
         </div>
       ) : (
         <div className="rounded-lg border border-[hsl(var(--platform-border)/0.5)] overflow-hidden">
@@ -164,7 +164,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                      {article.category?.name || 'Uncategorized'}
+                      {article.category?.name || 'Uncategorized')}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -177,7 +177,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                           : 'border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground-muted))]'
                       )}
                     >
-                      {article.status === 'published' ? '● Published' : '○ Draft'}
+                      {article.status === 'published' ? '● Published' : '○ Draft')}
                     </Badge>
                     {article.published_at && (
                       <div className="text-xs text-[hsl(var(--platform-foreground-subtle))] mt-0.5">
@@ -200,9 +200,9 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                           'h-8 w-8 p-0',
                           article.is_featured && 'text-amber-400'
                         )}
-                        title={article.is_featured ? 'Remove from featured' : 'Add to featured'}
+                        title={article.is_featured ? 'Remove from featured' : 'Add to featured')}
                       >
-                        <Star className={cn('h-4 w-4', article.is_featured && 'fill-current'} />
+                        <Star className={cn('h-4 w-4', article.is_featured && 'fill-current')} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"
@@ -217,9 +217,9 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                         size="sm"
                         onClick={() => handleTogglePublish(article)}
                         className="h-8 w-8 p-0"
-                        title={article.status === 'published' ? 'Unpublish' : 'Publish'}
+                        title={article.status === 'published' ? 'Unpublish' : 'Publish')}
                       >
-                        <Eye className={cn('h-4 w-4', article.status === 'draft' && 'text-[hsl(var(--platform-foreground-subtle)/0.7)]'} />
+                        <Eye className={cn('h-4 w-4', article.status === 'draft' && 'text-[hsl(var(--platform-foreground-subtle)/0.7)]')} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"

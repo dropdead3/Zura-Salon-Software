@@ -169,7 +169,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Overall ROI</p>
-                <p className={`text-2xl font-medium ${(stats?.overallROI || 0) > 0 ? 'text-success-foreground' : 'text-destructive'}`}>
+                <p className={`text-2xl font-medium ${(stats?.overallROI || 0) > 0 ? 'text-success-foreground' : 'text-destructive')}`}>
                   {(stats?.overallROI || 0).toFixed(0)}%
                 </p>
               </div>
@@ -286,18 +286,18 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
                   <TableCell className="font-medium">{promo.name}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
-                      {promo.promotion_type?.replace('_', ' '}
+                      {promo.promotion_type?.replace('_', ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{promo.redemptions}</TableCell>
                   <TableCell className="text-right">{formatCurrencyWhole(promo.total_revenue)}</TableCell>
                   <TableCell className="text-right">{formatCurrencyWhole(promo.total_discounts)}</TableCell>
-                  <TableCell className={`text-right font-medium ${promo.roi > 0 ? 'text-success-foreground' : 'text-destructive'}`}>
+                  <TableCell className={`text-right font-medium ${promo.roi > 0 ? 'text-success-foreground' : 'text-destructive')}`}>
                     {promo.roi.toFixed(0)}%
                   </TableCell>
                   <TableCell>
-                    <Badge variant={promo.is_active ? 'default' : 'secondary'}>
-                      {promo.is_active ? 'Active' : 'Inactive'}
+                    <Badge variant={promo.is_active ? 'default' : 'secondary')}>
+                      {promo.is_active ? 'Active' : 'Inactive')}
                     </Badge>
                   </TableCell>
                 </TableRow>

@@ -80,7 +80,7 @@ export function WasteCategoryBreakdownCard({ wasteByCategory, totalWasteQty }: W
                   dataKey="value"
                 >
                   {chartData.map((entry) => (
-                    <Cell key={entry.key} fill={CATEGORY_COLORS[entry.key] ?? 'hsl(var(--muted))'} />
+                    <Cell key={entry.key} fill={CATEGORY_COLORS[entry.key] ?? 'hsl(var(--muted))')} />
                   ))}
                 </Pie>
                 <Tooltip

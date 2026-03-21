@@ -93,7 +93,7 @@ export function MenuTreeEditor({
   return (
     <EditorCard
       title="Menu Items"
-      description={`${items.length} item${items.length !== 1 ? 's' : ''}`}
+      description={`${items.length} item${items.length !== 1 ? 's' : '')}`}
       headerActions={
         <Button
           variant="outline"

@@ -206,7 +206,7 @@ export function WorkScheduleWidget() {
                               <Button
                                 key={day.key}
                                 type="button"
-                                variant={requestedDays.includes(day.key) ? 'default' : 'outline'}
+                                variant={requestedDays.includes(day.key) ? 'default' : 'outline')}
                                 size="sm"
                                 onClick={() => toggleDay(day.key)}
                                 disabled={isDisabled}
@@ -227,7 +227,7 @@ export function WorkScheduleWidget() {
                           {requestedDays.length} days selected
                           {closedDays.length > 0 && (
                             <span className="ml-2">
-                              • Closed {closedDays.join(' & '}
+                              • Closed {closedDays.join(' & ')}
                             </span>
                           )}
                           {daysUsedElsewhere.length > 0 && (
@@ -365,7 +365,7 @@ export function WorkScheduleWidget() {
                 return (
                   <Badge
                     key={day.key}
-                    variant={isWorking ? 'default' : 'outline'}
+                    variant={isWorking ? 'default' : 'outline')}
                     className={cn(
                       "min-w-[50px] justify-center py-1.5",
                       isWorking 
@@ -395,7 +395,7 @@ export function WorkScheduleWidget() {
                 .map(request => (
                   <div key={request.id} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      {request.requested_days.join(', '}
+                      {request.requested_days.join(', ')}
                     </span>
                     <Badge
                       variant="outline"

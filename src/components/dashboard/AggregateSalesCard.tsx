@@ -625,7 +625,7 @@ export function AggregateSalesCard({
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="font-display text-base tracking-wide">{t('sales.sales_overview'}</h2>
+            <h2 className="font-display text-base tracking-wide">{t('sales.sales_overview')}</h2>
           </div>
           {hasNoData && (() => {
             const isSingleDay = dateRange === 'today' || dateRange === 'yesterday';
@@ -655,15 +655,15 @@ export function AggregateSalesCard({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="today">{tc('date_range.today'}</SelectItem>
-                  <SelectItem value="yesterday">{tc('date_range.yesterday'}</SelectItem>
-                  <SelectItem value="thisWeek">{tc('date_range.this_week'}</SelectItem>
-                  <SelectItem value="7d">{tc('date_range.last_7_days'}</SelectItem>
-                  <SelectItem value="30d">{tc('date_range.last_30_days'}</SelectItem>
-                  <SelectItem value="mtd">{tc('date_range.month_to_date'}</SelectItem>
-                  <SelectItem value="ytd">{tc('date_range.year_to_date'}</SelectItem>
-                  <SelectItem value="lastYear">{tc('date_range.last_year'}</SelectItem>
-                  <SelectItem value="last365">{tc('date_range.last_365_days'}</SelectItem>
+                  <SelectItem value="today">{tc('date_range.today')}</SelectItem>
+                  <SelectItem value="yesterday">{tc('date_range.yesterday')}</SelectItem>
+                  <SelectItem value="thisWeek">{tc('date_range.this_week')}</SelectItem>
+                  <SelectItem value="7d">{tc('date_range.last_7_days')}</SelectItem>
+                  <SelectItem value="30d">{tc('date_range.last_30_days')}</SelectItem>
+                  <SelectItem value="mtd">{tc('date_range.month_to_date')}</SelectItem>
+                  <SelectItem value="ytd">{tc('date_range.year_to_date')}</SelectItem>
+                  <SelectItem value="lastYear">{tc('date_range.last_year')}</SelectItem>
+                  <SelectItem value="last365">{tc('date_range.last_365_days')}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -677,7 +677,7 @@ export function AggregateSalesCard({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
-                {t('sales.export_data'}
+                {t('sales.export_data')}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -692,7 +692,7 @@ export function AggregateSalesCard({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
-                {t('sales.view_full_analytics'}
+                {t('sales.view_full_analytics')}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -705,10 +705,10 @@ export function AggregateSalesCard({
             <Moon className="h-6 w-6 text-muted-foreground" />
           </div>
           <h3 className="font-display text-lg text-foreground">
-            All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}
+            All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today')}
           </h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are'} closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}.
+            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are')} closed {dateRange === 'yesterday' ? 'yesterday' : 'today')}.
           </p>
         </div>
       ) : (
@@ -722,7 +722,7 @@ export function AggregateSalesCard({
             {/* Header row: location label left, sync status right */}
             <div className="flex items-start justify-between gap-4 mb-2">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5 min-w-0">
-                <span>{isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading'}</span>
+                <span>{isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}</span>
                 {/* Closed locations summary — single-day views only */}
                 {isAllLocations && (dateRange === 'today' || dateRange === 'yesterday') && (() => {
                   const viewDate = dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date();
@@ -737,8 +737,8 @@ export function AggregateSalesCard({
                       <span className="flex items-center gap-1 text-muted-foreground/70">
                         <Moon className="w-3 h-3" />
                         {closedCount === totalCount
-                          ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`
-                          : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`}
+                          ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today')}`
+                          : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today')}`}
                       </span>
                     </>
                   );
@@ -764,7 +764,7 @@ export function AggregateSalesCard({
                   <p className="text-sm text-muted-foreground">
                     {isToday 
                       ? (allAppointmentsComplete ? 'Final Revenue Today' : 'Revenue So Far Today')
-                      : t('sales.total_revenue'}
+                      : t('sales.total_revenue')}
                   </p>
                   <MetricInfoTooltip description={isToday
                     ? (allAppointmentsComplete 
@@ -805,7 +805,7 @@ export function AggregateSalesCard({
                         {todayActual?.hasActualData ? (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">{t('sales.actual_revenue'}</span>
+                              <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
                               <BlurredAmount>
                                 <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
                                   {formatCurrency(todayActual.actualRevenue)}
@@ -848,7 +848,7 @@ export function AggregateSalesCard({
                           </div>
                         ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
                           <p className="text-xs text-muted-foreground/70 text-center">
-                            {t('sales.estimated_final_at'}{' '}
+                            {t('sales.estimated_final_at')}{' ')}
                             <span className="font-medium text-foreground/70">
                               {formatEndTime(todayActual.lastAppointmentEndTime)}
                             </span>
@@ -895,7 +895,7 @@ export function AggregateSalesCard({
                             <BlurredAmount>
                               <span>{formatCurrency(scheduledRevenue)}</span>
                             </BlurredAmount>
-                            <span>{exceededScheduled ? 'Scheduled · Exceeded' : 'Scheduled'}</span>
+                            <span>{exceededScheduled ? 'Scheduled · Exceeded' : 'Scheduled')}</span>
                           </Badge>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -927,10 +927,10 @@ export function AggregateSalesCard({
 
                         {/* Gap analysis drill-down */}
                         <RevenueGapDrilldown
-                          isOpen={activeDrilldown === 'expectedGap'}
+                          isOpen={activeDrilldown === 'expectedGap')}
                           data={gapAnalysis}
                           isLoading={gapLoading}
-                          showDates={dateRange !== 'yesterday'}
+                          showDates={dateRange !== 'yesterday')}
                         />
                       </>
                     );
@@ -943,7 +943,7 @@ export function AggregateSalesCard({
                 <div className="flex items-center justify-center gap-1.5 mt-2">
                   <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30">
                     <Clock className="w-3 h-3 mr-1" />
-                    {t('sales.expected_revenue'}
+                    {t('sales.expected_revenue')}
                   </Badge>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -1009,11 +1009,11 @@ export function AggregateSalesCard({
                     activeDrilldown === 'revenue'
                       ? "ring-1 ring-primary/20 bg-primary/5 border-primary/30"
                       : "border-border/40 hover:border-border/80 dark:hover:border-border/60"
-                  )} onClick={() => toggleDrilldown('revenue'}>
+                  )} onClick={() => toggleDrilldown('revenue')}>
                     <div>
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <Scissors className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-xs text-muted-foreground">{t('sales.services'}</span>
+                        <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
                         <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
                       </div>
                       <AnimatedBlurredAmount 
@@ -1071,11 +1071,11 @@ export function AggregateSalesCard({
                   <div className="text-center p-3 sm:p-4 bg-card-inner-deep rounded-lg border border-border/40 transition-all hover:border-border/80 dark:hover:border-border/60">
                     <div 
                       className="cursor-pointer"
-                      onClick={() => setDrilldownMode('products'}
+                      onClick={() => setDrilldownMode('products')}
                     >
                       <div className="flex items-center justify-center gap-1.5 mb-2">
                         <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-xs text-muted-foreground">{t('sales.products'}</span>
+                        <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
                         <MetricInfoTooltip description="Total retail revenue including products, merch, and extensions. Expand to see breakdown." />
                       </div>
                       <AnimatedBlurredAmount 
@@ -1136,7 +1136,7 @@ export function AggregateSalesCard({
 
             {/* Revenue by Category Drill-Down */}
             <RevenueByCategoryPanel
-              isOpen={activeDrilldown === 'revenue'}
+              isOpen={activeDrilldown === 'revenue')}
               dateFrom={dateFilters.dateFrom}
               dateTo={dateFilters.dateTo}
               locationId={filterContext?.locationId}
@@ -1163,14 +1163,14 @@ export function AggregateSalesCard({
                           ? "border-primary/50 ring-1 ring-primary/20"
                           : "border-border/40 hover:border-primary/30 hover:bg-muted/50"
                       )}
-                      onClick={() => toggleDrilldown('transactions'}
+                      onClick={() => toggleDrilldown('transactions')}
                     >
                       <div className="flex justify-center mb-2">
                         <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <AnimatedBlurredAmount value={isToday ? (todayActual?.hasActualData ? todayActual.actualTransactions : 0) : pastActualActive ? pastActual.actualTransactions : displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">{t('sales.transactions'}</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.transactions')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'transactions' && "rotate-180")} />
                         <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
                       </div>
@@ -1182,14 +1182,14 @@ export function AggregateSalesCard({
                           ? "border-primary/50 ring-1 ring-primary/20"
                           : "border-border/40 hover:border-primary/30 hover:bg-muted/50"
                       )}
-                      onClick={() => toggleDrilldown('avgTicket'}
+                      onClick={() => toggleDrilldown('avgTicket')}
                     >
                       <div className="flex justify-center mb-2">
                         <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData ? todayActual.actualAverageTicket : 0) : pastActualActive ? (pastActual.actualTransactions > 0 ? pastActual.actualRevenue / pastActual.actualTransactions : 0) : displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">{t('sales.avg_ticket'}</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.avg_ticket')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'avgTicket' && "rotate-180")} />
                         <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
                       </div>
@@ -1201,14 +1201,14 @@ export function AggregateSalesCard({
                           ? "border-primary/50 ring-1 ring-primary/20"
                           : "border-border/40 hover:border-primary/30 hover:bg-muted/50"
                       )}
-                      onClick={() => toggleDrilldown('revPerHour'}
+                      onClick={() => toggleDrilldown('revPerHour')}
                     >
                       <div className="flex justify-center mb-2">
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : pastActualActive ? (metrics?.totalServiceHours && metrics.totalServiceHours > 0 ? pastActual.actualRevenue / metrics.totalServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour'}</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
                         <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
                       </div>
@@ -1228,14 +1228,14 @@ export function AggregateSalesCard({
                           ? "border-primary/50 ring-1 ring-primary/20"
                           : "border-border/40 hover:border-primary/30 hover:bg-muted/50"
                     )}
-                    onClick={() => toggleDrilldown('transactions'}
+                    onClick={() => toggleDrilldown('transactions')}
                   >
                     <div className="flex justify-center mb-2">
                       <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
                     <AnimatedBlurredAmount value={isToday ? (todayActual?.hasActualData ? todayActual.actualTransactions : 0) : pastActualActive ? pastActual.actualTransactions : displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">{t('sales.transactions'}</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.transactions')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'transactions' && "rotate-180")} />
                       <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
                     </div>
@@ -1247,14 +1247,14 @@ export function AggregateSalesCard({
                           ? "border-primary/50 ring-1 ring-primary/20"
                           : "border-border/40 hover:border-primary/30 hover:bg-muted/50"
                     )}
-                    onClick={() => toggleDrilldown('avgTicket'}
+                    onClick={() => toggleDrilldown('avgTicket')}
                   >
                     <div className="flex justify-center mb-2">
                       <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
                     <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData ? todayActual.actualAverageTicket : 0) : pastActualActive ? (pastActual.actualTransactions > 0 ? pastActual.actualRevenue / pastActual.actualTransactions : 0) : displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">{t('sales.avg_ticket'}</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.avg_ticket')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'avgTicket' && "rotate-180")} />
                       <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
                     </div>
@@ -1266,14 +1266,14 @@ export function AggregateSalesCard({
                           ? "border-primary/50 ring-1 ring-primary/20"
                           : "border-border/40 hover:border-primary/30 hover:bg-muted/50"
                     )}
-                    onClick={() => toggleDrilldown('revPerHour'}
+                    onClick={() => toggleDrilldown('revPerHour')}
                   >
                     <div className="flex justify-center mb-2">
                       <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
                     <AnimatedBlurredAmount value={Math.round(isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 ? todayActual.actualRevenue / todayActual.actualServiceHours : 0) : pastActualActive ? (metrics?.totalServiceHours && metrics.totalServiceHours > 0 ? pastActual.actualRevenue / metrics.totalServiceHours : 0) : revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour'}</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
                       <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
                     </div>
@@ -1286,7 +1286,7 @@ export function AggregateSalesCard({
                     </div>
                     <AnimatedBlurredAmount value={Math.round(dailyAverage)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">{t('sales.daily_avg'}</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.daily_avg')}</p>
                       <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
                     </div>
                   </div>
@@ -1298,14 +1298,14 @@ export function AggregateSalesCard({
 
           {/* Transactions by Hour Drill-Down */}
           <TransactionsByHourPanel
-            isOpen={activeDrilldown === 'transactions'}
+            isOpen={activeDrilldown === 'transactions')}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
           />
           {/* Client Type Split → Rebooking (Level 2) */}
           <ClientTypeSplitPanel
-            isOpen={activeDrilldown === 'transactions'}
+            isOpen={activeDrilldown === 'transactions')}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
@@ -1313,14 +1313,14 @@ export function AggregateSalesCard({
 
           {/* Ticket Distribution Drill-Down */}
           <TicketDistributionPanel
-            isOpen={activeDrilldown === 'avgTicket'}
+            isOpen={activeDrilldown === 'avgTicket')}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
           />
           {/* Avg Ticket by Stylist → Service Mix (Level 2) */}
           <AvgTicketByStylistPanel
-            isOpen={activeDrilldown === 'avgTicket'}
+            isOpen={activeDrilldown === 'avgTicket')}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
@@ -1328,7 +1328,7 @@ export function AggregateSalesCard({
 
           {/* Rev/Hour by Stylist Drill-Down */}
           <RevPerHourByStylistPanel
-            isOpen={activeDrilldown === 'revPerHour'}
+            isOpen={activeDrilldown === 'revPerHour')}
             stylistData={stylistData}
             totalServiceHours={metrics?.totalServiceHours || 0}
             isLoading={stylistLoading}
@@ -1378,11 +1378,11 @@ export function AggregateSalesCard({
                     label={goalLabel}
                     hoursJson={selectedLoc?.hours_json ?? mergedHoursJson}
                     holidayClosures={selectedLoc?.holiday_closures ?? mergedHolidays}
-                    onClick={() => toggleDrilldown('goals'}
-                    isExpanded={activeDrilldown === 'goals'}
+                    onClick={() => toggleDrilldown('goals')}
+                    isExpanded={activeDrilldown === 'goals')}
                   />
                   <GoalLocationsDrilldown
-                    isOpen={activeDrilldown === 'goals'}
+                    isOpen={activeDrilldown === 'goals')}
                     period={goalPeriodForCard}
                   />
                 </>
@@ -1458,7 +1458,7 @@ export function AggregateSalesCard({
                   </div>
                   <div>
                     <p className="text-sm font-display tabular-nums">
-                      {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—'}
+                      {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—')}
                     </p>
                     <p className="text-xs text-muted-foreground">Tip Attach</p>
                   </div>
@@ -1486,11 +1486,11 @@ export function AggregateSalesCard({
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide text-muted-foreground">{t('sales.by_location'}</h3>
+              <h3 className="font-display text-xs tracking-wide text-muted-foreground">{t('sales.by_location')}</h3>
             </div>
             <div className="flex items-center gap-2">
               {isToday && (
-                <Tabs value={locationRevenueView} onValueChange={(v) => setLocationRevenueView(v as 'actual' | 'expected'}>
+                <Tabs value={locationRevenueView} onValueChange={(v) => setLocationRevenueView(v as 'actual' | 'expected')}>
                   <FilterTabsList>
                     <FilterTabsTrigger value="actual">Actual</FilterTabsTrigger>
                     <FilterTabsTrigger value="expected">Expected</FilterTabsTrigger>
@@ -1500,10 +1500,10 @@ export function AggregateSalesCard({
               {availableRegions.length >= 2 && (
                 <Select value={regionFilter} onValueChange={setRegionFilter}>
                   <SelectTrigger className="w-[140px] h-7 text-xs">
-                    <SelectValue placeholder={t('sales.all_regions'} />
+                    <SelectValue placeholder={t('sales.all_regions')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('sales.all_regions'}</SelectItem>
+                    <SelectItem value="all">{t('sales.all_regions')}</SelectItem>
                     {availableRegions.map(region => (
                       <SelectItem key={region} value={region}>{region}</SelectItem>
                     ))}
@@ -1515,19 +1515,19 @@ export function AggregateSalesCard({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="totalRevenue">{t('sales.revenue'}</SelectItem>
-                  <SelectItem value="name">{t('sales.name'}</SelectItem>
-                  <SelectItem value="serviceRevenue">{t('sales.services'}</SelectItem>
-                  <SelectItem value="productRevenue">{t('sales.products'}</SelectItem>
-                  <SelectItem value="totalTransactions">{t('sales.transactions'}</SelectItem>
-                  <SelectItem value="avgTicket">{t('sales.avg_ticket'}</SelectItem>
+                  <SelectItem value="totalRevenue">{t('sales.revenue')}</SelectItem>
+                  <SelectItem value="name">{t('sales.name')}</SelectItem>
+                  <SelectItem value="serviceRevenue">{t('sales.services')}</SelectItem>
+                  <SelectItem value="productRevenue">{t('sales.products')}</SelectItem>
+                  <SelectItem value="totalTransactions">{t('sales.transactions')}</SelectItem>
+                  <SelectItem value="avgTicket">{t('sales.avg_ticket')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc'}
+                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
               >
                 {locationSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
               </Button>
@@ -1593,7 +1593,7 @@ export function AggregateSalesCard({
                               })()}
                             </BlurredAmount>
                           </span>
-                          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : '')}`} />
                         </div>
                       </button>
 
@@ -1618,14 +1618,14 @@ export function AggregateSalesCard({
                                     'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
-                                  aria-label={t('sales.services'}
+                                  aria-label={t('sales.services')}
                                 >
                                   {(() => {
                                     const locActual = isToday ? locationActuals[location.location_id || ''] : null;
                                     const useAct = isToday && locationRevenueView === 'actual';
                                     return (
                                       <>
-                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.services'}</p>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.services')}</p>
                                         <p className="text-sm font-display tabular-nums">
                                           <BlurredAmount>{formatCurrency(useAct ? (locActual?.actualServiceRevenue ?? 0) : location.serviceRevenue)}</BlurredAmount>
                                         </p>
@@ -1642,14 +1642,14 @@ export function AggregateSalesCard({
                                     'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
-                                  aria-label={t('sales.products'}
+                                  aria-label={t('sales.products')}
                                 >
                                   {(() => {
                                     const locActual = isToday ? locationActuals[location.location_id || ''] : null;
                                     const useAct = isToday && locationRevenueView === 'actual';
                                     return (
                                       <>
-                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.products'}</p>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.products')}</p>
                                         <p className="text-sm font-display tabular-nums">
                                           <BlurredAmount>{formatCurrency(useAct ? (locActual?.actualProductRevenue ?? 0) : location.productRevenue)}</BlurredAmount>
                                         </p>
@@ -1666,14 +1666,14 @@ export function AggregateSalesCard({
                                     'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
-                                  aria-label={t('sales.transactions'}
+                                  aria-label={t('sales.transactions')}
                                 >
                                   {(() => {
                                     const locActual = isToday ? locationActuals[location.location_id || ''] : null;
                                     const useAct = isToday && locationRevenueView === 'actual';
                                     return (
                                       <>
-                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.transactions'}</p>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.transactions')}</p>
                                         <p className="text-sm font-display tabular-nums">
                                           <BlurredAmount>{useAct ? (locActual?.actualTransactions ?? 0) : location.totalTransactions}</BlurredAmount>
                                         </p>
@@ -1690,7 +1690,7 @@ export function AggregateSalesCard({
                                     'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
-                                  aria-label={t('sales.avg_ticket'}
+                                  aria-label={t('sales.avg_ticket')}
                                 >
                                   {(() => {
                                     const locActual = isToday ? locationActuals[location.location_id || ''] : null;
@@ -1700,7 +1700,7 @@ export function AggregateSalesCard({
                                     const avgVal = txVal > 0 ? revVal / txVal : 0;
                                     return (
                                       <>
-                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.avg_ticket'}</p>
+                                        <p className="text-xs text-muted-foreground mb-1">{t('sales.avg_ticket')}</p>
                                         <p className="text-sm font-display tabular-nums">
                                           <BlurredAmount>{formatCurrency(isFinite(avgVal) ? Math.round(avgVal) : 0)}</BlurredAmount>
                                         </p>
@@ -1717,9 +1717,9 @@ export function AggregateSalesCard({
                                     'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                     location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                   )}
-                                  aria-label={t('sales.trend'}
+                                  aria-label={t('sales.trend')}
                                 >
-                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.trend'}</p>
+                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.trend')}</p>
                                   {!hideNumbers ? (
                                     <TrendSparkline 
                                       data={getLocationTrend(location.location_id).map(d => d.value)} 
@@ -1740,21 +1740,21 @@ export function AggregateSalesCard({
                                       'bg-muted/30 rounded-lg border border-border/40 p-3 text-left transition-colors',
                                       location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
                                     )}
-                                    aria-label={t('sales.status'}
+                                    aria-label={t('sales.status')}
                                   >
-                                    <p className="text-xs text-muted-foreground mb-1">{t('sales.status'}</p>
+                                    <p className="text-xs text-muted-foreground mb-1">{t('sales.status')}</p>
                                     {(() => {
                                       const locActual = locationActuals[location.location_id || ''];
                                       const expectedRevenue = location.totalRevenue;
                                       if (!locActual || !locActual.hasActualData) {
-                                        return <span className="text-xs text-muted-foreground/70">{t('sales.pending'}</span>;
+                                        return <span className="text-xs text-muted-foreground/70">{t('sales.pending')}</span>;
                                       }
                                       if (locActual.actualRevenue >= expectedRevenue && expectedRevenue > 0) {
                                         return (
                                           <div className="space-y-0.5">
                                             <Badge variant="outline" className="text-[10px] font-normal bg-primary/10 text-primary border-primary/30">
                                               <Check className="w-3 h-3 mr-1" />
-                                              {t('sales.checked_out'}
+                                              {t('sales.checked_out')}
                                             </Badge>
                                             {locActual.lastEndTime && (
                                               <p className="text-[10px] text-muted-foreground/60">
@@ -1790,7 +1790,7 @@ export function AggregateSalesCard({
                                   handleViewDetails(location.location_id);
                                 }}
                               >
-                                {t('sales.view_full_details'} →
+                                {t('sales.view_full_details')} →
                               </button>
                             </div>
                           </motion.div>
@@ -1819,8 +1819,8 @@ export function AggregateSalesCard({
           ) : (
             <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
               <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">{t('sales.no_location_data'}</p>
-              <p className="text-xs mt-1">{t('sales.sync_to_see'}</p>
+              <p className="text-sm">{t('sales.no_location_data')}</p>
+              <p className="text-xs mt-1">{t('sales.sync_to_see')}</p>
             </div>
           )}
         </div>
@@ -1850,9 +1850,9 @@ export function AggregateSalesCard({
       <LocationMetricDrilldownSheet
         open={!!locationDrilldown}
         onOpenChange={(open) => !open && setLocationDrilldown(null)}
-        type={locationDrilldown?.type ?? 'transactions'}
-        locationId={locationDrilldown?.locationId ?? ''}
-        locationName={locationDrilldown?.locationName ?? ''}
+        type={locationDrilldown?.type ?? 'transactions')}
+        locationId={locationDrilldown?.locationId ?? '')}
+        locationName={locationDrilldown?.locationName ?? '')}
         dateFrom={dateFilters.dateFrom}
         dateTo={dateFilters.dateTo}
       />

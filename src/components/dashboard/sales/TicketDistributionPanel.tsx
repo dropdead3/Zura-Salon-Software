@@ -86,7 +86,7 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                         </span>
                         <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
                           <motion.div
-                            className={`h-full rounded-full ${isSweetSpot ? 'bg-primary' : 'bg-primary/60'}`}
+                            className={`h-full rounded-full ${isSweetSpot ? 'bg-primary' : 'bg-primary/60')}`}
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
                             transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}

@@ -125,7 +125,7 @@ export function GoogleSheetsExport({ data, dateFrom, dateTo }: GoogleSheetsExpor
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sales-export-${format(new Date(), 'yyyy-MM-dd'}.csv`;
+      a.download = `sales-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       

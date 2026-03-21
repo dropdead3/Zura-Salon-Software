@@ -78,7 +78,7 @@ export function SupplyKPICards({ kpis, isLoading, overallHealth }: SupplyKPICard
       {tiles.map((tile) => {
         const Icon = tile.icon;
         return (
-          <div key={tile.label} className={cn(tokens.kpi.tile, 'relative'}>
+          <div key={tile.label} className={cn(tokens.kpi.tile, 'relative')}>
             <MetricInfoTooltip
               title={tile.label}
               description={tile.tooltip}
@@ -93,11 +93,11 @@ export function SupplyKPICards({ kpis, isLoading, overallHealth }: SupplyKPICard
             <div className={cn(tokens.kpi.value, tile.accent)}>
               {tile.isCurrency ? (
                 <BlurredAmount>
-                  {tile.prefix ?? ''}${Math.abs(tile.value).toLocaleString()}
+                  {tile.prefix ?? '')}${Math.abs(tile.value).toLocaleString()}
                 </BlurredAmount>
               ) : (
                 <>
-                  {tile.prefix ?? ''}{tile.value}{tile.suffix ?? ''}
+                  {tile.prefix ?? '')}{tile.value}{tile.suffix ?? '')}
                 </>
               )}
             </div>

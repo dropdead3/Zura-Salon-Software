@@ -218,7 +218,7 @@ export function LeadAssignmentDialog({
             onClick={handleAssign}
             disabled={!selectedStylistId || isAssigning}
           >
-            {isAssigning ? 'Assigning...' : 'Assign Lead'}
+            {isAssigning ? 'Assigning...' : 'Assign Lead')}
           </Button>
         </div>
       </DialogContent>

@@ -20,7 +20,7 @@ export function ControlTowerAlertCard({ alert }: ControlTowerAlertCardProps) {
   const navigate = useNavigate();
 
   return (
-    <div className={cn(tokens.card.inner, 'flex overflow-hidden'}>
+    <div className={cn(tokens.card.inner, 'flex overflow-hidden')}>
       {/* Priority bar */}
       <div className={cn('w-1 shrink-0 rounded-l-lg', PRIORITY_BAR[alert.priority])} />
 
@@ -28,10 +28,10 @@ export function ControlTowerAlertCard({ alert }: ControlTowerAlertCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className={cn(tokens.label.tiny, 'text-muted-foreground'}>
+            <span className={cn(tokens.label.tiny, 'text-muted-foreground')}>
               {alert.category}
             </span>
-            <h4 className={cn(tokens.body.emphasis, 'mt-0.5'}>{alert.title}</h4>
+            <h4 className={cn(tokens.body.emphasis, 'mt-0.5')}>{alert.title}</h4>
           </div>
         </div>
 
@@ -53,7 +53,7 @@ export function ControlTowerAlertCard({ alert }: ControlTowerAlertCardProps) {
 
         {/* Action */}
         <div className="flex items-center justify-between pt-1">
-          <span className={cn(tokens.body.muted, 'text-xs italic'}>
+          <span className={cn(tokens.body.muted, 'text-xs italic')}>
             {alert.suggestedAction}
           </span>
           <Button

@@ -79,7 +79,7 @@ export function HouseholdCard({
             ) : (
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.heading.card}>
-                  {household.household_name || 'Unnamed Household'}
+                  {household.household_name || 'Unnamed Household')}
                 </CardTitle>
                 {canEdit && (
                   <Button
@@ -109,7 +109,7 @@ export function HouseholdCard({
           )}
         </div>
         <Badge variant="outline" className="w-fit text-xs mt-1">
-          {household.members.length} member{household.members.length !== 1 ? 's' : ''}
+          {household.members.length} member{household.members.length !== 1 ? 's' : '')}
         </Badge>
       </CardHeader>
 
@@ -161,7 +161,7 @@ export function HouseholdCard({
                   {client.last_visit && (
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {formatDate(new Date(client.last_visit), 'MMM d'}
+                      {formatDate(new Date(client.last_visit), 'MMM d')}
                     </span>
                   )}
                 </div>

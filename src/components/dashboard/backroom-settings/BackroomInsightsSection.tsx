@@ -130,7 +130,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
   const SortButton = ({ label, field }: { label: string; field: SortKey }) => (
     <button className="flex items-center gap-1 group" onClick={() => handleSort(field)}>
       <span>{label}</span>
-      <ArrowUpDown className={cn('w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity', sortKey === field && 'opacity-100'} />
+      <ArrowUpDown className={cn('w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity', sortKey === field && 'opacity-100')} />
     </button>
   );
 
@@ -187,7 +187,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
           <span className={tokens.kpi.value}>{formatPercent(analytics?.wastePct ?? 0, false)}</span>
         </KPICard>
         <KPICard icon={AlertTriangle} label="Est. Waste Cost" tooltip="Estimated dollar value of wasted product based on wholesale cost and recorded waste quantities." loading={analyticsLoading}>
-          <BlurredAmount className={cn(tokens.kpi.value, 'text-destructive'}>{formatCurrency(((analytics?.totalProductCost ?? 0) * (analytics?.wastePct ?? 0)) / 100)}</BlurredAmount>
+          <BlurredAmount className={cn(tokens.kpi.value, 'text-destructive')}>{formatCurrency(((analytics?.totalProductCost ?? 0) * (analytics?.wastePct ?? 0)) / 100)}</BlurredAmount>
         </KPICard>
       </div>
 
@@ -281,7 +281,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-primary'}>
+                        <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-primary')}>
                           {formatPercent(s.reweighCompliancePct, false)}
                         </span>
                       </TableCell>
@@ -296,7 +296,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
                           <TableCell className="text-right tabular-nums">{s.sessionsPerDay}</TableCell>
                           <TableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</TableCell>
                           <TableCell className="text-right">
-                            <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary'}>
+                            <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary')}>
                               {formatPercent(s.wastePct, false)}
                             </span>
                           </TableCell>
@@ -322,7 +322,7 @@ function KPICard({ icon: Icon, label, tooltip, loading, children, accent }: {
   icon: typeof DollarSign; label: string; tooltip: string; loading: boolean; children: React.ReactNode; accent?: string;
 }) {
   return (
-    <div className={cn(tokens.kpi.tile, 'relative'}>
+    <div className={cn(tokens.kpi.tile, 'relative')}>
       <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">

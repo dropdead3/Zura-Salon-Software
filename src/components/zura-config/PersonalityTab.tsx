@@ -242,7 +242,7 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={upsert.isPending} className="gap-2">
           <Save className="h-4 w-4" />
-          {upsert.isPending ? 'Saving...' : 'Save Personality'}
+          {upsert.isPending ? 'Saving...' : 'Save Personality')}
         </Button>
       </div>
     </div>

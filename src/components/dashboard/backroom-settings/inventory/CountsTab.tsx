@@ -274,7 +274,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
             {/* Brands */}
             {brands.length > 0 && (
               <div>
-                <p className={cn(tokens.label.default, 'mb-2'}>Brands</p>
+                <p className={cn(tokens.label.default, 'mb-2')}>Brands</p>
                 <ScrollArea className="max-h-[140px]">
                   <div className="space-y-1.5">
                     {brands.map(brand => (
@@ -294,7 +294,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
             {/* Categories */}
             {categories.length > 0 && (
               <div>
-                <p className={cn(tokens.label.default, 'mb-2'}>Categories</p>
+                <p className={cn(tokens.label.default, 'mb-2')}>Categories</p>
                 <ScrollArea className="max-h-[140px]">
                   <div className="space-y-1.5">
                     {categories.map(cat => (
@@ -312,7 +312,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
             )}
 
             <p className="text-muted-foreground text-xs">
-              {filteredProductCount} product{filteredProductCount !== 1 ? 's' : ''} will be included
+              {filteredProductCount} product{filteredProductCount !== 1 ? 's' : '')} will be included
             </p>
           </div>
           <div className="flex justify-end gap-2 pt-2">
@@ -332,15 +332,15 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
       {/* KPI summary */}
       {shrinkage.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          <div className={cn(tokens.kpi.tile, 'relative'}>
+          <div className={cn(tokens.kpi.tile, 'relative')}>
             <span className={tokens.kpi.label}>Total Shrinkage</span>
-            <span className={cn(tokens.kpi.value, 'text-destructive'}>{formatCurrency(totalShrinkageCost)}</span>
+            <span className={cn(tokens.kpi.value, 'text-destructive')}>{formatCurrency(totalShrinkageCost)}</span>
           </div>
-          <div className={cn(tokens.kpi.tile, 'relative'}>
+          <div className={cn(tokens.kpi.tile, 'relative')}>
             <span className={tokens.kpi.label}>Products Affected</span>
             <span className={tokens.kpi.value}>{shrinkage.length}</span>
           </div>
-          <div className={cn(tokens.kpi.tile, 'relative hidden lg:flex'}>
+          <div className={cn(tokens.kpi.tile, 'relative hidden lg:flex')}>
             <span className={tokens.kpi.label}>Count Sessions</span>
             <span className={tokens.kpi.value}>{sessions.length}</span>
           </div>
@@ -349,13 +349,13 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
 
       {/* Sub-tab toggle */}
       <div className="flex gap-1">
-        <Button variant={tab === 'sessions' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('sessions'}>
+        <Button variant={tab === 'sessions' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('sessions')}>
           <ClipboardCheck className="w-4 h-4 mr-1" /> Sessions
         </Button>
-        <Button variant={tab === 'shrinkage' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('shrinkage'}>
+        <Button variant={tab === 'shrinkage' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('shrinkage')}>
           <TrendingDown className="w-4 h-4 mr-1" /> Shrinkage
         </Button>
-        <Button variant={tab === 'audit' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('audit'}>
+        <Button variant={tab === 'audit' ? 'default' : 'ghost')} size="sm" onClick={() => setTab('audit')}>
           <CalendarCheck className="w-4 h-4 mr-1" /> Audit Schedule
         </Button>
       </div>
@@ -376,10 +376,10 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                   <TableRow>
                     <TableHead className={tokens.table.columnHeader}>Date</TableHead>
                     <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell'}>Products Counted</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell'}>Variance (units)</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell'}>Variance (cost)</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell'}>Notes</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Products Counted</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Variance (units)</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Variance (cost)</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Notes</TableHead>
                     <TableHead className={tokens.table.columnHeader}></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -389,34 +389,34 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                     return (
                       <TableRow
                         key={session.id}
-                        className={cn(isActive && 'cursor-pointer hover:bg-muted/40'}
+                        className={cn(isActive && 'cursor-pointer hover:bg-muted/40')}
                         onClick={() => isActive && setActiveSession(session)}
                       >
                         <TableCell className={tokens.body.emphasis}>
-                          {format(new Date(session.created_at), 'MMM d, yyyy'}
+                          {format(new Date(session.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={cn('text-[10px] font-medium border',
                             isActive ? 'bg-primary/10 text-primary border-primary/20' : 'bg-success/10 text-success border-success/20'
                           )}>
-                            {isActive ? 'In Progress' : 'Completed'}
+                            {isActive ? 'In Progress' : 'Completed')}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right hidden sm:table-cell tabular-nums">{session.total_products_counted}</TableCell>
                         <TableCell className="text-right hidden sm:table-cell tabular-nums">
                           {session.total_variance_units !== 0 ? (
-                            <span className={session.total_variance_units < 0 ? 'text-destructive' : 'text-success'}>
-                              {session.total_variance_units > 0 ? '+' : ''}{session.total_variance_units}
+                            <span className={session.total_variance_units < 0 ? 'text-destructive' : 'text-success')}>
+                              {session.total_variance_units > 0 ? '+' : '')}{session.total_variance_units}
                             </span>
-                          ) : '0'}
+                          ) : '0')}
                         </TableCell>
                         <TableCell className="text-right hidden md:table-cell tabular-nums">
                           {session.total_variance_cost !== 0 ? (
                             <span className="text-destructive">{formatCurrency(Math.abs(session.total_variance_cost))}</span>
-                          ) : '—'}
+                          ) : '—')}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-muted-foreground text-sm truncate max-w-[200px]">
-                          {session.notes || '—'}
+                          {session.notes || '—')}
                         </TableCell>
                         <TableCell className="w-10">
                           {isActive && (
@@ -448,19 +448,19 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                 <TableHeader>
                   <TableRow>
                     <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell'}>Category</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Expected</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Counted</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Loss</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell'}>Cost of Loss</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell'}>Last Counted</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Category</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Expected</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Counted</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Loss</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Cost of Loss</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Last Counted</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {shrinkage.map((item) => (
                     <TableRow key={item.productId}>
                       <TableCell className={tokens.body.emphasis}>{item.productName}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{item.category || '—'}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{item.category || '—')}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatNumber(item.expectedQty)}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatNumber(item.countedQty)}</TableCell>
                       <TableCell className="text-right tabular-nums text-destructive font-medium">
@@ -472,7 +472,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
                         {formatCurrency(item.shrinkageCost)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
-                        {format(new Date(item.lastCountedAt), 'MMM d, yyyy'}
+                        {format(new Date(item.lastCountedAt), 'MMM d, yyyy')}
                       </TableCell>
                     </TableRow>
                   ))}

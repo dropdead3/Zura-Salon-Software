@@ -273,7 +273,7 @@ export default function HeadshotRequests() {
               <p className="text-muted-foreground font-sans">
                 {requests.length === 0 
                   ? 'No headshot requests yet' 
-                  : 'No requests match your filters'}
+                  : 'No requests match your filters')}
               </p>
             </div>
           ) : (
@@ -293,21 +293,21 @@ export default function HeadshotRequests() {
                     <TableCell>
                       <div>
                         <p className="font-sans font-medium">
-                          {request.employee_profile?.display_name || request.employee_profile?.full_name || 'Unknown'}
+                          {request.employee_profile?.display_name || request.employee_profile?.full_name || 'Unknown')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {request.employee_profile?.email || '—'}
+                          {request.employee_profile?.email || '—')}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy'}
+                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell>
                       {request.scheduled_date ? (
                         <div className="text-sm">
                           <p className="font-medium">
-                            {formatDate(new Date(request.scheduled_date), 'MMM d, yyyy'}
+                            {formatDate(new Date(request.scheduled_date), 'MMM d, yyyy')}
                           </p>
                           {request.scheduled_time && (
                             <p className="text-xs text-muted-foreground">{request.scheduled_time}</p>
@@ -351,7 +351,7 @@ export default function HeadshotRequests() {
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Team Member</p>
                     <p className="font-sans font-medium">
-                      {selectedRequest.employee_profile?.display_name || selectedRequest.employee_profile?.full_name || 'Unknown'}
+                      {selectedRequest.employee_profile?.display_name || selectedRequest.employee_profile?.full_name || 'Unknown')}
                     </p>
                     {selectedRequest.employee_profile?.email && (
                       <p className="text-sm text-muted-foreground">{selectedRequest.employee_profile.email}</p>
@@ -365,7 +365,7 @@ export default function HeadshotRequests() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Requested</p>
                     <p className="text-sm font-sans">
-                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a'}
+                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a')}
                     </p>
                   </div>
 
@@ -376,7 +376,7 @@ export default function HeadshotRequests() {
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start">
                           <CalendarDays className="w-4 h-4 mr-2" />
-                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date'}
+                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date')}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -448,7 +448,7 @@ export default function HeadshotRequests() {
                   {/* Processed Info */}
                   {selectedRequest.processed_at && (
                     <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy'}
+                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy')}
                     </div>
                   )}
                 </div>
@@ -458,7 +458,7 @@ export default function HeadshotRequests() {
                     Cancel
                   </Button>
                   <Button onClick={handleUpdateRequest} disabled={updating} className="font-display">
-                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'UPDATE REQUEST'}
+                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'UPDATE REQUEST')}
                   </Button>
                 </DialogFooter>
               </>

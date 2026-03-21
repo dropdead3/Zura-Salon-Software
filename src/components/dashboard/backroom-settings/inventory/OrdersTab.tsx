@@ -107,7 +107,7 @@ export function OrdersTab() {
         {STATUS_FILTERS.map(s => (
           <Button
             key={s}
-            variant={statusFilter === s ? 'default' : 'ghost'}
+            variant={statusFilter === s ? 'default' : 'ghost')}
             size="sm"
             onClick={() => setStatusFilter(s)}
             className="capitalize text-sm"
@@ -147,11 +147,11 @@ export function OrdersTab() {
                   <TableHead className="w-8" />
                   <TableHead className={tokens.table.columnHeader}>PO #</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell'}>Qty</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell'}>Total</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden md:table-cell')}>Total</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell'}>Created</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell'}>Delivery</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden lg:table-cell')}>Created</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Delivery</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -213,20 +213,20 @@ function PORow({ po, isExpanded, statusStyle, formatCurrency, onToggle, onSend, 
           {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
         </TableCell>
         <TableCell className={tokens.body.emphasis}>{getPoLabel(po)}</TableCell>
-        <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—'}</TableCell>
+        <TableCell className="text-muted-foreground text-sm">{po.supplier_name || '—')}</TableCell>
         <TableCell className="text-right hidden sm:table-cell tabular-nums">{po.quantity}</TableCell>
-        <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—'}</TableCell>
+        <TableCell className="text-right hidden md:table-cell tabular-nums">{po.total_cost != null ? formatCurrency(po.total_cost) : '—')}</TableCell>
         <TableCell>
           <Badge variant="outline" className={cn('text-[10px] font-medium border', statusStyle.className)}>
             {statusStyle.label}
           </Badge>
         </TableCell>
-        <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{format(new Date(po.created_at), 'MMM d, yyyy'}</TableCell>
+        <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{format(new Date(po.created_at), 'MMM d, yyyy')}</TableCell>
         <TableCell className="hidden xl:table-cell text-sm">
           {expectedDate ? (
-            <span className={cn('tabular-nums', isOverdue && 'text-destructive'}>
+            <span className={cn('tabular-nums', isOverdue && 'text-destructive')}>
               {isOverdue && <Clock className="w-3 h-3 inline mr-1" />}
-              {format(expectedDate, 'MMM d'}
+              {format(expectedDate, 'MMM d')}
             </span>
           ) : (
             <span className="text-muted-foreground">—</span>
@@ -318,11 +318,11 @@ function POExpandedRow({ poId, po, formatCurrency }: {
             </div>
             <div>
               <span className={tokens.label.tiny}>Supplier Email</span>
-              <p className="text-foreground">{po.supplier_email || '—'}</p>
+              <p className="text-foreground">{po.supplier_email || '—')}</p>
             </div>
             <div>
               <span className={tokens.label.tiny}>Sent At</span>
-              <p className="text-foreground">{po.sent_at ? format(new Date(po.sent_at), 'MMM d, yyyy h:mm a') : '—'}</p>
+              <p className="text-foreground">{po.sent_at ? format(new Date(po.sent_at), 'MMM d, yyyy h:mm a') : '—')}</p>
             </div>
             <div>
               <span className={tokens.label.tiny}>Expected Delivery</span>
@@ -331,7 +331,7 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-sm gap-1.5 -ml-2">
                       <CalendarIcon className="w-3.5 h-3.5" />
-                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date'}
+                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -339,12 +339,12 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                   </PopoverContent>
                 </Popover>
               ) : (
-                <p className="text-foreground">{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d, yyyy') : '—'}</p>
+                <p className="text-foreground">{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'MMM d, yyyy') : '—')}</p>
               )}
             </div>
             <div>
               <span className={tokens.label.tiny}>Received At</span>
-              <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—'}</p>
+              <p className="text-foreground">{po.received_at ? format(new Date(po.received_at), 'MMM d, yyyy h:mm a') : '—')}</p>
             </div>
           </div>
 
@@ -352,7 +352,7 @@ function POExpandedRow({ poId, po, formatCurrency }: {
           {confirmedDate && (
             <div className="text-sm">
               <span className={tokens.label.tiny}>Supplier Confirmed Delivery</span>
-              <p className="text-foreground">{format(new Date(confirmedDate), 'MMM d, yyyy'}</p>
+              <p className="text-foreground">{format(new Date(confirmedDate), 'MMM d, yyyy')}</p>
             </div>
           )}
 
@@ -363,15 +363,15 @@ function POExpandedRow({ poId, po, formatCurrency }: {
             </div>
           ) : lines.length > 0 ? (
             <div>
-              <span className={cn(tokens.label.tiny, 'mb-2 block'}>Line Items</span>
+              <span className={cn(tokens.label.tiny, 'mb-2 block')}>Line Items</span>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Qty Ordered</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Qty Received</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Unit Cost</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Line Total</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Qty Ordered</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Qty Received</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Unit Cost</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Line Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -380,15 +380,15 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                       <TableCell className="text-sm">{getProductName(line.product_id)}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">{line.quantity_ordered}</TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
-                        <span className={cn(line.quantity_received < line.quantity_ordered && 'text-warning'}>
+                        <span className={cn(line.quantity_received < line.quantity_ordered && 'text-warning')}>
                           {line.quantity_received}
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                        {line.unit_cost != null ? formatCurrency(line.unit_cost) : '—'}
+                        {line.unit_cost != null ? formatCurrency(line.unit_cost) : '—')}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
-                        {line.line_total != null ? formatCurrency(line.line_total) : '—'}
+                        {line.line_total != null ? formatCurrency(line.line_total) : '—')}
                       </TableCell>
                     </TableRow>
                   ))}

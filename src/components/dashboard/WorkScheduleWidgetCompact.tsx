@@ -27,12 +27,12 @@ export function WorkScheduleWidgetCompact() {
   // Show "not on-site" state for remote admin staff
   if (profile?.is_onsite_staff === false) {
     return (
-      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <Calendar className={tokens.card.icon} />
           </div>
-          <span className={cn(tokens.kpi.label, 'flex-1'}>MY WORK DAYS</span>
+          <span className={cn(tokens.kpi.label, 'flex-1')}>MY WORK DAYS</span>
         </div>
         <div className="mt-4 flex-1">
           <p className="text-sm text-muted-foreground">
@@ -48,12 +48,12 @@ export function WorkScheduleWidgetCompact() {
 
   if (userLocations.length === 0) {
     return (
-      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <Calendar className={tokens.card.icon} />
           </div>
-          <span className={cn(tokens.kpi.label, 'flex-1'}>MY WORK DAYS</span>
+          <span className={cn(tokens.kpi.label, 'flex-1')}>MY WORK DAYS</span>
         </div>
         <div className="mt-4 flex-1">
           <p className="text-sm text-muted-foreground">
@@ -65,12 +65,12 @@ export function WorkScheduleWidgetCompact() {
   }
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Calendar className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1'}>MY WORK DAYS</span>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>MY WORK DAYS</span>
       </div>
 
       <div className="mt-4 flex-1">
@@ -91,7 +91,7 @@ export function WorkScheduleWidgetCompact() {
             return (
               <Badge
                 key={day}
-                variant={isWorking ? 'default' : 'outline'}
+                variant={isWorking ? 'default' : 'outline')}
                 className={cn(
                   "text-[10px] px-1.5 py-0.5",
                   isWorking 
@@ -112,7 +112,7 @@ export function WorkScheduleWidgetCompact() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to={dashPath('/profile'}
+          to={dashPath('/profile')}
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           Manage <ChevronRight className="w-3 h-3" />

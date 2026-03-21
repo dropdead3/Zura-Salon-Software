@@ -25,12 +25,12 @@ function DrinkCard({ drink }: { drink: Drink }) {
       
       {/* Name */}
       <h4 className="text-xl font-display text-foreground text-center leading-tight">
-        {drink.name || 'Drink Name'}
+        {drink.name || 'Drink Name')}
       </h4>
       
       {/* Ingredients */}
       <p className="text-sm text-muted-foreground text-center leading-relaxed">
-        {drink.ingredients || 'Ingredients...'}
+        {drink.ingredients || 'Ingredients...')}
       </p>
     </div>
   );
@@ -51,10 +51,10 @@ export function DrinksPreview({ config }: DrinksPreviewProps) {
       <div className="max-w-4xl mx-auto">
         {/* Eyebrow Header */}
         <p className="text-center text-sm uppercase tracking-wider text-muted-foreground mb-12">
-          {config.eyebrow}{' '}
+          {config.eyebrow}{' ')}
           <span className="underline underline-offset-4 decoration-foreground/30">
             {config.eyebrow_highlight}
-          </span>{' '}
+          </span>{' ')}
           {config.eyebrow_suffix}
         </p>
 

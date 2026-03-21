@@ -66,7 +66,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd'}.csv`;
+    link.download = `${orgSlug ? orgSlug + '_' : '')}${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
@@ -86,7 +86,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
       // Subtitle with date
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a'}, 14, 28);
+      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')}, 14, 28);
       doc.text(`Total Team Members: ${data.length}`, 14, 34);
 
       // Group by month for summary
@@ -130,7 +130,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
         },
       });
 
-      doc.save(`${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd'}.pdf`);
+      doc.save(`${orgSlug ? orgSlug + '_' : '')}${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       toast.success('PDF exported successfully');
     } catch (error) {
       console.error('PDF export error:', error);
@@ -166,7 +166,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
           <FileSpreadsheet className="w-4 h-4 mr-2" />
           Export as CSV
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportToPDF(birthdays, 'team_birthdays'}>
+        <DropdownMenuItem onClick={() => exportToPDF(birthdays, 'team_birthdays')}>
           <FileText className="w-4 h-4 mr-2" />
           Export as PDF
         </DropdownMenuItem>

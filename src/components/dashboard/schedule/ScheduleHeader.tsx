@@ -142,7 +142,7 @@ export function ScheduleHeader({
                     ? 'text-[hsl(0,0%,8%)] font-medium' 
                     : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
                 )}
-                onClick={() => setView('day'}
+                onClick={() => setView('day')}
               >
                 Day
               </button>
@@ -153,7 +153,7 @@ export function ScheduleHeader({
                     ? 'text-[hsl(0,0%,8%)] font-medium' 
                     : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
                 )}
-                onClick={() => setView('week'}
+                onClick={() => setView('week')}
               >
                 Week
               </button>
@@ -187,7 +187,7 @@ export function ScheduleHeader({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
+                <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts')}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -222,7 +222,7 @@ export function ScheduleHeader({
         {/* Center: Date Display */}
         <div className="text-center">
         <div className="text-lg font-display tracking-wide">
-          {formatDate(currentDate, 'EEEE, MMMM d, yyyy'}
+          {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
         </div>
           {isOrgToday(currentDate) && (
             <div className="text-xs text-[hsl(40,20%,92%)]/70">Today</div>
@@ -246,7 +246,7 @@ export function ScheduleHeader({
               <SelectContent>
                 {locations.map((loc) => {
                   const cityState = loc.city 
-                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
+                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || '')}`
                     : '';
                   
                   return (
@@ -283,7 +283,7 @@ export function ScheduleHeader({
               <PopoverContent className="w-[220px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
                   <button
-                    onClick={() => onStaffToggle('all'}
+                    onClick={() => onStaffToggle('all')}
                     className={cn(
                       'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
                       selectedStaffIds.length === 0 && 'bg-accent'
@@ -355,7 +355,7 @@ export function ScheduleHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}</p>
+                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : '')}` : 'Assistant Blocks')}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -377,7 +377,7 @@ export function ScheduleHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : ''}` : 'No drafts'}</p>
+                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : '')}` : 'No drafts')}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -390,7 +390,7 @@ export function ScheduleHeader({
                   variant="ghost"
                   size="icon"
                   className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                  onClick={() => navigate(dashPath('/today-prep'}
+                  onClick={() => navigate(dashPath('/today-prep')}
                 >
                   <ClipboardCheck className="h-4 w-4" />
                 </Button>
@@ -406,7 +406,7 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="icon"
                 className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                onClick={() => navigate(dashPath('/admin/settings?category=services'}
+                onClick={() => navigate(dashPath('/admin/settings?category=services')}
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -457,7 +457,7 @@ export function ScheduleHeader({
                   )}
                   <span className="font-medium text-xs tracking-wide">Today</span>
                 </div>
-                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d'}</span>
+                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d')}</span>
               </button>
             );
 
@@ -465,7 +465,7 @@ export function ScheduleHeader({
               <Tooltip>
                 <TooltipTrigger asChild>{todayButton}</TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p>{todayClosed.reason && todayClosed.reason !== 'Regular hours' ? `Closed — ${todayClosed.reason}` : 'Closed'}</p>
+                  <p>{todayClosed.reason && todayClosed.reason !== 'Regular hours' ? `Closed — ${todayClosed.reason}` : 'Closed')}</p>
                 </TooltipContent>
               </Tooltip>
             ) : todayButton;
@@ -499,9 +499,9 @@ export function ScheduleHeader({
                     {closed.isClosed && (
                       <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
                     )}
-                    <span className="text-xs font-medium tracking-wide">{format(day, 'EEE'}</span>
+                    <span className="text-xs font-medium tracking-wide">{format(day, 'EEE')}</span>
                   </div>
-                  <span className="text-[10px] opacity-70">{format(day, 'd'}</span>
+                  <span className="text-[10px] opacity-70">{format(day, 'd')}</span>
                 </div>
               </button>
             );
@@ -510,7 +510,7 @@ export function ScheduleHeader({
               <Tooltip key={day.toISOString()}>
                 <TooltipTrigger asChild>{btn}</TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p>{closed.reason && closed.reason !== 'Regular hours' ? `Closed — ${closed.reason}` : 'Closed'}</p>
+                  <p>{closed.reason && closed.reason !== 'Regular hours' ? `Closed — ${closed.reason}` : 'Closed')}</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -553,7 +553,7 @@ export function ScheduleHeader({
                       <div className="flex flex-col items-start">
                         <span className="font-medium">+{weeks} Weeks</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(targetDate, 'EEE, MMM d, yyyy'}
+                          {formatDate(targetDate, 'EEE, MMM d, yyyy')}
                         </span>
                       </div>
                     </Button>

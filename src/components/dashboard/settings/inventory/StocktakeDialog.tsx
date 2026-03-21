@@ -224,7 +224,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
             </DialogTitle>
             <div className="flex items-center gap-1">
               <Button
-                variant={scanMode ? 'default' : 'outline'}
+                variant={scanMode ? 'default' : 'outline')}
                 size="sm"
                 className="text-xs gap-1.5 h-8"
                 onClick={() => { setScanMode(true); setScanError(null); setPendingProduct(null); }}
@@ -233,7 +233,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                 Scan
               </Button>
               <Button
-                variant={!scanMode ? 'default' : 'outline'}
+                variant={!scanMode ? 'default' : 'outline')}
                 size="sm"
                 className="text-xs gap-1.5 h-8"
                 onClick={() => setScanMode(false)}
@@ -246,7 +246,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
           <p className="text-xs text-muted-foreground mt-1">
             {scanMode
               ? 'Scan barcodes or type SKUs to quickly count products.'
-              : 'Enter actual quantities for each product. Only products with entered counts will be recorded.'}
+              : 'Enter actual quantities for each product. Only products with entered counts will be recorded.')}
           </p>
         </DialogHeader>
 
@@ -263,7 +263,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                   value={scanInput}
                   onChange={e => { setScanInput(e.target.value); setScanError(null); }}
                   onKeyDown={e => { if (e.key === 'Enter') handleScan(); }}
-                  className={cn('pl-11 h-12 text-base', isMobile && 'text-lg'}
+                  className={cn('pl-11 h-12 text-base', isMobile && 'text-lg')}
                   autoCapitalize="none"
                   autoComplete="off"
                   autoFocus
@@ -323,9 +323,9 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                   <TableHeader>
                     <TableRow>
                       <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>System</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>Counted</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>Variance</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>System</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Counted</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Variance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -333,7 +333,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                       const variance = e.counted - e.expected;
                       const hasShrinkage = variance < 0;
                       return (
-                        <TableRow key={e.productId} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10'}>
+                        <TableRow key={e.productId} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10')}>
                           <TableCell className="py-2">
                             <p className="text-sm font-medium truncate max-w-[200px]">{e.productName}</p>
                             {e.sku && <p className="text-[10px] text-muted-foreground">{e.sku}</p>}
@@ -367,7 +367,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                                     : 'text-muted-foreground',
                               )}
                             >
-                              {variance > 0 ? '+' : ''}{variance}
+                              {variance > 0 ? '+' : '')}{variance}
                               {hasShrinkage && <AlertTriangle className="w-2.5 h-2.5 ml-0.5" />}
                             </Badge>
                           </TableCell>
@@ -403,9 +403,9 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                   <TableHeader>
                     <TableRow>
                       <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-24'}>System Qty</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28'}>Actual Count</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>Variance</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-24')}>System Qty</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>Actual Count</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Variance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -417,7 +417,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                       const hasShrinkage = variance !== null && variance < 0;
 
                       return (
-                        <TableRow key={p.id} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10'}>
+                        <TableRow key={p.id} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10')}>
                           <TableCell className="py-2">
                             <p className="text-sm font-medium truncate max-w-[250px]">{p.name}</p>
                             {p.sku && <p className="text-[10px] text-muted-foreground">{p.sku}</p>}
@@ -446,7 +446,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                                       : 'text-muted-foreground',
                                 )}
                               >
-                                {variance > 0 ? '+' : ''}{variance}
+                                {variance > 0 ? '+' : '')}{variance}
                                 {hasShrinkage && <AlertTriangle className="w-2.5 h-2.5 ml-0.5" />}
                               </Badge>
                             ) : (
@@ -466,7 +466,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
         <DialogFooter className="p-6 pt-3 border-t">
           <div className="flex items-center justify-between w-full">
             <div className="text-xs text-muted-foreground space-x-1">
-              <span>{allEntries.length} product{allEntries.length !== 1 ? 's' : ''} counted</span>
+              <span>{allEntries.length} product{allEntries.length !== 1 ? 's' : '')} counted</span>
               {totalVariance < 0 && (
                 <span className="text-red-500">· {Math.abs(totalVariance)} unit shrinkage</span>
               )}
@@ -481,7 +481,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                 onClick={handleSubmit}
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                Record {allEntries.length} Count{allEntries.length !== 1 ? 's' : ''}
+                Record {allEntries.length} Count{allEntries.length !== 1 ? 's' : '')}
               </Button>
             </div>
           </div>

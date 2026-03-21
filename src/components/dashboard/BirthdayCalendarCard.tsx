@@ -109,7 +109,7 @@ export function BirthdayCalendarCard() {
                 <div className="flex items-center gap-2 mb-2">
                   <PartyPopper className="w-4 h-4 text-pink-500" />
                   <span className="font-medium text-sm">
-                    🎉 Today's Birthday{todaysBirthdays.length > 1 ? 's' : ''}!
+                    🎉 Today's Birthday{todaysBirthdays.length > 1 ? 's' : '')}!
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -142,7 +142,7 @@ export function BirthdayCalendarCard() {
 
             {/* Calendar Navigation */}
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">{format(currentMonth, 'MMMM yyyy'}</h3>
+              <h3 className="font-medium text-sm">{format(currentMonth, 'MMMM yyyy')}</h3>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPreviousMonth}>
                   <ChevronLeft className="w-3 h-3" />

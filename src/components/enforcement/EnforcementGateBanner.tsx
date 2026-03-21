@@ -53,10 +53,10 @@ export function EnforcementGateBanner({
         <div className="flex-1 space-y-3">
           <div>
             <h3 className="text-base font-medium tracking-tight text-[hsl(var(--platform-foreground))]">
-              {config?.label || 'Setup Required'}
+              {config?.label || 'Setup Required')}
             </h3>
             <p className="mt-1 text-sm text-[hsl(var(--platform-foreground-muted))]">
-              {config?.description || 'A structural prerequisite must be completed before this feature is available.'}
+              {config?.description || 'A structural prerequisite must be completed before this feature is available.')}
             </p>
           </div>
           {config?.ctaPath && (
@@ -64,7 +64,7 @@ export function EnforcementGateBanner({
               onClick={() => navigate(config.ctaPath)}
               className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--platform-accent))] px-4 py-2 text-sm font-medium text-[hsl(var(--platform-accent-foreground))] transition-colors hover:bg-[hsl(var(--platform-accent))]/90"
             >
-              {config.ctaLabel || 'Complete Setup'}
+              {config.ctaLabel || 'Complete Setup')}
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           )}

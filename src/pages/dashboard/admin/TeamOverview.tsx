@@ -399,7 +399,7 @@ export default function TeamOverview() {
                           {member.display_name || member.full_name}
                         </p>
                         <p className="text-xs text-muted-foreground font-sans">
-                          Started {formatDate(new Date(member.start_date), 'MMM d, yyyy'}
+                          Started {formatDate(new Date(member.start_date), 'MMM d, yyyy')}
                         </p>
                       </div>
 
@@ -476,7 +476,7 @@ export default function TeamOverview() {
                                   <p className="font-sans">{note.note_text}</p>
                                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
-                                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a'}
+                                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
                                   </p>
                                 </div>
                               ))
@@ -503,7 +503,7 @@ export default function TeamOverview() {
                                     <span className="font-display text-sm">WEEK {report.week_number}</span>
                                     {report.submitted_at && (
                                       <span className="text-xs text-muted-foreground">
-                                        {formatDate(new Date(report.submitted_at), 'MMM d'}
+                                        {formatDate(new Date(report.submitted_at), 'MMM d')}
                                       </span>
                                     )}
                                   </div>
@@ -621,7 +621,7 @@ export default function TeamOverview() {
                               <p className="font-sans">
                                 {member.last_completion_date 
                                   ? formatDate(new Date(member.last_completion_date), 'MMM d')
-                                  : 'Never'}
+                                  : 'Never')}
                               </p>
                             </div>
                           </div>
@@ -639,7 +639,7 @@ export default function TeamOverview() {
                               <p className="font-sans">
                                 {memberHandbooks[member.enrollment_id] 
                                   ? `${memberHandbooks[member.enrollment_id].acknowledged}/${memberHandbooks[member.enrollment_id].total}`
-                                  : '—'}
+                                  : '—')}
                               </p>
                             </div>
                           </div>

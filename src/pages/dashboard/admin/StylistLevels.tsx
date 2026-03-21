@@ -283,7 +283,7 @@ export default function StylistLevels() {
         <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
           <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
           <p className="text-sm text-muted-foreground">
-            Level-based service pricing is displayed on the client-facing website{' '}
+            Level-based service pricing is displayed on the client-facing website{' ')}
             <a 
               href="/" 
               target="_blank" 
@@ -292,7 +292,7 @@ export default function StylistLevels() {
             >
               your website
             </a>
-            . To adjust or edit level pricing, you can do so in the{' '}
+            . To adjust or edit level pricing, you can do so in the{' ')}
             <a 
               href="${dashPath('/admin/services" 
               className="text-primary hover:underline"
@@ -374,7 +374,7 @@ export default function StylistLevels() {
                           <span className="font-medium truncate">{level.label}</span>
                           {hasStylists && (
                             <span className="text-xs text-muted-foreground shrink-0">
-                              {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
+                              {stylistCount} stylist{stylistCount !== 1 ? 's' : '')}
                             </span>
                           )}
                         </div>
@@ -406,7 +406,7 @@ export default function StylistLevels() {
                                       <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
                                         <p className="font-medium flex items-center gap-2">
                                           <AlertTriangle className="w-4 h-4" />
-                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is')} assigned to this level
                                         </p>
                                         <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
                                           You'll need to reassign these stylists to a different level.
@@ -624,8 +624,8 @@ export default function StylistLevels() {
                 <ul className="text-xs space-y-1.5 text-muted-foreground">
                   {levels.map((level, idx) => (
                     <li key={level.id}>
-                      <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
-                      {level.description || 'No description'}
+                      <span className="font-medium text-foreground">Level {idx + 1}:</span>{' ')}
+                      {level.description || 'No description')}
                     </li>
                   ))}
                 </ul>
@@ -665,7 +665,7 @@ export default function StylistLevels() {
                           <ul className="text-[10px] space-y-1 text-muted-foreground">
                             {levels.map((level, idx) => (
                               <li key={level.id}>
-                                <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
+                                <span className="font-medium text-foreground">Level {idx + 1}:</span>{' ')}
                                 {level.description}
                               </li>
                             ))}
@@ -712,7 +712,7 @@ export default function StylistLevels() {
                 >
                   <span className="text-background/70">Level:</span>
                   <span className="font-medium truncate">
-                    {levels[previewLevel]?.label || 'New Talent'}
+                    {levels[previewLevel]?.label || 'New Talent')}
                   </span>
                   <ChevronDownIcon size={14} className="text-background/70 shrink-0" />
                 </button>

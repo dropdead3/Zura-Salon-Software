@@ -325,7 +325,7 @@ export function IndividualAssignments() {
                                 }`}
                               >
                                 <Clock className="w-3 h-3" />
-                                Due {format(new Date(assignment.due_date), 'MMM d'}
+                                Due {format(new Date(assignment.due_date), 'MMM d')}
                               </span>
                             )}
                             {completed && (
@@ -408,7 +408,7 @@ export function IndividualAssignments() {
                     className="w-full justify-start text-left font-normal"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, 'PPP') : 'Pick a date'}
+                    {dueDate ? format(dueDate, 'PPP') : 'Pick a date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

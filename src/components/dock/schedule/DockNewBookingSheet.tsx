@@ -59,7 +59,7 @@ function timeToMinutes(time: string): number {
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return `${h.toString().padStart(2, '0'}:${m.toString().padStart(2, '0}`;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`;
 }
 
 function formatTime12h(time: string) {
@@ -509,7 +509,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                     }}
                     onNewClient={() => setShowNewClientSheet(true)}
                     selectedClient={selectedClient}
-                    onContinue={() => setStep('service'}
+                    onContinue={() => setStep('service')}
                     onDeselectClient={() => {
                       setSelectedClient(null);
                       setSelectedServices([]);
@@ -542,7 +542,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                   totalDuration={totalDuration}
                   totalPrice={totalPrice}
                   isLoading={effectiveServicesLoading}
-                  onContinue={() => setStep('confirm'}
+                  onContinue={() => setStep('confirm')}
                 />
               )}
 
@@ -551,7 +551,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                   client={selectedClient}
                   services={selectedServiceDetails}
                   stylistName={effectiveStylistName}
-                  locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
+                  locationName={locations.find(l => l.id === selectedLocation)?.name || '')}
                   date={selectedDate}
                   time={selectedTime}
                   onTimeChange={setSelectedTime}
@@ -561,7 +561,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                   onNotesChange={setNotes}
                   onConfirm={() => createBooking.mutate()}
                   isLoading={createBooking.isPending}
-                  onAddService={() => setStep('service'}
+                  onAddService={() => setStep('service')}
                   teamMembers={teamMembers}
                   selectedAssistants={selectedAssistants}
                   onAssistantsChange={setSelectedAssistants}
@@ -614,7 +614,7 @@ function ClientStepDock({
               <span className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{selectedClient.name}</span>
             </div>
             <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-              {selectedClient.phone || selectedClient.email || 'No contact info'}
+              {selectedClient.phone || selectedClient.email || 'No contact info')}
             </div>
           </div>
           <button
@@ -758,7 +758,7 @@ function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: 
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-[hsl(var(--platform-foreground))] truncate">{client.name}</div>
         <div className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
-          {client.phone || client.email || 'No contact info'}
+          {client.phone || client.email || 'No contact info')}
         </div>
         <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.7)] truncate mt-0.5">
           {clientSinceLabel ? `${clientSinceLabel} · ${lastVisitLabel}` : lastVisitLabel}
@@ -881,7 +881,7 @@ function ServiceStepDock({
                         <div>
                           <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{cat}</div>
                           <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-                            {svcs.length} service{svcs.length !== 1 ? 's' : ''}
+                            {svcs.length} service{svcs.length !== 1 ? 's' : '')}
                           </div>
                         </div>
                         {selectedInCat > 0 && (
@@ -1007,7 +1007,7 @@ function ServiceStepDock({
             </div>
             <div className="flex items-center justify-between text-sm mb-3">
               <span className="text-[hsl(var(--platform-foreground-muted))]">
-                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {formatMinutesToDuration(totalDuration)}
+                {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')} · {formatMinutesToDuration(totalDuration)}
               </span>
               <span className="text-[hsl(var(--platform-foreground))] font-medium">${totalPrice}</span>
             </div>
@@ -1136,7 +1136,7 @@ function ConfirmStepDock({
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-[hsl(var(--platform-foreground))]">{client?.name}</div>
             <div className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-              {client?.phone || client?.email || ''}
+              {client?.phone || client?.email || '')}
             </div>
           </div>
           {clientHistory && clientHistory.visitCount === 0 && (
@@ -1155,8 +1155,8 @@ function ConfirmStepDock({
             <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--platform-foreground))]">
               <CalendarIcon className="w-3 h-3 text-violet-400 shrink-0" />
               <span>
-                Last visit: {format(new Date(clientHistory.lastVisit.date + 'T12:00:00'), 'MMM d'}
-                {' · '}
+                Last visit: {format(new Date(clientHistory.lastVisit.date + 'T12:00:00'), 'MMM d')}
+                {' · ')}
                 <span className="text-[hsl(var(--platform-foreground-muted))]">
                   {formatDistanceToNow(new Date(clientHistory.lastVisit.date + 'T12:00:00'), { addSuffix: true })}
                 </span>
@@ -1165,13 +1165,13 @@ function ConfirmStepDock({
             <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--platform-foreground-muted))]">
               <Scissors className="w-3 h-3 shrink-0" />
               <span className="truncate">
-                {clientHistory.lastVisit.service || 'Unknown service'}
+                {clientHistory.lastVisit.service || 'Unknown service')}
                 {clientHistory.lastVisit.stylist && ` · with ${clientHistory.lastVisit.stylist}`}
                 {clientHistory.lastVisit.location && ` at ${clientHistory.lastVisit.location}`}
               </span>
             </div>
             <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]">
-              {clientHistory.visitCount} visit{clientHistory.visitCount !== 1 ? 's' : ''} total
+              {clientHistory.visitCount} visit{clientHistory.visitCount !== 1 ? 's' : '')} total
             </div>
           </div>
         ) : null}
@@ -1195,7 +1195,7 @@ function ConfirmStepDock({
                   <div className="text-left">
                     <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]">Assistant</div>
                     {selectedNames.length > 0 ? (
-                      <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', '}</div>
+                      <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', ')}</div>
                     ) : (
                       <div className="text-sm text-violet-400">+ Add an assistant</div>
                     )}
@@ -1232,7 +1232,7 @@ function ConfirmStepDock({
               )}
             </div>
           )}
-          <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d'} />
+          <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={formatMinutesToDuration(totalDuration)} />
         </div>
 

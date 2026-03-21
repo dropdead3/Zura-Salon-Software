@@ -77,7 +77,7 @@ export default function ScheduleNewMeeting() {
       const [hours, minutes] = startTime.split(':').map(Number);
       const endHours = minutes >= 30 ? hours + 1 : hours;
       const endMinutes = minutes >= 30 ? '00' : '30';
-      const endTime = `${endHours.toString().padStart(2, '0'}:${endMinutes}`;
+      const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes}`;
 
       // Insert directly with correct roles
       supabase
@@ -112,7 +112,7 @@ export default function ScheduleNewMeeting() {
     const [hours, minutes] = startTime.split(':').map(Number);
     const endHours = minutes >= 30 ? hours + 1 : hours;
     const endMinutes = minutes >= 30 ? '00' : '30';
-    const endTime = `${endHours.toString().padStart(2, '0'}:${endMinutes}`;
+    const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes}`;
 
     createMeeting.mutate({
       coach_id: selectedCoach,
@@ -137,7 +137,7 @@ export default function ScheduleNewMeeting() {
       <PlatformPageContainer maxWidth="narrow">
         <div className="space-y-6">
           <div>
-            <Link to={dashPath('/schedule-meeting'}>
+            <Link to={dashPath('/schedule-meeting')}>
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
@@ -151,18 +151,18 @@ export default function ScheduleNewMeeting() {
 
           <Card className="relative">
             <button
-              onClick={() => navigate(dashPath('/schedule-meeting'}
+              onClick={() => navigate(dashPath('/schedule-meeting')}
               className="absolute top-4 right-4 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle>{isCoachMode ? 'Schedule 1:1 Meeting' : 'Request a Meeting'}</CardTitle>
+              <CardTitle>{isCoachMode ? 'Schedule 1:1 Meeting' : 'Request a Meeting')}</CardTitle>
               <CardDescription>
                 {isCoachMode
                   ? `Schedule a meeting with ${staffName}. This will be auto-confirmed.`
-                  : 'Select a coach and time that works for you.'}
+                  : 'Select a coach and time that works for you.')}
               </CardDescription>
             </CardHeader>
             <CardContent>

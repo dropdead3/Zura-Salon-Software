@@ -212,7 +212,7 @@ export function LoyaltyTiersEditor({ organizationId }: LoyaltyTiersEditorProps) 
                   <div className="flex gap-1">
                     <Input
                       placeholder="Add perk..."
-                      value={editingPerk?.tierId === tier.id ? newPerk : ''}
+                      value={editingPerk?.tierId === tier.id ? newPerk : '')}
                       onChange={(e) => {
                         setEditingPerk({ tierId: tier.id, index: -1 });
                         setNewPerk(e.target.value);

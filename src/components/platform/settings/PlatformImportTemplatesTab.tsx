@@ -283,7 +283,7 @@ export function PlatformImportTemplatesTab() {
             <div className="space-y-2">
               <Label className="text-slate-300">Date Format</Label>
               <Select 
-                value={localTransformations.dateFormat || 'YYYY-MM-DD'} 
+                value={localTransformations.dateFormat || 'YYYY-MM-DD')} 
                 onValueChange={(v) => updateTransformation('dateFormat', v)}
               >
                 <SelectTrigger>
@@ -301,7 +301,7 @@ export function PlatformImportTemplatesTab() {
             <div className="space-y-2">
               <Label className="text-slate-300">Phone Format</Label>
               <Select 
-                value={localTransformations.phoneFormat || 'E.164'} 
+                value={localTransformations.phoneFormat || 'E.164')} 
                 onValueChange={(v) => updateTransformation('phoneFormat', v)}
               >
                 <SelectTrigger>

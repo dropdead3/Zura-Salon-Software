@@ -66,13 +66,13 @@ export function ClientFormulaHistoryTab({ clientId, className }: ClientFormulaHi
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-sans text-sm text-foreground truncate">
-                      {formula.service_name || 'Formula'}
+                      {formula.service_name || 'Formula')}
                     </span>
                     <Badge
-                      variant={formula.formula_type === 'refined' ? 'default' : 'secondary'}
+                      variant={formula.formula_type === 'refined' ? 'default' : 'secondary')}
                       className="text-[10px] shrink-0"
                     >
-                      {formula.formula_type === 'refined' ? 'Refined' : 'Actual'}
+                      {formula.formula_type === 'refined' ? 'Refined' : 'Actual')}
                     </Badge>
                     {isLatest && (
                       <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">
@@ -82,7 +82,7 @@ export function ClientFormulaHistoryTab({ clientId, className }: ClientFormulaHi
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(new Date(formula.created_at), 'MMM d, yyyy'}
+                      {formatDate(new Date(formula.created_at), 'MMM d, yyyy')}
                     </span>
                     {formula.staff_name && (
                       <span className="text-xs text-muted-foreground">

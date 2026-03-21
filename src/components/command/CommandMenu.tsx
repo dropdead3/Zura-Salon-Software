@@ -66,7 +66,7 @@ export function CommandMenu() {
             return (
               <CommandItem
                 key={item.href}
-                value={[item.label, ...(item.keywords ?? [])].join(' '}
+                value={[item.label, ...(item.keywords ?? [])].join(' ')}
                 onSelect={() => run(item.href)}
               >
                 {Icon && <Icon className="mr-2 h-4 w-4 opacity-70" />}
@@ -79,12 +79,12 @@ export function CommandMenu() {
         <CommandSeparator />
 
         <CommandGroup heading="Theme">
-          <CommandItem onSelect={() => setTheme('light'}>
+          <CommandItem onSelect={() => setTheme('light')}>
             <Sun className="mr-2 h-4 w-4 opacity-70" />
             <span>Light</span>
             {theme === 'light' && <CommandShortcut>Active</CommandShortcut>}
           </CommandItem>
-          <CommandItem onSelect={() => setTheme('dark'}>
+          <CommandItem onSelect={() => setTheme('dark')}>
             <Moon className="mr-2 h-4 w-4 opacity-70" />
             <span>Dark</span>
             {theme === 'dark' && <CommandShortcut>Active</CommandShortcut>}

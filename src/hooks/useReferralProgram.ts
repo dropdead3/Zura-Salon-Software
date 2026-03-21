@@ -125,7 +125,7 @@ export function useReferralConversions(referralLinkId: string | undefined) {
         .select('id, client_first_name, client_last_name')
         .in('id', clientIds);
 
-      const clientMap = new Map(((clients || []) as any[]).map((c: any) => [c.id, `${c.client_first_name || ''} ${c.client_last_name || ''}`.trim()]));
+      const clientMap = new Map(((clients || []) as any[]).map((c: any) => [c.id, `${c.client_first_name || '')} ${c.client_last_name || '')}`.trim()]));
 
       return (data || []).map((conversion: any) => ({
         ...conversion,

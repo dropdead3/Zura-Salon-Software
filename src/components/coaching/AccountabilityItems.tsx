@@ -99,11 +99,11 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
     const isDueToday = isToday(date);
 
     return (
-      <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground'}`}>
+      <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground')}`}>
         <Calendar className="h-3 w-3" />
-        {formatDate(date, 'MMM d'}
-        {isOverdue && ' (overdue)'}
-        {isDueToday && ' (today)'}
+        {formatDate(date, 'MMM d')}
+        {isOverdue && ' (overdue)')}
+        {isDueToday && ' (today)')}
       </span>
     );
   };
@@ -193,7 +193,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
 
           {activeItems.length === 0 && !isAdding && (
             <p className="text-muted-foreground text-sm text-center py-4">
-              No active items. {isCoach && 'Create action items to track follow-ups.'}
+              No active items. {isCoach && 'Create action items to track follow-ups.')}
             </p>
           )}
 
@@ -264,7 +264,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
                       <span className="text-sm line-through">{item.title}</span>
                       {item.completed_at && (
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(new Date(item.completed_at), 'MMM d'}
+                          {formatDate(new Date(item.completed_at), 'MMM d')}
                         </span>
                       )}
                     </div>

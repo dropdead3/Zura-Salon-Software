@@ -225,7 +225,7 @@ export function KioskIdleScreen() {
           >
             <img
               src={logoUrl}
-              alt={businessName || 'Logo'}
+              alt={businessName || 'Logo')}
               className={`${logoSizeClasses[logoSize]} w-auto h-auto object-contain`}
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';

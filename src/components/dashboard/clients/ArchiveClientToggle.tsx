@@ -55,7 +55,7 @@ export function ArchiveClientToggle({
       onArchiveStatusChange?.();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to ${isArchived ? 'restore' : 'archive'} client`, { description: error.message });
+      toast.error(`Failed to ${isArchived ? 'restore' : 'archive')} client`, { description: error.message });
     },
   });
 
@@ -88,7 +88,7 @@ export function ArchiveClientToggle({
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isArchived ? 'Restore Client' : 'Archive Client'}</DialogTitle>
+            <DialogTitle>{isArchived ? 'Restore Client' : 'Archive Client')}</DialogTitle>
             <DialogDescription>
               {isArchived
                 ? `Are you sure you want to restore ${clientName}? They will reappear in the client directory and marketing will resume.`
@@ -100,12 +100,12 @@ export function ArchiveClientToggle({
               Cancel
             </Button>
             <Button
-              variant={isArchived ? 'default' : 'destructive'}
+              variant={isArchived ? 'default' : 'destructive')}
               onClick={() => archiveMutation.mutate()}
               disabled={archiveMutation.isPending}
             >
               {archiveMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isArchived ? 'Restore Client' : 'Archive Client'}
+              {isArchived ? 'Restore Client' : 'Archive Client')}
             </Button>
           </DialogFooter>
         </DialogContent>

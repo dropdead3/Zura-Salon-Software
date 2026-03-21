@@ -147,7 +147,7 @@ export function CommissionStatementDialog({
                 type="number"
                 step="0.01"
                 className="pl-7"
-                value={totalRetailSales || ''}
+                value={totalRetailSales || '')}
                 onChange={(e) => setTotalRetailSales(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
@@ -162,7 +162,7 @@ export function CommissionStatementDialog({
                 type="number"
                 step="0.01"
                 className="pl-7"
-                value={totalServiceRevenue || ''}
+                value={totalServiceRevenue || '')}
                 onChange={(e) => setTotalServiceRevenue(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
@@ -180,7 +180,7 @@ export function CommissionStatementDialog({
                 type="number"
                 step="0.01"
                 className="pl-7"
-                value={deductions || ''}
+                value={deductions || '')}
                 onChange={(e) => setDeductions(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />

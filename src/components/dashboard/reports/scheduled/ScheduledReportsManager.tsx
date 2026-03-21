@@ -73,10 +73,10 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
   const getScheduleLabel = (type: string, config?: any): string => {
     switch (type) {
       case 'daily':
-        return `Daily at ${config?.timeUtc || '9:00 AM'}`;
+        return `Daily at ${config?.timeUtc || '9:00 AM')}`;
       case 'weekly':
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        return `Every ${days[config?.dayOfWeek || 1]} at ${config?.timeUtc || '9:00 AM'}`;
+        return `Every ${days[config?.dayOfWeek || 1]} at ${config?.timeUtc || '9:00 AM')}`;
       case 'monthly':
       case 'first_of_month':
         return `1st of each month`;
@@ -131,14 +131,14 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
       ) : (
         <div className="space-y-4">
           {reports?.map(report => (
-            <Card key={report.id} className={!report.is_active ? 'opacity-60' : ''}>
+            <Card key={report.id} className={!report.is_active ? 'opacity-60' : '')}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium">{report.name}</h3>
-                      <Badge variant={report.is_active ? 'default' : 'secondary'}>
-                        {report.is_active ? 'Active' : 'Paused'}
+                      <Badge variant={report.is_active ? 'default' : 'secondary')}>
+                        {report.is_active ? 'Active' : 'Paused')}
                       </Badge>
                     </div>
                     
@@ -149,7 +149,7 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
                       </div>
                       <div className="flex items-center gap-1">
                         <Mail className="w-3.5 h-3.5" />
-                        {report.recipients.length} recipient{report.recipients.length !== 1 ? 's' : ''}
+                        {report.recipients.length} recipient{report.recipients.length !== 1 ? 's' : '')}
                       </div>
                       <Badge variant="outline" className="text-xs">
                         {(report.format || 'pdf').toUpperCase()}
@@ -164,7 +164,7 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
                       )}
                       {report.next_run_at && report.is_active && (
                         <span>
-                          Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a'}
+                          Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
                         </span>
                       )}
                     </div>
@@ -291,7 +291,7 @@ function ReportHistoryDialog({ reportId, onClose }: { reportId: string | null; o
                     )}
                     {run.recipient_count && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Sent to {run.recipient_count} recipient{run.recipient_count !== 1 ? 's' : ''}
+                        Sent to {run.recipient_count} recipient{run.recipient_count !== 1 ? 's' : '')}
                       </p>
                     )}
                   </div>

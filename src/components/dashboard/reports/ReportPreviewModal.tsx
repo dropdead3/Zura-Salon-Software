@@ -38,7 +38,7 @@ export function ReportPreviewModal({
   const { data: businessSettings } = useBusinessSettings();
   const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
   const logoUrl = businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null;
-  const dateRange = `${formatDate(new Date(dateFrom), 'MMM d, yyyy'} – ${formatDate(new Date(dateTo), 'MMM d, yyyy}`;
+  const dateRange = `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} – ${formatDate(new Date(dateTo), 'MMM d, yyyy}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,7 +61,7 @@ export function ReportPreviewModal({
           </div>
           <DialogTitle className="text-lg">{reportTitle}</DialogTitle>
           <DialogDescription id="report-preview-description">
-            {dateRange} · Generated on {formatDate(new Date(), 'MMM d, yyyy h:mm a'}
+            {dateRange} · Generated on {formatDate(new Date(), 'MMM d, yyyy h:mm a')}
           </DialogDescription>
         </DialogHeader>
         <div className="overflow-y-auto flex-1 py-4 pr-2 -mr-2">

@@ -70,12 +70,12 @@ export function SuggestedTasksSection({ tasks, onAddTask }: SuggestedTasksSectio
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={cn('text-sm leading-snug', isAdded && 'line-through text-muted-foreground'}>
+                <p className={cn('text-sm leading-snug', isAdded && 'line-through text-muted-foreground')}>
                   {task.title}
                 </p>
                 {task.dueInDays && !isAdded && (
                   <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                    Due in {task.dueInDays} day{task.dueInDays !== 1 ? 's' : ''}
+                    Due in {task.dueInDays} day{task.dueInDays !== 1 ? 's' : '')}
                   </p>
                 )}
               </div>

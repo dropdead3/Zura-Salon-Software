@@ -83,7 +83,7 @@ export function BatchReorderDialog({ open, onOpenChange, products, supplierMap, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2'}>
+          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2')}>
             <Package className="w-5 h-5 text-primary" />
             Batch Reorder — {products.length} Product(s)
           </DialogTitle>
@@ -120,7 +120,7 @@ export function BatchReorderDialog({ open, onOpenChange, products, supplierMap, 
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium truncate block">{item.product.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        Stock: {item.product.quantity_on_hand ?? 0} / Min: {item.product.reorder_level ?? '—'}
+                        Stock: {item.product.quantity_on_hand ?? 0} / Min: {item.product.reorder_level ?? '—')}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

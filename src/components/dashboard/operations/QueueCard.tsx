@@ -185,7 +185,7 @@ export function QueueCard({
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-muted-foreground" />
             <span className="font-medium">
-              {appointment.client_name || 'Walk-in'}
+              {appointment.client_name || 'Walk-in')}
             </span>
             {appointment.is_new_client && (
               <Badge variant="outline" className="text-[10px] py-0 px-1.5">NEW</Badge>
@@ -212,7 +212,7 @@ export function QueueCard({
         <div className="flex items-start gap-2 text-sm">
           <Scissors className="w-4 h-4 text-muted-foreground mt-0.5" />
           <div>
-            <p className="font-medium">{appointment.service_name || 'Service'}</p>
+            <p className="font-medium">{appointment.service_name || 'Service')}</p>
             {appointment.stylistName && (
               <p className="text-muted-foreground">with {appointment.stylistName}</p>
             )}

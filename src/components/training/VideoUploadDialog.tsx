@@ -218,7 +218,7 @@ export function VideoUploadDialog({
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Edit Training Video' : 'Add Training Video'}
+            {isEditing ? 'Edit Training Video' : 'Add Training Video')}
           </DialogTitle>
         </DialogHeader>
 
@@ -283,9 +283,9 @@ export function VideoUploadDialog({
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant={uploadMethod === 'url' ? 'default' : 'outline'}
+                variant={uploadMethod === 'url' ? 'default' : 'outline')}
                 size={tokens.button.card}
-                onClick={() => setUploadMethod('url'}
+                onClick={() => setUploadMethod('url')}
                 className="gap-2"
               >
                 <LinkIcon className="w-4 h-4" />
@@ -293,9 +293,9 @@ export function VideoUploadDialog({
               </Button>
               <Button
                 type="button"
-                variant={uploadMethod === 'upload' ? 'default' : 'outline'}
+                variant={uploadMethod === 'upload' ? 'default' : 'outline')}
                 size={tokens.button.card}
-                onClick={() => setUploadMethod('upload'}
+                onClick={() => setUploadMethod('upload')}
                 className="gap-2"
               >
                 <Upload className="w-4 h-4" />
@@ -342,7 +342,7 @@ export function VideoUploadDialog({
               {availableRoles.map((role) => (
                 <Badge
                   key={role.value}
-                  variant={selectedRoles.includes(role.value) ? 'default' : 'outline'}
+                  variant={selectedRoles.includes(role.value) ? 'default' : 'outline')}
                   className="cursor-pointer"
                   onClick={() => toggleRole(role.value)}
                 >
@@ -382,7 +382,7 @@ export function VideoUploadDialog({
               {saveMutation.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
-              {isEditing ? 'Save Changes' : 'Add Video'}
+              {isEditing ? 'Save Changes' : 'Add Video')}
             </Button>
           </div>
         </form>

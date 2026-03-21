@@ -136,7 +136,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
             return (
               <button
                 key={i}
-                onClick={() => handleKey('delete'}
+                onClick={() => handleKey('delete')}
                 className="flex items-center justify-center h-16 rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors"
               >
                 <Delete className="w-6 h-6" />
@@ -189,7 +189,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
       {/* Powered by footer */}
       <div className="fixed bottom-4 left-0 right-0 text-center">
         <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.3)]">
-          {businessName ? `${businessName} · ` : ''}Powered by {PLATFORM_NAME}
+          {businessName ? `${businessName} · ` : '')}Powered by {PLATFORM_NAME}
         </span>
       </div>
     </div>

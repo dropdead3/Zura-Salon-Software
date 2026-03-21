@@ -67,8 +67,8 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 <p className="font-medium text-[hsl(var(--platform-foreground))]">Zura Backroom</p>
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {isBackroomEnabled
-                    ? `${activeLocations} active ${activeLocations === 1 ? 'location' : 'locations'}`
-                    : '--'}
+                    ? `${activeLocations} active ${activeLocations === 1 ? 'location' : 'locations')}`
+                    : '--')}
                 </p>
               </div>
             </div>
@@ -80,8 +80,8 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 <Play className="h-3 w-3" />
                 Launch Demo
               </button>
-              <PlatformBadge variant={isBackroomEnabled ? 'success' : 'default'}>
-                {isBackroomEnabled ? 'Active' : 'Not Enabled'}
+              <PlatformBadge variant={isBackroomEnabled ? 'success' : 'default')}>
+                {isBackroomEnabled ? 'Active' : 'Not Enabled')}
               </PlatformBadge>
             </div>
           </div>

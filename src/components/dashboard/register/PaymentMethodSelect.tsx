@@ -45,7 +45,7 @@ export function PaymentMethodSelect({ value, onChange }: PaymentMethodSelectProp
               `}
             >
               <RadioGroupItem value={method.value} id={method.value} className="sr-only" />
-              <method.icon className={`h-4 w-4 ${value === method.value ? 'text-primary' : 'text-muted-foreground'}`} />
+              <method.icon className={`h-4 w-4 ${value === method.value ? 'text-primary' : 'text-muted-foreground')}`} />
               <span className="text-sm font-medium">{method.label}</span>
             </Label>
           ))}

@@ -141,7 +141,7 @@ export function ClientNotesSection({ clientId }: ClientNotesSectionProps) {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">
-                          {note.author?.display_name || note.author?.full_name || 'Unknown'}
+                          {note.author?.display_name || note.author?.full_name || 'Unknown')}
                         </span>
                         {note.is_private && (
                           <Lock className="w-3 h-3 text-amber-600" />
@@ -149,7 +149,7 @@ export function ClientNotesSection({ clientId }: ClientNotesSectionProps) {
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(new Date(note.created_at), 'MMM d, yyyy'}
+                          {formatDate(new Date(note.created_at), 'MMM d, yyyy')}
                         </span>
                         {isOwner && (
                           <AlertDialog>

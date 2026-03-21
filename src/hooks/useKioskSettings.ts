@@ -469,7 +469,7 @@ export function usePushLocationSettingsToAll() {
       queryClient.invalidateQueries({ queryKey: ['kiosk-settings'] });
       queryClient.invalidateQueries({ queryKey: ['kiosk-settings-location'] });
       queryClient.invalidateQueries({ queryKey: ['kiosk-location-overrides'] });
-      toast.success(`Settings pushed to ${count} location${count > 1 ? 's' : ''}`);
+      toast.success(`Settings pushed to ${count} location${count > 1 ? 's' : '')}`);
     },
     onError: (error) => {
       console.error('Failed to push settings:', error);

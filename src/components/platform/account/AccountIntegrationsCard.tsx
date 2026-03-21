@@ -68,13 +68,13 @@ export function AccountIntegrationsCard({ organizationId }: AccountIntegrationsC
                 <p className="font-medium text-[hsl(var(--platform-foreground))]">{providerLabel}</p>
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {phorest?.connected 
-                    ? `${phorest.branchCount} ${phorest.branchCount === 1 ? 'branch' : 'branches'}, ${phorest.staffMappingCount} staff`
-                    : '--'}
+                    ? `${phorest.branchCount} ${phorest.branchCount === 1 ? 'branch' : 'branches')}, ${phorest.staffMappingCount} staff`
+                    : '--')}
                 </p>
               </div>
             </div>
-            <PlatformBadge variant={phorest?.connected ? 'success' : 'default'}>
-              {phorest?.connected ? 'Connected' : 'Not Connected'}
+            <PlatformBadge variant={phorest?.connected ? 'success' : 'default')}>
+              {phorest?.connected ? 'Connected' : 'Not Connected')}
             </PlatformBadge>
           </div>
 
@@ -86,15 +86,15 @@ export function AccountIntegrationsCard({ organizationId }: AccountIntegrationsC
               </div>
               <div>
                 <p className="font-medium text-[hsl(var(--platform-foreground))]">
-                  Payroll{payrollProviderLabel ? ` - ${payrollProviderLabel}` : ''}
+                  Payroll{payrollProviderLabel ? ` - ${payrollProviderLabel}` : '')}
                 </p>
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                  {payroll?.connected ? 'Active connection' : '--'}
+                  {payroll?.connected ? 'Active connection' : '--')}
                 </p>
               </div>
             </div>
-            <PlatformBadge variant={payroll?.connected ? 'success' : 'default'}>
-              {payroll?.connected ? 'Connected' : 'Not Connected'}
+            <PlatformBadge variant={payroll?.connected ? 'success' : 'default')}>
+              {payroll?.connected ? 'Connected' : 'Not Connected')}
             </PlatformBadge>
           </div>
         </div>

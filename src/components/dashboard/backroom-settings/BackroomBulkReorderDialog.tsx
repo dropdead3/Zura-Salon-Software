@@ -105,7 +105,7 @@ export function BackroomBulkReorderDialog({ open, onOpenChange, orgId, reorderIt
         <DialogHeader>
           <DialogTitle className={tokens.card.title}>Bulk Reorder</DialogTitle>
           <p className="text-sm font-sans text-muted-foreground mt-1">
-            Create purchase orders for {reorderItems.length} product{reorderItems.length === 1 ? '' : 's'} needing replenishment.
+            Create purchase orders for {reorderItems.length} product{reorderItems.length === 1 ? '' : 's')} needing replenishment.
           </p>
         </DialogHeader>
 
@@ -134,7 +134,7 @@ export function BackroomBulkReorderDialog({ open, onOpenChange, orgId, reorderIt
                       <Badge variant="outline" className="text-[10px] capitalize">{line.category}</Badge>
                     )}
                     <span className="text-[11px] font-sans text-muted-foreground">
-                      Stock: {line.currentStock} → Par: {line.parLevel ?? '—'}
+                      Stock: {line.currentStock} → Par: {line.parLevel ?? '—')}
                     </span>
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export function BackroomBulkReorderDialog({ open, onOpenChange, orgId, reorderIt
         {/* Summary */}
         <div className="flex items-center justify-between pt-3 border-t border-border/40">
           <div className="text-sm font-sans text-muted-foreground">
-            {totalItems} item{totalItems === 1 ? '' : 's'} selected
+            {totalItems} item{totalItems === 1 ? '' : 's')} selected
             {totalCost > 0 && (
               <span className="ml-2 text-foreground tabular-nums">${totalCost.toFixed(2)} est.</span>
             )}

@@ -80,7 +80,7 @@ export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) 
                         {getChangeTypeLabel(change.change_type)}
                       </p>
                       <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
-                        {formatDate(new Date(change.created_at), 'MMM d, yyyy'}
+                        {formatDate(new Date(change.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                   </div>
@@ -90,7 +90,7 @@ export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) 
                         "text-sm font-medium",
                         change.proration_amount > 0 ? "text-emerald-400" : "text-red-400"
                       )}>
-                        {change.proration_amount > 0 ? '+' : ''}
+                        {change.proration_amount > 0 ? '+' : '')}
                         {formatCurrency(change.proration_amount)}
                       </span>
                     )}
@@ -103,7 +103,7 @@ export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) 
                   <div className="flex justify-between text-xs">
                     <span className="text-[hsl(var(--platform-foreground-subtle))]">Effective Date:</span>
                     <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                      {formatDate(new Date(change.effective_date), 'MMM d, yyyy'}
+                      {formatDate(new Date(change.effective_date), 'MMM d, yyyy')}
                     </span>
                   </div>
                   {change.notes && (

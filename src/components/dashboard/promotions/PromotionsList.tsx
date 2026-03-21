@@ -142,7 +142,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
                           <p className="font-medium">{promo.name}</p>
                           {promo.expires_at && (
                             <p className="text-xs text-muted-foreground">
-                              Expires {formatDate(new Date(promo.expires_at), 'MMM d, yyyy'}
+                              Expires {formatDate(new Date(promo.expires_at), 'MMM d, yyyy')}
                             </p>
                           )}
                         </div>
@@ -157,7 +157,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
                           ? `${promo.discount_value}%`
                           : promo.promotion_type === 'fixed_discount'
                           ? formatCurrency(promo.discount_value)
-                          : '-'}
+                          : '-')}
                       </TableCell>
                       <TableCell>
                         {promo.promo_code ? (

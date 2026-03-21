@@ -129,19 +129,19 @@ export function ProductUsageFrequencyTable({ locationId }: Props) {
             </div>
             <div className={tokens.kpi.tile}>
               <span className={tokens.kpi.label}>Rare</span>
-              <span className={cn(tokens.kpi.value, summary.rare > 0 && 'text-orange-500'}>
+              <span className={cn(tokens.kpi.value, summary.rare > 0 && 'text-orange-500')}>
                 {summary.rare}
               </span>
             </div>
             <div className={tokens.kpi.tile}>
               <span className={tokens.kpi.label}>Dormant</span>
-              <span className={cn(tokens.kpi.value, summary.dormant > 0 && 'text-destructive'}>
+              <span className={cn(tokens.kpi.value, summary.dormant > 0 && 'text-destructive')}>
                 {summary.dormant}
               </span>
             </div>
             <div className={tokens.kpi.tile}>
               <span className={tokens.kpi.label}>Dormant Capital</span>
-              <span className={cn(tokens.kpi.value, summary.dormantCapital > 0 && 'text-destructive'}>
+              <span className={cn(tokens.kpi.value, summary.dormantCapital > 0 && 'text-destructive')}>
                 {formatCurrency(summary.dormantCapital)}
               </span>
             </div>
@@ -188,7 +188,7 @@ export function ProductUsageFrequencyTable({ locationId }: Props) {
             <p className={tokens.empty.description}>
               {search || tierFilter !== 'all'
                 ? 'Try adjusting your filters.'
-                : 'No backroom-tracked products exist yet.'}
+                : 'No backroom-tracked products exist yet.')}
             </p>
           </div>
         ) : (
@@ -223,19 +223,19 @@ export function ProductUsageFrequencyTable({ locationId }: Props) {
                       {row.productName}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
-                      {row.brand ?? '—'}
+                      {row.brand ?? '—')}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground text-sm capitalize">
-                      {row.category ?? '—'}
+                      {row.category ?? '—')}
                     </TableCell>
                     <TableCell className="text-right font-sans tabular-nums">
                       {row.sessionsUsed}
                     </TableCell>
                     <TableCell className="text-right hidden sm:table-cell font-sans tabular-nums">
-                      {row.totalDispensedGrams > 0 ? `${row.totalDispensedGrams}g` : '—'}
+                      {row.totalDispensedGrams > 0 ? `${row.totalDispensedGrams}g` : '—')}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {row.lastUsedDate ? formatRelativeTime(row.lastUsedDate) : 'Never'}
+                      {row.lastUsedDate ? formatRelativeTime(row.lastUsedDate) : 'Never')}
                     </TableCell>
                     <TableCell>
                       <Badge

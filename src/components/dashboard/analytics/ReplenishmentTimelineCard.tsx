@@ -72,9 +72,9 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                 </div>
                 <CardDescription className="text-xs">
                   {criticalCount > 0 && <span className="text-red-500">{criticalCount} critical</span>}
-                  {criticalCount > 0 && warningCount > 0 && ', '}
+                  {criticalCount > 0 && warningCount > 0 && ', ')}
                   {warningCount > 0 && <span className="text-amber-600 dark:text-amber-400">{warningCount} warning</span>}
-                  {criticalCount === 0 && warningCount === 0 && 'All products have adequate runway'}
+                  {criticalCount === 0 && warningCount === 0 && 'All products have adequate runway')}
                 </CardDescription>
               </div>
             </div>
@@ -85,7 +85,7 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                   variant="outline"
                   size={tokens.button.inline}
                   className="gap-1.5 text-xs"
-                  onClick={() => navigate(dashPath('/admin/settings?category=retail-products&tab=inventory'}
+                  onClick={() => navigate(dashPath('/admin/settings?category=retail-products&tab=inventory')}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" /> Reorder
                 </Button>
@@ -127,7 +127,7 @@ export function ReplenishmentTimelineCard({ products, velocityMap, filterContext
                       </Badge>
                       {row.forecast.stockoutDate && (
                         <p className="text-[9px] text-muted-foreground mt-0.5">
-                          {format(row.forecast.stockoutDate, 'MMM d'}
+                          {format(row.forecast.stockoutDate, 'MMM d')}
                         </p>
                       )}
                     </div>

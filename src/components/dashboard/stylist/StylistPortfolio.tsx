@@ -62,7 +62,7 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
         {categoriesWithEntries.map(cat => (
           <Button
             key={cat}
-            variant={activeCategory === cat ? 'default' : 'outline'}
+            variant={activeCategory === cat ? 'default' : 'outline')}
             size="sm"
             onClick={() => setActiveCategory(cat)}
             className="text-xs h-7 px-3"
@@ -80,14 +80,14 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className={cn(tokens.card.inner, 'overflow-hidden'}
+            className={cn(tokens.card.inner, 'overflow-hidden')}
           >
             {/* After photo (primary portfolio image) */}
             <div className="aspect-square bg-muted overflow-hidden">
               {(t.after_url || t.before_url) ? (
                 <img
                   src={t.after_url || t.before_url!}
-                  alt={t.service_name || 'Transformation'}
+                  alt={t.service_name || 'Transformation')}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -99,11 +99,11 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
             </div>
             <div className="p-2 space-y-1">
               {t.service_name && (
-                <span className={cn(tokens.body.emphasis, 'text-xs line-clamp-1'}>{t.service_name}</span>
+                <span className={cn(tokens.body.emphasis, 'text-xs line-clamp-1')}>{t.service_name}</span>
               )}
               <div className="flex items-center justify-between">
-                <span className={cn(tokens.body.muted, 'text-[10px]'}>
-                  {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : ''}
+                <span className={cn(tokens.body.muted, 'text-[10px]')}>
+                  {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : '')}
                 </span>
                 {t.portfolio_category && (
                   <Badge variant="secondary" className="text-[9px] h-4">{t.portfolio_category}</Badge>

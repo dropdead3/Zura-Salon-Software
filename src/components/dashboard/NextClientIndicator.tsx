@@ -86,7 +86,7 @@ export function NextClientIndicator({ userId }: NextClientIndicatorProps) {
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
       <Clock className="w-3.5 h-3.5" />
       <span>
-        Your next client is <span className="font-medium text-foreground">{nextAppointment.client_name || 'Unknown'}</span> in <span className="text-primary font-medium">{timeRemaining}</span>
+        Your next client is <span className="font-medium text-foreground">{nextAppointment.client_name || 'Unknown')}</span> in <span className="text-primary font-medium">{timeRemaining}</span>
       </span>
     </div>
   );

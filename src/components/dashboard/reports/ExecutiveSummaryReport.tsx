@@ -139,7 +139,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
     if (isMultiLocation && locationData?.length) {
       csv += '\nLocation,Revenue,Appointments,Avg Ticket\n';
       locationData.forEach(loc => {
-        csv += `"${loc.locationName || 'Unknown'}",${loc.revenue ?? 0},${loc.appointments ?? 0},${loc.appointments ? ((loc.revenue ?? 0) / loc.appointments).toFixed(2) : 0}\n`;
+        csv += `"${loc.locationName || 'Unknown')}",${loc.revenue ?? 0},${loc.appointments ?? 0},${loc.appointments ? ((loc.revenue ?? 0) / loc.appointments).toFixed(2) : 0}\n`;
       });
     }
 
@@ -174,7 +174,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
             <div>
               <CardTitle className="font-display text-base tracking-wide">Executive Summary</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -227,7 +227,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
                     .sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))
                     .map((loc, i) => (
                       <TableRow key={i}>
-                        <TableCell>{loc.locationName || 'Unknown'}</TableCell>
+                        <TableCell>{loc.locationName || 'Unknown')}</TableCell>
                         <TableCell className="text-right tabular-nums">
                           <BlurredAmount>{formatCurrency(loc.revenue ?? 0)}</BlurredAmount>
                         </TableCell>

@@ -137,7 +137,7 @@ function SortableTaskItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''} ${!task.is_active ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!task.is_active ? 'opacity-50' : '')}`}
     >
       <button
         {...attributes}
@@ -225,7 +225,7 @@ function SortableRuleItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''} ${!rule.is_active ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-3 p-4 bg-card border rounded-lg ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : '')} ${!rule.is_active ? 'opacity-50' : '')}`}
     >
       <button
         {...attributes}
@@ -240,7 +240,7 @@ function SortableRuleItem({
       </div>
       
       <div className="flex-1 min-w-0">
-        <p className={`text-sm ${rule.is_emphasized ? 'font-medium' : ''}`}>{rule.rule_text}</p>
+        <p className={`text-sm ${rule.is_emphasized ? 'font-medium' : '')}`}>{rule.rule_text}</p>
       </div>
 
       <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ function SortableRuleItem({
           className="text-xs h-7"
           onClick={() => onToggleEmphasis(rule.id, !rule.is_emphasized)}
         >
-          {rule.is_emphasized ? 'Emphasized' : 'Normal'}
+          {rule.is_emphasized ? 'Emphasized' : 'Normal')}
         </Button>
         <Switch
           checked={rule.is_active}
@@ -810,7 +810,7 @@ export default function ProgramEditor() {
                         <div>
                           <p className="font-medium text-sm">Program Active</p>
                           <p className="text-xs text-muted-foreground">
-                            {config.is_active ? 'Program is open for enrollment' : 'Program is currently disabled'}
+                            {config.is_active ? 'Program is open for enrollment' : 'Program is currently disabled')}
                           </p>
                         </div>
                       </div>
@@ -955,7 +955,7 @@ export default function ProgramEditor() {
                     <div className="space-y-2">
                       <Label>Description</Label>
                       <Textarea
-                        value={editingTask.description || ''}
+                        value={editingTask.description || '')}
                         onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
                       />
                     </div>

@@ -141,7 +141,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Campaign Name (Optional)</Label>
-                  <Input {...register('campaign_name'} placeholder="e.g., Summer 2024 Referral Program" />
+                  <Input {...register('campaign_name')} placeholder="e.g., Summer 2024 Referral Program" />
                 </div>
 
                 <div className="space-y-2">
@@ -196,7 +196,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                 <div className="space-y-2">
                   <Label>Referrer Reward Description</Label>
                   <Input 
-                    {...register('referrer_reward_description'} 
+                    {...register('referrer_reward_description')} 
                     placeholder="e.g., $25 credit on your next visit"
                   />
                 </div>
@@ -204,7 +204,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                 <div className="space-y-2">
                   <Label>New Client Reward Description</Label>
                   <Input 
-                    {...register('referee_reward_description'} 
+                    {...register('referee_reward_description')} 
                     placeholder="e.g., $25 off your first service"
                   />
                 </div>
@@ -221,7 +221,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                 <div className="space-y-2">
                   <Label>Terms & Conditions</Label>
                   <Textarea
-                    {...register('terms_conditions'}
+                    {...register('terms_conditions')}
                     placeholder="Enter any terms and conditions..."
                     rows={3}
                   />
@@ -352,7 +352,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {entry.type === 'client' ? 'Client' : 'Staff'}
+                            {entry.type === 'client' ? 'Client' : 'Staff')}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium">{entry.count}</TableCell>

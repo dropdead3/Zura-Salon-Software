@@ -247,7 +247,7 @@ export function StructureLayersTab({
           {/* Site Content (home page only) */}
           {isHomePage && (
             <>
-              <SectionGroupHeader title="Global Elements" collapsible isOpen={isGroupOpen('global'} onToggle={() => toggleGroup('global'} />
+              <SectionGroupHeader title="Global Elements" collapsible isOpen={isGroupOpen('global')} onToggle={() => toggleGroup('global')} />
               {isGroupOpen('global') && (
                 <div className="space-y-0.5 mb-0.5">
                   {GLOBAL_ELEMENTS.map(item => (
@@ -262,7 +262,7 @@ export function StructureLayersTab({
                   ))}
                 </div>
               )}
-              <SectionGroupHeader title="Content Managers" collapsible isOpen={isGroupOpen('managers'} onToggle={() => toggleGroup('managers'} />
+              <SectionGroupHeader title="Content Managers" collapsible isOpen={isGroupOpen('managers')} onToggle={() => toggleGroup('managers')} />
               {isGroupOpen('managers') && (
                 <div className="space-y-0.5 mb-0.5">
                   {CONTENT_MANAGERS.map(item => (
@@ -328,7 +328,7 @@ export function StructureLayersTab({
                 {customSections.length > 0 && (
                   <>
                     <div className="mt-0.5" />
-                    <SectionGroupHeader title="Custom Sections" collapsible isOpen={isGroupOpen('custom'} onToggle={() => toggleGroup('custom'} />
+                    <SectionGroupHeader title="Custom Sections" collapsible isOpen={isGroupOpen('custom')} onToggle={() => toggleGroup('custom')} />
                     {isGroupOpen('custom') && customSections.map(section => (
                       <SectionNavItem
                         key={section.id}
@@ -355,7 +355,7 @@ export function StructureLayersTab({
           {!isHomePage && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePageDragEnd}>
               <SortableContext items={pageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <SectionGroupHeader title={`${pageTitle ?? 'Page'} Sections`} />
+                <SectionGroupHeader title={`${pageTitle ?? 'Page')} Sections`} />
                 {pageSections.map(section => (
                   <SectionNavItem
                     key={section.id}

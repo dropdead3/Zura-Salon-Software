@@ -72,14 +72,14 @@ export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHi
                   {order.id.slice(0, 8).toUpperCase()}
                 </TableCell>
                 <TableCell>
-                  {formatDate(new Date(order.ordered_at), 'MMM d, yyyy'}
+                  {formatDate(new Date(order.ordered_at), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>{order.quantity}</TableCell>
                 <TableCell className="capitalize">{order.card_design}</TableCell>
                 <TableCell className="capitalize">{order.card_stock}</TableCell>
                 <TableCell>{formatCurrency(order.total_price)}</TableCell>
                 <TableCell>
-                  <Badge className={STATUS_COLORS[order.status] || ''}>
+                  <Badge className={STATUS_COLORS[order.status] || '')}>
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </Badge>
                 </TableCell>

@@ -25,11 +25,11 @@ export function StockoutAlertCard({ locationId }: StockoutAlertCardProps) {
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle className="w-4 h-4 text-destructive" />
-          <span className={cn(tokens.heading.subsection, 'text-destructive'}>
+          <span className={cn(tokens.heading.subsection, 'text-destructive')}>
             Stockout Risk Detected
           </span>
           <Badge variant="destructive" className="font-sans text-xs ml-auto">
-            {alerts.length} product{alerts.length !== 1 ? 's' : ''}
+            {alerts.length} product{alerts.length !== 1 ? 's' : '')}
           </Badge>
         </div>
         <div className="space-y-2">
@@ -50,7 +50,7 @@ function AlertItem({ alert }: { alert: ProductDemandForecast }) {
       <div className="flex-1 min-w-0">
         <span className={tokens.body.emphasis}>{alert.product_name}</span>
         {alert.brand && (
-          <span className={cn(tokens.body.muted, 'ml-1 text-xs'}>({alert.brand})</span>
+          <span className={cn(tokens.body.muted, 'ml-1 text-xs')}>({alert.brand})</span>
         )}
         <p className={tokens.body.muted}>
           On hand: {alert.current_on_hand} {alert.unit} · After 7d: {alert.remaining_after_7d} {alert.unit}
@@ -58,7 +58,7 @@ function AlertItem({ alert }: { alert: ProductDemandForecast }) {
       </div>
       <div className="flex items-center gap-2 text-xs shrink-0 ml-3">
         {alert.recommended_order_qty > 0 && (
-          <span className={cn(tokens.body.muted, 'text-xs'}>
+          <span className={cn(tokens.body.muted, 'text-xs')}>
             Suggested: {alert.recommended_order_qty} {alert.unit}
           </span>
         )}

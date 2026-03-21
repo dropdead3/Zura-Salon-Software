@@ -88,7 +88,7 @@ END:VCALENDAR`;
             <Calendar className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">
-                {formatDate(bookingDate, 'EEEE, MMMM d, yyyy'}
+                {formatDate(bookingDate, 'EEEE, MMMM d, yyyy')}
               </p>
               <p className="text-sm text-muted-foreground">Full Day Rental</p>
             </div>

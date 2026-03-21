@@ -45,7 +45,7 @@ export function GoalsOverviewHeader({ goals, onCategoryClick }: GoalsOverviewHea
             <span className={tokens.kpi.label}>{label}</span>
           </div>
           <span className={count === 0 ? tokens.body.muted : tokens.kpi.value}>
-            {count === 0 ? 'Not set' : `${count} goal${count > 1 ? 's' : ''}`}
+            {count === 0 ? 'Not set' : `${count} goal${count > 1 ? 's' : '')}`}
           </span>
         </button>
       ))}

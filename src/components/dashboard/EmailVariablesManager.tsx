@@ -219,7 +219,7 @@ export function EmailVariablesManager() {
       </div>
 
       <div className="text-sm text-muted-foreground">
-        {filteredVariables?.length} variable{filteredVariables?.length !== 1 ? 's' : ''} found
+        {filteredVariables?.length} variable{filteredVariables?.length !== 1 ? 's' : '')} found
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -263,7 +263,7 @@ export function EmailVariablesManager() {
                   {variable.description}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {variable.example || '—'}
+                  {variable.example || '—')}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
@@ -326,12 +326,12 @@ export function EmailVariablesManager() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingVariable ? 'Edit Variable' : 'Add New Variable'}
+              {editingVariable ? 'Edit Variable' : 'Add New Variable')}
             </DialogTitle>
             <DialogDescription>
               {editingVariable
                 ? 'Update the variable details below.'
-                : 'Create a new email template variable.'}
+                : 'Create a new email template variable.')}
             </DialogDescription>
           </DialogHeader>
 
@@ -347,7 +347,7 @@ export function EmailVariablesManager() {
                 }
               />
               <p className="text-xs text-muted-foreground">
-                Use snake_case (lowercase with underscores). Will be used as {`{{${formData.variable_key || 'variable_key'}}}`}
+                Use snake_case (lowercase with underscores). Will be used as {`{{${formData.variable_key || 'variable_key')}}}`}
               </p>
             </div>
 
@@ -409,7 +409,7 @@ export function EmailVariablesManager() {
               onClick={handleSave}
               disabled={createVariable.isPending || updateVariable.isPending}
             >
-              {editingVariable ? 'Save Changes' : 'Create Variable'}
+              {editingVariable ? 'Save Changes' : 'Create Variable')}
             </Button>
           </DialogFooter>
         </DialogContent>

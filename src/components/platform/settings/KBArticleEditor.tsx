@@ -115,7 +115,7 @@ export function KBArticleEditor({ open, onOpenChange, article, onClose }: KBArti
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-violet-400" />
-            {article ? 'Edit Article' : 'New Article'}
+            {article ? 'Edit Article' : 'New Article')}
           </DialogTitle>
         </DialogHeader>
 
@@ -221,13 +221,13 @@ To add your first location, follow these steps:
           </PlatformButton>
           <PlatformButton
             variant="outline"
-            onClick={() => handleSubmit('draft'}
+            onClick={() => handleSubmit('draft')}
             disabled={isSubmitting || !formData.title || !formData.content}
           >
             Save as Draft
           </PlatformButton>
           <PlatformButton
-            onClick={() => handleSubmit('published'}
+            onClick={() => handleSubmit('published')}
             disabled={isSubmitting || !formData.title || !formData.content}
           >
             Publish

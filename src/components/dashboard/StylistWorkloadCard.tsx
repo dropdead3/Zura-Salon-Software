@@ -110,7 +110,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             <Button
               variant="ghost"
               size={tokens.button.card}
-              onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'}
+              onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization')}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
               View Full Report
@@ -172,7 +172,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           <Button
             variant="ghost"
             size={tokens.button.card}
-            onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'}
+            onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization')}
             className="gap-1 text-muted-foreground hover:text-foreground"
           >
             View Full Report
@@ -232,7 +232,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.6)'}
+                      fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.6)')}
                     />
                   ))}
                 </Bar>

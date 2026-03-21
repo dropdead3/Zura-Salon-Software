@@ -142,7 +142,7 @@ export default function IncidentReports() {
                   <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={e => setForm(f => ({ ...f, witnesses: e.target.value }))} placeholder="Names of witnesses" /></div>
                   <div><Label>Corrective Action Taken</Label><Textarea value={form.corrective_action} onChange={e => setForm(f => ({ ...f, corrective_action: e.target.value }))} /></div>
                   <Button onClick={handleSubmit} disabled={createIncident.isPending} className="w-full">
-                    {createIncident.isPending ? 'Submitting...' : 'Submit Report'}
+                    {createIncident.isPending ? 'Submitting...' : 'Submit Report')}
                   </Button>
                 </div>
               </DialogContent>
@@ -182,7 +182,7 @@ export default function IncidentReports() {
                         <TableCell><Badge variant={statusCfg.variant}>{statusCfg.label}</Badge></TableCell>
                         <TableCell>{INCIDENT_TYPES.find(t => t.value === incident.incident_type)?.label || incident.incident_type}</TableCell>
                         <TableCell><Badge variant="outline" className={sevCfg?.color}>{sevCfg?.label || incident.severity}</Badge></TableCell>
-                        <TableCell className="text-muted-foreground">{formatDate(parseISO(incident.incident_date), 'MMM d, yyyy'}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(parseISO(incident.incident_date), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="max-w-[250px] truncate">{incident.description}</TableCell>
                         <TableCell>
                           {incident.status === 'open' && (

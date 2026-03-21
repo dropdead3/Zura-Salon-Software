@@ -51,7 +51,7 @@ export default function MyMeetings() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <div>
-            <Link to={dashPath('/schedule-meeting'}>
+            <Link to={dashPath('/schedule-meeting')}>
               <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
@@ -76,7 +76,7 @@ export default function MyMeetings() {
                  title="No meetings scheduled"
                  description="Request a meeting to get started"
                  action={
-                   <Link to={dashPath('/schedule-meeting/new'}>
+                   <Link to={dashPath('/schedule-meeting/new')}>
                      <Button size={tokens.button.card}>Request a meeting</Button>
                    </Link>
                  }
@@ -94,7 +94,7 @@ export default function MyMeetings() {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-muted-foreground" />
                          <span className={tokens.body.emphasis}>
-                             {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy'}
+                             {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export default function MyMeetings() {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm">
-                            Coach: {meeting.coach?.display_name || meeting.coach?.full_name || 'Unknown'}
+                            Coach: {meeting.coach?.display_name || meeting.coach?.full_name || 'Unknown')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">

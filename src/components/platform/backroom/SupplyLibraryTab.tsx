@@ -342,7 +342,7 @@ export function SupplyLibraryTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `supply-library-${selectedBrand || 'all'}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `supply-library-${selectedBrand || 'all')}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Exported ${products.length} products`);
@@ -512,7 +512,7 @@ export function SupplyLibraryTab() {
                     value: p.wholesale_price != null ? String(p.wholesale_price) : '',
                   })}
                 >
-                  {p.wholesale_price != null ? formatCurrency(p.wholesale_price, { currency: p.currency || 'USD' }) : '—'}
+                  {p.wholesale_price != null ? formatCurrency(p.wholesale_price, { currency: p.currency || 'USD' }) : '—')}
                 </span>
               </TooltipTrigger>
               {p.price_updated_at && (
@@ -528,7 +528,7 @@ export function SupplyLibraryTab() {
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
         {p.default_markup_pct != null && p.default_markup_pct > 0
           ? `${p.default_markup_pct}%`
-          : '—'}
+          : '—')}
       </TableCell>
       {/* Computed Retail column */}
       <TableCell className="font-sans text-xs">
@@ -541,7 +541,7 @@ export function SupplyLibraryTab() {
         )}
       </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-        {p.size_options?.join(', ') || '—'}
+        {p.size_options?.join(', ') || '—')}
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
@@ -718,7 +718,7 @@ export function SupplyLibraryTab() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <PlatformButton variant="outline" size="sm" onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending}>
-                      <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin'} /> Sync Library
+                      <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin')} /> Sync Library
                     </PlatformButton>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">Syncs the library with the latest product catalog data, inserting any missing products and backfilling metadata.</TooltipContent>
@@ -841,7 +841,7 @@ export function SupplyLibraryTab() {
                       <p className="absolute bottom-2 left-0 right-0 text-center font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight px-2">
                         {b.categorySummary.slice(0, 3).map((cs) =>
                           `${cs.count} ${SUPPLY_CATEGORY_LABELS[cs.category] || cs.category}`
-                        ).join(' · '}
+                        ).join(' · ')}
                         {b.categorySummary.length > 3 && ` +${b.categorySummary.length - 3}`}
                       </p>
                     </PlatformCard>
@@ -864,7 +864,7 @@ export function SupplyLibraryTab() {
                     onChange={(e) => setProductSearch(e.target.value)}
                   />
                 </div>
-                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced'}>
+                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
                   <SelectTrigger className="w-[160px] font-sans">
                     <SelectValue placeholder="All Pricing" />
                   </SelectTrigger>
@@ -875,10 +875,10 @@ export function SupplyLibraryTab() {
                   </SelectContent>
                 </Select>
                 <PlatformButton
-                  variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
+                  variant={recencyFilter === 'recent' ? 'secondary' : 'ghost')}
                   size="sm"
-                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all'}
-                  className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : ''}
+                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all')}
+                  className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : '')}
                 >
                   <Clock className="w-3.5 h-3.5 mr-1" />
                   Recently Added
@@ -1029,10 +1029,10 @@ export function SupplyLibraryTab() {
             <AlertDialogHeader>
               <PlatformAlertDialogTitle>Delete {selectedBrand}?</PlatformAlertDialogTitle>
               <PlatformAlertDialogDescription>
-                This will remove <span className="font-medium text-[hsl(var(--platform-foreground))]">{selectedBrand}</span> and all{' '}
+                This will remove <span className="font-medium text-[hsl(var(--platform-foreground))]">{selectedBrand}</span> and all{' ')}
                 <span className="font-medium text-[hsl(var(--platform-foreground))]">
                   {brandCards.find((b) => b.brand === selectedBrand)?.productCount ?? 0}
-                </span>{' '}
+                </span>{' ')}
                 products from the supply library. This cannot be undone.
               </PlatformAlertDialogDescription>
             </AlertDialogHeader>
@@ -1238,7 +1238,7 @@ function AddEditDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-sans text-base">
-            {isEdit ? 'Edit Product' : 'Add Product'}
+            {isEdit ? 'Edit Product' : 'Add Product')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
@@ -1310,7 +1310,7 @@ function AddEditDialog({
         <DialogFooter>
           <PlatformButton variant="outline" onClick={() => onOpenChange(false)}>Cancel</PlatformButton>
           <PlatformButton onClick={handleSave} loading={saving} disabled={!brand.trim() || !name.trim()}>
-            {isEdit ? 'Save Changes' : 'Add Product'}
+            {isEdit ? 'Save Changes' : 'Add Product')}
           </PlatformButton>
         </DialogFooter>
       </DialogContent>
@@ -1521,7 +1521,7 @@ function ColumnBrowser({
                           disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory)}
                           onClick={() => onReanalyzeSwatches(displayProducts, selectedCategory)}
                         >
-                          <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin'} />
+                          <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin')} />
                           Re-analyze
                         </PlatformButton>
                       </TooltipTrigger>

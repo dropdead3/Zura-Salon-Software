@@ -154,7 +154,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
                   return (
                     <Card 
                       key={rule.id} 
-                      className={`${!rule.is_active ? 'opacity-60' : ''} ${!hasHolder ? 'border-warning' : ''}`}
+                      className={`${!rule.is_active ? 'opacity-60' : '')} ${!hasHolder ? 'border-warning' : '')}`}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">

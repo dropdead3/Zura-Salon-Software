@@ -25,7 +25,7 @@ export function SectionPreviewWrapper({ children, className }: SectionPreviewWra
               "h-7 px-2",
               viewMode === 'desktop' && "bg-background shadow-sm"
             )}
-            onClick={() => setViewMode('desktop'}
+            onClick={() => setViewMode('desktop')}
           >
             <Monitor className="h-4 w-4" />
           </Button>
@@ -36,7 +36,7 @@ export function SectionPreviewWrapper({ children, className }: SectionPreviewWra
               "h-7 px-2",
               viewMode === 'mobile' && "bg-background shadow-sm"
             )}
-            onClick={() => setViewMode('mobile'}
+            onClick={() => setViewMode('mobile')}
           >
             <Smartphone className="h-4 w-4" />
           </Button>

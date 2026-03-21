@@ -30,14 +30,14 @@ export default function PlatformSettings() {
 
       <Tabs defaultValue="account" className="space-y-6">
         <TabsList className="border p-1 bg-[hsl(var(--platform-bg-card)/0.5)] border-[hsl(var(--platform-border)/0.5)]">
-          <TabsTrigger value="account" className={cn(tabTriggerClass, 'flex items-center gap-1.5'}>
+          <TabsTrigger value="account" className={cn(tabTriggerClass, 'flex items-center gap-1.5')}>
             <User className="h-3.5 w-3.5" />
             Account
           </TabsTrigger>
           <TabsTrigger value="team" className={tabTriggerClass}>
             Team
           </TabsTrigger>
-          <TabsTrigger value="appearance" className={cn(tabTriggerClass, 'flex items-center gap-1.5'}>
+          <TabsTrigger value="appearance" className={cn(tabTriggerClass, 'flex items-center gap-1.5')}>
             <Palette className="h-3.5 w-3.5" />
             Appearance
           </TabsTrigger>
@@ -50,7 +50,7 @@ export default function PlatformSettings() {
           <TabsTrigger value="defaults" className={tabTriggerClass}>
             Defaults
           </TabsTrigger>
-          <TabsTrigger value="integrations" className={cn(tabTriggerClass, 'flex items-center gap-1.5'}>
+          <TabsTrigger value="integrations" className={cn(tabTriggerClass, 'flex items-center gap-1.5')}>
             <Plug className="h-3.5 w-3.5" />
             Integrations
           </TabsTrigger>

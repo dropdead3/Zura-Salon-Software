@@ -135,7 +135,7 @@ export function ExpandableSearch({ isExpanded, onExpandedChange }: ExpandableSea
                 <DashboardLoader size="sm" className="py-8" />
               ) : results.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  {debouncedQuery ? 'No messages found' : 'Type to search messages'}
+                  {debouncedQuery ? 'No messages found' : 'Type to search messages')}
                 </div>
               ) : (
                 <div className="p-1">

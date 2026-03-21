@@ -143,8 +143,8 @@ export default function PublicBooking() {
   const timeSlots = useMemo(() => {
     const slots: string[] = [];
     for (let hour = 9; hour < 19; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0'}:00`);
-      slots.push(`${hour.toString().padStart(2, '0'}:30`);
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
     return slots;
   }, []);
@@ -303,7 +303,7 @@ export default function PublicBooking() {
             <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2 mb-6">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date</span>
-                <span className="font-medium">{format(booking.date!, 'EEEE, MMMM d, yyyy'}</span>
+                <span className="font-medium">{format(booking.date!, 'EEEE, MMMM d, yyyy')}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Time</span>
@@ -315,11 +315,11 @@ export default function PublicBooking() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Services</span>
-                <span className="font-medium">{booking.services.map(s => s.name).join(', '}</span>
+                <span className="font-medium">{booking.services.map(s => s.name).join(', ')}</span>
               </div>
             </div>
 
-            <Button onClick={() => window.location.href = '/'} className="w-full">
+            <Button onClick={() => window.location.href = '/')} className="w-full">
               Return to Homepage
             </Button>
           </Card>
@@ -415,7 +415,7 @@ export default function PublicBooking() {
                 <div className="mt-6 pt-4 border-t flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      {booking.services.length} service{booking.services.length > 1 ? 's' : ''} selected
+                      {booking.services.length} service{booking.services.length > 1 ? 's' : '')} selected
                     </p>
                     <p className="font-medium">
                       {totalDuration} min • ${totalPrice.toLocaleString()}
@@ -472,7 +472,7 @@ export default function PublicBooking() {
               
               <div className="grid gap-3">
                 <div
-                  onClick={() => handleStylistSelect('any'}
+                  onClick={() => handleStylistSelect('any')}
                   className={cn(
                     "p-4 rounded-lg border cursor-pointer transition-all",
                     booking.stylistName === 'First Available'
@@ -550,8 +550,8 @@ export default function PublicBooking() {
                           : "border-border hover:border-primary/50"
                       )}
                     >
-                      <p className="text-xs text-muted-foreground">{format(date, 'EEE'}</p>
-                      <p className="font-medium">{format(date, 'd'}</p>
+                      <p className="text-xs text-muted-foreground">{format(date, 'EEE')}</p>
+                      <p className="font-medium">{format(date, 'd')}</p>
                     </button>
                   ))}
                 </div>
@@ -645,7 +645,7 @@ export default function PublicBooking() {
                   <Scissors className="w-5 h-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Services</p>
-                    <p className="font-medium">{booking.services.map(s => s.name).join(', '}</p>
+                    <p className="font-medium">{booking.services.map(s => s.name).join(', ')}</p>
                     <p className="text-sm text-muted-foreground">{totalDuration} min • ${totalPrice}</p>
                   </div>
                 </div>
@@ -671,7 +671,7 @@ export default function PublicBooking() {
                   <div>
                     <p className="text-sm text-muted-foreground">Date & Time</p>
                     <p className="font-medium">
-                      {format(booking.date!, 'EEEE, MMMM d, yyyy'} at {formatTime12h(booking.time!)}
+                      {format(booking.date!, 'EEEE, MMMM d, yyyy')} at {formatTime12h(booking.time!)}
                     </p>
                   </div>
                 </div>

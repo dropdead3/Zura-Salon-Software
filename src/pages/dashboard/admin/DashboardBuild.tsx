@@ -218,9 +218,9 @@ export default function DashboardBuild() {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingTask ? 'Edit Task' : 'Add New Task'}</DialogTitle>
+                <DialogTitle>{editingTask ? 'Edit Task' : 'Add New Task')}</DialogTitle>
                 <DialogDescription>
-                  {editingTask ? 'Update the task details below.' : 'Create a new build task.'}
+                  {editingTask ? 'Update the task details below.' : 'Create a new build task.')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -323,7 +323,7 @@ export default function DashboardBuild() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                 <Button onClick={handleSubmit} disabled={createTask.isPending || updateTask.isPending}>
                   {(createTask.isPending || updateTask.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  {editingTask ? 'Update' : 'Create'}
+                  {editingTask ? 'Update' : 'Create')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -596,16 +596,16 @@ function TaskCard({ task, variant, onEdit, onDelete, onStatusChange, deleteConfi
         <div className="flex items-center gap-2 ml-8">
           <span className="text-xs text-muted-foreground">Move to:</span>
           {variant !== 'pending' && (
-            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'pending'}>
+            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'pending')}>
               Pending
             </Button>
           )}
           {variant !== 'in-progress' && (
-            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'in-progress'}>
+            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'in-progress')}>
               In Progress
             </Button>
           )}
-          <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'complete'}>
+          <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'complete')}>
             Complete
           </Button>
         </div>

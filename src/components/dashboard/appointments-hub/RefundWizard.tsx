@@ -255,7 +255,7 @@ export function RefundWizard({
             Issue Refund
           </DialogTitle>
           <DialogDescription>
-            Step {step} of 3 — {step === 1 ? 'Select items' : step === 2 ? 'Choose method' : 'Confirm'}
+            Step {step} of 3 — {step === 1 ? 'Select items' : step === 2 ? 'Choose method' : 'Confirm')}
           </DialogDescription>
         </DialogHeader>
 
@@ -281,7 +281,7 @@ export function RefundWizard({
               <Button variant="outline" size="sm" onClick={selectAllLessFees}>All Less Fees</Button>
               <Button variant="outline" size="sm" onClick={selectServicesOnly}>Services Only</Button>
               <Button
-                variant={manualOverride ? 'default' : 'outline'}
+                variant={manualOverride ? 'default' : 'outline')}
                 size="sm"
                 onClick={() => setManualOverride(!manualOverride)}
               >
@@ -408,7 +408,7 @@ export function RefundWizard({
                   )}
                   onClick={() => setMethod(opt.value)}
                 >
-                  <Icon className={cn('w-5 h-5 shrink-0', selected ? 'text-primary' : 'text-muted-foreground'} />
+                  <Icon className={cn('w-5 h-5 shrink-0', selected ? 'text-primary' : 'text-muted-foreground')} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium">{opt.label}</div>
                     <div className="text-xs text-muted-foreground">{opt.desc}</div>
@@ -517,7 +517,7 @@ export function RefundWizard({
               disabled={!canSubmit}
               className="gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {processRefund.isPending ? 'Processing…' : 'Confirm Refund'}
+              {processRefund.isPending ? 'Processing…' : 'Confirm Refund')}
               <Check className="w-3.5 h-3.5" />
             </Button>
           )}

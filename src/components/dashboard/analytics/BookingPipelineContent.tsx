@@ -34,7 +34,7 @@ function TimelineTooltip({ active, payload }: any) {
   const d = payload[0].payload;
   return (
     <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md text-sm">
-      <p className="font-display text-xs tracking-wide">{format(parseISO(d.date), 'EEE, MMM d'}</p>
+      <p className="font-display text-xs tracking-wide">{format(parseISO(d.date), 'EEE, MMM d')}</p>
       <p className="text-muted-foreground text-xs tabular-nums">{d.trailingCount ?? d.forwardCount ?? 0} appointments</p>
     </div>
   );
@@ -71,7 +71,7 @@ function PipelineTimelineChart({ locationId, status }: { locationId: string; sta
           <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <XAxis
               dataKey="date"
-              tickFormatter={(v) => format(parseISO(v), 'MMM d'}
+              tickFormatter={(v) => format(parseISO(v), 'MMM d')}
               tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
               axisLine={false}
               tickLine={false}
@@ -270,7 +270,7 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                   </span>
                   <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
                 </div>
-                <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180'} />
+                <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
               </div>
 
               {/* Detail line */}
@@ -332,7 +332,7 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
           onClick={() => setShowAll(!showAll)}
           className="w-full text-center py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
         >
-          <ChevronDown className={cn('w-4 h-4 transition-transform', showAll && 'rotate-180'} />
+          <ChevronDown className={cn('w-4 h-4 transition-transform', showAll && 'rotate-180')} />
           {showAll ? 'Show less' : `Show all ${sorted.length} locations`}
         </button>
       )}

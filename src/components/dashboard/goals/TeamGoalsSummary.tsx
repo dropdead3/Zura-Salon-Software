@@ -93,7 +93,7 @@ export function TeamGoalsSummary() {
         <Progress
           value={participationPct}
           className="h-2"
-          indicatorClassName={participationPct >= 80 ? 'bg-emerald-500' : participationPct >= 50 ? 'bg-amber-500' : 'bg-destructive'}
+          indicatorClassName={participationPct >= 80 ? 'bg-emerald-500' : participationPct >= 50 ? 'bg-amber-500' : 'bg-destructive')}
         />
 
         {staffWithGoals.length > 0 && (
@@ -113,7 +113,7 @@ export function TeamGoalsSummary() {
 
         {staffWithoutGoals.length > 0 && (
           <div className="pt-2">
-            <p className={cn(tokens.label.tiny, 'mb-2'}>No Goals Set</p>
+            <p className={cn(tokens.label.tiny, 'mb-2')}>No Goals Set</p>
             <div className="flex flex-wrap gap-1.5">
               {staffWithoutGoals.map(s => (
                 <span key={s.user_id} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">

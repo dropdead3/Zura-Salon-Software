@@ -70,7 +70,7 @@ export function InspectorPanel({
   return (
     <div className={cn(editorTokens.panel.inspector, 'h-full flex flex-col overflow-hidden', className)} style={style}>
       {/* Inspector Header */}
-      <div className={cn(editorTokens.panel.header, 'justify-between'}>
+      <div className={cn(editorTokens.panel.header, 'justify-between')}>
         {breadcrumb && breadcrumb.length > 0 ? (
           <div className="flex items-center gap-1 min-w-0 overflow-hidden flex-1">
             {breadcrumb.map((segment, i) => (

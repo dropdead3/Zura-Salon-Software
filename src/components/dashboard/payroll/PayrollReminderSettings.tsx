@@ -134,7 +134,7 @@ export function PayrollReminderSettings() {
           Automatically notify payroll admins before submission deadlines.
         </CardDescription>
       </CardHeader>
-      <CardContent className={`space-y-6 ${!enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+      <CardContent className={`space-y-6 ${!enabled ? 'opacity-50 pointer-events-none' : '')}`}>
         {/* Reminder Timing */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Reminder Timing</Label>

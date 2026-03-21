@@ -103,7 +103,7 @@ export function TodaysPrepSection() {
             <CardTitle className={tokens.card.title}>TODAY'S PREP</CardTitle>
             {appointments && appointments.length > 0 && (
               <CardDescription className="font-sans text-xs text-muted-foreground">
-                {appointments.length} today{confirmCount > 0 ? ` · ${confirmCount} to confirm` : ''}
+                {appointments.length} today{confirmCount > 0 ? ` · ${confirmCount} to confirm` : '')}
               </CardDescription>
             )}
           </div>
@@ -169,7 +169,7 @@ export function TodaysPrepSection() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <span className="font-sans text-sm truncate">
-                          {appt.clientName || 'Walk-in'}
+                          {appt.clientName || 'Walk-in')}
                         </span>
                         {appt.isNewClient && (
                           <UserPlus className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -238,7 +238,7 @@ export function TodaysPrepSection() {
               className={tokens.button.cardFooter}
               asChild
             >
-              <Link to={dashPath('/today-prep'}>
+              <Link to={dashPath('/today-prep')}>
                 View Full Prep <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>

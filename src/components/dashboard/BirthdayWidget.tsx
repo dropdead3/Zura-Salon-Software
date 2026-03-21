@@ -20,7 +20,7 @@ export function BirthdayWidget() {
 
   if (isLoading) {
     return (
-      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
         <div className="flex items-center gap-3">
           <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="w-24 h-4" />
@@ -37,12 +37,12 @@ export function BirthdayWidget() {
   const hasUpcoming = nextUpcoming.length > 0;
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Cake className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1'}>TEAM BIRTHDAYS</span>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>TEAM BIRTHDAYS</span>
       </div>
 
       <div className="mt-4 flex-1">

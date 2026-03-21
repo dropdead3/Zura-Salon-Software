@@ -88,7 +88,7 @@ export function KioskNumberPad({
             border: `1px solid ${textColor}15`,
             color: textColor,
           }}
-          onClick={() => handleDigit('0'}
+          onClick={() => handleDigit('0')}
           whileHover={{ 
             backgroundColor: `${textColor}15`,
             scale: 1.05,

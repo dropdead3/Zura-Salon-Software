@@ -183,7 +183,7 @@ export function DockScaleTab() {
       {/* Mode toggle */}
       <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-xl p-1 border border-[hsl(var(--platform-border)/0.2)] mb-6">
         <button
-          onClick={() => handleModeSwitch('manual'}
+          onClick={() => handleModeSwitch('manual')}
           className={cn(
             'flex-1 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5',
             mode === 'manual' ? 'bg-violet-600/30 text-violet-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -193,7 +193,7 @@ export function DockScaleTab() {
           Manual
         </button>
         <button
-          onClick={() => handleModeSwitch('ble'}
+          onClick={() => handleModeSwitch('ble')}
           className={cn(
             'flex-1 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5',
             mode === 'ble' ? 'bg-violet-600/30 text-violet-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -210,7 +210,7 @@ export function DockScaleTab() {
         stateUI.bgColor,
         'border-[hsl(var(--platform-border)/0.2)]'
       )}>
-        <div className={cn('relative inline-flex mb-4', stateUI.pulse && 'animate-pulse'}>
+        <div className={cn('relative inline-flex mb-4', stateUI.pulse && 'animate-pulse')}>
           <StateIcon className={cn('w-16 h-16', stateUI.color)} />
           {(connectionState === 'connected' || isLiveReading) && (
             <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[hsl(var(--platform-bg))]" />
@@ -246,7 +246,7 @@ export function DockScaleTab() {
                   'text-[9px] uppercase tracking-wide',
                   isActive ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground-muted)/0.3)]'
                 )}>
-                  {step === 'disconnected' ? 'Off' : step === 'scanning' ? 'Scan' : step === 'pairing' ? 'Pair' : 'Live'}
+                  {step === 'disconnected' ? 'Off' : step === 'scanning' ? 'Scan' : step === 'pairing' ? 'Pair' : 'Live')}
                 </span>
               </div>
             );
@@ -265,7 +265,7 @@ export function DockScaleTab() {
       {lastReading !== null && (connectionState === 'connected' || isLiveReading) && (
         <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 mb-6 text-center">
           <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)] uppercase tracking-wide mb-1">
-            {connectionState === 'unstable_reading' ? 'Stabilizing...' : 'Live Weight'}
+            {connectionState === 'unstable_reading' ? 'Stabilizing...' : 'Live Weight')}
           </p>
           <p className={cn(
             'font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]',
@@ -286,7 +286,7 @@ export function DockScaleTab() {
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <BluetoothSearching className="w-4 h-4" />
-            {isConnecting ? 'Connecting...' : 'Scan for Acaia Pearl'}
+            {isConnecting ? 'Connecting...' : 'Scan for Acaia Pearl')}
           </button>
         )}
         {mode === 'ble' && (connectionState === 'connected' || isLiveReading) && (
@@ -311,7 +311,7 @@ export function DockScaleTab() {
           <div className="flex items-center justify-center gap-2 py-3">
             <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-              {connectionState === 'scanning' ? 'Searching nearby devices...' : 'Establishing connection...'}
+              {connectionState === 'scanning' ? 'Searching nearby devices...' : 'Establishing connection...')}
             </span>
           </div>
         )}

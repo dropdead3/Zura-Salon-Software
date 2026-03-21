@@ -170,7 +170,7 @@ export function NewHireWizardContent() {
                     <SelectContent>
                       {configurableRoles.map(r => (
                         <SelectItem key={r.id} value={r.name}>
-                          {r.display_name || r.name.replace(/_/g, ' '}
+                          {r.display_name || r.name.replace(/_/g, ' ')}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -219,7 +219,7 @@ export function NewHireWizardContent() {
                   </Select>
                 </div>
                 <div>
-                  <Label>{form.payType === 'salary' ? 'Annual Salary' : 'Hourly Rate'}</Label>
+                  <Label>{form.payType === 'salary' ? 'Annual Salary' : 'Hourly Rate')}</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
                     <Input
@@ -227,7 +227,7 @@ export function NewHireWizardContent() {
                       className="pl-7"
                       value={form.payRate}
                       onChange={e => updateField('payRate', e.target.value)}
-                      placeholder={form.payType === 'salary' ? '45000' : '18.00'}
+                      placeholder={form.payType === 'salary' ? '45000' : '18.00')}
                     />
                   </div>
                 </div>
@@ -278,10 +278,10 @@ export function NewHireWizardContent() {
                           <p className="font-medium text-sm">
                             {payrollConnected
                               ? `${connectedProvider === 'gusto' ? 'Gusto' : connectedProvider === 'quickbooks' ? 'QuickBooks' : connectedProvider} Payroll`
-                              : 'Payroll Provider'}
+                              : 'Payroll Provider')}
                           </p>
                           <Badge variant={payrollConnected ? "default" : "secondary"} className="text-[10px]">
-                            {payrollConnected ? 'Connected' : 'Not Connected'}
+                            {payrollConnected ? 'Connected' : 'Not Connected')}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -289,7 +289,7 @@ export function NewHireWizardContent() {
                             ? 'Offer letter, W-4, I-9, and direct deposit will be handled via Gusto'
                             : payrollConnected && connectedProvider === 'quickbooks'
                             ? 'Employee setup, tax forms, and direct deposit will be handled via QuickBooks Payroll'
-                            : 'Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding'}
+                            : 'Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding')}
                         </p>
                       </div>
                     </div>
@@ -381,9 +381,9 @@ export function NewHireWizardContent() {
         <CardContent className="space-y-2 text-sm">
           {form.fullName && <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span className="font-medium">{form.fullName}</span></div>}
           {form.email && <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{form.email}</span></div>}
-          {form.role && <div className="flex justify-between"><span className="text-muted-foreground">Role</span><Badge variant="secondary" className="capitalize text-[10px]">{form.role.replace(/_/g, ' '}</Badge></div>}
+          {form.role && <div className="flex justify-between"><span className="text-muted-foreground">Role</span><Badge variant="secondary" className="capitalize text-[10px]">{form.role.replace(/_/g, ' ')}</Badge></div>}
           {form.startDate && <div className="flex justify-between"><span className="text-muted-foreground">Start Date</span><span>{form.startDate}</span></div>}
-          {form.payRate && <div className="flex justify-between"><span className="text-muted-foreground">Pay</span><span>{currency}{form.payRate}{form.payType === 'hourly' ? '/hr' : form.payType === 'salary' ? '/yr' : ''}</span></div>}
+          {form.payRate && <div className="flex justify-between"><span className="text-muted-foreground">Pay</span><span>{currency}{form.payRate}{form.payType === 'hourly' ? '/hr' : form.payType === 'salary' ? '/yr' : '')}</span></div>}
         </CardContent>
       </Card>
 
@@ -436,7 +436,7 @@ export function NewHireWizardContent() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={() => navigate(dashPath('/admin/payroll?tab=overview'} className="flex-1">
+                <Button onClick={() => navigate(dashPath('/admin/payroll?tab=overview')} className="flex-1">
                   Back to Hiring & Payroll Hub
                 </Button>
                 <Button variant="outline" onClick={() => {

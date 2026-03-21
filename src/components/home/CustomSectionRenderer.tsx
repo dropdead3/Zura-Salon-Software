@@ -33,7 +33,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       const bg = config.background === 'muted' ? 'bg-muted' : config.background === 'primary' ? 'bg-primary/5' : '';
       return (
         <section className={cn('py-16 px-4', bg)}>
-          <div className={cn('max-w-3xl mx-auto', `text-${config.alignment || 'center'}`)}>
+          <div className={cn('max-w-3xl mx-auto', `text-${config.alignment || 'center')}`)}>
             {config.heading && <h2 className="text-3xl font-display font-medium mb-4">{config.heading as string}</h2>}
             {config.body && <p className="text-muted-foreground whitespace-pre-line">{config.body as string}</p>}
           </div>
@@ -45,8 +45,8 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       const isRight = config.layout === 'image-right';
       return (
         <section className="py-16 px-4">
-          <div className={cn('max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center', isRight && 'direction-rtl'}>
-            <div className={isRight ? 'order-2 md:order-1' : ''}>
+          <div className={cn('max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center', isRight && 'direction-rtl')}>
+            <div className={isRight ? 'order-2 md:order-1' : '')}>
               {config.heading && <h2 className="text-3xl font-display font-medium mb-4">{config.heading as string}</h2>}
               {config.body && <p className="text-muted-foreground mb-6">{config.body as string}</p>}
               {config.button_text && config.button_url && (
@@ -55,9 +55,9 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
                 </Button>
               )}
             </div>
-            <div className={isRight ? 'order-1 md:order-2' : ''}>
+            <div className={isRight ? 'order-1 md:order-2' : '')}>
               {config.image_url && (
-                <img src={config.image_url as string} alt={config.heading as string || 'Section image'} className="rounded-xl w-full object-cover" />
+                <img src={config.image_url as string} alt={config.heading as string || 'Section image')} className="rounded-xl w-full object-cover" />
               )}
             </div>
           </div>
@@ -70,10 +70,10 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       let embedUrl = '';
       if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
         const id = url.includes('youtu.be') ? url.split('/').pop() : new URLSearchParams(url.split('?')[1]).get('v');
-        embedUrl = `https://www.youtube.com/embed/${id}${config.autoplay ? '?autoplay=1&mute=1' : ''}`;
+        embedUrl = `https://www.youtube.com/embed/${id}${config.autoplay ? '?autoplay=1&mute=1' : '')}`;
       } else if (url?.includes('vimeo.com')) {
         const id = url.split('/').pop();
-        embedUrl = `https://player.vimeo.com/video/${id}${config.autoplay ? '?autoplay=1&muted=1' : ''}`;
+        embedUrl = `https://player.vimeo.com/video/${id}${config.autoplay ? '?autoplay=1&muted=1' : '')}`;
       }
       return (
         <section className="py-16 px-4">
@@ -98,7 +98,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
             {config.heading && <h2 className="text-3xl font-display font-medium mb-3">{config.heading as string}</h2>}
             {config.description && <p className="mb-6 opacity-80">{config.description as string}</p>}
             {config.button_text && config.button_url && (
-              <Button variant={variant === 'primary' ? 'secondary' : 'default'} asChild>
+              <Button variant={variant === 'primary' ? 'secondary' : 'default')} asChild>
                 <a href={config.button_url as string}>{config.button_text as string}</a>
               </Button>
             )}

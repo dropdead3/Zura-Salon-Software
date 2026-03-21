@@ -85,7 +85,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
 
   const previewUrl = page.page_type === 'home'
     ? '/org/your-salon'
-    : `/org/your-salon/${local.slug || 'untitled'}`;
+    : `/org/your-salon/${local.slug || 'untitled')}`;
 
   return (
     <div className="max-w-2xl">
@@ -93,8 +93,8 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Page Settings — {page.title}</CardTitle>
-            <Badge variant={local.enabled ? 'default' : 'secondary'} className="text-[10px]">
-              {local.enabled ? 'Live' : 'Draft'}
+            <Badge variant={local.enabled ? 'default' : 'secondary')} className="text-[10px]">
+              {local.enabled ? 'Live' : 'Draft')}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1 font-mono">{previewUrl}</p>
@@ -112,7 +112,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
                 <span className="text-xs text-muted-foreground">/org/your-salon/</span>
                 <Input
                   value={local.slug}
-                  onChange={e => update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''}
+                  onChange={e => update('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')}
                   className="flex-1"
                 />
               </div>
@@ -157,16 +157,16 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
               <p className="text-xs font-sans text-muted-foreground truncate">
                 getzura.com
                 {page.page_type !== 'home' && (
-                  <> › {local.slug || 'untitled'}</>
+                  <> › {local.slug || 'untitled')}</>
                 )}
               </p>
               <p className="text-sm font-sans text-primary truncate leading-snug">
                 {(local.seo_title || local.title || 'Untitled Page').slice(0, 60)}
-                {(local.seo_title || local.title || '').length > 60 && '…'}
+                {(local.seo_title || local.title || '').length > 60 && '…')}
               </p>
               <p className="text-xs font-sans text-muted-foreground line-clamp-2 leading-relaxed">
                 {(local.seo_description || 'No description provided. Add an SEO description to improve your search appearance.').slice(0, 160)}
-                {(local.seo_description || '').length > 160 && '…'}
+                {(local.seo_description || '').length > 160 && '…')}
               </p>
             </div>
           </div>

@@ -129,10 +129,10 @@ export function ExpiryAlertCard({ products, filterContext }: ExpiryAlertCardProp
                   <MetricInfoTooltip description="Products approaching or past their expiration date. Discount tiers: 10% (warning), 25% (critical — within alert threshold), 50% (expired). Alert threshold is configurable per product (default 30 days)." />
                 </div>
                 <CardDescription className="text-xs">
-                  {candidates.length} product{candidates.length !== 1 ? 's' : ''}
+                  {candidates.length} product{candidates.length !== 1 ? 's' : '')}
                   {expiredCount > 0 && <span className="text-red-500"> · {expiredCount} expired</span>}
                   {criticalCount > 0 && <span className="text-orange-500"> · {criticalCount} critical</span>}
-                  {' · '}<BlurredAmount>{formatCurrency(totalAtRisk)}</BlurredAmount> at risk
+                  {' · ')}<BlurredAmount>{formatCurrency(totalAtRisk)}</BlurredAmount> at risk
                 </CardDescription>
               </div>
             </div>
@@ -160,7 +160,7 @@ export function ExpiryAlertCard({ products, filterContext }: ExpiryAlertCardProp
                         · {product.quantity_on_hand} units
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        · Exp {format(parseISO(product.expires_at!), 'MMM d, yyyy'}
+                        · Exp {format(parseISO(product.expires_at!), 'MMM d, yyyy')}
                       </span>
                     </div>
                   </div>

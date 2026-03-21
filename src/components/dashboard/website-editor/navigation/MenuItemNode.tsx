@@ -70,17 +70,17 @@ export function MenuItemNode({ item, depth, isSelected, selectedItemId, onSelect
         {depth > 0 && <span className="w-3.5 flex-shrink-0" />}
 
         {/* Type icon */}
-        <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', item.item_type === 'cta' && 'text-primary'} />
+        <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', item.item_type === 'cta' && 'text-primary')} />
 
         {/* Label */}
-        <span className={cn('truncate flex-1 text-left', item.item_type === 'cta' && 'font-medium'}>
+        <span className={cn('truncate flex-1 text-left', item.item_type === 'cta' && 'font-medium')}>
           {item.label}
         </span>
 
         {/* Visibility badge */}
         {item.visibility !== 'both' && (
           <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full flex-shrink-0">
-            {item.visibility === 'desktop_only' ? 'Desktop' : 'Mobile'}
+            {item.visibility === 'desktop_only' ? 'Desktop' : 'Mobile')}
           </span>
         )}
 

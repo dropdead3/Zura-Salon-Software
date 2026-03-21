@@ -227,14 +227,14 @@ export default function ScheduleMeeting() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3 sm:shrink-0">
-              <Link to={dashPath('/schedule-meeting/new'}>
+              <Link to={dashPath('/schedule-meeting/new')}>
                 <Button className="gap-2">
                   <CalendarPlus className="w-4 h-4" />
                   Schedule Meeting
                 </Button>
               </Link>
               {isCoach && <ManagerMeetingRequest />}
-              <Link to={dashPath('/schedule-meeting/inbox'}>
+              <Link to={dashPath('/schedule-meeting/inbox')}>
                 <Button variant="outline" className="gap-2">
                   <MessageSquareMore className="w-4 h-4" />
                   Meeting Inbox
@@ -301,15 +301,15 @@ export default function ScheduleMeeting() {
                              {formatMeetingDate(meeting.meeting_date, formatDate)} at {formatTime(meeting.start_time, formatDate)}
                            </span>
                           <span className="text-xs text-muted-foreground capitalize">
-                            {meeting.meeting_type?.replace('_', ' ') || 'Meeting'}
+                            {meeting.meeting_type?.replace('_', ' ') || 'Meeting')}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          with {meeting.coach?.display_name || meeting.coach?.full_name || 'Coach'}
+                          with {meeting.coach?.display_name || meeting.coach?.full_name || 'Coach')}
                         </span>
-                        <Badge variant={meeting.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs">
+                        <Badge variant={meeting.status === 'confirmed' ? 'default' : 'secondary')} className="text-xs">
                           {meeting.status}
                         </Badge>
                       </div>
@@ -323,7 +323,7 @@ export default function ScheduleMeeting() {
                    description="Schedule a 1:1 to get started"
                  />
               )}
-              <Link to={dashPath('/schedule-meeting/my-meetings'}>
+              <Link to={dashPath('/schedule-meeting/my-meetings')}>
                 <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                   View All Meetings <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -354,10 +354,10 @@ export default function ScheduleMeeting() {
                         <div key={request.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                           <div className="flex flex-col">
                              <span className={tokens.body.emphasis}>
-                               {request.requester?.display_name || request.requester?.full_name || 'Team Member'}
+                               {request.requester?.display_name || request.requester?.full_name || 'Team Member')}
                              </span>
                             <span className="text-xs text-muted-foreground capitalize">
-                              {request.meeting_type?.replace('_', ' ') || 'Meeting'}
+                              {request.meeting_type?.replace('_', ' ') || 'Meeting')}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -374,7 +374,7 @@ export default function ScheduleMeeting() {
                        description="All meeting requests have been addressed"
                      />
                   )}
-                  <Link to={dashPath('/schedule-meeting/requests'}>
+                  <Link to={dashPath('/schedule-meeting/requests')}>
                     <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Requests <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
@@ -405,7 +405,7 @@ export default function ScheduleMeeting() {
                             <div className="flex flex-col">
                               <span className={cn(tokens.body.emphasis, "line-clamp-1")}>{item.title}</span>
                               <span className="text-xs text-muted-foreground">
-                                For {item.teamMember?.display_name || item.teamMember?.full_name || 'Team Member'}
+                                For {item.teamMember?.display_name || item.teamMember?.full_name || 'Team Member')}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -415,7 +415,7 @@ export default function ScheduleMeeting() {
                                   isOverdue ? "text-destructive" : "text-muted-foreground"
                                 )}>
                                   {isOverdue && <AlertCircle className="w-3 h-3" />}
-                                  {formatDate(new Date(item.due_date), 'MMM d'}
+                                  {formatDate(new Date(item.due_date), 'MMM d')}
                                 </span>
                               )}
                               {item.priority === 'high' && (
@@ -433,7 +433,7 @@ export default function ScheduleMeeting() {
                        description="Commitments from coaching sessions will appear here"
                      />
                   )}
-                  <Link to={dashPath('/schedule-meeting/commitments'}>
+                  <Link to={dashPath('/schedule-meeting/commitments')}>
                     <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Commitments <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>

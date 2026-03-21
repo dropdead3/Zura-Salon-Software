@@ -158,7 +158,7 @@ export function StaffCommissionTable({ stylistData, isLoading }: StaffCommission
               {rows.map((row, idx) => {
                 const isTop = idx === 0 && row.commission.totalCommission > 0;
                 return (
-                  <TableRow key={row.user_id} className={cn(isTop && 'bg-chart-2/[0.03]'}>
+                  <TableRow key={row.user_id} className={cn(isTop && 'bg-chart-2/[0.03]')}>
                     <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2.5">

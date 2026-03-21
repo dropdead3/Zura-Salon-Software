@@ -128,7 +128,7 @@ export function SmsTemplateEditor({ template, onSave, onCancel, isLoading }: Sms
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg">
-          {template ? 'EDIT TEMPLATE' : 'NEW TEMPLATE'}
+          {template ? 'EDIT TEMPLATE' : 'NEW TEMPLATE')}
         </h3>
         <div className="flex items-center gap-2">
           <Button
@@ -137,7 +137,7 @@ export function SmsTemplateEditor({ template, onSave, onCancel, isLoading }: Sms
             onClick={() => setShowPreview(!showPreview)}
           >
             {showPreview ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-            {showPreview ? 'Edit' : 'Preview'}
+            {showPreview ? 'Edit' : 'Preview')}
           </Button>
         </div>
       </div>
@@ -212,7 +212,7 @@ export function SmsTemplateEditor({ template, onSave, onCancel, isLoading }: Sms
               {segmentInfo.chars} / {segmentInfo.limit} characters
             </span>
             <span className="text-muted-foreground">
-              ({segmentInfo.segments} {segmentInfo.segments === 1 ? 'segment' : 'segments'})
+              ({segmentInfo.segments} {segmentInfo.segments === 1 ? 'segment' : 'segments')})
             </span>
             {segmentInfo.isUnicode && (
               <Badge variant="secondary" className="text-xs">

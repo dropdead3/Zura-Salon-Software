@@ -131,18 +131,18 @@ export function HistoricalComparison({
             )}
             <div className="flex rounded-lg border overflow-hidden">
               <Button
-                variant={period === 'lastMonth' ? 'default' : 'ghost'}
+                variant={period === 'lastMonth' ? 'default' : 'ghost')}
                 size={tokens.button.inline}
                 className="h-7 text-xs rounded-none"
-                onClick={() => setPeriod('lastMonth'}
+                onClick={() => setPeriod('lastMonth')}
               >
                 vs Last Month
               </Button>
               <Button
-                variant={period === 'lastYear' ? 'default' : 'ghost'}
+                variant={period === 'lastYear' ? 'default' : 'ghost')}
                 size={tokens.button.inline}
                 className="h-7 text-xs rounded-none"
-                onClick={() => setPeriod('lastYear'}
+                onClick={() => setPeriod('lastYear')}
               >
                 vs Last Year
               </Button>
@@ -188,7 +188,7 @@ export function HistoricalComparison({
                       <ArrowDownRight className="w-3 h-3" />
                     )}
                     <span>
-                      {isPositive ? '+' : ''}{metric.change.toFixed(1)}%
+                      {isPositive ? '+' : '')}{metric.change.toFixed(1)}%
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">

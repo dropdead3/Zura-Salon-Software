@@ -114,7 +114,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
             <div className="space-y-1">
               <p className="text-sm font-medium">{insurance.insurance_provider}</p>
               <p className="text-xs text-muted-foreground">
-                Policy: {insurance.insurance_policy_number || 'Not provided'}
+                Policy: {insurance.insurance_policy_number || 'Not provided')}
               </p>
             </div>
 
@@ -126,7 +126,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
                   insurance.expiry_status === 'expired' && "text-red-500",
                   insurance.expiry_status === 'expiring_soon' && "text-amber-500"
                 )}>
-                  {formatDate(new Date(insurance.insurance_expiry_date), 'PPP'}
+                  {formatDate(new Date(insurance.insurance_expiry_date), 'PPP')}
                 </span>
                 {insurance.days_until_expiry !== undefined && insurance.days_until_expiry >= 0 && (
                   <span className="text-muted-foreground ml-1">
@@ -142,7 +142,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
                 Verified
                 {insurance.insurance_verified_at && (
                   <span className="text-muted-foreground">
-                    on {formatDate(new Date(insurance.insurance_verified_at), 'PP'}
+                    on {formatDate(new Date(insurance.insurance_verified_at), 'PP')}
                   </span>
                 )}
               </div>
@@ -168,7 +168,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
             <DialogTrigger asChild>
               <Button size={tokens.button.card} variant="outline" onClick={handleEditOpen}>
                 <Edit2 className="h-3 w-3 mr-1" />
-                {insurance?.insurance_provider ? 'Update' : 'Add Insurance'}
+                {insurance?.insurance_provider ? 'Update' : 'Add Insurance')}
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -178,15 +178,15 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Insurance Provider</Label>
-                  <Input {...register('insurance_provider'} placeholder="e.g., State Farm, GEICO" />
+                  <Input {...register('insurance_provider')} placeholder="e.g., State Farm, GEICO" />
                 </div>
                 <div className="space-y-2">
                   <Label>Policy Number</Label>
-                  <Input {...register('insurance_policy_number'} placeholder="Policy number" />
+                  <Input {...register('insurance_policy_number')} placeholder="Policy number" />
                 </div>
                 <div className="space-y-2">
                   <Label>Expiration Date</Label>
-                  <Input type="date" {...register('insurance_expiry_date'} />
+                  <Input type="date" {...register('insurance_expiry_date')} />
                 </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>

@@ -50,13 +50,13 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         <div className="space-y-2">
           <Label className="text-xs">
             {merged.background_type === 'color' ? 'Color' :
-             merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL'}
+             merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL')}
           </Label>
           {merged.background_type === 'color' ? (
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={merged.background_value || '#000000'}
+                value={merged.background_value || '#000000')}
                 onChange={e => update('background_value', e.target.value)}
                 className="h-8 w-10 rounded border cursor-pointer"
               />
@@ -72,7 +72,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
               value={merged.background_value}
               onChange={v => update('background_value', v)}
               label=""
-              pathPrefix={`sections/${sectionId ?? 'bg'}`}
+              pathPrefix={`sections/${sectionId ?? 'bg')}`}
             />
           ) : (
             <Input
@@ -91,7 +91,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         <div className="flex items-center gap-2">
           <input
             type="color"
-            value={merged.text_color_override || '#000000'}
+            value={merged.text_color_override || '#000000')}
             onChange={e => update('text_color_override', e.target.value)}
             className="h-8 w-10 rounded border cursor-pointer"
           />
@@ -106,7 +106,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
               variant="ghost"
               size={tokens.button.inline}
               className="h-8 text-xs"
-              onClick={() => update('text_color_override', ''}
+              onClick={() => update('text_color_override', '')}
             >
               Clear
             </Button>

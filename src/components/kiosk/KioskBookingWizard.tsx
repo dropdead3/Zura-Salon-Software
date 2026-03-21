@@ -152,7 +152,7 @@ export function KioskBookingWizard() {
           const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30min buffer
           if (slotMinutes < currentMinutes) continue;
         }
-        slots.push(`${h.toString().padStart(2, '0'}:${m.toString().padStart(2, '0}`);
+        slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`);
       }
     }
     return slots;
@@ -208,7 +208,7 @@ export function KioskBookingWizard() {
       const endMinutes = (parseInt(selectedTime!.split(':')[0]) * 60 + parseInt(selectedTime!.split(':')[1])) + totalDuration;
       const endH = Math.floor(endMinutes / 60);
       const endM = endMinutes % 60;
-      const endTime = `${endH.toString().padStart(2, '0'}:${endM.toString().padStart(2, '0'}:00`;
+      const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
 
       // Insert into phorest_appointments
       const { error } = await supabase
@@ -259,7 +259,7 @@ export function KioskBookingWizard() {
     const [h, m] = time.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
     const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-    return `${displayH}:${m.toString().padStart(2, '0'} ${ampm}`;
+    return `${displayH}:${m.toString().padStart(2, '0')} ${ampm}`;
   };
 
   // Number pad for phone
@@ -341,10 +341,10 @@ export function KioskBookingWizard() {
           {step === 'services' && (
             <motion.div key="services" className="flex-1 flex flex-col" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
               <h2 className="text-3xl font-medium mb-2 tracking-tight" style={{ color: textColor }}>
-                {selectedCategory ? selectedCategory : 'Select a Service'}
+                {selectedCategory ? selectedCategory : 'Select a Service')}
               </h2>
               <p className="text-lg mb-6" style={{ color: `${textColor}70` }}>
-                {selectedCategory ? 'Choose your services' : 'Pick a category to get started'}
+                {selectedCategory ? 'Choose your services' : 'Pick a category to get started')}
               </p>
 
               {!selectedCategory ? (
@@ -478,7 +478,7 @@ export function KioskBookingWizard() {
             <motion.div key="datetime" className="flex-1 flex flex-col" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
               <h2 className="text-3xl font-medium mb-2 tracking-tight" style={{ color: textColor }}>Pick a Date & Time</h2>
               <p className="text-lg mb-6" style={{ color: `${textColor}70` }}>
-                {allowFuture ? 'Select a date in the next 14 days' : 'Choose a time for today'}
+                {allowFuture ? 'Select a date in the next 14 days' : 'Choose a time for today')}
               </p>
 
               {/* Date picker - horizontal scroll */}
@@ -497,9 +497,9 @@ export function KioskBookingWizard() {
                         onClick={() => { setSelectedDate(date); setSelectedTime(null); }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <div className="text-xs font-medium" style={{ color: `${textColor}60` }}>{format(date, 'EEE'}</div>
-                        <div className="text-2xl font-medium" style={{ color: textColor }}>{format(date, 'd'}</div>
-                        <div className="text-xs" style={{ color: `${textColor}60` }}>{format(date, 'MMM'}</div>
+                        <div className="text-xs font-medium" style={{ color: `${textColor}60` }}>{format(date, 'EEE')}</div>
+                        <div className="text-2xl font-medium" style={{ color: textColor }}>{format(date, 'd')}</div>
+                        <div className="text-xs" style={{ color: `${textColor}60` }}>{format(date, 'MMM')}</div>
                       </motion.button>
                     );
                   })}
@@ -572,7 +572,7 @@ export function KioskBookingWizard() {
                     }}
                     onClick={() => setPhoneInputActive(true)}
                   >
-                    {clientPhone || 'Enter phone number'}
+                    {clientPhone || 'Enter phone number')}
                   </div>
                 </div>
 
@@ -580,7 +580,7 @@ export function KioskBookingWizard() {
                 <div className="grid grid-cols-3 gap-3">
                   {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key) => (
                     <motion.button
-                      key={key || 'empty'}
+                      key={key || 'empty')}
                       className={cn(
                         "h-16 rounded-2xl text-xl font-medium transition-colors backdrop-blur-md",
                         key === '' && 'invisible',
@@ -595,7 +595,7 @@ export function KioskBookingWizard() {
                         else if (key) handlePhoneDigit(key);
                       }}
                       whileTap={{ scale: 0.95 }}
-                      disabled={key === ''}
+                      disabled={key === '')}
                     >
                       {key === 'del' ? '←' : key}
                     </motion.button>
@@ -635,7 +635,7 @@ export function KioskBookingWizard() {
                     <User className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} />
                     <div>
                       <div className="text-sm font-medium" style={{ color: `${textColor}60` }}>Stylist</div>
-                      <div className="text-lg" style={{ color: textColor }}>{selectedStylist?.name || 'First Available'}</div>
+                      <div className="text-lg" style={{ color: textColor }}>{selectedStylist?.name || 'First Available')}</div>
                     </div>
                   </div>
 
@@ -647,7 +647,7 @@ export function KioskBookingWizard() {
                     <div>
                       <div className="text-sm font-medium" style={{ color: `${textColor}60` }}>Date & Time</div>
                       <div className="text-lg" style={{ color: textColor }}>
-                        {format(selectedDate, 'EEEE, MMM d'} at {selectedTime ? formatTimeDisplay(selectedTime) : ''}
+                        {format(selectedDate, 'EEEE, MMM d')} at {selectedTime ? formatTimeDisplay(selectedTime) : '')}
                       </div>
                     </div>
                   </div>
@@ -700,7 +700,7 @@ export function KioskBookingWizard() {
             {/* Selected services summary */}
             {selectedServices.length > 0 && step !== 'services' && (
               <div className="flex items-center gap-2" style={{ color: `${textColor}70` }}>
-                <span className="text-sm">{selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}</span>
+                <span className="text-sm">{selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}</span>
                 <span className="text-sm">• {totalDuration} min</span>
                 {totalPrice > 0 && <span className="text-sm font-medium" style={{ color: accentColor }}>{formatPrice(totalPrice)}</span>}
               </div>

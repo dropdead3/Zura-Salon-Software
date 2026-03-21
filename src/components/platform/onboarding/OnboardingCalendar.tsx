@@ -227,7 +227,7 @@ export function OnboardingCalendar({ organizations, billingData }: OnboardingCal
           <div className="lg:col-span-2">
             <div className="text-center mb-4">
               <h3 className="text-lg font-medium text-white">
-                {format(selectedMonth, 'MMMM yyyy'}
+                {format(selectedMonth, 'MMMM yyyy')}
               </h3>
             </div>
             <Calendar
@@ -388,7 +388,7 @@ export function OnboardingCalendar({ organizations, billingData }: OnboardingCal
                               {event.organizationName}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {format(event.date, 'MMM d'} • {config.label}
+                              {format(event.date, 'MMM d')} • {config.label}
                             </p>
                           </div>
                         </button>

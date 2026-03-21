@@ -353,18 +353,18 @@ export default function Changelog() {
             <div className="flex items-center gap-2">
               <div className="flex rounded-lg border bg-muted p-1">
                 <Button
-                  variant={activeTab === 'list' ? 'secondary' : 'ghost'}
+                  variant={activeTab === 'list' ? 'secondary' : 'ghost')}
                   size={tokens.button.card}
-                  onClick={() => setActiveTab('list'}
+                  onClick={() => setActiveTab('list')}
                   className="gap-1.5 text-xs sm:text-sm"
                 >
                   <LayoutList className="h-4 w-4" />
                   <span className="hidden sm:inline">List</span>
                 </Button>
                 <Button
-                  variant={activeTab === 'timeline' ? 'secondary' : 'ghost'}
+                  variant={activeTab === 'timeline' ? 'secondary' : 'ghost')}
                   size={tokens.button.card}
-                  onClick={() => setActiveTab('timeline'}
+                  onClick={() => setActiveTab('timeline')}
                   className="gap-1.5 text-xs sm:text-sm"
                 >
                   <GitBranch className="h-4 w-4" />
@@ -389,7 +389,7 @@ export default function Changelog() {
             <section>
               <h2 className="text-base sm:text-lg font-medium mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                {hasActiveFilters ? 'Search Results' : 'Recent Updates'}
+                {hasActiveFilters ? 'Search Results' : 'Recent Updates')}
                 {hasActiveFilters && (
                   <span className="text-sm font-normal text-muted-foreground">
                     ({recentUpdates.length} updates)
@@ -401,7 +401,7 @@ export default function Changelog() {
               ) : recentUpdates.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
-                    {hasActiveFilters ? 'No updates match your filters.' : 'No updates yet. Check back soon!'}
+                    {hasActiveFilters ? 'No updates match your filters.' : 'No updates yet. Check back soon!')}
                   </CardContent>
                 </Card>
               ) : isMobile ? (

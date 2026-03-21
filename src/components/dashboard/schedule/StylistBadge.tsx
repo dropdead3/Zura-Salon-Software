@@ -43,9 +43,9 @@ export function StylistBadge({ stylistProfile, assistantNames, assistantProfiles
         <div className={cn('z-10 shrink-0 flex items-center -space-x-1', className)}>
           {/* Stylist avatar */}
           {stylistProfile.photo_url ? (
-            <Avatar className={cn(dim, 'ring-1 ring-background'}>
+            <Avatar className={cn(dim, 'ring-1 ring-background')}>
               <AvatarImage src={stylistProfile.photo_url} />
-              <AvatarFallback className={cn(textSize, 'bg-muted/80'}>
+              <AvatarFallback className={cn(textSize, 'bg-muted/80')}>
                 {getStylistInitials(stylistProfile)}
               </AvatarFallback>
             </Avatar>
@@ -62,9 +62,9 @@ export function StylistBadge({ stylistProfile, assistantNames, assistantProfiles
           {/* Assistant avatars */}
           {assistantProfiles?.map((assistant, i) => (
             assistant.photo_url ? (
-              <Avatar key={i} className={cn(assistantDim, 'ring-1 ring-background'}>
+              <Avatar key={i} className={cn(assistantDim, 'ring-1 ring-background')}>
                 <AvatarImage src={assistant.photo_url} />
-                <AvatarFallback className={cn(assistantTextSize, 'bg-muted/80'}>
+                <AvatarFallback className={cn(assistantTextSize, 'bg-muted/80')}>
                   {getStylistInitials(assistant)}
                 </AvatarFallback>
               </Avatar>
@@ -90,7 +90,7 @@ export function StylistBadge({ stylistProfile, assistantNames, assistantProfiles
           {assistantNames && assistantNames.length > 0 && (
             <div className="flex items-center gap-1.5 opacity-80">
               <Users className="h-3 w-3 shrink-0" />
-              <span>w/ {assistantNames.join(', '}</span>
+              <span>w/ {assistantNames.join(', ')}</span>
             </div>
           )}
         </div>

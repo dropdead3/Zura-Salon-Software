@@ -312,7 +312,7 @@ export function PhorestApiHealthDashboard() {
                     <p className="font-medium truncate">
                       {endpoint.lastSuccess 
                         ? formatDistanceToNow(endpoint.lastSuccess, { addSuffix: true })
-                        : 'Never'}
+                        : 'Never')}
                     </p>
                   </div>
                   <div>
@@ -373,13 +373,13 @@ export function PhorestApiHealthDashboard() {
                         {formatDistanceToNow(new Date(failure.started_at), { addSuffix: true })}
                       </TooltipTrigger>
                       <TooltipContent>
-                        {formatDate(new Date(failure.started_at), 'PPpp'}
+                        {formatDate(new Date(failure.started_at), 'PPpp')}
                       </TooltipContent>
                     </Tooltip>
                   </TableCell>
                   <TableCell className="max-w-[300px]">
                     <p className="text-sm text-destructive truncate">
-                      {failure.error_message || 'Unknown error'}
+                      {failure.error_message || 'Unknown error')}
                     </p>
                   </TableCell>
                 </TableRow>

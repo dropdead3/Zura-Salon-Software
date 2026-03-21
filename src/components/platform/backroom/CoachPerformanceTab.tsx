@@ -25,7 +25,7 @@ function DeltaBadge({ value, invertColor = false }: { value: number | null; inve
       isGood ? 'text-emerald-400' : value === 0 ? 'text-muted-foreground' : 'text-rose-400'
     )}>
       {isPositive ? <TrendingUp className="w-3 h-3" /> : value < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-      {value > 0 ? '+' : ''}{(value * 100).toFixed(1)}%
+      {value > 0 ? '+' : '')}{(value * 100).toFixed(1)}%
     </span>
   );
 }
@@ -69,12 +69,12 @@ export function CoachPerformanceTab() {
           <TableHeader>
             <TableRow>
               <TableHead className={tokens.table.columnHeader}>Coach</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Assigned Orgs</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Emails (30d)</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Assigned Orgs</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Emails (30d)</TableHead>
               <TableHead className={tokens.table.columnHeader}>Waste Trend</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Waste Δ</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Waste Δ</TableHead>
               <TableHead className={tokens.table.columnHeader}>Reweigh Trend</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Reweigh Δ</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Reweigh Δ</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

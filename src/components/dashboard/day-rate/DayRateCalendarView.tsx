@@ -160,7 +160,7 @@ export function DayRateCalendarView() {
                     !isCurrentMonth && "text-muted-foreground",
                     isToday && "font-medium text-primary"
                   )}>
-                    {format(day, 'd'}
+                    {format(day, 'd')}
                   </div>
 
                   <div className="space-y-1">
@@ -198,7 +198,7 @@ export function DayRateCalendarView() {
           <div key={status} className="flex items-center gap-2">
             <div className={cn("w-3 h-3 rounded border", color)} />
             <span className="text-xs text-muted-foreground capitalize">
-              {status.replace('_', ' '}
+              {status.replace('_', ' ')}
             </span>
           </div>
         ))}
@@ -207,7 +207,7 @@ export function DayRateCalendarView() {
       {/* Booking Detail Sheet */}
       <BookingDetailSheet
         booking={selectedBooking}
-        locationName={selectedBooking ? getLocationName(selectedBooking.location_id) : ''}
+        locationName={selectedBooking ? getLocationName(selectedBooking.location_id) : '')}
         onClose={() => setSelectedBooking(null)}
       />
     </div>

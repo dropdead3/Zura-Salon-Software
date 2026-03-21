@@ -68,7 +68,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
       // Filter by location if user doesn't have full access
       if (!canViewAllLocations && assignedLocationIds.length > 0) {
         // Show company-wide (null) OR user's assigned locations
-        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(','})`);
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
       }
 
       const { data, error } = await query
@@ -170,7 +170,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground/60 text-[10px]">
-                  {formatDate(new Date(announcement.created_at), 'MMM d'}
+                  {formatDate(new Date(announcement.created_at), 'MMM d')}
                 </span>
                 {announcement.link_url && announcement.link_label && (
                   <a
@@ -190,7 +190,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
 
           {/* View all link */}
           <Link
-            to={dashPath('/admin/announcements'}
+            to={dashPath('/admin/announcements')}
             onClick={onNavClick}
             className="block text-center text-xs text-muted-foreground hover:text-foreground py-2 transition-colors"
           >

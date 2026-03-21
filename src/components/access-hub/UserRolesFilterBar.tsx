@@ -154,7 +154,7 @@ export function UserRolesFilterBar({
 
       {/* Unassigned Toggle */}
       <Button
-        variant={showUnassigned ? 'default' : 'outline'}
+        variant={showUnassigned ? 'default' : 'outline')}
         size="sm"
         className={cn(
           "h-9 gap-1.5 text-sm font-normal",
@@ -169,7 +169,7 @@ export function UserRolesFilterBar({
       {/* View Toggle */}
       <div className="flex items-center border border-border rounded-full overflow-hidden ml-auto">
         <button
-          onClick={() => onViewModeChange('card'}
+          onClick={() => onViewModeChange('card')}
           className={cn(
             "p-2 transition-colors",
             viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
@@ -179,7 +179,7 @@ export function UserRolesFilterBar({
           <LayoutGrid className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onViewModeChange('table'}
+          onClick={() => onViewModeChange('table')}
           className={cn(
             "p-2 transition-colors",
             viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'

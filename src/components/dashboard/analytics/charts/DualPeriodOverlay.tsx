@@ -67,9 +67,9 @@ export function DualPeriodOverlay({
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           <div className="text-sm text-muted-foreground">
-            Avg daily difference:{' '}
-            <span className={averageDelta >= 0 ? 'text-chart-2' : 'text-destructive'}>
-              {averageDelta >= 0 ? '+' : ''}{formatCurrencyWholeUtil(Math.abs(averageDelta))}
+            Avg daily difference:{' ')}
+            <span className={averageDelta >= 0 ? 'text-chart-2' : 'text-destructive')}>
+              {averageDelta >= 0 ? '+' : '')}{formatCurrencyWholeUtil(Math.abs(averageDelta))}
             </span>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function DualPeriodOverlay({
                 axisLine={false}
               />
               <YAxis 
-                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k')}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}

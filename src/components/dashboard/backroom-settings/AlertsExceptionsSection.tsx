@@ -178,14 +178,14 @@ export function AlertsExceptionsSection() {
                   {NOTIFY_ROLE_OPTIONS.map(role => (
                     <Badge
                       key={role}
-                      variant={form.notify_roles.includes(role) ? 'default' : 'outline'}
+                      variant={form.notify_roles.includes(role) ? 'default' : 'outline')}
                       className="cursor-pointer"
                       onClick={() => {
                         const next = form.notify_roles.includes(role) ? form.notify_roles.filter(r => r !== role) : [...form.notify_roles, role];
                         setForm(f => ({ ...f, notify_roles: next }));
                       }}
                     >
-                      {role.replace('_', ' '}
+                      {role.replace('_', ' ')}
                     </Badge>
                   ))}
                 </div>
@@ -214,15 +214,15 @@ export function AlertsExceptionsSection() {
                   <div className="flex items-center gap-3 flex-1">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={cn(tokens.body.emphasis, 'text-foreground'}>{ruleType?.label || rule.rule_type}</p>
+                        <p className={cn(tokens.body.emphasis, 'text-foreground')}>{ruleType?.label || rule.rule_type}</p>
                         <Badge variant={severityVariant(rule.severity)}>{rule.severity}</Badge>
                         {!rule.is_active && <Badge variant="outline">Disabled</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Threshold: {rule.threshold_value}{rule.threshold_unit}
-                        {rule.creates_exception && ' · Creates exception'}
-                        {rule.creates_task && ' · Creates task'}
-                        {rule.notify_roles.length > 0 && ` · Notifies: ${rule.notify_roles.join(', '}`}
+                        {rule.creates_exception && ' · Creates exception')}
+                        {rule.creates_task && ' · Creates task')}
+                        {rule.notify_roles.length > 0 && ` · Notifies: ${rule.notify_roles.join(', ')}`}
                       </p>
                     </div>
                   </div>

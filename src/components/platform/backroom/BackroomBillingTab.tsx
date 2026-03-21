@@ -56,7 +56,7 @@ function BillingKPICard({
             'w-10 h-10 rounded-lg flex items-center justify-center',
             variant === 'danger' ? 'bg-red-500/10' : 'bg-[hsl(var(--platform-bg-hover))]'
           )}>
-            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]'} />
+            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]')} />
           </div>
         </div>
       </PlatformCardContent>
@@ -126,15 +126,15 @@ export function BackroomBillingTab() {
           icon={AlertTriangle}
           label="Past Due"
           value={String(metrics.totalPastDueOrgs)}
-          subtitle={metrics.totalPastDueOrgs > 0 ? 'Needs attention' : 'All clear'}
-          variant={metrics.totalPastDueOrgs > 0 ? 'danger' : 'default'}
+          subtitle={metrics.totalPastDueOrgs > 0 ? 'Needs attention' : 'All clear')}
+          variant={metrics.totalPastDueOrgs > 0 ? 'danger' : 'default')}
         />
         <BillingKPICard
           icon={XCircle}
           label="MRR at Risk"
           value={`$${metrics.mrrAtRisk.toLocaleString()}`}
           subtitle="Past-due organizations"
-          variant={metrics.mrrAtRisk > 0 ? 'danger' : 'default'}
+          variant={metrics.mrrAtRisk > 0 ? 'danger' : 'default')}
         />
       </div>
 
@@ -168,13 +168,13 @@ export function BackroomBillingTab() {
         </PlatformCardHeader>
         <PlatformCardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className={cn(tokens.empty.container, 'py-16'}>
+            <div className={cn(tokens.empty.container, 'py-16')}>
               <Building2 className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>
-                {showAtRiskOnly ? 'No at-risk organizations' : 'No organizations found'}
+                {showAtRiskOnly ? 'No at-risk organizations' : 'No organizations found')}
               </h3>
               <p className={tokens.empty.description}>
-                {showAtRiskOnly ? 'All billing is healthy.' : 'Try adjusting your search.'}
+                {showAtRiskOnly ? 'All billing is healthy.' : 'Try adjusting your search.')}
               </p>
             </div>
           ) : (

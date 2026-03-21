@@ -272,7 +272,7 @@ export function CheckoutSummarySheet({
     y += 6;
 
     // Client and stylist
-    doc.text(`Client: ${appointment.client_name || 'Walk-in'}`, margin, y);
+    doc.text(`Client: ${appointment.client_name || 'Walk-in')}`, margin, y);
     y += 4;
     doc.text(`Stylist: ${stylistName}`, margin, y);
     y += 6;
@@ -421,7 +421,7 @@ export function CheckoutSummarySheet({
             <h3 className="text-sm font-medium text-muted-foreground">Client</h3>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <p className="font-medium text-lg">
-                {appointment.client_name || 'Walk-in'}
+                {appointment.client_name || 'Walk-in')}
               </p>
               {appointment.client_phone && (
                 <div className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export function CheckoutSummarySheet({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service</span>
                 <span className="font-medium text-right max-w-[60%]">
-                  {appointment.service_name || 'Service'}
+                  {appointment.service_name || 'Service')}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -528,7 +528,7 @@ export function CheckoutSummarySheet({
                 <div className="space-y-1.5">
                   {productCostCharges.map((charge, idx) => (
                     <div key={idx} className="flex items-center justify-between text-sm">
-                      <span>{charge.service_name ?? 'Product'}</span>
+                      <span>{charge.service_name ?? 'Product')}</span>
                       <span className="font-medium tabular-nums">{formatCurrency(charge.charge_amount)}</span>
                     </div>
                   ))}
@@ -624,7 +624,7 @@ export function CheckoutSummarySheet({
                       }
                     }}
                     onScheduleManually={handleScheduleNextClick}
-                    onDecline={() => setGatePhase('declining'}
+                    onDecline={() => setGatePhase('declining')}
                   />
                 )}
 
@@ -652,7 +652,7 @@ export function CheckoutSummarySheet({
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button variant="ghost" onClick={() => setGatePhase('gate'} className="flex-1">
+                      <Button variant="ghost" onClick={() => setGatePhase('gate')} className="flex-1">
                         Back
                       </Button>
                       <Button 

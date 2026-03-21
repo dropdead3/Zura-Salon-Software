@@ -238,7 +238,7 @@ export function ClientRetentionReport({
     if (isCLVReport && retentionData?.clvClients) {
       let csvContent = 'Client,Tier,Annual Value,Lifetime Value,Avg Ticket,Visits/Yr,Total Spend,Last Visit\n';
       retentionData.clvClients.forEach(c => {
-        csvContent += `"${c.name}","${CLV_TIERS[c.tier].label}",${Math.round(c.annualValue)},${Math.round(c.lifetimeValue)},${Math.round(c.avgTicket)},${c.annualFrequency.toFixed(1)},${Math.round(c.totalSpend)},"${c.lastVisit || ''}"\n`;
+        csvContent += `"${c.name}","${CLV_TIERS[c.tier].label}",${Math.round(c.annualValue)},${Math.round(c.lifetimeValue)},${Math.round(c.avgTicket)},${c.annualFrequency.toFixed(1)},${Math.round(c.totalSpend)},"${c.lastVisit || '')}"\n`;
       });
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -254,7 +254,7 @@ export function ClientRetentionReport({
     if (!retentionData?.atRiskClientsList) return;
     let csvContent = 'Client,Last Visit,Days Since,Total Spend\n';
     retentionData.atRiskClientsList.forEach(client => {
-      csvContent += `"${client.name}","${format(new Date(client.lastVisit), 'yyyy-MM-dd'}",${client.daysSinceVisit},${client.totalSpend}\n`;
+      csvContent += `"${client.name}","${format(new Date(client.lastVisit), 'yyyy-MM-dd')}",${client.daysSinceVisit},${client.totalSpend}\n`;
     });
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -473,9 +473,9 @@ export function ClientRetentionReport({
                 {retentionData.atRiskClientsList.slice(0, 10).map((client) => (
                   <TableRow key={client.id}>
                     <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{formatDate(new Date(client.lastVisit), 'MMM d, yyyy'}</TableCell>
+                    <TableCell>{formatDate(new Date(client.lastVisit), 'MMM d, yyyy')}</TableCell>
                     <TableCell className="text-right">
-                      <span className={client.daysSinceVisit > 90 ? 'text-red-500' : 'text-amber-500'}>
+                      <span className={client.daysSinceVisit > 90 ? 'text-red-500' : 'text-amber-500')}>
                         {client.daysSinceVisit} days
                       </span>
                     </TableCell>
@@ -508,7 +508,7 @@ export function ClientRetentionReport({
                 {getReportTitle()}
               </CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} - {formatDate(new Date(dateTo), 'MMM d, yyyy'}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

@@ -121,12 +121,12 @@ export function ManualAssignmentDialog({ request, open, onOpenChange }: ManualAs
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span>
-                {formatDate(parseISO(request.request_date), 'EEEE, MMM d'} • {request.start_time.slice(0, 5)} - {request.end_time.slice(0, 5)}
+                {formatDate(parseISO(request.request_date), 'EEEE, MMM d')} • {request.start_time.slice(0, 5)} - {request.end_time.slice(0, 5)}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{request.locations?.name || 'No location'}</span>
+              <span>{request.locations?.name || 'No location')}</span>
             </div>
             <div className="text-muted-foreground">
               Service: {request.salon_services?.name}
@@ -209,7 +209,7 @@ export function ManualAssignmentDialog({ request, open, onOpenChange }: ManualAs
               onClick={handleAssign} 
               disabled={!selectedAssistantId || isAssigning}
             >
-              {isAssigning ? 'Assigning...' : 'Assign'}
+              {isAssigning ? 'Assigning...' : 'Assign')}
             </Button>
           </div>
         </div>

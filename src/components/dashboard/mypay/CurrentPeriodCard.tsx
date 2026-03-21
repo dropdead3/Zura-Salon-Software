@@ -57,7 +57,7 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
             {(comp.hourlyPay > 0 || comp.salaryPay > 0) && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">
-                  {comp.salaryPay > 0 ? 'Salary' : 'Hourly Pay'}
+                  {comp.salaryPay > 0 ? 'Salary' : 'Hourly Pay')}
                 </span>
                 <BlurredAmount className="text-sm">
                   {formatCurrencyWhole(comp.salaryPay > 0 ? comp.salaryPay : comp.hourlyPay)}

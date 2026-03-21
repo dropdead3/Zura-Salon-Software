@@ -92,8 +92,8 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                       } catch { return day.dayName || day.date; }
                     })()}
                   </DialogTitle>
-                  <DialogDescription className={cn(tokens.body.muted, 'mt-1'}>
-                    {filteredCount} appointment{filteredCount !== 1 ? 's' : ''} · By Provider
+                  <DialogDescription className={cn(tokens.body.muted, 'mt-1')}>
+                    {filteredCount} appointment{filteredCount !== 1 ? 's' : '')} · By Provider
                   </DialogDescription>
                 </div>
                 <LocationSelect
@@ -127,7 +127,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                           />
                           <span className="text-sm font-medium">{group.name}</span>
                           <span className={tokens.body.muted}>
-                            {group.count} appointment{group.count !== 1 ? 's' : ''}
+                            {group.count} appointment{group.count !== 1 ? 's' : '')}
                           </span>
                         </div>
                         <span className="text-sm font-display tabular-nums">
@@ -165,12 +165,12 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                                     <span className="text-muted-foreground">
                                       {formatTime(apt.start_time)}
                                     </span>
-                                    <span className="font-medium truncate">{apt.service_name || 'Service'}</span>
+                                    <span className="font-medium truncate">{apt.service_name || 'Service')}</span>
                                   </div>
                                   <div className="flex items-center gap-3 shrink-0">
                                     <span className="text-muted-foreground flex items-center gap-1">
                                       <User className="w-3 h-3" />
-                                      {apt.client_name || 'Walk-in'}
+                                      {apt.client_name || 'Walk-in')}
                                     </span>
                                     <span className="font-display tabular-nums">
                                       {formatCurrencyWhole(Number(apt.total_price) || 0)}

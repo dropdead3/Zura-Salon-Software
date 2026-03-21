@@ -68,7 +68,7 @@ export function LevelPricingContent({ serviceId, basePrice, onSaved }: LevelPric
       <div className="space-y-3 max-h-[40vh] overflow-y-auto p-1">
         {activeLevels.map(level => (
           <div key={level.id} className="flex items-center gap-3">
-            <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate'}>
+            <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate')}>
               {level.label}
             </Label>
             <div className="relative flex-1">
@@ -79,7 +79,7 @@ export function LevelPricingContent({ serviceId, basePrice, onSaved }: LevelPric
                 min="0"
                 className="pl-7 rounded-lg"
                 placeholder="0.00"
-                value={prices[level.id] || ''}
+                value={prices[level.id] || '')}
                 onChange={e => setPrices(prev => ({ ...prev, [level.id]: e.target.value }))}
                 autoCapitalize="off"
               />
@@ -87,7 +87,7 @@ export function LevelPricingContent({ serviceId, basePrice, onSaved }: LevelPric
           </div>
         ))}
         {activeLevels.length === 0 && (
-          <p className={cn(tokens.body.muted, 'text-center py-4'}>No stylist levels configured yet.</p>
+          <p className={cn(tokens.body.muted, 'text-center py-4')}>No stylist levels configured yet.</p>
         )}
       </div>
       <div className="flex justify-end">

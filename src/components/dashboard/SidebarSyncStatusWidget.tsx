@@ -115,7 +115,7 @@ export function SidebarSyncStatusWidget({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to={dashPath('/admin/phorest-settings'}
+            to={dashPath('/admin/phorest-settings')}
             onClick={onNavClick}
             className="flex items-center justify-center py-2 px-2 mx-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
           >
@@ -137,7 +137,7 @@ export function SidebarSyncStatusWidget({
 
   return (
     <Link
-      to={dashPath('/admin/phorest-settings'}
+      to={dashPath('/admin/phorest-settings')}
       onClick={onNavClick}
       className="mx-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors block"
     >

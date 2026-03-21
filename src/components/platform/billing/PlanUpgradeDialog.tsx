@@ -203,7 +203,7 @@ export function PlanUpgradeDialog({
               </PlatformLabel>
               <RadioGroup
                 value={effectiveDate}
-                onValueChange={(v) => setEffectiveDate(v as 'immediately' | 'next_cycle'}
+                onValueChange={(v) => setEffectiveDate(v as 'immediately' | 'next_cycle')}
                 className="grid grid-cols-2 gap-3"
               >
                 <div className={cn(
@@ -279,7 +279,7 @@ export function PlanUpgradeDialog({
             {isLoading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : null}
-            {isUpgrade ? 'Confirm Upgrade' : isDowngrade ? 'Confirm Downgrade' : 'Confirm Change'}
+            {isUpgrade ? 'Confirm Upgrade' : isDowngrade ? 'Confirm Downgrade' : 'Confirm Change')}
           </PlatformButton>
         </DialogFooter>
       </DialogContent>

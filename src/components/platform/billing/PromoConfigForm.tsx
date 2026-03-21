@@ -83,7 +83,7 @@ export function PromoConfigForm({
                 min="1"
                 max="24"
                 placeholder="3"
-                value={promoMonths ?? ''}
+                value={promoMonths ?? '')}
                 onChange={(e) => onPromoMonthsChange(e.target.value ? parseInt(e.target.value) : null)}
               />
             </div>
@@ -98,7 +98,7 @@ export function PromoConfigForm({
                   min="0"
                   step="0.01"
                   placeholder={basePrice.toString()}
-                  value={promoPrice ?? ''}
+                  value={promoPrice ?? '')}
                   onChange={(e) => onPromoPriceChange(e.target.value ? parseFloat(e.target.value) : null)}
                   className="pl-7"
                 />
@@ -111,7 +111,7 @@ export function PromoConfigForm({
             <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/30">
               <p className="text-sm text-violet-300">
                 <span className="font-medium">{formatCurrency(promoPrice)}/mo</span>
-                <span className="text-violet-400"> for first {promoMonths} month{promoMonths > 1 ? 's' : ''}</span>
+                <span className="text-violet-400"> for first {promoMonths} month{promoMonths > 1 ? 's' : '')}</span>
               </p>
               <p className="text-xs text-violet-400/70 mt-1">
                 Then {formatCurrency(basePrice)}/mo regular rate

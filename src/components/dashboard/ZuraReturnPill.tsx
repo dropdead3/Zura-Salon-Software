@@ -26,7 +26,7 @@ export function ZuraReturnPill() {
         >
           <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card shadow-lg pl-1.5 pr-1 py-1">
             <button
-              onClick={() => navigate(dashPath('/'}
+              onClick={() => navigate(dashPath('/')}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-full hover:bg-muted/50 transition-colors"
             >
               <ArrowLeft className="w-3 h-3 text-muted-foreground" />

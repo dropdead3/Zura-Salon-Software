@@ -73,9 +73,9 @@ function getTimeAtCompany(hireDate: string | null): string {
   if (years > 0 && months > 0) {
     return `${years}y ${months}mo`;
   } else if (years > 0) {
-    return `${years} year${years > 1 ? 's' : ''}`;
+    return `${years} year${years > 1 ? 's' : '')}`;
   } else if (months > 0) {
-    return `${months} month${months > 1 ? 's' : ''}`;
+    return `${months} month${months > 1 ? 's' : '')}`;
   }
   return 'New';
 }
@@ -622,7 +622,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         {/* Hours */}
         <CopyableField 
           icon={<Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
-          value={`${hoursDisplay || location.hours || 'Hours not set'}${closedDays ? }` (${closedDays})` : ''}`}
+          value={`${hoursDisplay || location.hours || 'Hours not set')}${closedDays ? }` (${closedDays})` : '')}`}
           label="hours"
         >
           <div className="text-sm space-y-1">
@@ -647,7 +647,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Upcoming Closures</p>
               {upcomingHolidays.map((holiday, idx) => (
                 <p key={idx} className="text-xs text-muted-foreground">
-                  {formatDate(new Date(holiday.date), 'MMM d'} — {holiday.name}
+                  {formatDate(new Date(holiday.date), 'MMM d')} — {holiday.name}
                 </p>
               ))}
             </div>
@@ -683,7 +683,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         {/* Member Count */}
         <div className="pt-3 mt-3 border-t border-border">
           <Badge variant="secondary" className="text-xs">
-            {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+            {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members')}
           </Badge>
         </div>
       </CardContent>
@@ -787,8 +787,8 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
                   {strikeCount > 0 
-                    ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''}`
-                    : 'No active strikes'}
+                    ? `${strikeCount} active strike${strikeCount > 1 ? 's' : '')}`
+                    : 'No active strikes')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -855,7 +855,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="text-xs">
-                          {memberLocations.map(id => getLocationName(id)).join(', '}
+                          {memberLocations.map(id => getLocationName(id)).join(', ')}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -863,7 +863,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   {isStylistOrAssistant && member.stylist_level && (
                     <span className="flex items-center gap-1 font-medium text-foreground/70">
                       <Award className="w-3 h-3" />
-                      {member.stylist_level.replace(' STYLIST', ''}
+                      {member.stylist_level.replace(' STYLIST', '')}
                     </span>
                   )}
                 </div>
@@ -987,7 +987,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <a 
-                        href={`https://instagram.com/${member.instagram.replace('@', ''}`
+                        href={`https://instagram.com/${member.instagram.replace('@', '')}`
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
@@ -1024,7 +1024,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     {isHighlighted && (
                       <Sparkles className="w-2.5 h-2.5" />
                     )}
-                    {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' '}
+                    {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
                   </Badge>
                 );
               })}

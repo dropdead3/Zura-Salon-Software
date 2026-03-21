@@ -32,7 +32,7 @@ export function SupplierScorecard({ metrics }: SupplierScorecardProps) {
                   : 'text-amber-600 border-amber-200 dark:border-amber-800',
               )}>
                 <AlertTriangle className="w-2.5 h-2.5 mr-0.5" />
-                {metrics.riskLevel === 'critical' ? 'High Risk' : 'Moderate Risk'}
+                {metrics.riskLevel === 'critical' ? 'High Risk' : 'Moderate Risk')}
               </Badge>
             )}
             <Badge variant="outline" className={cn('text-xs font-medium', grade.color, grade.border, grade.bg)}>
@@ -53,7 +53,7 @@ export function SupplierScorecard({ metrics }: SupplierScorecardProps) {
           <div className="space-y-0.5">
             <p className="text-[11px] text-muted-foreground">Avg Delivery</p>
             <p className="text-sm font-medium tabular-nums">
-              {metrics.avgLeadTimeDays != null ? `${metrics.avgLeadTimeDays}d` : '—'}
+              {metrics.avgLeadTimeDays != null ? `${metrics.avgLeadTimeDays}d` : '—')}
               {metrics.promisedLeadTimeDays != null && (
                 <span className="text-muted-foreground text-xs"> / {metrics.promisedLeadTimeDays}d promised</span>
               )}
@@ -62,7 +62,7 @@ export function SupplierScorecard({ metrics }: SupplierScorecardProps) {
           <div className="space-y-0.5">
             <p className="text-[11px] text-muted-foreground">On-Time %</p>
             <p className="text-sm font-medium tabular-nums">
-              {metrics.leadTimeAccuracy != null ? `${metrics.leadTimeAccuracy}%` : '—'}
+              {metrics.leadTimeAccuracy != null ? `${metrics.leadTimeAccuracy}%` : '—')}
             </p>
           </div>
           <div className="space-y-0.5">
@@ -72,9 +72,9 @@ export function SupplierScorecard({ metrics }: SupplierScorecardProps) {
               metrics.priceConsistency != null && metrics.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' :
               metrics.priceConsistency != null ? 'text-red-500 dark:text-red-400' : '',
             )}>
-              {metrics.priceConsistency != null ? `${metrics.priceConsistency}%` : '—'}
+              {metrics.priceConsistency != null ? `${metrics.priceConsistency}%` : '—')}
               {metrics.priceChanges > 0 && (
-                <span className="text-muted-foreground text-xs"> ({metrics.priceChanges} change{metrics.priceChanges !== 1 ? 's' : ''})</span>
+                <span className="text-muted-foreground text-xs"> ({metrics.priceChanges} change{metrics.priceChanges !== 1 ? 's' : '')})</span>
               )}
             </p>
           </div>

@@ -74,7 +74,7 @@ function BudgetSettingsEditor({
     return (
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">
-          Budget: <span className="text-foreground font-sans">{currentBudget > 0 ? formatCurrency(currentBudget) : 'Not set'}</span>
+          Budget: <span className="text-foreground font-sans">{currentBudget > 0 ? formatCurrency(currentBudget) : 'Not set')}</span>
           {currentBudget > 0 && (
             <span className="ml-2">· Alert at {currentThreshold}%</span>
           )}
@@ -230,7 +230,7 @@ export function ReorderAnalyticsTab() {
         <KpiCard icon={ShoppingCart} label="Total POs" value={data.totalPOs.toLocaleString()} subtitle="Last 6 months" />
         <KpiCard icon={DollarSign} label="Total Spend" value={formatCurrency(data.totalSpend)} subtitle="Last 6 months" />
         <KpiCard icon={TrendingUp} label="Avg Order Value" value={formatCurrency(data.avgOrderValue)} />
-        <KpiCard icon={Clock} label="Avg Lead Time" value={data.avgLeadTimeDays != null ? `${data.avgLeadTimeDays} days` : '—'} subtitle="Sent to received" />
+        <KpiCard icon={Clock} label="Avg Lead Time" value={data.avgLeadTimeDays != null ? `${data.avgLeadTimeDays} days` : '—')} subtitle="Sent to received" />
       </div>
 
       {/* Budget vs Actual + Settings */}
@@ -280,7 +280,7 @@ export function ReorderAnalyticsTab() {
               />
               {data.trendPct !== 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {data.trendPct > 0 ? '↑' : '↓'} {Math.abs(data.trendPct)}% vs previous month
+                  {data.trendPct > 0 ? '↑' : '↓')} {Math.abs(data.trendPct)}% vs previous month
                 </p>
               )}
             </div>
@@ -415,10 +415,10 @@ export function ReorderAnalyticsTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Orders</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Units</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Spend</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Avg/Unit</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Orders</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Units</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Spend</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Avg/Unit</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -457,10 +457,10 @@ export function ReorderAnalyticsTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>POs</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Lead Time</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>On-Time</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Spend</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>POs</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Lead Time</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>On-Time</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Spend</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -469,14 +469,14 @@ export function ReorderAnalyticsTab() {
                     <TableCell className="text-sm max-w-[180px] truncate">{s.supplierName}</TableCell>
                     <TableCell className="text-right tabular-nums text-sm">{s.poCount}</TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
-                      {s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—'}
+                      {s.avgLeadTimeDays != null ? `${s.avgLeadTimeDays}d` : '—')}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
                       {s.onTimePct > 0 ? (
-                        <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive'}>
+                        <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive')}>
                           {s.onTimePct}%
                         </span>
-                      ) : '—'}
+                      ) : '—')}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">{formatCurrency(s.totalSpend)}</TableCell>
                   </TableRow>

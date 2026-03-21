@@ -207,7 +207,7 @@ export function StaffKPIReport({
                 {getReportTitle()}
               </CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} - {formatDate(new Date(dateTo), 'MMM d, yyyy'}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

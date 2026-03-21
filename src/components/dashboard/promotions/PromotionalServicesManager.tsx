@@ -122,10 +122,10 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                   const isExpiredOrDeactivated = ps.deactivated_at || isPast(new Date(ps.expires_at));
                   
                   return (
-                    <TableRow key={ps.id} className={isExpiredOrDeactivated ? 'opacity-60' : ''}>
+                    <TableRow key={ps.id} className={isExpiredOrDeactivated ? 'opacity-60' : '')}>
                       <TableCell>
                         <div className="font-medium">
-                          {ps.service?.name || 'Unknown Service'}
+                          {ps.service?.name || 'Unknown Service')}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -138,7 +138,7 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                           <span className="line-through text-muted-foreground">
                             {formatCurrency(ps.original_price)}
                           </span>
-                        ) : '—'}
+                        ) : '—')}
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-primary">
@@ -148,7 +148,7 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          {formatDate(new Date(ps.expires_at), 'MMM d, yyyy'}
+                          {formatDate(new Date(ps.expires_at), 'MMM d, yyyy')}
                         </div>
                       </TableCell>
                       <TableCell>

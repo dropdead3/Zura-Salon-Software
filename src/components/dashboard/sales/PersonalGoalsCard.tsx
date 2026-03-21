@@ -193,7 +193,7 @@ export function PersonalGoalsCard({
         ) : (
           <div className="space-y-4">
             {/* Two-column view: Service | Retail */}
-            <div className={cn('grid gap-6', (hasServiceGoals || hasRetailGoals) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}>
+            <div className={cn('grid gap-6', (hasServiceGoals || hasRetailGoals) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1')}>
               {/* Service Goals */}
               {hasServiceGoals && (
                 <div className="space-y-3">
@@ -207,7 +207,7 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(monthlyProgress, 100)}
-                      className={cn('h-2', monthlyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground'}
+                      className={cn('h-2', monthlyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
                     {monthlyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
@@ -220,7 +220,7 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(weeklyProgress, 100)}
-                      className={cn('h-2', weeklyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground'}
+                      className={cn('h-2', weeklyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
                     {weeklyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
@@ -243,7 +243,7 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(retailMonthlyProgress, 100)}
-                      className={cn('h-2', retailMonthlyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground'}
+                      className={cn('h-2', retailMonthlyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
                     {retailMonthlyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>
@@ -256,7 +256,7 @@ export function PersonalGoalsCard({
                     </div>
                     <Progress
                       value={Math.min(retailWeeklyProgress, 100)}
-                      className={cn('h-2', retailWeeklyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground'}
+                      className={cn('h-2', retailWeeklyProgress >= 100 && 'bg-success/20 [&>div]:bg-success-foreground')}
                     />
                     {retailWeeklyProgress >= 100 && <p className="text-xs text-success-foreground font-medium">🎉 Goal achieved!</p>}
                   </div>

@@ -74,7 +74,7 @@ export function OnboardingTasksConfigPanel({ selectedRole }: OnboardingTasksConf
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`font-sans text-sm ${!isVisible ? 'text-muted-foreground' : ''}`}>
+                    <span className={`font-sans text-sm ${!isVisible ? 'text-muted-foreground' : '')}`}>
                       {task.title}
                     </span>
                     {!task.is_active && (

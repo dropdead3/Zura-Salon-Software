@@ -175,7 +175,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                                 {/* Vote button for coming soon */}
                                 {isComingSoon && (
                                   <Button
-                                    variant={entry.user_voted ? 'default' : 'outline'}
+                                    variant={entry.user_voted ? 'default' : 'outline')}
                                     size={tokens.button.card}
                                     className="mt-3 gap-2"
                                     onClick={(e) => {
@@ -185,7 +185,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                                   >
                                     <ChevronUp className="h-4 w-4" />
                                     <span className="font-medium">{entry.vote_count || 0}</span>
-                                    <span>{entry.user_voted ? 'Voted' : 'Vote'}</span>
+                                    <span>{entry.user_voted ? 'Voted' : 'Vote')}</span>
                                   </Button>
                                 )}
                               </div>

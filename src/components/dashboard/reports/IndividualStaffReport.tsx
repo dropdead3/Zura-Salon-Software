@@ -68,10 +68,10 @@ function TrendIndicator({ values }: { values: [number, number, number] }) {
   return (
     <div className="flex items-center gap-1 text-xs">
       <span className="text-muted-foreground tabular-nums">{Math.round(prev2)}</span>
-      <span className="text-muted-foreground">{'\u2192'}</span>
+      <span className="text-muted-foreground">{'\u2192')}</span>
       <span className="text-muted-foreground tabular-nums">{Math.round(prev1)}</span>
-      <span className="text-muted-foreground">{'\u2192'}</span>
-      <span className={cn('font-medium tabular-nums', improving ? 'text-emerald-600 dark:text-emerald-400' : declining ? 'text-red-500 dark:text-red-400' : 'text-foreground'}>
+      <span className="text-muted-foreground">{'\u2192')}</span>
+      <span className={cn('font-medium tabular-nums', improving ? 'text-emerald-600 dark:text-emerald-400' : declining ? 'text-red-500 dark:text-red-400' : 'text-foreground')}>
         {Math.round(current)}
       </span>
       {improving && <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />}
@@ -235,7 +235,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
     data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
     csv += '\nTop Clients\nClient,Visits,Revenue,Avg Ticket,Last Visit,Status\n';
-    data.topClients.forEach(c => { csv += `"${c.name}",${c.visits},${c.revenue},${c.avgTicket},${c.lastVisit},${c.atRisk ? 'At Risk' : 'Active'}\n`; });
+    data.topClients.forEach(c => { csv += `"${c.name}",${c.visits},${c.revenue},${c.avgTicket},${c.lastVisit},${c.atRisk ? 'At Risk' : 'Active')}\n`; });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -314,7 +314,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   <div className="flex items-center gap-2">
                     <Avatar className="w-5 h-5">
                       <AvatarImage src={member.photo_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{getInitials(member.display_name || member.full_name || '?'}</AvatarFallback>
+                      <AvatarFallback className="text-[8px]">{getInitials(member.display_name || member.full_name || '?')}</AvatarFallback>
                     </Avatar>
                     {member.display_name || member.full_name}
                   </div>
@@ -372,7 +372,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
                     {data.profile.role && <Badge variant="outline" className="capitalize text-xs">{data.profile.role}</Badge>}
                     {data.profile.locationName && <span className="text-xs text-muted-foreground">{data.profile.locationName}</span>}
-                    {data.profile.hireDate && <span className="text-xs text-muted-foreground">Hired {formatDate(new Date(data.profile.hireDate), 'MMM yyyy'}</span>}
+                    {data.profile.hireDate && <span className="text-xs text-muted-foreground">Hired {formatDate(new Date(data.profile.hireDate), 'MMM yyyy')}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -403,8 +403,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <div className="flex items-end gap-2">
                       <span className="text-xl font-display tabular-nums"><BlurredAmount>{kpi.value}</BlurredAmount></span>
                       {kpi.change !== null && kpi.change !== undefined && (
-                        <span className={cn('text-xs font-medium tabular-nums', kpi.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
-                          {kpi.change >= 0 ? '+' : ''}{Math.round(kpi.change)}%
+                        <span className={cn('text-xs font-medium tabular-nums', kpi.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
+                          {kpi.change >= 0 ? '+' : '')}{Math.round(kpi.change)}%
                         </span>
                       )}
                     </div>
@@ -598,7 +598,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   </TableHeader>
                   <TableBody>
                     {data.topClients.map(c => (
-                      <TableRow key={c.clientId} className={cn(c.atRisk && 'bg-red-50/50 dark:bg-red-950/10'}>
+                      <TableRow key={c.clientId} className={cn(c.atRisk && 'bg-red-50/50 dark:bg-red-950/10')}>
                         <TableCell className="font-medium">{c.name}</TableCell>
                         <TableCell className="text-right tabular-nums">{c.visits}</TableCell>
                         <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(c.revenue)}</BlurredAmount></TableCell>
@@ -678,7 +678,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Missed</p>
-                    <p className={cn('text-xl font-display tabular-nums', data.backroomCompliance.missed > 0 && 'text-destructive'}>{data.backroomCompliance.missed}</p>
+                    <p className={cn('text-xl font-display tabular-nums', data.backroomCompliance.missed > 0 && 'text-destructive')}>{data.backroomCompliance.missed}</p>
                   </div>
                 </div>
               </CardContent>

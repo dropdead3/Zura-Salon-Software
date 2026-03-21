@@ -44,11 +44,11 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   };
 
   if (view === 'my-stats') {
-    return <DockMyStatsPanel staff={staff} onBack={() => setView('main'} />;
+    return <DockMyStatsPanel staff={staff} onBack={() => setView('main')} />;
   }
 
   if (view === 'team-compliance') {
-    return <DockTeamCompliancePanel staff={staff} onBack={() => setView('main'} />;
+    return <DockTeamCompliancePanel staff={staff} onBack={() => setView('main')} />;
   }
 
   return (
@@ -74,7 +74,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
 
       {/* My Stats card */}
       <button
-        onClick={() => setView('my-stats'}
+        onClick={() => setView('my-stats')}
         className="mt-4 flex items-center gap-3 w-full p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors text-left"
       >
         <div className="w-10 h-10 rounded-xl bg-violet-600/15 flex items-center justify-center">
@@ -93,7 +93,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
 
       {/* Team Compliance card */}
       <button
-        onClick={() => setView('team-compliance'}
+        onClick={() => setView('team-compliance')}
         className="mt-3 flex items-center gap-3 w-full p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] transition-colors text-left"
       >
         <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">

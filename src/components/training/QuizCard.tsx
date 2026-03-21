@@ -133,18 +133,18 @@ export function QuizCard({
           </div>
 
           <h3 className="text-2xl font-medium mb-2">
-            {passed ? 'Congratulations!' : 'Keep Trying!'}
+            {passed ? 'Congratulations!' : 'Keep Trying!')}
           </h3>
 
           <p className="text-muted-foreground mb-4">
-            You scored{' '}
+            You scored{' ')}
             <span className="font-medium text-foreground">{score}%</span> ({correctCount}/
             {totalQuestions} correct)
           </p>
 
           <Badge
-            variant={passed ? 'default' : 'destructive'}
-            className={passed ? 'bg-green-600' : ''}
+            variant={passed ? 'default' : 'destructive')}
+            className={passed ? 'bg-green-600' : '')}
           >
             {passed ? 'PASSED' : `Need ${passingScore}% to pass`}
           </Badge>
@@ -179,7 +179,7 @@ export function QuizCard({
         <p className="text-lg font-medium mb-4">{currentQuestion.question_text}</p>
 
         <RadioGroup
-          value={answers[currentQuestion.id] || ''}
+          value={answers[currentQuestion.id] || '')}
           onValueChange={handleAnswer}
           className="space-y-3"
         >

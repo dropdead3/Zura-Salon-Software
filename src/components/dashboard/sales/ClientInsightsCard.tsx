@@ -132,7 +132,7 @@ export function ClientInsightsCard({
             <CardTitle className="font-display text-lg">Client Insights</CardTitle>
             <MetricInfoTooltip description="Highlights key client metrics including new vs returning breakdown, average ticket size, and visit frequency. Data is sourced from completed appointments." />
           </div>
-          <Link to={dashPath('/my-clients'}>
+          <Link to={dashPath('/my-clients')}>
             <Button variant="ghost" size={tokens.button.inline} className="text-xs">
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -142,7 +142,7 @@ export function ClientInsightsCard({
         {/* Location Filter */}
         {showLocationFilter && clientLocations.length > 1 && onLocationChange && (
           <div className="mt-3">
-            <Select value={locationId || 'all'} onValueChange={onLocationChange}>
+            <Select value={locationId || 'all')} onValueChange={onLocationChange}>
               <SelectTrigger className="w-full h-8 text-xs">
                 <MapPin className="w-3 h-3 mr-1.5 text-muted-foreground" />
                 <SelectValue placeholder="All Locations" />
@@ -218,7 +218,7 @@ export function ClientInsightsCard({
                 <div key={client.id} className="flex items-center justify-between text-xs">
                   <span className="text-destructive">{client.name}</span>
                   <span className="text-destructive/80">
-                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown'}
+                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown')}
                   </span>
                 </div>
               ))}
@@ -230,7 +230,7 @@ export function ClientInsightsCard({
           <p className="text-sm text-muted-foreground text-center py-4">
             {locationId && locationId !== 'all' 
               ? 'No clients at this location.' 
-              : 'No client data available yet. Data syncs from Phorest automatically.'}
+              : 'No client data available yet. Data syncs from Phorest automatically.')}
           </p>
         )}
       </CardContent>

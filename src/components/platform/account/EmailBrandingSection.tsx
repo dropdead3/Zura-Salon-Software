@@ -168,7 +168,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
             <Label htmlFor="email-sender-name">Sender Display Name</Label>
             <Input
               id="email-sender-name"
-              placeholder={branding.name || 'e.g. Luxe Hair Studio'}
+              placeholder={branding.name || 'e.g. Luxe Hair Studio')}
               value={branding.email_sender_name}
               onChange={e => setBranding(prev => ({ ...prev, email_sender_name: e.target.value }))}
             />
@@ -214,7 +214,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
                 disabled={isUploading}
               >
                 {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                {branding.email_logo_url ? 'Replace' : 'Upload'}
+                {branding.email_logo_url ? 'Replace' : 'Upload')}
               </PlatformButton>
               {branding.email_logo_url && (
                 <PlatformButton
@@ -273,7 +273,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
             className="gap-1.5"
           >
             <Eye className="h-4 w-4" />
-            {showPreview ? 'Hide Preview' : 'Show Preview'}
+            {showPreview ? 'Hide Preview' : 'Show Preview')}
           </PlatformButton>
 
           <PlatformButton

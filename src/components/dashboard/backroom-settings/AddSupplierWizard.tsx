@@ -360,7 +360,7 @@ function StepDetails({
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className={cn(tokens.body.emphasis, 'text-foreground text-sm'}>Secondary Contact</p>
+              <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
               <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); update('secondary_contact_name', ''); update('secondary_contact_email', ''); update('secondary_contact_phone', ''); }}>
                 <X className="w-3.5 h-3.5 mr-1" /> Remove
               </Button>
@@ -487,7 +487,7 @@ function StepAssignProducts({
       {/* Mode toggle */}
       <div className="flex gap-1 p-0.5 bg-muted rounded-full w-fit">
         <button
-          onClick={() => onModeChange('brand'}
+          onClick={() => onModeChange('brand')}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
             assignMode === 'brand'
@@ -499,7 +499,7 @@ function StepAssignProducts({
           By Brand
         </button>
         <button
-          onClick={() => onModeChange('product'}
+          onClick={() => onModeChange('product')}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-colors',
             assignMode === 'product'
@@ -512,9 +512,9 @@ function StepAssignProducts({
         </button>
       </div>
 
-      <p className={cn(tokens.body.muted, 'text-xs'}>
-        {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''} selected
-        {assignMode === 'brand' && ' • Check a brand to assign all its products'}
+      <p className={cn(tokens.body.muted, 'text-xs')}>
+        {selectedIds.size} product{selectedIds.size !== 1 ? 's' : '')} selected
+        {assignMode === 'brand' && ' • Check a brand to assign all its products')}
       </p>
 
       {assignMode === 'product' && (
@@ -534,7 +534,7 @@ function StepAssignProducts({
         <div className="p-2 space-y-0.5">
           {assignMode === 'brand' ? (
             brands.length === 0 ? (
-              <p className={cn(tokens.body.muted, 'text-center py-8'}>No products found</p>
+              <p className={cn(tokens.body.muted, 'text-center py-8')}>No products found</p>
             ) : (
               brands.map(({ brand, products }) => {
                 const counts = brandSelectionCounts.get(brand);
@@ -551,7 +551,7 @@ function StepAssignProducts({
                       onCheckedChange={() => onToggleBrand(products)}
                     />
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className={cn(tokens.body.default, 'truncate'}>{brand}</span>
+                      <span className={cn(tokens.body.default, 'truncate')}>{brand}</span>
                       <Badge variant="secondary" className="text-xs shrink-0">
                         {counts?.selected || 0}/{counts?.total || 0}
                       </Badge>
@@ -562,7 +562,7 @@ function StepAssignProducts({
             )
           ) : (
             filteredProducts.length === 0 ? (
-              <p className={cn(tokens.body.muted, 'text-center py-8'}>No products found</p>
+              <p className={cn(tokens.body.muted, 'text-center py-8')}>No products found</p>
             ) : (
               filteredProducts.map(p => (
                 <label
@@ -574,7 +574,7 @@ function StepAssignProducts({
                     onCheckedChange={() => onToggleProduct(p.id)}
                   />
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className={cn(tokens.body.default, 'truncate'}>{p.name}</span>
+                    <span className={cn(tokens.body.default, 'truncate')}>{p.name}</span>
                     {p.brand && <span className="text-muted-foreground text-xs shrink-0">{p.brand}</span>}
                   </div>
                   {p.current_supplier && (
@@ -620,7 +620,7 @@ function StepReview({
       <div className="space-y-2">
         {rows.map(r => (
           <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
-            <span className={cn(tokens.label.default, 'text-muted-foreground'}>{r.label}</span>
+            <span className={cn(tokens.label.default, 'text-muted-foreground')}>{r.label}</span>
             <span className={tokens.body.default}>{r.value}</span>
           </div>
         ))}
@@ -631,11 +631,11 @@ function StepReview({
         <div>
           <p className={tokens.body.default}>
             {selectedCount > 0
-              ? `${selectedCount} product${selectedCount !== 1 ? 's' : ''} will be assigned`
-              : 'No products assigned yet'}
+              ? `${selectedCount} product${selectedCount !== 1 ? 's' : '')} will be assigned`
+              : 'No products assigned yet')}
           </p>
           {selectedCount === 0 && (
-            <p className={cn(tokens.body.muted, 'text-xs'}>
+            <p className={cn(tokens.body.muted, 'text-xs')}>
               You can link products later from the supplier detail panel.
             </p>
           )}
@@ -644,8 +644,8 @@ function StepReview({
 
       {details.reorder_notes && (
         <div className="space-y-1">
-          <span className={cn(tokens.label.default, 'text-muted-foreground'}>Reorder Notes</span>
-          <p className={cn(tokens.body.default, 'text-sm'}>{details.reorder_notes}</p>
+          <span className={cn(tokens.label.default, 'text-muted-foreground')}>Reorder Notes</span>
+          <p className={cn(tokens.body.default, 'text-sm')}>{details.reorder_notes}</p>
         </div>
       )}
     </div>

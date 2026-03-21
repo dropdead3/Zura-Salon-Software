@@ -245,7 +245,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
       >
         <img 
           src={getLogo()} 
-          alt={businessSettings?.business_name || 'Logo'} 
+          alt={businessSettings?.business_name || 'Logo')} 
           className="h-6 w-auto" 
         />
       </motion.div>
@@ -365,7 +365,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
       >
         {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key) => (
           <motion.button
-            key={key || 'empty'}
+            key={key || 'empty')}
             className={`w-16 h-16 rounded-xl text-xl font-medium transition-colors ${
               key === '' 
                 ? 'invisible' 

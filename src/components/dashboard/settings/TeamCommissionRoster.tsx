@@ -118,7 +118,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
     bulkAssign.mutate({ userIds, levelSlug: slug }, {
       onSuccess: () => {
         setSelectedIds(new Set());
-        toast.success(`${userIds.length} stylist${userIds.length > 1 ? 's' : ''} → ${level?.label || slug}`);
+        toast.success(`${userIds.length} stylist${userIds.length > 1 ? 's' : '')} → ${level?.label || slug}`);
       },
     });
   };
@@ -171,7 +171,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
                 variant="ghost"
                 size="sm"
                 className="text-xs"
-                onClick={() => navigate(dashPath('/admin/payroll?tab=commissions'}
+                onClick={() => navigate(dashPath('/admin/payroll?tab=commissions')}
               >
                 <BarChart3 className="h-3.5 w-3.5 mr-1" />
                 View Analytics

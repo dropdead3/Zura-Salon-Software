@@ -181,7 +181,7 @@ export function RoleAccessTab({ canManage }: RoleAccessTabProps) {
                     {selectedRoleData.display_name} Access
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    {selectedRoleData.description || 'Configure what this role can see'}
+                    {selectedRoleData.description || 'Configure what this role can see')}
                   </CardDescription>
                 </div>
               </div>

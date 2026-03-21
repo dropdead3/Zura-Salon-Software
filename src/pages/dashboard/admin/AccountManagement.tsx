@@ -124,7 +124,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           </div>
           <div className="pt-3 text-center max-w-[180px]">
             <p className="text-[8px] text-muted-foreground">
-              Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', ''}</span>
+              Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
             </p>
           </div>
         </div>
@@ -268,7 +268,7 @@ function QRCodeCard() {
               </div>
               <div className="mt-1 text-center max-w-[65px]">
                 <p className="text-[2.5px] text-muted-foreground">
-                  Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', ''}</span>
+                  Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
                 </p>
               </div>
             </div>
@@ -403,7 +403,7 @@ export default function AccountManagement() {
             <Avatar className="h-12 w-12">
               <AvatarImage src={account.photo_url || undefined} />
               <AvatarFallback className="bg-muted text-lg">
-                {account.full_name?.charAt(0)?.toUpperCase() || '?'}
+                {account.full_name?.charAt(0)?.toUpperCase() || '?')}
               </AvatarFallback>
             </Avatar>
 
@@ -422,11 +422,11 @@ export default function AccountManagement() {
                           : "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent"
                       )}>
                         <Crown className="w-3 h-3" />
-                        {account.is_primary_owner ? 'Account Owner' : 'Super Admin'}
+                        {account.is_primary_owner ? 'Account Owner' : 'Super Admin')}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {account.is_primary_owner ? 'Account owner - cannot be revoked' : 'Can approve other admins'}
+                      {account.is_primary_owner ? 'Account owner - cannot be revoked' : 'Can approve other admins')}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -460,7 +460,7 @@ export default function AccountManagement() {
 
               {account.approved_at && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Approved {formatDate(new Date(account.approved_at), 'MMM d, yyyy'}
+                  Approved {formatDate(new Date(account.approved_at), 'MMM d, yyyy')}
                 </p>
               )}
             </div>
@@ -513,13 +513,13 @@ export default function AccountManagement() {
                         className={cn("gap-1", account.is_super_admin && "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600")}
                       >
                         <Crown className="w-3 h-3" />
-                        {account.is_super_admin ? 'Super Admin' : 'Grant Super Admin'}
+                        {account.is_super_admin ? 'Super Admin' : 'Grant Super Admin')}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          {account.is_super_admin ? 'Revoke Super Admin Status?' : 'Grant Super Admin Status?'}
+                          {account.is_super_admin ? 'Revoke Super Admin Status?' : 'Grant Super Admin Status?')}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           {account.is_super_admin 
@@ -533,7 +533,7 @@ export default function AccountManagement() {
                         <AlertDialogAction
                           onClick={() => toggleSuperAdmin.mutate({ userId: account.user_id, grant: !account.is_super_admin })}
                         >
-                          {account.is_super_admin ? 'Revoke' : 'Grant'}
+                          {account.is_super_admin ? 'Revoke' : 'Grant')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -579,7 +579,7 @@ export default function AccountManagement() {
                   <TooltipTrigger asChild>
                     <span className="cursor-help">{formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true })}</span>
                   </TooltipTrigger>
-                  <TooltipContent>{formatDate(new Date(invitation.created_at), 'PPpp'}</TooltipContent>
+                  <TooltipContent>{formatDate(new Date(invitation.created_at), 'PPpp')}</TooltipContent>
                 </Tooltip>
               </div>
 
@@ -590,7 +590,7 @@ export default function AccountManagement() {
               )}
 
               {actualStatus === 'accepted' && invitation.accepted_at && (
-                <p className="text-xs text-green-600 mt-1">Accepted {formatDate(new Date(invitation.accepted_at), 'PPp'}</p>
+                <p className="text-xs text-green-600 mt-1">Accepted {formatDate(new Date(invitation.accepted_at), 'PPp')}</p>
               )}
             </div>
 
@@ -768,7 +768,7 @@ export default function AccountManagement() {
                 ) : filteredInvitations?.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">
-                      {searchQuery ? 'No invitations found matching your search' : 'No invitations yet'}
+                      {searchQuery ? 'No invitations found matching your search' : 'No invitations yet')}
                     </CardContent>
                   </Card>
                 ) : (

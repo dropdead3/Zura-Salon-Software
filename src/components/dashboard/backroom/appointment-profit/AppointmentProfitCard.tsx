@@ -35,7 +35,7 @@ export function AppointmentProfitCard({ data, className }: AppointmentProfitCard
             </div>
             <div>
               <CardTitle className={tokens.card.title}>
-                {data.serviceName ?? 'Service'}
+                {data.serviceName ?? 'Service')}
               </CardTitle>
               <p className={tokens.body.muted}>Profit Breakdown</p>
             </div>
@@ -76,7 +76,7 @@ export function AppointmentProfitCard({ data, className }: AppointmentProfitCard
 
           <div className="border-t border-border pt-3 flex items-center justify-between">
             <span className={tokens.body.emphasis}>Contribution Margin</span>
-            <span className={cn(tokens.stat.large, data.contributionMargin < 0 && 'text-destructive'}>
+            <span className={cn(tokens.stat.large, data.contributionMargin < 0 && 'text-destructive')}>
               {formatCurrency(data.contributionMargin)}
             </span>
           </div>

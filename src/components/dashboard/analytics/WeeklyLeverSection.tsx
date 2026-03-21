@@ -42,8 +42,8 @@ export function WeeklyLeverSection({ onClose }: WeeklyLeverSectionProps) {
               disabled={generateMutation.isPending}
               className="gap-1.5 text-xs h-8"
             >
-              <RefreshCw className={cn('w-3.5 h-3.5', generateMutation.isPending && 'animate-spin'} />
-              {generateMutation.isPending ? 'Generating...' : 'Generate New'}
+              <RefreshCw className={cn('w-3.5 h-3.5', generateMutation.isPending && 'animate-spin')} />
+              {generateMutation.isPending ? 'Generating...' : 'Generate New')}
             </Button>
             {onClose && (
               <button

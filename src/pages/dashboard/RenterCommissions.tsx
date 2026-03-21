@@ -163,10 +163,10 @@ export default function RenterCommissions() {
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {formatDate(new Date(statement.period_start), 'MMM yyyy'}
+                          {formatDate(new Date(statement.period_start), 'MMM yyyy')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {formatDate(new Date(statement.period_start), 'MMM d'} - {formatDate(new Date(statement.period_end), 'MMM d'}
+                          {formatDate(new Date(statement.period_start), 'MMM d')} - {formatDate(new Date(statement.period_end), 'MMM d')}
                         </p>
                       </div>
                     </TableCell>

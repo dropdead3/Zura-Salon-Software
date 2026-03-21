@@ -64,7 +64,7 @@ export function SendAllDraftsDialog({ open, onOpenChange, draftPOs, onComplete }
     onComplete();
 
     if (failCount === 0) {
-      toast.success(`${successCount} PO${successCount !== 1 ? 's' : ''} sent to suppliers`);
+      toast.success(`${successCount} PO${successCount !== 1 ? 's' : '')} sent to suppliers`);
     } else {
       toast.warning(`${successCount} sent, ${failCount} failed`);
     }
@@ -85,7 +85,7 @@ export function SendAllDraftsDialog({ open, onOpenChange, draftPOs, onComplete }
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
               <Mail className="w-4 h-4 text-primary shrink-0" />
               <span className="text-sm font-sans">
-                <span className="font-medium">{sendable.length}</span> PO{sendable.length !== 1 ? 's' : ''} will be emailed to suppliers
+                <span className="font-medium">{sendable.length}</span> PO{sendable.length !== 1 ? 's' : '')} will be emailed to suppliers
               </span>
             </div>
           )}
@@ -94,7 +94,7 @@ export function SendAllDraftsDialog({ open, onOpenChange, draftPOs, onComplete }
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/5 border border-warning/20">
               <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
               <span className="text-sm font-sans text-muted-foreground">
-                <span className="font-medium text-foreground">{skipped.length}</span> PO{skipped.length !== 1 ? 's' : ''} skipped — no supplier email
+                <span className="font-medium text-foreground">{skipped.length}</span> PO{skipped.length !== 1 ? 's' : '')} skipped — no supplier email
               </span>
             </div>
           )}
@@ -123,7 +123,7 @@ export function SendAllDraftsDialog({ open, onOpenChange, draftPOs, onComplete }
             ) : (
               <>
                 <Mail className="w-4 h-4 mr-1.5" />
-                Send {sendable.length} PO{sendable.length !== 1 ? 's' : ''}
+                Send {sendable.length} PO{sendable.length !== 1 ? 's' : '')}
               </>
             )}
           </Button>

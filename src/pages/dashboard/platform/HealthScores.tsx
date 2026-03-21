@@ -84,7 +84,7 @@ export default function HealthScores() {
             onClick={handleRecalculate}
             disabled={recalculate.isPending}
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', recalculate.isPending && 'animate-spin'} />
+            <RefreshCw className={cn('h-4 w-4 mr-2', recalculate.isPending && 'animate-spin')} />
             Recalculate
           </PlatformButton>
         }
@@ -264,7 +264,7 @@ export default function HealthScores() {
                     onClick={() => navigate(`/dashboard/platform/accounts/${score.organization_id}?tab=health`)}
                   >
                     <TableCell className="font-medium text-white">
-                      {score.organization?.name || 'Unknown'}
+                      {score.organization?.name || 'Unknown')}
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={cn(

@@ -91,7 +91,7 @@ export function LinkPandaDocDialog({ open, onOpenChange, organizationId }: LinkP
               type="submit"
               disabled={!documentId.trim() || !documentName.trim() || linkDocument.isPending}
             >
-              {linkDocument.isPending ? 'Linking...' : 'Link Document'}
+              {linkDocument.isPending ? 'Linking...' : 'Link Document')}
             </Button>
           </DialogFooter>
         </form>

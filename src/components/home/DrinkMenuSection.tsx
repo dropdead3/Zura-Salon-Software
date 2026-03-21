@@ -58,7 +58,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
     >
       {/* Drink image container with tooltip */}
       <div className="relative">
-        <div className={`w-32 h-40 md:w-28 md:h-36 lg:w-32 lg:h-40 transition-transform duration-300 ${isCardHovered ? 'scale-110' : ''}`}>
+        <div className={`w-32 h-40 md:w-28 md:h-36 lg:w-32 lg:h-40 transition-transform duration-300 ${isCardHovered ? 'scale-110' : '')}`}>
           <img 
             src={drink.image_url} 
             alt={drink.name}
@@ -67,7 +67,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         </div>
         
         {/* Hover tooltip - positioned to the right of the icon */}
-        <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-6 md:ml-8 transition-all duration-300 ease-out z-10 ${isCardHovered ? 'opacity-100 translate-x-0 pointer-events-auto' : 'opacity-0 -translate-x-4 pointer-events-none'}`}>
+        <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-6 md:ml-8 transition-all duration-300 ease-out z-10 ${isCardHovered ? 'opacity-100 translate-x-0 pointer-events-auto' : 'opacity-0 -translate-x-4 pointer-events-none')}`}>
           <motion.div 
             layout
             className="bg-foreground text-background px-5 py-4 text-center shadow-lg w-[180px] min-h-[120px] flex flex-col justify-center rounded-2xl"

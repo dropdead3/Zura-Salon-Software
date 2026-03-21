@@ -15,7 +15,7 @@ export function BillingAccessBanner() {
           Only the <span className="font-medium text-foreground">Account Owner</span>
           {!isBillingOwnerOnly && (
             <> and <span className="font-medium text-foreground">Super Admins</span></>
-          )}{' '}
+          )}{' ')}
           can view and manage billing.
         </span>
       </div>

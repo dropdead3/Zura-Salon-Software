@@ -125,7 +125,7 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
               <XAxis 
                 dataKey="date" 
-                tickFormatter={(d) => formatDate(parseISO(d), 'MMM d'}
+                tickFormatter={(d) => formatDate(parseISO(d), 'MMM d')}
                 tick={{ fontSize: 11 }}
                 className="text-muted-foreground"
               />
@@ -139,7 +139,7 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
                   return (
                     <div className="bg-background border border-border rounded-lg p-2 shadow-lg text-sm">
                       <p className="font-medium mb-1">
-                        {formatDate(parseISO(label), 'MMM d, yyyy'}
+                        {formatDate(parseISO(label), 'MMM d, yyyy')}
                       </p>
                       {payload.map((entry, idx) => (
                         <p key={idx} className="tabular-nums" style={{ color: entry.color }}>

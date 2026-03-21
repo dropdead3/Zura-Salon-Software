@@ -191,7 +191,7 @@ export function KBCategoryManager() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? 'Edit Category' : 'New Category'}
+              {editingCategory ? 'Edit Category' : 'New Category')}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -266,7 +266,7 @@ export function KBCategoryManager() {
                 Cancel
               </PlatformButton>
               <PlatformButton type="submit" disabled={createCategory.isPending || updateCategory.isPending}>
-                {editingCategory ? 'Update' : 'Create'}
+                {editingCategory ? 'Update' : 'Create')}
               </PlatformButton>
             </DialogFooter>
           </form>

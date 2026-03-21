@@ -113,7 +113,7 @@ function FormulaCard({
             <Badge variant="secondary" className="text-[10px]">{label}</Badge>
           )}
           <span className="font-sans text-xs text-muted-foreground">
-            {format(new Date(formula.created_at), 'MMM d, yyyy'}
+            {format(new Date(formula.created_at), 'MMM d, yyyy')}
           </span>
           {formula.service_name && (
             <span className="font-sans text-xs text-muted-foreground">

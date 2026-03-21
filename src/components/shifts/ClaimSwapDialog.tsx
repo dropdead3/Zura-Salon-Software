@@ -95,7 +95,7 @@ export function ClaimSwapDialog({ open, onOpenChange, swap }: ClaimSwapDialogPro
           <DialogDescription>
             {isSwapType
               ? 'Offer one of your shifts in exchange'
-              : 'Confirm you want to take this shift'}
+              : 'Confirm you want to take this shift')}
           </DialogDescription>
         </DialogHeader>
 
@@ -113,7 +113,7 @@ export function ClaimSwapDialog({ open, onOpenChange, swap }: ClaimSwapDialogPro
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                <span>{formatDate(new Date(swap.original_date), 'EEEE, MMMM d, yyyy'}</span>
+                <span>{formatDate(new Date(swap.original_date), 'EEEE, MMMM d, yyyy')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground" />
@@ -160,7 +160,7 @@ export function ClaimSwapDialog({ open, onOpenChange, swap }: ClaimSwapDialogPro
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {offerDate ? formatDate(offerDate, 'EEEE, MMMM d, yyyy') : 'Select date'}
+                        {offerDate ? formatDate(offerDate, 'EEEE, MMMM d, yyyy') : 'Select date')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -208,7 +208,7 @@ export function ClaimSwapDialog({ open, onOpenChange, swap }: ClaimSwapDialogPro
                 <div>
                   <p className="font-medium text-sm">Ready to claim</p>
                   <p className="text-xs text-muted-foreground">
-                    You'll take {requesterName}'s shift on {formatDate(new Date(swap.original_date), 'MMM d'}
+                    You'll take {requesterName}'s shift on {formatDate(new Date(swap.original_date), 'MMM d')}
                   </p>
                 </div>
               </div>

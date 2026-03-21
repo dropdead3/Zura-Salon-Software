@@ -106,13 +106,13 @@ export function CommandCenterControlRow({
           {isLeadership ? (
             <AIInsightsDrawer
               label={isShort ? 'Insights' : undefined}
-              expanded={activePanel === 'insights'}
+              expanded={activePanel === 'insights')}
               onToggle={toggleInsights}
             />
           ) : (
             <PersonalInsightsDrawer
               label={isShort ? 'Insights' : undefined}
-              expanded={activePanel === 'insights'}
+              expanded={activePanel === 'insights')}
               onToggle={toggleInsights}
             />
           )}
@@ -120,7 +120,7 @@ export function CommandCenterControlRow({
             isLeadership={isLeadership}
             label={isShort ? 'Announce' : undefined}
             iconOnly={announcementsIconOnly}
-            expanded={activePanel === 'announcements'}
+            expanded={activePanel === 'announcements')}
             onToggle={toggleAnnouncements}
           />
           <LiveSessionIndicator

@@ -107,7 +107,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Type</Label>
-              <Select value={formType} onValueChange={v => setFormType(v as 'percentage' | 'fixed'}>
+              <Select value={formType} onValueChange={v => setFormType(v as 'percentage' | 'fixed')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percentage">Percentage (%)</SelectItem>
@@ -122,7 +122,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                 step="0.01"
                 value={formValue}
                 onChange={e => setFormValue(e.target.value)}
-                placeholder={formType === 'percentage' ? 'e.g. 10' : 'e.g. -5'}
+                placeholder={formType === 'percentage' ? 'e.g. 10' : 'e.g. -5')}
                 autoCapitalize="off"
               />
             </div>
@@ -133,9 +133,9 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
               <Label>Start Date *</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formStartDate && 'text-muted-foreground'}>
+                  <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formStartDate && 'text-muted-foreground')}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formStartDate ? format(formStartDate, 'MMM d, yyyy') : 'Pick date'}
+                    {formStartDate ? format(formStartDate, 'MMM d, yyyy') : 'Pick date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -147,9 +147,9 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
               <Label>End Date *</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formEndDate && 'text-muted-foreground'}>
+                  <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formEndDate && 'text-muted-foreground')}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formEndDate ? format(formEndDate, 'MMM d, yyyy') : 'Pick date'}
+                    {formEndDate ? format(formEndDate, 'MMM d, yyyy') : 'Pick date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -197,7 +197,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
       {/* Existing adjustments */}
       <div className="space-y-2 max-h-[35vh] overflow-y-auto p-1">
         {serviceAdjustments.length === 0 && !showForm && (
-          <p className={cn(tokens.body.muted, 'text-center py-4'}>No seasonal adjustments yet.</p>
+          <p className={cn(tokens.body.muted, 'text-center py-4')}>No seasonal adjustments yet.</p>
         )}
         {serviceAdjustments.map(adj => {
           const expired = isExpired(adj.end_date);
@@ -205,8 +205,8 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
             ? locations.find(l => l.id === adj.location_id)?.name || adj.location_id
             : 'All Locations';
           const valueLabel = adj.adjustment_type === 'percentage'
-            ? `${adj.adjustment_value > 0 ? '+' : ''}${adj.adjustment_value}%`
-            : `${adj.adjustment_value > 0 ? '+' : ''}$${adj.adjustment_value}`;
+            ? `${adj.adjustment_value > 0 ? '+' : '')}${adj.adjustment_value}%`
+            : `${adj.adjustment_value > 0 ? '+' : '')}$${adj.adjustment_value}`;
 
           return (
             <div
@@ -218,7 +218,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={cn(tokens.body.emphasis, 'truncate'}>{adj.name}</p>
+                  <p className={cn(tokens.body.emphasis, 'truncate')}>{adj.name}</p>
                   {adj.service_id === null && (
                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-accent/50 text-accent-foreground shrink-0">
                       Global
@@ -236,7 +236,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
                   )}
                 </div>
                 <p className={tokens.body.muted}>
-                  {valueLabel} · {format(parseISO(adj.start_date), 'MMM d'} – {format(parseISO(adj.end_date), 'MMM d, yyyy'} · {locationName}
+                  {valueLabel} · {format(parseISO(adj.start_date), 'MMM d')} – {format(parseISO(adj.end_date), 'MMM d, yyyy')} · {locationName}
                 </p>
               </div>
               <Switch

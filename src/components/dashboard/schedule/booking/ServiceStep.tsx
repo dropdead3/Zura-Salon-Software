@@ -162,7 +162,7 @@ export function ServiceStep({
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full">
-                  {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                  {selectedServices.length} service{selectedServices.length > 1 ? 's' : '')}
                 </Badge>
                 <span className="text-muted-foreground">{totalDuration} min</span>
               </div>
@@ -196,7 +196,7 @@ export function ServiceStep({
           disabled={!canContinue}
           onClick={onContinue}
         >
-          {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
+          {selectedServices.length === 0 ? 'Skip Services' : 'Continue')}
         </Button>
       </div>
     </div>

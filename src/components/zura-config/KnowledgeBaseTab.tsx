@@ -140,8 +140,8 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
                       <Badge variant="secondary" className="text-xs">{entry.priority}/10</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={entry.is_active ? 'default' : 'secondary'} className="text-xs">
-                        {entry.is_active ? 'Active' : 'Inactive'}
+                      <Badge variant={entry.is_active ? 'default' : 'secondary')} className="text-xs">
+                        {entry.is_active ? 'Active' : 'Inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -162,18 +162,18 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
       <Dialog open={!!editingEntry} onOpenChange={open => { if (!open) close(); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{isNew ? 'Add Knowledge Entry' : 'Edit Knowledge Entry'}</DialogTitle>
+            <DialogTitle>{isNew ? 'Add Knowledge Entry' : 'Edit Knowledge Entry')}</DialogTitle>
           </DialogHeader>
           {editingEntry && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={editingEntry.title || ''} onChange={e => setEditingEntry({ ...editingEntry, title: e.target.value })} placeholder="Cancellation Policy" />
+                <Input value={editingEntry.title || '')} onChange={e => setEditingEntry({ ...editingEntry, title: e.target.value })} placeholder="Cancellation Policy" />
               </div>
 
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={editingEntry.category || 'custom'} onValueChange={v => setEditingEntry({ ...editingEntry, category: v as ZuraKnowledgeEntry['category'] })}>
+                <Select value={editingEntry.category || 'custom')} onValueChange={v => setEditingEntry({ ...editingEntry, category: v as ZuraKnowledgeEntry['category'] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
@@ -187,7 +187,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
                   <span className="text-xs text-muted-foreground">{(editingEntry.content || '').length}/2000</span>
                 </div>
                 <Textarea
-                  value={editingEntry.content || ''}
+                  value={editingEntry.content || '')}
                   onChange={e => setEditingEntry({ ...editingEntry, content: e.target.value.slice(0, 2000) })}
                   placeholder="Clients must cancel 24 hours before their appointment..."
                   rows={5}
@@ -214,7 +214,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
                     return (
                       <Badge
                         key={fn.value}
-                        variant={active ? 'default' : 'outline'}
+                        variant={active ? 'default' : 'outline')}
                         className="cursor-pointer"
                         onClick={() => toggleScope(fn.value)}
                       >
@@ -237,7 +237,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
           <DialogFooter>
             <Button variant="outline" onClick={close}>Cancel</Button>
             <Button onClick={handleSave} disabled={createEntry.isPending || updateEntry.isPending}>
-              {isNew ? 'Create' : 'Save'}
+              {isNew ? 'Create' : 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>

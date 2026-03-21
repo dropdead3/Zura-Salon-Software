@@ -307,7 +307,7 @@ export default function StaffStrikes() {
               <p className="text-sm">
                 {statusFilter === 'active'
                   ? 'No active strikes at this time.'
-                  : 'No strikes match your filters.'}
+                  : 'No strikes match your filters.')}
               </p>
             </CardContent>
           </Card>
@@ -327,7 +327,7 @@ export default function StaffStrikes() {
                     <Avatar className="w-10 h-10">
                       <AvatarImage src={strike.employee_photo || undefined} />
                       <AvatarFallback>
-                        {strike.employee_name?.charAt(0) || '?'}
+                        {strike.employee_name?.charAt(0) || '?')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -362,7 +362,7 @@ export default function StaffStrikes() {
                           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              {formatDate(new Date(strike.incident_date), 'MMM d, yyyy'}
+                              {formatDate(new Date(strike.incident_date), 'MMM d, yyyy')}
                             </span>
                             <span className="flex items-center gap-1">
                               <User className="w-3 h-3" />
@@ -370,7 +370,7 @@ export default function StaffStrikes() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {formatDate(new Date(strike.created_at), 'MMM d, yyyy'}
+                              {formatDate(new Date(strike.created_at), 'MMM d, yyyy')}
                             </span>
                           </div>
                           {strike.is_resolved && strike.resolution_notes && (
@@ -383,8 +383,8 @@ export default function StaffStrikes() {
                               </p>
                               {strike.resolved_by_name && strike.resolved_at && (
                                 <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                                  Resolved by {strike.resolved_by_name} on{' '}
-                                  {formatDate(new Date(strike.resolved_at), 'MMM d, yyyy'}
+                                  Resolved by {strike.resolved_by_name} on{' ')}
+                                  {formatDate(new Date(strike.resolved_at), 'MMM d, yyyy')}
                                 </p>
                               )}
                             </div>
