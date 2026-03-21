@@ -175,7 +175,7 @@ export function TasksCard({
             <div className={tokens.card.iconBox}>
               <CheckSquare className={tokens.card.icon} />
             </div>
-            <h2 className={tokens.card.title}>{t('home.my_tasks')}</h2>
+            <h2 className={tokens.card.title}>{t('home.my_tasks'}</h2>
             {visibleActive.length > 0 && (
               <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                 {visibleActive.length} active{overdueCount > 0 && <span className="text-destructive">, {overdueCount} overdue</span>}
@@ -188,7 +188,7 @@ export function TasksCard({
             )}
             {isImpersonating && (
               <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                {t('home.view_only')}
+                {t('home.view_only'}
               </span>
             )}
           </div>
@@ -212,7 +212,7 @@ export function TasksCard({
           />
           {isSearching && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSearchQuery(''}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="w-3.5 h-3.5" />
@@ -257,9 +257,9 @@ export function TasksCard({
               ) : completedTasks.length === 0 && snoozedTasks.length === 0 ? (
                 <div className="text-center py-14 text-muted-foreground">
                   <CheckSquare className="w-6 h-6 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-display">{t('home.no_tasks')}</p>
+                  <p className="text-sm font-display">{t('home.no_tasks'}</p>
                   <p className="text-xs mt-1 text-muted-foreground/60">
-                    {isImpersonating ? t('home.impersonating_no_tasks') : t('home.add_first_task')}
+                    {isImpersonating ? t('home.impersonating_no_tasks') : t('home.add_first_task'}
                   </p>
                 </div>
               ) : taskGroups.length === 0 && snoozedTasks.length > 0 ? (

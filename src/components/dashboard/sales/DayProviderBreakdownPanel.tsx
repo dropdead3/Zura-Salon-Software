@@ -92,7 +92,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                       } catch { return day.dayName || day.date; }
                     })()}
                   </DialogTitle>
-                  <DialogDescription className={cn(tokens.body.muted, 'mt-1')}>
+                  <DialogDescription className={cn(tokens.body.muted, 'mt-1'}>
                     {filteredCount} appointment{filteredCount !== 1 ? 's' : ''} · By Provider
                   </DialogDescription>
                 </div>

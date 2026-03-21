@@ -263,7 +263,7 @@ export function FinancialReportGenerator({
     if (reportType === 'revenue-trend' && trendData?.overall?.length) {
       csvContent = 'Date,Revenue,Transactions\n';
       trendData.overall.slice(-31).forEach((row: { date: string; revenue: number; transactions: number }) => {
-        csvContent += `"${formatDate(new Date(row.date), 'yyyy-MM-dd')}",${row.revenue},${row.transactions}\n`;
+        csvContent += `"${formatDate(new Date(row.date), 'yyyy-MM-dd'}",${row.revenue},${row.transactions}\n`;
       });
     }
 
@@ -314,7 +314,7 @@ export function FinancialReportGenerator({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
-          <CardDescription>{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription>{formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}</CardDescription>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-64 w-full" />
@@ -342,7 +342,7 @@ export function FinancialReportGenerator({
                 .reverse()
                 .map((row: { date: string; revenue: number; transactions: number }) => (
                   <TableRow key={row.date}>
-                    <TableCell>{formatDate(new Date(row.date), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{formatDate(new Date(row.date), 'MMM d, yyyy'}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       <BlurredAmount>{formatCurrency(row.revenue)}</BlurredAmount>
                     </TableCell>
@@ -520,7 +520,7 @@ export function FinancialReportGenerator({
             <div>
               <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}
               </CardDescription>
             </div>
             <div className="flex gap-2">

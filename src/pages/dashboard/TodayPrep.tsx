@@ -158,7 +158,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                 <div key={`cn-${i}`} className="text-sm font-sans text-foreground bg-muted/40 rounded-md px-3 py-2 border border-border/40">
                   <p>{n.note}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d')}
+                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d'}
                     {n.isPrivate && ' · Private'}
                   </p>
                 </div>
@@ -169,7 +169,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                 <div key={`an-${i}`} className="text-sm font-sans text-muted-foreground bg-muted/20 rounded-md px-3 py-2 border border-border/40 italic">
                   <p>{n.note}</p>
                   <p className="text-xs mt-1">
-                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d')} · Appointment note
+                    {n.authorName} · {format(parseISO(n.createdAt), 'MMM d'} · Appointment note
                   </p>
                 </div>
               ))}
@@ -188,7 +188,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                   <div key={i} className="flex items-center justify-between text-sm font-sans">
                     <span className="text-foreground truncate">{s.name}</span>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {format(parseISO(s.date), 'MMM d')}
+                      {format(parseISO(s.date), 'MMM d'}
                       {s.staffName && ` · ${s.staffName}`}
                     </span>
                   </div>
@@ -209,7 +209,7 @@ function PrepCard({ appointment, formatCurrency }: { appointment: PrepAppointmen
                   <div key={i} className="flex items-center justify-between text-sm font-sans">
                     <span className="text-foreground truncate">{p.name}</span>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {format(parseISO(p.date), 'MMM d')}
+                      {format(parseISO(p.date), 'MMM d'}
                       {p.quantity > 1 && ` · ×${p.quantity}`}
                     </span>
                   </div>

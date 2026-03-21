@@ -129,7 +129,7 @@ export function ConfirmStep({
                 <div>
                   <div className="text-xs text-muted-foreground">Date & Time</div>
                   <div className="font-medium text-sm">
-                    {formatDate(date, 'EEEE, MMMM d, yyyy')} at {formatTime12h(time)}
+                    {formatDate(date, 'EEEE, MMMM d, yyyy'} at {formatTime12h(time)}
                   </div>
                 </div>
               </div>

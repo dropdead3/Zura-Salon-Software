@@ -89,7 +89,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
 
       {/* Booking Pipeline Health */}
       <Link
-        to={dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline')}
+        to={dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline'}
         className="block p-3 bg-card-inner rounded-lg border border-border/50 mb-4 hover:bg-muted/50 transition-colors"
       >
         {pipeline.isLoading ? (
@@ -117,7 +117,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <button
           type="button"
-          onClick={() => setDrilldown('new')}
+          onClick={() => setDrilldown('new'}
           className="text-center p-4 bg-card-inner rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
@@ -136,7 +136,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
 
         <button
           type="button"
-          onClick={() => setDrilldown('returning')}
+          onClick={() => setDrilldown('returning'}
           className="text-center p-4 bg-card-inner rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">

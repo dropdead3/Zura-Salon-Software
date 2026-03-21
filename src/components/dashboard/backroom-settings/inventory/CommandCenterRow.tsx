@@ -240,7 +240,7 @@ export function CommandCenterRow({
               onClick={() => setExpanded(!expanded)}
               className="text-muted-foreground hover:text-foreground transition-colors duration-150 shrink-0"
             >
-              <ChevronRight className={cn('w-3.5 h-3.5 transition-transform duration-150', expanded && 'rotate-90')} />
+              <ChevronRight className={cn('w-3.5 h-3.5 transition-transform duration-150', expanded && 'rotate-90'} />
             </button>
             <div className="min-w-0">
               <span className={tokens.body.emphasis}>{stripSizeSuffix(row.name)}</span>
@@ -500,7 +500,7 @@ export function CommandCenterRow({
                     if (sent > 0) parts.push(`${sent} sent`);
                     if (partially_received > 0) parts.push(`${partially_received} partial`);
                     return parts.length > 0 ? (
-                      <span className="text-[10px] text-muted-foreground/40 font-sans">{parts.join(', ')}</span>
+                      <span className="text-[10px] text-muted-foreground/40 font-sans">{parts.join(', '}</span>
                     ) : null;
                   })()}
                 </div>

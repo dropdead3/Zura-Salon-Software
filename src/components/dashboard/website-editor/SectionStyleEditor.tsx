@@ -106,7 +106,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
               variant="ghost"
               size={tokens.button.inline}
               className="h-8 text-xs"
-              onClick={() => update('text_color_override', '')}
+              onClick={() => update('text_color_override', ''}
             >
               Clear
             </Button>

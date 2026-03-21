@@ -39,7 +39,7 @@ export default function CoachDashboard() {
           title="Coach Dashboard"
           description="Your assigned organizations"
         />
-        <div className={cn(tokens.empty.container, 'mt-12')}>
+        <div className={cn(tokens.empty.container, 'mt-12'}>
           <Building2 className={tokens.empty.icon} />
           <h3 className={tokens.empty.heading}>No assignments yet</h3>
           <p className={tokens.empty.description}>

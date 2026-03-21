@@ -517,8 +517,8 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             roleBadges={roleBadges}
             isAdmin={isAdmin}
             isPlatformUser={isPlatformUser}
-            isStylistRole={roles.includes('stylist')}
-            isStylistAssistantRole={roles.includes('stylist_assistant')}
+            isStylistRole={roles.includes('stylist'}
+            isStylistAssistantRole={roles.includes('stylist_assistant'}
             isViewingAsUser={isViewingAsUser}
             viewAsUser={viewAsUser}
           />

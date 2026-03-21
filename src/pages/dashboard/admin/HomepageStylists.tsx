@@ -365,7 +365,7 @@ export default function HomepageStylists() {
             {showActions && stylist.homepage_requested_at && (
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
+                Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy'}
               </p>
             )}
           </div>

@@ -352,7 +352,7 @@ export function StylistLevelsEditor({
               {hasChanges && <span className="text-amber-600 ml-2">• Unsaved changes</span>}
             </p>
             <Link 
-              to={dashPath('/admin/stylist-levels')} 
+              to={dashPath('/admin/stylist-levels'} 
               className="text-xs text-primary hover:underline flex items-center gap-1"
               onClick={() => setIsOpen(false)}
             >

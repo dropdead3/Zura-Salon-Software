@@ -219,7 +219,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
       a.total_price ?? '',
       a.total_paid ?? '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""'}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -267,7 +267,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                 <Button variant="outline" size={tokens.button.card} className="gap-2 text-xs">
                   <CalendarRange className="h-3.5 w-3.5" />
                   {customRange.from
-                    ? `${format(customRange.from, 'MMM d')}${customRange.to ? }` – ${format(customRange.to, 'MMM d')}` : ''}`
+                    ? `${format(customRange.from, 'MMM d'}${customRange.to ? }` – ${format(customRange.to, 'MMM d'}` : ''}`
                     : 'Pick dates'}
                 </Button>
               </PopoverTrigger>
@@ -360,15 +360,15 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                 </label>
               </TableHead>
               <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Time</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell'}>Time</TableHead>
               <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Phone</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell')}>Email</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell')}>Service</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell'}>Phone</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden 2xl:table-cell'}>Email</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'hidden xl:table-cell'}>Service</TableHead>
               <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'whitespace-nowrap')}>Status</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Price</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell')}>Total Paid</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'whitespace-nowrap'}>Status</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell'}>Price</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden lg:table-cell'}>Total Paid</TableHead>
               <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
@@ -406,7 +406,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
                 return (
                   <TableRow
                     key={appt.id}
-                    className={cn('cursor-pointer group hover:bg-muted/40 transition-colors', isSelected && 'bg-muted/50')}
+                    className={cn('cursor-pointer group hover:bg-muted/40 transition-colors', isSelected && 'bg-muted/50'}
                     onClick={() => setSelectedAppt(appt)}
                   >
                     <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>

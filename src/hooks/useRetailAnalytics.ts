@@ -140,7 +140,7 @@ const SERVICE_TYPES = ['Service', 'service', 'SERVICE'];
 // ---------------------------------------------------------------------------
 export function exportRetailCSV(data: RetailAnalyticsResult, section: 'products' | 'brands' | 'deadstock' | 'staff' | 'categories') {
   let csv = '';
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
 
   if (section === 'products') {
     csv = 'Product,Category,Brand,Units Sold,Revenue,Avg Price,Discount,Trend %,Cost,Margin %,Stock\n';
@@ -173,7 +173,7 @@ export function exportRetailCSV(data: RetailAnalyticsResult, section: 'products'
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `retail-${section}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  a.download = `retail-${section}-${format(new Date(), 'yyyy-MM-dd'}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

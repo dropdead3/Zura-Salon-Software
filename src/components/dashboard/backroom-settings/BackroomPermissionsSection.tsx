@@ -124,9 +124,9 @@ export function BackroomPermissionsSection() {
             <table className="w-full text-sm">
               <thead>
                 <tr>
-                  <th className={cn(tokens.table.columnHeader, 'text-left py-2 pr-4 w-40')}>Permission</th>
+                  <th className={cn(tokens.table.columnHeader, 'text-left py-2 pr-4 w-40'}>Permission</th>
                   {ROLES.map(r => (
-                    <th key={r.key} className={cn(tokens.table.columnHeader, 'text-center py-2 px-2 min-w-[80px]')}>{r.label}</th>
+                    <th key={r.key} className={cn(tokens.table.columnHeader, 'text-center py-2 px-2 min-w-[80px]'}>{r.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -140,7 +140,7 @@ export function BackroomPermissionsSection() {
                     </tr>
                     {PERMISSIONS.filter(p => p.group === group).map(perm => (
                       <tr key={perm.key} className="border-b border-border/40">
-                        <td className={cn(tokens.body.default, 'py-2.5 pr-4')}>
+                        <td className={cn(tokens.body.default, 'py-2.5 pr-4'}>
                           <span className="flex items-center gap-1">
                             {perm.label}
                             {PERMISSION_TOOLTIPS[perm.key] && <MetricInfoTooltip description={PERMISSION_TOOLTIPS[perm.key]} />}

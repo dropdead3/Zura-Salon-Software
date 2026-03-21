@@ -149,7 +149,7 @@ export function ClientNotesSection({ clientId }: ClientNotesSectionProps) {
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(new Date(note.created_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(note.created_at), 'MMM d, yyyy'}
                         </span>
                         {isOwner && (
                           <AlertDialog>

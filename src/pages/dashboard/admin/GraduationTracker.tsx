@@ -98,7 +98,7 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border/50">
             <Clock className="h-3 w-3" />
-            Submitted {formatDate(new Date(submission.submitted_at), 'MMM d, h:mm a')}
+            Submitted {formatDate(new Date(submission.submitted_at), 'MMM d, h:mm a'}
           </div>
         </div>
       </div>
@@ -142,7 +142,7 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.coach?.full_name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(new Date(item.created_at), 'MMM d')}
+                      {formatDate(new Date(item.created_at), 'MMM d'}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">{item.feedback}</p>
@@ -234,7 +234,7 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
                 </div>
                 {submission && (
                   <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[submission.status as keyof typeof STATUS_COLORS])}>
-                    {submission.status.replace('_', ' ')}
+                    {submission.status.replace('_', ' '}
                   </Badge>
                 )}
               </div>

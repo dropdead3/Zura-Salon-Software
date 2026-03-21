@@ -10,7 +10,7 @@ export default function WebsiteHub() {
       <DashboardPageHeader
         title="Website Hub"
         description="Theme, booking, retail & SEO settings"
-        backTo={dashPath('/admin/management')}
+        backTo={dashPath('/admin/management'}
       />
       <WebsiteSettingsContent />
     </DashboardLayout>

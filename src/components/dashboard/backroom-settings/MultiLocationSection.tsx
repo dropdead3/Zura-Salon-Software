@@ -162,20 +162,20 @@ export function MultiLocationSection() {
               <div className="flex flex-wrap gap-4">
                 <div className="rounded-lg border bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                   <p className={tokens.label.default}>Settings</p>
-                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.settingsCount ?? 0} org default(s)</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground'}>{pushPreFlight?.settingsCount ?? 0} org default(s)</p>
                 </div>
                 <div className="rounded-lg border bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                   <p className={tokens.label.default}>Locations</p>
-                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.locationsCount ?? 0} active</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground'}>{pushPreFlight?.locationsCount ?? 0} active</p>
                 </div>
                 <div className="rounded-lg border bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                   <p className={tokens.label.default}>Alert Rules</p>
-                  <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.alertRulesCount ?? 0} org rule(s)</p>
+                  <p className={cn(tokens.body.emphasis, 'text-foreground'}>{pushPreFlight?.alertRulesCount ?? 0} org rule(s)</p>
                 </div>
                 {(pushPreFlight?.existingOverrideCount ?? 0) > 0 && (
                   <div className="rounded-lg border border-amber-500/30 bg-card/50 px-4 py-3 flex-1 min-w-[140px]">
                     <p className="text-sm text-amber-500">Existing Overrides</p>
-                    <p className={cn(tokens.body.emphasis, 'text-foreground')}>{pushPreFlight?.existingOverrideCount} will be replaced</p>
+                    <p className={cn(tokens.body.emphasis, 'text-foreground'}>{pushPreFlight?.existingOverrideCount} will be replaced</p>
                   </div>
                 )}
               </div>
@@ -245,7 +245,7 @@ export function MultiLocationSection() {
               return (
                 <div key={key} className="rounded-lg border bg-card/50 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className={cn(tokens.body.emphasis, 'text-foreground')}>{key.replace(/_/g, ' ')}</p>
+                    <p className={cn(tokens.body.emphasis, 'text-foreground'}>{key.replace(/_/g, ' '}</p>
                     <Badge variant="outline">{overrides.length} override{overrides.length !== 1 ? 's' : ''}</Badge>
                   </div>
                   {orgDefault && <p className="text-sm text-muted-foreground">Org default: {JSON.stringify(orgDefault.setting_value).slice(0, 100)}…</p>}
@@ -324,7 +324,7 @@ export function MultiLocationSection() {
               ) : (
                 compareKeys.map(item => (
                   <div key={item.key} className="rounded-lg border bg-card/50 p-3 flex items-center justify-between">
-                    <p className="text-sm text-foreground">{item.key.replace(/_/g, ' ')}</p>
+                    <p className="text-sm text-foreground">{item.key.replace(/_/g, ' '}</p>
                     <Badge variant={item.differs ? 'destructive' : 'secondary'}>{item.differs ? 'Different' : 'Same'}</Badge>
                   </div>
                 ))

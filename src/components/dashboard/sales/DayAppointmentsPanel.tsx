@@ -31,7 +31,7 @@ function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
   const period = hours >= 12 ? 'PM' : 'AM';
   const hour12 = hours % 12 || 12;
-  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  return `${hour12}:${minutes.toString().padStart(2, '0'} ${period}`;
 }
 
 function AppointmentCard({ appointment, onClick }: { appointment: AppointmentSummary; onClick?: () => void }) {
@@ -118,7 +118,7 @@ export function DayAppointmentsPanel({ day, open, onOpenChange }: DayAppointment
     <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
       <div className="p-5 pb-3 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase">
-          {formatDate(parseISO(day.date), 'EEEE, MMMM d')}
+          {formatDate(parseISO(day.date), 'EEEE, MMMM d'}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
           <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}</span>

@@ -96,7 +96,7 @@ export function BillingStatusCard({
               </p>
             ) : nextInvoiceDate ? (
               <p className="text-lg font-medium text-white">
-                {formatDate(new Date(nextInvoiceDate), 'MMM d, yyyy')}
+                {formatDate(new Date(nextInvoiceDate), 'MMM d, yyyy'}
               </p>
             ) : (
               <p className="text-lg font-medium text-slate-500">Not scheduled</p>

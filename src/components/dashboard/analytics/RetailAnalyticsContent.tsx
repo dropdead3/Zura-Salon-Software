@@ -214,7 +214,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="brands" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -268,7 +268,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                         {brands.some(br => br.margin > 0) && (
                           <TableCell className="text-right">
                             {b.margin > 0 ? (
-                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400')}>
+                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400'}>
                                 {b.margin.toFixed(0)}%
                               </Badge>
                             ) : '—'}
@@ -324,7 +324,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
                               {b.staleProducts.length > 0 && (
                                 <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-2">
                                   <AlertTriangle className="w-3 h-3" />
-                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', ')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
+                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', '}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
                                 </div>
                               )}
                             </div>
@@ -420,7 +420,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="deadstock" />
-              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -827,19 +827,19 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     <TableHead>Product</TableHead>
                     <TableHead>Brand</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('unitsSold')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('unitsSold'}>
                       <span className="inline-flex items-center gap-1">Units <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenue')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenue'}>
                       <span className="inline-flex items-center gap-1">Revenue <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgPrice')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('avgPrice'}>
                       <span className="inline-flex items-center gap-1">Avg Price <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('discount')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('discount'}>
                       <span className="inline-flex items-center gap-1">Discount <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenueTrend')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenueTrend'}>
                       <span className="inline-flex items-center gap-1">Trend <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
                     <TableHead className="text-center">Sparkline</TableHead>
@@ -857,7 +857,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                       const realRank = data.products.findIndex(pp => pp.name === p.name);
                       const isBestSeller = realRank >= 0 && realRank < 3;
                       return (
-                        <TableRow key={p.name} className={cn(isBestSeller && 'bg-chart-2/[0.03]')}>
+                        <TableRow key={p.name} className={cn(isBestSeller && 'bg-chart-2/[0.03]'}>
                           <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -1344,19 +1344,19 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">#</TableHead>
-                    <TableHead className="cursor-pointer select-none" onClick={() => toggleStaffSort('name')}>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleStaffSort('name'}>
                       <span className="inline-flex items-center gap-1">Stylist <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('productRevenue')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('productRevenue'}>
                       <span className="inline-flex items-center gap-1">Product Revenue <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('unitsSold')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('unitsSold'}>
                       <span className="inline-flex items-center gap-1">Units Sold <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('attachmentRate')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('attachmentRate'}>
                       <span className="inline-flex items-center gap-1">Attachment Rate <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
-                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('avgTicket')}>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('avgTicket'}>
                       <span className="inline-flex items-center gap-1">Avg Ticket <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
                   </TableRow>
@@ -1372,7 +1372,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     filteredStaff.map((s, idx) => {
                       const isTop = idx === 0 && staffSortKey === 'productRevenue' && staffSortDir === 'desc';
                       return (
-                        <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]')}>
+                        <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]'}>
                           <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2.5">
@@ -1627,7 +1627,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
                     <Settings2 className="w-3.5 h-3.5" /> Set Goals
                   </Button>
                 </div>
@@ -1680,7 +1680,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="text-xs text-muted-foreground">Actual</div>
-                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500')} />
+                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500'} />
                       <div className="text-[10px] tabular-nums text-muted-foreground">{Math.round(goalProgress.progressPct)}%</div>
                     </div>
                   </div>
@@ -1825,7 +1825,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                        <Download className="w-3.5 h-3.5" /> Export Movements
                      </Button>
                    )}
-                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
+                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
                      <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
                    </Button>
                 </div>
@@ -1848,7 +1848,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </TableHeader>
                   <TableBody>
                     {inventoryAlerts.slice(0, 15).map(a => (
-                      <TableRow key={a.productId} className={cn(a.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10')}>
+                      <TableRow key={a.productId} className={cn(a.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10'}>
                         <TableCell className="font-medium text-sm">{a.productName}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{a.brand || '—'}</TableCell>
                         <TableCell className="text-right tabular-nums font-medium">{a.currentStock}</TableCell>
@@ -1908,7 +1908,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportCommissionsCSV(staffCommissions)}>
                     <Download className="w-3.5 h-3.5" /> Export
                   </Button>
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -1981,7 +1981,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate(dashPath('/admin/settings?category=retail-products'}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
@@ -2077,7 +2077,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                           <TableCell className="text-right tabular-nums">{s.leadTimeAccuracy != null ? `${s.leadTimeAccuracy}%` : '—'}</TableCell>
                           <TableCell className="text-right tabular-nums">
                             {s.priceConsistency != null ? (
-                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400')}>
+                              <span className={cn('text-xs', s.priceConsistency >= 90 ? 'text-emerald-600 dark:text-emerald-400' : s.priceConsistency >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}>
                                 {s.priceConsistency}%
                               </span>
                             ) : '—'}

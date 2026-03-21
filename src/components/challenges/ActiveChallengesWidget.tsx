@@ -85,7 +85,7 @@ export function ActiveChallengesWidget({
             Active Challenges
           </CardTitle>
           {challenges.length > maxItems && (
-            <Link to={dashPath('/admin/challenges')}>
+            <Link to={dashPath('/admin/challenges'}>
               <Button variant="ghost" size={tokens.button.inline} className="text-xs">
                 View All
                 <ChevronRight className="w-3 h-3 ml-1" />

@@ -193,7 +193,7 @@ export default function Stats() {
             {!isLinkedToPhorest && phorestConnection?.connected && (
               <Card className="p-4 bg-muted/50 border-dashed">
                 <p className="text-sm text-muted-foreground text-center">
-                  Your account isn't linked to {providerLabel} yet. <Link to={dashPath('/admin/phorest')} className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
+                  Your account isn't linked to {providerLabel} yet. <Link to={dashPath('/admin/phorest'} className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
                 </p>
               </Card>
             )}

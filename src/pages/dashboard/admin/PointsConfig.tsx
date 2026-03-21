@@ -115,7 +115,7 @@ export default function PointsConfig() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="font-medium capitalize">
-                          {rule.action_type.replace(/_/g, ' ')}
+                          {rule.action_type.replace(/_/g, ' '}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {rule.description}

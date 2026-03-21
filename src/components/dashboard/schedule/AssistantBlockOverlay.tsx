@@ -27,7 +27,7 @@ function parseTimeToMinutes(time: string): number {
 function minutesToTimeStr(minutes: number): string {
   const h = Math.floor(minutes / 60) % 24;
   const m = minutes % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+  return `${String(h).padStart(2, '0'}:${String(m).padStart(2, '0'}:00`;
 }
 
 function getBlockStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20) {

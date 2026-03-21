@@ -45,7 +45,7 @@ export default function DailyHuddle() {
           <TabsList>
             <TabsTrigger value="today" className="gap-2">
               <Edit className="w-4 h-4" />
-              Today ({formatDate(new Date(), 'MMM d')})
+              Today ({formatDate(new Date(), 'MMM d'})
             </TabsTrigger>
             <TabsTrigger value="archive" className="gap-2">
               <Calendar className="w-4 h-4" />

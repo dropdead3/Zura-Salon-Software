@@ -67,7 +67,7 @@ export function RedemptionQueue() {
                   {redemption.reward?.name || 'Unknown Reward'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {format(new Date(redemption.created_at), 'MMM d, yyyy h:mm a')}
+                  {format(new Date(redemption.created_at), 'MMM d, yyyy h:mm a'}
                 </p>
               </div>
             </div>

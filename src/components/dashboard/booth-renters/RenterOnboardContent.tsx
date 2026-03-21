@@ -384,7 +384,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
 
               <RadioGroup
                 value={identityMode}
-                onValueChange={(v) => setIdentityMode(v as 'existing' | 'new')}
+                onValueChange={(v) => setIdentityMode(v as 'existing' | 'new'}
                 className="grid grid-cols-2 gap-4"
               >
                 <Label htmlFor="mode-existing" className={cn(
@@ -834,7 +834,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={() => navigate(dashPath('/admin/booth-renters?tab=renters')} className="flex-1">
+                <Button onClick={() => navigate(dashPath('/admin/booth-renters?tab=renters'} className="flex-1">
                   Back to Renter Hub
                 </Button>
                 <Button variant="outline" onClick={resetForm}>

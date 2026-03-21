@@ -38,7 +38,7 @@ export default function NotFound() {
           >
             Go back
           </Button>
-          <Button onClick={() => navigate(dashPath('/')}>Go home</Button>
+          <Button onClick={() => navigate(dashPath('/'}>Go home</Button>
         </div>
       </div>
     </div>

@@ -68,7 +68,7 @@ export function ExtendTermDialog({
             <div className="p-3 rounded-lg bg-[hsl(var(--platform-bg-card)/0.5)] border border-[hsl(var(--platform-border)/0.5)]">
               <p className="text-sm text-[hsl(var(--platform-muted))]">Current End Date</p>
               <p className="text-[hsl(var(--platform-foreground))] font-medium">
-                {format(parseISO(currentEndDate), 'MMMM d, yyyy')}
+                {format(parseISO(currentEndDate), 'MMMM d, yyyy'}
               </p>
             </div>
           )}
@@ -89,7 +89,7 @@ export function ExtendTermDialog({
             <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/30">
               <p className="text-sm text-violet-300">New End Date</p>
               <p className="text-[hsl(var(--platform-foreground))] font-medium">
-                {format(newEndDate, 'MMMM d, yyyy')}
+                {format(newEndDate, 'MMMM d, yyyy'}
               </p>
             </div>
           )}

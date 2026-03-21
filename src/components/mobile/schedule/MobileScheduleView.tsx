@@ -108,7 +108,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigateDate('prev')}
+            onClick={() => navigateDate('prev'}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -116,14 +116,14 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
           <div className="text-center">
             <h1 className="text-lg font-medium">{getDateLabel()}</h1>
             <p className="text-xs text-muted-foreground">
-              {formatDate(selectedDate, 'MMMM d, yyyy')}
+              {formatDate(selectedDate, 'MMMM d, yyyy'}
             </p>
           </div>
           
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigateDate('next')}
+            onClick={() => navigateDate('next'}
           >
             <ChevronRight className="h-5 w-5" />
           </Button>
@@ -265,7 +265,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
               <p className="text-sm text-muted-foreground/70 mt-1">
                 {isToday(selectedDate)
                   ? "You're all clear for today"
-                  : `No appointments scheduled for ${formatDate(selectedDate, 'MMM d')}}
+                  : `No appointments scheduled for ${formatDate(selectedDate, 'MMM d'}}
               </p>
             </div>
           )}

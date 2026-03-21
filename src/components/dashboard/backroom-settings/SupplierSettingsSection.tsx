@@ -231,7 +231,7 @@ export function SupplierSettingsSection() {
               <ScrollArea className="h-[400px]">
                 <div className="p-2 space-y-0.5">
                   {filteredGroups.length === 0 && (
-                    <div className={cn(tokens.empty.container, 'py-8')}>
+                    <div className={cn(tokens.empty.container, 'py-8'}>
                       <Truck className={tokens.empty.icon} />
                       <p className={tokens.empty.description}>
                         {searchFilter ? 'No matches' : 'No suppliers yet'}
@@ -321,40 +321,40 @@ export function SupplierSettingsSection() {
                   <form onSubmit={handleSubmit(onSaveContact)} className="space-y-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="cn" className={tokens.label.default}>Contact Name</Label>
-                      <Input id="cn" {...register('contact_name')} placeholder="e.g. Jane Smith" />
+                      <Input id="cn" {...register('contact_name'} placeholder="e.g. Jane Smith" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
                         <Label htmlFor="se" className={tokens.label.default}>Email</Label>
-                        <Input id="se" type="email" {...register('supplier_email')} placeholder="orders@supplier.com" />
+                        <Input id="se" type="email" {...register('supplier_email'} placeholder="orders@supplier.com" />
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="sp" className={tokens.label.default}>Phone</Label>
-                        <Input id="sp" type="tel" {...register('supplier_phone')} placeholder="(555) 123-4567" autoCapitalize="off" />
+                        <Input id="sp" type="tel" {...register('supplier_phone'} placeholder="(555) 123-4567" autoCapitalize="off" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="sw" className={tokens.label.default}>Website</Label>
-                      <Input id="sw" {...register('supplier_website')} placeholder="https://supplier.com" autoCapitalize="off" />
+                      <Input id="sw" {...register('supplier_website'} placeholder="https://supplier.com" autoCapitalize="off" />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="space-y-1.5">
                         <Label htmlFor="sa" className={tokens.label.default}>Account #</Label>
-                        <Input id="sa" {...register('account_number')} placeholder="ACC-123" />
+                        <Input id="sa" {...register('account_number'} placeholder="ACC-123" />
                       </div>
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5">
                           <Label htmlFor="sl" className={tokens.label.default}>Lead Time (days)</Label>
                           <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
                         </div>
-                        <Input id="sl" type="number" {...register('lead_time_days')} placeholder="5" />
+                        <Input id="sl" type="number" {...register('lead_time_days'} placeholder="5" />
                       </div>
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5">
                           <Label htmlFor="sm" className={tokens.label.default}>MOQ</Label>
                           <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
                         </div>
-                        <Input id="sm" type="number" {...register('moq')} placeholder="1" />
+                        <Input id="sm" type="number" {...register('moq'} placeholder="1" />
                       </div>
                     </div>
 
@@ -383,7 +383,7 @@ export function SupplierSettingsSection() {
                         </Select>
                         <div className={cn("mt-1.5 transition-all", watch('reorder_method') !== 'other' ? "h-0 overflow-hidden opacity-0" : "h-auto opacity-100")}>
                           <Input
-                            {...register('reorder_method_other')}
+                            {...register('reorder_method_other'}
                             placeholder="Specify method..."
                           />
                         </div>
@@ -392,7 +392,7 @@ export function SupplierSettingsSection() {
                         <Label htmlFor="srn" className={tokens.label.default}>Reorder Notes</Label>
                         <Textarea
                           id="srn"
-                          {...register('reorder_notes')}
+                          {...register('reorder_notes'}
                           placeholder="Standing notes for reorders..."
                           className="min-h-[36px] text-sm resize-none"
                           rows={1}
@@ -409,23 +409,23 @@ export function SupplierSettingsSection() {
                        ) : (
                          <div className="space-y-3">
                            <div className="flex items-center justify-between">
-                             <p className={cn(tokens.body.emphasis, 'text-foreground text-sm')}>Secondary Contact</p>
+                             <p className={cn(tokens.body.emphasis, 'text-foreground text-sm'}>Secondary Contact</p>
                              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={() => { setShowSecondaryContact(false); setValue('secondary_contact_name', ''); setValue('secondary_contact_email', ''); setValue('secondary_contact_phone', ''); }}>
                                <X className="w-3.5 h-3.5 mr-1" /> Remove
                              </Button>
                            </div>
                            <div className="space-y-1.5">
                              <Label htmlFor="scn" className={tokens.label.default}>Name</Label>
-                             <Input id="scn" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+                             <Input id="scn" {...register('secondary_contact_name'} placeholder="e.g. John Doe" />
                            </div>
                            <div className="grid grid-cols-2 gap-3">
                              <div className="space-y-1.5">
                                <Label htmlFor="sce" className={tokens.label.default}>Email</Label>
-                               <Input id="sce" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+                               <Input id="sce" type="email" {...register('secondary_contact_email'} placeholder="backup@supplier.com" />
                              </div>
                              <div className="space-y-1.5">
                                <Label htmlFor="scp" className={tokens.label.default}>Phone</Label>
-                               <Input id="scp" type="tel" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                               <Input id="scp" type="tel" {...register('secondary_contact_phone'} placeholder="(555) 987-6543" autoCapitalize="off" />
                              </div>
                            </div>
                          </div>
@@ -519,7 +519,7 @@ export function SupplierSettingsSection() {
                   </AlertDialog>
                 </div>
               ) : (
-                <div className={cn(tokens.empty.container, 'h-full')}>
+                <div className={cn(tokens.empty.container, 'h-full'}>
                   <Truck className={tokens.empty.icon} />
                   <h3 className={tokens.empty.heading}>Select a supplier</h3>
                   <p className={tokens.empty.description}>Choose a supplier from the list or add a new one.</p>
@@ -550,7 +550,7 @@ export function SupplierSettingsSection() {
               {unlinkedBrands.map(([brand, products]) => (
                 <div key={brand}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className={cn(tokens.body.emphasis, 'text-sm')}>{brand}</span>
+                    <span className={cn(tokens.body.emphasis, 'text-sm'}>{brand}</span>
                     {groups && groups.length > 0 && (
                       <AssignBrandDropdown
                         brand={brand}
@@ -566,7 +566,7 @@ export function SupplierSettingsSection() {
                       <div key={p.id} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0">
                           <Package className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className={cn(tokens.body.default, 'truncate')}>{p.name}</span>
+                          <span className={cn(tokens.body.default, 'truncate'}>{p.name}</span>
                         </div>
                         {groups && groups.length > 0 && (
                           <Select
@@ -587,7 +587,7 @@ export function SupplierSettingsSection() {
                       </div>
                     ))}
                     {products.length > 5 && (
-                      <p className={cn(tokens.body.muted, 'px-3 py-1 text-xs')}>
+                      <p className={cn(tokens.body.muted, 'px-3 py-1 text-xs'}>
                         + {products.length - 5} more
                       </p>
                     )}
@@ -653,7 +653,7 @@ function SupplierStatsCard({ supplierName }: { supplierName: string }) {
               <div>
                 <span className="text-muted-foreground">Last order: </span>
                 <span className={tokens.body.emphasis}>
-                  {format(new Date(stats.last_order_date), 'MMM d, yyyy')}
+                  {format(new Date(stats.last_order_date), 'MMM d, yyyy'}
                 </span>
               </div>
             )}
@@ -801,7 +801,7 @@ function LinkProductsDialog({
           <ScrollArea className="h-[300px] border border-border/60 rounded-lg">
             <div className="p-2 space-y-0.5">
               {filtered.length === 0 && (
-                <p className={cn(tokens.body.muted, 'text-center py-8')}>No products found</p>
+                <p className={cn(tokens.body.muted, 'text-center py-8'}>No products found</p>
               )}
               {filtered.map(p => (
                 <label
@@ -813,7 +813,7 @@ function LinkProductsDialog({
                     onCheckedChange={() => toggle(p.id)}
                   />
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className={cn(tokens.body.default, 'truncate')}>{p.name}</span>
+                    <span className={cn(tokens.body.default, 'truncate'}>{p.name}</span>
                     {p.brand && <span className="text-muted-foreground text-xs shrink-0">{p.brand}</span>}
                   </div>
                   {p.current_supplier && (

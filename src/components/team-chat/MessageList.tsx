@@ -78,7 +78,7 @@ export function MessageList() {
           {isDM ? `Start a conversation with ${displayName}` : `Welcome to #${displayName}`}
         </h3>
         <p className="text-muted-foreground text-sm mt-1">
-          {activeChannel.description || (isDM ? 'Say hello!' : 'This is the start of the conversation.')}
+          {activeChannel.description || (isDM ? 'Say hello!' : 'This is the start of the conversation.'}
         </p>
       </div>
     );

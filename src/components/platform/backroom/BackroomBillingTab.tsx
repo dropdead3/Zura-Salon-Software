@@ -56,7 +56,7 @@ function BillingKPICard({
             'w-10 h-10 rounded-lg flex items-center justify-center',
             variant === 'danger' ? 'bg-red-500/10' : 'bg-[hsl(var(--platform-bg-hover))]'
           )}>
-            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]')} />
+            <Icon className={cn('w-5 h-5', variant === 'danger' ? 'text-red-400' : 'text-[hsl(var(--platform-primary))]'} />
           </div>
         </div>
       </PlatformCardContent>
@@ -168,7 +168,7 @@ export function BackroomBillingTab() {
         </PlatformCardHeader>
         <PlatformCardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className={cn(tokens.empty.container, 'py-16')}>
+            <div className={cn(tokens.empty.container, 'py-16'}>
               <Building2 className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>
                 {showAtRiskOnly ? 'No at-risk organizations' : 'No organizations found'}

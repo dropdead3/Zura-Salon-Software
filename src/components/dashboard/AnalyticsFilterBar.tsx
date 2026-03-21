@@ -67,7 +67,7 @@ export function AnalyticsFilterBar({
       {onCompactChange && (
         <Tabs
           value={compact ? 'simple' : 'detailed'}
-          onValueChange={(v) => onCompactChange(v === 'simple')}
+          onValueChange={(v) => onCompactChange(v === 'simple'}
         >
           <FilterTabsList>
             <FilterTabsTrigger value="simple">Simple</FilterTabsTrigger>

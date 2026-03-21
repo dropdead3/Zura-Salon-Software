@@ -70,7 +70,7 @@ export function ServiceAddonToast({
                         {formatMinutesToDuration(addon.duration_minutes)}
                       </span>
                     )}
-                    <span className={cn('text-[11px] text-muted-foreground')}>
+                    <span className={cn('text-[11px] text-muted-foreground'}>
                       {formatCurrency(addon.price)}
                     </span>
                   </div>

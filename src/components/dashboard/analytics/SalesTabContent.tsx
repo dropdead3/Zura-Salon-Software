@@ -378,7 +378,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
           </PinnableCard>
           {/* Compact Top Services summary — full analysis in Services tab */}
-          <Card className="cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => onSubTabChange('services')}>
+          <Card className="cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => onSubTabChange('services'}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-muted flex items-center justify-center rounded-lg">
@@ -544,7 +544,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               variant="outline"
               size={tokens.button.inline}
               className="shrink-0 text-xs gap-1.5"
-              onClick={() => navigate(dashPath('/admin/payroll?tab=commissions')}
+              onClick={() => navigate(dashPath('/admin/payroll?tab=commissions'}
             >
               Manage Tiers
               <ArrowRight className="w-3.5 h-3.5" />

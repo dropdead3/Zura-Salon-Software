@@ -223,7 +223,7 @@ export function RevPerHourByCategoryChart({ dateFrom, dateTo, locationId, filter
                         </div>
 
                         {/* Expand chevron */}
-                        <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', isExpanded && 'rotate-180')} />
+                        <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', isExpanded && 'rotate-180'} />
                       </div>
                     </button>
 

@@ -36,7 +36,7 @@ export function SmartMixAssistCard({
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className={cn(tokens.label.default, 'text-foreground')}>
+              <p className={cn(tokens.label.default, 'text-foreground'}>
                 Suggested Starting Formula
               </p>
               <p className={tokens.label.tiny}>{suggestion.sourceLabel}</p>
@@ -65,7 +65,7 @@ export function SmartMixAssistCard({
                   {line.product_name}
                 </span>
               </div>
-              <span className={cn(tokens.body.emphasis, 'tabular-nums')}>
+              <span className={cn(tokens.body.emphasis, 'tabular-nums'}>
                 {line.quantity} {line.unit}
               </span>
             </div>
@@ -76,7 +76,7 @@ export function SmartMixAssistCard({
         {suggestion.ratio && (
           <div className="flex items-center gap-2 px-3">
             <span className={tokens.label.tiny}>Ratio</span>
-            <span className={cn(tokens.body.emphasis, 'text-xs tabular-nums')}>
+            <span className={cn(tokens.body.emphasis, 'text-xs tabular-nums'}>
               {suggestion.ratio}
             </span>
           </div>

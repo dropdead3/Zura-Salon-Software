@@ -148,9 +148,9 @@ export function DraggableAnnouncementCard({
             </a>
           )}
           <p className="text-xs text-muted-foreground mt-4">
-            Posted {formatDate(new Date(announcement.created_at), 'MMM d, yyyy h:mm a')}
+            Posted {formatDate(new Date(announcement.created_at), 'MMM d, yyyy h:mm a'}
             {announcement.expires_at && (
-              <span> · Expires {formatDate(new Date(announcement.expires_at), 'MMM d, yyyy')}</span>
+              <span> · Expires {formatDate(new Date(announcement.expires_at), 'MMM d, yyyy'}</span>
             )}
           </p>
         </div>

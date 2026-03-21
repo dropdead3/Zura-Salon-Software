@@ -141,7 +141,7 @@ export function CategoryAddonManager({
             placeholder="Label (e.g. Scalp Treatment)"
             value={addLabel}
             onChange={e => { setAddLabel(e.target.value); setLabelTouched(true); }}
-            className={cn('h-8 text-xs', labelTouched && !addLabel.trim() && 'border-destructive focus-visible:ring-destructive')}
+            className={cn('h-8 text-xs', labelTouched && !addLabel.trim() && 'border-destructive focus-visible:ring-destructive'}
             autoFocus
             onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') resetForm(); }}
           />
@@ -153,7 +153,7 @@ export function CategoryAddonManager({
               size="sm"
               variant={linkMode === 'service' ? 'default' : 'outline'}
               className="h-6 text-xs px-2"
-              onClick={() => setLinkMode('service')}
+              onClick={() => setLinkMode('service'}
             >
               Specific Service
             </Button>
@@ -161,7 +161,7 @@ export function CategoryAddonManager({
               size="sm"
               variant={linkMode === 'category' ? 'default' : 'outline'}
               className="h-6 text-xs px-2"
-              onClick={() => setLinkMode('category')}
+              onClick={() => setLinkMode('category'}
             >
               Full Category
             </Button>

@@ -33,8 +33,8 @@ export function CompareTypeSelector({ value, onChange }: CompareTypeSelectorProp
             )}
           >
             <div className="flex items-center gap-2 w-full">
-              <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
-              <span className={cn('text-sm font-medium', isActive && 'text-foreground')}>{mode.label}</span>
+              <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground'} />
+              <span className={cn('text-sm font-medium', isActive && 'text-foreground'}>{mode.label}</span>
               {isActive && (
                 <Check className="w-3.5 h-3.5 text-primary ml-auto shrink-0" />
               )}

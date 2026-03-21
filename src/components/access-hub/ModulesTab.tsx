@@ -125,19 +125,19 @@ export function ModulesTab({ canManage }: ModulesTabProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuCheckboxItem
               checked={filterState === 'all'}
-              onCheckedChange={() => setFilterState('all')}
+              onCheckedChange={() => setFilterState('all'}
             >
               All Modules
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={filterState === 'enabled'}
-              onCheckedChange={() => setFilterState('enabled')}
+              onCheckedChange={() => setFilterState('enabled'}
             >
               Enabled Only
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={filterState === 'disabled'}
-              onCheckedChange={() => setFilterState('disabled')}
+              onCheckedChange={() => setFilterState('disabled'}
             >
               Disabled Only
             </DropdownMenuCheckboxItem>

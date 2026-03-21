@@ -355,7 +355,7 @@ export default function Changelog() {
                 <Button
                   variant={activeTab === 'list' ? 'secondary' : 'ghost'}
                   size={tokens.button.card}
-                  onClick={() => setActiveTab('list')}
+                  onClick={() => setActiveTab('list'}
                   className="gap-1.5 text-xs sm:text-sm"
                 >
                   <LayoutList className="h-4 w-4" />
@@ -364,7 +364,7 @@ export default function Changelog() {
                 <Button
                   variant={activeTab === 'timeline' ? 'secondary' : 'ghost'}
                   size={tokens.button.card}
-                  onClick={() => setActiveTab('timeline')}
+                  onClick={() => setActiveTab('timeline'}
                   className="gap-1.5 text-xs sm:text-sm"
                 >
                   <GitBranch className="h-4 w-4" />

@@ -217,7 +217,7 @@ export function CommandCenterAnalytics() {
         </p>
         <p className="text-xs text-muted-foreground/70">
           Visit the{' '}
-          <Link to={dashPath('/admin/analytics')} className="underline hover:text-foreground transition-colors">
+          <Link to={dashPath('/admin/analytics'} className="underline hover:text-foreground transition-colors">
             Analytics Hub
           </Link>{' '}
           and use the gear icon (⚙) to pin cards here.

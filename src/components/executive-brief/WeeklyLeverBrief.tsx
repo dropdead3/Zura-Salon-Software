@@ -93,7 +93,7 @@ export function WeeklyLeverBrief({ recommendation }: WeeklyLeverBriefProps) {
         {/* Expandable detail */}
         <Collapsible open={detailOpen} onOpenChange={setDetailOpen}>
           <CollapsibleTrigger className="flex w-full items-center gap-2 text-xs font-medium text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors">
-            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', detailOpen && 'rotate-180')} />
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', detailOpen && 'rotate-180'} />
             {detailOpen ? 'Hide reasoning' : 'Show reasoning & evidence'}
           </CollapsibleTrigger>
           <CollapsibleContent>

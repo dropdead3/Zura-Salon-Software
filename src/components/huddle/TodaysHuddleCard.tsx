@@ -52,7 +52,7 @@ export function TodaysHuddleCard({ locationId }: TodaysHuddleCardProps) {
           <div>
             <h3 className="font-display text-sm tracking-wide">DAILY HUDDLE</h3>
             <p className="text-sm text-muted-foreground">
-              {formatDate(new Date(), 'EEEE, MMMM d')}
+              {formatDate(new Date(), 'EEEE, MMMM d'}
             </p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export function TodaysHuddleCard({ locationId }: TodaysHuddleCardProps) {
           <div>
             <h3 className="font-display text-sm tracking-wide">DAILY HUDDLE</h3>
             <p className="text-sm text-muted-foreground">
-              {formatDate(new Date(huddle.huddle_date), 'EEEE, MMMM d')}
+              {formatDate(new Date(huddle.huddle_date), 'EEEE, MMMM d'}
             </p>
           </div>
         </div>

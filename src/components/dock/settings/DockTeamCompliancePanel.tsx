@@ -132,7 +132,7 @@ export function DockTeamCompliancePanel({ staff, onBack }: DockTeamCompliancePan
               if (key === '') return <div key={i} />;
               if (key === 'delete') {
                 return (
-                  <button key={i} onClick={() => handleKey('delete')}
+                  <button key={i} onClick={() => handleKey('delete'}
                     className="flex items-center justify-center h-14 rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors">
                     <Delete className="w-5 h-5" />
                   </button>

@@ -33,7 +33,7 @@ export function TargetWeightProgress({
       <div className="flex items-center justify-between">
         <span className={tokens.body.default}>{productName}</span>
         <div className="flex items-center gap-1.5">
-          <span className={cn(tokens.body.muted, 'tabular-nums text-xs')}>
+          <span className={cn(tokens.body.muted, 'tabular-nums text-xs'}>
             Target: {targetWeight} {unit}
           </span>
           {isReached && !isOverpour && (

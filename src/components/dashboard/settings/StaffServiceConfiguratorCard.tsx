@@ -271,7 +271,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
         {selectedUserId && !qualsLoading && (
           <div className="space-y-1">
             {!hasAnyQualifications && (
-              <p className={cn(tokens.body.muted, 'text-xs italic px-1 pb-2')}>
+              <p className={cn(tokens.body.muted, 'text-xs italic px-1 pb-2'}>
                 No assignments configured yet — all services default to available. Toggle services off to restrict what this stylist can be booked for.
               </p>
             )}
@@ -336,7 +336,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                   onCheckedChange={() => handleToggleService(svc, checked)}
                                   disabled={toggleService.isPending || bulkToggle.isPending}
                                 />
-                                <span className={cn(tokens.body.default, 'text-sm select-none flex-1')}>{svc.name}</span>
+                                <span className={cn(tokens.body.default, 'text-sm select-none flex-1'}>{svc.name}</span>
                                 {hasOverride && (
                                   <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" title="Has overrides" />
                                 )}
@@ -364,7 +364,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                       autoCapitalize="off"
                                     />
                                     {svc.price != null && qual?.custom_price != null && (
-                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap')}>
+                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap'}>
                                         (salon: ${svc.price})
                                       </span>
                                     )}
@@ -389,7 +389,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                                       autoCapitalize="off"
                                     />
                                     {svc.duration_minutes && qual?.custom_duration_minutes != null && (
-                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap')}>
+                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap'}>
                                         (salon: {svc.duration_minutes}m)
                                       </span>
                                     )}

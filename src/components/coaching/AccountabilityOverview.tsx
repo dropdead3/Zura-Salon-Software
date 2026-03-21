@@ -149,7 +149,7 @@ export function AccountabilityOverview() {
           <CardContent className="p-8 text-center text-muted-foreground">
             {statusFilter === 'all' 
               ? "No accountability items yet. Create some from meeting details."
-              : `No ${statusFilter.replace('_', ' ')} items.`
+              : `No ${statusFilter.replace('_', ' '} items.`
             }
           </CardContent>
         </Card>
@@ -198,7 +198,7 @@ export function AccountabilityOverview() {
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             <span className={isOverdue && item.status !== 'completed' ? 'text-destructive' : ''}>
-                              Due: {formatDate(parseISO(item.due_date), 'MMM d, yyyy')}
+                              Due: {formatDate(parseISO(item.due_date), 'MMM d, yyyy'}
                             </span>
                           </div>
                         )}

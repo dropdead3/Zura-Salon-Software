@@ -72,7 +72,7 @@ export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHi
                   {order.id.slice(0, 8).toUpperCase()}
                 </TableCell>
                 <TableCell>
-                  {formatDate(new Date(order.ordered_at), 'MMM d, yyyy')}
+                  {formatDate(new Date(order.ordered_at), 'MMM d, yyyy'}
                 </TableCell>
                 <TableCell>{order.quantity}</TableCell>
                 <TableCell className="capitalize">{order.card_design}</TableCell>

@@ -264,7 +264,7 @@ function ExtensionSpecialistsCarousel() {
             </div>
             <h3 className="font-serif text-xl mb-1">{stylist.name}</h3>
             <a 
-              href={`https://instagram.com/${stylist.instagram.replace('@', '')}`
+              href={`https://instagram.com/${stylist.instagram.replace('@', ''}`
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -318,7 +318,7 @@ function ExtensionSpecialistsCarousel() {
                   </div>
                   <h3 className="font-serif text-xl mb-1">{stylist.name}</h3>
                   <a 
-                    href={`https://instagram.com/${stylist.instagram.replace('@', '')}`
+                    href={`https://instagram.com/${stylist.instagram.replace('@', ''}`
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -405,7 +405,7 @@ export default function Extensions() {
 
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'})`, 'gi');
     const parts = text.split(regex);
     return parts.map((part, index) => 
       regex.test(part) ? (

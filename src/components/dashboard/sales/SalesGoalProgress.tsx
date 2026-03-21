@@ -392,7 +392,7 @@ export function SalesGoalProgress({
                                 className="mt-0.5"
                               />
                               <div className="flex-1 min-w-0">
-                                <p className={cn('text-sm leading-snug', !selected && 'line-through text-muted-foreground')}>
+                                <p className={cn('text-sm leading-snug', !selected && 'line-through text-muted-foreground'}>
                                   {task.title}
                                 </p>
                                 {task.description && selected && (

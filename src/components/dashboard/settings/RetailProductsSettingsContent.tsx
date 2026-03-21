@@ -89,13 +89,13 @@ type SortDir = 'asc' | 'desc';
 function exportProductsCsv(products: Product[]) {
   const headers = ['Name', 'Brand', 'Category', 'Type', 'SKU', 'Barcode', 'Container Size', 'Retail Price', 'Cost Price', 'Stock', 'Reorder Level', 'Available Online'];
   const rows = products.map(p => [
-    `"${(p.name || '').replace(/"/g, '""')}"`,
-    `"${(p.brand || '').replace(/"/g, '""')}"`,
-    `"${(p.category || '').replace(/"/g, '""')}"`,
-    `"${(p.product_type || getProductType(p)).replace(/"/g, '""')}"`,
-    `"${(p.sku || '').replace(/"/g, '""')}"`,
-    `"${(p.barcode || '').replace(/"/g, '""')}"`,
-    `"${(p.container_size || '').replace(/"/g, '""')}"`,
+    `"${(p.name || '').replace(/"/g, '""'}"`,
+    `"${(p.brand || '').replace(/"/g, '""'}"`,
+    `"${(p.category || '').replace(/"/g, '""'}"`,
+    `"${(p.product_type || getProductType(p)).replace(/"/g, '""'}"`,
+    `"${(p.sku || '').replace(/"/g, '""'}"`,
+    `"${(p.barcode || '').replace(/"/g, '""'}"`,
+    `"${(p.container_size || '').replace(/"/g, '""'}"`,
     p.retail_price ?? '',
     p.cost_price ?? '',
     p.quantity_on_hand ?? '',
@@ -322,7 +322,7 @@ function ProductsTab() {
       {showHistory && productImportJobs.length > 0 && (
         <Collapsible open={showHistory} onOpenChange={setShowHistory}>
           <CollapsibleContent className="space-y-3">
-            <h4 className={cn(tokens.label.default, 'text-muted-foreground')}>Recent Product Imports</h4>
+            <h4 className={cn(tokens.label.default, 'text-muted-foreground'}>Recent Product Imports</h4>
             {productImportJobs.map((job) => (
               <ImportHistoryCard key={job.id} job={job} showRollback={true} />
             ))}
@@ -463,36 +463,36 @@ function ProductsTab() {
                   <input type="checkbox" checked={selectedIds.size === (filteredProducts?.length || 0) && (filteredProducts?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
                 </TableHead>
                 <TableHead className={tokens.table.columnHeader}>
-                  <button type="button" onClick={() => toggleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                  <button type="button" onClick={() => toggleSort('name'} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Product <SortIcon field="name" />
                   </button>
                 </TableHead>
                 <TableHead className={tokens.table.columnHeader}>
-                  <button type="button" onClick={() => toggleSort('brand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                  <button type="button" onClick={() => toggleSort('brand'} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Brand <SortIcon field="brand" />
                   </button>
                 </TableHead>
                 <TableHead className={tokens.table.columnHeader}>
-                  <button type="button" onClick={() => toggleSort('category')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                  <button type="button" onClick={() => toggleSort('category'} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                     Category <SortIcon field="category" />
                   </button>
                 </TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'w-28')}>Movement</TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
-                  <button type="button" onClick={() => toggleSort('retail_price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
+                <TableHead className={cn(tokens.table.columnHeader, 'w-28'}>Movement</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>
+                  <button type="button" onClick={() => toggleSort('retail_price'} className="inline-flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
                     Price <SortIcon field="retail_price" />
                   </button>
                 </TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>
                   <div className="inline-flex items-center gap-1.5 ml-auto">
-                    <button type="button" onClick={() => toggleSort('quantity_on_hand')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    <button type="button" onClick={() => toggleSort('quantity_on_hand'} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Inventory <SortIcon field="quantity_on_hand" />
                     </button>
                     <MetricInfoTooltip description="Current stock on hand. Products are flagged as low stock when quantity reaches or falls below the minimum stock level you set." />
                   </div>
                 </TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'w-24')}>Expiry</TableHead>
-                <TableHead className={cn(tokens.table.columnHeader, 'text-center w-16')}>Online</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'w-24'}>Expiry</TableHead>
+                <TableHead className={cn(tokens.table.columnHeader, 'text-center w-16'}>Online</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -503,7 +503,7 @@ function ProductsTab() {
                 const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                 const productType = getProductType(p);
                 return (
-                  <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                  <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10'}>
                     <TableCell className="py-3"><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
                     {/* Product: Avatar + Name / SKU · Type */}
                     <TableCell className="py-3">
@@ -1030,9 +1030,9 @@ function BrandsTab() {
         <TableHeader>
           <TableRow>
              <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
-             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
-             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Stock</TableHead>
-             <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Inventory Value</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Products</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Total Stock</TableHead>
+             <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Inventory Value</TableHead>
              <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
@@ -1133,9 +1133,9 @@ function CategoriesTab() {
             <TableRow>
                <TableHead className={tokens.table.columnHeader}>Category</TableHead>
                <TableHead className={tokens.table.columnHeader}>Type</TableHead>
-               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
-               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Stock</TableHead>
-               <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Inventory Value</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Products</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Total Stock</TableHead>
+               <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Inventory Value</TableHead>
                <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
@@ -1402,7 +1402,7 @@ function InventoryByLocationTab() {
               variant={inventoryView === 'stock' ? 'default' : 'ghost'}
               size="sm"
               className="h-7 px-3 text-xs gap-1.5"
-              onClick={() => setInventoryView('stock')}
+              onClick={() => setInventoryView('stock'}
             >
               <Package className="w-3.5 h-3.5" /> Stock
             </Button>
@@ -1410,7 +1410,7 @@ function InventoryByLocationTab() {
               variant={inventoryView === 'orders' ? 'default' : 'ghost'}
               size="sm"
               className="h-7 px-3 text-xs gap-1.5"
-              onClick={() => setInventoryView('orders')}
+              onClick={() => setInventoryView('orders'}
             >
               <ShoppingCart className="w-3.5 h-3.5" /> Purchase Orders
             </Button>
@@ -1430,25 +1430,25 @@ function InventoryByLocationTab() {
              <div className="grid grid-cols-4 gap-4">
                <div className={tokens.kpi.tile}>
                  <div className={tokens.kpi.label}>Total Units</div>
-                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums'}>
                    <AnimatedBlurredAmount value={summary.totalUnits} />
                  </div>
                </div>
                <div className={tokens.kpi.tile}>
                  <div className={tokens.kpi.label}>Cost Value</div>
-                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums'}>
                    <AnimatedBlurredAmount value={summary.costValue} currency="USD" />
                  </div>
                </div>
                <div className={tokens.kpi.tile}>
                  <div className={tokens.kpi.label}>Retail Value</div>
-                 <div className={cn(tokens.kpi.value, 'tabular-nums')}>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums'}>
                    <AnimatedBlurredAmount value={summary.retailValue} currency="USD" />
                  </div>
                </div>
                <div className={tokens.kpi.tile}>
                  <div className={tokens.kpi.label}>Low Stock</div>
-                 <div className={cn(tokens.kpi.value, 'tabular-nums', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400')}>
+                 <div className={cn(tokens.kpi.value, 'tabular-nums', summary.lowStockCount > 0 && 'text-amber-600 dark:text-amber-400'}>
                    {summary.lowStockCount}
                  </div>
                </div>
@@ -1518,13 +1518,13 @@ function InventoryByLocationTab() {
                    <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                    <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
                    <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
-                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>On Hand</TableHead>
-                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Min. Stock</TableHead>
-                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Lead Time</TableHead>
-                   <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Status</TableHead>
-                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-32')}>Adjust</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>On Hand</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Min. Stock</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Lead Time</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Status</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-32'}>Adjust</TableHead>
                    <TableHead className="w-8" />
-                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-24')}>Reorder</TableHead>
+                   <TableHead className={cn(tokens.table.columnHeader, 'text-center w-24'}>Reorder</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1534,7 +1534,7 @@ function InventoryByLocationTab() {
                   const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
                   const supplier = supplierMap.get(p.id);
                   return (
-                      <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                      <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10'}>
                       <TableCell>
                         <Checkbox
                           checked={selectedInvIds.has(p.id)}
@@ -1694,7 +1694,7 @@ export function RetailProductsSettingsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div />
-        <Button variant="outline" size={tokens.button.card} className="gap-1.5" onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=retail')}>
+        <Button variant="outline" size={tokens.button.card} className="gap-1.5" onClick={() => navigate(dashPath('/admin/analytics?tab=sales&subtab=retail'}>
           <BarChart3 className="w-4 h-4" /> View Retail Analytics
         </Button>
       </div>
@@ -1712,7 +1712,7 @@ export function RetailProductsSettingsContent() {
                 — {onlineCount} of {totalCount} products visible online
               </span>
             </div>
-            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub')}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub'}>
               Manage Store Settings <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -1724,7 +1724,7 @@ export function RetailProductsSettingsContent() {
                 Online Store is not active. Clients cannot browse or purchase products online.
               </span>
             </div>
-            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub')}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate(dashPath('/admin/website-hub'}>
               Activate Online Store <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>

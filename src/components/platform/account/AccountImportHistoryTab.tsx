@@ -186,7 +186,7 @@ function ImportJobCard({ job, onRollback, isRollingBack }: ImportJobCardProps) {
           
           <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
             {job.created_at && (
-              <span>{formatDate(new Date(job.created_at), 'MMM d, yyyy h:mm a')}</span>
+              <span>{formatDate(new Date(job.created_at), 'MMM d, yyyy h:mm a'}</span>
             )}
             {job.success_count !== null && (
               <span className="text-emerald-400">

@@ -142,7 +142,7 @@ export function BirthdayCalendarCard() {
 
             {/* Calendar Navigation */}
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">{format(currentMonth, 'MMMM yyyy')}</h3>
+              <h3 className="font-medium text-sm">{format(currentMonth, 'MMMM yyyy'}</h3>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPreviousMonth}>
                   <ChevronLeft className="w-3 h-3" />

@@ -33,8 +33,8 @@ export function PhorestSyncButton({
       disabled={isPending}
       className={cn('gap-2', className)}
     >
-      <RefreshCw className={cn('w-4 h-4', isPending && 'animate-spin')} />
-      {showLabel && (isPending ? 'Syncing...' : 'Sync')}
+      <RefreshCw className={cn('w-4 h-4', isPending && 'animate-spin'} />
+      {showLabel && (isPending ? 'Syncing...' : 'Sync'}
     </Button>
   );
 }

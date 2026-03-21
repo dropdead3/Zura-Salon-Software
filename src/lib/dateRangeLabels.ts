@@ -52,7 +52,7 @@ export function getDateRangeSubtitle(key: string): string | null {
   switch (key) {
     case 'thisWeek': {
       const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-      return `${format(weekStart, 'EEE, MMM d')} – Today`;
+      return `${format(weekStart, 'EEE, MMM d'} – Today`;
     }
     case 'thisMonth': {
       const monthStart = startOfMonth(now);

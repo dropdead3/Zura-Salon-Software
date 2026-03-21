@@ -421,7 +421,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
               <Label className="text-sm font-medium">Color Theme</Label>
               <Select 
                 value={themePreset} 
-                onValueChange={(v) => applyPreset(v as ColorTheme | 'custom')}
+                onValueChange={(v) => applyPreset(v as ColorTheme | 'custom'}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose theme" />
@@ -480,7 +480,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
               <Label className="text-sm font-medium">Button Style</Label>
               <Select 
                 value={localSettings.button_style} 
-                onValueChange={(v) => updateField('button_style', v as 'rounded' | 'pill' | 'square')}
+                onValueChange={(v) => updateField('button_style', v as 'rounded' | 'pill' | 'square'}
               >
                 <SelectTrigger className="max-w-xs">
                   <SelectValue />
@@ -608,14 +608,14 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                           )}
                           onClick={() => updateField('location_badge_position', pos)}
                         >
-                          {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                          {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm">Style</Label>
-                    <Select value={localSettings.location_badge_style} onValueChange={(v) => updateField('location_badge_style', v as 'glass' | 'solid' | 'outline')}>
+                    <Select value={localSettings.location_badge_style} onValueChange={(v) => updateField('location_badge_style', v as 'glass' | 'solid' | 'outline'}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="glass">Glass (blur effect)</SelectItem>

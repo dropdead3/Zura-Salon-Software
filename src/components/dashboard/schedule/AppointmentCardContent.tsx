@@ -264,7 +264,7 @@ function GridContent({
       {/* Service line */}
       {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
         <div className="text-[13px] opacity-90 truncate">
-          {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + ')}
+          {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + '}
         </div>
       ) : (
         <div className="text-[13px] opacity-90 truncate">
@@ -278,7 +278,7 @@ function GridContent({
         if (!names || names.length === 0) return null;
         return (
           <div className="text-[11px] opacity-70 truncate flex items-center gap-1">
-            <span className="opacity-50">└</span> Assisted by {names.join(', ')}
+            <span className="opacity-50">└</span> Assisted by {names.join(', '}
           </div>
         );
       })()}
@@ -339,10 +339,10 @@ function AgendaContent({
           {/* Time Column */}
           <div className="text-center shrink-0 w-16">
             <div className="text-lg font-medium">
-              {formatTime12h(appointment.start_time).replace(' ', '')}
+              {formatTime12h(appointment.start_time).replace(' ', ''}
             </div>
             <div className="text-xs text-muted-foreground">
-              to {formatTime12h(appointment.end_time).replace(' ', '')}
+              to {formatTime12h(appointment.end_time).replace(' ', ''}
             </div>
             {duration > 0 && (
               <div className="text-[10px] text-muted-foreground mt-0.5">{duration} min</div>
@@ -419,7 +419,7 @@ function AgendaContent({
               {hasAssistants && assistantNamesMap?.get(appointment.id) && (
                 <div className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" />
-                  w/ {assistantNamesMap.get(appointment.id)!.join(', ')}
+                  w/ {assistantNamesMap.get(appointment.id)!.join(', '}
                 </div>
               )}
             </div>

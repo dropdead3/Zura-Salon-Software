@@ -213,7 +213,7 @@ export function TrialCountdownBanner() {
               size={tokens.button.card}
               className={cn('gap-1.5', buttonClasses)}
             >
-              <Link to={dashPath('/settings/billing')}>
+              <Link to={dashPath('/settings/billing'}>
                 {isExpired ? 'Contact Sales' : 'Upgrade Now'}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>

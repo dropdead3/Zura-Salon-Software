@@ -159,7 +159,7 @@ export function BookingWizard({
       const branchId = selectedLoc?.phorest_branch_id;
       if (!branchId) throw new Error('No Phorest branch ID for selected location');
 
-      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00Z`;
+      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd'}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {

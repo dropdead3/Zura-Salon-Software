@@ -301,13 +301,13 @@ export default function HeadshotRequests() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy'}
                     </TableCell>
                     <TableCell>
                       {request.scheduled_date ? (
                         <div className="text-sm">
                           <p className="font-medium">
-                            {formatDate(new Date(request.scheduled_date), 'MMM d, yyyy')}
+                            {formatDate(new Date(request.scheduled_date), 'MMM d, yyyy'}
                           </p>
                           {request.scheduled_time && (
                             <p className="text-xs text-muted-foreground">{request.scheduled_time}</p>
@@ -365,7 +365,7 @@ export default function HeadshotRequests() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Requested</p>
                     <p className="text-sm font-sans">
-                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a')}
+                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a'}
                     </p>
                   </div>
 
@@ -376,7 +376,7 @@ export default function HeadshotRequests() {
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start">
                           <CalendarDays className="w-4 h-4 mr-2" />
-                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date')}
+                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -448,7 +448,7 @@ export default function HeadshotRequests() {
                   {/* Processed Info */}
                   {selectedRequest.processed_at && (
                     <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy')}
+                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy'}
                     </div>
                   )}
                 </div>

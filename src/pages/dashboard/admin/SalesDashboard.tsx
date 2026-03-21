@@ -331,7 +331,7 @@ export default function SalesDashboard() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => syncSales.mutate('sales')}
+              onClick={() => syncSales.mutate('sales'}
               disabled={syncSales.isPending}
               className="shrink-0"
             >
@@ -827,7 +827,7 @@ export default function SalesDashboard() {
                   <Button 
                     variant="outline" 
                     className="gap-2"
-                    onClick={() => window.location.href = dashPath('/admin/phorest-settings')}
+                    onClick={() => window.location.href = dashPath('/admin/phorest-settings'}
                   >
                     <Link2 className="w-4 h-4" />
                     Phorest Settings

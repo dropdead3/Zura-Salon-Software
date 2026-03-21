@@ -34,7 +34,7 @@ export function PointsBalanceCard() {
           </div>
         </div>
         <Button variant="outline" size={tokens.button.card} asChild>
-          <Link to={dashPath('/rewards')}>
+          <Link to={dashPath('/rewards'}>
             <Gift className="w-4 h-4 mr-1" />
             Shop
           </Link>
@@ -53,7 +53,7 @@ export function PointsBalanceCard() {
               className="flex items-center justify-between text-sm"
             >
               <span className="text-muted-foreground truncate max-w-[180px]">
-                {transaction.description || transaction.action_type.replace(/_/g, ' ')}
+                {transaction.description || transaction.action_type.replace(/_/g, ' '}
               </span>
               <span className="text-green-600 font-medium">
                 +{transaction.points}

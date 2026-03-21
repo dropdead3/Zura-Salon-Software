@@ -130,7 +130,7 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
         <p className="text-xs tracking-[0.2em] text-white/70 mb-1">{stylist.level}</p>
         <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
         <a 
-          href={`https://instagram.com/${stylist.instagram.replace('@', '')}`
+          href={`https://instagram.com/${stylist.instagram.replace('@', ''}`
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-white/70 hover:text-white transition-colors duration-200 mb-4 inline-block"

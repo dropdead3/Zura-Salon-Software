@@ -549,7 +549,7 @@ export function AddBrandWizard({ open, onOpenChange }: AddBrandWizardProps) {
                         {csvProducts.map((p, i) => (
                           <TableRow
                             key={`csv-${i}`}
-                            className={cn('cursor-pointer', p.selected && 'bg-violet-500/5')}
+                            className={cn('cursor-pointer', p.selected && 'bg-violet-500/5'}
                             onClick={() => {
                               const updated = [...csvProducts];
                               updated[i] = { ...updated[i], selected: !updated[i].selected };

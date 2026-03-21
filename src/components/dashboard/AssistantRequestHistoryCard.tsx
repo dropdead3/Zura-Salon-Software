@@ -145,7 +145,7 @@ export function AssistantRequestHistoryCard({ userId }: AssistantRequestHistoryC
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span>{formatDate(parseISO(request.request_date), 'MMM d, yyyy')}</span>
+                          <span>{formatDate(parseISO(request.request_date), 'MMM d, yyyy'}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {request.start_time.slice(0, 5)}

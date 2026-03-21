@@ -351,7 +351,7 @@ export default function ServicesManager() {
               </div>
             </CardContent>
           </Card>
-          <Link to={dashPath('/admin/stylist-levels')}>
+          <Link to={dashPath('/admin/stylist-levels'}>
             <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">

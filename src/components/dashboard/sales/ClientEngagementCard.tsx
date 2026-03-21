@@ -277,7 +277,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
                 <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <p className="text-xs text-muted-foreground">
                   Staff names unavailable —{' '}
-                  <Link to={dashPath('/admin/settings/staff-mapping')} className="text-primary hover:underline">
+                  <Link to={dashPath('/admin/settings/staff-mapping'} className="text-primary hover:underline">
                     connect staff profiles in Settings
                   </Link>
                 </p>
@@ -349,7 +349,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
                 onClick={() => setShowAll(prev => !prev)}
                 className="flex items-center gap-1 mt-2 text-xs text-primary hover:underline mx-auto"
               >
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180')} />
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180'} />
                 {showAll ? 'Show less' : `Show all ${allChartData.length} stylists`}
               </button>
             )}
@@ -362,7 +362,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
                   animate={{ opacity: 0.6 }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className={cn(tokens.body.muted, 'text-xs text-center mt-1 opacity-60')}
+                  className={cn(tokens.body.muted, 'text-xs text-center mt-1 opacity-60'}
                 >
                   Click a bar to explore
                 </motion.p>
@@ -416,7 +416,7 @@ function DrillDown({ data, view, staffId, displayName }: {
           </div>
           {detail.topServices.length > 0 && (
             <div>
-              <p className={cn(tokens.body.muted, 'mb-2')}>Top Services</p>
+              <p className={cn(tokens.body.muted, 'mb-2'}>Top Services</p>
               <div className="space-y-1">
                 {detail.topServices.map(svc => (
                   <div key={svc.name} className="flex items-center justify-between text-xs">
@@ -489,7 +489,7 @@ function DrillDown({ data, view, staffId, displayName }: {
 function DrillHeader({ name, userId }: { name: string; userId: string | null }) {
   return (
     <div className="flex items-center justify-between">
-      <h4 className={cn(tokens.heading.subsection, 'text-foreground')}>{name}</h4>
+      <h4 className={cn(tokens.heading.subsection, 'text-foreground'}>{name}</h4>
       {userId && (
         <Link
           to={dashPath(`/admin/team/${userId}`)}

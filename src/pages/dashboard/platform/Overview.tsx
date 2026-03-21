@@ -118,7 +118,7 @@ export default function PlatformOverview() {
           </div>
           <div className="flex items-center gap-3">
             <PlatformOrgQuickSwitch />
-            <PlatformButton onClick={() => navigate('/platform/accounts')} className="gap-2">
+            <PlatformButton onClick={() => navigate('/platform/accounts'} className="gap-2">
               <Plus className="h-4 w-4" />
               New Account
             </PlatformButton>
@@ -204,19 +204,19 @@ export default function PlatformOverview() {
             <QuickActionButton 
               icon={Building2}
               label="View All Accounts"
-              onClick={() => navigate('/platform/accounts')}
+              onClick={() => navigate('/platform/accounts'}
               hoverAnimation="group-hover/action:scale-110"
             />
             <QuickActionButton 
               icon={Upload}
               label="Start Migration"
-              onClick={() => navigate('/platform/import')}
+              onClick={() => navigate('/platform/import'}
               hoverAnimation="group-hover/action:-translate-y-0.5"
             />
             <QuickActionButton 
               icon={Settings}
               label="Platform Settings"
-              onClick={() => navigate('/platform/settings')}
+              onClick={() => navigate('/platform/settings'}
               hoverAnimation="group-hover/action:rotate-45"
             />
           </div>

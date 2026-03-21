@@ -280,7 +280,7 @@ export function BellEntryCard({
               </div>
               <p className="text-xs text-muted-foreground font-sans">
                 {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
-                {formatDate(new Date(entry.created_at), 'MMM d, yyyy')}
+                {formatDate(new Date(entry.created_at), 'MMM d, yyyy'}
               </p>
               {entry.closing_script && (
                 <p className="mt-3 text-sm text-muted-foreground font-sans italic">

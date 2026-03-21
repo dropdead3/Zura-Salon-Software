@@ -52,7 +52,7 @@ export default function ClientHealthHub() {
         {/* Header */}
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to={dashPath('/admin/management')}>
+            <Link to={dashPath('/admin/management'}>
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>

@@ -226,7 +226,7 @@ export function EditAppointmentDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? formatDate(selectedDate, 'PPP') : 'Select date')}
+                  {selectedDate ? formatDate(selectedDate, 'PPP') : 'Select date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -251,7 +251,7 @@ export function EditAppointmentDialog({
               <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map(time => (
                   <SelectItem key={time} value={time}>
-                    {formatDate(parse(time, 'HH:mm', new Date()), 'h:mm a')}
+                    {formatDate(parse(time, 'HH:mm', new Date()), 'h:mm a'}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -156,7 +156,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
             </div>
             <div className="flex-1 min-w-0">
               <p className={tokens.body.emphasis}>Digest Emails</p>
-              <p className={cn(tokens.body.muted, 'text-xs')}>Intelligence summary to admins</p>
+              <p className={cn(tokens.body.muted, 'text-xs'}>Intelligence summary to admins</p>
             </div>
             <div className="flex gap-1">
               {FREQUENCY_OPTIONS.map((opt) => (
@@ -185,7 +185,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
             </div>
             <div className="flex-1 min-w-0">
               <p className={tokens.body.emphasis}>Cost Spike Alerts</p>
-              <p className={cn(tokens.body.muted, 'text-xs')}>
+              <p className={cn(tokens.body.muted, 'text-xs'}>
                 Notify when cost rises &gt;{alertThreshold}%
               </p>
             </div>
@@ -202,7 +202,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
                 className="w-16 h-8 text-xs text-center rounded-lg"
                 disabled={!alertEnabled}
               />
-              <span className={cn(tokens.body.muted, 'text-xs')}>%</span>
+              <span className={cn(tokens.body.muted, 'text-xs'}>%</span>
               <Switch
                 checked={alertEnabled}
                 onCheckedChange={handleAlertToggle}
@@ -292,7 +292,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
       </Card>
 
       {/* Benchmarking Roadmap Placeholder */}
-      <Card className={cn(tokens.card.wrapper, 'border-dashed opacity-75')}>
+      <Card className={cn(tokens.card.wrapper, 'border-dashed opacity-75'}>
         <CardContent className="flex items-center gap-4 py-6">
           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
             <BarChart3 className="w-5 h-5 text-muted-foreground" />

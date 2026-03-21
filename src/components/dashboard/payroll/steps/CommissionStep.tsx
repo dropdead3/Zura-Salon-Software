@@ -100,8 +100,8 @@ export function CommissionStep({
           Review commissions calculated from sales data for{' '}
           {payPeriodStart && payPeriodEnd && (
             <>
-              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
-              {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
+              {formatDate(new Date(payPeriodStart), 'MMM d'} -{' '}
+              {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy'}
             </>
           )}
         </p>
@@ -164,7 +164,7 @@ export function CommissionStep({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={emp.employee?.photo_url || undefined} />
                       <AvatarFallback>
-                        {getInitials(emp.employee?.full_name || '')}
+                        {getInitials(emp.employee?.full_name || ''}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium">

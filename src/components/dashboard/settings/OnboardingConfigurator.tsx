@@ -97,7 +97,7 @@ export function OnboardingConfigurator() {
                     : "bg-muted hover:bg-muted/80 text-muted-foreground"
                 )}
               >
-                {role.display_name || role.name.replace('_', ' ')}
+                {role.display_name || role.name.replace('_', ' '}
               </button>
             ))}
           </div>
@@ -108,7 +108,7 @@ export function OnboardingConfigurator() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Configuring onboarding for:</span>
                 <Badge variant="secondary" className="capitalize">
-                  {selectedRole.replace('_', ' ')}
+                  {selectedRole.replace('_', ' '}
                 </Badge>
               </div>
 

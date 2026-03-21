@@ -232,7 +232,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         <div className="p-6 pb-4 border-b border-border">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="min-w-0">
-              <h2 className={cn(tokens.heading.card, 'truncate')}>
+              <h2 className={cn(tokens.heading.card, 'truncate'}>
                 {clientName}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -352,7 +352,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                         </span>
                       </div>
                       <div className="text-xs text-muted-foreground pl-6">
-                        {format(parseISO(thisApptReview.responded_at), 'MMM d, yyyy')}
+                        {format(parseISO(thisApptReview.responded_at), 'MMM d, yyyy'}
                         {thisApptReview.nps_score !== null && ` · NPS: ${thisApptReview.nps_score}`}
                       </div>
                       {thisApptReview.comments && (
@@ -377,7 +377,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                       </div>
                       {reviewSummary.lastReviewDate && (
                         <div className="text-xs text-muted-foreground pl-6">
-                          Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy')}
+                          Last: {format(parseISO(reviewSummary.lastReviewDate), 'MMM d, yyyy'}
                           {appointment.appointment_date && (() => {
                             const days = differenceInCalendarDays(
                               parseISO(reviewSummary.lastReviewDate!),

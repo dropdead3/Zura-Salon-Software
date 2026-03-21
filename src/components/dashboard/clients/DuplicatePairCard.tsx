@@ -159,7 +159,7 @@ function ProfileColumn({
         {data.last_visit && (
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            {formatDateFn(new Date(data.last_visit), 'MMM d')}
+            {formatDateFn(new Date(data.last_visit), 'MMM d'}
           </span>
         )}
       </div>

@@ -47,7 +47,7 @@ export function CardExportButton({
             const value = row[header];
             // Handle values that might contain commas or quotes
             if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-              return `"${value.replace(/"/g, '""')}"`;
+              return `"${value.replace(/"/g, '""'}"`;
             }
             return value ?? '';
           }).join(',')

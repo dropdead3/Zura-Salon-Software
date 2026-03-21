@@ -42,7 +42,7 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
             <StarRating rating={response.overall_rating} />
           )}
           <p className="text-xs text-muted-foreground">
-            {response.responded_at && formatDate(new Date(response.responded_at), 'MMM d, yyyy h:mm a')}
+            {response.responded_at && formatDate(new Date(response.responded_at), 'MMM d, yyyy h:mm a'}
           </p>
         </div>
         <div className="flex items-center gap-2">

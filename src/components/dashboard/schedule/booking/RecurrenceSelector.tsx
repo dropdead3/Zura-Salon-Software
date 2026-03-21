@@ -123,7 +123,7 @@ export function RecurrenceSelector({ value, onChange, startDate }: RecurrenceSel
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
               <CalendarDays className="h-3.5 w-3.5 shrink-0" />
               <span>
-                Creates {value.occurrences} appointments through {format(endDate, 'MMM d, yyyy')}
+                Creates {value.occurrences} appointments through {format(endDate, 'MMM d, yyyy'}
               </span>
             </div>
           )}

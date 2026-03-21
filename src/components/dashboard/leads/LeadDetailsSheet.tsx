@@ -177,7 +177,7 @@ export function LeadDetailsSheet({
                 Created
               </div>
               <p className="text-sm font-medium">
-                {formatDate(new Date(lead.created_at), 'MMM d, yyyy')}
+                {formatDate(new Date(lead.created_at), 'MMM d, yyyy'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}

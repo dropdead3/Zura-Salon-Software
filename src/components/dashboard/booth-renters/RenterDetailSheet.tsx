@@ -335,7 +335,7 @@ export function RenterDetailSheet({
                         <div>
                           <p className="font-medium">{contract.contract_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDate(new Date(contract.start_date), 'MMM d, yyyy')}
+                            {formatDate(new Date(contract.start_date), 'MMM d, yyyy'}
                             {contract.end_date && ` - ${formatDate(new Date(contract.end_date), 'MMM d, yyyy}`}
                           </p>
                         </div>
@@ -377,7 +377,7 @@ export function RenterDetailSheet({
                       <div>
                         <p className="font-medium">{formatCurrency(payment.amount)}</p>
                         <p className="text-sm text-muted-foreground">
-                          Due: {formatDate(new Date(payment.due_date), 'MMM d, yyyy')}
+                          Due: {formatDate(new Date(payment.due_date), 'MMM d, yyyy'}
                         </p>
                       </div>
                       <Badge

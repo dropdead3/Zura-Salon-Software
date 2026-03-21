@@ -28,14 +28,14 @@ interface LegendRow {
 function LegendSection({ title, rows }: { title: string; rows: LegendRow[] }) {
   return (
     <div className="space-y-1.5">
-      <h4 className={cn(tokens.heading.subsection, 'px-1')}>{title}</h4>
+      <h4 className={cn(tokens.heading.subsection, 'px-1'}>{title}</h4>
       <div className="space-y-0.5">
         {rows.map((row, i) => (
           <div key={i} className="flex items-start gap-3 px-1 py-1.5 rounded-md">
             <div className="shrink-0 mt-0.5">{row.visual}</div>
             <div className="min-w-0">
-              <span className={cn(tokens.body.emphasis, 'block text-xs')}>{row.label}</span>
-              <span className={cn(tokens.body.muted, 'block text-[11px] leading-snug')}>{row.description}</span>
+              <span className={cn(tokens.body.emphasis, 'block text-xs'}>{row.label}</span>
+              <span className={cn(tokens.body.muted, 'block text-[11px] leading-snug'}>{row.description}</span>
             </div>
           </div>
         ))}
@@ -233,7 +233,7 @@ export function ScheduleLegend() {
         <Button
           variant="outline"
           size="icon"
-          className={cn('rounded-full h-9 w-9 shrink-0 bg-card/80 backdrop-blur-xl')}
+          className={cn('rounded-full h-9 w-9 shrink-0 bg-card/80 backdrop-blur-xl'}
         >
           <Info className="h-4 w-4" />
           <span className="sr-only">Schedule Key</span>
@@ -247,7 +247,7 @@ export function ScheduleLegend() {
       >
         <div className="px-4 pt-3 pb-2 border-b border-border">
           <h3 className={tokens.heading.card}>Schedule Key</h3>
-          <p className={cn(tokens.body.muted, 'text-xs mt-0.5')}>Visual guide for all calendar elements</p>
+          <p className={cn(tokens.body.muted, 'text-xs mt-0.5'}>Visual guide for all calendar elements</p>
         </div>
         <ScrollArea className="h-[60vh]">
           <div className="px-4 py-3 space-y-4">

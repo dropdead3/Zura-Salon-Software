@@ -100,7 +100,7 @@ export function LoyaltyProgramConfigurator({ organizationId }: LoyaltyProgramCon
                 <Label htmlFor="program_name">Program Name</Label>
                 <Input
                   id="program_name"
-                  {...register('program_name')}
+                  {...register('program_name'}
                   placeholder="e.g., Salon Rewards"
                 />
               </div>

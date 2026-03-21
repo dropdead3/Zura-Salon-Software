@@ -365,7 +365,7 @@ export default function PlatformAccounts() {
                             
                             return (
                               <PlatformBadge variant={variant} size="sm">
-                                {format(goLiveDate, 'MMM d')}
+                                {format(goLiveDate, 'MMM d'}
                                 {isPast && !isLive && ' 🚨'}
                               </PlatformBadge>
                             );

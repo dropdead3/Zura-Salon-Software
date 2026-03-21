@@ -631,7 +631,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
         <div className="flex items-center justify-between border-t border-slate-700/50 px-6 py-4 bg-slate-800/50">
           <div className="text-xs text-slate-500">
             {organization.account_number && `Account #${organization.account_number} • `}
-            Created {formatDate(new Date(organization.created_at), 'MMM d, yyyy')}
+            Created {formatDate(new Date(organization.created_at), 'MMM d, yyyy'}
           </div>
           <div className="flex gap-2">
             <PlatformButton type="button" variant="secondary" onClick={() => onOpenChange(false)}>

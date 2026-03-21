@@ -209,7 +209,7 @@ export function StructureInsightsTab({
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <h3 className="font-display text-sm tracking-wide uppercase mb-2">Website Intelligence</h3>
-        <p className={cn(tokens.body.muted, 'mb-6 max-w-[200px]')}>
+        <p className={cn(tokens.body.muted, 'mb-6 max-w-[200px]'}>
           Analyze your website for SEO, conversion, content quality, and structure improvements.
         </p>
         <Button
@@ -276,7 +276,7 @@ export function StructureInsightsTab({
             disabled={isLoading}
             className="font-sans h-8 w-8 p-0"
           >
-            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin'} />
           </Button>
         </div>
 

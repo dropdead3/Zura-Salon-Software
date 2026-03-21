@@ -415,7 +415,7 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
                   {' → '}
                   <BlurredAmount>{formatCurrencyWholeUtil(Math.round(h.actual))}</BlurredAmount>
                 </span>
-                <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive')}>
+                <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive'}>
                   {isOver ? '+' : ''}{((diff / h.projected) * 100).toFixed(1)}%
                 </span>
               </div>

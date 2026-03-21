@@ -100,7 +100,7 @@ export function RandomAssignModal({
             <div className="space-y-4">
               {/* Exclude list */}
               <div>
-                <h4 className={cn(tokens.label.default, 'mb-2')}>Exclude stylists</h4>
+                <h4 className={cn(tokens.label.default, 'mb-2'}>Exclude stylists</h4>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {stylists.map(s => (
                     <label
@@ -129,7 +129,7 @@ export function RandomAssignModal({
                 <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <UserX className="h-4 w-4 text-destructive" />
-                    <span className={cn(tokens.label.default, 'text-destructive')}>
+                    <span className={cn(tokens.label.default, 'text-destructive'}>
                       {result.exclusions.length} stylist{result.exclusions.length > 1 ? 's' : ''} excluded
                     </span>
                   </div>
@@ -179,7 +179,7 @@ export function RandomAssignModal({
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setMode('idle')}>
+              <Button variant="outline" onClick={() => setMode('idle'}>
                 Back
               </Button>
               <Button onClick={handleApply} disabled={isApplying || !result?.assignments.length}>

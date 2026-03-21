@@ -194,11 +194,11 @@ export default function PerformanceReviews() {
                         <TableCell>{REVIEW_TYPES.find(t => t.value === review.review_type)?.label || review.review_type}</TableCell>
                         <TableCell className="text-muted-foreground">
                           {review.review_period_start && review.review_period_end
-                            ? `${formatDate(parseISO(review.review_period_start), 'MMM yyyy')} – ${formatDate(parseISO(review.review_period_end), 'MMM yyyy}`
+                            ? `${formatDate(parseISO(review.review_period_start), 'MMM yyyy'} – ${formatDate(parseISO(review.review_period_end), 'MMM yyyy}`
                             : '—'}
                         </TableCell>
                         <TableCell><RatingStars rating={review.overall_rating} /></TableCell>
-                        <TableCell className="text-muted-foreground">{formatDate(parseISO(review.created_at), 'MMM d, yyyy')}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(parseISO(review.created_at), 'MMM d, yyyy'}</TableCell>
                         <TableCell>
                           {review.status === 'draft' && (
                             <Button size={tokens.button.inline} variant="outline" onClick={() => handleSubmitReview(review.id)}>Submit</Button>

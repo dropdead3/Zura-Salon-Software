@@ -147,7 +147,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Label htmlFor="sku">SKU</Label>
               <Input
                 id="sku"
-                {...register('sku')}
+                {...register('sku'}
                 placeholder="SKU code"
                 autoCapitalize="none"
               />
@@ -157,7 +157,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Label htmlFor="barcode">Barcode</Label>
               <Input
                 id="barcode"
-                {...register('barcode')}
+                {...register('barcode'}
                 placeholder="UPC/EAN"
                 autoCapitalize="none"
               />
@@ -167,7 +167,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Label htmlFor="category">Category</Label>
               <Input
                 id="category"
-                {...register('category')}
+                {...register('category'}
                 placeholder="e.g., Shampoo"
               />
             </div>
@@ -176,7 +176,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Label htmlFor="brand">Brand</Label>
               <Input
                 id="brand"
-                {...register('brand')}
+                {...register('brand'}
                 placeholder="e.g., Olaplex"
               />
             </div>
@@ -187,7 +187,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
                 id="retail_price"
                 type="number"
                 step="0.01"
-                {...register('retail_price')}
+                {...register('retail_price'}
                 placeholder="0.00"
               />
             </div>
@@ -198,7 +198,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
                 id="cost_price"
                 type="number"
                 step="0.01"
-                {...register('cost_price')}
+                {...register('cost_price'}
                 placeholder="0.00"
               />
             </div>
@@ -208,7 +208,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Input
                 id="quantity_on_hand"
                 type="number"
-                {...register('quantity_on_hand')}
+                {...register('quantity_on_hand'}
                 placeholder="0"
               />
             </div>
@@ -218,7 +218,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Input
                 id="reorder_level"
                 type="number"
-                {...register('reorder_level')}
+                {...register('reorder_level'}
                 placeholder="Low stock alert"
               />
             </div>
@@ -228,7 +228,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Input
                 id="par_level"
                 type="number"
-                {...register('par_level')}
+                {...register('par_level'}
                 placeholder="Target stock level"
               />
               {parSuggestion && parSuggestion.suggestedPar > 0 && (
@@ -250,7 +250,7 @@ export function ProductEditDialog({ productId, open, onOpenChange }: ProductEdit
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                {...register('description')}
+                {...register('description'}
                 placeholder="Product description..."
                 rows={3}
               />

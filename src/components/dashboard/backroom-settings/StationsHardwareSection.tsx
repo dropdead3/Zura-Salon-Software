@@ -175,7 +175,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className={cn(tokens.body.emphasis, 'text-foreground')}>{station.station_name}</p>
+                          <p className={cn(tokens.body.emphasis, 'text-foreground'}>{station.station_name}</p>
                           {connType !== 'manual' && <Badge variant="outline" className="text-[10px]">{connType === 'ble' ? 'BLE' : 'Direct'}</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -200,7 +200,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
 
           {onNavigate && stations && stations.length > 0 && (
             <div className="flex justify-end pt-2 border-t border-border/40">
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('alerts')}>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('alerts'}>
                 Next: Alerts & Exceptions <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </div>

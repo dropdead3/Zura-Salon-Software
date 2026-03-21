@@ -250,7 +250,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
           textAnchor="middle" 
           className="text-[10px] fill-muted-foreground"
         >
-          {formatDate(day.date, 'MMM d')}
+          {formatDate(day.date, 'MMM d'}
         </text>
         {day.appointmentCount > 0 ? (
           <>
@@ -678,7 +678,7 @@ export function ForecastingCard() {
         <CardContent className="space-y-4">
           {/* Scheduled / Predicted toggle */}
           <div className="flex items-center gap-3">
-            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted')}>
+            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted'}>
               <FilterTabsList>
                 <FilterTabsTrigger value="scheduled">Scheduled</FilterTabsTrigger>
                 <UITooltip>
@@ -713,13 +713,13 @@ export function ForecastingCard() {
           </div>
 
           {/* Summary Stats */}
-          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
+          <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3'}>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
-              onClick={() => handleStatCardClick('revenue')}
+              onClick={() => handleStatCardClick('revenue'}
             >
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -733,7 +733,7 @@ export function ForecastingCard() {
                 <p className="text-xs text-muted-foreground">{PERIOD_TOTAL_LABELS[period]}</p>
                 <MetricInfoTooltip description={totalTooltip} />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary'} />
             </div>
             {period !== 'tomorrow' && (
               <div
@@ -741,7 +741,7 @@ export function ForecastingCard() {
                   "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                   selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
                 )}
-                onClick={() => handleStatCardClick('dailyAvg')}
+                onClick={() => handleStatCardClick('dailyAvg'}
               >
                 <div className="flex justify-center mb-1">
                   <Calendar className="w-4 h-4 text-primary" />
@@ -755,7 +755,7 @@ export function ForecastingCard() {
                 {(period === '7days' || period === 'todayToEom') && (
                   <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-tight">Only counts days open</p>
                 )}
-                <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
+                <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary'} />
               </div>
             )}
             <div
@@ -763,7 +763,7 @@ export function ForecastingCard() {
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
               )}
-              onClick={() => handleStatCardClick('count')}
+              onClick={() => handleStatCardClick('count'}
             >
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-primary" />
@@ -773,7 +773,7 @@ export function ForecastingCard() {
                 <p className="text-xs text-muted-foreground">Appointments</p>
                 <MetricInfoTooltip description={apptTooltip} />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary'} />
             </div>
           </div>
 
@@ -880,7 +880,7 @@ export function ForecastingCard() {
                   </div>
                 );
               })()}
-              <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
+              <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid'}>
                 <FilterTabsList>
                   <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
                   <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
@@ -1088,7 +1088,7 @@ export function ForecastingCard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    {formatDate(days[0].date, 'EEEE, MMMM d')}
+                    {formatDate(days[0].date, 'EEEE, MMMM d'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Click to view {days[0].appointmentCount} appointment{days[0].appointmentCount !== 1 ? 's' : ''}
@@ -1137,7 +1137,7 @@ export function ForecastingCard() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE, MMM d')}</span>
+                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE, MMM d'}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrency(peakDay.revenue)}</BlurredAmount>

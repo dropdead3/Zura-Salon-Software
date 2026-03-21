@@ -120,7 +120,7 @@ export function RecentReports() {
                     </Badge>
                     <span>•</span>
                     <span>
-                      {formatDate(new Date(report.date_from), 'MMM d')} - {formatDate(new Date(report.date_to), 'MMM d, yyyy')}
+                      {formatDate(new Date(report.date_from), 'MMM d'} - {formatDate(new Date(report.date_to), 'MMM d, yyyy'}
                     </span>
                   </div>
                 </div>

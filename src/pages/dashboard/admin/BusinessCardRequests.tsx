@@ -316,7 +316,7 @@ export default function BusinessCardRequests() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(request.requested_at), 'MMM d, yyyy'}
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(request.status)}
@@ -374,7 +374,7 @@ export default function BusinessCardRequests() {
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Requested</p>
                     <p className="text-sm font-sans">
-                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a')}
+                      {formatDate(new Date(selectedRequest.requested_at), 'MMMM d, yyyy \'at\' h:mm a'}
                     </p>
                   </div>
 
@@ -412,7 +412,7 @@ export default function BusinessCardRequests() {
                   {/* Processed Info */}
                   {selectedRequest.processed_at && (
                     <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy')}
+                      Processed on {formatDate(new Date(selectedRequest.processed_at), 'MMM d, yyyy'}
                     </div>
                   )}
                 </div>

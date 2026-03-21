@@ -45,7 +45,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       const isRight = config.layout === 'image-right';
       return (
         <section className="py-16 px-4">
-          <div className={cn('max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center', isRight && 'direction-rtl')}>
+          <div className={cn('max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center', isRight && 'direction-rtl'}>
             <div className={isRight ? 'order-2 md:order-1' : ''}>
               {config.heading && <h2 className="text-3xl font-display font-medium mb-4">{config.heading as string}</h2>}
               {config.body && <p className="text-muted-foreground mb-6">{config.body as string}</p>}

@@ -253,8 +253,8 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
                 payPeriodEnd={payPeriodEnd!}
                 checkDate={checkDate!}
                 isSubmitting={isCreatingLocalRun}
-                onSaveAsDraft={() => handleSubmit('draft')}
-                onFinalize={() => handleSubmit('submitted')}
+                onSaveAsDraft={() => handleSubmit('draft'}
+                onFinalize={() => handleSubmit('submitted'}
               />
             )}
           </motion.div>

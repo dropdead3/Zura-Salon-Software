@@ -103,29 +103,29 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
                 <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
               </TableHead>
               <TableHead>
-                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('name')}>
+                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('name'}>
                   Name <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden lg:table-cell">Phone</TableHead>
               <TableHead>
-                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('last_visit')}>
+                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('last_visit'}>
                   Last Visit <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
               <TableHead>
-                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('days_inactive')}>
+                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('days_inactive'}>
                   Days Inactive <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
               <TableHead>
-                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('total_spend')}>
+                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('total_spend'}>
                   Total Spend <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
               <TableHead>
-                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('clv')}>
+                <Button variant="ghost" size={tokens.button.inline} className="gap-1 -ml-3" onClick={() => handleSort('clv'}>
                   CLV <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>

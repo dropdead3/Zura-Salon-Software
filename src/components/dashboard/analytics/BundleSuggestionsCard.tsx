@@ -97,7 +97,7 @@ export function BundleSuggestionsCard({ locationId, filterContext, movementRatin
                 {data.pairs.slice(0, 15).map((pair, idx) => {
                   const isStrategic = strategicPairs.includes(pair);
                   return (
-                    <TableRow key={idx} className={cn(isStrategic && 'bg-primary/[0.02]')}>
+                    <TableRow key={idx} className={cn(isStrategic && 'bg-primary/[0.02]'}>
                       <TableCell className="font-medium text-sm">{titleCase(pair.productA)}</TableCell>
                       <TableCell className="font-medium text-sm">{titleCase(pair.productB)}</TableCell>
                       <TableCell className="text-right tabular-nums">{pair.count}</TableCell>

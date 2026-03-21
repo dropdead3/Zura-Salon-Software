@@ -101,7 +101,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
     return (
       <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground'}`}>
         <Calendar className="h-3 w-3" />
-        {formatDate(date, 'MMM d')}
+        {formatDate(date, 'MMM d'}
         {isOverdue && ' (overdue)'}
         {isDueToday && ' (today)'}
       </span>
@@ -264,7 +264,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
                       <span className="text-sm line-through">{item.title}</span>
                       {item.completed_at && (
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(new Date(item.completed_at), 'MMM d')}
+                          {formatDate(new Date(item.completed_at), 'MMM d'}
                         </span>
                       )}
                     </div>

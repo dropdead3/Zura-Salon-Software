@@ -150,7 +150,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium min-w-[120px] text-center">
-              {formatDate(currentMonth, 'MMMM yyyy')}
+              {formatDate(currentMonth, 'MMMM yyyy'}
             </span>
             <Button
               variant="outline"
@@ -204,7 +204,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                       "text-xs",
                       isToday(day) && "font-medium text-primary"
                     )}>
-                      {format(day, 'd')}
+                      {format(day, 'd'}
                     </span>
                     
                     {dayRequests.length > 0 && (
@@ -241,7 +241,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                 
                 <PopoverContent className="w-80 p-0" align="start">
                   <div className="p-3 border-b">
-                    <h4 className="font-medium">{formatDate(day, 'EEEE, MMMM d')}</h4>
+                    <h4 className="font-medium">{formatDate(day, 'EEEE, MMMM d'}</h4>
                     <p className="text-sm text-muted-foreground">
                       {dayRequests.length} request{dayRequests.length !== 1 ? 's' : ''}
                     </p>

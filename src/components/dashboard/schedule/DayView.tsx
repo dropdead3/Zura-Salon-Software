@@ -95,7 +95,7 @@ const BLOCKED_CATEGORIES = ['Block', 'Break'];
 function formatSlotTime(hour: number, minute: number): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour % 12 || 12;
-  return `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+  return `${hour12}:${minute.toString().padStart(2, '0'} ${ampm}`;
 }
 
 function DroppableSlot({
@@ -505,7 +505,7 @@ export function DayView({
                     )}
                   >
                     {label && (
-                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60')}>
+                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60'}>
                         {label}
                       </span>
                     )}
@@ -529,7 +529,7 @@ export function DayView({
                       return slotMins < dayNowMins;
                     })();
                       
-                      const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0}`;
+                      const slotTime = `${hour.toString().padStart(2, '0'}:${minute.toString().padStart(2, '0}`;
                       
                       // Determine if slot is outside operating hours
                       const isOutsideHours = isLocationClosed || (

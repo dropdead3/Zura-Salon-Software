@@ -199,7 +199,7 @@ export function PriceQueueTab() {
               </>
             )}
             <PlatformButton variant="outline" size="sm" onClick={handleSync} disabled={syncMutation.isPending}>
-              <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin')} />
+              <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin'} />
               Sync Now
             </PlatformButton>
           </div>
@@ -210,7 +210,7 @@ export function PriceQueueTab() {
               <Loader2 className={tokens.loading.spinner} />
             </div>
           ) : items.length === 0 ? (
-            <div className={cn(tokens.empty.container, 'py-16')}>
+            <div className={cn(tokens.empty.container, 'py-16'}>
               <Check className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>Queue is clear</h3>
               <p className={tokens.empty.description}>No price updates awaiting review.</p>

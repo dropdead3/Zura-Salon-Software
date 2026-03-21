@@ -229,7 +229,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
                     <TableCell>
                       <div className="font-medium">{promo.promotionName}</div>
                       <Badge variant="outline" className="mt-1">
-                        {promo.promotionType?.replace('_', ' ')}
+                        {promo.promotionType?.replace('_', ' '}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{promo.uses}</TableCell>

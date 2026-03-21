@@ -130,7 +130,7 @@ export function ServiceBundlingIntelligence({
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium flex items-center gap-1">
                             {r.category}
-                            <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180')} />
+                            <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180'} />
                           </span>
                           <Badge variant="secondary" className="text-xs">{r.totalBookings} visits</Badge>
                         </div>
@@ -209,14 +209,14 @@ export function ServiceBundlingIntelligence({
                       return (
                          <React.Fragment key={r.category}>
                           <TableRow
-                            className={cn('cursor-pointer hover:bg-muted/50', r.liftPct >= 50 && 'bg-emerald-500/5')}
+                            className={cn('cursor-pointer hover:bg-muted/50', r.liftPct >= 50 && 'bg-emerald-500/5'}
                             onClick={() => setExpandedLift(isExp ? null : r.category)}
                           >
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
                                 {r.category}
                                 {r.liftPct >= 50 && <Badge variant="outline" className="text-[10px] border-success/30 text-success-foreground">Strong</Badge>}
-                                <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180')} />
+                                <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180'} />
                               </div>
                             </TableCell>
                             <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketSolo)}</BlurredAmount></TableCell>
@@ -329,7 +329,7 @@ export function ServiceBundlingIntelligence({
                                 }}
                               >
                                 <span className="font-medium text-[11px]">{pair.count}</span>
-                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground')}>{Math.round(pair.pct)}%</span>
+                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground'}>{Math.round(pair.pct)}%</span>
                               </div>
                             </td>
                           );

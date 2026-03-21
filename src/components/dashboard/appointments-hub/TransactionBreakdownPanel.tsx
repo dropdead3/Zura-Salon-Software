@@ -110,7 +110,7 @@ export function TransactionBreakdownPanel({
   if (!breakdown?.hasTransaction) {
     return (
       <div className={tokens.empty.container}>
-        <Receipt className={cn(tokens.empty.icon, 'text-primary')} />
+        <Receipt className={cn(tokens.empty.icon, 'text-primary'} />
         <h3 className={tokens.empty.heading}>No Transaction Data</h3>
         <p className={tokens.empty.description}>
           Transaction data will appear after POS sync
@@ -205,7 +205,7 @@ export function TransactionBreakdownPanel({
           <div className="pt-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
               <CreditCard className="w-3 h-3" />
-              {summary.paymentMethods.join(', ')}
+              {summary.paymentMethods.join(', '}
             </span>
           </div>
         )}
@@ -242,7 +242,7 @@ export function TransactionBreakdownPanel({
                     )}
                     {r.createdAt && (
                       <span className="text-xs text-muted-foreground/60">
-                        {format(new Date(r.createdAt), 'MMM d, yyyy')}
+                        {format(new Date(r.createdAt), 'MMM d, yyyy'}
                       </span>
                     )}
                   </div>

@@ -52,7 +52,7 @@ export function BenchmarkLeaderboard({ leaderboard, className }: BenchmarkLeader
                 </span>
               </div>
               <span className="text-sm text-violet-400 font-medium">
-                {formatMetricValue(leader.value, config?.format || 'number')}
+                {formatMetricValue(leader.value, config?.format || 'number'}
               </span>
             </button>
           ))}
@@ -62,7 +62,7 @@ export function BenchmarkLeaderboard({ leaderboard, className }: BenchmarkLeader
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-500">Platform Average</span>
             <span className="text-slate-300">
-              {formatMetricValue(leaderboard.platform_average, config?.format || 'number')}
+              {formatMetricValue(leaderboard.platform_average, config?.format || 'number'}
             </span>
           </div>
         </div>

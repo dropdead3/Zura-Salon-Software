@@ -106,7 +106,7 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
                 <TableCell>
                   {subscription.current_period_start && subscription.current_period_end ? (
                     <span className="text-slate-400 text-sm">
-                      {formatDate(new Date(subscription.current_period_start), 'MMM d')} - {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy')}
+                      {formatDate(new Date(subscription.current_period_start), 'MMM d'} - {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy'}
                     </span>
                   ) : (
                     <span className="text-slate-500">—</span>
@@ -176,13 +176,13 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
                 </TableCell>
                 <TableCell>
                   <span className="text-slate-400">
-                    {formatDate(new Date(invoice.created_at), 'MMM d, yyyy')}
+                    {formatDate(new Date(invoice.created_at), 'MMM d, yyyy'}
                   </span>
                 </TableCell>
                 <TableCell>
                   {invoice.period_start && invoice.period_end ? (
                     <span className="text-slate-400 text-sm">
-                      {formatDate(new Date(invoice.period_start), 'MMM d')} - {formatDate(new Date(invoice.period_end), 'MMM d')}
+                      {formatDate(new Date(invoice.period_start), 'MMM d'} - {formatDate(new Date(invoice.period_end), 'MMM d'}
                     </span>
                   ) : (
                     <span className="text-slate-500">—</span>
@@ -244,7 +244,7 @@ export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
               <TableCell>
                 {subscription.current_period_end ? (
                   <span className="text-slate-400">
-                    {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy')}
+                    {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy'}
                   </span>
                 ) : (
                   <span className="text-slate-500">—</span>

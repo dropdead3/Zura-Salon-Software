@@ -72,10 +72,10 @@ export function PointsActivityFeed({ transactions }: PointsActivityFeedProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {tx.description || tx.transaction_type.replace(/_/g, ' ')}
+                      {tx.description || tx.transaction_type.replace(/_/g, ' '}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(new Date(tx.created_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(tx.created_at), 'MMM d, yyyy'}
                     </p>
                   </div>
                   <div className={cn(

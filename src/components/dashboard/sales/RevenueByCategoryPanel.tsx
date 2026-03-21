@@ -187,7 +187,7 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
                       onClick={(e) => { e.stopPropagation(); setShowAll(!showAll); }}
                       className="text-xs text-primary hover:underline mt-2 flex items-center gap-1"
                     >
-                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
+                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
                       {showAll ? 'Show less' : `Show all ${category.stylists.length}`}
                     </button>
                   )}
@@ -252,7 +252,7 @@ export function RevenueByCategoryPanel({ isOpen, dateFrom, dateTo, locationId }:
                     onClick={() => setShowAll(!showAll)}
                     className="text-xs text-primary hover:underline flex items-center gap-1 mx-auto"
                   >
-                    <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
                     {showAll ? 'Show less' : `Show all ${categories.length} categories`}
                   </button>
                 )}

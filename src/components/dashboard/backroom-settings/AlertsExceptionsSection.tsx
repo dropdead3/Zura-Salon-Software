@@ -185,7 +185,7 @@ export function AlertsExceptionsSection() {
                         setForm(f => ({ ...f, notify_roles: next }));
                       }}
                     >
-                      {role.replace('_', ' ')}
+                      {role.replace('_', ' '}
                     </Badge>
                   ))}
                 </div>
@@ -214,7 +214,7 @@ export function AlertsExceptionsSection() {
                   <div className="flex items-center gap-3 flex-1">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={cn(tokens.body.emphasis, 'text-foreground')}>{ruleType?.label || rule.rule_type}</p>
+                        <p className={cn(tokens.body.emphasis, 'text-foreground'}>{ruleType?.label || rule.rule_type}</p>
                         <Badge variant={severityVariant(rule.severity)}>{rule.severity}</Badge>
                         {!rule.is_active && <Badge variant="outline">Disabled</Badge>}
                       </div>
@@ -222,7 +222,7 @@ export function AlertsExceptionsSection() {
                         Threshold: {rule.threshold_value}{rule.threshold_unit}
                         {rule.creates_exception && ' · Creates exception'}
                         {rule.creates_task && ' · Creates task'}
-                        {rule.notify_roles.length > 0 && ` · Notifies: ${rule.notify_roles.join(', ')}`}
+                        {rule.notify_roles.length > 0 && ` · Notifies: ${rule.notify_roles.join(', '}`}
                       </p>
                     </div>
                   </div>

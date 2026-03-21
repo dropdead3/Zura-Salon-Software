@@ -43,7 +43,7 @@ export function AssistantBlockNotificationItem({
           <Users className="w-3 h-3" />
         </div>
         <div className="flex-1 min-w-0 space-y-1.5">
-          <p className={cn('text-sm', !notification.is_read && 'font-medium')}>
+          <p className={cn('text-sm', !notification.is_read && 'font-medium'}>
             {notification.title}
           </p>
           <p className="text-xs text-muted-foreground line-clamp-2">

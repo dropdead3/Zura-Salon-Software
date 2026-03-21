@@ -98,7 +98,7 @@ export function TransactionHistoryTimeline({ transactions, summary, isLoading }:
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">
-                {formatDate(new Date(date), 'EEEE, MMMM d, yyyy')}
+                {formatDate(new Date(date), 'EEEE, MMMM d, yyyy'}
               </span>
             </div>
 

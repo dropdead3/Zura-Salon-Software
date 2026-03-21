@@ -42,7 +42,7 @@ export function CustomLandingPageBanner({ sidebarCollapsed }: CustomLandingPageB
           </div>
           
           <div className="flex items-center gap-2">
-            <Link to={dashPath('/profile')}>
+            <Link to={dashPath('/profile'}>
               <Button
                 variant="ghost"
                 size="sm"

@@ -169,7 +169,7 @@ export function DockLiveDispensing({
         <div className="flex-1 flex items-center justify-center">
           <DockWeightInput
             onSubmit={handleReweigh}
-            onCancel={() => setActiveView('lines')}
+            onCancel={() => setActiveView('lines'}
             label="Leftover Weight"
           />
         </div>
@@ -270,7 +270,7 @@ export function DockLiveDispensing({
         )}
         {needsReweigh && !isComplete && (
           <button
-            onClick={() => setActiveView('reweigh-input')}
+            onClick={() => setActiveView('reweigh-input'}
             className="w-full h-12 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Scale className="w-4 h-4" />

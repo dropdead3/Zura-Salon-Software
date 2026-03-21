@@ -191,7 +191,7 @@ function ActiveCardsTab() {
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 text-[10px]">Active</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{formatDate(new Date(card.created_at), 'MMM d, yyyy')}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(new Date(card.created_at), 'MMM d, yyyy'}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => setEditCard(card)}>
                       <Edit2 className="w-3.5 h-3.5" />
@@ -295,7 +295,7 @@ function EditGiftCardDialog({ card, onClose }: { card: GiftCard; onClose: () => 
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
                 {transactions.map(tx => (
                   <div key={tx.id} className="flex items-center justify-between text-xs p-2 rounded bg-muted/30 border border-border/40">
-                    <span className="text-muted-foreground">{formatDate(new Date(tx.created_at), 'MMM d, yyyy')}</span>
+                    <span className="text-muted-foreground">{formatDate(new Date(tx.created_at), 'MMM d, yyyy'}</span>
                     <span className="font-medium tabular-nums"><BlurredAmount>{formatCurrency(Number(tx.amount))}</BlurredAmount></span>
                   </div>
                 ))}

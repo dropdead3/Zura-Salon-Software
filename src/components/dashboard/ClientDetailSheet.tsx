@@ -639,7 +639,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <p className="text-xs text-muted-foreground">Since Visit</p>
                     {client.last_visit && (
                       <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                        {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}
+                        {formatDate(new Date(client.last_visit), 'MMM d, yyyy'}
                       </p>
                     )}
                   </Card>
@@ -819,7 +819,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   {client.last_visit && (
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                      <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy'}</span>
                     </div>
                   )}
                   {/* Source badge in contact section */}
@@ -929,8 +929,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <Cake className="w-4 h-4 text-muted-foreground" />
                     <span>
                       {client.birthday 
-                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
-                        : 'No birthday on file')}
+                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d'}
+                        : 'No birthday on file'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -938,7 +938,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                     <span>
                       {client.client_since ? (
                         <>
-                          Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                          Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy'}
                           {' — '}
                           {(() => {
                             const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
@@ -1201,7 +1201,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       <div>
                         {client.address_line1 && <p>{client.address_line1}</p>}
                         {client.address_line2 && <p>{client.address_line2}</p>}
-                        <p>{[client.city, client.state, client.zip].filter(Boolean).join(', ')}</p>
+                        <p>{[client.city, client.state, client.zip].filter(Boolean).join(', '}</p>
                         {client.country && <p>{client.country}</p>}
                       </div>
                     </div>
@@ -1268,7 +1268,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       >
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-sans text-sm text-foreground">{formatDate(visit.appointment_date, 'EEE, MMM d')}</span>
+                            <span className="font-sans text-sm text-foreground">{formatDate(visit.appointment_date, 'EEE, MMM d'}</span>
                             <span className="text-xs text-muted-foreground">
                               {(() => { const [h, m] = visit.start_time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })()}
                             </span>

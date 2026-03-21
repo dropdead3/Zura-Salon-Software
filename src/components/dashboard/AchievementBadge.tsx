@@ -96,7 +96,7 @@ export function AchievementBadge({
             <p className="text-xs text-muted-foreground">{achievement.description}</p>
             {earnedAt && (
               <p className="text-[10px] text-muted-foreground/70 pt-1 border-t">
-                Earned {formatDate(new Date(earnedAt), 'MMM d, yyyy')}
+                Earned {formatDate(new Date(earnedAt), 'MMM d, yyyy'}
               </p>
             )}
           </div>

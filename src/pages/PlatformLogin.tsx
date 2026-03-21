@@ -54,7 +54,7 @@ export default function PlatformLogin() {
             });
             toast({
               title: 'Welcome to the Platform Team!',
-              description: `You've been granted ${invitation.role.replace('platform_', '')} access.`,
+              description: `You've been granted ${invitation.role.replace('platform_', ''} access.`,
             });
             navigate(redirectTarget, { replace: true });
             return;
@@ -108,7 +108,7 @@ export default function PlatformLogin() {
             });
             toast({
               title: 'Welcome to the Platform Team!',
-              description: `You've been granted ${invitation.role.replace('platform_', '')} access.`,
+              description: `You've been granted ${invitation.role.replace('platform_', ''} access.`,
             });
             navigate(redirectTarget, { replace: true });
             return;
@@ -354,7 +354,7 @@ export default function PlatformLogin() {
               >
                 {loading 
                   ? (isSignupMode ? 'Creating account...' : 'Signing in...')
-                  : (isSignupMode ? 'Create Account' : 'Sign In')}
+                  : (isSignupMode ? 'Create Account' : 'Sign In'}
               </PlatformButton>
 
               {isSignupMode && (

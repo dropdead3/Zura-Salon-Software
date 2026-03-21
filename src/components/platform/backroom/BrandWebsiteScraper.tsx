@@ -255,7 +255,7 @@ export function BrandWebsiteScraper({
       {categories.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => setCategoryFilter('all')}
+            onClick={() => setCategoryFilter('all'}
             className={cn(
               'h-7 px-2.5 rounded-md font-sans text-[11px] transition-colors',
               categoryFilter === 'all'

@@ -124,7 +124,7 @@ function AdminRequestRow({ request, onManualAssign }: { request: AssistantReques
           )}
         </div>
         <div className="text-sm text-muted-foreground mt-1">
-          <span>{formatDate(parseISO(request.request_date), 'MMM d')} • </span>
+          <span>{formatDate(parseISO(request.request_date), 'MMM d'} • </span>
           <span>{request.salon_services?.name}</span>
           {request.locations?.name && (
             <span className="flex items-center gap-1 inline-flex ml-2">
@@ -526,7 +526,7 @@ export default function AssistantSchedule() {
               <ToggleGroup 
                 type="single" 
                 value={viewMode} 
-                onValueChange={(v) => v && setViewMode(v as 'list' | 'calendar')}
+                onValueChange={(v) => v && setViewMode(v as 'list' | 'calendar'}
                 className="border rounded-lg"
               >
                 <ToggleGroupItem value="list" aria-label="List view" className="px-3">

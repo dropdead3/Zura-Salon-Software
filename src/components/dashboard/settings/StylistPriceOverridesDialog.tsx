@@ -128,7 +128,7 @@ export function StylistPriceOverridesDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2')}>
+          <DialogTitle className={cn(tokens.heading.card, 'flex items-center gap-2'}>
             <UserPlus className="w-4 h-4" /> Stylist Price Overrides
           </DialogTitle>
           <DialogDescription className={tokens.body.muted}>
@@ -152,7 +152,7 @@ export function StylistPriceOverridesDialog({
                   return (
                     <div key={emp.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className={cn(tokens.body.emphasis, 'truncate')}>{emp.display_name || emp.full_name}</p>
+                        <p className={cn(tokens.body.emphasis, 'truncate'}>{emp.display_name || emp.full_name}</p>
                         <p className={tokens.body.muted}>
                           {emp.stylist_level || 'No level'}
                           {levelPrice != null && ` · Level: $${levelPrice.toFixed(2)}`}
@@ -201,7 +201,7 @@ export function StylistPriceOverridesDialog({
               </div>
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {availableEmployees.length === 0 ? (
-                  <p className={cn(tokens.body.muted, 'text-center py-3')}>
+                  <p className={cn(tokens.body.muted, 'text-center py-3'}>
                     {search ? 'No matching stylists' : 'All stylists have overrides'}
                   </p>
                 ) : (
@@ -215,7 +215,7 @@ export function StylistPriceOverridesDialog({
                       onClick={() => { setAddingEmployeeId(emp.id); setNewPrice(''); }}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className={cn(tokens.body.emphasis, 'truncate')}>{emp.display_name || emp.full_name}</p>
+                        <p className={cn(tokens.body.emphasis, 'truncate'}>{emp.display_name || emp.full_name}</p>
                         <p className={tokens.body.muted}>{emp.stylist_level || 'No level'}</p>
                       </div>
                       {addingEmployeeId === emp.id && (

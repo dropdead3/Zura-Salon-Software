@@ -492,7 +492,7 @@ export function WebsiteEditorSidebar({
               variant="ghost"
               size={tokens.button.inline}
               className="h-7 text-xs flex-1"
-              onClick={() => onTabChange('page-settings')}
+              onClick={() => onTabChange('page-settings'}
             >
               <Settings className="h-3 w-3 mr-1" />
               Page Settings

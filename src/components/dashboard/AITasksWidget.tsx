@@ -14,12 +14,12 @@ export function AITasksWidget() {
   );
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Brain className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1')}>AI SUGGESTED TASKS</span>
+        <span className={cn(tokens.kpi.label, 'flex-1'}>AI SUGGESTED TASKS</span>
       </div>
 
       <div className="mt-4 flex-1">

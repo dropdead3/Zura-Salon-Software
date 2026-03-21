@@ -128,11 +128,11 @@ export function LocationStationsTab({ locationId }: LocationStationsTabProps) {
               )}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className={cn(tokens.body.emphasis, 'text-sm')}>
+                <span className={cn(tokens.body.emphasis, 'text-sm'}>
                   {station.station_name}
                 </span>
                 {station.station_number != null && (
-                  <span className={cn(tokens.body.muted, 'text-xs')}>
+                  <span className={cn(tokens.body.muted, 'text-xs'}>
                     #{station.station_number}
                   </span>
                 )}
@@ -140,7 +140,7 @@ export function LocationStationsTab({ locationId }: LocationStationsTabProps) {
 
               <div className="flex items-center gap-3 shrink-0">
                 <div className="flex items-center gap-2">
-                  <span className={cn(tokens.body.muted, 'text-xs')}>Available</span>
+                  <span className={cn(tokens.body.muted, 'text-xs'}>Available</span>
                   <Switch
                     checked={station.is_available}
                     onCheckedChange={() => handleToggleAvailability(station)}

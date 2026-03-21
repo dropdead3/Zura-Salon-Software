@@ -379,7 +379,7 @@ export default function PhorestSettings() {
                 <Users className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Staff</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('staff')}
+                  onClick={() => triggerSync.mutate('staff'}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
@@ -392,7 +392,7 @@ export default function PhorestSettings() {
                 <Calendar className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Appointments</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('appointments')}
+                  onClick={() => triggerSync.mutate('appointments'}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
@@ -405,7 +405,7 @@ export default function PhorestSettings() {
                 <DollarSign className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Sales</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('sales')}
+                  onClick={() => triggerSync.mutate('sales'}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
@@ -418,7 +418,7 @@ export default function PhorestSettings() {
                 <BarChart3 className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Reports</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('reports')}
+                  onClick={() => triggerSync.mutate('reports'}
                   disabled={triggerSync.isPending}
                   variant="outline"
                   className="w-full"
@@ -434,7 +434,7 @@ export default function PhorestSettings() {
                 <RefreshCw className="w-6 h-6 text-muted-foreground" />
                 <h3 className="font-display text-sm tracking-wide uppercase">Full Sync</h3>
                 <Button
-                  onClick={() => triggerSync.mutate('all')}
+                  onClick={() => triggerSync.mutate('all'}
                   disabled={triggerSync.isPending}
                   className="w-full"
                 >
@@ -931,12 +931,12 @@ export default function PhorestSettings() {
                         </TableCell>
                         <TableCell>{log.records_synced}</TableCell>
                         <TableCell>
-                          {formatDate(new Date(log.started_at), 'MMM d, HH:mm')}
+                          {formatDate(new Date(log.started_at), 'MMM d, HH:mm'}
                         </TableCell>
                         <TableCell>
                           {log.completed_at 
                             ? formatDate(new Date(log.completed_at), 'MMM d, HH:mm')
-                            : '-')}
+                            : '-'}
                         </TableCell>
                         <TableCell>
                           {log.error_message ? (

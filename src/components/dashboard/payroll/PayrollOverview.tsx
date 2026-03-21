@@ -29,13 +29,13 @@ export function PayrollOverview() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Current Period:</span>
             <span className="font-medium">
-              {formatDate(currentPeriod.periodStart, 'MMM d')} - {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy')}
+              {formatDate(currentPeriod.periodStart, 'MMM d'} - {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy'}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Next Pay Day:</span>
             <Badge variant="secondary">
-              {formatDate(currentPeriod.nextPayDay, 'MMM d, yyyy')}
+              {formatDate(currentPeriod.nextPayDay, 'MMM d, yyyy'}
             </Badge>
           </div>
           {projection && (

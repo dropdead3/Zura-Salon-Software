@@ -199,7 +199,7 @@ export function ClientStep({
       {/* Client list with alphabet strip */}
       <div className="flex-1 relative min-h-0">
         <ScrollArea className="h-full">
-          <div className={cn('p-2', showAlphabetStrip && 'pr-8')}>
+          <div className={cn('p-2', showAlphabetStrip && 'pr-8'}>
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

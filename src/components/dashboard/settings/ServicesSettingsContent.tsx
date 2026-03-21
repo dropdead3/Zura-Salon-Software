@@ -106,7 +106,7 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : undefined, opacity: isDragging ? 0.9 : undefined };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn('flex items-center gap-3', isDragging && 'shadow-lg')}>
+    <div ref={setNodeRef} style={style} className={cn('flex items-center gap-3', isDragging && 'shadow-lg'}>
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none">
         <GripVertical className="w-4 h-4" />
       </div>
@@ -478,7 +478,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                       <Tooltip key={g.id}>
                                         <TooltipTrigger asChild>
                                           <button
-                                            className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
+                                            className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary'}
                                             style={{ background: g.background }}
                                             onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
                                           />
@@ -495,7 +495,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                     {CATEGORY_PALETTE.map(c => (
                                       <button
                                         key={c}
-                                        className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
+                                        className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary'}
                                         style={{ backgroundColor: c }}
                                         onClick={() => handleColorChange(cat.id, c)}
                                       />
@@ -512,7 +512,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             setEditingCategory(cat);
                             setCategoryDialogOpen(true);
                           }}>
-                            <p className={cn(tokens.body.emphasis, 'truncate', isEmpty && 'text-muted-foreground')}>{cat.category_name}</p>
+                            <p className={cn(tokens.body.emphasis, 'truncate', isEmpty && 'text-muted-foreground'}>{cat.category_name}</p>
                             <div className="flex items-center gap-2 flex-wrap">
                               {isEmpty 
                                 ? <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-destructive/15 text-destructive border border-destructive/25">No services</span>
@@ -552,10 +552,10 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                 >
                   <div className="flex items-center gap-2">
                     <Archive className="w-4 h-4 text-muted-foreground" />
-                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Categories</span>
+                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground'}>Archived Categories</span>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedCategories?.length}</Badge>
                   </div>
-                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedCategories && 'rotate-180')} />
+                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedCategories && 'rotate-180'} />
                 </button>
                 {showArchivedCategories && (
                   <div className="px-4 pb-3 space-y-2">
@@ -568,7 +568,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           {getCategoryAbbreviation(cat.category_name)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{cat.category_name}</p>
+                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate'}>{cat.category_name}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => {
@@ -655,8 +655,8 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           >
                             {abbr}
                           </div>
-                          <span className={cn(tokens.body.emphasis, 'tracking-normal')}>{cat.category_name}</span>
-                          <span className={cn(tokens.body.muted, 'tracking-normal')}>
+                          <span className={cn(tokens.body.emphasis, 'tracking-normal'}>{cat.category_name}</span>
+                          <span className={cn(tokens.body.muted, 'tracking-normal'}>
                             ({searchQuery.trim() ? `${services.length}/${totalServices}` : totalServices})
                           </span>
                         </div>
@@ -664,14 +664,14 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                       <AccordionContent>
                         <div className="space-y-1 pb-2">
                           {services.length === 0 ? (
-                            <p className={cn(tokens.empty.description, 'text-center py-4')}>No services in this category</p>
+                            <p className={cn(tokens.empty.description, 'text-center py-4'}>No services in this category</p>
                           ) : (
                             services.map(svc => {
                               const margin = computeMargin(svc.price || 0, svc.cost);
                               return (
                                 <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
                                   <div className="flex-1 min-w-0">
-                                    <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                                    <p className={cn(tokens.body.emphasis, 'truncate'}>{svc.name}</p>
                                     <div className={cn('flex items-center gap-3', tokens.body.muted)}>
                                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
                                       {svc.price != null && (
@@ -728,7 +728,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
               <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
                 <div className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Uncategorized</span>
+                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground'}>Uncategorized</span>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{uncategorizedServices.length}</Badge>
                   </div>
                 </div>
@@ -738,7 +738,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                     return (
                       <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
                         <div className="flex-1 min-w-0">
-                          <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                          <p className={cn(tokens.body.emphasis, 'truncate'}>{svc.name}</p>
                           <div className={cn('flex items-center gap-3', tokens.body.muted)}>
                             {svc.category && (
                               <span className="text-[10px] text-muted-foreground/60 italic">was: {svc.category}</span>
@@ -802,17 +802,17 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                 >
                   <div className="flex items-center gap-2">
                     <Archive className="w-4 h-4 text-muted-foreground" />
-                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Services</span>
+                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground'}>Archived Services</span>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedServices?.length}</Badge>
                   </div>
-                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedServices && 'rotate-180')} />
+                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedServices && 'rotate-180'} />
                 </button>
                 {showArchivedServices && (
                   <div className="px-4 pb-3 space-y-1">
                     {archivedServices?.map(svc => (
                       <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
                         <div className="flex-1 min-w-0">
-                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{svc.name}</p>
+                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate'}>{svc.name}</p>
                           <div className={cn('flex items-center gap-3', tokens.body.muted)}>
                             {svc.category && <span className="text-[10px] italic">was: {svc.category}</span>}
                             {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>}
@@ -909,7 +909,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                     <Tooltip key={g.id}>
                                       <TooltipTrigger asChild>
                                         <button
-                                          className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
+                                          className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary'}
                                           style={{ background: g.background }}
                                           onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
                                         />
@@ -926,7 +926,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                   {CATEGORY_PALETTE.map(c => (
                                     <button
                                       key={c}
-                                      className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
+                                      className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary'}
                                       style={{ backgroundColor: c }}
                                       onClick={() => handleColorChange(cat.id, c)}
                                     />

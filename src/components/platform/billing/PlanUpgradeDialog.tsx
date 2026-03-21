@@ -203,7 +203,7 @@ export function PlanUpgradeDialog({
               </PlatformLabel>
               <RadioGroup
                 value={effectiveDate}
-                onValueChange={(v) => setEffectiveDate(v as 'immediately' | 'next_cycle')}
+                onValueChange={(v) => setEffectiveDate(v as 'immediately' | 'next_cycle'}
                 className="grid grid-cols-2 gap-3"
               >
                 <div className={cn(

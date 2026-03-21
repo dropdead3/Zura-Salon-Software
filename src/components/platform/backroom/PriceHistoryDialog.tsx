@@ -58,7 +58,7 @@ export function PriceHistoryDialog({ open, onOpenChange, productName, brand }: P
               <Loader2 className={tokens.loading.spinner} />
             </div>
           ) : history.length === 0 ? (
-            <div className={cn(tokens.empty.container, 'py-12')}>
+            <div className={cn(tokens.empty.container, 'py-12'}>
               <History className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No history found</h3>
             </div>

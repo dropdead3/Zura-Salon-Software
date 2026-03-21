@@ -110,7 +110,7 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className={tokens.heading.section}>Inventory Management</h2>
-          <p className={cn(tokens.body.muted, 'mt-1')}>Monitor stock, reorder supplies, manage purchase orders, receive shipments, and run physical counts.</p>
+          <p className={cn(tokens.body.muted, 'mt-1'}>Monitor stock, reorder supplies, manage purchase orders, receive shipments, and run physical counts.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {locations.length > 1 && (

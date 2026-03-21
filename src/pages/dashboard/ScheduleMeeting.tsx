@@ -227,14 +227,14 @@ export default function ScheduleMeeting() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3 sm:shrink-0">
-              <Link to={dashPath('/schedule-meeting/new')}>
+              <Link to={dashPath('/schedule-meeting/new'}>
                 <Button className="gap-2">
                   <CalendarPlus className="w-4 h-4" />
                   Schedule Meeting
                 </Button>
               </Link>
               {isCoach && <ManagerMeetingRequest />}
-              <Link to={dashPath('/schedule-meeting/inbox')}>
+              <Link to={dashPath('/schedule-meeting/inbox'}>
                 <Button variant="outline" className="gap-2">
                   <MessageSquareMore className="w-4 h-4" />
                   Meeting Inbox
@@ -323,7 +323,7 @@ export default function ScheduleMeeting() {
                    description="Schedule a 1:1 to get started"
                  />
               )}
-              <Link to={dashPath('/schedule-meeting/my-meetings')}>
+              <Link to={dashPath('/schedule-meeting/my-meetings'}>
                 <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                   View All Meetings <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -374,7 +374,7 @@ export default function ScheduleMeeting() {
                        description="All meeting requests have been addressed"
                      />
                   )}
-                  <Link to={dashPath('/schedule-meeting/requests')}>
+                  <Link to={dashPath('/schedule-meeting/requests'}>
                     <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Requests <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
@@ -415,7 +415,7 @@ export default function ScheduleMeeting() {
                                   isOverdue ? "text-destructive" : "text-muted-foreground"
                                 )}>
                                   {isOverdue && <AlertCircle className="w-3 h-3" />}
-                                  {formatDate(new Date(item.due_date), 'MMM d')}
+                                  {formatDate(new Date(item.due_date), 'MMM d'}
                                 </span>
                               )}
                               {item.priority === 'high' && (
@@ -433,7 +433,7 @@ export default function ScheduleMeeting() {
                        description="Commitments from coaching sessions will appear here"
                      />
                   )}
-                  <Link to={dashPath('/schedule-meeting/commitments')}>
+                  <Link to={dashPath('/schedule-meeting/commitments'}>
                     <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Commitments <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>

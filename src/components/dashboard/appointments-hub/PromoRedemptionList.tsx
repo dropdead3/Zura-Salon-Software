@@ -57,7 +57,7 @@ export function PromoRedemptionList({ redemptions, isLoading }: PromoRedemptionL
       r.original_amount ?? '',
       r.final_amount ?? '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""'}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -108,16 +108,16 @@ export function PromoRedemptionList({ redemptions, isLoading }: PromoRedemptionL
               <TableHead className={tokens.table.columnHeader}>Promotion</TableHead>
               <TableHead className={tokens.table.columnHeader}>Code</TableHead>
               <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Discount</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Original</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Final</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Discount</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Original</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Final</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {redemptions.map((r) => {
               const isSelected = selectedIds.has(r.id);
               return (
-                <TableRow key={r.id} className={cn(isSelected && 'bg-muted/50')}>
+                <TableRow key={r.id} className={cn(isSelected && 'bg-muted/50'}>
                   <TableCell className="w-10 pr-0">
                     <Checkbox
                       checked={isSelected}
@@ -126,7 +126,7 @@ export function PromoRedemptionList({ redemptions, isLoading }: PromoRedemptionL
                     />
                   </TableCell>
                   <TableCell className="text-sm">
-                    {formatDate(new Date(r.redeemed_at), 'MMM d, yyyy')}
+                    {formatDate(new Date(r.redeemed_at), 'MMM d, yyyy'}
                   </TableCell>
                   <TableCell className="font-medium text-sm">{r.promotion_name}</TableCell>
                   <TableCell>

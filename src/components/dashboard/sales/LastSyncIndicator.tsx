@@ -65,7 +65,7 @@ export function LastSyncIndicator({
           onClick={handleRefresh}
           disabled={isPending}
         >
-          <RefreshCw className={cn('w-3 h-3 mr-1', isPending && 'animate-spin')} />
+          <RefreshCw className={cn('w-3 h-3 mr-1', isPending && 'animate-spin'} />
           Sync now
         </Button>
       </div>
@@ -98,7 +98,7 @@ export function LastSyncIndicator({
               onClick={handleRefresh}
               disabled={isPending}
             >
-              <RefreshCw className={cn('w-3 h-3', isPending && 'animate-spin')} />
+              <RefreshCw className={cn('w-3 h-3', isPending && 'animate-spin'} />
             </Button>
           </div>
         </TooltipTrigger>

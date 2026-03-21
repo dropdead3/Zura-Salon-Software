@@ -54,7 +54,7 @@ export function ChallengeLeaderboard({
             {participants.length} participant{participants.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Tabs value={view} onValueChange={(v) => setView(v as 'list' | 'cards')}>
+        <Tabs value={view} onValueChange={(v) => setView(v as 'list' | 'cards'}>
           <TabsList className="h-8">
             <TabsTrigger value="list" className="text-xs px-3">List</TabsTrigger>
             <TabsTrigger value="cards" className="text-xs px-3">Cards</TabsTrigger>

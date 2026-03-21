@@ -83,7 +83,7 @@ export function ShrinkageReportCard({ filterContext }: ShrinkageReportCardProps)
                         Expected: {item.expectedQty} → Counted: {item.countedQty}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        · {format(parseISO(item.lastCountedAt), 'MMM d')}
+                        · {format(parseISO(item.lastCountedAt), 'MMM d'}
                       </span>
                     </div>
                   </div>

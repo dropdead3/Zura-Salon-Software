@@ -73,7 +73,7 @@ export function PurchaseOrdersPanel() {
           <Badge variant="outline" className={cn("text-[10px]", cfg.className)}>{cfg.label}</Badge>
         </TableCell>
         <TableCell className="text-xs text-muted-foreground">
-          {format(new Date(po.created_at), 'MMM d, yyyy')}
+          {format(new Date(po.created_at), 'MMM d, yyyy'}
         </TableCell>
         <TableCell className="text-center">
           {(po.status === 'sent' || po.status === 'confirmed') && (

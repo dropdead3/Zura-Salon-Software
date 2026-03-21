@@ -84,7 +84,7 @@ export default function HealthScores() {
             onClick={handleRecalculate}
             disabled={recalculate.isPending}
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', recalculate.isPending && 'animate-spin')} />
+            <RefreshCw className={cn('h-4 w-4 mr-2', recalculate.isPending && 'animate-spin'} />
             Recalculate
           </PlatformButton>
         }

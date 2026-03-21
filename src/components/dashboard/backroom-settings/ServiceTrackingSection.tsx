@@ -135,7 +135,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
               <Zap className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={cn(tokens.body.emphasis, 'text-foreground')}>Auto-detected {suggestedServices.length} color/chemical services</p>
+              <p className={cn(tokens.body.emphasis, 'text-foreground'}>Auto-detected {suggestedServices.length} color/chemical services</p>
               <p className="text-sm text-muted-foreground">Zura identified services that likely need backroom tracking based on their names.</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -266,7 +266,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           {/* Next step hint */}
           {onNavigate && tracked.length > 0 && (
             <div className="flex justify-end pt-2 border-t">
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('formulas')}>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('formulas'}>
                 Next: Formula Baselines <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </div>

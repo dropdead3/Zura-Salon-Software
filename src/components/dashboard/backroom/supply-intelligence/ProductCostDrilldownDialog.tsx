@@ -49,7 +49,7 @@ export function ProductCostDrilldownDialog({
               <TrendingUp className={tokens.card.icon} />
             </div>
             <div className="min-w-0 flex-1">
-              <DialogTitle className={cn(tokens.card.title, 'truncate')}>
+              <DialogTitle className={cn(tokens.card.title, 'truncate'}>
                 {product.productName}
               </DialogTitle>
               <DialogDescription className={tokens.body.muted}>
@@ -84,7 +84,7 @@ export function ProductCostDrilldownDialog({
         <ScrollArea className="flex-1 overflow-y-auto">
           <div className="p-5 pt-3">
             {entries.length === 0 ? (
-              <p className={cn(tokens.body.muted, 'text-center py-6')}>
+              <p className={cn(tokens.body.muted, 'text-center py-6'}>
                 No cost history available.
               </p>
             ) : (
@@ -118,8 +118,8 @@ export function ProductCostDrilldownDialog({
                             <p className={tokens.body.emphasis}>
                               <BlurredAmount>${entry.cost.toFixed(2)}</BlurredAmount>
                             </p>
-                            <p className={cn(tokens.body.muted, 'text-xs')}>
-                              {format(new Date(entry.date), 'MMM d, yyyy')}
+                            <p className={cn(tokens.body.muted, 'text-xs'}>
+                              {format(new Date(entry.date), 'MMM d, yyyy'}
                               {entry.supplier && ` · ${entry.supplier}`}
                             </p>
                           </div>

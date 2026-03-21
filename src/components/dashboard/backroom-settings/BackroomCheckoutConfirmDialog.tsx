@@ -82,7 +82,7 @@ export function BackroomCheckoutConfirmDialog({
 
           {/* ── 2. What You Pay Right Now ── */}
           <div className="space-y-1.5">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>What You Pay Right Now</p>
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground'}>What You Pay Right Now</p>
             <div className="rounded-lg border border-border/60 divide-y divide-border/40">
               {hardwareOneTime > 0 && (
                 <div className="flex items-center justify-between px-3 py-2.5">
@@ -128,7 +128,7 @@ export function BackroomCheckoutConfirmDialog({
 
           {/* ── 3. Recurring Every 30 Days ── */}
           <div className="space-y-1.5">
-            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground')}>Recurring Every 30 Days</p>
+            <p className={cn(tokens.label.default, 'text-xs text-muted-foreground'}>Recurring Every 30 Days</p>
             <div className="rounded-lg border border-border/60 divide-y divide-border/40">
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">

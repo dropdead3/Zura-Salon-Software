@@ -189,7 +189,7 @@ export function NewBookingSheet({
       const stylistMapping = stylists.find(s => s.user_id === selectedStylist);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
-      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00Z`;
+      const startDateTime = `${format(selectedDate, 'yyyy-MM-dd'}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
@@ -574,7 +574,7 @@ export function NewBookingSheet({
               <div className="flex items-center gap-3">
                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
+                  <p className="font-medium">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy'}</p>
                   <p className="text-sm text-muted-foreground">at {selectedTime ? formatTime12h(selectedTime) : 'TBD'}</p>
                 </div>
               </div>

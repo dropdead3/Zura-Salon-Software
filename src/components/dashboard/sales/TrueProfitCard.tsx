@@ -145,7 +145,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
                 )}
               </div>
               {summary.highestMarginService && (
-                <span className={cn(tokens.body.muted, 'text-xs')}>
+                <span className={cn(tokens.body.muted, 'text-xs'}>
                   Top: {summary.highestMarginService.serviceName} ({summary.highestMarginService.avgMarginPct}%)
                 </span>
               )}

@@ -283,12 +283,12 @@ export function AppointmentsContent({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tickFormatter={(date) => formatDate(parseISO(date), 'MMM d')}
+                    tickFormatter={(date) => formatDate(parseISO(date), 'MMM d'}
                     tick={{ fontSize: 11 }}
                   />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip 
-                    labelFormatter={(date) => formatDate(parseISO(date as string), 'EEEE, MMM d')}
+                    labelFormatter={(date) => formatDate(parseISO(date as string), 'EEEE, MMM d'}
                     formatter={(value: number, name: string) => {
                       const labels: Record<string, string> = {
                         count: 'Total',
@@ -356,7 +356,7 @@ export function AppointmentsContent({
                     ]}
                   />
                   <Legend 
-                    formatter={(value) => value.replace('_', ' ')}
+                    formatter={(value) => value.replace('_', ' '}
                   />
                 </PieChart>
               </ResponsiveContainer>

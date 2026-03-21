@@ -517,7 +517,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     Cancel
                   </Button>
                   {isWizard ? (
-                    <Button type="button" size="sm" onClick={() => setStep('card')} className="gap-1.5" disabled={isSaving}>
+                    <Button type="button" size="sm" onClick={() => setStep('card'} className="gap-1.5" disabled={isSaving}>
                       Next
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
@@ -534,7 +534,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     variant="ghost"
                     size="sm"
                     className="mr-auto gap-1.5 text-muted-foreground hover:text-foreground"
-                    onClick={() => setStep('avatar')}
+                    onClick={() => setStep('avatar'}
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
                     Back

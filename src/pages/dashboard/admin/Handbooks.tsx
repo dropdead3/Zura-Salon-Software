@@ -347,7 +347,7 @@ export default function Handbooks() {
                 </div>
 
                 <Button type="submit" className="w-full font-display" disabled={submitting}>
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingHandbook ? 'UPDATE' : 'CREATE')}
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingHandbook ? 'UPDATE' : 'CREATE'}
                 </Button>
               </form>
             </DialogContent>
@@ -382,7 +382,7 @@ export default function Handbooks() {
                           <div>
                             <h3 className="font-sans font-medium">{handbook.title}</h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                              v{handbook.version} • Updated {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy')}
+                              v{handbook.version} • Updated {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy'}
                             </p>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {handbook.visible_to_roles?.map(role => (

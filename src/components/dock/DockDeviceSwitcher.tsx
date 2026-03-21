@@ -117,7 +117,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
       {showRotate && (
         <button
           type="button"
-          onClick={() => onOrientationChange(orientation === 'portrait' ? 'landscape' : 'portrait')}
+          onClick={() => onOrientationChange(orientation === 'portrait' ? 'landscape' : 'portrait'}
           className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-md text-foreground/60 hover:text-foreground/80 transition-colors"
           title={orientation === 'portrait' ? 'Switch to landscape' : 'Switch to portrait'}
         >

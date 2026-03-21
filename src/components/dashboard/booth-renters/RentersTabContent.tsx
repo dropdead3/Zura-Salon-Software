@@ -105,7 +105,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
             <SelectItem value="terminated">Terminated</SelectItem>
           </SelectContent>
         </Select>
-        <Button className="gap-2" onClick={() => navigate(dashPath('/admin/onboard-renter')}>
+        <Button className="gap-2" onClick={() => navigate(dashPath('/admin/onboard-renter'}>
           <Plus className="h-4 w-4" />
           Onboard Renter
         </Button>
@@ -201,7 +201,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
                       )}
                       {renter.start_date && (
                         <span className="text-muted-foreground">
-                          Started: {formatDate(new Date(renter.start_date), 'MMM d, yyyy')}
+                          Started: {formatDate(new Date(renter.start_date), 'MMM d, yyyy'}
                         </span>
                       )}
                     </div>

@@ -118,19 +118,19 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
       {/* KPI Strip */}
       {kpis.total > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className={cn(tokens.kpi.tile, 'relative')}>
+          <div className={cn(tokens.kpi.tile, 'relative'}>
             <span className={tokens.kpi.label}>Compliance Rate</span>
             <span className={tokens.kpi.value}>{kpis.complianceRate}%</span>
           </div>
-          <div className={cn(tokens.kpi.tile, 'relative')}>
+          <div className={cn(tokens.kpi.tile, 'relative'}>
             <span className={tokens.kpi.label}>On-Time Rate</span>
             <span className={tokens.kpi.value}>{kpis.onTimeRate}%</span>
           </div>
-          <div className={cn(tokens.kpi.tile, 'relative')}>
+          <div className={cn(tokens.kpi.tile, 'relative'}>
             <span className={tokens.kpi.label}>Current Streak</span>
             <span className={tokens.kpi.value}>{kpis.streak}</span>
           </div>
-          <div className={cn(tokens.kpi.tile, 'relative')}>
+          <div className={cn(tokens.kpi.tile, 'relative'}>
             <span className={tokens.kpi.label}>Total Completed</span>
             <span className={tokens.kpi.value}>{kpis.totalCompleted}</span>
           </div>
@@ -152,8 +152,8 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Due Date</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Completed</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell')}>Notes</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell'}>Completed</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden md:table-cell'}>Notes</TableHead>
                   <TableHead className={tokens.table.columnHeader}></TableHead>
                 </TableRow>
               </TableHeader>
@@ -169,7 +169,7 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
                   return (
                     <TableRow key={audit.id}>
                       <TableCell className={tokens.body.emphasis}>
-                        {format(new Date(audit.due_date), 'MMM d, yyyy')}
+                        {format(new Date(audit.due_date), 'MMM d, yyyy'}
                       </TableCell>
                       <TableCell>
                         <Badge variant={config.variant} className="gap-1 text-[10px]">
@@ -180,7 +180,7 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
                       <TableCell className="hidden sm:table-cell">
                         {audit.completed_at ? (
                           <div className="space-y-0.5">
-                            <span className="text-xs">{format(new Date(audit.completed_at), 'MMM d, yyyy')}</span>
+                            <span className="text-xs">{format(new Date(audit.completed_at), 'MMM d, yyyy'}</span>
                             {daysLate !== null && daysLate > 0 && (
                               <Badge variant="outline" className="text-[9px] text-destructive ml-1">
                                 {daysLate}d late

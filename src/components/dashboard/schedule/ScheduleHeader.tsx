@@ -142,7 +142,7 @@ export function ScheduleHeader({
                     ? 'text-[hsl(0,0%,8%)] font-medium' 
                     : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
                 )}
-                onClick={() => setView('day')}
+                onClick={() => setView('day'}
               >
                 Day
               </button>
@@ -153,7 +153,7 @@ export function ScheduleHeader({
                     ? 'text-[hsl(0,0%,8%)] font-medium' 
                     : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
                 )}
-                onClick={() => setView('week')}
+                onClick={() => setView('week'}
               >
                 Week
               </button>
@@ -222,7 +222,7 @@ export function ScheduleHeader({
         {/* Center: Date Display */}
         <div className="text-center">
         <div className="text-lg font-display tracking-wide">
-          {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
+          {formatDate(currentDate, 'EEEE, MMMM d, yyyy'}
         </div>
           {isOrgToday(currentDate) && (
             <div className="text-xs text-[hsl(40,20%,92%)]/70">Today</div>
@@ -283,7 +283,7 @@ export function ScheduleHeader({
               <PopoverContent className="w-[220px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
                   <button
-                    onClick={() => onStaffToggle('all')}
+                    onClick={() => onStaffToggle('all'}
                     className={cn(
                       'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
                       selectedStaffIds.length === 0 && 'bg-accent'
@@ -390,7 +390,7 @@ export function ScheduleHeader({
                   variant="ghost"
                   size="icon"
                   className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                  onClick={() => navigate(dashPath('/today-prep')}
+                  onClick={() => navigate(dashPath('/today-prep'}
                 >
                   <ClipboardCheck className="h-4 w-4" />
                 </Button>
@@ -406,7 +406,7 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="icon"
                 className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                onClick={() => navigate(dashPath('/admin/settings?category=services')}
+                onClick={() => navigate(dashPath('/admin/settings?category=services'}
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -457,7 +457,7 @@ export function ScheduleHeader({
                   )}
                   <span className="font-medium text-xs tracking-wide">Today</span>
                 </div>
-                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d')}</span>
+                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d'}</span>
               </button>
             );
 
@@ -499,9 +499,9 @@ export function ScheduleHeader({
                     {closed.isClosed && (
                       <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
                     )}
-                    <span className="text-xs font-medium tracking-wide">{format(day, 'EEE')}</span>
+                    <span className="text-xs font-medium tracking-wide">{format(day, 'EEE'}</span>
                   </div>
-                  <span className="text-[10px] opacity-70">{format(day, 'd')}</span>
+                  <span className="text-[10px] opacity-70">{format(day, 'd'}</span>
                 </div>
               </button>
             );
@@ -553,7 +553,7 @@ export function ScheduleHeader({
                       <div className="flex flex-col items-start">
                         <span className="font-medium">+{weeks} Weeks</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(targetDate, 'EEE, MMM d, yyyy')}
+                          {formatDate(targetDate, 'EEE, MMM d, yyyy'}
                         </span>
                       </div>
                     </Button>

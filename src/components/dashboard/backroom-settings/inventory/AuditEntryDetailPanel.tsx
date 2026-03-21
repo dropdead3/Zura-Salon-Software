@@ -93,7 +93,7 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md')}
+        className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md'}
         overlayClassName={DRILLDOWN_OVERLAY_CLASS}
       >
         {/* Hero header */}
@@ -104,7 +104,7 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
             </div>
             <div className="flex-1 min-w-0">
               <DialogHeader className="p-0 space-y-0">
-                <DialogTitle className={cn(tokens.card.title, 'text-sm')}>
+                <DialogTitle className={cn(tokens.card.title, 'text-sm'}>
                   {getFieldLabel(entry.field)}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
@@ -176,7 +176,7 @@ export function AuditEntryDetailPanel({ open, onOpenChange, entry }: AuditEntryD
           <DetailRow
             icon={Clock}
             label="Timestamp"
-            value={format(new Date(entry.created_at), 'EEEE, MMM d, yyyy · h:mm:ss a')}
+            value={format(new Date(entry.created_at), 'EEEE, MMM d, yyyy · h:mm:ss a'}
             className="tabular-nums"
           />
 

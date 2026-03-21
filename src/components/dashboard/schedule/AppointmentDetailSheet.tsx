@@ -185,7 +185,7 @@ function HouseholdSection({ phorestClientId, formatDate }: { phorestClientId: st
                   <span className="text-xs text-muted-foreground">
                     {client.last_visit
                       ? `Last visit: ${formatDate(new Date(client.last_visit), 'MMM d}`
-                      : 'No visits yet')}
+                      : 'No visits yet'}
                     {client.visit_count > 0 && ` · ${client.visit_count} visits`}
                   </span>
                 </div>
@@ -911,7 +911,7 @@ export function AppointmentDetailSheet({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link to={dashPath('/appointments-hub')}>
+                          <Link to={dashPath('/appointments-hub'}>
                             <Receipt className="h-3.5 w-3.5 mr-2" />
                             Transactions
                           </Link>
@@ -923,13 +923,13 @@ export function AppointmentDetailSheet({
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Status Override</DropdownMenuLabel>
                             {availableTransitions.includes('no_show') && (
-                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('no_show'} disabled={isUpdating}>
                                 <AlertTriangle className="h-3.5 w-3.5 mr-2" />
                                 No Show
                               </DropdownMenuItem>
                             )}
                             {availableTransitions.includes('cancelled') && canCancel && (
-                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('cancelled')} disabled={isUpdating}>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('cancelled'} disabled={isUpdating}>
                                 <XCircle className="h-3.5 w-3.5 mr-2" />
                                 Cancel
                               </DropdownMenuItem>
@@ -978,7 +978,7 @@ export function AppointmentDetailSheet({
                     )}
                     {lastVisitDate && (
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
+                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d'}
                       </p>
                     )}
                     {/* View Client Profile */}
@@ -1121,7 +1121,7 @@ export function AppointmentDetailSheet({
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-3">
                           <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span>{formatDate(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy')}</span>
+                          <span>{formatDate(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy'}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -1137,7 +1137,7 @@ export function AppointmentDetailSheet({
                           <div className="flex items-center gap-3">
                             <ArrowRightLeft className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
                             <span className="text-blue-600 dark:text-blue-400">
-                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d')} at ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
+                              Moved from {(appointment as any).rescheduled_from_date !== appointment.appointment_date ? `${formatDate(parseISO((appointment as any).rescheduled_from_date), 'MMM d'} at ` : ''}{formatTime12h((appointment as any).rescheduled_from_time)} · {formatRelativeTime((appointment as any).rescheduled_at)}
                             </span>
                           </div>
                         )}
@@ -1209,7 +1209,7 @@ export function AppointmentDetailSheet({
                                 'text-red-600 border-red-300': (appointment as any).deposit_status === 'refunded' || (appointment as any).deposit_status === 'forfeited',
                               })}
                             >
-                              {((appointment as any).deposit_status || 'pending').replace('_', ' ')}
+                              {((appointment as any).deposit_status || 'pending').replace('_', ' '}
                             </Badge>
                           </div>
                         </div>
@@ -1422,7 +1422,7 @@ export function AppointmentDetailSheet({
                             <Collapsible open={clientNotesExpanded} onOpenChange={setClientNotesExpanded}>
                               <div className="space-y-1.5">
                                 {clientNotes.slice(0, 3).map(note => (
-                                  <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                                  <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
                                     <div className="flex items-center gap-1.5">
                                       <Avatar className="h-4 w-4">
                                         <AvatarImage src={note.author?.photo_url || undefined} />
@@ -1430,7 +1430,7 @@ export function AppointmentDetailSheet({
                                       </Avatar>
                                       <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
                                       {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
-                                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
+                                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d'}</span>
                                     </div>
                                     <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
                                   </div>
@@ -1442,7 +1442,7 @@ export function AppointmentDetailSheet({
                                     <ScrollArea className="max-h-48 mt-1.5">
                                       <div className="space-y-1.5">
                                         {clientNotes.slice(3).map(note => (
-                                          <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                                          <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
                                             <div className="flex items-center gap-1.5">
                                               <Avatar className="h-4 w-4">
                                                 <AvatarImage src={note.author?.photo_url || undefined} />
@@ -1450,7 +1450,7 @@ export function AppointmentDetailSheet({
                                               </Avatar>
                                               <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
                                               {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
-                                              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
+                                              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d'}</span>
                                             </div>
                                             <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
                                           </div>
@@ -1484,7 +1484,7 @@ export function AppointmentDetailSheet({
                           </h4>
                           <div className="space-y-1.5">
                             {notes.slice(0, 2).map(note => (
-                              <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                              <div key={note.id} className={cn('p-2 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
                                 <div className="flex items-center gap-1.5">
                                   <Avatar className="h-4 w-4">
                                     <AvatarImage src={note.author?.photo_url || undefined} />
@@ -1492,7 +1492,7 @@ export function AppointmentDetailSheet({
                                   </Avatar>
                                   <span className="text-xs font-medium truncate">{note.author?.display_name || note.author?.full_name}</span>
                                   {note.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
-                                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d')}</span>
+                                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{formatDate(new Date(note.created_at), 'MMM d'}</span>
                                 </div>
                                 <p className="mt-1 text-xs line-clamp-2 text-muted-foreground">{note.note}</p>
                               </div>
@@ -1500,7 +1500,7 @@ export function AppointmentDetailSheet({
                           </div>
                           {notes.length > 2 && (
                             <button
-                              onClick={() => setActiveTab('notes')}
+                              onClick={() => setActiveTab('notes'}
                               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                             >
                               View all {notes.length} notes in Notes tab
@@ -1600,7 +1600,7 @@ export function AppointmentDetailSheet({
                               <div className="flex-1 min-w-0">
                                 <p className="truncate font-medium">{visit.service_name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatDate(parseISO(visit.appointment_date), 'MMM d, yyyy')}
+                                  {formatDate(parseISO(visit.appointment_date), 'MMM d, yyyy'}
                                   {visit.stylist_name && ` · ${visit.stylist_name}`}
                                 </p>
                               </div>
@@ -1628,7 +1628,7 @@ export function AppointmentDetailSheet({
                       {notes.length > 0 ? (
                         <div className="space-y-2">
                           {notes.map(note => (
-                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-5 w-5">
@@ -1645,7 +1645,7 @@ export function AppointmentDetailSheet({
                                 )}
                               </div>
                               <p className="mt-1">{note.note}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a')}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a'}</p>
                             </div>
                           ))}
                         </div>
@@ -1682,7 +1682,7 @@ export function AppointmentDetailSheet({
                       ) : clientNotes.length > 0 ? (
                         <div className="space-y-2">
                           {clientNotes.map(note => (
-                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed'}>
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-5 w-5">
@@ -1699,7 +1699,7 @@ export function AppointmentDetailSheet({
                                 )}
                               </div>
                               <p className="mt-1">{note.note}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a')}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a'}</p>
                             </div>
                           ))}
                         </div>
@@ -1776,13 +1776,13 @@ export function AppointmentDetailSheet({
                   <div className="flex items-center gap-2">
                     {/* Confirm */}
                     {availableTransitions.includes('confirmed') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating} className="flex-1">
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed'} disabled={isUpdating} className="flex-1">
                         <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
                       </Button>
                     )}
                     {/* Check In */}
                     {availableTransitions.includes('checked_in') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating} className="flex-1">
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in'} disabled={isUpdating} className="flex-1">
                         <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
                       </Button>
                     )}
@@ -1794,7 +1794,7 @@ export function AppointmentDetailSheet({
                     )}
                     {/* Complete (if no pay handler) */}
                     {availableTransitions.includes('completed') && !onPay && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed')} disabled={isUpdating} className="flex-1">
+                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed'} disabled={isUpdating} className="flex-1">
                         <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
                       </Button>
                     )}

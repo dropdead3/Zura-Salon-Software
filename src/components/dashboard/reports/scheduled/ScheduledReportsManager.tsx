@@ -164,7 +164,7 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
                       )}
                       {report.next_run_at && report.is_active && (
                         <span>
-                          Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
+                          Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a'}
                         </span>
                       )}
                     </div>

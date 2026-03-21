@@ -285,7 +285,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
         {brandGroups.map(([brand, brandProducts]) => (
           <div key={brand}>
             <div className="flex items-center gap-2 mb-2">
-              <span className={cn(tokens.label.default, 'text-xs')}>{brand}</span>
+              <span className={cn(tokens.label.default, 'text-xs'}>{brand}</span>
               <span className="text-xs text-muted-foreground">
                 ({brandProducts.filter((p) => entries[p.id]?.counted != null).length}/
                 {brandProducts.length})

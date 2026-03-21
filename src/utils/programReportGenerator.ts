@@ -48,7 +48,7 @@ export function generateProgressReport(data: ReportData): void {
   // Participant info
   doc.setFontSize(12);
   doc.text(`Participant: ${data.userName}`, 20, 50);
-  doc.text(`Generated: ${format(new Date(), 'MMMM d, yyyy')}, 20, 58);
+  doc.text(`Generated: ${format(new Date(), 'MMMM d, yyyy'}, 20, 58);
   doc.text(`Start Date: ${format(new Date(data.enrollment.start_date), 'MMMM d, yyyy}`, 20, 66);
   
   // Status badge
@@ -152,7 +152,7 @@ export function generateProgressReport(data: ReportData): void {
   }
   
   // Save
-  const fileName = `client-engine-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+  const fileName = `client-engine-report-${format(new Date(), 'yyyy-MM-dd'}.pdf`;
   doc.save(fileName);
 }
 
@@ -208,6 +208,6 @@ export function generateCompletionCertificate(userName: string, completedAt: Dat
   doc.text('Program Director', pageWidth / 2, 198, { align: 'center' });
   
   // Save
-  const fileName = `client-engine-certificate-${userName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+  const fileName = `client-engine-certificate-${userName.toLowerCase().replace(/\s+/g, '-'}.pdf`;
   doc.save(fileName);
 }

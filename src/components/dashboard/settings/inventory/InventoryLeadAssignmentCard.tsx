@@ -213,7 +213,7 @@ export function InventoryLeadAssignmentCard() {
                     <Avatar className="h-7 w-7">
                       {resolvedPhoto && <AvatarImage src={resolvedPhoto} alt={resolvedName} />}
                       <AvatarFallback className="text-[10px]">
-                        {getInitials(resolvedName || '')}
+                        {getInitials(resolvedName || ''}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm">{resolvedName}</span>

@@ -305,7 +305,7 @@ export function ReceiveTab() {
           const isExpanded = expandedPoId === po.id;
 
           return (
-            <Card key={po.id} className={cn(isExpanded && 'ring-1 ring-primary/30')}>
+            <Card key={po.id} className={cn(isExpanded && 'ring-1 ring-primary/30'}>
               {/* ── PO Header ── */}
               <CardHeader
                 className="pb-3 cursor-pointer select-none"
@@ -317,7 +317,7 @@ export function ReceiveTab() {
                       <Package className={tokens.card.icon} />
                     </div>
                     <div>
-                      <CardTitle className={cn(tokens.card.title, 'text-sm flex items-center gap-2')}>
+                      <CardTitle className={cn(tokens.card.title, 'text-sm flex items-center gap-2'}>
                         {getPoLabel(po)}
                         {getReceivingBadge(po)}
                       </CardTitle>
@@ -358,7 +358,7 @@ export function ReceiveTab() {
                       {/* Receivable lines */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className={cn(tokens.label.default, 'text-xs')}>Items to Receive</span>
+                          <span className={cn(tokens.label.default, 'text-xs'}>Items to Receive</span>
                           <MetricInfoTooltip description="Enter the quantity actually received for each product. Mark damaged items separately — they won't be added to stock." />
                         </div>
 

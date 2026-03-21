@@ -145,7 +145,7 @@ export function OverviewContent({
         {/* Appointments Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('appointments')}
+          onClick={() => onNavigateToTab('appointments'}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -184,7 +184,7 @@ export function OverviewContent({
         {/* Clients Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('clients')}
+          onClick={() => onNavigateToTab('clients'}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -231,7 +231,7 @@ export function OverviewContent({
         {/* Staffing Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('staffing')}
+          onClick={() => onNavigateToTab('staffing'}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -288,7 +288,7 @@ export function OverviewContent({
         {/* Staff Utilization Card */}
         <Card 
           className="cursor-pointer hover:bg-muted/20 transition-colors group"
-          onClick={() => onNavigateToTab('staff-utilization')}
+          onClick={() => onNavigateToTab('staff-utilization'}
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">

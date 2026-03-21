@@ -147,7 +147,7 @@ export function AchievementsShowcase({ userId, compact = false }: AchievementsSh
                         </p>
                         {isEarned && userAch && (
                           <p className="text-[10px] text-primary mt-1">
-                            Earned {formatDate(new Date(userAch.earned_at), 'MMM d')}
+                            Earned {formatDate(new Date(userAch.earned_at), 'MMM d'}
                           </p>
                         )}
                         {!isEarned && (

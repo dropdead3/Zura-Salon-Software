@@ -75,7 +75,7 @@ export function PaymentMethodCard() {
                   {pm.brand.charAt(0).toUpperCase() + pm.brand.slice(1)} ···· {pm.last4}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Expires {String(pm.exp_month).padStart(2, '0')}/{pm.exp_year}
+                  Expires {String(pm.exp_month).padStart(2, '0'}/{pm.exp_year}
                 </p>
               </div>
             </div>

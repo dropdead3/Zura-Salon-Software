@@ -892,7 +892,7 @@ export function LocationsSettingsContent() {
                         <div>
                           <p className="text-sm font-medium">{holiday.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDate(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
+                            {formatDate(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy'}
                           </p>
                         </div>
                         <button

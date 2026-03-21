@@ -162,7 +162,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
 
               <div className="space-y-2">
                 <Label>Notes</Label>
-                <Textarea {...register('notes')} placeholder="Additional details..." />
+                <Textarea {...register('notes'} placeholder="Additional details..." />
               </div>
 
               <DialogFooter>

@@ -39,7 +39,7 @@ export function PlatformLogoUploader({
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `platform-${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.${fileExt}`;
+      const fileName = `platform-${label.toLowerCase().replace(/\s+/g, '-'}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('business-logos').upload(fileName, file, { cacheControl: '3600', upsert: true });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('business-logos').getPublicUrl(fileName);

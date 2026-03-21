@@ -59,17 +59,17 @@ export function MarginErosionCard({ filterContext }: MarginErosionCardProps) {
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Old Cost</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>New Cost</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Change</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Margin</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Annual Risk</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Severity</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Old Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>New Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Change</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Margin</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Annual Risk</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Severity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.items.slice(0, 20).map(item => (
-                  <TableRow key={item.productId} className={cn(item.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10')}>
+                  <TableRow key={item.productId} className={cn(item.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10'}>
                     <TableCell className="font-medium text-sm max-w-[180px] truncate">{item.productName}</TableCell>
                     <TableCell className="text-sm text-muted-foreground truncate max-w-[120px]">{item.supplierName ?? '—'}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">

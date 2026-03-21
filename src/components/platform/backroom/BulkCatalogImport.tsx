@@ -545,7 +545,7 @@ export function BulkCatalogImport({ existingBrands, open, onOpenChange }: BulkCa
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
             {phase === 'select' && 'Build Full Color Catalog'}
-            {phase === 'review' && (isRunning ? 'Generating Preview...' : 'Review Generated Products')}
+            {phase === 'review' && (isRunning ? 'Generating Preview...' : 'Review Generated Products'}
             {phase === 'importing' && 'Importing to Library...'}
             {phase === 'done' && 'Import Complete'}
           </DialogTitle>

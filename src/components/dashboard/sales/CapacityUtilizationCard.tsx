@@ -454,14 +454,14 @@ export function CapacityUtilizationCard() {
             <div className="p-6 bg-muted/20 rounded-lg flex flex-col items-center justify-center gap-2">
               <Moon className="w-6 h-6 text-muted-foreground" />
               <p className="text-sm font-medium text-muted-foreground">Closed Tomorrow</p>
-              <p className="text-xs text-muted-foreground">{formatDate(days[0].date, 'EEEE, MMMM d')}</p>
+              <p className="text-xs text-muted-foreground">{formatDate(days[0].date, 'EEEE, MMMM d'}</p>
             </div>
           ) : (
             <div className="p-4 bg-muted/20 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">
-                    {formatDate(days[0].date, 'EEEE, MMMM d')}
+                    {formatDate(days[0].date, 'EEEE, MMMM d'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {days[0].bookedHours}h booked • {days[0].gapHours}h available
@@ -488,7 +488,7 @@ export function CapacityUtilizationCard() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {lowDay && lowDay.utilizationPercent < 50 && (
-                    <>{formatDate(lowDay.date, 'EEEE')} has the most availability ({lowDay.gapHours}h open)</>
+                    <>{formatDate(lowDay.date, 'EEEE'} has the most availability ({lowDay.gapHours}h open)</>
                   )}
                   {!lowDay && `Fill unused hours to capture ${formatCurrency(gapRevenue)} in potential revenue`}
                 </p>

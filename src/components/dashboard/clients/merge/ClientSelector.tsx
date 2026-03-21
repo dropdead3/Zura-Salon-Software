@@ -163,7 +163,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
                     </TooltipTrigger>
                     {reasons && (
                       <TooltipContent>
-                        <p className="text-xs">Match: {reasons.map(matchLabel).join(', ')}</p>
+                        <p className="text-xs">Match: {reasons.map(matchLabel).join(', '}</p>
                       </TooltipContent>
                     )}
                   </Tooltip>

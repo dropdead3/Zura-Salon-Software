@@ -134,7 +134,7 @@ export function HistoricalComparison({
                 variant={period === 'lastMonth' ? 'default' : 'ghost'}
                 size={tokens.button.inline}
                 className="h-7 text-xs rounded-none"
-                onClick={() => setPeriod('lastMonth')}
+                onClick={() => setPeriod('lastMonth'}
               >
                 vs Last Month
               </Button>
@@ -142,7 +142,7 @@ export function HistoricalComparison({
                 variant={period === 'lastYear' ? 'default' : 'ghost'}
                 size={tokens.button.inline}
                 className="h-7 text-xs rounded-none"
-                onClick={() => setPeriod('lastYear')}
+                onClick={() => setPeriod('lastYear'}
               >
                 vs Last Year
               </Button>

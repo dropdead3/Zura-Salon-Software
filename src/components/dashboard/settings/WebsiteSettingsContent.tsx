@@ -396,7 +396,7 @@ function GeneralTab() {
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => window.location.href = dashPath('/admin/website-hub')}
+            onClick={() => window.location.href = dashPath('/admin/website-hub'}
           >
             <ExternalLink className="w-4 h-4" />
             Open Footer Editor
@@ -511,7 +511,7 @@ function ThemeTab() {
         {/* Editor header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size={tokens.button.card} onClick={() => setMode('overview')} className="gap-2">
+            <Button variant="ghost" size={tokens.button.card} onClick={() => setMode('overview'} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Back to Themes
             </Button>
@@ -535,7 +535,7 @@ function ThemeTab() {
                 <><PanelRightOpen className="h-4 w-4 mr-1" />Preview</>
               )}
             </Button>
-            <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
+            <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank'}>
               <ExternalLink className="h-4 w-4 mr-1" />
               Open Site
             </Button>
@@ -603,7 +603,7 @@ function ThemeTab() {
       {activeTheme && (
         <ActiveThemeCard
           theme={activeTheme}
-          onCustomize={() => setMode('editor')}
+          onCustomize={() => setMode('editor'}
           onPreview={() => handlePreview()}
         />
       )}
@@ -1097,7 +1097,7 @@ export function WebsiteSettingsContent() {
               Editor
             </a>
           </Button>
-          <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
+          <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank'}>
             <Eye className="w-4 h-4 mr-1.5" />
             Preview
           </Button>

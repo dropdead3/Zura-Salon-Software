@@ -141,8 +141,8 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
   const timeSlots = [];
   for (let hour = 8; hour <= 20; hour++) {
     for (let min = 0; min < 60; min += 15) {
-      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-      const displayTime = `${hour > 12 ? hour - 12 : hour}:${min.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
+      const time = `${hour.toString().padStart(2, '0'}:${min.toString().padStart(2, '0'}`;
+      const displayTime = `${hour > 12 ? hour - 12 : hour}:${min.toString().padStart(2, '0'} ${hour >= 12 ? 'PM' : 'AM'}`;
       timeSlots.push({ value: time, label: displayTime });
     }
   }
@@ -188,7 +188,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? formatDate(date, 'PPP') : 'Pick a date first')}
+                  {date ? formatDate(date, 'PPP') : 'Pick a date first'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -208,7 +208,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                No assistants are scheduled to work on {formatDate(date, 'EEEE')}. Please select a different date.
+                No assistants are scheduled to work on {formatDate(date, 'EEEE'}. Please select a different date.
               </AlertDescription>
             </Alert>
           )}
@@ -358,7 +358,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {recurrenceEndDate ? formatDate(recurrenceEndDate, 'PPP') : 'Pick end date')}
+                      {recurrenceEndDate ? formatDate(recurrenceEndDate, 'PPP') : 'Pick end date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">

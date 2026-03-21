@@ -286,7 +286,7 @@ function CreateFlowDialog({ onClose }: { onClose: () => void }) {
 
         <div className="space-y-2">
           <Label>Scope</Label>
-          <Select value={scope} onValueChange={(v) => setScope(v as 'service' | 'category')}>
+          <Select value={scope} onValueChange={(v) => setScope(v as 'service' | 'category'}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="category">All services in a category</SelectItem>
@@ -841,7 +841,7 @@ function QueueItemRow({ item }: { item: ServiceEmailQueueItem }) {
             {config.label}
           </Badge>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {format(new Date(item.scheduled_at), 'MMM d, h:mm a')}
+            {format(new Date(item.scheduled_at), 'MMM d, h:mm a'}
           </p>
         </div>
       </CardContent>

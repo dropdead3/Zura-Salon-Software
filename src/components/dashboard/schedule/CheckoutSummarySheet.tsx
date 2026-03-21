@@ -624,7 +624,7 @@ export function CheckoutSummarySheet({
                       }
                     }}
                     onScheduleManually={handleScheduleNextClick}
-                    onDecline={() => setGatePhase('declining')}
+                    onDecline={() => setGatePhase('declining'}
                   />
                 )}
 
@@ -652,7 +652,7 @@ export function CheckoutSummarySheet({
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button variant="ghost" onClick={() => setGatePhase('gate')} className="flex-1">
+                      <Button variant="ghost" onClick={() => setGatePhase('gate'} className="flex-1">
                         Back
                       </Button>
                       <Button 

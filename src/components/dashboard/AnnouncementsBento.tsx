@@ -116,14 +116,14 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             {isLeadership && (
               <>
                 <Link 
-                  to={dashPath('/admin/announcements')} 
+                  to={dashPath('/admin/announcements'} 
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Manage announcements"
                 >
                   <Pencil className="w-4 h-4" />
                 </Link>
                 <Link 
-                  to={dashPath('/admin/announcements?create=true')} 
+                  to={dashPath('/admin/announcements?create=true'} 
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Create new announcement"
                 >
@@ -133,7 +133,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             )}
             {totalCount > 3 && (
               <Button variant="ghost" size={tokens.button.card} asChild className="text-xs h-7">
-                <Link to={dashPath('/admin/announcements')}>
+                <Link to={dashPath('/admin/announcements'}>
                   View All ({totalCount})
                 </Link>
               </Button>
@@ -172,7 +172,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                   
                   <div className="flex items-center justify-between mt-auto">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide">
-                      <span>{formatDate(new Date(announcement.created_at), 'MMM d')}</span>
+                      <span>{formatDate(new Date(announcement.created_at), 'MMM d'}</span>
                       <span>·</span>
                       <span className="flex items-center gap-1">
                         {announcement.location_id ? (

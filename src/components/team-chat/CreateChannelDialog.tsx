@@ -226,7 +226,7 @@ export function CreateChannelDialog({ open, onOpenChange }: CreateChannelDialogP
                         </div>
                         {member.role && (
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {member.role.replace('_', ' ')}
+                            {member.role.replace('_', ' '}
                           </Badge>
                         )}
                       </button>

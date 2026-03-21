@@ -80,7 +80,7 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className={cn(tokens.card.inner, 'overflow-hidden')}
+            className={cn(tokens.card.inner, 'overflow-hidden'}
           >
             {/* After photo (primary portfolio image) */}
             <div className="aspect-square bg-muted overflow-hidden">
@@ -99,10 +99,10 @@ export function StylistPortfolio({ stylistUserId, className }: StylistPortfolioP
             </div>
             <div className="p-2 space-y-1">
               {t.service_name && (
-                <span className={cn(tokens.body.emphasis, 'text-xs line-clamp-1')}>{t.service_name}</span>
+                <span className={cn(tokens.body.emphasis, 'text-xs line-clamp-1'}>{t.service_name}</span>
               )}
               <div className="flex items-center justify-between">
-                <span className={cn(tokens.body.muted, 'text-[10px]')}>
+                <span className={cn(tokens.body.muted, 'text-[10px]'}>
                   {t.taken_at ? format(new Date(t.taken_at + 'T00:00:00'), 'MMM d, yyyy') : ''}
                 </span>
                 {t.portfolio_category && (

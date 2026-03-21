@@ -192,7 +192,7 @@ export function RefundHistoryTab() {
                         </TableCell>
                         <TableCell>
                           <PlatformBadge variant="default" className="capitalize text-xs">
-                            {r.refund_type.replace(/_/g, ' ')}
+                            {r.refund_type.replace(/_/g, ' '}
                           </PlatformBadge>
                         </TableCell>
                         <TableCell>

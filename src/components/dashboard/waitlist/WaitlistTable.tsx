@@ -83,9 +83,9 @@ export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
                 <TableCell className="text-sm">
                   <div className="flex items-center gap-1.5">
                     <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                    {format(parseISO(entry.preferred_date_start), 'MMM d')}
+                    {format(parseISO(entry.preferred_date_start), 'MMM d'}
                     {entry.preferred_date_end && (
-                      <> – {format(parseISO(entry.preferred_date_end), 'MMM d')}</>
+                      <> – {format(parseISO(entry.preferred_date_end), 'MMM d'}</>
                     )}
                   </div>
                 </TableCell>

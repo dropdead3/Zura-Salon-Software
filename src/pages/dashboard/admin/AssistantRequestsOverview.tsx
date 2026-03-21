@@ -97,7 +97,7 @@ function RequestRow({ request, onManualAssign }: { request: AssistantRequest; on
           )}
         </div>
         <div className="text-sm text-muted-foreground mt-1">
-          <span>{formatDate(parseISO(request.request_date), 'MMM d')} • </span>
+          <span>{formatDate(parseISO(request.request_date), 'MMM d'} • </span>
           <span>{request.salon_services?.name}</span>
           {request.locations?.name && (
             <span className="flex items-center gap-1 inline-flex ml-2">

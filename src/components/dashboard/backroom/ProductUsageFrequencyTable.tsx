@@ -129,19 +129,19 @@ export function ProductUsageFrequencyTable({ locationId }: Props) {
             </div>
             <div className={tokens.kpi.tile}>
               <span className={tokens.kpi.label}>Rare</span>
-              <span className={cn(tokens.kpi.value, summary.rare > 0 && 'text-orange-500')}>
+              <span className={cn(tokens.kpi.value, summary.rare > 0 && 'text-orange-500'}>
                 {summary.rare}
               </span>
             </div>
             <div className={tokens.kpi.tile}>
               <span className={tokens.kpi.label}>Dormant</span>
-              <span className={cn(tokens.kpi.value, summary.dormant > 0 && 'text-destructive')}>
+              <span className={cn(tokens.kpi.value, summary.dormant > 0 && 'text-destructive'}>
                 {summary.dormant}
               </span>
             </div>
             <div className={tokens.kpi.tile}>
               <span className={tokens.kpi.label}>Dormant Capital</span>
-              <span className={cn(tokens.kpi.value, summary.dormantCapital > 0 && 'text-destructive')}>
+              <span className={cn(tokens.kpi.value, summary.dormantCapital > 0 && 'text-destructive'}>
                 {formatCurrency(summary.dormantCapital)}
               </span>
             </div>

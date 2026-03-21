@@ -101,7 +101,7 @@ export default function ChallengeDetail() {
         <div className="p-8 text-center">
           <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-medium mb-2">Challenge not found</h2>
-          <Button onClick={() => navigate(dashPath('/admin/challenges')}>Back to Challenges</Button>
+          <Button onClick={() => navigate(dashPath('/admin/challenges'}>Back to Challenges</Button>
         </div>
       </DashboardLayout>
     );
@@ -147,13 +147,13 @@ export default function ChallengeDetail() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {challenge.status === 'draft' && (
-                    <DropdownMenuItem onClick={() => handleStatusChange('active')}>
+                    <DropdownMenuItem onClick={() => handleStatusChange('active'}>
                       <Play className="w-4 h-4 mr-2" />
                       Start Challenge
                     </DropdownMenuItem>
                   )}
                   {challenge.status === 'active' && (
-                    <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
+                    <DropdownMenuItem onClick={() => handleStatusChange('completed'}>
                       <Square className="w-4 h-4 mr-2" />
                       End Challenge
                     </DropdownMenuItem>
@@ -220,7 +220,7 @@ export default function ChallengeDetail() {
                   <div>
                     <p className="text-sm font-medium">Duration</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(new Date(challenge.start_date), 'MMM d')} - {formatDate(new Date(challenge.end_date), 'MMM d, yyyy')}
+                      {formatDate(new Date(challenge.start_date), 'MMM d'} - {formatDate(new Date(challenge.end_date), 'MMM d, yyyy'}
                     </p>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export default function ChallengeDetail() {
             {challenge.status === 'draft' && (
               <Button 
                 className="w-full" 
-                onClick={() => handleStatusChange('active')}
+                onClick={() => handleStatusChange('active'}
                 disabled={updateChallenge.isPending}
               >
                 {updateChallenge.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -312,7 +312,7 @@ export default function ChallengeDetail() {
               <Button 
                 variant="outline"
                 className="w-full" 
-                onClick={() => handleStatusChange('completed')}
+                onClick={() => handleStatusChange('completed'}
                 disabled={updateChallenge.isPending}
               >
                 {updateChallenge.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

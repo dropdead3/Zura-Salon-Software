@@ -152,7 +152,7 @@ export default function ClientFeedback() {
         settings={thresholdSettings}
         comments={comments}
         feedbackToken={token}
-        onSkip={() => setSubmissionState('thankyou')}
+        onSkip={() => setSubmissionState('thankyou'}
       />
     );
   }

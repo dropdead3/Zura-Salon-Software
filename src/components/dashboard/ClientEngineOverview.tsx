@@ -129,7 +129,7 @@ export function ClientEngineOverview() {
                 variant="ghost" 
                 size="icon" 
                 className="h-7 w-7 rounded-full hover:bg-primary/10"
-                onClick={() => navigate(dashPath('/admin/client-engine-tracker')}
+                onClick={() => navigate(dashPath('/admin/client-engine-tracker'}
               >
                 <Info className="w-4 h-4 text-primary" />
               </Button>

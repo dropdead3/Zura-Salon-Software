@@ -44,7 +44,7 @@ export function OptimizationInsightCard({ insight }: OptimizationInsightCardProp
     <Card className={cn('border-l-4', severityStyles[insight.severity])}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className={cn(tokens.card.iconBox, 'shrink-0 mt-0.5')}>
+          <div className={cn(tokens.card.iconBox, 'shrink-0 mt-0.5'}>
             <Icon className={tokens.card.icon} />
           </div>
           <div className="flex-1 min-w-0 space-y-1.5">

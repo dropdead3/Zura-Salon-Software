@@ -91,7 +91,7 @@ export function MultiClientResolutionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md')} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
+      <DialogContent className={cn(DRILLDOWN_DIALOG_CONTENT_CLASS, 'max-w-md'} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
         <DialogHeader className="p-6 pb-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/15">

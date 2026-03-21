@@ -85,7 +85,7 @@ export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
       doc.text(
-        `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} - ${formatDate(new Date(dateTo), 'MMM d, yyyy}`,
+        `${formatDate(new Date(dateFrom), 'MMM d, yyyy'} - ${formatDate(new Date(dateTo), 'MMM d, yyyy}`,
         pageWidth / 2,
         y,
         { align: 'center' }
@@ -238,7 +238,7 @@ export function SalesReportPDF({ dateFrom, dateTo, orgName, metrics, stylistData
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Date Range</span>
             <Badge variant="outline">
-              {formatDate(new Date(dateFrom), 'MMM d')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+              {formatDate(new Date(dateFrom), 'MMM d'} - {formatDate(new Date(dateTo), 'MMM d, yyyy'}
             </Badge>
           </div>
 

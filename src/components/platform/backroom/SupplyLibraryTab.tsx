@@ -718,7 +718,7 @@ export function SupplyLibraryTab() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <PlatformButton variant="outline" size="sm" onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending}>
-                      <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin')} /> Sync Library
+                      <RefreshCw className={cn('w-3.5 h-3.5 mr-1', syncMutation.isPending && 'animate-spin'} /> Sync Library
                     </PlatformButton>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">Syncs the library with the latest product catalog data, inserting any missing products and backfilling metadata.</TooltipContent>
@@ -841,7 +841,7 @@ export function SupplyLibraryTab() {
                       <p className="absolute bottom-2 left-0 right-0 text-center font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] leading-tight px-2">
                         {b.categorySummary.slice(0, 3).map((cs) =>
                           `${cs.count} ${SUPPLY_CATEGORY_LABELS[cs.category] || cs.category}`
-                        ).join(' · ')}
+                        ).join(' · '}
                         {b.categorySummary.length > 3 && ` +${b.categorySummary.length - 3}`}
                       </p>
                     </PlatformCard>
@@ -864,7 +864,7 @@ export function SupplyLibraryTab() {
                     onChange={(e) => setProductSearch(e.target.value)}
                   />
                 </div>
-                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
+                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced'}>
                   <SelectTrigger className="w-[160px] font-sans">
                     <SelectValue placeholder="All Pricing" />
                   </SelectTrigger>
@@ -877,7 +877,7 @@ export function SupplyLibraryTab() {
                 <PlatformButton
                   variant={recencyFilter === 'recent' ? 'secondary' : 'ghost'}
                   size="sm"
-                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all')}
+                  onClick={() => setRecencyFilter((prev) => prev === 'all' ? 'recent' : 'all'}
                   className={recencyFilter === 'recent' ? 'ring-1 ring-violet-500/50' : ''}
                 >
                   <Clock className="w-3.5 h-3.5 mr-1" />
@@ -1521,7 +1521,7 @@ function ColumnBrowser({
                           disabled={reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory)}
                           onClick={() => onReanalyzeSwatches(displayProducts, selectedCategory)}
                         >
-                          <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin')} />
+                          <RefreshCw className={cn('w-3 h-3 mr-0.5', reanalyzingCategory === (SUPPLY_CATEGORY_LABELS[selectedCategory] || selectedCategory) && 'animate-spin'} />
                           Re-analyze
                         </PlatformButton>
                       </TooltipTrigger>

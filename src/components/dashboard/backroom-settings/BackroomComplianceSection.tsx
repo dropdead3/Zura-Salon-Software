@@ -167,7 +167,7 @@ export function BackroomComplianceSection() {
                   <p className={tokens.kpi.label}>Waste Rate</p>
                   <MetricInfoTooltip description="Percentage of dispensed product recorded as waste." />
                 </div>
-                <span className={cn(tokens.kpi.value, summary.wastePct > 15 && 'text-destructive')}>
+                <span className={cn(tokens.kpi.value, summary.wastePct > 15 && 'text-destructive'}>
                   {summary.wastePct}%
                 </span>
               </CardContent>
@@ -271,11 +271,11 @@ export function BackroomComplianceSection() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Missed</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Rate</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Waste %</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Waste $</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Total</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Missed</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Rate</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Waste %</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Waste $</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -284,7 +284,7 @@ export function BackroomComplianceSection() {
                         return (
                           <TableRow
                             key={s.staffUserId}
-                            className={cn('cursor-pointer', staffFilter === s.staffUserId && 'bg-muted/50')}
+                            className={cn('cursor-pointer', staffFilter === s.staffUserId && 'bg-muted/50'}
                             onClick={() => setStaffFilter(staffFilter === s.staffUserId ? 'all' : s.staffUserId)}
                           >
                             <TableCell className="font-medium">{s.staffName}</TableCell>
@@ -293,7 +293,7 @@ export function BackroomComplianceSection() {
                             <TableCell className="text-right">
                               <Badge variant={b.variant} className="text-xs">{s.complianceRate}%</Badge>
                             </TableCell>
-                            <TableCell className={cn('text-right tabular-nums', s.wastePct > 15 && 'text-destructive')}>
+                            <TableCell className={cn('text-right tabular-nums', s.wastePct > 15 && 'text-destructive'}>
                               {s.wastePct}%
                             </TableCell>
                             <TableCell className="text-right tabular-nums">

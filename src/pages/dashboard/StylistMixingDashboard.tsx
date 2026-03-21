@@ -113,7 +113,7 @@ export default function StylistMixingDashboard() {
                 return (
                   <div
                     key={session.id}
-                    className={cn(tokens.card.inner, 'p-4 flex items-center justify-between')}
+                    className={cn(tokens.card.inner, 'p-4 flex items-center justify-between'}
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
@@ -123,7 +123,7 @@ export default function StylistMixingDashboard() {
                         <p className={tokens.body.emphasis}>
                           {session.bowl_count} bowl{session.bowl_count !== 1 ? 's' : ''}
                         </p>
-                        <p className={cn(tokens.body.muted, 'text-xs')}>
+                        <p className={cn(tokens.body.muted, 'text-xs'}>
                           {formatRelativeTime(session.started_at)}
                           {session.is_manual_override && ' · Manual override'}
                         </p>
@@ -233,9 +233,9 @@ export default function StylistMixingDashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className={tokens.table.columnHeader}>Formula</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Uses</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Clients</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Last Used</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Uses</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Clients</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Last Used</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -298,11 +298,11 @@ export default function StylistMixingDashboard() {
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Date</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Service</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Included</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Actual</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Overage</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Charge</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Status</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Included</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Actual</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Overage</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Charge</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -345,7 +345,7 @@ function StatTile({
   variant?: 'default' | 'warning';
 }) {
   return (
-    <div className={cn(tokens.kpi.tile, 'relative')}>
+    <div className={cn(tokens.kpi.tile, 'relative'}>
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <span className={tokens.kpi.label}>{label}</span>

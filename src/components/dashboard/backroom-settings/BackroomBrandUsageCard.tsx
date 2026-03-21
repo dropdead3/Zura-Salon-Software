@@ -146,10 +146,10 @@ export function BackroomBrandUsageCard({ startDate, endDate, rangeLabel, locatio
                 <TableHeader>
                   <TableRow>
                     <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Dispensed</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Cost</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Waste</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Services</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Dispensed</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Cost</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Waste</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Services</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

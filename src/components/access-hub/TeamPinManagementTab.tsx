@@ -150,7 +150,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                   <strong>Your PIN:</strong> As the Account Owner, you can manage your own PIN in your personal settings.
                 </p>
                 <Link 
-                  to={dashPath('/admin/settings?category=system')}
+                  to={dashPath('/admin/settings?category=system'}
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
                 >
                   Go to PIN Settings
@@ -218,7 +218,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                               <Button
                                 variant="outline"
                                 size={tokens.button.card}
-                                onClick={() => handleOpenResetDialog(member, 'set')}
+                                onClick={() => handleOpenResetDialog(member, 'set'}
                                 className="gap-1.5"
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -233,12 +233,12 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleOpenResetDialog(member, 'set')}>
+                                  <DropdownMenuItem onClick={() => handleOpenResetDialog(member, 'set'}>
                                     <Pencil className="w-4 h-4 mr-2" />
                                     Change PIN
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
-                                    onClick={() => handleOpenResetDialog(member, 'clear')}
+                                    onClick={() => handleOpenResetDialog(member, 'clear'}
                                     className="text-destructive focus:text-destructive"
                                   >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -286,7 +286,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 {changelog.slice(0, 10).map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="text-sm">
-                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
+                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a'}
                     </TableCell>
                     <TableCell className="text-sm">{entry.changer_name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">

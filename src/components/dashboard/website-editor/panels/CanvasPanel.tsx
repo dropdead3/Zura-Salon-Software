@@ -164,7 +164,7 @@ export const CanvasPanel = memo(function CanvasPanel({
     : ZOOM_SCALES[zoomLevel];
 
   return (
-    <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative rounded-none')}>
+    <div className={cn(editorTokens.panel.canvas, 'h-full flex flex-col relative rounded-none'}>
       {/* Canvas Header */}
       <CanvasHeader
         siteName={siteName}

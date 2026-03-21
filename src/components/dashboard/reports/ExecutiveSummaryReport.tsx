@@ -174,7 +174,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
             <div>
               <CardTitle className="font-display text-base tracking-wide">Executive Summary</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy'} – {formatDate(new Date(dateTo), 'MMM d, yyyy'}
               </CardDescription>
             </div>
             <div className="flex gap-2">

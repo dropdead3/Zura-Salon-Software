@@ -128,7 +128,7 @@ export function CapacityBreakdown({
                   From your location settings
                 </span>
                 <Link 
-                  to={dashPath('/admin/settings?category=locations')}
+                  to={dashPath('/admin/settings?category=locations'}
                   className="text-xs text-primary hover:underline flex items-center gap-1"
                 >
                   Edit Settings

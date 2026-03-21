@@ -59,8 +59,8 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
   };
 
   const showSinglePeriod = mode === 'location';
-  const fmtA = periodA.dateFrom ? `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy}` : '';
-  const fmtB = periodB.dateFrom ? `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy}` : '';
+  const fmtA = periodA.dateFrom ? `${formatDate(new Date(periodA.dateFrom), 'MMM d'} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy}` : '';
+  const fmtB = periodB.dateFrom ? `${formatDate(new Date(periodB.dateFrom), 'MMM d'} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy}` : '';
 
   return (
     <div className="space-y-3">
@@ -100,7 +100,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                 <PopoverTrigger asChild>
                   <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
-                    {periodA.dateFrom ? formatDate(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start')}
+                    {periodA.dateFrom ? formatDate(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -118,7 +118,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                 <PopoverTrigger asChild>
                   <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
-                    {periodA.dateTo ? formatDate(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End')}
+                    {periodA.dateTo ? formatDate(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -152,7 +152,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                     <PopoverTrigger asChild>
                       <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                         <CalendarIcon className="mr-1.5 h-3 w-3" />
-                        {periodB.dateFrom ? formatDate(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start')}
+                        {periodB.dateFrom ? formatDate(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -170,7 +170,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                     <PopoverTrigger asChild>
                       <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                         <CalendarIcon className="mr-1.5 h-3 w-3" />
-                        {periodB.dateTo ? formatDate(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End')}
+                        {periodB.dateTo ? formatDate(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">

@@ -118,7 +118,7 @@ export function MeetingAgendaCard({ meeting, onClick, attendeeProfiles }: Meetin
       )}
     >
       <div className="text-center shrink-0 w-16">
-        <div className="text-sm font-medium font-sans">{formatTime12h(meeting.start_time).replace(' ', '')}</div>
+        <div className="text-sm font-medium font-sans">{formatTime12h(meeting.start_time).replace(' ', ''}</div>
         <div className="text-xs text-muted-foreground font-sans">
           {formatMinutesToDuration(meeting.duration_minutes)}
         </div>

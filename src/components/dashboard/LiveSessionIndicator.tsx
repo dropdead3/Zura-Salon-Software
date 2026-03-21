@@ -104,7 +104,7 @@ export function LiveSessionIndicator({ locationId, compact }: LiveSessionIndicat
           </p>
           {stylists.length > 0 && (
             <p className="text-xs text-muted-foreground mt-1 font-sans">
-              {stylists.map(s => s.name.split(' ')[0]).join(', ')}
+              {stylists.map(s => s.name.split(' ')[0]).join(', '}
             </p>
           )}
         </TooltipContent>

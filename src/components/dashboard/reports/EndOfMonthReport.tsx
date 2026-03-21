@@ -215,7 +215,7 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
               </TableHeader>
               <TableBody>
                 {staffKpi.slice(0, 15).map((s, idx) => (
-                  <TableRow key={s.staffId} className={cn(idx === 0 && 'bg-chart-2/[0.03]')}>
+                  <TableRow key={s.staffId} className={cn(idx === 0 && 'bg-chart-2/[0.03]'}>
                     <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                     <TableCell className="font-medium">{s.staffName}</TableCell>
                     <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.totalRevenue)}</BlurredAmount></TableCell>

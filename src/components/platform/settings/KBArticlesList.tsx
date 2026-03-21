@@ -202,7 +202,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                         )}
                         title={article.is_featured ? 'Remove from featured' : 'Add to featured'}
                       >
-                        <Star className={cn('h-4 w-4', article.is_featured && 'fill-current')} />
+                        <Star className={cn('h-4 w-4', article.is_featured && 'fill-current'} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"
@@ -219,7 +219,7 @@ export function KBArticlesList({ onEditArticle }: KBArticlesListProps) {
                         className="h-8 w-8 p-0"
                         title={article.status === 'published' ? 'Unpublish' : 'Publish'}
                       >
-                        <Eye className={cn('h-4 w-4', article.status === 'draft' && 'text-[hsl(var(--platform-foreground-subtle)/0.7)]')} />
+                        <Eye className={cn('h-4 w-4', article.status === 'draft' && 'text-[hsl(var(--platform-foreground-subtle)/0.7)]'} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"

@@ -35,7 +35,7 @@ export default function PlatformLanding() {
         <nav className="flex items-center gap-6">
           {user ? (
             <Link
-              to={dashPath('/')}
+              to={dashPath('/'}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium transition-colors"
             >
               Go to Dashboard

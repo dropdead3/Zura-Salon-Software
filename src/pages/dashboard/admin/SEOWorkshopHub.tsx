@@ -45,7 +45,7 @@ export default function SEOWorkshopHub() {
           <TabsContent value="overview" className="mt-6">
             <SEOWorkshopOverview
               organizationId={organizationId}
-              onGoToActions={() => setActiveTab('actions')}
+              onGoToActions={() => setActiveTab('actions'}
             />
           </TabsContent>
 

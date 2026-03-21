@@ -469,14 +469,14 @@ export function CapacityUtilizationSection({
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {lowDay && lowDay.utilizationPercent < 50 ? (
-                    <>{formatDate(parseISO(lowDay.date), 'EEEE')} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
+                    <>{formatDate(parseISO(lowDay.date), 'EEEE'} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
                   ) : (
                     <>Fill unused hours to capture {formatCurrencyWhole(gapRevenue)} in potential revenue</>
                   )}
                 </p>
                 {peakDay && peakDay.utilizationPercent >= 80 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatDate(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
+                    {formatDate(parseISO(peakDay.date), 'EEEE'} was your strongest day ({peakDay.utilizationPercent}% utilized)
                   </p>
                 )}
               </div>

@@ -102,13 +102,13 @@ function formatDateRange(from: string, to: string): string {
   const t = parseISO(to);
   const sameMonth = f.getMonth() === t.getMonth() && f.getFullYear() === t.getFullYear();
   if (sameMonth) {
-    return `${format(f, 'MMM d')} – ${format(t, 'd, yyyy')}`;
+    return `${format(f, 'MMM d'} – ${format(t, 'd, yyyy'}`;
   }
   const sameYear = f.getFullYear() === t.getFullYear();
   if (sameYear) {
-    return `${format(f, 'MMM d')} – ${format(t, 'MMM d, yyyy')}`;
+    return `${format(f, 'MMM d'} – ${format(t, 'MMM d, yyyy'}`;
   }
-  return `${format(f, 'MMM d, yyyy')} – ${format(t, 'MMM d, yyyy')}`;
+  return `${format(f, 'MMM d, yyyy'} – ${format(t, 'MMM d, yyyy'}`;
 }
 
 export function ExecutiveTrendChart() {
@@ -595,7 +595,7 @@ export function ExecutiveTrendChart() {
             {/* View mode toggle */}
             <div className="flex items-center gap-1 rounded-[10px] border border-border/50 p-1">
               <button
-                onClick={() => setViewMode('historical')}
+                onClick={() => setViewMode('historical'}
                 className={cn(
                   'px-3 py-1 rounded-[6px] font-sans text-xs transition-colors duration-150',
                   viewMode === 'historical'
@@ -606,7 +606,7 @@ export function ExecutiveTrendChart() {
                 Historical
               </button>
               <button
-                onClick={() => setViewMode('forecast')}
+                onClick={() => setViewMode('forecast'}
                 className={cn(
                   'px-3 py-1 rounded-[6px] font-sans text-xs transition-colors duration-150',
                   viewMode === 'forecast'
@@ -624,7 +624,7 @@ export function ExecutiveTrendChart() {
                 {/* Comparison toggle */}
                 <div className="flex items-center gap-1 rounded-[10px] border border-border/50 p-1">
                   <button
-                    onClick={() => setComparison('mom')}
+                    onClick={() => setComparison('mom'}
                     className={cn(
                       'px-3 py-1 rounded-[6px] font-sans text-xs transition-colors duration-150',
                       comparison === 'mom'
@@ -635,7 +635,7 @@ export function ExecutiveTrendChart() {
                     {priorLabel}
                   </button>
                   <button
-                    onClick={() => setComparison('yoy')}
+                    onClick={() => setComparison('yoy'}
                     className={cn(
                       'px-3 py-1 rounded-[6px] font-sans text-xs transition-colors duration-150',
                       comparison === 'yoy'
@@ -650,7 +650,7 @@ export function ExecutiveTrendChart() {
                 {/* Chart type toggle */}
                 <div className="flex items-center gap-1 rounded-[10px] border border-border/50 p-1">
                   <button
-                    onClick={() => setChartType('area')}
+                    onClick={() => setChartType('area'}
                     title="Line chart"
                     className={cn(
                       'p-1.5 rounded-[6px] transition-colors duration-150',
@@ -662,7 +662,7 @@ export function ExecutiveTrendChart() {
                     <LineChart className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => setChartType('bar')}
+                    onClick={() => setChartType('bar'}
                     title="Bar chart"
                     className={cn(
                       'p-1.5 rounded-[6px] transition-colors duration-150',

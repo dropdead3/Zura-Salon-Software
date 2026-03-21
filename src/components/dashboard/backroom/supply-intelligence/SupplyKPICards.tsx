@@ -78,7 +78,7 @@ export function SupplyKPICards({ kpis, isLoading, overallHealth }: SupplyKPICard
       {tiles.map((tile) => {
         const Icon = tile.icon;
         return (
-          <div key={tile.label} className={cn(tokens.kpi.tile, 'relative')}>
+          <div key={tile.label} className={cn(tokens.kpi.tile, 'relative'}>
             <MetricInfoTooltip
               title={tile.label}
               description={tile.tooltip}

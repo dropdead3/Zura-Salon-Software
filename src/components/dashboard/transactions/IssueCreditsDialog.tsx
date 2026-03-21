@@ -166,7 +166,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                   "flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50",
                   balanceType === 'salon_credit' && "border-primary bg-primary/5"
                 )}
-                onClick={() => setBalanceType('salon_credit')}
+                onClick={() => setBalanceType('salon_credit'}
               >
                 <RadioGroupItem value="salon_credit" id="salon_credit" className="mt-0.5" />
                 <div className="flex-1">
@@ -185,7 +185,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                   "flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50",
                   balanceType === 'gift_card' && "border-primary bg-primary/5"
                 )}
-                onClick={() => setBalanceType('gift_card')}
+                onClick={() => setBalanceType('gift_card'}
               >
                 <RadioGroupItem value="gift_card" id="gift_card" className="mt-0.5" />
                 <div className="flex-1">

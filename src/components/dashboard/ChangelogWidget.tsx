@@ -27,7 +27,7 @@ export function ChangelogWidget() {
 
   if (isLoading) {
     return (
-      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
         <div className="flex items-center gap-3">
           <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="h-5 w-24" />
@@ -41,12 +41,12 @@ export function ChangelogWidget() {
   }
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Sparkles className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1')}>WHAT'S NEW</span>
+        <span className={cn(tokens.kpi.label, 'flex-1'}>WHAT'S NEW</span>
       </div>
 
       <div className="mt-4 flex-1">
@@ -59,7 +59,7 @@ export function ChangelogWidget() {
             {recentUpdates.map(entry => (
               <Link
                 key={entry.id}
-                to={dashPath('/changelog')}
+                to={dashPath('/changelog'}
                 className="block group"
               >
                 <div className="flex items-start gap-3 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
@@ -82,7 +82,7 @@ export function ChangelogWidget() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {entry.version && `${entry.version} • `}
-                      {entry.published_at && formatDate(parseISO(entry.published_at), 'MMM d')}
+                      {entry.published_at && formatDate(parseISO(entry.published_at), 'MMM d'}
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -96,7 +96,7 @@ export function ChangelogWidget() {
                 {topComingSoon.map(entry => (
                   <Link
                     key={entry.id}
-                    to={dashPath('/changelog')}
+                    to={dashPath('/changelog'}
                     className="block group"
                   >
                     <div className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
@@ -120,7 +120,7 @@ export function ChangelogWidget() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to={dashPath('/changelog')}
+          to={dashPath('/changelog'}
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           View All Updates <ChevronRight className="w-3 h-3" />

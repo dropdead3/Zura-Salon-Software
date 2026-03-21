@@ -95,7 +95,7 @@ export function CompareVisitsDialog({
             {entryA.notes && (
               <div>
                 <span className={tokens.label.tiny}>Notes</span>
-                <p className={cn(tokens.body.muted, 'mt-1 text-xs')}>{entryA.notes}</p>
+                <p className={cn(tokens.body.muted, 'mt-1 text-xs'}>{entryA.notes}</p>
               </div>
             )}
           </div>
@@ -153,7 +153,7 @@ export function CompareVisitsDialog({
             {entryB.notes && (
               <div>
                 <span className={tokens.label.tiny}>Notes</span>
-                <p className={cn(tokens.body.muted, 'mt-1 text-xs')}>{entryB.notes}</p>
+                <p className={cn(tokens.body.muted, 'mt-1 text-xs'}>{entryB.notes}</p>
               </div>
             )}
           </div>

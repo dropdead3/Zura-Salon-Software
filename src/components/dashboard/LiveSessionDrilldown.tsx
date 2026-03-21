@@ -17,7 +17,7 @@ function formatTimeDisplay(timeStr: string): string {
   const [h, m] = timeStr.split(':').map(Number);
   const period = h >= 12 ? 'PM' : 'AM';
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+  return `${displayH}:${String(m).padStart(2, '0'} ${period}`;
 }
 
 function getInitials(name: string) {
@@ -94,7 +94,7 @@ export function LiveSessionDrilldown({
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
+            <DialogTitle className={cn(tokens.heading.section, 'text-sm'}>Happening Now</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1.5">
             {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : ''}` : ''} working
@@ -174,7 +174,7 @@ function StylistRow({ stylist }: { stylist: StylistDetail }) {
           <p className="text-sm font-medium text-foreground truncate">{formatNameWithPeriod(stylist.name)}</p>
           {stylist.assistedBy.length > 0 && (
             <span className="bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap">
-              Assisted by {stylist.assistedBy.map(formatNameWithPeriod).join(', ')}
+              Assisted by {stylist.assistedBy.map(formatNameWithPeriod).join(', '}
             </span>
           )}
         </div>

@@ -282,7 +282,7 @@ export function GoalSetupDialog({
                 if (!templates?.length) return null;
                 return (
                   <div key={cat}>
-                    <h3 className={cn(tokens.heading.subsection, 'mb-3')}>
+                    <h3 className={cn(tokens.heading.subsection, 'mb-3'}>
                       {GOAL_CATEGORY_LABELS[cat]}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -462,12 +462,12 @@ export function GoalSetupDialog({
           ) : (
             <div className="flex items-center justify-between w-full">
               {!isEditing && (
-                <Button variant="ghost" onClick={() => setStep('select')}>
+                <Button variant="ghost" onClick={() => setStep('select'}>
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Back
                 </Button>
               )}
-              <div className={cn(!isEditing ? '' : 'ml-auto')}>
+              <div className={cn(!isEditing ? '' : 'ml-auto'}>
                 <Button onClick={handleSave} disabled={isPending}>
                   {isPending
                     ? 'Saving...'

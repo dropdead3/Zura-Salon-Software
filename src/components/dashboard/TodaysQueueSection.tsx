@@ -288,7 +288,7 @@ export function TodaysQueueSection({
             {/* View Full Schedule Link */}
             <div className="flex justify-center pt-2">
               <Button variant="ghost" asChild className="text-muted-foreground">
-                <Link to={dashPath('/schedule')}>
+                <Link to={dashPath('/schedule'}>
                   View Full Schedule
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>

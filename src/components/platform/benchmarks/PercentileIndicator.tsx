@@ -27,7 +27,7 @@ export function PercentileIndicator({
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {showLabel && (
-        <span className={cn(textSize, 'text-muted-foreground whitespace-nowrap')}>
+        <span className={cn(textSize, 'text-muted-foreground whitespace-nowrap'}>
           Top {100 - percentile}%
         </span>
       )}

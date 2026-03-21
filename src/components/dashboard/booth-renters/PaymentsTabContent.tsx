@@ -96,7 +96,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
     <div className="space-y-6">
       {/* Month indicator */}
       <p className="text-muted-foreground">
-        {formatDate(now, 'MMMM yyyy')} rent payments
+        {formatDate(now, 'MMMM yyyy'} rent payments
       </p>
 
       {/* Summary Cards */}
@@ -203,7 +203,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                       <td className="p-4 text-sm">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {formatDate(new Date(payment.due_date), 'MMM d, yyyy')}
+                          {formatDate(new Date(payment.due_date), 'MMM d, yyyy'}
                         </div>
                       </td>
                       <td className="p-4 text-right font-medium">{formatCurrency(payment.total_due)}</td>
@@ -262,7 +262,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="font-medium">{selectedPayment.renter_name}</p>
                 <p className="text-sm text-muted-foreground">
-                  Due: {formatDate(new Date(selectedPayment.due_date), 'MMM d, yyyy')}
+                  Due: {formatDate(new Date(selectedPayment.due_date), 'MMM d, yyyy'}
                 </p>
                 <p className="text-sm">
                   Balance: <span className="font-medium text-amber-400">{formatCurrency(selectedPayment.balance)}</span>

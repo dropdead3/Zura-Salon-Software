@@ -104,7 +104,7 @@ export function AgreementEditor() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Created {formatDate(new Date(agreement.created_at), 'MMM d, yyyy')}
+                      Created {formatDate(new Date(agreement.created_at), 'MMM d, yyyy'}
                     </p>
                   </div>
                 </div>

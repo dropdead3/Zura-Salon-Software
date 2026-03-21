@@ -133,7 +133,7 @@ export function EditorSectionCard({
       </div>
 
       {/* Section content */}
-      <div className={cn(!enabled && 'pointer-events-none')}>
+      <div className={cn(!enabled && 'pointer-events-none'}>
         {children}
       </div>
     </div>

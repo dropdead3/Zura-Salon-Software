@@ -42,7 +42,7 @@ export function ReviewThankYouScreen({ showManagerFollowUp = false }: ReviewThan
 
           {/* Return button */}
           <Button 
-            onClick={() => navigate('/')} 
+            onClick={() => navigate('/'} 
             variant="outline"
             className="gap-2"
           >

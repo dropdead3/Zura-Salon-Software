@@ -184,7 +184,7 @@ function CategorySection({
       animate={isInView ? { opacity: 1 } : {}}
       transition={{ duration: 0.6, ease: editorialEasing }}
       className="scroll-mt-32"
-      id={category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}
+      id={category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and'}
     >
       {/* Category Header */}
       <div className="mb-10 lg:mb-12">
@@ -196,7 +196,7 @@ function CategorySection({
         >
           <div>
             <Eyebrow className="text-muted-foreground mb-3">
-              {category.category === "New-Client Consultations" ? "New-Client" : String(categoryIndex + 1).padStart(2, '0')}
+              {category.category === "New-Client Consultations" ? "New-Client" : String(categoryIndex + 1).padStart(2, '0'}
             </Eyebrow>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground leading-tight">
               {category.category === "New-Client Consultations" ? "Consultations" : category.category}
@@ -401,7 +401,7 @@ export default function Services() {
                 href={`#${category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and}`}
                 className="group inline-flex items-center gap-2 px-5 py-3 text-sm font-sans text-foreground bg-card border border-border rounded-full transition-all duration-300 hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105"
               >
-                <span className="text-xs text-muted-foreground group-hover:text-background/70 font-display">{String(index + 1).padStart(2, '0')}</span>
+                <span className="text-xs text-muted-foreground group-hover:text-background/70 font-display">{String(index + 1).padStart(2, '0'}</span>
                 {category.category}
               </a>
             ))}

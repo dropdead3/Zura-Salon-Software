@@ -80,7 +80,7 @@ export function CoachingHistoryDrawer({ orgId, orgName, open, onOpenChange }: Co
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : !entries || entries.length === 0 ? (
-          <div className={cn(tokens.empty.container, 'py-12')}>
+          <div className={cn(tokens.empty.container, 'py-12'}>
             <Mail className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No coaching history</h3>
             <p className={tokens.empty.description}>No coaching emails have been sent to this organization yet.</p>

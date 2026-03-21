@@ -70,10 +70,10 @@ export function MenuItemNode({ item, depth, isSelected, selectedItemId, onSelect
         {depth > 0 && <span className="w-3.5 flex-shrink-0" />}
 
         {/* Type icon */}
-        <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', item.item_type === 'cta' && 'text-primary')} />
+        <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', item.item_type === 'cta' && 'text-primary'} />
 
         {/* Label */}
-        <span className={cn('truncate flex-1 text-left', item.item_type === 'cta' && 'font-medium')}>
+        <span className={cn('truncate flex-1 text-left', item.item_type === 'cta' && 'font-medium'}>
           {item.label}
         </span>
 

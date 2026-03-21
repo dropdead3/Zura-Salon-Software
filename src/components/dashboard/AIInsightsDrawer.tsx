@@ -190,7 +190,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
               </span>
             </div>
           )}
-          <p className={cn('text-sm font-medium leading-snug', isCritical && 'text-base')}>{insight.title}</p>
+          <p className={cn('text-sm font-medium leading-snug', isCritical && 'text-base'}>{insight.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             <InsightDescriptionWithLinks description={insight.description} />
           </p>
@@ -217,7 +217,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
                   {insight.estimatedImpact && (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-foreground/5 text-foreground/80">
                       <DollarSign className="w-2.5 h-2.5" />
-                      <BlurredAmount>{insight.estimatedImpact.replace(/^\$/, '')}</BlurredAmount>
+                      <BlurredAmount>{insight.estimatedImpact.replace(/^\$/, ''}</BlurredAmount>
                     </span>
                   )}
                   {insight.comparisonContext && (
@@ -292,7 +292,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
 }
 function ActionItemCard({ item, index, onRequestGuidance, isEven }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void; isEven?: boolean }) {
   return (
-    <div className={cn('py-2 px-3 rounded-lg', isEven && 'bg-muted/20')}>
+    <div className={cn('py-2 px-3 rounded-lg', isEven && 'bg-muted/20'}>
       <div className="flex items-start gap-2.5">
         <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
           <span className="text-[10px] font-display">{index + 1}</span>
@@ -566,7 +566,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
             <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
-                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin'} />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
                 <X className="w-3.5 h-3.5" />
@@ -640,7 +640,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                         ) : (
                           <SilenceState compact />
                         )}
-                        <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
+                        <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180'} />
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="pt-3">

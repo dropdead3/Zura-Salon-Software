@@ -183,7 +183,7 @@ export function DockScaleTab() {
       {/* Mode toggle */}
       <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-xl p-1 border border-[hsl(var(--platform-border)/0.2)] mb-6">
         <button
-          onClick={() => handleModeSwitch('manual')}
+          onClick={() => handleModeSwitch('manual'}
           className={cn(
             'flex-1 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5',
             mode === 'manual' ? 'bg-violet-600/30 text-violet-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -193,7 +193,7 @@ export function DockScaleTab() {
           Manual
         </button>
         <button
-          onClick={() => handleModeSwitch('ble')}
+          onClick={() => handleModeSwitch('ble'}
           className={cn(
             'flex-1 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5',
             mode === 'ble' ? 'bg-violet-600/30 text-violet-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -210,7 +210,7 @@ export function DockScaleTab() {
         stateUI.bgColor,
         'border-[hsl(var(--platform-border)/0.2)]'
       )}>
-        <div className={cn('relative inline-flex mb-4', stateUI.pulse && 'animate-pulse')}>
+        <div className={cn('relative inline-flex mb-4', stateUI.pulse && 'animate-pulse'}>
           <StateIcon className={cn('w-16 h-16', stateUI.color)} />
           {(connectionState === 'connected' || isLiveReading) && (
             <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[hsl(var(--platform-bg))]" />

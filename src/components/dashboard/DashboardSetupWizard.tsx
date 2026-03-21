@@ -169,7 +169,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
                               key={section}
                               className="text-xs bg-background/60 px-2 py-0.5 rounded-full"
                             >
-                              {section.replace(/_/g, ' ')}
+                              {section.replace(/_/g, ' '}
                             </span>
                           ))}
                           {(template.layout.sections?.length || 0) > 4 && (

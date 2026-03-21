@@ -523,7 +523,7 @@ export default function MyProfile() {
           <Card className="mb-6">
             <CardContent className="p-4">
               <Link 
-                to={dashPath('/onboarding')}
+                to={dashPath('/onboarding'}
                 className="flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
@@ -780,7 +780,7 @@ export default function MyProfile() {
                     </div>
                     <Input
                       id="instagram"
-                      value={formData.instagram.replace(/^@/, '')}
+                      value={formData.instagram.replace(/^@/, ''}
                       onChange={(e) => {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
                         setFormData(prev => ({ ...prev, instagram: clean ? `@${clean}` : '' }));
@@ -806,7 +806,7 @@ export default function MyProfile() {
                     </div>
                     <Input
                       id="tiktok"
-                      value={formData.tiktok.replace(/^@/, '')}
+                      value={formData.tiktok.replace(/^@/, ''}
                       onChange={(e) => {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
                         setFormData(prev => ({ ...prev, tiktok: clean ? `@${clean}` : '' }));
@@ -1016,7 +1016,7 @@ export default function MyProfile() {
                         )}
                         {closedDays.length > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            Closed {closedDays.join(' & ')}
+                            Closed {closedDays.join(' & '}
                           </span>
                         )}
                       </div>
@@ -1122,7 +1122,7 @@ export default function MyProfile() {
                 <CardTitle className="text-lg">Professional Details</CardTitle>
                 {(roles.includes('super_admin') || roles.includes('admin')) && (
                   <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
-                    <Link to={dashPath('/admin/website-hub')}>
+                    <Link to={dashPath('/admin/website-hub'}>
                       Manage Specialties <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>

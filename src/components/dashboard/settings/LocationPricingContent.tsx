@@ -68,7 +68,7 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
       <div className="space-y-3 max-h-[40vh] overflow-y-auto p-1">
         {activeLocations.map(loc => (
           <div key={loc.id} className="flex items-center gap-3">
-            <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate')}>
+            <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate'}>
               {loc.name}
             </Label>
             <div className="relative flex-1">
@@ -87,7 +87,7 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
           </div>
         ))}
         {activeLocations.length === 0 && (
-          <p className={cn(tokens.body.muted, 'text-center py-4')}>No locations configured yet.</p>
+          <p className={cn(tokens.body.muted, 'text-center py-4'}>No locations configured yet.</p>
         )}
       </div>
       <div className="flex justify-end">

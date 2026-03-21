@@ -149,7 +149,7 @@ export function TransactionList({
             {sortedTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell className={tokens.body.emphasis}>
-                  {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                  {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy'}
                 </TableCell>
                 <TableCell>
                   <span className={tokens.body.emphasis}>{transaction.client_name || 'Walk-in'}</span>
@@ -186,7 +186,7 @@ export function TransactionList({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className={cn(tokens.body.emphasis, 'text-right')}>
+                <TableCell className={cn(tokens.body.emphasis, 'text-right'}>
                   {formatCurrency(Number(transaction.total_amount) || 0)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">

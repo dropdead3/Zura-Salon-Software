@@ -82,7 +82,7 @@ export function ClientFormulaHistoryTab({ clientId, className }: ClientFormulaHi
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(new Date(formula.created_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(formula.created_at), 'MMM d, yyyy'}
                     </span>
                     {formula.staff_name && (
                       <span className="text-xs text-muted-foreground">

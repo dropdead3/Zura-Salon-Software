@@ -263,7 +263,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                   value={scanInput}
                   onChange={e => { setScanInput(e.target.value); setScanError(null); }}
                   onKeyDown={e => { if (e.key === 'Enter') handleScan(); }}
-                  className={cn('pl-11 h-12 text-base', isMobile && 'text-lg')}
+                  className={cn('pl-11 h-12 text-base', isMobile && 'text-lg'}
                   autoCapitalize="none"
                   autoComplete="off"
                   autoFocus
@@ -323,9 +323,9 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                   <TableHeader>
                     <TableRow>
                       <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>System</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Counted</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Variance</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>System</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>Counted</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>Variance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -333,7 +333,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                       const variance = e.counted - e.expected;
                       const hasShrinkage = variance < 0;
                       return (
-                        <TableRow key={e.productId} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10')}>
+                        <TableRow key={e.productId} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10'}>
                           <TableCell className="py-2">
                             <p className="text-sm font-medium truncate max-w-[200px]">{e.productName}</p>
                             {e.sku && <p className="text-[10px] text-muted-foreground">{e.sku}</p>}
@@ -403,9 +403,9 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                   <TableHeader>
                     <TableRow>
                       <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-24')}>System Qty</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28')}>Actual Count</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20')}>Variance</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-24'}>System Qty</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-28'}>Actual Count</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right w-20'}>Variance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -417,7 +417,7 @@ export function StocktakeDialog({ open, onOpenChange, locationId }: StocktakeDia
                       const hasShrinkage = variance !== null && variance < 0;
 
                       return (
-                        <TableRow key={p.id} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10')}>
+                        <TableRow key={p.id} className={cn(hasShrinkage && 'bg-red-50/50 dark:bg-red-950/10'}>
                           <TableCell className="py-2">
                             <p className="text-sm font-medium truncate max-w-[250px]">{p.name}</p>
                             {p.sku && <p className="text-[10px] text-muted-foreground">{p.sku}</p>}

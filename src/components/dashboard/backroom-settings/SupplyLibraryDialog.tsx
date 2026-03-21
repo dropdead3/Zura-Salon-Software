@@ -582,7 +582,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                       Supply Library
                     </button>
                     <ChevronLeft className="w-3 h-3 text-muted-foreground rotate-180" />
-                    <DialogTitle className={cn(tokens.card.title, 'truncate')}>{selectedBrand}</DialogTitle>
+                    <DialogTitle className={cn(tokens.card.title, 'truncate'}>{selectedBrand}</DialogTitle>
                   </div>
                   <DialogDescription className={tokens.body.muted}>
                     Select products to add to your backroom catalog

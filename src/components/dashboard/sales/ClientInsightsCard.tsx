@@ -132,7 +132,7 @@ export function ClientInsightsCard({
             <CardTitle className="font-display text-lg">Client Insights</CardTitle>
             <MetricInfoTooltip description="Highlights key client metrics including new vs returning breakdown, average ticket size, and visit frequency. Data is sourced from completed appointments." />
           </div>
-          <Link to={dashPath('/my-clients')}>
+          <Link to={dashPath('/my-clients'}>
             <Button variant="ghost" size={tokens.button.inline} className="text-xs">
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -218,7 +218,7 @@ export function ClientInsightsCard({
                 <div key={client.id} className="flex items-center justify-between text-xs">
                   <span className="text-destructive">{client.name}</span>
                   <span className="text-destructive/80">
-                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown')}
+                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown'}
                   </span>
                 </div>
               ))}

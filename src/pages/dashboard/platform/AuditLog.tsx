@@ -109,10 +109,10 @@ export default function AuditLogPage() {
                 </PlatformButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                <DropdownMenuItem onClick={() => handleExport('csv'}>
                   Export as CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('json')}>
+                <DropdownMenuItem onClick={() => handleExport('json'}>
                   Export as JSON
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -245,7 +245,7 @@ export default function AuditLogPage() {
                         {log.organization_name || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {format(new Date(log.created_at), 'MMM d, h:mm a')}
+                        {format(new Date(log.created_at), 'MMM d, h:mm a'}
                       </td>
                       <td className="px-4 py-3">
                         <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
@@ -323,7 +323,7 @@ export default function AuditLogPage() {
             </div>
             <div>
               <label className={tokens.heading.subsection}>Timestamp</label>
-              <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp')}</p>
+              <p className="mt-1 text-foreground">{format(new Date(selectedLog.created_at), 'PPpp'}</p>
             </div>
             {selectedLog.entity_type && (
               <div>

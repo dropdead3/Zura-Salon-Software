@@ -7,7 +7,7 @@
  * Usage:
  *   import { tokens } from '@/lib/design-tokens';
  *   <h1 className={tokens.heading.page}>Revenue</h1>
- *   <p className={cn(tokens.stat.large, isNegative && 'text-destructive')}>$12,400</p>
+ *   <p className={cn(tokens.stat.large, isNegative && 'text-destructive'}>$12,400</p>
  */
 
 export const tokens = {

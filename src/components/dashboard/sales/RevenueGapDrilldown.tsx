@@ -91,7 +91,7 @@ function GapItemRow({ item, showDates, formatCurrency }: {
             item.serviceName,
             item.stylistName ? `w/ ${item.stylistName}` : null,
             showDates ? item.appointmentDate : null,
-          ].filter(Boolean).join(' · ')}
+          ].filter(Boolean).join(' · '}
         </span>
         {showAmountShift && (
           <span className="flex items-center gap-0.5 shrink-0 ml-auto">

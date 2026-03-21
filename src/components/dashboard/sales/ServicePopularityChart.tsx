@@ -276,7 +276,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const serviceGradientDefs = useMemo(() => {
     const unique = [...new Set(serviceColors)];
     return unique.map(hex => ({
-      id: `glass-${hex.replace('#', '')}`,
+      id: `glass-${hex.replace('#', ''}`,
       hex,
     }));
   }, [serviceColors]);
@@ -300,7 +300,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const categoryGradientDefs = useMemo(() => {
     const unique = [...new Set(categoryColors)];
     return unique.map(hex => ({
-      id: `cat-glass-${hex.replace('#', '')}`,
+      id: `cat-glass-${hex.replace('#', ''}`,
       hex,
     }));
   }, [categoryColors]);
@@ -374,7 +374,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               >
                 {sortedServiceData.map((_, i) => {
                   const hex = serviceColors[i];
-                  const gradId = `glass-${hex.replace('#', '')}`;
+                  const gradId = `glass-${hex.replace('#', ''}`;
                   return (
                     <Cell
                       key={i}
@@ -482,7 +482,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               >
                 {sortedCategoryData.map((_, i) => {
                   const hex = categoryColors[i];
-                  const gradId = `cat-glass-${hex.replace('#', '')}`;
+                  const gradId = `cat-glass-${hex.replace('#', ''}`;
                   return (
                     <Cell
                       key={i}
@@ -578,7 +578,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               <FilterTabsTrigger
                 value="service"
                 data-state={viewMode === 'service' ? 'active' : 'inactive'}
-                onClick={() => setViewMode('service')}
+                onClick={() => setViewMode('service'}
                 className="flex items-center gap-1"
               >
                 <Scissors className="w-3 h-3" />
@@ -587,7 +587,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               <FilterTabsTrigger
                 value="category"
                 data-state={viewMode === 'category' ? 'active' : 'inactive'}
-                onClick={() => setViewMode('category')}
+                onClick={() => setViewMode('category'}
                 className="flex items-center gap-1"
               >
                 <Users className="w-3 h-3" />
@@ -602,7 +602,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
         {/* Service view */}
         {viewMode === 'service' && (
           <>
-            <Tabs value={serviceSortBy} onValueChange={(v) => setServiceSortBy(v as 'frequency' | 'revenue')}>
+            <Tabs value={serviceSortBy} onValueChange={(v) => setServiceSortBy(v as 'frequency' | 'revenue'}>
               <FilterTabsList className="mb-4">
                 <FilterTabsTrigger value="revenue" className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3" />
@@ -672,7 +672,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
         {/* Category view */}
         {viewMode === 'category' && (
           <>
-            <Tabs value={categorySortBy} onValueChange={(v) => setCategorySortBy(v as 'revenue' | 'frequency')}>
+            <Tabs value={categorySortBy} onValueChange={(v) => setCategorySortBy(v as 'revenue' | 'frequency'}>
               <FilterTabsList className="mb-4">
                 <FilterTabsTrigger value="revenue" className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3" />

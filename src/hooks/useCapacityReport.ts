@@ -104,7 +104,7 @@ export function useCapacityReport(dateFrom: string, dateTo: string, locationId?:
       for (let h = 8; h <= 20; h++) {
         const count = byHourCount[h] || 0;
         byHour.push({
-          hour: `${h.toString().padStart(2, '0')}:00`,
+          hour: `${h.toString().padStart(2, '0'}:00`,
           appointments: count,
           utilization: maxAppointmentsPerHour > 0 ? (count / maxAppointmentsPerHour) * 100 : 0,
         });
@@ -114,7 +114,7 @@ export function useCapacityReport(dateFrom: string, dateTo: string, locationId?:
         totalAppointments: appointments.length,
         totalBookedHours: totalMinutes / 60,
         avgUtilization: appointments.length > 0 ? (appointments.length / (workingDays * 8)) * 100 : 0,
-        peakHour: `${peakHour.toString().padStart(2, '0')}:00`,
+        peakHour: `${peakHour.toString().padStart(2, '0'}:00`,
         busiestDay: dayNames[busiestDay],
         byHour,
       };

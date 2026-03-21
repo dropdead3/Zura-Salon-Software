@@ -81,7 +81,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             autoFocus
           />
           {query && (
-            <button onClick={() => setQuery('')}>
+            <button onClick={() => setQuery(''}>
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}

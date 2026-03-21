@@ -40,7 +40,7 @@ interface StylistStepProps {
 const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
   const hour = 8 + Math.floor(i / 2);
   const minute = (i % 2) * 30;
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0}`;
+  return `${hour.toString().padStart(2, '0'}:${minute.toString().padStart(2, '0}`;
 }).filter(t => {
   const [h] = t.split(':');
   return parseInt(h) < 20;
@@ -168,14 +168,14 @@ export function StylistStep({
                         'text-[10px] uppercase',
                         isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       )}>
-                        {isToday ? 'Today' : formatDate(date, 'EEE')}
+                        {isToday ? 'Today' : formatDate(date, 'EEE'}
                       </span>
-                      <span className="text-lg font-medium">{formatDate(date, 'd')}</span>
+                      <span className="text-lg font-medium">{formatDate(date, 'd'}</span>
                       <span className={cn(
                         'text-[10px]',
                         isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       )}>
-                        {formatDate(date, 'MMM')}
+                        {formatDate(date, 'MMM'}
                       </span>
                     </button>
                   );

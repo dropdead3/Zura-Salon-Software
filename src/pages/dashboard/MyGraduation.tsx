@@ -83,7 +83,7 @@ function FeedbackSection({ submissionId }: { submissionId: string }) {
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                 <span className="font-medium">{fb.coach?.full_name || 'Coach'}</span>
                 <span>•</span>
-                <span>{formatDate(new Date(fb.created_at), 'MMM d, h:mm a')}</span>
+                <span>{formatDate(new Date(fb.created_at), 'MMM d, h:mm a'}</span>
               </div>
               <p className="text-foreground">{fb.feedback}</p>
             </div>
@@ -204,7 +204,7 @@ function SubmissionDialog({
                   <Button 
                     variant="ghost" 
                     size={tokens.button.inline} 
-                    onClick={() => setProofUrl('')}
+                    onClick={() => setProofUrl(''}
                   >
                     Remove
                   </Button>
@@ -309,7 +309,7 @@ function RequirementCard({
                 <div className="mt-3 space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>Submitted {formatDate(new Date(submission.submitted_at), 'PPP')}</span>
+                    <span>Submitted {formatDate(new Date(submission.submitted_at), 'PPP'}</span>
                   </div>
                   
                   {submission.proof_url && (

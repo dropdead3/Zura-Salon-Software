@@ -235,7 +235,7 @@ export function MobileAgendaCard({
             <div className="grid grid-cols-2 gap-2 pt-4 border-t">
               {status === 'confirmed' && (
                 <Button 
-                  onClick={() => handleStatusChange('checked_in')}
+                  onClick={() => handleStatusChange('checked_in'}
                   disabled={isUpdating}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
@@ -245,7 +245,7 @@ export function MobileAgendaCard({
               )}
               {(status === 'checked_in' || status === 'in_progress') && (
                 <Button 
-                  onClick={() => handleStatusChange('completed')}
+                  onClick={() => handleStatusChange('completed'}
                   disabled={isUpdating}
                   className="bg-green-600 hover:bg-green-700"
                 >
@@ -256,7 +256,7 @@ export function MobileAgendaCard({
               {status !== 'cancelled' && status !== 'no_show' && status !== 'completed' && (
                 <Button 
                   variant="outline"
-                  onClick={() => handleStatusChange('no_show')}
+                  onClick={() => handleStatusChange('no_show'}
                   disabled={isUpdating}
                   className="text-destructive hover:bg-destructive/10"
                 >

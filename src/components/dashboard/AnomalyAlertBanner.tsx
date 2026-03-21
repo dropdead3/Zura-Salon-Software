@@ -144,7 +144,7 @@ function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
                           </Badge>
                         </div>
                         <p className="text-xs opacity-70">
-                          {formatDate(parseISO(anomaly.detected_at), 'MMM d, h:mm a')}
+                          {formatDate(parseISO(anomaly.detected_at), 'MMM d, h:mm a'}
                         </p>
                       </div>
                     </div>

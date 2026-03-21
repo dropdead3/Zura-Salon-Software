@@ -91,12 +91,12 @@ export function RebalancingCard({ filterContext }: RebalancingCardProps) {
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={tokens.table.columnHeader}>From</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')} />
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell'} />
                   <TableHead className={tokens.table.columnHeader}>To</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Qty</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell')}>Value</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Priority</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Action</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Qty</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right hidden sm:table-cell'}>Value</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Priority</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

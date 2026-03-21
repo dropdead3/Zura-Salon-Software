@@ -255,9 +255,9 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                     {abbr}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
+                    <p className={cn(tokens.body.emphasis, 'truncate'}>{cat.category_name}</p>
                     {totalForCat > 0 ? (
-                      <p className={cn(tokens.body.muted, 'flex items-center gap-1')}>
+                      <p className={cn(tokens.body.muted, 'flex items-center gap-1'}>
                         <Sparkles className="h-3 w-3 text-primary" />
                         {totalForCat} add-on{totalForCat !== 1 ? 's' : ''} assigned
                       </p>

@@ -596,16 +596,16 @@ function TaskCard({ task, variant, onEdit, onDelete, onStatusChange, deleteConfi
         <div className="flex items-center gap-2 ml-8">
           <span className="text-xs text-muted-foreground">Move to:</span>
           {variant !== 'pending' && (
-            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'pending')}>
+            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'pending'}>
               Pending
             </Button>
           )}
           {variant !== 'in-progress' && (
-            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'in-progress')}>
+            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'in-progress'}>
               In Progress
             </Button>
           )}
-          <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'complete')}>
+          <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'complete'}>
             Complete
           </Button>
         </div>

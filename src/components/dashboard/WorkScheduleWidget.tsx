@@ -227,7 +227,7 @@ export function WorkScheduleWidget() {
                           {requestedDays.length} days selected
                           {closedDays.length > 0 && (
                             <span className="ml-2">
-                              • Closed {closedDays.join(' & ')}
+                              • Closed {closedDays.join(' & '}
                             </span>
                           )}
                           {daysUsedElsewhere.length > 0 && (
@@ -395,7 +395,7 @@ export function WorkScheduleWidget() {
                 .map(request => (
                   <div key={request.id} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      {request.requested_days.join(', ')}
+                      {request.requested_days.join(', '}
                     </span>
                     <Badge
                       variant="outline"

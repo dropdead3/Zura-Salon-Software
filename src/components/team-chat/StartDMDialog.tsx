@@ -121,7 +121,7 @@ export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
             />
             {search && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => setSearch(''}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
               >
                 <X className="h-4 w-4 text-muted-foreground" />

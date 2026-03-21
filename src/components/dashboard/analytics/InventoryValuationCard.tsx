@@ -110,7 +110,7 @@ export function InventoryValuationCard({ products, movementRatings, filterContex
                 <AlertTriangle className="w-3 h-3 text-orange-500" />
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-display">Capital at Risk</p>
               </div>
-              <p className={cn('text-lg font-display tabular-nums', metrics.atRiskPct > 30 ? 'text-red-500' : 'text-orange-500')}>
+              <p className={cn('text-lg font-display tabular-nums', metrics.atRiskPct > 30 ? 'text-red-500' : 'text-orange-500'}>
                 <BlurredAmount>{formatCurrency(metrics.atRiskCost)}</BlurredAmount>
               </p>
               <p className="text-[10px] text-muted-foreground tabular-nums">{metrics.atRiskPct.toFixed(1)}% of inventory</p>

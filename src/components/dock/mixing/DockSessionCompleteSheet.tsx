@@ -127,7 +127,7 @@ export function DockSessionCompleteSheet({
               {/* Mode tabs */}
               <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-xl p-1 border border-[hsl(var(--platform-border)/0.2)]">
                 <button
-                  onClick={() => setMode('confirm')}
+                  onClick={() => setMode('confirm'}
                   className={cn(
                     'flex-1 h-8 rounded-lg text-xs font-medium transition-all',
                     mode === 'confirm' ? 'bg-emerald-600/30 text-emerald-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -136,7 +136,7 @@ export function DockSessionCompleteSheet({
                   Complete
                 </button>
                 <button
-                  onClick={() => setMode('unresolved')}
+                  onClick={() => setMode('unresolved'}
                   className={cn(
                     'flex-1 h-8 rounded-lg text-xs font-medium transition-all',
                     mode === 'unresolved' ? 'bg-amber-600/30 text-amber-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -203,7 +203,7 @@ function SummaryTile({ label, value, alert }: { label: string; value: string; al
   return (
     <div className="rounded-lg bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.1)] p-2.5 text-center">
       <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide mb-0.5">{label}</p>
-      <p className={cn('font-display text-sm tracking-tight', alert ? 'text-amber-400' : 'text-[hsl(var(--platform-foreground))]')}>
+      <p className={cn('font-display text-sm tracking-tight', alert ? 'text-amber-400' : 'text-[hsl(var(--platform-foreground))]'}>
         {value}
       </p>
     </div>

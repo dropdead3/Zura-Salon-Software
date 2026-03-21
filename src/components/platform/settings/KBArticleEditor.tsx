@@ -221,13 +221,13 @@ To add your first location, follow these steps:
           </PlatformButton>
           <PlatformButton
             variant="outline"
-            onClick={() => handleSubmit('draft')}
+            onClick={() => handleSubmit('draft'}
             disabled={isSubmitting || !formData.title || !formData.content}
           >
             Save as Draft
           </PlatformButton>
           <PlatformButton
-            onClick={() => handleSubmit('published')}
+            onClick={() => handleSubmit('published'}
             disabled={isSubmitting || !formData.title || !formData.content}
           >
             Publish

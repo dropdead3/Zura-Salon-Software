@@ -422,7 +422,7 @@ export function BackroomEntitlementsTab() {
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : filtered.length === 0 ? (
-          <div className={cn(tokens.empty.container, 'py-16')}>
+          <div className={cn(tokens.empty.container, 'py-16'}>
             <Building2 className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No organizations found</h3>
           </div>

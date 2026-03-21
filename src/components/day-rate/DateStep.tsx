@@ -75,7 +75,7 @@ export function DateStep({ locationId, selectedDate, onSelect }: DateStepProps) 
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="font-medium">
-            {formatDate(currentMonth, 'MMMM yyyy')}
+            {formatDate(currentMonth, 'MMMM yyyy'}
           </span>
           <Button
             variant="outline"

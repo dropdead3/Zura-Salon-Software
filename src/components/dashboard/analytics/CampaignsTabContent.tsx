@@ -101,7 +101,7 @@ export function CampaignsTabContent() {
             <CardDescription>Created from {PLATFORM_NAME} AI insights</CardDescription>
           </div>
           <Button variant="outline" size={tokens.button.card} asChild>
-            <Link to={dashPath('/campaigns')}>View All</Link>
+            <Link to={dashPath('/campaigns'}>View All</Link>
           </Button>
         </CardHeader>
         <CardContent>
@@ -120,7 +120,7 @@ export function CampaignsTabContent() {
                 return (
                   <Link key={campaign.id} to={dashPath(`/campaigns/${campaign.id}`)}>
                     <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors group">
-                      <Icon className={cn('w-4 h-4 shrink-0', campaign.status === 'completed' ? 'text-chart-2' : 'text-primary')} />
+                      <Icon className={cn('w-4 h-4 shrink-0', campaign.status === 'completed' ? 'text-chart-2' : 'text-primary'} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium truncate">{campaign.name}</span>
@@ -133,7 +133,7 @@ export function CampaignsTabContent() {
                           <span className="text-[11px] text-muted-foreground">{counts.done}/{counts.total}</span>
                           <Badge variant="outline" className="text-[10px] gap-1">
                             <Calendar className="w-2.5 h-2.5" />
-                            {formatDate(new Date(campaign.created_at), 'MMM d')}
+                            {formatDate(new Date(campaign.created_at), 'MMM d'}
                           </Badge>
                         </div>
                       </div>

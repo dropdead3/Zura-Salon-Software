@@ -176,7 +176,7 @@ export function IssueContractDialog({
                 <Label htmlFor="contract_name">Contract Name</Label>
                 <Input
                   id="contract_name"
-                  {...form.register('contract_name')}
+                  {...form.register('contract_name'}
                 />
                 {form.formState.errors.contract_name && (
                   <p className="text-sm text-destructive">{form.formState.errors.contract_name.message}</p>
@@ -198,7 +198,7 @@ export function IssueContractDialog({
                   <Label>Frequency</Label>
                   <Select
                     value={rentFrequency}
-                    onValueChange={(value) => form.setValue('rent_frequency', value as 'weekly' | 'monthly')}
+                    onValueChange={(value) => form.setValue('rent_frequency', value as 'weekly' | 'monthly'}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -215,7 +215,7 @@ export function IssueContractDialog({
                 <div className="space-y-2">
                   <Label>Due Day of Month</Label>
                   <Select
-                    value={String(form.watch('due_day_of_month')}
+                    value={String(form.watch('due_day_of_month'}
                     onValueChange={(value) => form.setValue('due_day_of_month', Number(value))}
                   >
                     <SelectTrigger>
@@ -234,7 +234,7 @@ export function IssueContractDialog({
                 <div className="space-y-2">
                   <Label>Due Day of Week</Label>
                   <Select
-                    value={String(form.watch('due_day_of_week')}
+                    value={String(form.watch('due_day_of_week'}
                     onValueChange={(value) => form.setValue('due_day_of_week', Number(value))}
                   >
                     <SelectTrigger>
@@ -271,7 +271,7 @@ export function IssueContractDialog({
                   <Input
                     id="start_date"
                     type="date"
-                    {...form.register('start_date')}
+                    {...form.register('start_date'}
                   />
                 </div>
                 <div className="space-y-2">
@@ -279,7 +279,7 @@ export function IssueContractDialog({
                   <Input
                     id="end_date"
                     type="date"
-                    {...form.register('end_date')}
+                    {...form.register('end_date'}
                   />
                 </div>
               </div>
@@ -294,7 +294,7 @@ export function IssueContractDialog({
                       </p>
                     </div>
                     <Switch
-                      checked={form.watch('auto_renew')}
+                      checked={form.watch('auto_renew'}
                       onCheckedChange={(checked) => form.setValue('auto_renew', checked)}
                     />
                   </div>
@@ -321,7 +321,7 @@ export function IssueContractDialog({
                   <div className="flex items-center justify-between">
                     <Label>Utilities</Label>
                     <Switch
-                      checked={form.watch('includes_utilities')}
+                      checked={form.watch('includes_utilities'}
                       onCheckedChange={(checked) => form.setValue('includes_utilities', checked)}
                     />
                   </div>
@@ -329,7 +329,7 @@ export function IssueContractDialog({
                   <div className="flex items-center justify-between">
                     <Label>WiFi</Label>
                     <Switch
-                      checked={form.watch('includes_wifi')}
+                      checked={form.watch('includes_wifi'}
                       onCheckedChange={(checked) => form.setValue('includes_wifi', checked)}
                     />
                   </div>
@@ -337,7 +337,7 @@ export function IssueContractDialog({
                   <div className="flex items-center justify-between">
                     <Label>Products (backbar)</Label>
                     <Switch
-                      checked={form.watch('includes_products')}
+                      checked={form.watch('includes_products'}
                       onCheckedChange={(checked) => form.setValue('includes_products', checked)}
                     />
                   </div>

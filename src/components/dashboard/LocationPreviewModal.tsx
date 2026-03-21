@@ -57,7 +57,7 @@ function LocationPreviewCard({ location }: { location: Location }) {
             <p>{formatHoursForDisplay(location.hours_json) || location.hours || 'Hours not set'}</p>
             {closedDays.length > 0 && (
               <p className="text-muted-foreground text-xs mt-0.5">
-                Closed {closedDays.join(' & ')}
+                Closed {closedDays.join(' & '}
               </p>
             )}
           </div>

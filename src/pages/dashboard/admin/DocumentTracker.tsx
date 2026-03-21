@@ -215,7 +215,7 @@ export default function DocumentTracker() {
                         <TableCell className="text-muted-foreground">{doc.license_number || '—'}</TableCell>
                         <TableCell>
                           {doc.expiration_date ? (
-                            <Badge variant={docStatus.variant}>{docStatus.label} · {formatDate(parseISO(doc.expiration_date), 'MMM d, yyyy')}</Badge>
+                            <Badge variant={docStatus.variant}>{docStatus.label} · {formatDate(parseISO(doc.expiration_date), 'MMM d, yyyy'}</Badge>
                           ) : '—'}
                         </TableCell>
                         <TableCell className="text-muted-foreground max-w-[200px] truncate">{doc.notes || '—'}</TableCell>

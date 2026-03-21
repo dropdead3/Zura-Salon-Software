@@ -100,7 +100,7 @@ export function MissedDayDialog({
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => setView('main')}
+                onClick={() => setView('main'}
                 className="flex-1 border-oat/50 hover:bg-oat/20"
                 disabled={isLoading}
               >
@@ -260,7 +260,7 @@ export function MissedDayDialog({
             {!hasPendingPauseRequest && (
               <Button
                 variant="outline"
-                onClick={() => setView('pause')}
+                onClick={() => setView('pause'}
                 className="w-full border-oat/50 hover:bg-oat/20 hover:border-oat transition-all duration-300"
                 disabled={isLoading}
                 size="lg"

@@ -74,7 +74,7 @@ export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportBut
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd'}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
@@ -94,7 +94,7 @@ export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportBut
       // Subtitle with date
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')}`, 14, 28);
+      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a'}`, 14, 28);
       doc.text(`Total Records: ${data.length}`, 14, 34);
 
       // Summary stats
@@ -132,7 +132,7 @@ export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportBut
         },
       });
 
-      doc.save(`${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`${orgSlug ? orgSlug + '_' : ''}${filename}_${format(new Date(), 'yyyy-MM-dd'}.pdf`);
       toast.success('PDF exported successfully');
     } catch (error) {
       console.error('PDF export error:', error);
@@ -173,11 +173,11 @@ export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportBut
           <FileSpreadsheet className="w-4 h-4 mr-2" />
           Export All (CSV)
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportToPDF(filteredStrikes, 'strikes_filtered')}>
+        <DropdownMenuItem onClick={() => exportToPDF(filteredStrikes, 'strikes_filtered'}>
           <FileText className="w-4 h-4 mr-2" />
           Export Filtered (PDF)
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportToPDF(strikes, 'strikes_all')}>
+        <DropdownMenuItem onClick={() => exportToPDF(strikes, 'strikes_all'}>
           <FileText className="w-4 h-4 mr-2" />
           Export All (PDF)
         </DropdownMenuItem>

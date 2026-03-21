@@ -270,7 +270,7 @@ export function PersonalInsightsPanel({ onClose }: { onClose: () => void }) {
             </div>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
-                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin'} />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
                 <X className="w-3.5 h-3.5" />

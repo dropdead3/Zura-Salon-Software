@@ -142,7 +142,7 @@ export function MobileFeatureRequestViewer({
                         <p className="text-xs text-muted-foreground mt-6">
                           Submitted by {request.submitter_name}
                           {request.created_at && (
-                            <> • {formatDate(parseISO(request.created_at), 'MMM d, yyyy')}</>
+                            <> • {formatDate(parseISO(request.created_at), 'MMM d, yyyy'}</>
                           )}
                         </p>
 
@@ -161,7 +161,7 @@ export function MobileFeatureRequestViewer({
                           className="mt-8 gap-2"
                           onClick={() => onVote(request)}
                         >
-                          <Heart className={cn('h-5 w-5', request.user_voted && 'fill-current')} />
+                          <Heart className={cn('h-5 w-5', request.user_voted && 'fill-current'} />
                           {request.user_voted ? 'Remove Vote' : 'Vote for This'}
                         </Button>
                       </div>

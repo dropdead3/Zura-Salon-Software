@@ -111,7 +111,7 @@ function TransactionsTab({ search }: { search: string }) {
       t.promotion_name || '',
       t.refund_status || '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""'}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -125,30 +125,30 @@ function TransactionsTab({ search }: { search: string }) {
     <div className="space-y-4">
       {/* Stats */}
       <BentoGrid maxPerRow={5} gap="gap-4">
-        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+        <Card className={cn(tokens.card.wrapper, 'p-4'}>
           <p className={tokens.body.muted}>Total Revenue</p>
           <p className={tokens.stat.large}><BlurredAmount>{formatCurrency(totalRevenue)}</BlurredAmount></p>
         </Card>
-        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+        <Card className={cn(tokens.card.wrapper, 'p-4'}>
           <p className={tokens.body.muted}>Services</p>
           <p className={tokens.stat.large}>{serviceCount}</p>
         </Card>
-        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+        <Card className={cn(tokens.card.wrapper, 'p-4'}>
           <p className={tokens.body.muted}>Products</p>
           <p className={tokens.stat.large}>{productCount}</p>
         </Card>
-        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+        <Card className={cn(tokens.card.wrapper, 'p-4'}>
           <p className={tokens.body.muted}>Discounts Given</p>
-          <p className={cn(tokens.stat.large, totalDiscounts > 0 && 'text-amber-600')}>
+          <p className={cn(tokens.stat.large, totalDiscounts > 0 && 'text-amber-600'}>
             <BlurredAmount>{formatCurrency(totalDiscounts)}</BlurredAmount>
           </p>
           {discountedCount > 0 && (
             <p className="text-xs text-muted-foreground mt-1">{discountedCount} item{discountedCount !== 1 ? 's' : ''}</p>
           )}
         </Card>
-        <Card className={cn(tokens.card.wrapper, 'p-4')}>
+        <Card className={cn(tokens.card.wrapper, 'p-4'}>
           <p className={tokens.body.muted}>Refunded</p>
-          <p className={cn(tokens.stat.large, refundedCount > 0 && 'text-amber-600')}>{refundedCount}</p>
+          <p className={cn(tokens.stat.large, refundedCount > 0 && 'text-amber-600'}>{refundedCount}</p>
         </Card>
       </BentoGrid>
 

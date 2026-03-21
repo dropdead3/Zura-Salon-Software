@@ -78,7 +78,7 @@ function SchedulingCopilotPanelComponent({
                 onClick={handleRefresh}
                 disabled={isFetching}
               >
-                <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} />
+                <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin'} />
               </Button>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -101,7 +101,7 @@ function SchedulingCopilotPanelComponent({
           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
             <div className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              {format(date, 'EEE, MMM d')}
+              {format(date, 'EEE, MMM d'}
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ function SchedulingCopilotPanelComponent({
             {data && !isLoading && (
               <div className="mt-4 pt-4 border-t flex items-center justify-between text-xs text-muted-foreground">
                 <span>
-                  {data.existingCount} existing appointments on {format(date, 'MMM d')}
+                  {data.existingCount} existing appointments on {format(date, 'MMM d'}
                 </span>
                 <span>
                   {visibleSuggestions.length} of {data.suggestions.length} suggestions shown

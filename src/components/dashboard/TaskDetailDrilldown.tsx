@@ -117,7 +117,7 @@ export function TaskDetailDrilldown({
                 )}
                 {isSnoozed && (
                   <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-amber-500/10 text-amber-600 gap-1">
-                    <AlarmClock className="w-2.5 h-2.5" /> Snoozed until {format(parseISO(task.snoozed_until!), 'MMM d')}
+                    <AlarmClock className="w-2.5 h-2.5" /> Snoozed until {format(parseISO(task.snoozed_until!), 'MMM d'}
                   </Badge>
                 )}
               </div>
@@ -225,7 +225,7 @@ export function TaskDetailDrilldown({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
                 <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> Created</p>
-                <p className="font-sans font-medium">{format(parseISO(task.created_at), 'MMM d, yyyy')}</p>
+                <p className="font-sans font-medium">{format(parseISO(task.created_at), 'MMM d, yyyy'}</p>
               </div>
               <div className="space-y-1">
                 <p className={cn("font-sans text-xs flex items-center gap-1", isOverdue ? "text-destructive" : "text-muted-foreground")}>
@@ -254,7 +254,7 @@ export function TaskDetailDrilldown({
               {isSnoozed && (
                 <div className="space-y-1">
                   <p className="font-sans text-xs text-amber-600 flex items-center gap-1"><AlarmClock className="w-3 h-3" /> Snoozed Until</p>
-                  <p className="font-sans font-medium">{format(parseISO(task.snoozed_until!), 'MMM d, yyyy')}</p>
+                  <p className="font-sans font-medium">{format(parseISO(task.snoozed_until!), 'MMM d, yyyy'}</p>
                 </div>
               )}
             </div>

@@ -50,7 +50,7 @@ export function RewardCard({
             variant="secondary"
             className={`w-fit mb-2 ${categoryColors[reward.category] || ''}`}
           >
-            {reward.category.replace(/_/g, ' ')}
+            {reward.category.replace(/_/g, ' '}
           </Badge>
         )}
 

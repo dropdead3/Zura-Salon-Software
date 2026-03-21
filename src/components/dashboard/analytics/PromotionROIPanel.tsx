@@ -286,7 +286,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
                   <TableCell className="font-medium">{promo.name}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
-                      {promo.promotion_type?.replace('_', ' ')}
+                      {promo.promotion_type?.replace('_', ' '}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{promo.redemptions}</TableCell>

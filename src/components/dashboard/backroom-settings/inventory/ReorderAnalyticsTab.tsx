@@ -415,10 +415,10 @@ export function ReorderAnalyticsTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Orders</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Units</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Spend</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Avg/Unit</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Orders</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Units</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Spend</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Avg/Unit</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -457,10 +457,10 @@ export function ReorderAnalyticsTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Supplier</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>POs</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Lead Time</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>On-Time</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Spend</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>POs</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Lead Time</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>On-Time</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Spend</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -473,7 +473,7 @@ export function ReorderAnalyticsTab() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
                       {s.onTimePct > 0 ? (
-                        <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive')}>
+                        <span className={cn(s.onTimePct >= 80 ? 'text-success' : s.onTimePct >= 50 ? 'text-warning' : 'text-destructive'}>
                           {s.onTimePct}%
                         </span>
                       ) : '—'}

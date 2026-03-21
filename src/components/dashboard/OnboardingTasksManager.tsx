@@ -278,7 +278,7 @@ export function OnboardingTasksManager() {
                     size="icon"
                     className="h-5 w-5"
                     disabled={index === 0}
-                    onClick={() => moveTask(task.id, 'up')}
+                    onClick={() => moveTask(task.id, 'up'}
                   >
                     <GripVertical className="w-3 h-3 rotate-90" />
                   </Button>
@@ -287,7 +287,7 @@ export function OnboardingTasksManager() {
                     size="icon"
                     className="h-5 w-5"
                     disabled={index === tasks.length - 1}
-                    onClick={() => moveTask(task.id, 'down')}
+                    onClick={() => moveTask(task.id, 'down'}
                   >
                     <GripVertical className="w-3 h-3 rotate-90" />
                   </Button>
@@ -317,7 +317,7 @@ export function OnboardingTasksManager() {
                   <div className="flex flex-wrap gap-1">
                     {task.visible_to_roles.map(role => (
                       <Badge key={role} variant="outline" className="text-xs capitalize">
-                        {role.replace('_', ' ')}
+                        {role.replace('_', ' '}
                       </Badge>
                     ))}
                   </div>

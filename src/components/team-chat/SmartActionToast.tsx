@@ -94,7 +94,7 @@ export function SmartActionToast({
           
           {details.length > 0 && (
             <p className="text-sm text-foreground mt-0.5">
-              {details.join(' ')}
+              {details.join(' '}
             </p>
           )}
           

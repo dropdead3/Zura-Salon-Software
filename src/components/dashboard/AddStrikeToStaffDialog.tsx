@@ -127,7 +127,7 @@ export function AddStrikeToStaffDialog({
               value={selectedUserId}
               onValueChange={(value) => setValue('user_id', value)}
             >
-              <SelectTrigger className={cn(errors.user_id && 'border-destructive')}>
+              <SelectTrigger className={cn(errors.user_id && 'border-destructive'}>
                 <SelectValue placeholder="Select a staff member..." />
               </SelectTrigger>
               <SelectContent>
@@ -156,7 +156,7 @@ export function AddStrikeToStaffDialog({
             <Input
               id="title"
               placeholder="Brief summary of the issue"
-              {...register('title')}
+              {...register('title'}
             />
             {errors.title && (
               <p className="text-sm text-destructive">{errors.title.message}</p>
@@ -215,7 +215,7 @@ export function AddStrikeToStaffDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date')}
+                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -236,7 +236,7 @@ export function AddStrikeToStaffDialog({
               id="description"
               placeholder="Detailed description of the incident..."
               rows={4}
-              {...register('description')}
+              {...register('description'}
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description.message}</p>

@@ -269,7 +269,7 @@ export function GiftCardManager() {
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(new Date(card.created_at), 'MMM d, yyyy')}
+                    {formatDate(new Date(card.created_at), 'MMM d, yyyy'}
                   </TableCell>
                 </TableRow>
               ))

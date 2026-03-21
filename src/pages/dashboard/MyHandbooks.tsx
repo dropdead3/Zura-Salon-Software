@@ -213,11 +213,11 @@ export default function MyHandbooks() {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-sans font-medium truncate">{handbook.title}</h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                              v{handbook.version} • Updated {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy')}
+                              v{handbook.version} • Updated {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy'}
                             </p>
                             {acknowledged && ackDate && (
                               <p className="text-xs text-primary mt-2">
-                                ✓ Acknowledged {formatDate(new Date(ackDate), 'MMM d, yyyy')}
+                                ✓ Acknowledged {formatDate(new Date(ackDate), 'MMM d, yyyy'}
                               </p>
                             )}
                             {!acknowledged && (
@@ -280,7 +280,7 @@ export default function MyHandbooks() {
                     <div className="flex items-center gap-2 text-primary w-full justify-center">
                       <CheckCircle2 className="w-5 h-5" />
                       <span className="font-sans text-sm">
-                        You acknowledged this on {formatDate(new Date(getAcknowledgmentDate(selectedHandbook.id)!), 'MMMM d, yyyy')}
+                        You acknowledged this on {formatDate(new Date(getAcknowledgmentDate(selectedHandbook.id)!), 'MMMM d, yyyy'}
                       </span>
                     </div>
                   ) : (

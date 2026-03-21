@@ -68,7 +68,7 @@ function addMinutesToTime(time: string, minutes: number): string {
   const totalMinutes = h * 60 + m + minutes;
   const newH = Math.floor(totalMinutes / 60) % 24;
   const newM = totalMinutes % 60;
-  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0}`;
+  return `${String(newH).padStart(2, '0'}:${String(newM).padStart(2, '0}`;
 }
 
 export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylistId }: AddTimeBlockFormProps) {
@@ -168,7 +168,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
               ? 'border-primary bg-primary/5 text-primary'
               : 'border-border hover:border-muted-foreground/50 text-muted-foreground'
           )}
-          onClick={() => handleModeChange('Break')}
+          onClick={() => handleModeChange('Break'}
         >
           <Coffee className="h-5 w-5" />
           <span className="font-medium">Break</span>
@@ -181,7 +181,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
               ? 'border-primary bg-primary/5 text-primary'
               : 'border-border hover:border-muted-foreground/50 text-muted-foreground'
           )}
-          onClick={() => handleModeChange('Block')}
+          onClick={() => handleModeChange('Block'}
         >
           <Clock className="h-5 w-5" />
           <span className="font-medium">Block</span>
@@ -192,7 +192,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
       {/* Date & Time summary */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
         <Clock className="h-3.5 w-3.5" />
-        <span>{format(date, 'EEE, MMM d')} · {startTime}{!isFullDay && ` – ${endTime}`}{isFullDay && ' (Full Day)'}</span>
+        <span>{format(date, 'EEE, MMM d'} · {startTime}{!isFullDay && ` – ${endTime}`}{isFullDay && ' (Full Day)'}</span>
       </div>
 
       {/* Reason Pills */}
@@ -271,7 +271,7 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
                           setStaffSearchOpen(false);
                         }}
                       >
-                        <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
+                        <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0'} />
                         {member.display_name || member.full_name}
                       </CommandItem>
                     ))}

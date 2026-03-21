@@ -338,7 +338,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
+                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a'}
                   </span>
                   {isCoach && note.coach_id === user?.id && (
                     <div className="flex gap-1">

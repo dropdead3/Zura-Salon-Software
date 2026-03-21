@@ -66,7 +66,7 @@ export function ProfitTrendChart({ data, className }: ProfitTrendChartProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(v) => format(parseISO(v), 'MMM d')}
+                  tickFormatter={(v) => format(parseISO(v), 'MMM d'}
                   tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                   axisLine={false}
                   tickLine={false}
@@ -84,7 +84,7 @@ export function ProfitTrendChart({ data, className }: ProfitTrendChartProps) {
                     const d = payload[0].payload as TrendDataPoint;
                     return (
                       <div className="rounded-lg border bg-card p-3 shadow-md text-sm">
-                        <p className={tokens.body.emphasis}>{format(parseISO(d.date), 'MMM d, yyyy')}</p>
+                        <p className={tokens.body.emphasis}>{format(parseISO(d.date), 'MMM d, yyyy'}</p>
                         <p className={tokens.body.muted}>Margin: {d.avgMarginPct}%</p>
                         <p className={tokens.body.muted}>Total: {formatCurrency(d.totalMargin)}</p>
                         <p className={tokens.body.muted}>{d.count} appointment{d.count !== 1 ? 's' : ''}</p>

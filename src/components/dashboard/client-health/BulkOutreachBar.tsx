@@ -35,7 +35,7 @@ export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelectio
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `client-health-${segmentLabel.toLowerCase().replace(/\s+/g, '-')}.csv`;
+    a.download = `client-health-${segmentLabel.toLowerCase().replace(/\s+/g, '-'}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -101,7 +101,7 @@ export function AssistantUtilizationCard() {
               {/* Top Assistants */}
               {topAssistants.length > 0 && (
                 <div>
-                  <span className={cn(tokens.label.tiny, 'mb-2 block')}>Top Assistants</span>
+                  <span className={cn(tokens.label.tiny, 'mb-2 block'}>Top Assistants</span>
                   <div className="space-y-2">
                     {topAssistants.map((assistant, idx) => (
                       <div key={assistant.user_id} className="flex items-center gap-3 py-1.5">
@@ -112,7 +112,7 @@ export function AssistantUtilizationCard() {
                             {assistant.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className={cn(tokens.body.default, 'flex-1 truncate')}>
+                        <span className={cn(tokens.body.default, 'flex-1 truncate'}>
                           {assistant.name}
                         </span>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">

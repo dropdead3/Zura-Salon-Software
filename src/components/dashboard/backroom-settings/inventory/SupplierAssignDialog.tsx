@@ -120,37 +120,37 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="supplier_email">Email</Label>
-              <Input id="supplier_email" type="email" {...register('supplier_email')} placeholder="orders@supplier.com" />
+              <Input id="supplier_email" type="email" {...register('supplier_email'} placeholder="orders@supplier.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="supplier_phone">Phone</Label>
-              <Input id="supplier_phone" type="tel" {...register('supplier_phone')} placeholder="(555) 123-4567" autoCapitalize="off" />
+              <Input id="supplier_phone" type="tel" {...register('supplier_phone'} placeholder="(555) 123-4567" autoCapitalize="off" />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="supplier_website">Website</Label>
-            <Input id="supplier_website" {...register('supplier_website')} placeholder="https://supplier.com" autoCapitalize="off" />
+            <Input id="supplier_website" {...register('supplier_website'} placeholder="https://supplier.com" autoCapitalize="off" />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label htmlFor="account_number">Account #</Label>
-              <Input id="account_number" {...register('account_number')} placeholder="ACC-123" />
+              <Input id="account_number" {...register('account_number'} placeholder="ACC-123" />
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Label htmlFor="lead_time_days">Lead Time (days)</Label>
                 <MetricInfoTooltip description="Average number of days between placing an order with this supplier and receiving the delivery. Used to calculate reorder points and safety stock." />
               </div>
-              <Input id="lead_time_days" type="number" {...register('lead_time_days')} placeholder="5" />
+              <Input id="lead_time_days" type="number" {...register('lead_time_days'} placeholder="5" />
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Label htmlFor="moq">MOQ</Label>
                 <MetricInfoTooltip description="Minimum Order Quantity — the smallest number of units this supplier will accept per order. Purchase orders are automatically rounded up to meet this threshold." />
               </div>
-              <Input id="moq" type="number" {...register('moq')} placeholder="1" />
+              <Input id="moq" type="number" {...register('moq'} placeholder="1" />
             </div>
           </div>
 
@@ -170,16 +170,16 @@ export function SupplierAssignDialog({ open, onOpenChange, brand, products }: Su
                  </div>
                  <div className="space-y-2">
                    <Label htmlFor="secondary_contact_name">Name</Label>
-                   <Input id="secondary_contact_name" {...register('secondary_contact_name')} placeholder="e.g. John Doe" />
+                   <Input id="secondary_contact_name" {...register('secondary_contact_name'} placeholder="e.g. John Doe" />
                  </div>
                  <div className="grid grid-cols-2 gap-3">
                    <div className="space-y-2">
                      <Label htmlFor="secondary_contact_email">Email</Label>
-                     <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email')} placeholder="backup@supplier.com" />
+                     <Input id="secondary_contact_email" type="email" {...register('secondary_contact_email'} placeholder="backup@supplier.com" />
                    </div>
                    <div className="space-y-2">
                      <Label htmlFor="secondary_contact_phone">Phone</Label>
-                     <Input id="secondary_contact_phone" {...register('secondary_contact_phone')} placeholder="(555) 987-6543" autoCapitalize="off" />
+                     <Input id="secondary_contact_phone" {...register('secondary_contact_phone'} placeholder="(555) 987-6543" autoCapitalize="off" />
                    </div>
                  </div>
                </div>

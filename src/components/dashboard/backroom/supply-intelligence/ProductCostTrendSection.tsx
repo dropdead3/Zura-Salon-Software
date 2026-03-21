@@ -70,11 +70,11 @@ export function ProductCostTrendSection() {
               >
                 {/* Product info */}
                 <div className="flex-1 min-w-0">
-                  <p className={cn(tokens.body.emphasis, 'truncate')}>
+                  <p className={cn(tokens.body.emphasis, 'truncate'}>
                     {item.productName}
                   </p>
                   {item.supplierName && (
-                    <p className={cn(tokens.body.muted, 'text-xs truncate')}>
+                    <p className={cn(tokens.body.muted, 'text-xs truncate'}>
                       {item.supplierName}
                     </p>
                   )}

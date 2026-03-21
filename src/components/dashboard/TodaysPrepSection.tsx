@@ -238,7 +238,7 @@ export function TodaysPrepSection() {
               className={tokens.button.cardFooter}
               asChild
             >
-              <Link to={dashPath('/today-prep')}>
+              <Link to={dashPath('/today-prep'}>
                 View Full Prep <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>

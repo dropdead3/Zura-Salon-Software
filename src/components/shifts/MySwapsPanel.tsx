@@ -61,7 +61,7 @@ function SwapListItem({ swap, type, onCancel }: SwapListItemProps) {
             </div>
             <div className="min-w-0">
               <p className="font-medium text-sm">
-                {formatDate(new Date(swap.original_date), 'EEE, MMM d')}
+                {formatDate(new Date(swap.original_date), 'EEE, MMM d'}
               </p>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
@@ -75,7 +75,7 @@ function SwapListItem({ swap, type, onCancel }: SwapListItemProps) {
           <div className="flex items-center gap-2 shrink-0">
             <Badge className={status.color} variant="secondary">
               <StatusIcon className="w-3 h-3 mr-1" />
-              {swap.status.replace('_', ' ')}
+              {swap.status.replace('_', ' '}
             </Badge>
             {type === 'requested' && swap.status === 'open' && onCancel && (
               <Button

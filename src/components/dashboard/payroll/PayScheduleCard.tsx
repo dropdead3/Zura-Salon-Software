@@ -208,7 +208,7 @@ export function PayScheduleCard() {
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {biWeeklyAnchor 
                       ? formatDate(biWeeklyAnchor, 'PPP') 
-                      : 'Select a pay week Friday')}
+                      : 'Select a pay week Friday'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -299,11 +299,11 @@ export function PayScheduleCard() {
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
               <span className="font-medium text-foreground">Next Pay Day:</span>{' '}
-              {formatDate(nextPayDay, 'EEEE, MMMM d, yyyy')}
+              {formatDate(nextPayDay, 'EEEE, MMMM d, yyyy'}
             </p>
             <p>
               <span className="font-medium text-foreground">Current Period:</span>{' '}
-              {formatDate(currentPeriod.periodStart, 'MMM d')} – {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy')}
+              {formatDate(currentPeriod.periodStart, 'MMM d'} – {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy'}
             </p>
           </div>
         </div>

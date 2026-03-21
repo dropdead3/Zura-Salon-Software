@@ -366,7 +366,7 @@ export function WeekAheadForecast() {
         <CardContent className="space-y-4">
           {/* Scheduled / Predicted toggle */}
           <div className="flex items-center gap-3">
-            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted')}>
+            <Tabs value={viewMode} onValueChange={(v) => v && setViewMode(v as 'scheduled' | 'predicted'}>
               <FilterTabsList>
                 <FilterTabsTrigger value="scheduled">Scheduled</FilterTabsTrigger>
                 <UITooltip>
@@ -407,7 +407,7 @@ export function WeekAheadForecast() {
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
-              onClick={() => handleStatCardClick('revenue')}
+              onClick={() => handleStatCardClick('revenue'}
             >
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -426,14 +426,14 @@ export function WeekAheadForecast() {
                   : "Sum of projected revenue from all scheduled appointments over the next 7 days."
                 } />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary'} />
             </div>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
-              onClick={() => handleStatCardClick('dailyAvg')}
+              onClick={() => handleStatCardClick('dailyAvg'}
             >
               <div className="flex justify-center mb-1">
                 <Calendar className="w-4 h-4 text-chart-2" />
@@ -445,14 +445,14 @@ export function WeekAheadForecast() {
               />
               <p className="text-xs text-muted-foreground">Daily Operating Avg</p>
               <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-tight">Only counts days open</p>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary'} />
             </div>
             <div
               className={cn(
                 "text-center p-3 bg-card-inner rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
                 selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/40'
               )}
-              onClick={() => handleStatCardClick('count')}
+              onClick={() => handleStatCardClick('count'}
             >
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-chart-3" />
@@ -462,7 +462,7 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">Appointments</p>
                 <MetricInfoTooltip description="Total count of scheduled appointments across the next 7 days." />
               </div>
-              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary'} />
             </div>
           </div>
 
@@ -492,7 +492,7 @@ export function WeekAheadForecast() {
               </div>
             )}
             {!operatingDailyAvg && <div />}
-            <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
+            <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid'}>
               <FilterTabsList>
                 <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
                 <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
@@ -693,7 +693,7 @@ export function WeekAheadForecast() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(parseISO(peakDay.date), 'EEEE, MMM d')}</span>
+                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(parseISO(peakDay.date), 'EEEE, MMM d'}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrencyWhole(peakDay.revenue)}</BlurredAmount>

@@ -567,7 +567,7 @@ export default function OnboardingTracker() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'}
               >
                 <ArrowUpDown className={cn("w-4 h-4 transition-transform", sortOrder === 'desc' && "rotate-180")} />
               </Button>

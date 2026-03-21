@@ -142,7 +142,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
                           <p className="font-medium">{promo.name}</p>
                           {promo.expires_at && (
                             <p className="text-xs text-muted-foreground">
-                              Expires {formatDate(new Date(promo.expires_at), 'MMM d, yyyy')}
+                              Expires {formatDate(new Date(promo.expires_at), 'MMM d, yyyy'}
                             </p>
                           )}
                         </div>

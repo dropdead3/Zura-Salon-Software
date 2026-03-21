@@ -89,9 +89,9 @@ export function AppointmentAuditTimeline({ appointmentId }: { appointmentId: str
             
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className={cn(tokens.body.emphasis, 'text-xs')}>{label}</span>
+                <span className={cn(tokens.body.emphasis, 'text-xs'}>{label}</span>
                 <span className="text-[10px] text-muted-foreground">
-                  {format(parseISO(entry.created_at), 'MMM d, yyyy h:mm a')}
+                  {format(parseISO(entry.created_at), 'MMM d, yyyy h:mm a'}
                 </span>
               </div>
               {entry.actor_name && (

@@ -148,7 +148,7 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          {formatDate(new Date(ps.expires_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(ps.expires_at), 'MMM d, yyyy'}
                         </div>
                       </TableCell>
                       <TableCell>

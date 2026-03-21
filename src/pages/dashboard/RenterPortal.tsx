@@ -73,7 +73,7 @@ export default function RenterPortal() {
                 <p className="text-sm text-muted-foreground">Next Rent Due</p>
                 <p className="text-2xl font-medium">{formatCurrencyWhole(upcomingPayment.amount)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDate(upcomingPayment.dueDate, 'MMM d, yyyy')}
+                  {formatDate(upcomingPayment.dueDate, 'MMM d, yyyy'}
                 </p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
@@ -154,7 +154,7 @@ export default function RenterPortal() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="hover:border-primary/50 transition-colors">
-          <Link to={dashPath('/renter/pay')}>
+          <Link to={dashPath('/renter/pay'}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -173,7 +173,7 @@ export default function RenterPortal() {
         </Card>
 
         <Card className="hover:border-primary/50 transition-colors">
-          <Link to={dashPath('/renter/payment-methods')}>
+          <Link to={dashPath('/renter/payment-methods'}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -192,7 +192,7 @@ export default function RenterPortal() {
         </Card>
 
         <Card className="hover:border-primary/50 transition-colors">
-          <Link to={dashPath('/renter/commissions')}>
+          <Link to={dashPath('/renter/commissions'}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -225,7 +225,7 @@ export default function RenterPortal() {
               </p>
             </div>
             <Button size={tokens.button.card} asChild>
-              <Link to={dashPath('/renter/payment-methods')}>Add Payment Method</Link>
+              <Link to={dashPath('/renter/payment-methods'}>Add Payment Method</Link>
             </Button>
           </CardContent>
         </Card>

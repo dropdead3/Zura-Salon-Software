@@ -130,7 +130,7 @@ export function SwapCard({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{requesterName}</p>
               <p className="text-xs text-muted-foreground">
-                {formatDate(new Date(swap.original_date), 'MMM d')} • {formatTime(swap.original_start_time)}
+                {formatDate(new Date(swap.original_date), 'MMM d'} • {formatTime(swap.original_start_time)}
               </p>
             </div>
             <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
@@ -182,7 +182,7 @@ export function SwapCard({
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span className="font-medium">
-                {formatDate(new Date(swap.original_date), 'EEEE, MMM d, yyyy')}
+                {formatDate(new Date(swap.original_date), 'EEEE, MMM d, yyyy'}
               </span>
             </div>
           </div>
@@ -215,7 +215,7 @@ export function SwapCard({
                 Trade Offered by {claimerName}
               </p>
               <p className="text-sm">
-                {formatDate(new Date(swap.claimer_date), 'MMM d')} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
+                {formatDate(new Date(swap.claimer_date), 'MMM d'} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
               </p>
             </div>
           )}

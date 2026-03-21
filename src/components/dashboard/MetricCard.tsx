@@ -107,7 +107,7 @@ export function MetricCard({ metric }: MetricCardProps) {
                 <div className="flex gap-1 flex-wrap">
                   {metric.relatedMetrics.map((id) => (
                     <Badge key={id} variant="secondary" className="text-xs">
-                      {id.replace(/-/g, ' ')}
+                      {id.replace(/-/g, ' '}
                     </Badge>
                   ))}
                 </div>

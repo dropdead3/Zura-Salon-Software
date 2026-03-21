@@ -48,7 +48,7 @@ function getFieldLabel(field: string): string {
 
 function exportBulkCsv(entries: BulkAuditEntry[]) {
   const headers = ['Timestamp', 'Product', 'Type', 'Field', 'Change', 'After', 'User', 'Notes'];
-  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""'}"`;
   const rows = entries.map(e => [
     new Date(e.created_at).toISOString(),
     escape(e.product_name),
@@ -64,7 +64,7 @@ function exportBulkCsv(entries: BulkAuditEntry[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `inventory-audit-log-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  a.download = `inventory-audit-log-${format(new Date(), 'yyyy-MM-dd'}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -266,7 +266,7 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
                 <CalendarIcon className="w-3 h-3" />
-                {dateFrom ? format(dateFrom, 'MMM d') : 'From')}
+                {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -284,7 +284,7 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
                 <CalendarIcon className="w-3 h-3" />
-                {dateTo ? format(dateTo, 'MMM d') : 'To')}
+                {dateTo ? format(dateTo, 'MMM d') : 'To'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -343,8 +343,8 @@ export function AuditLogTab({ locationId, pdfExportRef, locations: locationsProp
                     <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                     <TableHead className={tokens.table.columnHeader}>Type</TableHead>
                     <TableHead className={tokens.table.columnHeader}>Field</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Change</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>After</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Change</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>After</TableHead>
                     <TableHead className={tokens.table.columnHeader}>User</TableHead>
                     <TableHead className={tokens.table.columnHeader}>Notes</TableHead>
                   </TableRow>
@@ -418,7 +418,7 @@ function AuditTableRow({ entry, onClick }: { entry: BulkAuditEntry; onClick: () 
   return (
     <TableRow className="text-xs cursor-pointer hover:bg-muted/40 transition-colors" onClick={onClick}>
       <TableCell className="tabular-nums whitespace-nowrap">
-        {format(new Date(entry.created_at), 'MMM d, h:mm a')}
+        {format(new Date(entry.created_at), 'MMM d, h:mm a'}
       </TableCell>
       <TableCell className="font-medium max-w-[160px] truncate">{entry.product_name}</TableCell>
       <TableCell>

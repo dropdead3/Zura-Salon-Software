@@ -41,7 +41,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
         <Button
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => handleQuickAction('approved')}
+          onClick={() => handleQuickAction('approved'}
           disabled={decide.isPending}
         >
           {decide.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
@@ -51,7 +51,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
           variant="outline"
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => setDialogType('modified')}
+          onClick={() => setDialogType('modified'}
         >
           <PenLine className="h-3.5 w-3.5" />
           Modify
@@ -60,7 +60,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
           variant="outline"
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => setDialogType('declined')}
+          onClick={() => setDialogType('declined'}
         >
           <XCircle className="h-3.5 w-3.5" />
           Decline
@@ -69,7 +69,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
           variant="ghost"
           size={tokens.button.card}
           className="gap-1.5"
-          onClick={() => handleQuickAction('snoozed')}
+          onClick={() => handleQuickAction('snoozed'}
           disabled={decide.isPending}
         >
           <Clock className="h-3.5 w-3.5" />

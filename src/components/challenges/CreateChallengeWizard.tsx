@@ -168,7 +168,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                   <Input
                     id="title"
                     placeholder="e.g., Q1 Bell Challenge"
-                    {...form.register('title')}
+                    {...form.register('title'}
                   />
                 </div>
                 <div>
@@ -176,7 +176,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                   <Textarea
                     id="description"
                     placeholder="Describe the challenge..."
-                    {...form.register('description')}
+                    {...form.register('description'}
                   />
                 </div>
               </div>
@@ -203,7 +203,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                               : 'border-border hover:border-primary/50'
                           )}
                         >
-                          <Icon className={cn('w-5 h-5', isSelected && 'text-primary')} />
+                          <Icon className={cn('w-5 h-5', isSelected && 'text-primary'} />
                           <div className="flex-1">
                             <p className="font-medium text-sm">{type.label}</p>
                             <p className="text-xs text-muted-foreground">{type.description}</p>
@@ -233,7 +233,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                               : 'border-border hover:border-primary/50'
                           )}
                         >
-                          <Icon className={cn('w-4 h-4', isSelected && 'text-primary')} />
+                          <Icon className={cn('w-4 h-4', isSelected && 'text-primary'} />
                           <span className="text-sm font-medium">{metric.label}</span>
                         </button>
                       );
@@ -253,13 +253,13 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left mt-1">
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formatDate(form.watch('start_date'), 'MMM d, yyyy')}
+                          {formatDate(form.watch('start_date'), 'MMM d, yyyy'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={form.watch('start_date')}
+                          selected={form.watch('start_date'}
                           onSelect={(d) => d && form.setValue('start_date', d)}
                         />
                       </PopoverContent>
@@ -271,13 +271,13 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left mt-1">
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formatDate(form.watch('end_date'), 'MMM d, yyyy')}
+                          {formatDate(form.watch('end_date'), 'MMM d, yyyy'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={form.watch('end_date')}
+                          selected={form.watch('end_date'}
                           onSelect={(d) => d && form.setValue('end_date', d)}
                         />
                       </PopoverContent>
@@ -303,7 +303,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                   <Textarea
                     id="prize"
                     placeholder="e.g., Winner gets a day off!"
-                    {...form.register('prize_description')}
+                    {...form.register('prize_description'}
                   />
                 </div>
               </div>
@@ -315,32 +315,32 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Title</span>
-                    <span className="font-medium">{form.watch('title')}</span>
+                    <span className="font-medium">{form.watch('title'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Type</span>
-                    <span className="font-medium capitalize">{form.watch('challenge_type')}</span>
+                    <span className="font-medium capitalize">{form.watch('challenge_type'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Metric</span>
-                    <span className="font-medium capitalize">{form.watch('metric_type').replace('_', ' ')}</span>
+                    <span className="font-medium capitalize">{form.watch('metric_type').replace('_', ' '}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Duration</span>
                     <span className="font-medium">
-                      {formatDate(form.watch('start_date'), 'MMM d')} - {formatDate(form.watch('end_date'), 'MMM d')}
+                      {formatDate(form.watch('start_date'), 'MMM d'} - {formatDate(form.watch('end_date'), 'MMM d'}
                     </span>
                   </div>
                   {form.watch('goal_value') && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Goal</span>
-                      <span className="font-medium">{form.watch('goal_value')}</span>
+                      <span className="font-medium">{form.watch('goal_value'}</span>
                     </div>
                   )}
                   {form.watch('prize_description') && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Prize</span>
-                      <span className="font-medium">{form.watch('prize_description')}</span>
+                      <span className="font-medium">{form.watch('prize_description'}</span>
                     </div>
                   )}
                 </div>

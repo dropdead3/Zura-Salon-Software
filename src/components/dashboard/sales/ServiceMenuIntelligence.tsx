@@ -88,12 +88,12 @@ export function ServiceMenuIntelligence({ locationId }: ServiceMenuIntelligenceP
       <CardContent className="space-y-4">
         {/* Declining Services */}
         {data.decliningServices.length > 0 && (
-          <Collapsible open={openSections.declining} onOpenChange={() => toggle('declining')}>
+          <Collapsible open={openSections.declining} onOpenChange={() => toggle('declining'}>
             <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-muted/50 rounded-lg px-3 transition-colors">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
               <span className="text-sm font-sans font-medium flex-1 text-left">Declining Services</span>
               <Badge variant="secondary" className="text-xs">{data.decliningServices.length}</Badge>
-              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', openSections.declining && 'rotate-180')} />
+              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', openSections.declining && 'rotate-180'} />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <Table>
@@ -131,12 +131,12 @@ export function ServiceMenuIntelligence({ locationId }: ServiceMenuIntelligenceP
 
         {/* High-Margin Underbooked */}
         {data.highMarginUnderbooked.length > 0 && (
-          <Collapsible open={openSections.highMargin} onOpenChange={() => toggle('highMargin')}>
+          <Collapsible open={openSections.highMargin} onOpenChange={() => toggle('highMargin'}>
             <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-muted/50 rounded-lg px-3 transition-colors">
               <Target className="h-4 w-4 text-emerald-500" />
               <span className="text-sm font-sans font-medium flex-1 text-left">High-Margin Opportunities</span>
               <Badge variant="secondary" className="text-xs">{data.highMarginUnderbooked.length}</Badge>
-              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', openSections.highMargin && 'rotate-180')} />
+              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', openSections.highMargin && 'rotate-180'} />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <Table>
@@ -171,12 +171,12 @@ export function ServiceMenuIntelligence({ locationId }: ServiceMenuIntelligenceP
 
         {/* Bundle Suggestions */}
         {data.suggestedBundles.length > 0 && (
-          <Collapsible open={openSections.bundles} onOpenChange={() => toggle('bundles')}>
+          <Collapsible open={openSections.bundles} onOpenChange={() => toggle('bundles'}>
             <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-muted/50 rounded-lg px-3 transition-colors">
               <Layers className="h-4 w-4 text-blue-500" />
               <span className="text-sm font-sans font-medium flex-1 text-left">Bundle Opportunities</span>
               <Badge variant="secondary" className="text-xs">{data.suggestedBundles.length}</Badge>
-              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', openSections.bundles && 'rotate-180')} />
+              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', openSections.bundles && 'rotate-180'} />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <Table>

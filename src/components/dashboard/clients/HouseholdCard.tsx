@@ -161,7 +161,7 @@ export function HouseholdCard({
                   {client.last_visit && (
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {formatDate(new Date(client.last_visit), 'MMM d')}
+                      {formatDate(new Date(client.last_visit), 'MMM d'}
                     </span>
                   )}
                 </div>

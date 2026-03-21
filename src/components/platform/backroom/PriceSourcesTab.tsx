@@ -174,7 +174,7 @@ export function PriceSourcesTab() {
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : sources.length === 0 ? (
-          <div className={cn(tokens.empty.container, 'py-16')}>
+          <div className={cn(tokens.empty.container, 'py-16'}>
             <Database className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No sources configured</h3>
             <p className={tokens.empty.description}>Add a distributor API to start syncing wholesale prices.</p>
@@ -220,7 +220,7 @@ export function PriceSourcesTab() {
                         onClick={() => handleSync(source.id)}
                         disabled={syncMutation.isPending}
                       >
-                        <RefreshCw className={cn('w-3.5 h-3.5', syncMutation.isPending && 'animate-spin')} />
+                        <RefreshCw className={cn('w-3.5 h-3.5', syncMutation.isPending && 'animate-spin'} />
                       </PlatformButton>
                       <PlatformButton
                         variant="ghost"

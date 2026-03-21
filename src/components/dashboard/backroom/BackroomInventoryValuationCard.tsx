@@ -96,7 +96,7 @@ export function BackroomInventoryValuationCard({ locationId }: { locationId?: st
     if (!data?.length) return;
     const esc = (v: string | number) => {
       const s = String(v);
-      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""'}"` : s;
     };
     const headers = ['Brand', 'SKUs', 'Units', 'Cost Value', 'Retail Value', 'Implied Margin %'];
     const rows = data.map((b) => [

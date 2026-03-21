@@ -217,7 +217,7 @@ export default function DashboardHome() {
 
       // Filter by location if user doesn't have full access
       if (!canViewAllLocations && assignedLocationIds.length > 0) {
-        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(','})`);
       }
 
       const { data, error } = await query
@@ -264,10 +264,10 @@ export default function DashboardHome() {
           <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 dark:border-amber-700">
             <Hourglass className="h-5 w-5 text-amber-600" />
             <AlertTitle className="text-amber-800 dark:text-amber-200 font-display">
-              {t('home.pending_approval_title')}
+              {t('home.pending_approval_title'}
             </AlertTitle>
             <AlertDescription className="text-amber-700 dark:text-amber-300">
-              {t('home.pending_approval_desc')}
+              {t('home.pending_approval_desc'}
             </AlertDescription>
           </Alert>
         )}
@@ -438,53 +438,53 @@ function DashboardSections({
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">
         <div>
-          <h2 className="font-display text-xs tracking-[0.15em] mb-4">{t('home.quick_actions')}</h2>
+          <h2 className="font-display text-xs tracking-[0.15em] mb-4">{t('home.quick_actions'}</h2>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <VisibilityGate elementKey="ring_the_bell_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/ring-the-bell')}>
+                <Link to={dashPath('/ring-the-bell'}>
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <Bell className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">{t('home.ring_the_bell')}</span>
+                  <span className="text-xs">{t('home.ring_the_bell'}</span>
                 </Link>
               </Button>
             </VisibilityGate>
             <VisibilityGate elementKey="log_metrics_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/stats')}>
+                <Link to={dashPath('/stats'}>
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <TrendingUp className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">{t('home.log_metrics')}</span>
+                  <span className="text-xs">{t('home.log_metrics'}</span>
                 </Link>
               </Button>
             </VisibilityGate>
             <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-              <Link to={dashPath('/my-clients')}>
+              <Link to={dashPath('/my-clients'}>
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                   <Users className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-xs">{t('home.my_clients')}</span>
+                <span className="text-xs">{t('home.my_clients'}</span>
               </Link>
             </Button>
             {roles.includes('stylist') && (
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/assistant-schedule')}>
+                <Link to={dashPath('/assistant-schedule'}>
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <HandHelping className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">{t('home.request_assistant')}</span>
+                  <span className="text-xs">{t('home.request_assistant'}</span>
                 </Link>
               </Button>
             )}
             <VisibilityGate elementKey="training_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
-                <Link to={dashPath('/training')}>
+                <Link to={dashPath('/training'}>
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <Target className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">{t('home.training')}</span>
+                  <span className="text-xs">{t('home.training'}</span>
                 </Link>
               </Button>
             </VisibilityGate>
@@ -517,7 +517,7 @@ function DashboardSections({
                 <p className="text-2xl font-display tabular-nums">
                   {quickStatsLoading ? '—' : todayClients}
                 </p>
-                <p className="text-xs text-muted-foreground font-sans">{t('home.today_clients')}</p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.today_clients'}</p>
               </div>
             </div>
           </Card>
@@ -530,7 +530,7 @@ function DashboardSections({
                 <p className="text-2xl font-display tabular-nums">
                   {quickStatsLoading ? '—' : <BlurredAmount>{formatCurrencyWhole(thisWeekRevenue)}</BlurredAmount>}
                 </p>
-                <p className="text-xs text-muted-foreground font-sans">{t('home.this_week')}</p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.this_week'}</p>
               </div>
             </div>
           </Card>
@@ -543,7 +543,7 @@ function DashboardSections({
                 <p className="text-2xl font-display tabular-nums">
                   {quickStatsLoading ? '—' : newClients}
                 </p>
-                <p className="text-xs text-muted-foreground font-sans">{t('home.new_clients')}</p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.new_clients'}</p>
               </div>
             </div>
           </Card>
@@ -556,7 +556,7 @@ function DashboardSections({
                 <p className="text-2xl font-display tabular-nums">
                   {quickStatsLoading ? '—' : `${rebookingRate.toFixed(0)}%`}
                 </p>
-                <p className="text-xs text-muted-foreground font-sans">{t('home.rebooking_rate')}</p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.rebooking_rate'}</p>
               </div>
             </div>
           </Card>
@@ -611,11 +611,11 @@ function DashboardSections({
                   </div>
                   <div>
                     <div className="flex items-center gap-3">
-                      <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">{t('home.client_engine')}</h2>
+                      <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">{t('home.client_engine'}</h2>
                       {enrollment && (
                         <div className="flex items-center gap-1.5 text-sm">
                           <Flame className="w-4 h-4 text-primary" />
-                          <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} {t('home.day_streak')}</span>
+                          <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} {t('home.day_streak'}</span>
                         </div>
                       )}
                     </div>
@@ -648,8 +648,8 @@ function DashboardSections({
                 asChild
                 className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8 shrink-0"
               >
-                <Link to={dashPath('/program')}>
-                  {enrollment ? t('home.continue_today') : t('home.start_program')}
+                <Link to={dashPath('/program'}>
+                  {enrollment ? t('home.continue_today') : t('home.start_program'}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </Button>

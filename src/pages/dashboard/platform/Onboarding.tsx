@@ -209,7 +209,7 @@ function TimelineItem({ org }: { org: OnboardingOrganization }) {
           {org.name}
         </p>
         <p className="text-xs text-slate-500">
-          {org.go_live_date ? format(parseISO(org.go_live_date), 'MMMM yyyy') : 'No date set')}
+          {org.go_live_date ? format(parseISO(org.go_live_date), 'MMMM yyyy') : 'No date set'}
         </p>
       </div>
       {org.account_number && (
@@ -304,7 +304,7 @@ export default function PlatformOnboarding() {
         title="Onboarding" 
         description="Track accounts through their go-live journey"
         actions={
-          <PlatformButton onClick={() => navigate('/platform/accounts')}>
+          <PlatformButton onClick={() => navigate('/platform/accounts'}>
             <Building2 className="h-4 w-4 mr-2" />
             All Accounts
           </PlatformButton>
@@ -352,7 +352,7 @@ export default function PlatformOnboarding() {
       </div>
 
       {/* View Tabs */}
-      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'list' | 'calendar')} className="mt-8">
+      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'list' | 'calendar'} className="mt-8">
         <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
           <TabsTrigger 
             value="list"
@@ -443,7 +443,7 @@ export default function PlatformOnboarding() {
                 <Rocket className="h-12 w-12 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-300 mb-2">No accounts onboarding</h3>
                 <p className="text-sm text-slate-500 mb-6">All accounts have completed their go-live journey</p>
-                <PlatformButton onClick={() => navigate('/platform/accounts')}>
+                <PlatformButton onClick={() => navigate('/platform/accounts'}>
                   View All Accounts
                 </PlatformButton>
               </div>

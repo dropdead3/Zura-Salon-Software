@@ -647,7 +647,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Upcoming Closures</p>
               {upcomingHolidays.map((holiday, idx) => (
                 <p key={idx} className="text-xs text-muted-foreground">
-                  {formatDate(new Date(holiday.date), 'MMM d')} — {holiday.name}
+                  {formatDate(new Date(holiday.date), 'MMM d'} — {holiday.name}
                 </p>
               ))}
             </div>
@@ -855,7 +855,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="text-xs">
-                          {memberLocations.map(id => getLocationName(id)).join(', ')}
+                          {memberLocations.map(id => getLocationName(id)).join(', '}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -863,7 +863,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   {isStylistOrAssistant && member.stylist_level && (
                     <span className="flex items-center gap-1 font-medium text-foreground/70">
                       <Award className="w-3 h-3" />
-                      {member.stylist_level.replace(' STYLIST', '')}
+                      {member.stylist_level.replace(' STYLIST', ''}
                     </span>
                   )}
                 </div>
@@ -987,7 +987,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <a 
-                        href={`https://instagram.com/${member.instagram.replace('@', '')}`
+                        href={`https://instagram.com/${member.instagram.replace('@', ''}`
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
@@ -1024,7 +1024,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     {isHighlighted && (
                       <Sparkles className="w-2.5 h-2.5" />
                     )}
-                    {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
+                    {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' '}
                   </Badge>
                 );
               })}

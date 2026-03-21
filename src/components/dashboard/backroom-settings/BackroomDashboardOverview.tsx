@@ -149,7 +149,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                         </span>
                       </div>
                       {i < arr.length - 1 && (
-                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60')} />
+                        <div className={cn('flex-1 h-px mx-1 mt-2.5', step.done ? 'bg-amber-400 dark:bg-amber-500/60' : 'bg-border/60'} />
                       )}
                     </React.Fragment>
                   ))}
@@ -216,7 +216,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
           {/* ── KPI Strip ── */}
-          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
+          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'}>
             <KpiTile
               icon={FlaskConical}
               label="Chemical Cost/Svc"
@@ -274,7 +274,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     </CardDescription>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('alerts')} className="font-sans text-xs text-muted-foreground">
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('alerts'} className="font-sans text-xs text-muted-foreground">
                   View All
                 </Button>
               </CardHeader>
@@ -311,7 +311,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     <CardDescription>Budget tracking & projections</CardDescription>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory')} className="font-sans text-xs text-muted-foreground">
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory'} className="font-sans text-xs text-muted-foreground">
                   View Analytics
                 </Button>
               </CardHeader>
@@ -347,7 +347,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                 ) : (
                   <div className="py-4 text-center">
                     <p className={tokens.body.muted}>No budget target set.</p>
-                    <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:reorder')} className="mt-2 font-sans">
+                    <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:reorder'} className="mt-2 font-sans">
                       Set Budget
                     </Button>
                   </div>
@@ -380,7 +380,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     <CardDescription>Last 30 days — by waste rate</CardDescription>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setActiveSubTab('analytics')} className="font-sans text-xs text-muted-foreground">
+                <Button variant="ghost" size="sm" onClick={() => setActiveSubTab('analytics'} className="font-sans text-xs text-muted-foreground">
                   Full Report
                 </Button>
               </CardHeader>
@@ -394,7 +394,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                   <div className="space-y-3">
                     {staffSummary.top.length > 0 && (
                       <div>
-                        <p className={cn(tokens.label.tiny, 'mb-2')}>Top Performers</p>
+                        <p className={cn(tokens.label.tiny, 'mb-2'}>Top Performers</p>
                         {staffSummary.top.map((s) => (
                           <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} />
                         ))}
@@ -402,7 +402,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     )}
                     {staffSummary.bottom.length > 0 && (
                       <div>
-                        <p className={cn(tokens.label.tiny, 'mb-2')}>Needs Attention</p>
+                        <p className={cn(tokens.label.tiny, 'mb-2'}>Needs Attention</p>
                         {staffSummary.bottom.map((s) => (
                           <StaffRow key={s.staffUserId} name={s.staffName ?? s.staffUserId} wasteRate={s.wastePct} sessions={s.sessionsPerDay} reweighPct={s.reweighCompliancePct} isBottom />
                         ))}
@@ -425,7 +425,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
                     <CardDescription>Stock risk snapshot</CardDescription>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory')} className="font-sans text-xs text-muted-foreground">
+                <Button variant="ghost" size="sm" onClick={() => onNavigate('inventory'} className="font-sans text-xs text-muted-foreground">
                   View Inventory
                 </Button>
               </CardHeader>
@@ -450,19 +450,19 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
           <Card>
             <CardContent className="py-4">
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:counts')} className="font-sans gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:counts'} className="font-sans gap-1.5">
                   <ClipboardList className="w-3.5 h-3.5" /> Start Count
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:orders')} className="font-sans gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:orders'} className="font-sans gap-1.5">
                   <FileText className="w-3.5 h-3.5" /> Create PO
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => onNavigate('alerts'} className="font-sans gap-1.5">
                   <Eye className="w-3.5 h-3.5" /> View Exceptions
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers')} className="font-sans gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers'} className="font-sans gap-1.5">
                   <Truck className="w-3.5 h-3.5" /> Manage Suppliers
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setActiveSubTab('analytics')} className="font-sans gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => setActiveSubTab('analytics'} className="font-sans gap-1.5">
                   <Download className="w-3.5 h-3.5" /> Export Report
                 </Button>
               </div>
@@ -503,14 +503,14 @@ function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
   subtitle?: string;
 }) {
   return (
-    <div className={cn(tokens.kpi.tile, 'relative')}>
+    <div className={cn(tokens.kpi.tile, 'relative'}>
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary')} />
+          <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary'} />
         </div>
         <span className={tokens.kpi.label}>{label}</span>
       </div>
-      <span className={cn(tokens.kpi.value, status === 'warning' && 'text-amber-500')}>{value}</span>
+      <span className={cn(tokens.kpi.value, status === 'warning' && 'text-amber-500'}>{value}</span>
       {subtitle && (
         <span className="text-[10px] font-sans text-muted-foreground mt-1 block">{subtitle}</span>
       )}
@@ -531,18 +531,18 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
 
   return (
     <button
-      onClick={() => onNavigate('inventory:reorder')}
-      className={cn(tokens.kpi.tile, 'relative cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all text-left w-full')}
+      onClick={() => onNavigate('inventory:reorder'}
+      className={cn(tokens.kpi.tile, 'relative cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all text-left w-full'}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary')} />
+          <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary'} />
         </div>
         <span className={tokens.kpi.label}>Budget</span>
       </div>
       {monthlyBudget > 0 ? (
         <>
-          <span className={cn(tokens.kpi.value, status === 'over' && 'text-destructive', status === 'warn' && 'text-amber-500')}>
+          <span className={cn(tokens.kpi.value, status === 'over' && 'text-destructive', status === 'warn' && 'text-amber-500'}>
             {pct}%
           </span>
           <Progress
@@ -552,7 +552,7 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
           />
         </>
       ) : (
-        <span className={cn(tokens.kpi.value, 'text-muted-foreground')}>Not set</span>
+        <span className={cn(tokens.kpi.value, 'text-muted-foreground'}>Not set</span>
       )}
       <span className="text-[10px] font-sans text-muted-foreground mt-1 block">
         {monthlyBudget > 0 ? 'Adjust →' : 'Set budget →'}
@@ -598,7 +598,7 @@ function StaffRow({ name, wasteRate, sessions, reweighPct, isBottom = false }: {
   return (
     <div className="flex items-center gap-3 py-1.5 text-xs font-sans">
       <span className="flex-1 truncate text-foreground">{name}</span>
-      <span className={cn('tabular-nums', isBottom ? 'text-amber-500' : 'text-muted-foreground')}>
+      <span className={cn('tabular-nums', isBottom ? 'text-amber-500' : 'text-muted-foreground'}>
         {wasteRate.toFixed(1)}% waste
       </span>
       <span className="text-muted-foreground tabular-nums">{reweighPct.toFixed(0)}% reweigh</span>
@@ -609,7 +609,7 @@ function StaffRow({ name, wasteRate, sessions, reweighPct, isBottom = false }: {
 function HealthStat({ label, count, color }: { label: string; count: number; color: string }) {
   return (
     <div className="text-center py-3">
-      <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground')}>
+      <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground'}>
         {count}
       </p>
       <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider mt-1">{label}</p>

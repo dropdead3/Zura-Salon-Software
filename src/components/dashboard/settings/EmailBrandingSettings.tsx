@@ -605,7 +605,7 @@ export function EmailBrandingSettings() {
               </Select>
               <div className="flex items-center gap-1 border rounded-full p-0.5">
                 <button
-                  onClick={() => setPreviewMode('desktop')}
+                  onClick={() => setPreviewMode('desktop'}
                   className={cn(
                     "p-1.5 rounded-full transition-colors",
                     previewMode === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -615,7 +615,7 @@ export function EmailBrandingSettings() {
                   <Monitor className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => setPreviewMode('mobile')}
+                  onClick={() => setPreviewMode('mobile'}
                   className={cn(
                     "p-1.5 rounded-full transition-colors",
                     previewMode === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'

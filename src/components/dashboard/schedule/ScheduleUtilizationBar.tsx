@@ -86,22 +86,22 @@ export function ScheduleUtilizationBar({
         </div>
         <div className="flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5 text-primary" />
-          <span className={cn(tokens.stat.large, 'text-lg')}>{metrics.fillRate}%</span>
+          <span className={cn(tokens.stat.large, 'text-lg'}>{metrics.fillRate}%</span>
           <span className={tokens.body.muted}>fill</span>
         </div>
       </div>
 
       {/* Gap Count */}
       <div className="flex items-center gap-1.5">
-        <AlertCircle className={cn('h-3.5 w-3.5', metrics.gapCount > 0 ? 'text-amber-500' : 'text-muted-foreground')} />
-        <span className={cn(tokens.stat.large, 'text-lg')}>{metrics.gapCount}</span>
+        <AlertCircle className={cn('h-3.5 w-3.5', metrics.gapCount > 0 ? 'text-amber-500' : 'text-muted-foreground'} />
+        <span className={cn(tokens.stat.large, 'text-lg'}>{metrics.gapCount}</span>
         <span className={tokens.body.muted}>gap{metrics.gapCount !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Revenue Potential */}
       <div className="flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className={cn(tokens.stat.large, 'text-lg')}>
+        <span className={cn(tokens.stat.large, 'text-lg'}>
           ${Math.round(metrics.revenuePotential).toLocaleString()}
         </span>
         <span className={tokens.body.muted}>potential</span>

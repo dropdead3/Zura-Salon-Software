@@ -91,7 +91,7 @@ export function PlatformFeedbackDialog({ open, onOpenChange, defaultType = 'feat
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setType('feature_request')}
+              onClick={() => setType('feature_request'}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
                 type === 'feature_request'
@@ -104,7 +104,7 @@ export function PlatformFeedbackDialog({ open, onOpenChange, defaultType = 'feat
             </button>
             <button
               type="button"
-              onClick={() => setType('bug_report')}
+              onClick={() => setType('bug_report'}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
                 type === 'bug_report'

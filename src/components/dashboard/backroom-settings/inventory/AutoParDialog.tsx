@@ -109,12 +109,12 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className={cn(tokens.table.columnHeader, 'w-10')} />
+                  <TableHead className={cn(tokens.table.columnHeader, 'w-10'} />
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Current</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Suggested</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Velocity</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell')}>Explanation</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Current</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Suggested</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Velocity</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'hidden sm:table-cell'}>Explanation</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,7 +122,7 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
                   const hasVelocity = s.velocity > 0;
                   const changed = s.suggestedPar !== (s.currentPar ?? 0);
                   return (
-                    <TableRow key={s.productId} className={cn(!hasVelocity && 'opacity-50')}>
+                    <TableRow key={s.productId} className={cn(!hasVelocity && 'opacity-50'}>
                       <TableCell>
                         <Checkbox
                           checked={selectedIds.has(s.productId)}
@@ -138,7 +138,7 @@ export function AutoParDialog({ open, onOpenChange, productIds, orgId, locationI
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {s.suggestedPar > 0 ? (
-                          <span className={cn(changed && 'text-primary font-medium')}>
+                          <span className={cn(changed && 'text-primary font-medium'}>
                             {s.suggestedPar}
                           </span>
                         ) : '—'}

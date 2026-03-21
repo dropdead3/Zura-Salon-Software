@@ -387,14 +387,14 @@ export function LeaderboardContent() {
                   This Week
                 </p>
                 <p className="font-sans font-medium">
-                  {formatDate(weekStart, 'MMM d')} - {formatDate(weekEnd, 'MMM d, yyyy')}
+                  {formatDate(weekStart, 'MMM d'} - {formatDate(weekEnd, 'MMM d, yyyy'}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => triggerSync.mutate('reports')}
+                  onClick={() => triggerSync.mutate('reports'}
                   disabled={triggerSync.isPending || phorestLoading}
                   className="font-display text-xs tracking-wide"
                 >
@@ -414,7 +414,7 @@ export function LeaderboardContent() {
                   <History className="w-4 h-4 mr-2" />
                   History
                 </Button>
-                <Link to={dashPath('/admin/phorest')}>
+                <Link to={dashPath('/admin/phorest'}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -468,7 +468,7 @@ export function LeaderboardContent() {
           ) : (
             <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
               <p className="text-xs text-muted-foreground font-sans text-center">
-                📊 Showing sample data • <Link to={dashPath('/admin/phorest')} className="underline hover:text-foreground">Connect {providerLabel}</Link> to see live rankings
+                📊 Showing sample data • <Link to={dashPath('/admin/phorest'} className="underline hover:text-foreground">Connect {providerLabel}</Link> to see live rankings
               </p>
             </div>
           )}
@@ -486,7 +486,7 @@ export function LeaderboardContent() {
                       {getRankIcon(index)}
                     </div>
                     <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-2 flex items-center justify-center font-display text-lg">
-                      {performer.name.split(' ').map(n => n[0]).join('')}
+                      {performer.name.split(' ').map(n => n[0]).join(''}
                     </div>
                     <p className="font-sans text-sm font-medium truncate mb-1">
                       {performer.name.split(' ')[0]}
@@ -525,7 +525,7 @@ export function LeaderboardContent() {
 
                       {/* Avatar */}
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-display text-sm">
-                        {performer.name.split(' ').map(n => n[0]).join('')}
+                        {performer.name.split(' ').map(n => n[0]).join(''}
                       </div>
 
                       {/* Name + Trend + Badges */}

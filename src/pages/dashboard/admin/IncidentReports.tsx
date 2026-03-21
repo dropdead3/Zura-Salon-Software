@@ -182,7 +182,7 @@ export default function IncidentReports() {
                         <TableCell><Badge variant={statusCfg.variant}>{statusCfg.label}</Badge></TableCell>
                         <TableCell>{INCIDENT_TYPES.find(t => t.value === incident.incident_type)?.label || incident.incident_type}</TableCell>
                         <TableCell><Badge variant="outline" className={sevCfg?.color}>{sevCfg?.label || incident.severity}</Badge></TableCell>
-                        <TableCell className="text-muted-foreground">{formatDate(parseISO(incident.incident_date), 'MMM d, yyyy')}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(parseISO(incident.incident_date), 'MMM d, yyyy'}</TableCell>
                         <TableCell className="max-w-[250px] truncate">{incident.description}</TableCell>
                         <TableCell>
                           {incident.status === 'open' && (

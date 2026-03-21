@@ -176,7 +176,7 @@ function ForecastRow({ forecast }: { forecast: ProductDemandForecast }) {
         <div>
           <span className={tokens.body.emphasis}>{forecast.product_name}</span>
           {forecast.brand && (
-            <span className={cn(tokens.body.muted, 'ml-1')}>({forecast.brand})</span>
+            <span className={cn(tokens.body.muted, 'ml-1'}>({forecast.brand})</span>
           )}
         </div>
       </TableCell>

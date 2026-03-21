@@ -90,7 +90,7 @@ export function PassHistoryCard({
                 )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="w-3 h-3" />
-                  <span>{formatDate(new Date(record.used_at), 'MMM d, yyyy h:mm a')}</span>
+                  <span>{formatDate(new Date(record.used_at), 'MMM d, yyyy h:mm a'}</span>
                 </div>
                 <p className="text-sm">
                   Used on Day {record.current_day_at_use} (missed Day {record.day_missed})

@@ -102,7 +102,7 @@ export function ResponsibilityCard({
 
   return (
     <>
-      <Card className={cn(!responsibility.is_active && 'opacity-60')}>
+      <Card className={cn(!responsibility.is_active && 'opacity-60'}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             {canManage && responsibility.is_active && (

@@ -635,7 +635,7 @@ export function EmailTemplatesManager() {
               <Button 
                 onClick={handleSave} 
                 disabled={updateTemplate.isPending || !hasUnsavedChanges}
-                className={cn(hasUnsavedChanges && 'animate-pulse')}
+                className={cn(hasUnsavedChanges && 'animate-pulse'}
               >
                 {updateTemplate.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -681,7 +681,7 @@ export function EmailTemplatesManager() {
                   )}
                 />
                 <button
-                  onClick={() => setPreviewMode('desktop')}
+                  onClick={() => setPreviewMode('desktop'}
                   className={cn(
                     "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-sans font-medium transition-colors duration-200",
                     previewMode === 'desktop' 
@@ -693,7 +693,7 @@ export function EmailTemplatesManager() {
                   Desktop
                 </button>
                 <button
-                  onClick={() => setPreviewMode('mobile')}
+                  onClick={() => setPreviewMode('mobile'}
                   className={cn(
                     "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-sans font-medium transition-colors duration-200",
                     previewMode === 'mobile' 

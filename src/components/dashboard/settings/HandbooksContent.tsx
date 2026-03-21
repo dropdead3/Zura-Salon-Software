@@ -256,7 +256,7 @@ export function HandbooksContent() {
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingHandbook ? 'Update' : 'Create')}
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingHandbook ? 'Update' : 'Create'}
               </Button>
             </form>
           </DialogContent>
@@ -283,7 +283,7 @@ export function HandbooksContent() {
                       <div className="p-2 bg-muted rounded"><FileText className="w-4 h-4" /></div>
                       <div>
                         <h3 className="font-medium text-sm">{handbook.title}</h3>
-                        <p className="text-xs text-muted-foreground">v{handbook.version} • {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy')}</p>
+                        <p className="text-xs text-muted-foreground">v{handbook.version} • {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">

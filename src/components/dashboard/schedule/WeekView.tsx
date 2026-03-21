@@ -262,7 +262,7 @@ export function WeekView({
                       'text-[10px] uppercase tracking-wider font-medium',
                       dayIsToday ? 'text-primary' : 'text-muted-foreground'
                     )}>
-                      {format(day, 'EEE')}{dayIsToday ? ' · Today' : dayIsTomorrow ? ' · Tomorrow' : ''}
+                      {format(day, 'EEE'}{dayIsToday ? ' · Today' : dayIsTomorrow ? ' · Tomorrow' : ''}
                     </div>
                     <div className="flex items-center justify-center mt-1">
                       <span className={cn(
@@ -271,7 +271,7 @@ export function WeekView({
                           ? 'bg-foreground text-background min-w-[36px] h-9 px-2 rounded-full' 
                           : 'text-foreground'
                       )}>
-                        {format(day, 'd')}
+                        {format(day, 'd'}
                       </span>
                     </div>
                     <div className={cn(
@@ -340,7 +340,7 @@ export function WeekView({
                 >
                   {/* Time slot rows */}
                   {timeSlots.map((slot) => {
-                    const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0}`;
+                    const slotTime = `${slot.hour.toString().padStart(2, '0'}:${slot.minute.toString().padStart(2, '0}`;
                     const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
                     
                     // Check if this slot is in the past (only for today)
@@ -422,7 +422,7 @@ export function WeekView({
                             {(() => {
                               const ampm = slot.hour >= 12 ? 'PM' : 'AM';
                               const hour12 = slot.hour % 12 || 12;
-                              return `${hour12}:${slot.minute.toString().padStart(2, '0')} ${ampm}`;
+                              return `${hour12}:${slot.minute.toString().padStart(2, '0'} ${ampm}`;
                             })()}
                           </div>
                         </div>
@@ -503,7 +503,7 @@ export function WeekView({
                             const m = wkNowMins % 60;
                             const ampm = h >= 12 ? 'PM' : 'AM';
                             const h12 = h % 12 || 12;
-                            return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+                            return `${h12}:${String(m).padStart(2, '0'} ${ampm}`;
                           })()}
                         </div>
                       </div>

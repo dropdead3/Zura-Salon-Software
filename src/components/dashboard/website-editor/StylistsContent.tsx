@@ -282,7 +282,7 @@ export function StylistsContent() {
               {showActions && stylist.homepage_requested_at && (
                 <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
+                  Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy'}
                 </p>
               )}
             </div>

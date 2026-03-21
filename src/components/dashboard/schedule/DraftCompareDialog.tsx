@@ -37,11 +37,11 @@ function DiffCell({ label, valueA, valueB, renderValue }: {
 
   return (
     <>
-      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10')}>
+      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10'}>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-display">{label}</span>
         <div className="text-sm font-sans mt-0.5">{render(valueA)}</div>
       </div>
-      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10')}>
+      <div className={cn('p-2 rounded-lg', differs && 'bg-primary/10'}>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-display">{label}</span>
         <div className="text-sm font-sans mt-0.5">{render(valueB)}</div>
       </div>
@@ -56,7 +56,7 @@ function StepDots({ stepReached }: { stepReached: string | null }) {
       {WIZARD_STEPS.map((s, i) => (
         <div
           key={s}
-          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted')}
+          className={cn('h-1.5 w-1.5 rounded-full', i <= currentIdx ? 'bg-primary' : 'bg-muted'}
           title={s}
         />
       ))}

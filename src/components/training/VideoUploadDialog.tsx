@@ -285,7 +285,7 @@ export function VideoUploadDialog({
                 type="button"
                 variant={uploadMethod === 'url' ? 'default' : 'outline'}
                 size={tokens.button.card}
-                onClick={() => setUploadMethod('url')}
+                onClick={() => setUploadMethod('url'}
                 className="gap-2"
               >
                 <LinkIcon className="w-4 h-4" />
@@ -295,7 +295,7 @@ export function VideoUploadDialog({
                 type="button"
                 variant={uploadMethod === 'upload' ? 'default' : 'outline'}
                 size={tokens.button.card}
-                onClick={() => setUploadMethod('upload')}
+                onClick={() => setUploadMethod('upload'}
                 className="gap-2"
               >
                 <Upload className="w-4 h-4" />

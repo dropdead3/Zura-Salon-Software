@@ -220,7 +220,7 @@ export function BackroomAnalyticsTab() {
         </PlatformCardHeader>
         <PlatformCardContent className="p-0">
           {metrics.orgUsageStats.length === 0 ? (
-            <div className={cn(tokens.empty.container, 'py-12')}>
+            <div className={cn(tokens.empty.container, 'py-12'}>
               <Building2 className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No enabled organizations</h3>
             </div>

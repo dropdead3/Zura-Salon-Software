@@ -160,7 +160,7 @@ export function useCreateAssistantRequest() {
       const endMinutes = startMinutes + service.duration_minutes;
       const endHours = Math.floor(endMinutes / 60);
       const endMins = endMinutes % 60;
-      const end_time = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
+      const end_time = `${endHours.toString().padStart(2, '0'}:${endMins.toString().padStart(2, '0'}:00`;
 
       const recurrenceType = data.recurrence_type || 'none';
       const hasRecurrence = recurrenceType !== 'none' && data.recurrence_end_date;

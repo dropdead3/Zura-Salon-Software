@@ -152,7 +152,7 @@ export function IncidentManagementCard() {
                 <div className="flex items-center gap-3 mt-2 text-xs text-[hsl(var(--platform-foreground-subtle))]">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {format(new Date(activeIncident.created_at), 'MMM d, h:mm a')}
+                    {format(new Date(activeIncident.created_at), 'MMM d, h:mm a'}
                   </span>
                   {activeIncident.is_auto_created && (
                     <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground-muted))] text-[10px] font-medium tracking-wide">AUTO</span>

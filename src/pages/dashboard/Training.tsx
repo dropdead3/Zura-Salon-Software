@@ -190,7 +190,7 @@ export default function Training() {
         <div className="flex flex-wrap gap-2 mb-8">
           <Button
             variant={selectedCategory === 'all' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('all')}
+            onClick={() => setSelectedCategory('all'}
             className="font-display text-xs tracking-wide"
           >
             All

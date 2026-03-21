@@ -80,7 +80,7 @@ export function ResponseCountdown({ assignedAt, deadlineHours, className }: Resp
         : 'text-muted-foreground bg-muted',
       className
     )}>
-      <Clock className={cn('h-3 w-3', timeRemaining.isUrgent && 'animate-spin')} style={{ animationDuration: '3s' }} />
+      <Clock className={cn('h-3 w-3', timeRemaining.isUrgent && 'animate-spin'} style={{ animationDuration: '3s' }} />
       <span>{formatTime()} to respond</span>
     </div>
   );

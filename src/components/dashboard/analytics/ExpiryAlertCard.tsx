@@ -160,7 +160,7 @@ export function ExpiryAlertCard({ products, filterContext }: ExpiryAlertCardProp
                         · {product.quantity_on_hand} units
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        · Exp {format(parseISO(product.expires_at!), 'MMM d, yyyy')}
+                        · Exp {format(parseISO(product.expires_at!), 'MMM d, yyyy'}
                       </span>
                     </div>
                   </div>

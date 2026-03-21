@@ -179,7 +179,7 @@ export function GoalLocationRow({
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Projected</p>
-                  <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive')}>
+                  <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive'}>
                     <AnimatedBlurredAmount value={projectedRevenue} currency={currency} />
                   </p>
                 </div>

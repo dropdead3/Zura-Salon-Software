@@ -17,12 +17,12 @@ export function HelpCenterWidget() {
   const totalArticles = categories?.reduce((sum, cat) => sum + (cat.article_count || 0), 0) || 0;
 
   return (
-    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5'}>
       <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <HelpCircle className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1')}>HELP CENTER</span>
+        <span className={cn(tokens.kpi.label, 'flex-1'}>HELP CENTER</span>
       </div>
 
       <div className="mt-4 flex-1">
@@ -66,7 +66,7 @@ export function HelpCenterWidget() {
 
       <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
         <Link 
-          to={dashPath('/help')}
+          to={dashPath('/help'}
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
           Browse Help Center <ChevronRight className="w-3 h-3" />

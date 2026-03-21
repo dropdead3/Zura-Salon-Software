@@ -51,8 +51,8 @@ export default function MergeClients() {
           <TabsContent value="merge" className="mt-6">
             <MergeWizard
               preselectedClientIds={preselectedIds}
-              onComplete={() => setActiveTab('history')}
-              onCancel={() => navigate(dashPath('/clients')}
+              onComplete={() => setActiveTab('history'}
+              onCancel={() => navigate(dashPath('/clients'}
             />
           </TabsContent>
 
@@ -84,7 +84,7 @@ export default function MergeClients() {
                               Merged {(log.secondary_client_ids || []).length + 1} profiles
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(log.performed_at), 'MMM d, yyyy h:mm a')}
+                              {format(new Date(log.performed_at), 'MMM d, yyyy h:mm a'}
                             </p>
                             {log.reparenting_counts && (
                               <div className="flex gap-2 mt-1">

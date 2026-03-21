@@ -672,7 +672,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 <div className="flex items-center rounded-lg border overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => setCatalogView('brands')}
+                    onClick={() => setCatalogView('brands'}
                     className={cn(
                       'flex items-center justify-center w-8 h-8 transition-colors',
                       catalogView === 'brands' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
@@ -683,7 +683,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setCatalogView('inventory')}
+                    onClick={() => setCatalogView('inventory'}
                     className={cn(
                       'flex items-center justify-center w-8 h-8 transition-colors',
                       catalogView === 'inventory' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
@@ -706,7 +706,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                    disabled={syncFromLibraryMutation.isPending}
                    className="font-sans gap-1.5"
                  >
-                   <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
+                   <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin'} />
                    Sync from Zura Library
                  </Button>
                )}
@@ -757,7 +757,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     className="font-sans pl-10"
                   />
                 </div>
-                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced')}>
+                <Select value={pricingFilter} onValueChange={(v) => setPricingFilter(v as 'all' | 'missing' | 'priced'}>
                   <SelectTrigger className="w-[160px] font-sans">
                     <SelectValue placeholder="All Pricing" />
                   </SelectTrigger>
@@ -843,7 +843,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                   )} />
                                 )}
                                 <span className="flex-1 font-sans text-xs font-medium truncate">{item.label}</span>
-                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60')}>
+                                <span className={cn('shrink-0 font-sans text-[10px] tabular-nums', isActive ? 'text-primary' : 'text-muted-foreground/60'}>
                                   {item.count}
                                 </span>
                               </button>
@@ -939,7 +939,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                   : null;
                                 const isGhostRetail = isGhostCost || isGhostMarkup;
                                 return (
-                                  <TableRow key={p.id} className={cn(!isTrackedAtLocation(p.id) && 'opacity-50')}>
+                                  <TableRow key={p.id} className={cn(!isTrackedAtLocation(p.id) && 'opacity-50'}>
                                     <TableCell className="w-8 pr-0">
                                       <Switch
                                         checked={isTrackedAtLocation(p.id)}
@@ -964,7 +964,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                       </TableCell>
                                     )}
                                     <TableCell className="font-sans text-sm font-medium text-foreground">
-                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, '')}
+                                      {p.name.replace(/\s*[—–-]\s*\d+\.?\d*\s*(g|ml|oz|L|l)\s*$/i, ''}
                                     </TableCell>
                                     <TableCell className="font-sans text-xs">
                                       {isGhostCost ? (
@@ -996,7 +996,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell font-sans text-xs">
                                       {retail != null ? (
-                                        <span className={cn('text-foreground', isGhostRetail && 'text-muted-foreground/50 italic')}>
+                                        <span className={cn('text-foreground', isGhostRetail && 'text-muted-foreground/50 italic'}>
                                           ${retail.toFixed(2)}
                                         </span>
                                       ) : (
@@ -1038,7 +1038,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* Next step */}
               {onNavigate && brandProductsAll.filter((p) => isTrackedAtLocation(p.id)).length > 0 && (
                 <div className="flex justify-end pt-2 border-t">
-                  <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
+                  <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services'}>
                     Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
@@ -1078,7 +1078,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </div>
                   <div className="rounded-xl border-border/20 border bg-card-inner p-4">
                     <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
-                    <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
+                    <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400'}>{kpis.toReorder}</span>
                   </div>
                 </div>
               )}
@@ -1134,12 +1134,12 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
               {/* Brand cards */}
               {!hasProducts ? (
-                <div className={cn(tokens.empty.container, 'py-14')}>
+                <div className={cn(tokens.empty.container, 'py-14'}>
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted/40">
                     <Library className="h-7 w-7 text-muted-foreground" />
                   </div>
                   <h3 className={tokens.empty.heading}>Build Your Supply Catalog</h3>
-                  <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2')}>
+                  <p className={cn(tokens.empty.description, 'max-w-sm mx-auto mt-2'}>
                     Open the Supply Library to add professional brands and products.
                   </p>
                 </div>
@@ -1217,7 +1217,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {/* Next step hint */}
               {onNavigate && trackedCount > 0 && (
                 <div className="flex justify-end pt-2 border-t">
-                  <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services')}>
+                  <Button variant="ghost" size="sm" className="text-xs font-sans" onClick={() => onNavigate('services'}>
                     Next: Service Tracking <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
@@ -1348,7 +1348,7 @@ function InventoryView({
       <div className="grid grid-cols-3 gap-3">
         <button
           type="button"
-          onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock')}
+          onClick={() => setStockFilter(stockFilter === 'in_stock' ? 'all' : 'in_stock'}
           className={cn(
             'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
             stockFilter === 'in_stock' ? 'border-primary/40 bg-primary/5' : 'hover:border-border/40 hover:shadow-sm'
@@ -1359,14 +1359,14 @@ function InventoryView({
         </button>
         <button
           type="button"
-          onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder')}
+          onClick={() => setStockFilter(stockFilter === 'reorder' ? 'all' : 'reorder'}
           className={cn(
             'rounded-xl border-border/20 border bg-card-inner p-4 text-left transition-all cursor-pointer',
             stockFilter === 'reorder' ? 'border-amber-500/40 bg-amber-500/5' : 'hover:border-border/40 hover:shadow-sm'
           )}
         >
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">To Reorder</span>
-          <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400')}>{kpis.toReorder}</span>
+          <span className={cn('block text-2xl font-display tracking-tight text-foreground mt-1', kpis.toReorder > 0 && 'text-amber-400'}>{kpis.toReorder}</span>
         </button>
         <div className="rounded-xl border-border/20 border bg-card-inner p-4">
           <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">Total Tracked</span>

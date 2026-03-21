@@ -59,7 +59,7 @@ function timeToMinutes(time: string): number {
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0}`;
+  return `${h.toString().padStart(2, '0'}:${m.toString().padStart(2, '0}`;
 }
 
 function formatTime12h(time: string) {
@@ -509,7 +509,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                     }}
                     onNewClient={() => setShowNewClientSheet(true)}
                     selectedClient={selectedClient}
-                    onContinue={() => setStep('service')}
+                    onContinue={() => setStep('service'}
                     onDeselectClient={() => {
                       setSelectedClient(null);
                       setSelectedServices([]);
@@ -542,7 +542,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                   totalDuration={totalDuration}
                   totalPrice={totalPrice}
                   isLoading={effectiveServicesLoading}
-                  onContinue={() => setStep('confirm')}
+                  onContinue={() => setStep('confirm'}
                 />
               )}
 
@@ -561,7 +561,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                   onNotesChange={setNotes}
                   onConfirm={() => createBooking.mutate()}
                   isLoading={createBooking.isPending}
-                  onAddService={() => setStep('service')}
+                  onAddService={() => setStep('service'}
                   teamMembers={teamMembers}
                   selectedAssistants={selectedAssistants}
                   onAssistantsChange={setSelectedAssistants}
@@ -1155,7 +1155,7 @@ function ConfirmStepDock({
             <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--platform-foreground))]">
               <CalendarIcon className="w-3 h-3 text-violet-400 shrink-0" />
               <span>
-                Last visit: {format(new Date(clientHistory.lastVisit.date + 'T12:00:00'), 'MMM d')}
+                Last visit: {format(new Date(clientHistory.lastVisit.date + 'T12:00:00'), 'MMM d'}
                 {' · '}
                 <span className="text-[hsl(var(--platform-foreground-muted))]">
                   {formatDistanceToNow(new Date(clientHistory.lastVisit.date + 'T12:00:00'), { addSuffix: true })}
@@ -1195,7 +1195,7 @@ function ConfirmStepDock({
                   <div className="text-left">
                     <div className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)]">Assistant</div>
                     {selectedNames.length > 0 ? (
-                      <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', ')}</div>
+                      <div className="text-sm text-[hsl(var(--platform-foreground))]">{selectedNames.join(', '}</div>
                     ) : (
                       <div className="text-sm text-violet-400">+ Add an assistant</div>
                     )}
@@ -1232,7 +1232,7 @@ function ConfirmStepDock({
               )}
             </div>
           )}
-          <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d')} />
+          <DetailRow icon={<CalendarIcon className="w-4 h-4" />} label="Date" value={format(new Date(date + 'T12:00:00'), 'EEE, MMM d'} />
           <DetailRow icon={<Clock className="w-4 h-4" />} label="Duration" value={formatMinutesToDuration(totalDuration)} />
         </div>
 

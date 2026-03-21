@@ -146,7 +146,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
 
       toast({
         title: 'Team member added',
-        description: `${existingUser.fullName || email} has been granted ${role.replace('platform_', '')} access.`,
+        description: `${existingUser.fullName || email} has been granted ${role.replace('platform_', ''} access.`,
       });
 
       handleClose(false);
@@ -283,7 +283,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               <div>
                 <p className="text-sm font-medium text-white">Invitation Email</p>
                 <p className="text-xs text-slate-400">
-                  They'll receive a link to create an account with {role.replace('platform_', '')} access.
+                  They'll receive a link to create an account with {role.replace('platform_', ''} access.
                 </p>
               </div>
             </div>
@@ -294,7 +294,7 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
               <PlatformButton 
                 type="button" 
                 variant="secondary" 
-                onClick={() => setFlowState('input')}
+                onClick={() => setFlowState('input'}
               >
                 Back
               </PlatformButton>

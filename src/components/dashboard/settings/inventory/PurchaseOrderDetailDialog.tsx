@@ -77,10 +77,10 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
     const rows = displayLines.map(line => {
       const prod = productMap.get(line.product_id);
       return [
-        `"${(prod?.name || 'Unknown').replace(/"/g, '""')}"`,
-        `"${(prod?.brand || '').replace(/"/g, '""')}"`,
-        `"${(prod?.category || '').replace(/"/g, '""')}"`,
-        `"${(prod?.container_size || '').replace(/"/g, '""')}"`,
+        `"${(prod?.name || 'Unknown').replace(/"/g, '""'}"`,
+        `"${(prod?.brand || '').replace(/"/g, '""'}"`,
+        `"${(prod?.category || '').replace(/"/g, '""'}"`,
+        `"${(prod?.container_size || '').replace(/"/g, '""'}"`,
         line.quantity_ordered,
         line.quantity_received,
         line.unit_cost ?? '',
@@ -102,7 +102,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className={cn(tokens.card.title, 'text-base')}>
+            <DialogTitle className={cn(tokens.card.title, 'text-base'}>
               Order Summary
             </DialogTitle>
             <Badge variant="outline" className={cn('text-[10px]', cfg.className)}>{cfg.label}</Badge>
@@ -113,24 +113,24 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm border-b border-border pb-4">
           <div>
             <span className="text-muted-foreground text-xs">Created</span>
-            <p>{format(new Date(order.created_at), 'MMM d, yyyy')}</p>
+            <p>{format(new Date(order.created_at), 'MMM d, yyyy'}</p>
           </div>
           {order.sent_at && (
             <div>
               <span className="text-muted-foreground text-xs">Submitted</span>
-              <p>{format(new Date(order.sent_at), 'MMM d, yyyy')}</p>
+              <p>{format(new Date(order.sent_at), 'MMM d, yyyy'}</p>
             </div>
           )}
           {order.received_at && (
             <div>
               <span className="text-muted-foreground text-xs">Received</span>
-              <p>{format(new Date(order.received_at), 'MMM d, yyyy')}</p>
+              <p>{format(new Date(order.received_at), 'MMM d, yyyy'}</p>
             </div>
           )}
           {order.expected_delivery_date && (
             <div>
               <span className="text-muted-foreground text-xs">Expected Delivery</span>
-              <p>{format(new Date(order.expected_delivery_date), 'MMM d, yyyy')}</p>
+              <p>{format(new Date(order.expected_delivery_date), 'MMM d, yyyy'}</p>
             </div>
           )}
           {order.supplier_name && (
@@ -158,10 +158,10 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, order }: Purchas
                   <TableHead className={tokens.table.columnHeader}>Product</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Brand</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Size</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Ordered</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Received</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Unit Cost</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Ordered</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Received</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Unit Cost</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right'}>Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

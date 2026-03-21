@@ -371,7 +371,7 @@ function JobHistory({ functionName }: { functionName: string }) {
             return (
               <tr key={log.id} className="border-b border-slate-700/20">
                 <td className="px-4 py-2 text-slate-300">
-                  {format(new Date(log.started_at), 'MMM d, h:mm:ss a')}
+                  {format(new Date(log.started_at), 'MMM d, h:mm:ss a'}
                 </td>
                 <td className={cn("px-4 py-2 capitalize", statusColors[log.status])}>
                   {log.status}

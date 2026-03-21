@@ -119,7 +119,7 @@ export function RedemptionApprovalsTab() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Requested {format(new Date(redemption.created_at), 'MMM d, yyyy h:mm a')}
+                        Requested {format(new Date(redemption.created_at), 'MMM d, yyyy h:mm a'}
                       </p>
                       <Badge variant="outline" className="mt-2 text-xs">
                         {redemption.points_spent} points
@@ -131,7 +131,7 @@ export function RedemptionApprovalsTab() {
                     <Button
                       size={tokens.button.card}
                       variant="outline"
-                      onClick={() => handleAction(redemption, 'denied')}
+                      onClick={() => handleAction(redemption, 'denied'}
                       disabled={updateStatus.isPending}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
@@ -140,7 +140,7 @@ export function RedemptionApprovalsTab() {
                     </Button>
                     <Button
                       size={tokens.button.card}
-                      onClick={() => handleAction(redemption, 'approved')}
+                      onClick={() => handleAction(redemption, 'approved'}
                       disabled={updateStatus.isPending}
                     >
                       <Check className="w-4 h-4 mr-1" />
@@ -149,7 +149,7 @@ export function RedemptionApprovalsTab() {
                     <Button
                       size={tokens.button.card}
                       variant="secondary"
-                      onClick={() => handleAction(redemption, 'fulfilled')}
+                      onClick={() => handleAction(redemption, 'fulfilled'}
                       disabled={updateStatus.isPending}
                     >
                       <Gift className="w-4 h-4 mr-1" />

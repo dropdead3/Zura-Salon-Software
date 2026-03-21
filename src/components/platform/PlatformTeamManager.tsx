@@ -161,7 +161,7 @@ export function PlatformTeamManager() {
           </div>
           <div className="flex items-center gap-3">
             {/* Role Filter */}
-            <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val as PlatformRole | 'all')}>
+            <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val as PlatformRole | 'all'}>
               <SelectTrigger className="w-[160px]">
                 <Filter className="w-4 h-4 mr-2 text-slate-500" />
                 <SelectValue placeholder="Filter by role" />
@@ -251,7 +251,7 @@ export function PlatformTeamManager() {
                           </PlatformBadge>
                         </TableCell>
                         <TableCell className="text-[hsl(var(--platform-foreground-subtle))] text-sm">
-                          {formatDate(new Date(member.created_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(member.created_at), 'MMM d, yyyy'}
                         </TableCell>
                         {canManageTeam && (
                           <TableCell>

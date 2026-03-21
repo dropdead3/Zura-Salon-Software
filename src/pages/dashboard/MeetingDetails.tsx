@@ -121,7 +121,7 @@ export default function MeetingDetails() {
                   </Avatar>
                   <div>
                     <CardTitle className="text-xl">
-                      1:1 with {canManage ? teamMemberName : (meeting.coach?.display_name || meeting.coach?.full_name || 'Coach')}
+                      1:1 with {canManage ? teamMemberName : (meeting.coach?.display_name || meeting.coach?.full_name || 'Coach'}
                     </CardTitle>
                     <p className="text-muted-foreground">
                       {meetingTypes[meeting.meeting_type || 'other'] || meeting.meeting_type}
@@ -132,7 +132,7 @@ export default function MeetingDetails() {
                 <div className="flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatDate(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}</span>
+                    <span>{formatDate(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />

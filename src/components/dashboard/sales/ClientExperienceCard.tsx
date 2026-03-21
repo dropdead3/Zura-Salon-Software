@@ -123,7 +123,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
         </CardHeader>
         <CardContent>
           {/* Hero skeleton */}
-          <div className={cn(tokens.kpi.tile, 'mb-3')}>
+          <div className={cn(tokens.kpi.tile, 'mb-3'}>
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-8 w-28 mt-2" />
           </div>
@@ -314,7 +314,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <p className="text-xs text-muted-foreground">
               Staff names unavailable —{' '}
-              <Link to={dashPath('/admin/settings/staff-mapping')} className="text-primary hover:underline">
+              <Link to={dashPath('/admin/settings/staff-mapping'} className="text-primary hover:underline">
                 connect staff profiles in Settings
               </Link>
             </p>
@@ -372,7 +372,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                 onClick={() => setShowAll(prev => !prev)}
                 className="flex items-center gap-1 mt-2 text-xs text-primary hover:underline mx-auto"
               >
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180')} />
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180'} />
                 {showAll ? 'Show less' : `Show all ${rankedStaff.length} stylists`}
               </button>
             )}
@@ -446,7 +446,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                 onClick={() => setShowAll(prev => !prev)}
                 className="flex items-center gap-1 mt-2 text-xs text-primary hover:underline mx-auto"
               >
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180')} />
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180'} />
                 {showAll ? 'Show less' : `Show all ${allChartData.length} stylists`}
               </button>
             )}

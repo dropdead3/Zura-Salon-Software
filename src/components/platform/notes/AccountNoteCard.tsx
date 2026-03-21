@@ -51,7 +51,7 @@ export function AccountNoteCard({ note, onDelete, isDeleting }: AccountNoteCardP
           <div className="flex items-center gap-2 mb-1">
             <span className="font-medium text-white text-sm">{authorName}</span>
             <span className="text-xs text-slate-500">
-              {format(new Date(note.created_at), 'MMM d, yyyy \'at\' h:mm a')}
+              {format(new Date(note.created_at), 'MMM d, yyyy \'at\' h:mm a'}
             </span>
           </div>
           

@@ -83,7 +83,7 @@ export default function BackroomSubscription() {
           <DashboardPageHeader
             title="Backroom Subscription"
             description="You don't have an active Backroom subscription."
-            backTo={dashPath('/admin/backroom-settings')}
+            backTo={dashPath('/admin/backroom-settings'}
           />
           <Card className="bg-card/60 border-border/40 max-w-lg">
             <CardContent className="p-6 text-center space-y-4">
@@ -92,7 +92,7 @@ export default function BackroomSubscription() {
               </p>
               <Button
                 className="font-sans font-medium"
-                onClick={() => window.location.href = dashPath('/admin/backroom-settings')}
+                onClick={() => window.location.href = dashPath('/admin/backroom-settings'}
               >
                 View Plans
               </Button>
@@ -117,7 +117,7 @@ export default function BackroomSubscription() {
         <DashboardPageHeader
           title="Backroom Subscription"
           description="Manage your Backroom subscription, scale licenses, and billing."
-          backTo={dashPath('/admin/backroom-settings')}
+          backTo={dashPath('/admin/backroom-settings'}
           actions={
             <Button
               variant="outline"
@@ -140,14 +140,14 @@ export default function BackroomSubscription() {
                   <CreditCard className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className={cn(tokens.label.default, 'text-foreground')}>Subscription</p>
+                  <p className={cn(tokens.label.default, 'text-foreground'}>Subscription</p>
                   <p className="text-xs text-muted-foreground font-sans">Active backroom plan</p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <span className={cn(tokens.stat.large, 'text-foreground')}>
+                  <span className={cn(tokens.stat.large, 'text-foreground'}>
                     {locationCount} Location{locationCount !== 1 ? 's' : ''}
                   </span>
                   <Badge variant="outline" className="font-sans text-[10px]">
@@ -185,14 +185,14 @@ export default function BackroomSubscription() {
                   <Weight className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className={cn(tokens.label.default, 'text-foreground')}>Scale Hardware</p>
+                  <p className={cn(tokens.label.default, 'text-foreground'}>Scale Hardware</p>
                   <p className="text-xs text-muted-foreground font-sans"><p className="text-xs text-muted-foreground font-sans">Precision scales</p></p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <span className={cn(tokens.stat.large, 'text-foreground')}>
+                  <span className={cn(tokens.stat.large, 'text-foreground'}>
                     {scaleCount}
                   </span>
                   <span className="text-sm text-muted-foreground font-sans">active license(s)</span>
@@ -222,7 +222,7 @@ export default function BackroomSubscription() {
                   <Beaker className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className={cn(tokens.label.default, 'text-foreground')}>Color Service Usage</p>
+                  <p className={cn(tokens.label.default, 'text-foreground'}>Color Service Usage</p>
                   <p className="text-xs text-muted-foreground font-sans">Billed based on actual appointments</p>
                 </div>
               </div>

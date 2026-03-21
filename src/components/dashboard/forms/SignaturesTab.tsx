@@ -70,7 +70,7 @@ export function SignaturesTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `form-signatures-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.download = `form-signatures-${format(new Date(), 'yyyy-MM-dd'}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -127,9 +127,9 @@ export function SignaturesTab() {
                 {filteredSignatures.map((sig) => (
                   <TableRow key={sig.id}>
                     <TableCell className="whitespace-nowrap">
-                      {formatDate(new Date(sig.signed_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(sig.signed_at), 'MMM d, yyyy'}
                       <span className="text-xs text-muted-foreground block">
-                        {formatDate(new Date(sig.signed_at), 'h:mm a')}
+                        {formatDate(new Date(sig.signed_at), 'h:mm a'}
                       </span>
                     </TableCell>
                     <TableCell>

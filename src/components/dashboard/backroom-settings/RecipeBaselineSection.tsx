@@ -86,7 +86,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
               <h3 className={tokens.empty.heading}>No tracked services</h3>
               <p className={tokens.empty.description}>Products → Services → then Baselines. Enable backroom tracking on services first.</p>
               {onNavigate && (
-                <Button variant="outline" size="sm" className="mt-2" onClick={() => onNavigate('services')}>
+                <Button variant="outline" size="sm" className="mt-2" onClick={() => onNavigate('services'}>
                   Go to Service Tracking
                 </Button>
               )}
@@ -115,7 +115,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
               {/* Next step hint */}
               {onNavigate && (
                 <div className="flex justify-end pt-2 border-t border-border/40">
-                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('allowances')}>
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => onNavigate('allowances'}>
                     Next: Allowances & Billing <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>

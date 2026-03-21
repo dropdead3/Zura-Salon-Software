@@ -104,7 +104,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
 
               <div className="space-y-2">
                 <Label>Variant Code (Optional)</Label>
-                <Input {...register('variant_code')} placeholder="e.g., SUMMER25B" />
+                <Input {...register('variant_code'} placeholder="e.g., SUMMER25B" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -148,7 +148,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
 
               <div className="space-y-2">
                 <Label>Description (Optional)</Label>
-                <Input {...register('description')} placeholder="What makes this variant different?" />
+                <Input {...register('description'} placeholder="What makes this variant different?" />
               </div>
 
               <div className="flex items-center justify-between rounded-lg border p-3">

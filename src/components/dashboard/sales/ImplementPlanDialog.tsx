@@ -216,7 +216,7 @@ export function ImplementPlanDialog({
 
     activeSteps.forEach((step, i) => {
       text += `${i + 1}. ${step.title}`;
-      text += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d')})`;
+      text += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d'})`;
       text += '\n';
       if (step.description) text += `   ${step.description}\n`;
     });
@@ -232,7 +232,7 @@ export function ImplementPlanDialog({
     let md = `**📋 ${campaignName}**\n\n`;
     activeSteps.forEach((step, i) => {
       md += `**${i + 1}. ${step.title}**`;
-      md += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d')})`;
+      md += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d'})`;
       md += '\n';
       if (step.description) md += `${step.description}\n`;
     });
@@ -419,7 +419,7 @@ export function ImplementPlanDialog({
                               </p>
                             )}
                             <p className="text-[11px] text-muted-foreground/60 mt-1">
-                              Due {formatDate(addDays(new Date(), step.dueDays), 'MMM d')}
+                              Due {formatDate(addDays(new Date(), step.dueDays), 'MMM d'}
                             </p>
                           </div>
                         </label>

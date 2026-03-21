@@ -859,7 +859,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const textHtml = `<div style="display: inline-block; vertical-align: middle;">
           <div style="font-weight: bold; font-size: 16px; line-height: 1.3;">${config.name}</div>
           <div style="font-size: 14px; opacity: 0.8; line-height: 1.3;">${config.title}</div>
-          ${contactLines.length > 0 ? }`<div style="margin-top: 4px;">${contactLines.join('')}</div>` : ''}
+          ${contactLines.length > 0 ? }`<div style="margin-top: 4px;">${contactLines.join(''}</div>` : ''}
         </div>`;
         
         let contentHtml = '';
@@ -2869,7 +2869,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
               size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'themes' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes')}
+              onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes'}
             >
               <Palette className="w-4 h-4" />
               Themes
@@ -2878,7 +2878,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               variant={toolbarPanel === 'blocks' ? 'default' : 'outline'}
               size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'blocks' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks')}
+              onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks'}
             >
               <Plus className="w-4 h-4" />
               Add Block
@@ -2888,7 +2888,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                 variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
                 size={tokens.button.inline}
                 className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'variables' && "bg-background border-border/80")}
-                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables')}
+                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables'}
               >
                 <Variable className="w-4 h-4" />
                 Variables
@@ -3023,7 +3023,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="flex gap-0.5 mb-1.5">
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
@@ -3044,7 +3044,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {customThemes.map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={(e) => { e.stopPropagation(); handleEditCustomTheme(theme.id); }}><Pencil className="w-2.5 h-2.5" /></Button>
                               <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCustomTheme(theme.id); }}><Trash2 className="w-2.5 h-2.5" /></Button>
@@ -3111,7 +3111,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   </button>
                   <button 
                     onClick={() => { addBlock('header'); setToolbarPanel(null); }} 
-                    disabled={blocks.some(b => b.type === 'header')}
+                    disabled={blocks.some(b => b.type === 'header'}
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
                       blocks.some(b => b.type === 'header') 
@@ -3124,7 +3124,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   </button>
                   <button 
                     onClick={() => { addBlock('footer'); setToolbarPanel(null); }} 
-                    disabled={blocks.some(b => b.type === 'footer')}
+                    disabled={blocks.some(b => b.type === 'footer'}
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
                       blocks.some(b => b.type === 'footer') 
@@ -3183,7 +3183,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   />
                   {variableSearchTerm && (
                     <button
-                      onClick={() => setVariableSearchTerm('')}
+                      onClick={() => setVariableSearchTerm(''}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       <X className="w-4 h-4" />
@@ -3401,7 +3401,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             variant="outline"
                             size={tokens.button.inline}
                             className="h-8 w-8 p-0"
-                            onClick={() => applyInlineFormat(selectedBlock.id, 'strong')}
+                            onClick={() => applyInlineFormat(selectedBlock.id, 'strong'}
                             title="Bold selected text"
                           >
                             <Bold className="w-3.5 h-3.5" />
@@ -3410,7 +3410,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             variant="outline"
                             size={tokens.button.inline}
                             className="h-8 w-8 p-0"
-                            onClick={() => applyInlineFormat(selectedBlock.id, 'em')}
+                            onClick={() => applyInlineFormat(selectedBlock.id, 'em'}
                             title="Italic selected text"
                           >
                             <Italic className="w-3.5 h-3.5" />
@@ -4620,56 +4620,56 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     <PopoverContent className="w-48 p-2" align="end">
                                       <div className="grid grid-cols-2 gap-1">
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'heading')}
+                                          onClick={() => addColumnBlock(colIndex, 'heading'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Type className="w-3 h-3" />
                                           Heading
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'text')}
+                                          onClick={() => addColumnBlock(colIndex, 'text'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <AlignLeft className="w-3 h-3" />
                                           Text
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'button')}
+                                          onClick={() => addColumnBlock(colIndex, 'button'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <MousePointerClick className="w-3 h-3" />
                                           Button
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'link')}
+                                          onClick={() => addColumnBlock(colIndex, 'link'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Link className="w-3 h-3" />
                                           Link
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'image')}
+                                          onClick={() => addColumnBlock(colIndex, 'image'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Image className="w-3 h-3" />
                                           Image
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'divider')}
+                                          onClick={() => addColumnBlock(colIndex, 'divider'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Minus className="w-3 h-3" />
                                           Divider
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'spacer')}
+                                          onClick={() => addColumnBlock(colIndex, 'spacer'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Square className="w-3 h-3" />
                                           Spacer
                                         </button>
                                         <button 
-                                          onClick={() => addColumnBlock(colIndex, 'social')}
+                                          onClick={() => addColumnBlock(colIndex, 'social'}
                                           className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
                                           <Share2 className="w-3 h-3" />

@@ -123,12 +123,12 @@ export function PendingInvitationsSection() {
                       </PlatformBadge>
                     </TableCell>
                     <TableCell className="text-slate-500 text-sm">
-                      {formatDate(new Date(invitation.created_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(invitation.created_at), 'MMM d, yyyy'}
                     </TableCell>
                     <TableCell>
                       <div className={`flex items-center gap-1.5 text-sm ${isExpiringSoon ? 'text-amber-400' : 'text-slate-500'}`}>
                         {isExpiringSoon && <Clock className="w-3.5 h-3.5" />}
-                        {formatDate(expiresAt, 'MMM d')}
+                        {formatDate(expiresAt, 'MMM d'}
                       </div>
                     </TableCell>
                     <TableCell>

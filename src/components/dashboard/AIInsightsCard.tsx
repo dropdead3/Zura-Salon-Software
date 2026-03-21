@@ -311,7 +311,7 @@ export function AIInsightsCard() {
                   <CardTitle className="text-base font-display tracking-wide">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</CardTitle>
                 </div>
                 <Button variant="ghost" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
-                  <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+                  <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin'} />
                   {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
                 </Button>
               </div>
@@ -363,7 +363,7 @@ export function AIInsightsCard() {
                             ) : (
                               <SilenceState compact />
                             )}
-                            <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
+                            <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180'} />
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <div className="pt-3">

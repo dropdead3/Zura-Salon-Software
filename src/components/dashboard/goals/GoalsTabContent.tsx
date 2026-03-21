@@ -83,7 +83,7 @@ export function GoalsTabContent() {
           title="Set Your Organization Goals"
           description="Define targets across revenue, profitability, client health, efficiency, and team metrics to track what matters most."
           action={
-            <Button onClick={() => handleAddGoal('revenue')}>
+            <Button onClick={() => handleAddGoal('revenue'}>
               <Plus className="w-4 h-4 mr-1.5" />
               Add Your First Goal
             </Button>

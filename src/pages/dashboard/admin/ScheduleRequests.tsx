@@ -104,7 +104,7 @@ export default function ScheduleRequests() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   <Clock className="w-3 h-3 inline mr-1" />
-                  Submitted {formatDate(new Date(request.created_at), 'MMM d, yyyy')}
+                  Submitted {formatDate(new Date(request.created_at), 'MMM d, yyyy'}
                 </p>
               </div>
             </div>
@@ -389,7 +389,7 @@ export default function ScheduleRequests() {
             </Button>
             <Button
               variant={reviewAction === 'approve' ? 'default' : 'destructive'}
-              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied')}
+              onClick={() => handleReview(reviewAction === 'approve' ? 'approved' : 'denied'}
               disabled={reviewRequest.isPending}
             >
               {reviewRequest.isPending ? (

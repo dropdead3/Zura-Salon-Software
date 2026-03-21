@@ -106,7 +106,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
 
       // Filter by location if user doesn't have full access
       if (!canViewAllLocations && assignedLocationIds.length > 0) {
-        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(','})`);
       }
 
       const { data: announcementsData, error: announcementsError } = await query
@@ -591,13 +591,13 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
         </Tabs>
 
         <div className="p-2 border-t border-border grid grid-cols-2 gap-1">
-          <Link to={dashPath('/notifications')}>
+          <Link to={dashPath('/notifications'}>
             <Button variant="ghost" size={tokens.button.inline} className="w-full justify-start text-xs h-8">
               <Settings className="w-3 h-3 mr-1" />
               Preferences
             </Button>
           </Link>
-          <Link to={dashPath('/changelog')}>
+          <Link to={dashPath('/changelog'}>
             <Button variant="ghost" size={tokens.button.inline} className="w-full justify-end text-xs h-8">
               View updates
               <ExternalLink className="w-3 h-3 ml-1" />

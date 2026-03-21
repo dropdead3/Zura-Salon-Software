@@ -112,7 +112,7 @@ function RevenueForecastCardComponent({
             onClick={() => refetch()}
             disabled={isFetching}
           >
-            <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} />
+            <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin'} />
           </Button>
         </div>
       </CardHeader>
@@ -150,7 +150,7 @@ function RevenueForecastCardComponent({
               <div className="flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="text-sm">
-                  {formatDate(parseISO(day.date), 'EEE, MMM d')}
+                  {formatDate(parseISO(day.date), 'EEE, MMM d'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ function RevenueForecastCardComponent({
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="text-xs max-w-48">
-                        {day.factors.join(', ')}
+                        {day.factors.join(', '}
                       </p>
                     </TooltipContent>
                   </Tooltip>

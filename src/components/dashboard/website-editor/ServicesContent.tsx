@@ -277,7 +277,7 @@ export function ServicesContent() {
         <Settings2 className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
           Services and categories are managed in{' '}
-          <Link to={dashPath('/admin/services')} className="underline font-medium text-foreground hover:text-primary">
+          <Link to={dashPath('/admin/services'} className="underline font-medium text-foreground hover:text-primary">
             Services Settings
           </Link>
           . Use this editor to control website display, descriptions, and popular badges.
@@ -318,7 +318,7 @@ export function ServicesContent() {
             </div>
           </CardContent>
         </Card>
-        <Link to={dashPath('/admin/stylist-levels')}>
+        <Link to={dashPath('/admin/stylist-levels'}>
           <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30 h-full">
             <CardContent className="p-2.5 flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30">

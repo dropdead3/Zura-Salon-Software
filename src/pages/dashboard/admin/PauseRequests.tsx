@@ -195,7 +195,7 @@ export default function PauseRequests() {
             <DialogFooter className="gap-2">
               <Button
                 variant="outline"
-                onClick={() => handleReview('denied')}
+                onClick={() => handleReview('denied'}
                 disabled={isProcessing}
                 className="text-destructive hover:text-destructive"
               >
@@ -203,7 +203,7 @@ export default function PauseRequests() {
                 Deny
               </Button>
               <Button
-                onClick={() => handleReview('approved')}
+                onClick={() => handleReview('approved'}
                 disabled={isProcessing}
               >
                 {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}

@@ -181,14 +181,14 @@ export function BlueprintEditor({ serviceId }: BlueprintEditorProps) {
                 <button
                   className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
                   disabled={index === 0}
-                  onClick={() => handleMoveStep(index, 'up')}
+                  onClick={() => handleMoveStep(index, 'up'}
                 >
                   <GripVertical className="w-3.5 h-3.5 rotate-180" />
                 </button>
                 <button
                   className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
                   disabled={index === steps.length - 1}
-                  onClick={() => handleMoveStep(index, 'down')}
+                  onClick={() => handleMoveStep(index, 'down'}
                 >
                   <GripVertical className="w-3.5 h-3.5" />
                 </button>

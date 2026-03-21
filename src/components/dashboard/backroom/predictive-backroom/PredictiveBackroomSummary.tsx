@@ -86,7 +86,7 @@ export function PredictiveBackroomSummary({ locationId }: PredictiveBackroomSumm
           <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
             <div className="flex items-center gap-1.5 mb-2">
               <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-              <span className={cn(tokens.label.tiny, 'text-destructive')}>Urgent Reorders</span>
+              <span className={cn(tokens.label.tiny, 'text-destructive'}>Urgent Reorders</span>
             </div>
             {summary.urgent_reorders.map((item) => (
               <div key={item.product_id} className="flex items-center justify-between text-sm">
@@ -103,7 +103,7 @@ export function PredictiveBackroomSummary({ locationId }: PredictiveBackroomSumm
         )}
 
         {summary.unmapped_services_count > 0 && (
-          <p className={cn(tokens.body.muted, 'mt-3 text-xs')}>
+          <p className={cn(tokens.body.muted, 'mt-3 text-xs'}>
             {summary.unmapped_services_count} service{summary.unmapped_services_count !== 1 ? 's' : ''} without formula data
           </p>
         )}

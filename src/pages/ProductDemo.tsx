@@ -25,7 +25,7 @@ export default function ProductDemo() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/'}
               className="flex-shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -37,10 +37,10 @@ export default function ProductDemo() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="outline" size={tokens.button.card} onClick={() => navigate('/login')}>
+            <Button variant="outline" size={tokens.button.card} onClick={() => navigate('/login'}>
               Sign In
             </Button>
-            <Button size={tokens.button.card} onClick={() => navigate('/register')}>
+            <Button size={tokens.button.card} onClick={() => navigate('/register'}>
               Get Started
             </Button>
           </div>
@@ -77,10 +77,10 @@ export default function ProductDemo() {
               Ready to transform your salon operations?
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Button size={tokens.button.hero} onClick={() => navigate('/register')}>
+              <Button size={tokens.button.hero} onClick={() => navigate('/register'}>
                 Start Free Trial
               </Button>
-              <Button variant="outline" size={tokens.button.hero} onClick={() => navigate('/contact')}>
+              <Button variant="outline" size={tokens.button.hero} onClick={() => navigate('/contact'}>
                 Schedule a Demo
               </Button>
             </div>

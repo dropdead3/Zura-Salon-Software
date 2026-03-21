@@ -66,10 +66,10 @@ export function PointsHistoryPanel() {
                   <p className="text-sm font-medium">
                     {transaction.description ||
                       actionTypeLabels[transaction.action_type] ||
-                      transaction.action_type.replace(/_/g, ' ')}
+                      transaction.action_type.replace(/_/g, ' '}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {format(new Date(transaction.created_at), 'MMM d, yyyy h:mm a')}
+                    {format(new Date(transaction.created_at), 'MMM d, yyyy h:mm a'}
                   </p>
                 </div>
               </div>

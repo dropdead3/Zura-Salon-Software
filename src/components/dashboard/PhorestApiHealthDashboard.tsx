@@ -373,7 +373,7 @@ export function PhorestApiHealthDashboard() {
                         {formatDistanceToNow(new Date(failure.started_at), { addSuffix: true })}
                       </TooltipTrigger>
                       <TooltipContent>
-                        {formatDate(new Date(failure.started_at), 'PPpp')}
+                        {formatDate(new Date(failure.started_at), 'PPpp'}
                       </TooltipContent>
                     </Tooltip>
                   </TableCell>

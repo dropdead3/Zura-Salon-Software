@@ -352,7 +352,7 @@ export default function ClientEngineTracker() {
         {/* Header */}
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to={dashPath('/admin/management')}>
+            <Link to={dashPath('/admin/management'}>
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
@@ -489,7 +489,7 @@ export default function ClientEngineTracker() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'}
               >
                 <ArrowUpDown className={cn("w-4 h-4", sortOrder === 'desc' && "rotate-180")} />
               </Button>
@@ -577,7 +577,7 @@ export default function ClientEngineTracker() {
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Start Date</p>
                           <p className="text-sm font-medium">
-                            {formatDate(new Date(participant.enrollment.start_date), 'MMM d, yyyy')}
+                            {formatDate(new Date(participant.enrollment.start_date), 'MMM d, yyyy'}
                           </p>
                         </div>
                         <div>
@@ -585,7 +585,7 @@ export default function ClientEngineTracker() {
                           <p className="text-sm font-medium">
                             {participant.enrollment.last_completion_date 
                               ? formatDate(new Date(participant.enrollment.last_completion_date), 'MMM d, yyyy')
-                              : 'Never')}
+                              : 'Never'}
                           </p>
                         </div>
                         <div>
@@ -795,7 +795,7 @@ export default function ClientEngineTracker() {
             <DialogFooter className="gap-2">
               <Button
                 variant="outline"
-                onClick={() => handlePauseReview('denied')}
+                onClick={() => handlePauseReview('denied'}
                 disabled={isProcessing}
                 className="text-destructive hover:text-destructive"
               >
@@ -803,7 +803,7 @@ export default function ClientEngineTracker() {
                 Deny
               </Button>
               <Button
-                onClick={() => handlePauseReview('approved')}
+                onClick={() => handlePauseReview('approved'}
                 disabled={isProcessing}
               >
                 {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}

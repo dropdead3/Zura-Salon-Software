@@ -296,7 +296,7 @@ function NotificationPreferences() {
             </div>
             <div className="flex justify-center">
               <Switch
-                checked={pref?.email_enabled ?? config.defaultChannels.includes('email')}
+                checked={pref?.email_enabled ?? config.defaultChannels.includes('email'}
                 onCheckedChange={(v) => handleToggle(type, 'email_enabled', v)}
               />
             </div>

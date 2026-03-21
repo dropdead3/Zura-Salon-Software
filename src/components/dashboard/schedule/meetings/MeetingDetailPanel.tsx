@@ -113,7 +113,7 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
               <h2 className="font-display text-base tracking-wide truncate">{meeting.title}</h2>
               <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground font-sans">
                 <CalendarIcon className="w-3.5 h-3.5" />
-                <span>{format(new Date(meeting.start_date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}</span>
+                <span>{format(new Date(meeting.start_date + 'T12:00:00'), 'EEEE, MMMM d, yyyy'}</span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground font-sans">
                 <Clock className="w-3.5 h-3.5" />
@@ -230,7 +230,7 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
                 size="sm"
                 variant={myAttendee.rsvp_status === 'accepted' ? 'default' : 'outline'}
                 className="flex-1 gap-1"
-                onClick={() => handleRsvp('accepted')}
+                onClick={() => handleRsvp('accepted'}
                 disabled={updateRsvp.isPending}
               >
                 <CheckCircle className="w-3.5 h-3.5" />
@@ -240,7 +240,7 @@ export function MeetingDetailPanel({ meeting, open, onOpenChange }: MeetingDetai
                 size="sm"
                 variant={myAttendee.rsvp_status === 'declined' ? 'destructive' : 'outline'}
                 className="flex-1 gap-1"
-                onClick={() => handleRsvp('declined')}
+                onClick={() => handleRsvp('declined'}
                 disabled={updateRsvp.isPending}
               >
                 <XCircle className="w-3.5 h-3.5" />

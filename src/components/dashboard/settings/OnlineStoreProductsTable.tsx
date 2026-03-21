@@ -212,7 +212,7 @@ export function OnlineStoreProductsTable() {
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-1">
                         {isLowStock && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
-                        <span className={cn(isLowStock && 'text-amber-600 font-medium')}>
+                        <span className={cn(isLowStock && 'text-amber-600 font-medium'}>
                           {product.quantity_on_hand ?? 0}
                         </span>
                       </span>

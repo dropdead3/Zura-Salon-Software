@@ -130,7 +130,7 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
               <div className="flex items-center gap-3 text-xs mb-1.5">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3 text-muted-foreground" />
-                  {formatDate(new Date(lastVisit.appointment_date), 'MMM d, yyyy')}
+                  {formatDate(new Date(lastVisit.appointment_date), 'MMM d, yyyy'}
                 </span>
                 {lastVisit.stylist_name && (
                   <span className="flex items-center gap-1">
@@ -151,13 +151,13 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
             {client.birthday && (
               <span className="flex items-center gap-1">
                 <Cake className="w-3 h-3 text-muted-foreground" />
-                {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
+                {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d'}
               </span>
             )}
             {client.client_since && (
               <span className="flex items-center gap-1">
                 <Award className="w-3 h-3 text-muted-foreground" />
-                Since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                Since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy'}
               </span>
             )}
           </div>

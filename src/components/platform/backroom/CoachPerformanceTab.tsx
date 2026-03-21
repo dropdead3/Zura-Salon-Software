@@ -69,12 +69,12 @@ export function CoachPerformanceTab() {
           <TableHeader>
             <TableRow>
               <TableHead className={tokens.table.columnHeader}>Coach</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Assigned Orgs</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Emails (30d)</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Assigned Orgs</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Emails (30d)</TableHead>
               <TableHead className={tokens.table.columnHeader}>Waste Trend</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Waste Δ</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Waste Δ</TableHead>
               <TableHead className={tokens.table.columnHeader}>Reweigh Trend</TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Reweigh Δ</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'text-center'}>Reweigh Δ</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

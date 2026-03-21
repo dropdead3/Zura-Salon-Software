@@ -56,7 +56,7 @@ export function ContractAdjustmentsPanel({
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
               <p className="text-sm text-slate-400 mb-1">Current Contract</p>
               <p className="text-white font-medium">
-                {formatDate(parseISO(contractStartDate), 'MMM d, yyyy')} → {formatDate(parseISO(contractEndDate), 'MMM d, yyyy')}
+                {formatDate(parseISO(contractStartDate), 'MMM d, yyyy'} → {formatDate(parseISO(contractEndDate), 'MMM d, yyyy'}
                 {contractMonths !== null && (
                   <span className="text-slate-400 font-normal ml-2">
                     ({contractMonths} months)
@@ -119,7 +119,7 @@ export function ContractAdjustmentsPanel({
                     <Clock className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-slate-300">
-                        {formatDate(new Date(adjustment.created_at), 'MMM d')}: {adjustment.description}
+                        {formatDate(new Date(adjustment.created_at), 'MMM d'}: {adjustment.description}
                       </p>
                       <p className="text-xs text-slate-500">{adjustment.reason}</p>
                     </div>

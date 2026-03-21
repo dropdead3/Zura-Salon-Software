@@ -124,7 +124,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           </div>
           <div className="pt-3 text-center max-w-[180px]">
             <p className="text-[8px] text-muted-foreground">
-              Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
+              Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', ''}</span>
             </p>
           </div>
         </div>
@@ -268,7 +268,7 @@ function QRCodeCard() {
               </div>
               <div className="mt-1 text-center max-w-[65px]">
                 <p className="text-[2.5px] text-muted-foreground">
-                  Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
+                  Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', ''}</span>
                 </p>
               </div>
             </div>
@@ -460,7 +460,7 @@ export default function AccountManagement() {
 
               {account.approved_at && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Approved {formatDate(new Date(account.approved_at), 'MMM d, yyyy')}
+                  Approved {formatDate(new Date(account.approved_at), 'MMM d, yyyy'}
                 </p>
               )}
             </div>
@@ -579,7 +579,7 @@ export default function AccountManagement() {
                   <TooltipTrigger asChild>
                     <span className="cursor-help">{formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true })}</span>
                   </TooltipTrigger>
-                  <TooltipContent>{formatDate(new Date(invitation.created_at), 'PPpp')}</TooltipContent>
+                  <TooltipContent>{formatDate(new Date(invitation.created_at), 'PPpp'}</TooltipContent>
                 </Tooltip>
               </div>
 
@@ -590,7 +590,7 @@ export default function AccountManagement() {
               )}
 
               {actualStatus === 'accepted' && invitation.accepted_at && (
-                <p className="text-xs text-green-600 mt-1">Accepted {formatDate(new Date(invitation.accepted_at), 'PPp')}</p>
+                <p className="text-xs text-green-600 mt-1">Accepted {formatDate(new Date(invitation.accepted_at), 'PPp'}</p>
               )}
             </div>
 

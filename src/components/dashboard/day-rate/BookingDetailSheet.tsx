@@ -121,7 +121,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
             <div className="flex items-start gap-3">
               <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
               <div>
-                <p className="font-medium">{formatDate(bookingDate, 'EEEE, MMMM d, yyyy')}</p>
+                <p className="font-medium">{formatDate(bookingDate, 'EEEE, MMMM d, yyyy'}</p>
                 <p className="text-sm text-muted-foreground">Booking Date</p>
               </div>
             </div>
@@ -217,7 +217,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
                 <div>
                   <p className="font-medium">Version {booking.agreement_version}</p>
                   <p className="text-sm text-muted-foreground">
-                    Signed {formatDate(new Date(booking.agreement_signed_at), 'MMM d, yyyy h:mm a')}
+                    Signed {formatDate(new Date(booking.agreement_signed_at), 'MMM d, yyyy h:mm a'}
                   </p>
                 </div>
               </div>
@@ -254,12 +254,12 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
         <div className="text-xs text-muted-foreground space-y-1">
           <div className="flex items-center gap-2">
             <Clock className="w-3 h-3" />
-            Created: {formatDate(new Date(booking.created_at), 'MMM d, yyyy h:mm a')}
+            Created: {formatDate(new Date(booking.created_at), 'MMM d, yyyy h:mm a'}
           </div>
           {booking.updated_at !== booking.created_at && (
             <div className="flex items-center gap-2">
               <Clock className="w-3 h-3" />
-              Updated: {formatDate(new Date(booking.updated_at), 'MMM d, yyyy h:mm a')}
+              Updated: {formatDate(new Date(booking.updated_at), 'MMM d, yyyy h:mm a'}
             </div>
           )}
         </div>

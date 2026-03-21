@@ -297,7 +297,7 @@ export function ScheduleToolbar({
                         onCheckedChange={() => toggleStatus(status)}
                       />
                       <Label htmlFor={status} className="text-sm capitalize">
-                        {status.replace('_', ' ')}
+                        {status.replace('_', ' '}
                       </Label>
                     </div>
                   ))}
@@ -367,7 +367,7 @@ export function ScheduleToolbar({
       {/* Sync Status */}
       {lastSync && (
         <div className="text-xs text-muted-foreground hidden lg:block">
-          Last synced: {formatDate(lastSync, 'h:mm a')}
+          Last synced: {formatDate(lastSync, 'h:mm a'}
         </div>
       )}
     </div>

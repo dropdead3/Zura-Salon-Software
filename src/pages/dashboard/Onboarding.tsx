@@ -868,7 +868,7 @@ export default function Onboarding() {
             <p className="text-muted-foreground font-sans mb-6">
               You've completed all onboarding steps. You're ready to start!
             </p>
-            <Button onClick={() => navigate(dashPath('/')} size={tokens.button.hero} className="font-display">
+            <Button onClick={() => navigate(dashPath('/'} size={tokens.button.hero} className="font-display">
               <Sparkles className="w-4 h-4 mr-2" />
               GO TO DASHBOARD
             </Button>

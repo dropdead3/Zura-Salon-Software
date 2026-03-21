@@ -170,7 +170,7 @@ export function NewHireWizardContent() {
                     <SelectContent>
                       {configurableRoles.map(r => (
                         <SelectItem key={r.id} value={r.name}>
-                          {r.display_name || r.name.replace(/_/g, ' ')}
+                          {r.display_name || r.name.replace(/_/g, ' '}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -381,7 +381,7 @@ export function NewHireWizardContent() {
         <CardContent className="space-y-2 text-sm">
           {form.fullName && <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span className="font-medium">{form.fullName}</span></div>}
           {form.email && <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{form.email}</span></div>}
-          {form.role && <div className="flex justify-between"><span className="text-muted-foreground">Role</span><Badge variant="secondary" className="capitalize text-[10px]">{form.role.replace(/_/g, ' ')}</Badge></div>}
+          {form.role && <div className="flex justify-between"><span className="text-muted-foreground">Role</span><Badge variant="secondary" className="capitalize text-[10px]">{form.role.replace(/_/g, ' '}</Badge></div>}
           {form.startDate && <div className="flex justify-between"><span className="text-muted-foreground">Start Date</span><span>{form.startDate}</span></div>}
           {form.payRate && <div className="flex justify-between"><span className="text-muted-foreground">Pay</span><span>{currency}{form.payRate}{form.payType === 'hourly' ? '/hr' : form.payType === 'salary' ? '/yr' : ''}</span></div>}
         </CardContent>
@@ -436,7 +436,7 @@ export function NewHireWizardContent() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={() => navigate(dashPath('/admin/payroll?tab=overview')} className="flex-1">
+                <Button onClick={() => navigate(dashPath('/admin/payroll?tab=overview'} className="flex-1">
                   Back to Hiring & Payroll Hub
                 </Button>
                 <Button variant="outline" onClick={() => {

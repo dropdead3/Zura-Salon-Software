@@ -748,7 +748,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 : 'border-white/10 hover:border-white/20'
                             }`}
                             style={themePreset === 'custom' ? { borderColor: accentColor } : undefined}
-                            onClick={() => setThemePreset('custom')}
+                            onClick={() => setThemePreset('custom'}
                             whileTap={{ scale: 0.98 }}
                           >
                             <Palette className="w-4 h-4 text-white/60" />
@@ -822,7 +822,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   : 'border-white/10 hover:border-white/20'
                               }`}
                               style={logoSource === 'auto' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('auto')}
+                              onClick={() => handleLogoSourceChange('auto'}
                               whileTap={{ scale: 0.98 }}
                             >
                               <Image className="w-4 h-4 text-white/60" />
@@ -835,7 +835,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   : 'border-white/10 hover:border-white/20'
                               } ${!businessSettings?.logo_light_url ? 'opacity-50' : ''}`}
                               style={logoSource === 'org-light' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('org-light')}
+                              onClick={() => handleLogoSourceChange('org-light'}
                               whileTap={{ scale: 0.98 }}
                               disabled={!businessSettings?.logo_light_url}
                             >
@@ -849,7 +849,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   : 'border-white/10 hover:border-white/20'
                               } ${!businessSettings?.logo_dark_url ? 'opacity-50' : ''}`}
                               style={logoSource === 'org-dark' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('org-dark')}
+                              onClick={() => handleLogoSourceChange('org-dark'}
                               whileTap={{ scale: 0.98 }}
                               disabled={!businessSettings?.logo_dark_url}
                             >
@@ -863,7 +863,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                   : 'border-white/10 hover:border-white/20'
                               }`}
                               style={logoSource === 'custom' ? { borderColor: accentColor } : undefined}
-                              onClick={() => handleLogoSourceChange('custom')}
+                              onClick={() => handleLogoSourceChange('custom'}
                               whileTap={{ scale: 0.98 }}
                             >
                               <Palette className="w-4 h-4 text-white/60" />

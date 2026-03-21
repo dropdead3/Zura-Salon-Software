@@ -86,7 +86,7 @@ function StylistTicketRow({ stylist, delay, orgAvg }: { stylist: StylistTicketDa
           <p className="text-xs text-muted-foreground">
             {stylist.transactionCount} appointment{stylist.transactionCount !== 1 ? 's' : ''}
             {diff !== 0 && (
-              <span className={cn('ml-1.5', diff > 0 ? 'text-chart-4' : 'text-destructive')}>
+              <span className={cn('ml-1.5', diff > 0 ? 'text-chart-4' : 'text-destructive'}>
                 {diff > 0 ? '+' : ''}{diff}% vs avg
               </span>
             )}
@@ -95,7 +95,7 @@ function StylistTicketRow({ stylist, delay, orgAvg }: { stylist: StylistTicketDa
         <span className="text-sm font-display tabular-nums">
           <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.avgTicket))}</BlurredAmount>
         </span>
-        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', expanded && 'rotate-180')} />
+        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', expanded && 'rotate-180'} />
       </div>
       <AnimatePresence>
         {expanded && <ServiceMixPanel categories={stylist.categories} />}
@@ -153,7 +153,7 @@ export function AvgTicketByStylistPanel({ isOpen, dateFrom, dateTo, locationId }
                     onClick={() => setShowAll(!showAll)}
                     className="text-xs text-primary hover:underline flex items-center gap-1 mx-auto"
                   >
-                    <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180'} />
                     {showAll ? 'Show less' : `Show all ${stylists.length}`}
                   </button>
                 )}

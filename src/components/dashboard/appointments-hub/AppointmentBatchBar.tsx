@@ -95,7 +95,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       a.status || '',
       a.total_price ?? '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""'}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -264,7 +264,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
             <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => handleBulkStatusUpdate('cancelled')}
+              onClick={() => handleBulkStatusUpdate('cancelled'}
             >
               Cancel Appointments
             </AlertDialogAction>

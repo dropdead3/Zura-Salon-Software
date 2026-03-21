@@ -161,7 +161,7 @@ export function ReviewShareScreen({
                 {platformButtons.map((platform) => (
                   <Button
                     key={platform.id}
-                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'yelp' | 'facebook')}
+                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'yelp' | 'facebook'}
                     className={cn(
                       'text-white gap-2',
                       platform.color,
