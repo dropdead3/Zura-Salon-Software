@@ -60,9 +60,7 @@ export default function Dock() {
   const [demoLocationId, setDemoLocationId] = useState('');
   const [staffFilter, setStaffFilter] = useState('all');
 
-  const effectiveStaff = urlDemoSession
-    ? { ...urlDemoSession, locationId: demoLocationId || urlDemoSession.locationId }
-    : staff;
+  const effectiveStaff = staff;
 
   const handlePinSuccess = useCallback((session: DockStaffSession) => {
     setStaff(session);
