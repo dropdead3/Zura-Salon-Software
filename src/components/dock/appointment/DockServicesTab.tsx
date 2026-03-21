@@ -5,7 +5,7 @@
  * In demo mode, bowls are managed in local state (no DB writes).
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
