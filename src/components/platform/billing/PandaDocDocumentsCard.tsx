@@ -97,10 +97,10 @@ export function PandaDocDocumentsCard({ organizationId }: PandaDocDocumentsCardP
                         )}
                         <p className="text-xs text-slate-500 mt-1">
                           {doc.completed_at
-                            ? `Completed: ${format(new Date(doc.completed_at), 'MMM d, yyyy`
+                            ? `Completed: ${format(new Date(doc.completed_at), 'MMM d, yyyy}`
                             : doc.sent_at
-                            ? `Sent: ${format(new Date(doc.sent_at), 'MMM d, yyyy`
-                            : `Created: ${format(new Date(doc.created_at), 'MMM d, yyyy`}
+                            ? `Sent: ${format(new Date(doc.sent_at), 'MMM d, yyyy}`
+                            : `Created: ${format(new Date(doc.created_at), 'MMM d, yyyy}`}
                         </p>
                       </div>
                     </div>

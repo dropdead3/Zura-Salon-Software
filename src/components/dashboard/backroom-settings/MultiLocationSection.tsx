@@ -81,7 +81,7 @@ export function MultiLocationSection() {
           }
         }
       }
-      toast.success(`Pushed ${settingsPushed} setting(s)${rulesPushed > 0 ? ` + ${rulesPushed} alert rule(s)` : ''} to ${locations.length} locations`);
+      toast.success(`Pushed ${settingsPushed} setting(s)${rulesPushed > 0 ? }` + ${rulesPushed} alert rule(s)` : ''} to ${locations.length} locations`);
       setShowPushDialog(false);
     } catch (e: any) { toast.error('Push failed: ' + e.message); }
     finally { setIsPushing(false); }
