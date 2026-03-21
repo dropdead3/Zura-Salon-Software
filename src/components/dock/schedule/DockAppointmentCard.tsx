@@ -176,14 +176,6 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Mix session indicator */}
-            {appointment.has_mix_session && (
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600/20">
-                <FlaskConical className="w-3.5 h-3.5 text-violet-400" />
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
