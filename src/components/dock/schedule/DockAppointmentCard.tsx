@@ -26,14 +26,14 @@ const BORDER_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
-const OPEN_OFFSET = -152;
+const OPEN_OFFSET = -170;
 const SNAP_THRESHOLD = 60;
 
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
-  const trayWidth = isTerminal ? 72 : 152;
-  const openOffset = isTerminal ? -72 : OPEN_OFFSET;
+  const trayWidth = isTerminal ? 78 : 170;
+  const openOffset = isTerminal ? -78 : OPEN_OFFSET;
 
   const x = useMotionValue(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -79,31 +79,35 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
         {!isTerminal && (
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                close();
+                onComplete?.(appointment);
+              }}
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-95 transition-all"
+              aria-label="Complete appointment"
+            >
+              <CheckCircle2 className="w-[18px] h-[18px]" />
+            </button>
+            <span className="text-[8px] tracking-wide uppercase font-display text-emerald-400">Finish Appt</span>
+          </div>
+        )}
+        <div className="flex flex-col items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               close();
-              onComplete?.(appointment);
+              onViewClient?.(appointment);
             }}
-            className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-95 transition-all"
-            aria-label="Complete appointment"
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-400 active:bg-violet-500/25 active:scale-95 transition-all"
+            aria-label="View client"
           >
-            <CheckCircle2 className="w-[18px] h-[18px]" />
-            <span className="text-[9px] tracking-wide uppercase font-display mt-0.5">Done</span>
+            <UserCircle className="w-[18px] h-[18px]" />
           </button>
-        )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            close();
-            onViewClient?.(appointment);
-          }}
-          className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 active:bg-violet-500/25 active:scale-95 transition-all"
-          aria-label="View client"
-        >
-          <UserCircle className="w-[18px] h-[18px]" />
-          <span className="text-[9px] tracking-wide uppercase font-display mt-0.5">Client</span>
-        </button>
+          <span className="text-[8px] tracking-wide uppercase font-display text-violet-400">Client Info</span>
+        </div>
       </motion.div>
 
       {/* Swipeable card content */}
