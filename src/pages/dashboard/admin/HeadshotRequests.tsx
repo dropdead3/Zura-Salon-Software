@@ -376,7 +376,7 @@ export default function HeadshotRequests() {
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start">
                           <CalendarDays className="w-4 h-4 mr-2" />
-                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date')}
+                          {scheduledDate ? formatDate(scheduledDate, 'PPP') : 'Pick a date'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">

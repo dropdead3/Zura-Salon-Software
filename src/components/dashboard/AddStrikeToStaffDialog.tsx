@@ -215,7 +215,7 @@ export function AddStrikeToStaffDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date')}
+                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

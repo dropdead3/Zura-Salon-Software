@@ -136,7 +136,7 @@ export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? formatDate(date, 'EEEE, MMMM d, yyyy') : 'Select date')}
+                  {date ? formatDate(date, 'EEEE, MMMM d, yyyy') : 'Select date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
