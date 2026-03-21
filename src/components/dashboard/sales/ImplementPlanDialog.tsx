@@ -272,7 +272,7 @@ export function ImplementPlanDialog({
           .map((step) => ({
             user_id: user.id,
             title: step.title,
-            description: `From campaign: ${campaignName}${step.description ? }`\n${step.description}` : ''}`,
+            description: `From campaign: ${campaignName}${step.description ? `\n${step.description}` : ''}`,
             due_date: addDays(new Date(), step.dueDays).toISOString(),
             priority: 'high',
             source: 'ai_recovery_plan',

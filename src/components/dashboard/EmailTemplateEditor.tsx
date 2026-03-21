@@ -626,10 +626,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     // Base styles WITHOUT borderRadius - only apply borderRadius to elements that use it in canvas
     const baseStyles = `
       ${bgStyle}
-      ${block.styles.textColor ? }`color: ${block.styles.textColor};` : ''}
-      ${block.styles.fontSize ? }`font-size: ${block.styles.fontSize};` : ''}
-      ${block.styles.fontWeight ? }`font-weight: ${block.styles.fontWeight};` : ''}
-      ${block.styles.textAlign ? }`text-align: ${block.styles.textAlign};` : ''}
+      ${block.styles.textColor ? `color: ${block.styles.textColor};` : ''}
+      ${block.styles.fontSize ? `font-size: ${block.styles.fontSize};` : ''}
+      ${block.styles.fontWeight ? `font-weight: ${block.styles.fontWeight};` : ''}
+      ${block.styles.textAlign ? `text-align: ${block.styles.textAlign};` : ''}
       padding: ${padding};
       ${borderStyles}
     `.trim();
@@ -647,7 +647,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)};">
-          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? }`width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? }`border-radius: ${block.styles.borderRadius};` : ''}" />
+          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
       }
       case 'button': {
@@ -667,7 +667,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
           : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
         </div>`;
       }
@@ -717,7 +717,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
         }).join('');
         
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? }`background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
           ${socialIcons}
         </div>`;
       }
@@ -859,7 +859,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const textHtml = `<div style="display: inline-block; vertical-align: middle;">
           <div style="font-weight: bold; font-size: 16px; line-height: 1.3;">${config.name}</div>
           <div style="font-size: 14px; opacity: 0.8; line-height: 1.3;">${config.title}</div>
-          ${contactLines.length > 0 ? }`<div style="margin-top: 4px;">${contactLines.join('')}</div>` : ''}
+          ${contactLines.length > 0 ? `<div style="margin-top: 4px;">${contactLines.join('')}</div>` : ''}
         </div>`;
         
         let contentHtml = '';
@@ -871,20 +871,20 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
             <tr>
               <td style="vertical-align: middle; padding-right: ${imageHtml ? '16px' : '0'};">${textHtml}</td>
-              ${imageHtml ? }`<td style="vertical-align: middle;">${imageHtml}</td>` : ''}
+              ${imageHtml ? `<td style="vertical-align: middle;">${imageHtml}</td>` : ''}
             </tr>
           </table>`;
         } else {
           // horizontal-left (default)
           contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
             <tr>
-              ${imageHtml ? }`<td style="vertical-align: middle; padding-right: 16px;">${imageHtml}</td>` : ''}
+              ${imageHtml ? `<td style="vertical-align: middle; padding-right: 16px;">${imageHtml}</td>` : ''}
               <td style="vertical-align: middle;">${textHtml}</td>
             </tr>
           </table>`;
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; ${indent > 0 ? }`padding-left: ${horizontalPadding + indent}px;` : ''}">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; ${indent > 0 ? `padding-left: ${horizontalPadding + indent}px;` : ''}">
           ${contentHtml}
         </div>`;
       }
@@ -907,9 +907,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           
           switch (columnBlock.type) {
             case 'heading':
-              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
+              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? `background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
             case 'text':
-              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? }`background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
+              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? `background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
             case 'button': {
               const isSecondary = columnBlock.styles.buttonVariant === 'secondary';
               const sizeScale = (columnBlock.styles.buttonSize || 100) / 100;
@@ -929,7 +929,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
               if (!imgUrl) return '';
               const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
               return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
-                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image'}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? }`border-radius: ${columnBlock.styles.borderRadius};` : ''}" />
+                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image'}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? `border-radius: ${columnBlock.styles.borderRadius};` : ''}" />
               </div>`;
             }
             case 'link': {
@@ -987,7 +987,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const columnCells = (useBlocks ? config.columnBlocks! : []).map((columnBlocks, colIndex) => {
           const cellContent = columnBlocks.map(generateColumnBlockHtml).join('');
           
-          return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? }`0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
+          return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? `0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
             ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
           </td>`;
         }).join('');
@@ -1023,7 +1023,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
             return '';
           }).join('');
           
-          return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? }`0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
+          return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? `0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
             ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
           </td>`;
         }).join('');

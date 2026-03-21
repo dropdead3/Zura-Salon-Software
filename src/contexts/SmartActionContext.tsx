@@ -66,7 +66,7 @@ export function SmartActionProvider({ children }: { children: ReactNode }) {
         await supabase.from('chat_messages').insert({
           channel_id: action.channel_id,
           sender_id: user.id,
-          content: `❌ Sorry, I can't help with that right now.${note ? }` (${note})` : ''}`,
+          content: `❌ Sorry, I can't help with that right now.${note ? ` (${note})` : ''}`,
           metadata: { smart_action_response: true, action_id: actionId },
         });
       } catch (error) {

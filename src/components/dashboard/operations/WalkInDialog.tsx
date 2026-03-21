@@ -344,7 +344,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center pt-1">
-                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? }`${redoPolicy.redo_pricing_percentage}% of price` : 'Full price'}` : 'Estimated price, not including overages'}
+                {isRedo ? `Redo pricing: ${redoPolicy?.redo_pricing_policy === 'free' ? 'Complimentary' : redoPolicy?.redo_pricing_policy === 'percentage' ? `${redoPolicy.redo_pricing_percentage}% of price` : 'Full price'}` : 'Estimated price, not including overages'}
               </p>
             </div>
           )}
