@@ -116,7 +116,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, 'MMM d, yyyy') : 'Pick a date'}
+                    {dueDate ? format(dueDate, 'MMM d, yyyy') : 'Pick a date')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

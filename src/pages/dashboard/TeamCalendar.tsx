@@ -221,7 +221,7 @@ export default function TeamCalendar() {
           {/* Selected Date Panel */}
           <Card className="p-4">
             <h3 className="font-medium mb-4">
-              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date'}
+              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date')}
             </h3>
             
             {selectedDate ? (
