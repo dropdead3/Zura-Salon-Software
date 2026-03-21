@@ -174,7 +174,7 @@ export function ChangelogSearchFilter({
                     !filters.dateFrom && 'text-muted-foreground'
                   )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateFrom ? formatDate(filters.dateFrom, 'MMM d, yyyy') : 'From date')}
+                    {filters.dateFrom ? formatDate(filters.dateFrom, 'MMM d, yyyy') : 'From date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -195,7 +195,7 @@ export function ChangelogSearchFilter({
                     !filters.dateTo && 'text-muted-foreground'
                   )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateTo ? formatDate(filters.dateTo, 'MMM d, yyyy') : 'To date')}
+                    {filters.dateTo ? formatDate(filters.dateTo, 'MMM d, yyyy') : 'To date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

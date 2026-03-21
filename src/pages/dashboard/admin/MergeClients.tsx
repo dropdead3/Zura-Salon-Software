@@ -52,7 +52,7 @@ export default function MergeClients() {
             <MergeWizard
               preselectedClientIds={preselectedIds}
               onComplete={() => setActiveTab('history')}
-              onCancel={() => navigate(dashPath('/clients')}
+              onCancel={() => navigate(dashPath('/clients'))}
             />
           </TabsContent>
 

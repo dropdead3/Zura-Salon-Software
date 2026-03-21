@@ -91,7 +91,7 @@ export default function LocationsManager() {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => navigate(dashPath('/admin/settings')}
+              onClick={() => navigate(dashPath('/admin/settings'))}
               className="gap-2"
             >
               <Settings className="w-4 h-4" />
@@ -132,7 +132,7 @@ export default function LocationsManager() {
               <Button 
                 variant="outline" 
                 className="mt-4"
-                onClick={() => navigate(dashPath('/admin/settings')}
+                onClick={() => navigate(dashPath('/admin/settings'))}
               >
                 Go to Settings
               </Button>
@@ -223,7 +223,7 @@ export default function LocationsManager() {
           <p className="text-xs text-muted-foreground text-center">
             Drag locations to reorder how they appear on the website. 
             Edit location details in <button 
-              onClick={() => navigate(dashPath('/admin/settings')}
+              onClick={() => navigate(dashPath('/admin/settings'))}
               className="underline hover:text-foreground transition-colors"
             >
               Settings → Locations

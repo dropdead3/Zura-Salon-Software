@@ -331,7 +331,7 @@ function POExpandedRow({ poId, po, formatCurrency }: {
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-sm gap-1.5 -ml-2">
                       <CalendarIcon className="w-3.5 h-3.5" />
-                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date')}
+                      {deliveryDate ? format(deliveryDate, 'MMM d, yyyy') : 'Set date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
