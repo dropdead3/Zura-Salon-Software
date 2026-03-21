@@ -276,7 +276,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const serviceGradientDefs = useMemo(() => {
     const unique = [...new Set(serviceColors)];
     return unique.map(hex => ({
-      id: `glass-${hex.replace('#', '`,
+      id: `glass-${hex.replace('#', '')`,
       hex,
     }));
   }, [serviceColors]);
@@ -300,7 +300,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const categoryGradientDefs = useMemo(() => {
     const unique = [...new Set(categoryColors)];
     return unique.map(hex => ({
-      id: `cat-glass-${hex.replace('#', '`,
+      id: `cat-glass-${hex.replace('#', '')`,
       hex,
     }));
   }, [categoryColors]);

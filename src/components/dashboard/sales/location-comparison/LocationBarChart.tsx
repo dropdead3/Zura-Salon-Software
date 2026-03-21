@@ -86,7 +86,7 @@ export function LocationBarChart({ locations, colors, totalRevenue }: LocationBa
   // Unique gradient defs for each color
   const gradientDefs = useMemo(() => {
     const unique = [...new Set(colors.slice(0, data.length))];
-    return unique.map(hex => ({ id: `loc-glass-${hex.replace('#', '`, hex }));
+    return unique.map(hex => ({ id: `loc-glass-${hex.replace('#', '')`, hex }));
   }, [colors, data.length]);
 
   const barHeight = 36;

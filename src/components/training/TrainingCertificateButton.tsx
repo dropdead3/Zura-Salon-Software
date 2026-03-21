@@ -115,7 +115,7 @@ export function TrainingCertificateButton({
       doc.setFontSize(11);
       doc.setTextColor(100, 100, 120);
       doc.text(
-        `Completed on ${formatDate(completionDate, 'MMMM d, yyyy`,
+        `Completed on ${formatDate(completionDate, 'MMMM d, yyyy')`,
         pageWidth / 2,
         155,
         { align: 'center' }
