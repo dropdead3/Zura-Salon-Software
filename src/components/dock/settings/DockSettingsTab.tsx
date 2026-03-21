@@ -93,7 +93,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
             {staff.displayName}
           </p>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Mixing Station
+            Zura Backroom Station 1 of {totalStations} at {locationName}
           </p>
         </div>
       </div>
