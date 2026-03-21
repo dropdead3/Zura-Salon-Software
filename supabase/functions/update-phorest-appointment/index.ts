@@ -268,6 +268,16 @@ serve(async (req) => {
       localUpdate.rebook_declined_reason = rebook_declined_reason;
     }
 
+    // Services update: rewrite service_name, total_price, duration_minutes
+    if (services && services.length > 0) {
+      localUpdate.service_name = services.map(s => s.name).join(', ');
+      const totalPrice = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
+      const totalDuration = services.reduce((sum, s) => sum + (s.duration_minutes ?? 0), 0);
+      if (totalPrice > 0) localUpdate.total_price = totalPrice;
+      if (totalDuration > 0) localUpdate.duration_minutes = totalDuration;
+      localUpdate.service_category = services[0]?.category || null;
+    }
+
     console.log(`Updating ${targetTable}.${matchColumn} = ${appointment_id}`, JSON.stringify(localUpdate));
 
     const { error: updateError, data: updatedAppointment } = await supabase
