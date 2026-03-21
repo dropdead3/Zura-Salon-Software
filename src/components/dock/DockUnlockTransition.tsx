@@ -71,7 +71,7 @@ export function DockUnlockTransition({ unlocked, gate, children }: DockUnlockTra
             animate={{
               opacity: 1,
               scale: 1,
-              transition: { duration: 0.4, ease: ENTER_EASE as unknown as number[], delay: 0.15 },
+              transition: { duration: 0.4, ease: ENTER_EASE, delay: 0.15 },
             }}
           >
             {children}
