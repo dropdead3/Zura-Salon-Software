@@ -1,29 +1,22 @@
 
 
-## Match Admin PIN Pad to Front Entry PIN Pad
+## Update Subtitle to "Zura Backroom Station X of Y at [Location]"
 
-**File:** `src/components/dock/settings/DockTeamCompliancePanel.tsx`
+**File:** `src/components/dock/settings/DockSettingsTab.tsx`
 
-The admin PIN pad (Team Compliance gate) uses smaller buttons and wider gaps than the front entry PIN pad (`DockPinGate`). Align them:
+**Changes:**
 
-| Property | Admin (current) | Front entry | Target |
-|----------|----------------|-------------|--------|
-| Grid gap | `gap-3` | `gap-2` | `gap-2` |
-| Grid width | `w-64` | `w-80` | `w-80` |
-| Button height | `h-14` | `h-[72px]` | `h-[72px]` |
-| Text size | `text-lg` | `text-2xl` | `text-2xl` |
-| Delete button | `Delete` icon | "Clear" text | "Clear" text (clears full PIN) |
-| PIN dots | `w-3.5 h-3.5` | `w-4 h-4` | `w-4 h-4` |
-| Dots margin | `mb-8` | `mb-6` | `mb-6` |
+1. **Import** `useLocations` is already imported. Additionally import `useQuery` and `supabase` to fetch station count for this location.
 
-**Changes (lines 113–148):**
+2. **Add queries** inside the component:
+   - Use the existing `useLocations` hook (already imported) to resolve `staff.locationId` into a location name.
+   - Query `backroom_stations` filtered by `organization_id` and `location_id` to get total station count and determine this station's position (or default to "1 of 1" since the Dock doesn't currently track which station number it is).
 
-1. **Line 113** — PIN dots: `gap-4 mb-8` → `gap-3 mb-6`, dot size `w-3.5 h-3.5` → `w-4 h-4`
-2. **Line 130** — Grid: `gap-3 w-64` → `gap-2 w-80`
-3. **Line 136** — Delete button: height `h-14` → `h-[72px]`, replace `Delete` icon with `"Clear"` text label
-4. **Line 137** — Remove `Delete` icon import (replace with text)
-5. **Line 142-143** — Digit buttons: `h-14` → `h-[72px]`, `text-lg` → `text-2xl`
-6. **Delete handler** — Change from single-character delete to full clear (`setPin('')`)
+3. **Line 75-77** — Replace the static `"Mixing Station"` text with a dynamic string:
+   ```
+   Zura Backroom Station 1 of {totalStations} at {locationName}
+   ```
+   Since the Dock doesn't currently persist which specific station number it is, we'll show "Station 1 of X" using the count of active stations at the location. The location name comes from resolving `staff.locationId` against the locations list.
 
-All changes in one file.
+Single file, small edit. The subtitle will dynamically show station count and location name from database queries.
 
