@@ -141,7 +141,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
                 onClick={() => handleKey('delete')}
                 className="flex items-center justify-center h-[72px] rounded-2xl text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-[hsl(var(--platform-bg-card))] transition-colors"
               >
-                <Delete className="w-6 h-6" />
+                <span className="text-sm font-medium tracking-wide">Clear</span>
               </button>
             );
           }
