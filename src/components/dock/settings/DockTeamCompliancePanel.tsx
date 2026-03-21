@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Delete, ShieldCheck, Scale, Droplets, Wrench, Activity } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Scale, Droplets, Wrench, Activity } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
