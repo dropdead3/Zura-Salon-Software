@@ -450,9 +450,36 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                     <span className="text-xs text-[hsl(var(--platform-foreground))]">
                       {f.service_name || 'Formula'}
                     </span>
-                    <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
-                      {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                        {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
+                      </span>
+                      {activeBowlId && f.formula_data?.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cloneFormula.mutate({ bowlId: activeBowlId, formulaLines: f.formula_data });
+                          }}
+                          disabled={cloneFormula.isPending}
+                          className="p-1 rounded-lg hover:bg-violet-500/15 transition-colors"
+                          title="Clone into active bowl"
+                        >
+                          <Copy className="w-3 h-3 text-violet-400" />
+                        </button>
+                      )}
+                      {!activeBowlId && f.formula_data?.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toast.info('Start a mixing session first to clone formulas');
+                          }}
+                          className="p-1 rounded-lg opacity-40 cursor-not-allowed"
+                          title="No active bowl"
+                        >
+                          <Copy className="w-3 h-3 text-[hsl(var(--platform-foreground-muted))]" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {lines.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
