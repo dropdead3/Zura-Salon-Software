@@ -236,11 +236,11 @@ function AppointmentGroup({
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
-        <span className="text-sm font-display font-medium tracking-wide text-[hsl(var(--platform-foreground-muted))]">
+        <div className={`w-3 h-3 rounded-full ${dotColor}`} />
+        <span className="text-base font-display font-medium tracking-wide text-[hsl(var(--platform-foreground-muted))]">
           {label}
         </span>
-        <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.6)]">
+        <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.6)]">
           ({count})
         </span>
       </div>
