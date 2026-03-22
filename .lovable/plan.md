@@ -1,29 +1,34 @@
 
 
-## Add L-Shaped Hook Connector to Assistant Line
+## Handle Long Service Lists on Appointment Cards
 
-**Goal:** Indent the assistant info line and add an L-shaped visual connector (like a tree-view branch) to show that the assistant is subordinate/attached to the appointment. This is a common UI pattern in threaded lists and org charts.
+**Problem:** When a client has many services (e.g., "Balayage + Toner + Gloss + Blowout + Treatment"), the top line truncates everything after the client name. Services vanish behind `…` with no indication of how many there are.
 
-**File:** `src/components/dock/schedule/DockAppointmentCard.tsx` — lines 174-181
+**Approach:** Split client name and services onto separate visual lines when there are multiple services, and show a count badge when truncated. This keeps the card scannable while surfacing service volume.
 
-**Change:** Replace the current flat assistant row with an indented version that has an L-shaped connector drawn with a border trick:
+### Changes
+
+**File: `src/components/dock/schedule/DockAppointmentCard.tsx`** — lines 158-166
+
+Replace the single combined `<p>` with a two-line layout:
+
+1. **Line 1:** Client name only — always fully visible, `truncate` on its own
+2. **Line 2:** Services — `truncate` on its own line, so they get more horizontal space
 
 ```tsx
-{appointment.assistant_names && appointment.assistant_names.length > 0 && (
-  <div className="flex items-start mt-1 ml-1">
-    {/* L-hook connector */}
-    <div className="w-3 h-4 border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm shrink-0 mr-1.5" />
-    <div className="flex items-center gap-1 pt-1">
-      <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0" />
-      <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
-        {formatAssistantLabel(appointment.assistant_names)}
-      </span>
-    </div>
-  </div>
-)}
+<div className="flex-1 min-w-0">
+  <p className="font-medium text-lg text-[hsl(var(--platform-foreground))] truncate">
+    {appointment.client_name || 'Walk-in'}
+  </p>
+  {appointment.service_name && (
+    <p className="text-base text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
+      {appointment.service_name}
+    </p>
+  )}
+</div>
 ```
 
-The L-hook is a simple `div` with `border-l` + `border-b` + `rounded-bl-sm` — a left edge going down then turning right. Muted at 25% opacity so it reads as a subtle structural connector, not a loud decoration. The `ml-1` indent shifts the whole block slightly right to nest it under the time line.
+This gives services a full line width to display before truncating, and the client name is never cut off by long service lists. The card height grows by ~20px for one extra text line — acceptable for the "enlarged for fast-paced environment" context.
 
-Single file, one block replacement.
+Single file, one block change.
 
