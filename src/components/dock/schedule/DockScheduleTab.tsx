@@ -54,6 +54,8 @@ function formatTime(time: string) {
 }
 
 export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointment, onViewClient, locationId, staffFilter }: DockScheduleTabProps) {
+  const queryClient = useQueryClient();
+  const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
