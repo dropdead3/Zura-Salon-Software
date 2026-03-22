@@ -31,7 +31,7 @@ function groupAppointments(appointments: DockAppointment[]) {
 
   for (const a of appointments) {
     const status = a.status || 'pending';
-    if (a.has_mix_session || ACTIVE_STATUSES.includes(status)) {
+    if (ACTIVE_STATUSES.includes(status)) {
       active.push(a);
     } else if (COMPLETED_STATUSES.includes(status)) {
       completed.push(a);
