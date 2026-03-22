@@ -89,7 +89,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl" onClick={handleTap}>
+    <div className="relative z-[1] overflow-hidden rounded-xl" onClick={handleTap}>
       {/* Action tray behind the card */}
       <motion.div
         className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
@@ -121,7 +121,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
         className={cn(
-          'relative z-10 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
+          'relative z-20 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
           borderClass
         )}
@@ -150,7 +150,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
       </motion.div>
 
       {/* Static text overlay — does NOT move */}
-      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-5 pointer-events-none">
+      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-10 p-5 pointer-events-none">
         {/* Top row: client name · service */}
         <div className="flex items-start gap-2">
           <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
