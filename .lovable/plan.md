@@ -1,29 +1,21 @@
 
 
-## Fix: Card Content Hidden Behind Opaque Draggable Layer
+## Fix: Color & Chemical Toggle Visibility in Dark Dock Theme
 
-**Root cause:** The z-index swap (draggable `z-20`, text `z-10`) made the opaque card background cover the text overlay entirely. The card background is solid, so nothing below it is visible.
+**Problem:** The `Switch` component uses `bg-primary` for its checked state. In the Dock's dark context, `--primary` resolves to a muted light color (`40 20% 92%` in dark mode) that doesn't contrast well against the dark background — making it nearly invisible when toggled on.
 
-**Fix:** Merge the visible text content into the draggable `motion.div` itself, eliminating the separate static text overlay. This means:
-- The text moves with the card on swipe (which is actually better UX — content slides with the card)
-- No z-index conflict since there's only one visual layer
-- The invisible spacer div is no longer needed
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx` (line 148)
 
-**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+**Fix:** Override the Switch's checked background with the Dock's violet platform primary color via className:
 
-**Changes:**
-1. Replace the invisible spacer div (lines 156-168) with the actual visible content (currently in the static overlay at lines 172-199)
-2. Remove the static text overlay `motion.div` entirely (lines 172-199)
-3. The `contentOpacity` transform is no longer needed — remove it
-4. The flask icon stays inside the draggable div as-is
-
-The card structure simplifies to:
-```text
-<div wrapper>          -- outer, z-[1], overflow hidden
-  <motion.div tray>    -- action buttons behind
-  <motion.div drag>    -- draggable card with VISIBLE content inside
-</div>
+```tsx
+<Switch
+  id="chemical-toggle"
+  checked={showChemicalOnly}
+  onCheckedChange={setShowChemicalOnly}
+  className="data-[state=checked]:bg-[hsl(var(--platform-primary))]"
+/>
 ```
 
-Single file, removes ~20 lines of duplication.
+This makes the toggle glow violet when on — consistent with the Dock's design language and clearly visible against the dark background. Single line change.
 
