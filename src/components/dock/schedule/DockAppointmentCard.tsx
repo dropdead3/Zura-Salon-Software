@@ -100,7 +100,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
-        {!isTerminal && (
+        {canSwipe && isActive && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -112,6 +112,20 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           >
             <CheckCircle2 className="w-6 h-6" />
             <span className="text-[11px] tracking-wide uppercase font-display text-emerald-400 leading-tight">Finish Appt</span>
+          </button>
+        )}
+        {canSwipe && isScheduled && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              close();
+              onStart?.(appointment);
+            }}
+            className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
+            aria-label="Start appointment"
+          >
+            <Play className="w-6 h-6" />
+            <span className="text-[11px] tracking-wide uppercase font-display text-blue-400 leading-tight">Start Appt</span>
           </button>
         )}
       </motion.div>
