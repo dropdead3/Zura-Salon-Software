@@ -53,8 +53,8 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
   const durationMinutes = differenceInMinutes(end, start);
   const durationText = durationMinutes > 0 ? formatMinutesToDuration(durationMinutes) : '';
 
-  const trayWidth = isTerminal ? 0 : 128;
-  const openOffset = isTerminal ? 0 : OPEN_OFFSET;
+  const trayWidth = canSwipe ? 128 : 0;
+  const openOffset = canSwipe ? OPEN_OFFSET : 0;
 
   const x = useMotionValue(0);
   const [isOpen, setIsOpen] = useState(false);
