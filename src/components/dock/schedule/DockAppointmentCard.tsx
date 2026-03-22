@@ -126,7 +126,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
               serviceDisplay = `${services[0]} + ${services[1]} +${services.length - 2} more`;
             }
             return (
-              <p className={cn('text-lg', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
+              <p className={cn('text-lg truncate', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
                 {appointment.client_name || 'Walk-in'}
                 {serviceDisplay && (
                   <span className={cn('font-normal', visible ? 'text-[hsl(var(--platform-foreground-muted))]' : '')}>
