@@ -1,22 +1,20 @@
 
 
-## Tone Down Toggle Purple
+## Hide Flask Icon on Completed Appointment Cards
 
-**Problem:** The switch uses `bg-[hsl(var(--platform-primary))]` when checked, which resolves to a vivid violet that's too bright in the dark Dock context.
+**Problem:** The flask icon appears on all cards with a mix session, including completed ones. Once an appointment is completed, the mix session is finished too — the icon adds visual noise without actionable value.
 
-**File:** `src/components/dock/schedule/DockScheduleTab.tsx` — line 161
+**File:** `src/components/dock/schedule/DockAppointmentCard.tsx` — line 148
 
-**Change:** Replace the checked background with a muted violet using opacity:
+**Change:** Add a status check so the flask icon only renders for non-terminal appointments:
 
 ```tsx
 // Before
-className="data-[state=checked]:bg-[hsl(var(--platform-primary))] data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
+{appointment.has_mix_session && (
 
 // After
-className="data-[state=checked]:bg-violet-500/60 data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
+{appointment.has_mix_session && !['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase()) && (
 ```
 
-Uses `violet-500/60` (60% opacity) instead of the full-brightness platform primary. This keeps the violet hue recognizable but significantly tones down the vibrancy to fit the subdued dark theme.
-
-Single class change, one line.
+Single condition addition, one line. Flask icon will still appear on Active and Scheduled cards where it's meaningful.
 
