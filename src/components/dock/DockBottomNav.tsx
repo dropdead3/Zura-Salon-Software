@@ -3,7 +3,7 @@
  * Floating capsule · spring-animated pill · scale morphing · label reveal.
  */
 
-import { Calendar, FlaskConical, Users, Weight, Settings } from 'lucide-react';
+import { Calendar, FlaskConical, Users, Weight, Settings, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DockTab } from '@/pages/Dock';
@@ -11,6 +11,7 @@ import type { DockTab } from '@/pages/Dock';
 interface DockBottomNavProps {
   activeTab: DockTab;
   onTabChange: (tab: DockTab) => void;
+  onLockStation?: () => void;
 }
 
 const TABS: { id: DockTab; label: string; icon: typeof Calendar }[] = [
