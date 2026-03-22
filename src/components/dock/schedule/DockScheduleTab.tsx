@@ -240,7 +240,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         <div className="absolute bottom-0 left-0 right-0 h-16 z-10 pointer-events-none"
           style={{ background: 'linear-gradient(to top, hsl(var(--platform-bg)), transparent)' }}
         />
-        <div ref={scrollRef} onScroll={checkScroll} className="h-full overflow-y-auto px-5 pb-56 space-y-8">
+        <div ref={scrollRef} onScroll={checkScroll} className="h-full overflow-y-auto px-5 pt-12 pb-56 space-y-8">
           {filteredAppointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center pt-20 text-center">
               <Calendar className="w-12 h-12 text-violet-400/40 mb-4" />
