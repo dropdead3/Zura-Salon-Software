@@ -1,34 +1,42 @@
 
+Fix the card so the appointment details are truly anchored in place while only the background shell slides.
 
-## Fix: Stationary Card Content + Visible Cancel/No-Show Buttons
+What’s happening now:
+- The current card still uses the draggable `motion.div` as the main layout box and height source.
+- Even though there is a static overlay, the interaction is only partially decoupled, so the visual result still feels like the card content is tied to the swipe.
 
-**Two bugs:**
-1. Card content moves with the swipe — it should stay fixed in place and dim
-2. Cancel/No-Show buttons aren't visible because the card may not be sliding far enough or they're clipped
+Implementation plan:
+1. Refactor `src/components/dock/schedule/DockAppointmentCard.tsx` to use a fully separated 4-layer structure:
+   - Layer 1: static sizing shell in normal flow
+   - Layer 2: action tray behind the card
+   - Layer 3: sliding background shell (`motion.div`, absolute)
+   - Layer 4: stationary content overlay (`motion.div`, absolute, opacity only)
 
-**Root cause:** The current structure places all card content inside the draggable `motion.div`. Per the original design, the background layer slides while the content stays stationary.
+2. Move the invisible sizing content out of the draggable layer:
+   - Keep one non-visible sizing block in the root container so the card height is determined without relying on the sliding element.
+   - Remove the current “invisible spacer inside the draggable layer” pattern.
 
-### Architecture (restore original pattern)
+3. Make the draggable background truly absolute:
+   - Change the sliding `motion.div` to `absolute inset-0 z-10`.
+   - Leave only background, border, and flask icon in that layer.
+   - Do not place any text/content inside it.
 
-```text
-┌─────────────────────────────────────────┐
-│ .relative overflow-hidden               │
-│                                         │
-│  [Tray]        absolute right-0         │  ← action buttons, behind everything
-│  [Sliding BG]  motion.div z-10          │  ← colored border/bg, drags left
-│  [Static Info] absolute z-20            │  ← card content, stays in place, dims
-│  [Flask icon]  absolute z-30            │  ← mix indicator, on sliding layer
-└─────────────────────────────────────────┘
-```
+4. Keep the appointment details in a separate stationary overlay:
+   - Keep the client, services, time, and assistant info in `absolute inset-0 z-20`.
+   - Retain the dimming effect with `contentOpacity`, but only animate opacity, never position.
 
-### Changes — `src/components/dock/schedule/DockAppointmentCard.tsx`
+5. Preserve the swipe tray behavior:
+   - Keep scheduled cards at the wider 3-button reveal.
+   - Keep active cards at the existing finish width.
+   - Ensure the stationary overlay remains visible while the tray is exposed.
 
-1. **Extract card content out of the draggable `motion.div`** — make it an `absolute inset-0 z-20` layer that does NOT move
-2. **Add opacity dim** — use `useTransform` to dim content to 0.4 opacity as the card slides open
-3. **Keep the draggable `motion.div` as background only** — it carries the border, bg color, and flask icon, but no text content
-4. **Ensure the draggable layer height matches** — use `h-full` so the sliding background covers the card area
+Technical notes:
+- File: `src/components/dock/schedule/DockAppointmentCard.tsx`
+- No backend changes needed.
+- This is a structural UI fix, not a logic change.
 
-This restores the original interaction model where swiping reveals actions behind a dimming content overlay. The three scheduled buttons (Cancel, No-Show, Start) will be fully visible since the background slides away to expose the full 320px tray.
-
-Single file change: `src/components/dock/schedule/DockAppointmentCard.tsx`
-
+Verification:
+- Swipe a scheduled card left and confirm the text stays visually locked in place.
+- Confirm Cancel / No Show / Start remain fully visible behind the sliding shell.
+- Confirm active cards still reveal Finish correctly.
+- Confirm the dimming remains subtle and the flask icon still travels with the sliding shell.
