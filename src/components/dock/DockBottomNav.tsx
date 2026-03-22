@@ -70,7 +70,7 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
                 >
                   <DisplayIcon
                     className={cn(
-                      'h-6 w-6 transition-colors duration-150',
+                      'h-7 w-7 transition-colors duration-150',
                       isActive
                         ? isSettingsLock
                           ? 'text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]'
