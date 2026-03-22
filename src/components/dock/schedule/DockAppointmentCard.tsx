@@ -85,7 +85,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
               close();
               onComplete?.(appointment);
             }}
-            className="flex flex-col items-center justify-center gap-1 w-[80px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
+            className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
             aria-label="Complete appointment"
           >
             <CheckCircle2 className="w-5 h-5" />
