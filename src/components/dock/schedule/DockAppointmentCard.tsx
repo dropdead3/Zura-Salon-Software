@@ -50,6 +50,12 @@ const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
   cancelled: { label: 'Cancelled', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
 };
 
+const PAYMENT_BADGE: Record<string, { label: string; classes: string }> = {
+  paid: { label: 'Paid', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  unpaid: { label: 'Unpaid', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  comp: { label: 'Comp', classes: 'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]' },
+};
+
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
 const ACTIVE_OPEN_OFFSET = -160;
