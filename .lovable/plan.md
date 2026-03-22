@@ -1,20 +1,18 @@
 
 
-## Reposition Payment/Status Badges to Top-Right Corner
+## Reduce Header Crowding in Dock Schedule Tab
 
-**Problem:** The status and payment badges are currently inline in the first row alongside the client name. Since there are no other icons in the top-right corner of the card, the badges should be absolutely positioned there for cleaner placement.
+**Problem:** The top section (title, date, + button, toggle) feels cramped — elements are packed tightly with minimal vertical breathing room between them.
 
-### Change — `src/components/dock/schedule/DockAppointmentCard.tsx`
+### Changes — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-1. **Move badges out of the flex row** (lines 146-163) and place them as an absolutely positioned element at the top of the `cardContent` block.
+1. **Increase header vertical padding:** `pt-8 pb-3` → `pt-8 pb-5` (line 194) — more space below the title/date before the toggle row
 
-2. **Wrap `cardContent` in a `relative` container** so badges can be positioned `absolute top-0 right-0`.
+2. **Add spacing between date and toggle:** Insert a subtle separator or simply increase the toggle row's top padding: `pb-4` → `pt-2 pb-5` (line 212) — gives the toggle row its own breathing room above and below
 
-3. **Badge positioning:** `absolute top-2 right-2` (or `top-3 right-3` for padding alignment) with `z-10` so they float above content.
+3. **Add a thin divider** between the header block and the toggle row using a `border-b border-[hsl(var(--platform-border)/0.15)]` on the header container, visually separating the title area from the filter controls
 
-4. **Remove the inline badge markup** from inside the `flex items-start gap-2` row.
+**Result:** The top section goes from 3 tightly stacked rows to a more breathable layout with clear separation between the title area and the filter toggle, before the appointment list begins.
 
-Result: badges appear pinned to the top-right corner of each card, out of the content flow, clearly visible without competing with the client name line.
-
-Single file, one structural move.
+Single file, padding/border class adjustments only.
 
