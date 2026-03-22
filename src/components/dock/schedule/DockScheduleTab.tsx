@@ -135,6 +135,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         <ChevronDown className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))] animate-bounce" />
       </div>
 
+      <DockNewBookingSheet
         open={showNewBooking}
         onClose={() => setShowNewBooking(false)}
         staff={staff}
