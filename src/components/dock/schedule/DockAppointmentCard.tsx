@@ -293,7 +293,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
 
       {/* Layer 3: Static content overlay — stays in place, dims on swipe (z-20) */}
       <motion.div
-        className="absolute inset-0 z-20 pointer-events-none p-6"
+        className="absolute inset-0 z-20 pointer-events-none p-6 overflow-hidden"
         style={{ opacity: contentOpacity }}
       >
         {cardContent(true)}
