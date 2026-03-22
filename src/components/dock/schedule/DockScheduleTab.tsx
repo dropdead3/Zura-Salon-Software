@@ -149,6 +149,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           id="chemical-toggle"
           checked={showChemicalOnly}
           onCheckedChange={setShowChemicalOnly}
+          className="data-[state=checked]:bg-[hsl(var(--platform-primary))]"
         />
       </div>
 
