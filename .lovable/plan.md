@@ -1,18 +1,30 @@
 
 
-## Fix Scroll Indicator Position — Above Bottom Nav
+## Move Time Inline with Client Name
 
-**Problem:** The scroll indicator is `absolute bottom-0` on the full tab container, which places it behind/under the bottom navigation bar rendered by the parent layout. It needs to sit at the bottom of the scrollable appointment list area, above the nav.
+**Problem:** Time and staff info on the far right get covered by the Finish Appt button on swipe. The time should sit next to the client name on the left so it stays visible.
 
-**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
+**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-**Fix:** Wrap the scrollable area and indicator in a `relative` container so the indicator anchors to the bottom of the scroll region rather than the full page. Move the indicator div inside a wrapper around the scroll area.
+### Layout Change
 
-Lines 105-136 — restructure:
-- Wrap the scroll `div` and indicator `div` together in a new `div className="relative flex-1 min-h-0"`
-- Move `flex-1 min-h-0` from the scroll div to this wrapper
-- The scroll div becomes `h-full overflow-y-auto`
-- The indicator stays `absolute bottom-0` but now it's relative to the scroll wrapper, not the full page
+```text
+Current:
+│  Sarah Mitchell          9:14 AM – 10:44 AM  │
+│  Balayage + Toner              👤 Jenna B.    │
+│                                👥 w/ Alexis R. │
 
-This ensures the chevron arrow and gradient appear just above the bottom nav bar.
+Proposed:
+│  Sarah Mitchell · 9:14 – 10:44 AM             │
+│  Balayage + Toner              👤 Jenna B.    │
+│                                👥 w/ Alexis R. │
+```
+
+**Changes:**
+1. Move the time span from the right side of the top row to inline after the client name, separated by a middle dot (·) delimiter, both sharing the left side
+2. Remove the `justify-between` on the top row since both elements are now left-aligned
+3. Apply to both the invisible spacer div and the visible text overlay
+4. Time text gets the muted color treatment to visually separate it from the name
+
+This keeps the time visible even when the card is swiped open, since it's on the left side away from the action tray.
 
