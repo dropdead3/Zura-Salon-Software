@@ -196,7 +196,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           .order('start_time', { ascending: true }),
         supabase
           .from('appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, client_id, notes')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, client_id, notes')
           .eq('staff_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
