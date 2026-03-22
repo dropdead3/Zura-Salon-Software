@@ -40,8 +40,8 @@ const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
 const OPEN_OFFSET = -128;
 const SNAP_THRESHOLD = 50;
 
-export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onStart, onViewClient }: DockAppointmentCardProps) {
-  const borderClass = BORDER_COLORS[accentColor];
+export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onViewClient }: DockAppointmentCardProps) {
+  const borderClass = isChemical ? BORDER_COLORS[accentColor] : 'border-l-[hsl(var(--platform-foreground-muted)/0.3)]';
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
   const isActive = ACTIVE_STATUSES.includes(appointment.status || '');
   const isScheduled = !isTerminal && !isActive;
