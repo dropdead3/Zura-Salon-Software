@@ -2,14 +2,16 @@
  * DockScheduleTab — Today's appointments grouped by Active/Scheduled/Completed.
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, Plus, Loader2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockAppointmentCard } from './DockAppointmentCard';
 import { DockNewBookingSheet } from './DockNewBookingSheet';
-
+import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
+import { isColorOrChemicalService } from '@/utils/serviceCategorization';
+import { Switch } from '@/components/ui/switch';
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
@@ -50,8 +52,10 @@ function formatTime(time: string) {
 
 export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointment, onViewClient, locationId, staffFilter }: DockScheduleTabProps) {
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
+  const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
+  const [showChemicalOnly, setShowChemicalOnly] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +75,19 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     return () => el.removeEventListener('scroll', checkScroll);
   }, [checkScroll, appointments]);
 
+  const filteredAppointments = useMemo(() => {
+    const all = appointments || [];
+    if (!showChemicalOnly) return all;
+    return all.filter((a) => {
+      const services = (a.service_name || '').split(',').map((s) => s.trim().toLowerCase());
+      if (trackedSet) {
+        return services.some((s) => trackedSet.has(s));
+      }
+      // Fallback to regex when no tracked services configured
+      return services.some((s) => isColorOrChemicalService(s));
+    });
+  }, [appointments, showChemicalOnly, trackedSet]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -79,13 +96,12 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     );
   }
 
-  const all = appointments || [];
-  const { active, scheduled, completed } = groupAppointments(all);
+  const { active, scheduled, completed } = groupAppointments(filteredAppointments);
 
   return (
     <div className="relative flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-8 pb-5">
+      <div className="flex items-center justify-between px-5 pt-8 pb-3">
         <div>
           <h1 className="font-display text-2xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Today's Appointments
@@ -102,10 +118,22 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         </button>
       </div>
 
+      {/* Chemical filter toggle */}
+      <div className="flex items-center justify-between px-5 pb-4">
+        <label htmlFor="chemical-toggle" className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+          Color & Chemical Only
+        </label>
+        <Switch
+          id="chemical-toggle"
+          checked={showChemicalOnly}
+          onCheckedChange={setShowChemicalOnly}
+        />
+      </div>
+
       {/* Appointment list + scroll indicator wrapper */}
       <div className="relative flex-1 min-h-0">
         <div ref={scrollRef} onScroll={checkScroll} className="h-full overflow-y-auto px-5 pb-6 space-y-8">
-          {all.length === 0 ? (
+          {filteredAppointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center pt-20 text-center">
               <Calendar className="w-12 h-12 text-violet-400/40 mb-4" />
               <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
