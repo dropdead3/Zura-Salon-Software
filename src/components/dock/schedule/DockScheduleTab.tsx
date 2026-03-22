@@ -5,6 +5,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, Plus, Loader2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockAppointmentCard } from './DockAppointmentCard';
@@ -12,6 +13,8 @@ import { DockNewBookingSheet } from './DockNewBookingSheet';
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
@@ -31,7 +34,7 @@ function groupAppointments(appointments: DockAppointment[]) {
 
   for (const a of appointments) {
     const status = a.status || 'pending';
-    if (a.has_mix_session || ACTIVE_STATUSES.includes(status)) {
+    if (ACTIVE_STATUSES.includes(status)) {
       active.push(a);
     } else if (COMPLETED_STATUSES.includes(status)) {
       completed.push(a);
@@ -51,6 +54,7 @@ function formatTime(time: string) {
 }
 
 export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointment, onViewClient, locationId, staffFilter }: DockScheduleTabProps) {
+  const queryClient = useQueryClient();
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
@@ -75,6 +79,25 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     return () => el.removeEventListener('scroll', checkScroll);
   }, [checkScroll, appointments]);
 
+  const handleStartAppointment = useCallback(async (appointment: DockAppointment) => {
+    if (appointment.id.startsWith('demo-')) {
+      toast.success('Demo: Appointment started');
+      return;
+    }
+    try {
+      const { error } = await supabase.functions.invoke('update-phorest-appointment', {
+        body: { appointment_id: appointment.id, status: 'CHECKED_IN' },
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success('Appointment started');
+    } catch (err) {
+      toast.error('Failed to start: ' + (err as Error).message);
+    }
+  }, [queryClient]);
+
   const filteredAppointments = useMemo(() => {
     const all = appointments || [];
     if (!showChemicalOnly) return all;
@@ -83,7 +106,6 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       if (trackedSet) {
         return services.some((s) => trackedSet.has(s));
       }
-      // Fallback to regex when no tracked services configured
       return services.some((s) => isColorOrChemicalService(s));
     });
   }, [appointments, showChemicalOnly, trackedSet]);
@@ -143,13 +165,13 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           ) : (
             <>
               {active.length > 0 && (
-                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
               )}
               {scheduled.length > 0 && (
-                <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
               )}
               {completed.length > 0 && (
-                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
               )}
             </>
           )}
@@ -183,6 +205,7 @@ function AppointmentGroup({
   accentColor,
   onTap,
   onComplete,
+  onStart,
   onViewClient,
 }: {
   label: string;
@@ -191,6 +214,7 @@ function AppointmentGroup({
   accentColor: 'violet' | 'blue' | 'slate';
   onTap: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
+  onStart?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
 }) {
   const dotColor = {
@@ -212,7 +236,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-3">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onViewClient={onViewClient} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onStart={onStart} onViewClient={onViewClient} />
         ))}
       </div>
     </div>
