@@ -162,9 +162,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
           Move to Another Location
         </button>
       </div>
-
-      {/* Spacer */}
-      <div className="flex-1" />
+      </div>
 
       {/* Move Dock confirmation overlay — absolute, not portal */}
       <AnimatePresence>
@@ -213,7 +211,6 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
           </motion.div>
         )}
       </AnimatePresence>
-      </div>
     </div>
   );
 }
