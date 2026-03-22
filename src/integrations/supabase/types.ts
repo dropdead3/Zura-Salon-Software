@@ -1204,6 +1204,7 @@ export type Database = {
           original_appointment_id: string | null
           original_price: number | null
           payment_method: string | null
+          payment_status: string
           phorest_client_id: string | null
           phorest_staff_id: string | null
           rebook_declined_reason: string | null
@@ -1262,6 +1263,7 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
+          payment_status?: string
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
           rebook_declined_reason?: string | null
@@ -1320,6 +1322,7 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
+          payment_status?: string
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
           rebook_declined_reason?: string | null
@@ -12276,6 +12279,7 @@ export type Database = {
           original_appointment_id: string | null
           original_price: number | null
           payment_method: string | null
+          payment_status: string
           phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
@@ -12323,6 +12327,7 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
+          payment_status?: string
           phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
@@ -12370,6 +12375,7 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
+          payment_status?: string
           phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null

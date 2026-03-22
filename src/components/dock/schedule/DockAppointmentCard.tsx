@@ -50,6 +50,12 @@ const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
   cancelled: { label: 'Cancelled', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
 };
 
+const PAYMENT_BADGE: Record<string, { label: string; classes: string }> = {
+  paid: { label: 'Paid', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  unpaid: { label: 'Unpaid', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  comp: { label: 'Comp', classes: 'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]' },
+};
+
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
 const ACTIVE_OPEN_OFFSET = -160;
@@ -144,6 +150,15 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             STATUS_BADGE[appointment.status || ''].classes
           )}>
             {STATUS_BADGE[appointment.status || ''].label}
+          </span>
+        )}
+        {/* Payment badge for completed appointments */}
+        {visible && appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
+          <span className={cn(
+            'shrink-0 text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
+            PAYMENT_BADGE[appointment.payment_status || ''].classes
+          )}>
+            {PAYMENT_BADGE[appointment.payment_status || ''].label}
           </span>
         )}
         {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}

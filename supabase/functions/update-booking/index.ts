@@ -56,6 +56,27 @@ serve(async (req) => {
 
       if (error) throw new Error(error.message);
       result = data?.[0];
+
+      // Cross-table sync: update phorest_appointments if linked
+      if (result?.success) {
+        try {
+          const { data: localRow } = await supabase
+            .from('appointments')
+            .select('external_id')
+            .eq('id', updateData.appointment_id)
+            .maybeSingle();
+
+          if (localRow?.external_id) {
+            await supabase
+              .from('phorest_appointments')
+              .update({ status: updateData.status, updated_at: new Date().toISOString() })
+              .eq('phorest_id', localRow.external_id);
+            console.log(`Cross-synced status "${updateData.status}" to phorest_appointments`);
+          }
+        } catch (syncErr: any) {
+          console.warn('Cross-table sync failed (non-fatal):', syncErr.message);
+        }
+      }
       
     } else if (updateData.action === 'reschedule') {
       // Reschedule
