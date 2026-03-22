@@ -87,6 +87,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
   const trayOpacity = useTransform(x, [0, openOffset / 2, openOffset], [0, 0.6, 1]);
   // Content dims as card slides open
   const contentOpacity = useTransform(x, [openOffset, 0], [0.4, 1]);
+  const contentClipRight = useTransform(x, (v) => `${Math.abs(v)}px`);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const offset = info.offset.x;
