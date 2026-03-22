@@ -52,8 +52,8 @@ const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
-const ACTIVE_OPEN_OFFSET = -128;
-const SCHEDULED_OPEN_OFFSET = -320;
+const ACTIVE_OPEN_OFFSET = -148;
+const SCHEDULED_OPEN_OFFSET = -370;
 const SNAP_THRESHOLD = 50;
 
 export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient }: DockAppointmentCardProps) {
