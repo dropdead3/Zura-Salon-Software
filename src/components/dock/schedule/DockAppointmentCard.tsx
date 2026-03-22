@@ -118,9 +118,31 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
 
   /* ---- Shared content block (rendered invisible for sizing + visible for display) ---- */
   const cardContent = (visible: boolean) => (
-    <>
+    <div className="relative">
+      {/* Badges pinned to top-right corner */}
+      {visible && (
+        <div className="absolute top-0 right-0 z-10 flex items-center gap-1.5">
+          {STATUS_BADGE[appointment.status || ''] && (
+            <span className={cn(
+              'text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
+              STATUS_BADGE[appointment.status || ''].classes
+            )}>
+              {STATUS_BADGE[appointment.status || ''].label}
+            </span>
+          )}
+          {appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
+            <span className={cn(
+              'text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
+              PAYMENT_BADGE[appointment.payment_status || ''].classes
+            )}>
+              {PAYMENT_BADGE[appointment.payment_status || ''].label}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-20">
           {(() => {
             const services = (appointment.service_name || '').split(' + ').filter(Boolean);
             let serviceDisplay = '';
@@ -143,24 +165,6 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             );
           })()}
         </div>
-        {/* Status badge for no-show / cancelled */}
-        {visible && STATUS_BADGE[appointment.status || ''] && (
-          <span className={cn(
-            'shrink-0 text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
-            STATUS_BADGE[appointment.status || ''].classes
-          )}>
-            {STATUS_BADGE[appointment.status || ''].label}
-          </span>
-        )}
-        {/* Payment badge for completed appointments */}
-        {visible && appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
-          <span className={cn(
-            'shrink-0 text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
-            PAYMENT_BADGE[appointment.payment_status || ''].classes
-          )}>
-            {PAYMENT_BADGE[appointment.payment_status || ''].label}
-          </span>
-        )}
         {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}
       </div>
 
