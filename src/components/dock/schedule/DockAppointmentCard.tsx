@@ -221,7 +221,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 close();
                 onNoShow?.(appointment);
               }}
-              className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 active:bg-amber-500/25 active:scale-[0.97] transition-all"
+              className="flex flex-col items-center justify-center gap-1 w-[120px] px-2 h-full rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 active:bg-amber-500/25 active:scale-[0.97] transition-all"
               aria-label="Mark as no show"
             >
               <UserX className="w-6 h-6" />
