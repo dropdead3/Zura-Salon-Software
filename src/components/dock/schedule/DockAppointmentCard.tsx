@@ -6,9 +6,11 @@
 import { useRef, useState } from 'react';
 import { FlaskConical, Users, CheckCircle2 } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
+import { differenceInMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
 
 function formatAssistantLabel(names: string[]): string {
@@ -38,6 +40,14 @@ const SNAP_THRESHOLD = 50;
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
+
+  // Compute duration
+  const refDate = new Date();
+  const start = parse(appointment.start_time, 'HH:mm:ss', refDate);
+  const end = parse(appointment.end_time, 'HH:mm:ss', refDate);
+  const durationMinutes = differenceInMinutes(end, start);
+  const durationText = durationMinutes > 0 ? formatMinutesToDuration(durationMinutes) : '';
+
   const trayWidth = isTerminal ? 0 : 128;
   const openOffset = isTerminal ? 0 : OPEN_OFFSET;
 
@@ -128,12 +138,12 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           <div className="flex items-start gap-2">
             <p className="font-medium text-base flex-1 min-w-0 truncate">
               {appointment.client_name || 'Walk-in'}
-              <span className="font-normal ml-1.5">· {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span>
+              {appointment.service_name && <span className="font-normal ml-1.5">· {appointment.service_name}</span>}
             </p>
             {appointment.has_mix_session && <div className="w-8 h-8" />}
           </div>
-          <div className="mt-1">
-            {appointment.service_name && <p className="text-sm truncate">{appointment.service_name}</p>}
+          <div className="mt-0.5">
+            <p className="text-sm">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}</p>
             {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">{formatAssistantLabel(appointment.assistant_names)}</p>}
           </div>
         </div>
@@ -141,23 +151,23 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
       {/* Static text overlay — does NOT move */}
       <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-5 pointer-events-none">
-        {/* Top row: client name · time */}
+        {/* Top row: client name · service */}
         <div className="flex items-start gap-2">
           <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
             {appointment.client_name || 'Walk-in'}
-            <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
-              · {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
-            </span>
+            {appointment.service_name && (
+              <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
+                · {appointment.service_name}
+              </span>
+            )}
           </p>
         </div>
 
-        {/* Bottom rows: service + assistant, left-aligned */}
-        <div className="mt-1">
-          {appointment.service_name && (
-            <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate">
-              {appointment.service_name}
-            </p>
-          )}
+        {/* Second row: time range · duration */}
+        <div className="mt-0.5">
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
+          </p>
           {appointment.assistant_names && appointment.assistant_names.length > 0 && (
             <div className="flex items-center gap-1 mt-0.5">
               <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
