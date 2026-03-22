@@ -39,9 +39,12 @@ const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
 const OPEN_OFFSET = -128;
 const SNAP_THRESHOLD = 50;
 
-export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
+export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onStart, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
+  const isActive = ACTIVE_STATUSES.includes(appointment.status || '');
+  const isScheduled = !isTerminal && !isActive;
+  const canSwipe = !isTerminal;
 
   // Compute duration
   const refDate = new Date();
