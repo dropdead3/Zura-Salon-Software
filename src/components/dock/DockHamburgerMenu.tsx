@@ -40,7 +40,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
   };
 
   const handleDragEnd = (_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
-    if (info.offset.y > DOCK_SHEET.dismissThreshold.offset || info.velocity.y > DOCK_SHEET.dismissThreshold.velocity) {
+    if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
       setOpen(false);
     }
   };
