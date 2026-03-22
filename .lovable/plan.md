@@ -1,51 +1,34 @@
 
 
-## Add Cancel & No-Show Action Buttons for Scheduled Appointments
+## Fix: Stationary Card Content + Visible Cancel/No-Show Buttons
 
-**Problem:** Scheduled (not-yet-started) appointments only have a "Start Appt" swipe action. Staff need quick access to Cancel and No-Show actions with confirmation dialogs.
+**Two bugs:**
+1. Card content moves with the swipe — it should stay fixed in place and dim
+2. Cancel/No-Show buttons aren't visible because the card may not be sliding far enough or they're clipped
 
-**Approach:** Widen the swipe tray to fit 3 buttons side-by-side for scheduled appointments. Add confirmation dialogs. Wire status changes through the same edge function used by "Start Appt".
+**Root cause:** The current structure places all card content inside the draggable `motion.div`. Per the original design, the background layer slides while the content stays stationary.
 
-### Changes
-
-**File: `src/components/dock/schedule/DockAppointmentCard.tsx`**
-
-1. **Add new props** `onCancel` and `onNoShow` to the interface
-2. **Widen tray for scheduled cards** — increase `OPEN_OFFSET` dynamically: scheduled cards get ~320px tray (3 buttons), active cards keep 128px (1 button)
-3. **Add Cancel and No-Show buttons** alongside "Start Appt" in the scheduled tray section:
-   - Cancel: red-tinted button with X icon, "Cancel" label
-   - No-Show: amber-tinted button with UserX icon, "No Show" label
-   - Start: existing blue button stays
-4. **Import** `XCircle`, `UserX` from lucide-react
-
-**File: `src/components/dock/schedule/DockScheduleTab.tsx`**
-
-5. **Add confirmation dialog state** — track which appointment is pending cancel/no-show with a state like `{ appointment, action: 'cancel' | 'no_show' }`
-6. **Add handler functions** `handleCancelAppointment` and `handleNoShowAppointment`:
-   - Show AlertDialog asking for confirmation ("Are you sure you want to cancel [Client]'s appointment?" / "Mark [Client] as a no-show?")
-   - On confirm, invoke `update-phorest-appointment` with `status: 'CANCELLED'` or `status: 'NO_SHOW'`
-   - Invalidate query caches, show success toast
-   - Demo appointments get a toast-only response
-7. **Pass `onCancel` and `onNoShow`** through `AppointmentGroup` to `DockAppointmentCard`
-8. **Render AlertDialog** at the bottom of the component for the confirmation modal
-
-**File: `src/components/dock/schedule/DockAppointmentCard.tsx`** (layout detail)
-
-The scheduled tray layout will be:
+### Architecture (restore original pattern)
 
 ```text
-┌────────────┬────────────┬────────────┐
-│   Cancel   │  No Show   │ Start Appt │
-│   (red)    │  (amber)   │   (blue)   │
-└────────────┴────────────┴────────────┘
+┌─────────────────────────────────────────┐
+│ .relative overflow-hidden               │
+│                                         │
+│  [Tray]        absolute right-0         │  ← action buttons, behind everything
+│  [Sliding BG]  motion.div z-10          │  ← colored border/bg, drags left
+│  [Static Info] absolute z-20            │  ← card content, stays in place, dims
+│  [Flask icon]  absolute z-30            │  ← mix indicator, on sliding layer
+└─────────────────────────────────────────┘
 ```
 
-Each button: ~100px wide, same height styling as current "Start Appt". The tray width increases from 128px to ~320px for scheduled appointments only. Active cards keep the existing single "Finish Appt" button.
+### Changes — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-### Confirmation Dialogs
+1. **Extract card content out of the draggable `motion.div`** — make it an `absolute inset-0 z-20` layer that does NOT move
+2. **Add opacity dim** — use `useTransform` to dim content to 0.4 opacity as the card slides open
+3. **Keep the draggable `motion.div` as background only** — it carries the border, bg color, and flask icon, but no text content
+4. **Ensure the draggable layer height matches** — use `h-full` so the sliding background covers the card area
 
-- **Cancel:** "Cancel Appointment — Are you sure you want to cancel [Client Name]'s appointment? This action will update the schedule and POS." Actions: "Keep Appointment" / "Yes, Cancel"
-- **No-Show:** "Mark as No-Show — Mark [Client Name] as a no-show? This will be reflected in the schedule and client history." Actions: "Go Back" / "Mark No-Show"
+This restores the original interaction model where swiping reveals actions behind a dimming content overlay. The three scheduled buttons (Cancel, No-Show, Start) will be fully visible since the background slides away to expose the full 320px tray.
 
-Four total modifications across two files. No new files needed — uses existing `AlertDialog` from shadcn.
+Single file change: `src/components/dock/schedule/DockAppointmentCard.tsx`
 
