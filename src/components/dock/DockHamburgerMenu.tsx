@@ -73,14 +73,14 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
             {/* Sheet panel — slides up from bottom */}
             <motion.div
               drag="y"
-              dragConstraints={{ top: 0 }}
+              dragConstraints={{ bottom: 0 }}
               dragElastic={0.1}
               onDragEnd={handleDragEnd}
-              initial={{ y: '100%' }}
+              initial={{ y: '-100%' }}
               animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+              exit={{ y: '-100%' }}
               transition={SPRING}
-              className="absolute inset-x-0 bottom-0 flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl shadow-2xl"
+              className="absolute inset-x-0 top-0 flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl shadow-2xl"
               style={{ zIndex: 46, maxHeight: DOCK_SHEET.maxHeight }}
             >
               {/* Drag handle */}
