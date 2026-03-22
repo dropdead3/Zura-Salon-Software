@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
-import { DockBottomNav } from './DockBottomNav';
+import { DockHamburgerMenu } from './DockHamburgerMenu';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
 import { DockDemoBadge } from './DockDemoBadge';
 import { useDockDemo } from '@/contexts/DockDemoContext';
