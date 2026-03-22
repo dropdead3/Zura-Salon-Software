@@ -119,9 +119,11 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
         {/* Invisible spacer to maintain card height */}
         <div className="p-5 opacity-0 pointer-events-none" aria-hidden="true">
-          <div className="flex items-start justify-between gap-3">
-            <p className="font-medium text-base flex-1 min-w-0 truncate">{appointment.client_name || 'Walk-in'}</p>
-            <span className="text-sm shrink-0">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span>
+          <div className="flex items-start gap-2">
+            <p className="font-medium text-base flex-1 min-w-0 truncate">
+              {appointment.client_name || 'Walk-in'}
+              <span className="font-normal ml-1.5">· {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span>
+            </p>
             {appointment.has_mix_session && <div className="w-8 h-8" />}
           </div>
           <div className="flex items-end justify-between gap-3 mt-1">
