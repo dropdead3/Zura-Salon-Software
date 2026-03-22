@@ -320,7 +320,7 @@ function AppointmentGroup({
   label: string;
   count: number;
   appointments: DockAppointment[];
-  accentColor: 'violet' | 'blue' | 'slate';
+  accentColor: 'violet' | 'blue' | 'slate' | 'amber' | 'red';
   onTap: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
@@ -332,6 +332,8 @@ function AppointmentGroup({
     violet: 'bg-violet-500',
     blue: 'bg-blue-500',
     slate: 'bg-slate-500',
+    amber: 'bg-amber-500',
+    red: 'bg-red-500',
   }[accentColor];
 
   return (
