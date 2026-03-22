@@ -61,7 +61,16 @@ function groupAppointments(appointments: DockAppointment[]) {
     }
   }
 
-  return { active, scheduled, completed, noShow, cancelled };
+  const sortByTime = (a: DockAppointment, b: DockAppointment) =>
+    (a.start_time || '').localeCompare(b.start_time || '');
+
+  return {
+    active: active.sort(sortByTime),
+    scheduled: scheduled.sort(sortByTime),
+    completed: completed.sort(sortByTime),
+    noShow: noShow.sort(sortByTime),
+    cancelled: cancelled.sort(sortByTime),
+  };
 }
 
 function formatTime(time: string) {
