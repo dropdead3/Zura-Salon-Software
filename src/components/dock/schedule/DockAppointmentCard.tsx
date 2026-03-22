@@ -152,9 +152,9 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         )}
 
         {/* Card content — lives inside draggable layer, moves with swipe */}
-        <div className="p-5">
+        <div className="p-6">
           <div className="flex items-start gap-2">
-            <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
+            <p className="font-medium text-lg text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
               {appointment.client_name || 'Walk-in'}
               {appointment.service_name && (
                 <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
