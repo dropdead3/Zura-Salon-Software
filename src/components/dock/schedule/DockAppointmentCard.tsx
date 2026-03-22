@@ -231,7 +231,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 close();
                 onStart?.(appointment);
               }}
-              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
+              className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
               aria-label="Start appointment"
             >
               <Play className="w-6 h-6" />
