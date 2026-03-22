@@ -168,7 +168,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           {filteredAppointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center pt-20 text-center">
               <Calendar className="w-12 h-12 text-violet-400/40 mb-4" />
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+              <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
                 No appointments today
               </p>
             </div>
