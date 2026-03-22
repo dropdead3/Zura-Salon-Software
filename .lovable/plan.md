@@ -1,22 +1,22 @@
 
 
-## Add Gradient Fade Above Floating Bottom Nav
+## Fix: Remove All-Caps from Status Group Labels
 
-**Problem:** The floating glass bottom nav sits directly over the appointment cards with no visual separation — cards are fully visible right up to the nav, making it feel cluttered.
+**Problem:** The status labels ("ACTIVE", "SCHEDULED", "COMPLETED") use `uppercase` class, but with Aeonik font the rule is normal capitalization only.
 
-**Approach:** Add a gradient overlay above the bottom nav that fades from transparent to the platform background color. This creates a natural "fade out" effect on the last visible cards, giving the nav breathing room.
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
 
-**File:** `src/components/dock/DockLayout.tsx`
-
-**Change:** Inside the `absolute bottom-0 inset-x-0 z-30` wrapper that holds `DockBottomNav`, add a gradient div above the nav:
+**Change — line 240:** Remove `uppercase` from the status label's className:
 
 ```tsx
-<div className="absolute bottom-0 inset-x-0 z-30">
-  {/* Gradient fade above nav */}
-  <div className="h-16 bg-gradient-to-t from-[hsl(var(--platform-bg))] via-[hsl(var(--platform-bg)/0.7)] to-transparent pointer-events-none" />
-  <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
-</div>
+// Before
+<span className="text-sm font-medium tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
+
+// After
+<span className="text-sm font-medium tracking-wide text-[hsl(var(--platform-foreground-muted))]">
 ```
 
-This adds a 64px tall gradient that darkens cards as they approach the nav, creating clear visual separation. The `pointer-events-none` ensures it doesn't block card interactions. Single addition, no other files affected.
+Labels will then render as "Active", "Scheduled", "Completed" — standard capitalization as passed from the data.
+
+Single class removal, one line.
 
