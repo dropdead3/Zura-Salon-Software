@@ -140,14 +140,14 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
       {/* Static text overlay — does NOT move */}
       <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-5 pointer-events-none">
-        {/* Top row: client name + time */}
-        <div className="flex items-start justify-between gap-3">
+        {/* Top row: client name · time */}
+        <div className="flex items-start gap-2">
           <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
             {appointment.client_name || 'Walk-in'}
+            <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
+              · {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
+            </span>
           </p>
-          <span className="text-sm text-[hsl(var(--platform-foreground-muted))] shrink-0">
-            {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
-          </span>
         </div>
 
         {/* Bottom row: service (left) + stylist/assistant (right) */}
