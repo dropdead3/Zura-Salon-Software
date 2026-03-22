@@ -424,6 +424,9 @@ export const DEMO_CLIENTS: DemoClient[] = [
   { id: 'demo-client-6', phorest_client_id: 'demo-pc-6', name: 'Maria Gonzalez', email: 'maria.g@example.com', phone: '(480) 555-0106' },
   { id: 'demo-client-7', phorest_client_id: 'demo-pc-7', name: 'Rachel Kim', email: 'rkim@example.com', phone: '(602) 555-0107' },
   { id: 'demo-client-8', phorest_client_id: 'demo-pc-8', name: 'Olivia Barnes', email: 'obarnes@example.com', phone: '(480) 555-0108' },
+  { id: 'demo-client-9', phorest_client_id: 'demo-pc-9', name: 'Megan Foster', email: 'mfoster@example.com', phone: '(602) 555-0109' },
+  { id: 'demo-client-10', phorest_client_id: 'demo-pc-10', name: 'Danielle Wright', email: 'dwright@example.com', phone: '(480) 555-0110' },
+  { id: 'demo-client-11', phorest_client_id: 'demo-pc-11', name: 'Natalie Brooks', email: 'nbrooks@example.com', phone: '(602) 555-0111' },
 ];
 
 export function searchDemoClients(query: string): DemoClient[] {
