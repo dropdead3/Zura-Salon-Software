@@ -1,20 +1,24 @@
 
 
-## Reduce Header Title-to-Date Spacing
+## Remove Bottom Gradient Covering Appointment Cards
 
-**Problem:** The grid layout introduced for button alignment added `gap-y-1` between rows, which combined with the heading's line-height creates excessive vertical space between "TODAY'S APPOINTMENTS" and "Sunday, March 22".
+**Problem:** The scroll indicator at the bottom of the schedule tab includes a `h-12` gradient overlay that covers appointment cards.
 
 ### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-**Line 194:** Change `gap-y-1` to `gap-y-0` to eliminate the inter-row gap:
+**Lines 257-264:** Remove the entire scroll indicator block (gradient + bouncing chevron):
+
 ```tsx
-className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-0 px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]"
+// Delete this entire block
+<div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 flex flex-col items-center pb-3 transition-opacity duration-300"
+  style={{ opacity: showScrollIndicator ? 1 : 0 }}
+>
+  <div className="w-full h-12 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
+  <ChevronDown className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))] animate-bounce" />
+</div>
 ```
 
-**Line 204:** Remove the `mt-0.5` from the date paragraph since the gap is now tighter:
-```tsx
-<p className="col-start-1 text-base text-[hsl(var(--platform-foreground-muted))]">
-```
+Also clean up the `showScrollIndicator` state and `checkScroll` logic if they're no longer used elsewhere.
 
-One file, two class tweaks.
+One file, one deletion.
 
