@@ -89,7 +89,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl" onClick={handleTap}>
+    <div className="relative z-[1] overflow-hidden rounded-xl" onClick={handleTap}>
       {/* Action tray behind the card */}
       <motion.div
         className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
