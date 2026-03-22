@@ -65,12 +65,12 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
               {/* Centered content stack */}
               <div className="relative z-10 flex h-full flex-col items-center justify-center gap-0.5">
                 <motion.div
-                  animate={{ scale: isActive ? 1.15 : 1 }}
+                  animate={{ scale: isActive ? 1.15 : 0.95, y: isActive ? -2 : 0 }}
                   transition={SPRING}
                 >
                   <DisplayIcon
                     className={cn(
-                      'h-7 w-7 transition-colors duration-150',
+                      'h-7 w-7 transition-colors duration-200',
                       isActive
                         ? isSettingsLock
                           ? 'text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]'
@@ -83,10 +83,10 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
                 <AnimatePresence>
                   {isActive && (
                     <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.2 }}
                       className={cn(
                         "whitespace-nowrap text-xs font-medium tracking-wide",
                         isSettingsLock ? 'text-red-300' : 'text-violet-300'
