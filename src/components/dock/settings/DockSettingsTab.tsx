@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { LogOut, User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
+import { User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -158,15 +158,6 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
 
       {/* Spacer */}
       <div className="flex-1" />
-
-      {/* Logout button */}
-      <button
-        onClick={onLogout}
-        className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-red-600/10 border border-red-500/20 text-red-400 hover:bg-red-600/20 transition-colors"
-      >
-        <LogOut className="w-4 h-4" />
-        <span className="text-sm font-medium">Lock Station</span>
-      </button>
 
       {/* Move Dock confirmation overlay — absolute, not portal */}
       <AnimatePresence>

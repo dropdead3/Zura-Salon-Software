@@ -97,7 +97,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
       {/* Bottom navigation — hidden during detail view */}
       {!showingDetail && (
-        <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+        <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
       )}
 
       {/* Client quick view sheet */}
