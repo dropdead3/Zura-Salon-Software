@@ -213,6 +213,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
