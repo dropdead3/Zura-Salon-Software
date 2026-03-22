@@ -101,7 +101,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   return (
     <div className="relative flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-8 pb-5">
+      <div className="flex items-center justify-between px-5 pt-8 pb-3">
         <div>
           <h1 className="font-display text-2xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Today's Appointments
@@ -116,6 +116,18 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         >
           <Plus className="w-6 h-6" />
         </button>
+      </div>
+
+      {/* Chemical filter toggle */}
+      <div className="flex items-center justify-between px-5 pb-4">
+        <label htmlFor="chemical-toggle" className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+          Color & Chemical Only
+        </label>
+        <Switch
+          id="chemical-toggle"
+          checked={showChemicalOnly}
+          onCheckedChange={setShowChemicalOnly}
+        />
       </div>
 
       {/* Appointment list + scroll indicator wrapper */}
