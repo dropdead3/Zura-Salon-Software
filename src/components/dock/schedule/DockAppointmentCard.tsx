@@ -41,6 +41,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
   // Tray opacity fades in as card slides left
   const trayOpacity = useTransform(x, [0, openOffset / 2, openOffset], [0, 0.6, 1]);
+  const contentOpacity = useTransform(x, [0, openOffset], [1, 0.6]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const offset = info.offset.x;
