@@ -68,7 +68,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
     >
       {/* Content area */}
-      <div className="flex-1 min-h-0 overflow-y-auto pb-20">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {showingDetail ? (
           <DockAppointmentDetail
             appointment={view.appointment}
@@ -97,7 +97,9 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
       {/* Bottom navigation — hidden during detail view */}
       {!showingDetail && (
-        <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
+        <div className="absolute bottom-0 inset-x-0 z-30">
+          <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
+        </div>
       )}
 
       {/* Client quick view sheet */}
