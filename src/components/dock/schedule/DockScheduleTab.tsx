@@ -38,25 +38,30 @@ interface DockScheduleTabProps {
 }
 
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
-const COMPLETED_STATUSES = ['completed', 'no_show', 'cancelled'];
 
 function groupAppointments(appointments: DockAppointment[]) {
   const active: DockAppointment[] = [];
   const scheduled: DockAppointment[] = [];
   const completed: DockAppointment[] = [];
+  const noShow: DockAppointment[] = [];
+  const cancelled: DockAppointment[] = [];
 
   for (const a of appointments) {
     const status = a.status || 'pending';
     if (ACTIVE_STATUSES.includes(status)) {
       active.push(a);
-    } else if (COMPLETED_STATUSES.includes(status)) {
+    } else if (status === 'no_show') {
+      noShow.push(a);
+    } else if (status === 'cancelled') {
+      cancelled.push(a);
+    } else if (status === 'completed') {
       completed.push(a);
     } else {
       scheduled.push(a);
     }
   }
 
-  return { active, scheduled, completed };
+  return { active, scheduled, completed, noShow, cancelled };
 }
 
 function formatTime(time: string) {
