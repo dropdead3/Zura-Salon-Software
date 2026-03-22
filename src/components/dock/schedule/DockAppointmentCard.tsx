@@ -87,6 +87,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
   const trayOpacity = useTransform(x, [0, openOffset / 2, openOffset], [0, 0.6, 1]);
   // Content dims as card slides open
   const contentOpacity = useTransform(x, [openOffset, 0], [0.4, 1]);
+  const contentClipRight = useTransform(x, (v) => `${Math.abs(v)}px`);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const offset = info.offset.x;
@@ -142,7 +143,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
       )}
 
       <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0 pr-20">
+        <div className="flex-1 min-w-0">
           {(() => {
             const services = (appointment.service_name || '').split(' + ').filter(Boolean);
             let serviceDisplay = '';
@@ -293,8 +294,8 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
 
       {/* Layer 3: Static content overlay — stays in place, dims on swipe (z-20) */}
       <motion.div
-        className="absolute inset-0 z-20 pointer-events-none p-6 overflow-hidden"
-        style={{ opacity: contentOpacity }}
+        className="absolute top-0 bottom-0 left-0 z-20 pointer-events-none p-6 overflow-hidden"
+        style={{ opacity: contentOpacity, right: contentClipRight }}
       >
         {cardContent(true)}
       </motion.div>
