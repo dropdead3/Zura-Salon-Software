@@ -131,6 +131,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           start_time: a.start_time,
           end_time: a.end_time,
           status: a.status,
+          payment_status: (a as any).payment_status || 'pending',
           location_id: a.location_id,
           phorest_client_id: a.phorest_client_id,
           notes: a.notes,
