@@ -166,7 +166,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </div>
 
           <div className="mt-0.5">
-            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
             </p>
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
