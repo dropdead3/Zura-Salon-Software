@@ -35,6 +35,7 @@ const BORDER_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
+const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
 const OPEN_OFFSET = -128;
 const SNAP_THRESHOLD = 50;
 
