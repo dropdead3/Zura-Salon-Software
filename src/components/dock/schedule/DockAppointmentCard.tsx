@@ -207,7 +207,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 close();
                 onCancel?.(appointment);
               }}
-              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 active:bg-red-500/25 active:scale-[0.97] transition-all"
+              className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 active:bg-red-500/25 active:scale-[0.97] transition-all"
               aria-label="Cancel appointment"
             >
               <XCircle className="w-6 h-6" />
