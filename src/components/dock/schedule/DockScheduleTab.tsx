@@ -191,7 +191,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   return (
     <div className="relative flex flex-col h-full">
       {/* Header */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-0 px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
         <h1 className="font-display text-3xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
           Today's Appointments
         </h1>
@@ -201,7 +201,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         >
           <Plus className="w-7 h-7" />
         </button>
-        <p className="col-start-1 text-base text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+        <p className="col-start-1 text-base text-[hsl(var(--platform-foreground-muted))]">
           {today}
         </p>
       </div>
