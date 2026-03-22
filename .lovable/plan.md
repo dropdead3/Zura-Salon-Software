@@ -1,22 +1,31 @@
 
 
-## Widen Action Buttons with Internal Padding
+## Remove Premature Truncation from Client + Services Line
 
-**Problem:** The button widths and tray offsets were updated, but the button text ("START APPT", "CANCEL", etc.) still touches the button edges because the buttons lack internal horizontal padding — they only use `items-center justify-center` with fixed widths.
+**Problem:** The client name + services line has CSS `truncate` applied, which clips the text even though the card is full-width and there's ample horizontal room. The `+X more` logic already handles overflow by limiting the display to the first service — CSS truncation on top of that is double-constraining.
 
 ### Changes — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-1. **Increase tray offsets** to give more total breathing room:
-   - `ACTIVE_OPEN_OFFSET`: `-148` → `-160`
-   - `SCHEDULED_OPEN_OFFSET`: `-370` → `-400`
+1. **Remove `truncate` from the client+services `<p>` tag** (line 124) — the `+X more` suffix already handles long service lists programmatically, so CSS ellipsis is redundant.
 
-2. **Increase button widths:**
-   - Finish Appt: `w-[132px]` → `w-[144px]`
-   - Cancel / No Show / Start: `w-[112px]` → `w-[120px]` each
+2. **Show more services before collapsing** — since the card is wide, show up to 2-3 services inline before the `+X more` kicks in. Update the display logic:
+   - If 1 service: show it
+   - If 2 services: show both separated by ` + `
+   - If 3+ services: show first two, then `+X more`
 
-3. **Add horizontal padding** `px-2` to each button so text has internal breathing room from the button borders.
+```tsx
+const services = (appointment.service_name || '').split(' + ').filter(Boolean);
+let serviceDisplay = '';
+if (services.length === 1) {
+  serviceDisplay = services[0];
+} else if (services.length === 2) {
+  serviceDisplay = services.join(' + ');
+} else if (services.length > 2) {
+  serviceDisplay = `${services[0]} + ${services[1]} +${services.length - 2} more`;
+}
+```
 
-4. **Increase tray right padding** from `pr-2` → `pr-3` to prevent the rightmost button from clipping against the card edge.
+This uses the available card width to show real service names and only collapses when there are 3+ services.
 
-Single file, class-level adjustments only. No logic changes.
+Single file, one block update.
 
