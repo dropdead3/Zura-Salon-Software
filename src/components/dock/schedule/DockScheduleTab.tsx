@@ -244,7 +244,7 @@ function AppointmentGroup({
           ({count})
         </span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {appointments.map((a) => (
           <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onStart={onStart} onViewClient={onViewClient} />
         ))}

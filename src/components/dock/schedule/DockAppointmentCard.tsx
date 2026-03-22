@@ -171,8 +171,8 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             </p>
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
               <div className="flex items-center gap-1 mt-0.5">
-                <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-                <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
                   {formatAssistantLabel(appointment.assistant_names)}
                 </span>
               </div>
