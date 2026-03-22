@@ -134,7 +134,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </div>
           <div className="mt-1">
             {appointment.service_name && <p className="text-sm truncate">{appointment.service_name}</p>}
-            {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">w/ {appointment.assistant_names.join(', ')}</p>}
+            {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">{formatAssistantLabel(appointment.assistant_names)}</p>}
           </div>
         </div>
       </motion.div>
