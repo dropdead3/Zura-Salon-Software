@@ -276,37 +276,56 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         staffFilter={staffFilter}
       />
 
-      {/* Confirmation AlertDialog */}
-      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
-        <AlertDialogContent className={DOCK_DIALOG.content}>
-          <AlertDialogHeader>
-            <AlertDialogTitle className={DOCK_DIALOG.title}>
-              {confirmAction?.action === 'cancel' ? 'Cancel Appointment' : 'Mark as No-Show'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className={DOCK_DIALOG.description}>
-              {confirmAction?.action === 'cancel'
-                ? `Are you sure you want to cancel ${confirmAction?.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
-                : `Mark ${confirmAction?.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
-              }
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              disabled={isSubmitting}
-              className={DOCK_DIALOG.cancelButton}
+      {/* Dock-native confirmation overlay */}
+      <AnimatePresence>
+        {confirmAction && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className={DOCK_DIALOG.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => !isSubmitting && setConfirmAction(null)}
+            />
+            {/* Dialog panel */}
+            <motion.div
+              className={DOCK_DIALOG.content}
+              initial={{ opacity: 0, scale: 0.95, x: '-50%', y: '-50%' }}
+              animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+              exit={{ opacity: 0, scale: 0.95, x: '-50%', y: '-50%' }}
+              transition={DOCK_SHEET.spring}
             >
-              {confirmAction?.action === 'cancel' ? 'Keep Appointment' : 'Go Back'}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmAction}
-              disabled={isSubmitting}
-              className={confirmAction?.action === 'cancel' ? DOCK_DIALOG.destructiveAction : DOCK_DIALOG.warningAction}
-            >
-              {isSubmitting ? 'Processing…' : confirmAction?.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <h2 className={DOCK_DIALOG.title}>
+                {confirmAction.action === 'cancel' ? 'Cancel Appointment' : 'Mark as No-Show'}
+              </h2>
+              <p className={DOCK_DIALOG.description}>
+                {confirmAction.action === 'cancel'
+                  ? `Are you sure you want to cancel ${confirmAction.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
+                  : `Mark ${confirmAction.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
+                }
+              </p>
+              <div className={DOCK_DIALOG.buttonRow}>
+                <button
+                  disabled={isSubmitting}
+                  onClick={() => setConfirmAction(null)}
+                  className={DOCK_DIALOG.cancelButton}
+                >
+                  {confirmAction.action === 'cancel' ? 'Keep Appointment' : 'Go Back'}
+                </button>
+                <button
+                  onClick={handleConfirmAction}
+                  disabled={isSubmitting}
+                  className={confirmAction.action === 'cancel' ? DOCK_DIALOG.destructiveAction : DOCK_DIALOG.warningAction}
+                >
+                  {isSubmitting ? 'Processing…' : confirmAction.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
