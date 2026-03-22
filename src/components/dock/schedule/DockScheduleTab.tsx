@@ -137,7 +137,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           <h1 className="font-display text-3xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Today's Appointments
           </h1>
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+          <p className="text-base text-[hsl(var(--platform-foreground-muted))] mt-0.5">
             {today}
           </p>
         </div>
