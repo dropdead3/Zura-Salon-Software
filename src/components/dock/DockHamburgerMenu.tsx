@@ -1,6 +1,6 @@
 /**
- * DockHamburgerMenu — Full-screen overlay nav replacing bottom tab bar.
- * Absolute containment · spring transitions · dock token styling.
+ * DockHamburgerMenu — Bottom-sheet nav matching DockNewBookingSheet visual language.
+ * Absolute containment · spring transitions · pull-to-dismiss · dock token styling.
  */
 
 import { useState } from 'react';
@@ -24,7 +24,7 @@ const TABS: { id: DockTab; label: string; icon: typeof Calendar }[] = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
+const SPRING = DOCK_SHEET.spring;
 
 export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: DockHamburgerMenuProps) {
   const [open, setOpen] = useState(false);
@@ -39,21 +39,23 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
     onLockStation();
   };
 
+  const handleDragEnd = (_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
+    if (info.offset.y > DOCK_SHEET.dismissThreshold.offset || info.velocity.y > DOCK_SHEET.dismissThreshold.velocity) {
+      setOpen(false);
+    }
+  };
+
   return (
     <>
       {/* Hamburger trigger — top-right */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(true)}
         className="absolute top-5 right-5 z-40 p-2.5 rounded-xl bg-[hsl(var(--platform-bg-elevated)/0.8)] border border-[hsl(var(--platform-border)/0.2)] backdrop-blur-md transition-colors hover:bg-[hsl(var(--platform-bg-elevated))]"
       >
-        {open ? (
-          <X className="w-5 h-5 text-[hsl(var(--platform-foreground))]" />
-        ) : (
-          <Menu className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
-        )}
+        <Menu className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
       </button>
 
-      {/* Full-screen overlay menu */}
+      {/* Bottom sheet overlay */}
       <AnimatePresence>
         {open && (
           <>
@@ -63,21 +65,42 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm"
+              className={DOCK_SHEET.backdrop}
+              style={{ zIndex: 45 }}
               onClick={() => setOpen(false)}
             />
 
-            {/* Menu panel — slides down from top */}
+            {/* Sheet panel — slides up from bottom */}
             <motion.div
-              initial={{ y: '-100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '-100%', opacity: 0 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={0.1}
+              onDragEnd={handleDragEnd}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
               transition={SPRING}
-              className="absolute inset-x-0 top-0 z-35 flex flex-col bg-[hsl(var(--platform-bg-elevated))] border-b border-[hsl(var(--platform-border)/0.3)] rounded-b-2xl shadow-2xl pt-16 pb-6 px-6"
-              style={{ zIndex: 35 }}
+              className="absolute inset-x-0 bottom-0 flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl shadow-2xl"
+              style={{ zIndex: 46, maxHeight: DOCK_SHEET.maxHeight }}
             >
+              {/* Drag handle */}
+              <div className={DOCK_SHEET.dragHandle} />
+
+              {/* Header row */}
+              <div className="flex items-center justify-between px-6 pt-4 pb-2">
+                <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                  Navigation
+                </h2>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors"
+                >
+                  <X className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
+                </button>
+              </div>
+
               {/* Tab items */}
-              <div className="space-y-1">
+              <div className="px-4 space-y-1">
                 {TABS.map(({ id, label, icon: Icon }) => {
                   const isActive = activeTab === id;
                   return (
@@ -107,16 +130,18 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
               </div>
 
               {/* Divider */}
-              <div className="my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
+              <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
 
               {/* Lock Station */}
-              <button
-                onClick={handleLock}
-                className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"
-              >
-                <Lock className="w-5 h-5" />
-                <span className="font-display text-sm tracking-wide uppercase">Lock Station</span>
-              </button>
+              <div className="px-4 pb-8">
+                <button
+                  onClick={handleLock}
+                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"
+                >
+                  <Lock className="w-5 h-5" />
+                  <span className="font-display text-sm tracking-wide uppercase">Lock Station</span>
+                </button>
+              </div>
             </motion.div>
           </>
         )}
