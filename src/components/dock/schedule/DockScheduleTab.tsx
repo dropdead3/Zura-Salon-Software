@@ -165,10 +165,10 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           ) : (
             <>
               {active.length > 0 && (
-                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
               )}
               {scheduled.length > 0 && (
-                <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
               )}
               {completed.length > 0 && (
                 <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onViewClient={onViewClient} />
