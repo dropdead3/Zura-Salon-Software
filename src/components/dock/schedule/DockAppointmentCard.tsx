@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState } from 'react';
-import { FlaskConical, User, Users, CheckCircle2 } from 'lucide-react';
+import { FlaskConical, Users, CheckCircle2 } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
@@ -126,14 +126,9 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             </p>
             {appointment.has_mix_session && <div className="w-8 h-8" />}
           </div>
-          <div className="flex items-end justify-between gap-3 mt-1">
-            <div className="flex-1 min-w-0">
-              {appointment.service_name && <p className="text-sm truncate">{appointment.service_name}</p>}
-            </div>
-            <div className="shrink-0 text-right">
-              {appointment.stylist_name && <div className="flex items-center gap-1 justify-end"><span className="text-sm">{appointment.stylist_name}</span></div>}
-              {appointment.assistant_names && appointment.assistant_names.length > 0 && <div className="flex items-center gap-1 justify-end mt-0.5"><span className="text-sm">w/ {appointment.assistant_names.join(', ')}</span></div>}
-            </div>
+          <div className="mt-1">
+            {appointment.service_name && <p className="text-sm truncate">{appointment.service_name}</p>}
+            {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">w/ {appointment.assistant_names.join(', ')}</p>}
           </div>
         </div>
       </motion.div>
@@ -150,33 +145,21 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </p>
         </div>
 
-        {/* Bottom row: service (left) + stylist/assistant (right) */}
-        <div className="flex items-end justify-between gap-3 mt-1">
-          <div className="flex-1 min-w-0">
-            {appointment.service_name && (
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate">
-                {appointment.service_name}
-              </p>
-            )}
-          </div>
-          <div className="shrink-0 text-right">
-            {appointment.stylist_name && (
-              <div className="flex items-center gap-1 justify-end">
-                <User className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-                <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                  {appointment.stylist_name}
-                </span>
-              </div>
-            )}
-            {appointment.assistant_names && appointment.assistant_names.length > 0 && (
-              <div className="flex items-center gap-1 justify-end mt-0.5">
-                <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-                <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
-                  w/ {appointment.assistant_names.join(', ')}
-                </span>
-              </div>
-            )}
-          </div>
+        {/* Bottom rows: service + assistant, left-aligned */}
+        <div className="mt-1">
+          {appointment.service_name && (
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate">
+              {appointment.service_name}
+            </p>
+          )}
+          {appointment.assistant_names && appointment.assistant_names.length > 0 && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+              <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                w/ {appointment.assistant_names.join(', ')}
+              </span>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
