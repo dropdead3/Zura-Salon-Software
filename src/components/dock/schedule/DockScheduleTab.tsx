@@ -201,7 +201,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         >
           <Plus className="w-7 h-7" />
         </button>
-        <p className="col-start-1 text-base text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+        <p className="col-start-1 text-base text-[hsl(var(--platform-foreground-muted))]">
           {today}
         </p>
       </div>
