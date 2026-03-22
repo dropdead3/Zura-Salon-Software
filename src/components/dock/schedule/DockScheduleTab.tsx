@@ -85,7 +85,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       </div>
 
       {/* Appointment list */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 space-y-8">
         {all.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-20 text-center">
             <Calendar className="w-12 h-12 text-violet-400/40 mb-4" />
