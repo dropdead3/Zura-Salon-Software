@@ -1,23 +1,16 @@
 
 
-## Add Multi-Service Scheduled Demo Appointment
+## Add Payment Status to Demo Completed Appointments
 
-**Problem:** There's no demo appointment in the scheduled section with multiple services (including a non-chemical one) to showcase the color/chem toggle behavior.
+**Problem:** The three completed demo appointments (Amanda Park, Maria Gonzalez, Natalie Brooks) lack `payment_status` values, so no payment badges appear on their cards.
 
 ### Change — `src/hooks/dock/dockDemoData.ts`
 
-**Modify one existing scheduled appointment** (e.g. `demo-appt-3`, Emily Rodriguez) to have 4 services with 1 non-chemical:
+Add `payment_status` to each completed demo appointment with varied values to showcase all badge states:
 
-Change line 121:
-```
-service_name: 'Full Highlight + Cut',
-```
-to:
-```
-service_name: 'Full Highlight + Root Smudge + Glaze Add On + Signature Haircut',
-```
+- **demo-appt-4** (Amanda Park): `payment_status: 'paid'` — green "Paid" badge
+- **demo-appt-6** (Maria Gonzalez): `payment_status: 'unpaid'` — red "Unpaid" badge  
+- **demo-appt-11** (Natalie Brooks): `payment_status: 'comp'` — muted "Comp" badge
 
-This gives Emily Rodriguez 4 services: 3 color/chem services (Full Highlight, Root Smudge, Glaze Add On) and 1 non-chemical service (Signature Haircut). This naturally demonstrates how the toggle filters work — the haircut is the odd one out.
-
-Single line change in one file.
+Three lines added across one file. Each line goes after `has_mix_session` in the respective appointment object.
 
