@@ -146,15 +146,15 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
       >
         {/* Mix session indicator — inside sliding layer so it moves with card */}
         {appointment.has_mix_session && (
-          <div className="absolute top-5 right-5 z-30 flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600/20">
-            <FlaskConical className="w-4 h-4 text-violet-400" />
+          <div className="absolute top-5 right-5 z-30 flex items-center justify-center w-9 h-9 rounded-lg bg-violet-600/20">
+            <FlaskConical className="w-5 h-5 text-violet-400" />
           </div>
         )}
 
         {/* Card content — lives inside draggable layer, moves with swipe */}
-        <div className="p-5">
+        <div className="p-6">
           <div className="flex items-start gap-2">
-            <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
+            <p className="font-medium text-lg text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
               {appointment.client_name || 'Walk-in'}
               {appointment.service_name && (
                 <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
@@ -162,17 +162,17 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
                 </span>
               )}
             </p>
-            {appointment.has_mix_session && <div className="w-8 h-8" />}
+            {appointment.has_mix_session && <div className="w-9 h-9" />}
           </div>
 
           <div className="mt-0.5">
-            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+            <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
             </p>
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
               <div className="flex items-center gap-1 mt-0.5">
-                <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-                <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
                   {formatAssistantLabel(appointment.assistant_names)}
                 </span>
               </div>

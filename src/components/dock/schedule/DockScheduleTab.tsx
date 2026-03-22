@@ -134,24 +134,24 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-8 pb-3">
         <div>
-          <h1 className="font-display text-2xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+          <h1 className="font-display text-3xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Today's Appointments
           </h1>
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+          <p className="text-base text-[hsl(var(--platform-foreground-muted))] mt-0.5">
             {today}
           </p>
         </div>
         <button
           onClick={() => setShowNewBooking(true)}
-          className="flex items-center justify-center w-12 h-12 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
+          className="flex items-center justify-center w-14 h-14 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
         >
-          <Plus className="w-6 h-6" />
+          <Plus className="w-7 h-7" />
         </button>
       </div>
 
       {/* Chemical filter toggle */}
       <div className="flex items-center justify-between px-5 pb-4">
-        <label htmlFor="chemical-toggle" className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+        <label htmlFor="chemical-toggle" className="text-base text-[hsl(var(--platform-foreground-muted))]">
           Show Color & Chemical Service Appointments Only
         </label>
         <Switch
@@ -168,7 +168,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           {filteredAppointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center pt-20 text-center">
               <Calendar className="w-12 h-12 text-violet-400/40 mb-4" />
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+              <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
                 No appointments today
               </p>
             </div>
@@ -236,15 +236,15 @@ function AppointmentGroup({
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
-        <span className="text-sm font-display font-medium tracking-wide text-[hsl(var(--platform-foreground-muted))]">
+        <div className={`w-3 h-3 rounded-full ${dotColor}`} />
+        <span className="text-base font-display font-medium tracking-wide text-[hsl(var(--platform-foreground-muted))]">
           {label}
         </span>
-        <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.6)]">
+        <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.6)]">
           ({count})
         </span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {appointments.map((a) => (
           <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onStart={onStart} onViewClient={onViewClient} />
         ))}

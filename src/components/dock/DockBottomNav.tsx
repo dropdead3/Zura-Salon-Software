@@ -46,7 +46,7 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
             <button
               key={id}
               onClick={handleClick}
-              className="relative flex h-16 flex-1 items-center justify-center px-1"
+              className="relative flex h-[72px] flex-1 items-center justify-center px-1"
             >
               {/* Full-slot pill indicator */}
               {isActive && (
@@ -70,7 +70,7 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
                 >
                   <DisplayIcon
                     className={cn(
-                      'h-6 w-6 transition-colors duration-150',
+                      'h-7 w-7 transition-colors duration-150',
                       isActive
                         ? isSettingsLock
                           ? 'text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]'
@@ -88,7 +88,7 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15 }}
                       className={cn(
-                        "whitespace-nowrap text-[11px] font-medium tracking-wide",
+                        "whitespace-nowrap text-xs font-medium tracking-wide",
                         isSettingsLock ? 'text-red-300' : 'text-violet-300'
                       )}
                     >
