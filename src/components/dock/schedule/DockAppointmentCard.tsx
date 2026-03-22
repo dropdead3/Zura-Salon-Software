@@ -172,11 +172,15 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
             </p>
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
-              <div className="flex items-center gap-1 mt-0.5">
-                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-                <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
-                  {formatAssistantLabel(appointment.assistant_names)}
-                </span>
+              <div className="flex items-start mt-1 ml-1">
+                {/* L-hook connector */}
+                <div className="w-3 h-4 border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm shrink-0 mr-1.5" />
+                <div className="flex items-center gap-1 pt-1">
+                  <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0" />
+                  <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                    {formatAssistantLabel(appointment.assistant_names)}
+                  </span>
+                </div>
               </div>
             )}
           </div>
