@@ -1,48 +1,30 @@
 
 
-## Fix Hamburger/Add Button Overlap + Relocate Add Button
+## Style-Match Hamburger Menu to Booking Sheet
 
-**Problem:** The hamburger menu button (`top-5 right-5 z-40`) overlaps the add appointment button (`w-14 h-14`) in the header grid, both competing for the top-right corner.
+**Problem:** The hamburger menu panel slides down from the top with `bg-[hsl(var(--platform-bg-elevated))]` and no drag handle, while the booking sheet slides up from the bottom with `bg-[hsl(var(--platform-bg))]`, a drag handle, rounded top corners, and pull-to-dismiss. They should share the same visual language.
 
-### Changes
+### Changes — `src/components/dock/DockHamburgerMenu.tsx`
 
-#### 1. `src/components/dock/schedule/DockScheduleTab.tsx`
+Convert the menu from a top-sliding panel to a bottom sheet matching `DockNewBookingSheet`:
 
-**Remove add button from header** (lines 198-203): Delete the `+` button from the header grid. Simplify the grid back to a single-column layout since there's no second column needed.
+1. **Slide direction:** Change from `y: '-100%'` (top) to `y: '100%'` (bottom), anchored with `absolute inset-x-0 bottom-0`
+2. **Background:** `bg-[hsl(var(--platform-bg-elevated))]` → `bg-[hsl(var(--platform-bg))]` to match booking sheet
+3. **Border:** `border-b` → `border-t border-[hsl(var(--platform-border))]`
+4. **Corners:** `rounded-b-2xl` → `rounded-t-2xl`
+5. **Drag handle:** Add the standard dock drag handle (`mx-auto mt-3 h-1.5 w-12 rounded-full`) at the top
+6. **Pull-to-dismiss:** Add `drag="y"` with `useDragControls`, same dismiss threshold (offset 120, velocity 500)
+7. **Close button:** Replace the top-right X with an inline close button in the header row (matching booking sheet's `p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)]` pattern)
+8. **Max height:** Add `maxHeight: '92%'` style to match `DOCK_SHEET.maxHeight`
+9. **Keep hamburger trigger** in top-right, but only show the `Menu` icon (no `X` toggle — the sheet itself has a close button and pull-to-dismiss)
 
-**Add inline add button above the Active section** (inside the scroll area, before the first `AppointmentGroup`): Place a smaller, inline "Add Appointment" button row just above the first group:
+### Layout inside the sheet (top to bottom):
+- Drag handle
+- Header row: "Navigation" title + X close button
+- Tab items (same styling, unchanged)
+- Divider
+- Lock Station button
+- Bottom padding for safe area
 
-```tsx
-<button
-  onClick={() => setShowNewBooking(true)}
-  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors border border-violet-500/20"
->
-  <Plus className="w-4 h-4" />
-  <span className="font-display text-xs tracking-wide uppercase">Add Appointment</span>
-</button>
-```
-
-This sits at the top of the scrollable content, clearly separated from the hamburger menu.
-
-**Simplify header layout** (line 194): Revert to a simple flex column since the button is gone:
-
-```tsx
-<div className="px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
-  <h1 className="font-display text-3xl tracking-wide uppercase ...">Today's Appointments</h1>
-  <p className="text-base ...">Sunday, March 22</p>
-</div>
-```
-
-### UI Improvement Suggestions
-
-- **Top fade overlay removal**: The `h-12` top gradient still partially covers the first section. With the add button now inline at the top of the scroll content, consider removing or reducing it.
-- **Hamburger button position**: Could move to `top-8` to align better with the header title baseline.
-
-### Summary
-
-| File | Change |
-|------|--------|
-| `DockScheduleTab.tsx` | Remove add button from header grid, simplify header to flex column, add inline "Add Appointment" button above first appointment group in scroll area |
-
-One file, three localized edits.
+One file changed. Purely class and animation direction updates + drag handle addition.
 
