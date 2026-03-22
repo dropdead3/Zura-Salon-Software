@@ -178,7 +178,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
