@@ -115,20 +115,22 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
     <>
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
-          <p className={cn(
-            'text-lg truncate',
-            visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : ''
-          )}>
-            {appointment.client_name || 'Walk-in'}
-          </p>
-          {appointment.service_name && (
-            <p className={cn(
-              'text-base truncate mt-0.5',
-              visible ? 'text-[hsl(var(--platform-foreground-muted))]' : ''
-            )}>
-              {appointment.service_name}
-            </p>
-          )}
+          {(() => {
+            const services = (appointment.service_name || '').split(' + ').filter(Boolean);
+            const serviceDisplay = services.length <= 1
+              ? services[0] || ''
+              : `${services[0]} +${services.length - 1} more`;
+            return (
+              <p className={cn('text-lg truncate', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
+                {appointment.client_name || 'Walk-in'}
+                {serviceDisplay && (
+                  <span className={cn('font-normal', visible ? 'text-[hsl(var(--platform-foreground-muted))]' : '')}>
+                    {' · '}{serviceDisplay}
+                  </span>
+                )}
+              </p>
+            );
+          })()}
         </div>
         {/* Status badge for no-show / cancelled */}
         {visible && STATUS_BADGE[appointment.status || ''] && (
