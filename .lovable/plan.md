@@ -1,24 +1,48 @@
 
 
-## Remove Bottom Gradient Covering Appointment Cards
+## Fix Hamburger/Add Button Overlap + Relocate Add Button
 
-**Problem:** The scroll indicator at the bottom of the schedule tab includes a `h-12` gradient overlay that covers appointment cards.
+**Problem:** The hamburger menu button (`top-5 right-5 z-40`) overlaps the add appointment button (`w-14 h-14`) in the header grid, both competing for the top-right corner.
 
-### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
+### Changes
 
-**Lines 257-264:** Remove the entire scroll indicator block (gradient + bouncing chevron):
+#### 1. `src/components/dock/schedule/DockScheduleTab.tsx`
+
+**Remove add button from header** (lines 198-203): Delete the `+` button from the header grid. Simplify the grid back to a single-column layout since there's no second column needed.
+
+**Add inline add button above the Active section** (inside the scroll area, before the first `AppointmentGroup`): Place a smaller, inline "Add Appointment" button row just above the first group:
 
 ```tsx
-// Delete this entire block
-<div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 flex flex-col items-center pb-3 transition-opacity duration-300"
-  style={{ opacity: showScrollIndicator ? 1 : 0 }}
+<button
+  onClick={() => setShowNewBooking(true)}
+  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors border border-violet-500/20"
 >
-  <div className="w-full h-12 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
-  <ChevronDown className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))] animate-bounce" />
+  <Plus className="w-4 h-4" />
+  <span className="font-display text-xs tracking-wide uppercase">Add Appointment</span>
+</button>
+```
+
+This sits at the top of the scrollable content, clearly separated from the hamburger menu.
+
+**Simplify header layout** (line 194): Revert to a simple flex column since the button is gone:
+
+```tsx
+<div className="px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
+  <h1 className="font-display text-3xl tracking-wide uppercase ...">Today's Appointments</h1>
+  <p className="text-base ...">Sunday, March 22</p>
 </div>
 ```
 
-Also clean up the `showScrollIndicator` state and `checkScroll` logic if they're no longer used elsewhere.
+### UI Improvement Suggestions
 
-One file, one deletion.
+- **Top fade overlay removal**: The `h-12` top gradient still partially covers the first section. With the add button now inline at the top of the scroll content, consider removing or reducing it.
+- **Hamburger button position**: Could move to `top-8` to align better with the header title baseline.
+
+### Summary
+
+| File | Change |
+|------|--------|
+| `DockScheduleTab.tsx` | Remove add button from header grid, simplify header to flex column, add inline "Add Appointment" button above first appointment group in scroll area |
+
+One file, three localized edits.
 
