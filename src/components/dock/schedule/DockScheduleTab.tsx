@@ -186,7 +186,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     );
   }
 
-  const { active, scheduled, completed } = groupAppointments(filteredAppointments);
+  const { active, scheduled, completed, noShow, cancelled } = groupAppointments(filteredAppointments);
 
   return (
     <div className="relative flex flex-col h-full">
