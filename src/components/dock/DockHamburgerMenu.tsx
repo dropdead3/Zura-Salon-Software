@@ -83,8 +83,8 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
               className="absolute inset-x-0 top-0 flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl shadow-2xl"
               style={{ zIndex: 46, maxHeight: DOCK_SHEET.maxHeight }}
             >
-              {/* Drag handle */}
-              <div className={DOCK_SHEET.dragHandle} />
+              {/* Top spacer for rounded corners */}
+              <div className="h-2" />
 
               {/* Header row */}
               <div className="flex items-center justify-between px-6 pt-4 pb-2">
