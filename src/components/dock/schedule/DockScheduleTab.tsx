@@ -205,6 +205,7 @@ function AppointmentGroup({
   accentColor,
   onTap,
   onComplete,
+  onStart,
   onViewClient,
 }: {
   label: string;
@@ -213,6 +214,7 @@ function AppointmentGroup({
   accentColor: 'violet' | 'blue' | 'slate';
   onTap: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
+  onStart?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
 }) {
   const dotColor = {
