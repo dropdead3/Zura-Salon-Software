@@ -261,12 +261,12 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
       {/* Confirmation AlertDialog */}
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
-        <AlertDialogContent className="bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))]">
+        <AlertDialogContent className={DOCK_DIALOG.content}>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-display tracking-wide">
+            <AlertDialogTitle className={DOCK_DIALOG.title}>
               {confirmAction?.action === 'cancel' ? 'Cancel Appointment' : 'Mark as No-Show'}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[hsl(var(--platform-foreground-muted))]">
+            <AlertDialogDescription className={DOCK_DIALOG.description}>
               {confirmAction?.action === 'cancel'
                 ? `Are you sure you want to cancel ${confirmAction?.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
                 : `Mark ${confirmAction?.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
@@ -276,19 +276,14 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={isSubmitting}
-              className="bg-transparent border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground-muted)/0.1)]"
+              className={DOCK_DIALOG.cancelButton}
             >
               {confirmAction?.action === 'cancel' ? 'Keep Appointment' : 'Go Back'}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmAction}
               disabled={isSubmitting}
-              className={cn(
-                'border-0',
-                confirmAction?.action === 'cancel'
-                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
-              )}
+              className={confirmAction?.action === 'cancel' ? DOCK_DIALOG.destructiveAction : DOCK_DIALOG.warningAction}
             >
               {isSubmitting ? 'Processing…' : confirmAction?.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
             </AlertDialogAction>
