@@ -132,7 +132,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
       {/* Sliding card background — drags left to reveal tray */}
       <motion.div
-        drag={isTerminal ? false : 'x'}
+        drag={canSwipe ? 'x' : false}
         dragConstraints={{ left: openOffset, right: 0 }}
         dragElastic={0.1}
         dragMomentum={false}
