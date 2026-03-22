@@ -29,3 +29,12 @@ export const DOCK_BUTTON = {
   close: 'p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors',
   iconColor: 'text-[hsl(var(--platform-foreground-muted))]',
 } as const;
+
+export const DOCK_DIALOG = {
+  content: 'bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] rounded-xl shadow-2xl',
+  title: 'font-display text-lg tracking-wide text-[hsl(var(--platform-foreground))]',
+  description: 'text-sm text-[hsl(var(--platform-foreground-muted))]',
+  cancelButton: 'bg-transparent border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground-muted)/0.1)]',
+  destructiveAction: 'border-0 bg-red-500/20 text-red-400 hover:bg-red-500/30',
+  warningAction: 'border-0 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30',
+} as const;
