@@ -152,6 +152,15 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             {STATUS_BADGE[appointment.status || ''].label}
           </span>
         )}
+        {/* Payment badge for completed appointments */}
+        {visible && appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
+          <span className={cn(
+            'shrink-0 text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
+            PAYMENT_BADGE[appointment.payment_status || ''].classes
+          )}>
+            {PAYMENT_BADGE[appointment.payment_status || ''].label}
+          </span>
+        )}
         {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}
       </div>
 
