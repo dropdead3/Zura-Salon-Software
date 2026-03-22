@@ -22,6 +22,7 @@ function formatAssistantLabel(names: string[]): string {
 interface DockAppointmentCardProps {
   appointment: DockAppointment;
   accentColor: 'violet' | 'blue' | 'slate';
+  isChemical?: boolean;
   onTap?: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
@@ -39,8 +40,8 @@ const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
 const OPEN_OFFSET = -128;
 const SNAP_THRESHOLD = 50;
 
-export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onStart, onViewClient }: DockAppointmentCardProps) {
-  const borderClass = BORDER_COLORS[accentColor];
+export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onViewClient }: DockAppointmentCardProps) {
+  const borderClass = isChemical ? BORDER_COLORS[accentColor] : 'border-l-[hsl(var(--platform-foreground-muted)/0.3)]';
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
   const isActive = ACTIVE_STATUSES.includes(appointment.status || '');
   const isScheduled = !isTerminal && !isActive;
@@ -139,8 +140,9 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
         className={cn(
-          'relative z-20 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
+          'relative z-20 w-full border-l-[3px] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
+          isChemical ? 'bg-[hsl(var(--platform-bg-card))]' : 'bg-[hsl(var(--platform-bg-card)/0.7)]',
           borderClass
         )}
       >
