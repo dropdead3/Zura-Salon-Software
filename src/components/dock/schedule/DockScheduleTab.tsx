@@ -59,7 +59,16 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
-  const [showChemicalOnly, setShowChemicalOnly] = useState(true);
+  const storageKey = `dock-chemical-toggle::${staff.userId}`;
+  const [showChemicalOnly, setShowChemicalOnly] = useState(() => {
+    const saved = localStorage.getItem(storageKey);
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const handleToggleChange = (checked: boolean) => {
+    localStorage.setItem(storageKey, String(checked));
+    setShowChemicalOnly(checked);
+  };
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
