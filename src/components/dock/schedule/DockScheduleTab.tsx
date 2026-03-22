@@ -191,7 +191,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   return (
     <div className="relative flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-8 pb-3">
+      <div className="flex items-center justify-between px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
         <div>
           <h1 className="font-display text-3xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Today's Appointments
@@ -209,7 +209,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       </div>
 
       {/* Chemical filter toggle */}
-      <div className="flex items-center justify-between px-5 pb-4">
+      <div className="flex items-center justify-between px-5 pt-2 pb-5">
         <label htmlFor="chemical-toggle" className="text-base text-[hsl(var(--platform-foreground-muted))]">
           Show Color & Chemical Service Appointments Only
         </label>
