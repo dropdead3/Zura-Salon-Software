@@ -97,11 +97,12 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
       {/* Bottom navigation — hidden during detail view */}
       {!showingDetail && (
-        <div className="absolute bottom-0 inset-x-0 z-30">
-          <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
-        </div>
-        {/* Gradient fade — covers bottom area behind nav */}
-        <div className="absolute bottom-0 inset-x-0 z-20 h-32 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent pointer-events-none" />
+        <>
+          <div className="absolute bottom-0 inset-x-0 z-30">
+            <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
+          </div>
+          <div className="absolute bottom-0 inset-x-0 z-20 h-32 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent pointer-events-none" />
+        </>
       )}
 
       {/* Client quick view sheet */}
