@@ -211,7 +211,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         </div>
         <button
           onClick={() => setShowNewBooking(true)}
-          className="flex items-center justify-center w-14 h-14 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
+          className="flex items-center justify-center w-14 h-14 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors mt-1"
         >
           <Plus className="w-7 h-7" />
         </button>
