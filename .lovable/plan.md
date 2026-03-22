@@ -1,20 +1,26 @@
 
 
-## Fix: Gradient Covering Scrollbar
+## Extend Gradient + Add More Bottom Padding for Card Scroll
 
-**Problem:** The gradient overlay at `z-20` uses `inset-x-0` which spans the full width including the scrollbar area, obscuring the scroll thumb.
+**Problem:** The gradient (`h-32`) isn't tall enough to visually separate the FAB from cards, and `pb-28` bottom padding on the scroll container isn't enough for cards to fully scroll above the gradient zone.
 
-**File:** `src/components/dock/DockLayout.tsx` — line 104
+### Changes
 
-**Change:** Add right padding to the gradient so it doesn't cover the scrollbar. Replace `inset-x-0` with `left-0 right-3` (12px inset from the right edge to clear the scrollbar track):
+**File: `src/components/dock/DockLayout.tsx` — line 104**
+
+Increase gradient height from `h-32` to `h-44` (176px) for a taller fade zone that better covers the FAB area:
 
 ```tsx
-// Before
-<div className="absolute bottom-0 inset-x-0 z-20 h-32 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent pointer-events-none" />
-
-// After
-<div className="absolute bottom-0 left-0 right-3 z-20 h-32 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent pointer-events-none" />
+<div className="absolute bottom-0 left-0 right-3 z-20 h-44 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent pointer-events-none" />
 ```
 
-Single class change — swaps `inset-x-0` for `left-0 right-3` to leave room for the scrollbar handle.
+**File: `src/components/dock/schedule/DockScheduleTab.tsx` — line 167**
+
+Increase bottom padding from `pb-28` to `pb-44` so the last cards can scroll fully above the gradient into clear view:
+
+```tsx
+<div ref={scrollRef} onScroll={checkScroll} className="h-full overflow-y-auto px-5 pb-44 space-y-8">
+```
+
+Two class changes across two files.
 
