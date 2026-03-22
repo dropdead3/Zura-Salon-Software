@@ -1,21 +1,16 @@
 
 
-## Fix: Color & Chemical Toggle Visibility in Dark Dock Theme
+## Fix: Toggle "Off" State Too Bright
 
-**Problem:** The `Switch` component uses `bg-primary` for its checked state. In the Dock's dark context, `--primary` resolves to a muted light color (`40 20% 92%` in dark mode) that doesn't contrast well against the dark background — making it nearly invisible when toggled on.
+**Problem:** The Switch unchecked state uses `bg-muted` which resolves to a bright white/light color in the Dock's dark theme context.
 
-**File:** `src/components/dock/schedule/DockScheduleTab.tsx` (line 148)
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx` (line 152)
 
-**Fix:** Override the Switch's checked background with the Dock's violet platform primary color via className:
+**Fix:** Add a `data-[state=unchecked]` override to use a subtle dark gray matching the Dock palette:
 
 ```tsx
-<Switch
-  id="chemical-toggle"
-  checked={showChemicalOnly}
-  onCheckedChange={setShowChemicalOnly}
-  className="data-[state=checked]:bg-[hsl(var(--platform-primary))]"
-/>
+className="data-[state=checked]:bg-[hsl(var(--platform-primary))] data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
 ```
 
-This makes the toggle glow violet when on — consistent with the Dock's design language and clearly visible against the dark background. Single line change.
+Single class addition — the unchecked track becomes a dim gray that's visible but not eye-catching.
 
