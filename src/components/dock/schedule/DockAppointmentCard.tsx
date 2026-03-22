@@ -22,6 +22,7 @@ function formatAssistantLabel(names: string[]): string {
 interface DockAppointmentCardProps {
   appointment: DockAppointment;
   accentColor: 'violet' | 'blue' | 'slate';
+  isChemical?: boolean;
   onTap?: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
