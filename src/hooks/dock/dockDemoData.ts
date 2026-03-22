@@ -236,6 +236,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       client_id: 'demo-client-11',
       notes: null,
       has_mix_session: false,
+      payment_status: 'comp',
     },
   ];
 })();
