@@ -46,7 +46,7 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
             <button
               key={id}
               onClick={handleClick}
-              className="relative flex h-14 flex-1 items-center justify-center px-1"
+              className="relative flex h-16 flex-1 items-center justify-center px-1"
             >
               {/* Full-slot pill indicator */}
               {isActive && (
