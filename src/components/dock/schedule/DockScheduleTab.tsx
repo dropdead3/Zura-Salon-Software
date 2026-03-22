@@ -229,6 +229,13 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
             </div>
           ) : (
             <>
+              <button
+                onClick={() => setShowNewBooking(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors border border-violet-500/20"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="font-display text-xs tracking-wide uppercase">Add Appointment</span>
+              </button>
               {active.length > 0 && (
                 <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
