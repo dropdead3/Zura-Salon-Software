@@ -11,6 +11,12 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 import { DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
 
+function formatAssistantLabel(names: string[]): string {
+  if (names.length === 1) return `Assisted by ${names[0]}`;
+  if (names.length === 2) return `Assisted by ${names[0]} & ${names[1]}`;
+  return `Assisted by ${names[0]}, ${names[1]} & ${names.length - 2} more`;
+}
+
 interface DockAppointmentCardProps {
   appointment: DockAppointment;
   accentColor: 'violet' | 'blue' | 'slate';
@@ -128,7 +134,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </div>
           <div className="mt-1">
             {appointment.service_name && <p className="text-sm truncate">{appointment.service_name}</p>}
-            {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">w/ {appointment.assistant_names.join(', ')}</p>}
+            {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">{formatAssistantLabel(appointment.assistant_names)}</p>}
           </div>
         </div>
       </motion.div>
@@ -156,7 +162,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             <div className="flex items-center gap-1 mt-0.5">
               <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
               <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
-                w/ {appointment.assistant_names.join(', ')}
+                {formatAssistantLabel(appointment.assistant_names)}
               </span>
             </div>
           )}
