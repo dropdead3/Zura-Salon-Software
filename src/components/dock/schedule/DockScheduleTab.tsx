@@ -242,6 +242,12 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
               {completed.length > 0 && (
                 <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
+              {noShow.length > 0 && (
+                <AppointmentGroup label="No Show" count={noShow.length} appointments={noShow} accentColor="amber" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+              )}
+              {cancelled.length > 0 && (
+                <AppointmentGroup label="Cancelled" count={cancelled.length} appointments={cancelled} accentColor="red" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+              )}
             </>
           )}
         </div>
