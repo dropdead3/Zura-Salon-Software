@@ -1,17 +1,39 @@
 
 
-## Widen Action Buttons — Add Horizontal Padding
+## Inline Services with Client Name + "+X more" Overflow
 
-**Problem:** "Finish Appt" and "Start Appt" text nearly touches the button edges. Buttons need more horizontal breathing room.
+**Problem:** Services are on a separate line below the client name. They should be inline on the same line, separated by a dot, with a "+X more" indicator when they overflow.
 
 ### Changes — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-1. **Increase `SCHEDULED_OPEN_OFFSET`** from `-320` to `-370` (line 56) — gives the 3-button tray 50px more total width
-2. **Increase `ACTIVE_OPEN_OFFSET`** from `-128` to `-148` (line 55) — gives the single Finish button 20px more width
-3. **Widen individual buttons:**
-   - Finish Appt: `w-[112px]` → `w-[132px]` (line 195)
-   - Cancel / No Show / Start: `w-[100px]` → `w-[112px]` each (lines 210, 222, 234)
-4. **Increase tray inner padding:** `pl-2 pr-1` → `pl-3 pr-2` (line 185)
+**Replace the two-line client/service block (lines 117-132) with a single-line layout:**
 
-Single file, class-level width + padding bumps. No logic changes.
+1. **Parse services** from `appointment.service_name` (split on ` + `) into an array
+2. **Render inline:** `Client Name · Service1 + Service2 +3 more` all on one truncated line
+3. **Logic:** Show the client name, then a `·` separator, then as many services as fit. Use a helper that builds the display string:
+   - If 1 service: show it directly
+   - If 2+ services: show first service, then `+X more` suffix
+   - The whole line gets `truncate` so it clips gracefully
+
+```tsx
+// Helper inside cardContent
+const services = (appointment.service_name || '').split(' + ').filter(Boolean);
+const serviceDisplay = services.length <= 1
+  ? services[0] || ''
+  : `${services[0]} +${services.length - 1} more`;
+
+// Single line render
+<p className={cn('text-lg truncate', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
+  {appointment.client_name || 'Walk-in'}
+  {serviceDisplay && (
+    <span className={cn('font-normal', visible ? 'text-[hsl(var(--platform-foreground-muted))]' : '')}>
+      {' · '}{serviceDisplay}
+    </span>
+  )}
+</p>
+```
+
+This removes the second `<p>` for services entirely. Everything is on one line: client name in medium weight, then dot + services in muted weight, with "+X more" when there are multiple services. The `truncate` on the parent `<p>` handles overflow at the card edge.
+
+Single file, one block replacement.
 
