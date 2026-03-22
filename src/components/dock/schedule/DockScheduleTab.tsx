@@ -144,16 +144,16 @@ function AppointmentGroup({
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`w-2 h-2 rounded-full ${dotColor}`} />
-        <span className="text-xs font-medium tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
+      <div className="flex items-center gap-2 mb-4">
+        <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+        <span className="text-sm font-medium tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
           {label}
         </span>
-        <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)]">
+        <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.6)]">
           ({count})
         </span>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {appointments.map((a) => (
           <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} onTap={onTap} onComplete={onComplete} onViewClient={onViewClient} />
         ))}

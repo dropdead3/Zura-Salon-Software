@@ -133,26 +133,26 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
       </motion.div>
 
       {/* Static text overlay — does NOT move */}
-      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-4 pointer-events-none">
+      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-5 pointer-events-none">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Client name */}
-            <p className="font-medium text-sm text-[hsl(var(--platform-foreground))] truncate">
+            <p className="font-medium text-base text-[hsl(var(--platform-foreground))] truncate">
               {appointment.client_name || 'Walk-in'}
             </p>
 
             {/* Service */}
             {appointment.service_name && (
-              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5 truncate">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5 truncate">
                 {appointment.service_name}
               </p>
             )}
 
             {/* Stylist */}
             {appointment.stylist_name && (
-              <div className="flex items-center gap-1 mt-1">
-                <User className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-                <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">
+              <div className="flex items-center gap-1 mt-1.5">
+                <User className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+                <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {appointment.stylist_name}
                 </span>
               </div>
@@ -161,17 +161,17 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             {/* Assistants */}
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
               <div className="flex items-center gap-1 mt-0.5">
-                <Users className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-                <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
                   w/ {appointment.assistant_names.join(', ')}
                 </span>
               </div>
             )}
 
             {/* Time */}
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <Clock className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-              <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">
+            <div className="flex items-center gap-1.5 mt-2">
+              <Clock className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+              <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                 {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
               </span>
             </div>

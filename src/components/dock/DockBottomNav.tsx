@@ -88,7 +88,7 @@ export function DockBottomNav({ activeTab, onTabChange, onLockStation }: DockBot
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.15 }}
                       className={cn(
-                        "whitespace-nowrap text-[9px] font-medium tracking-wide",
+                        "whitespace-nowrap text-[11px] font-medium tracking-wide",
                         isSettingsLock ? 'text-red-300' : 'text-violet-300'
                       )}
                     >
