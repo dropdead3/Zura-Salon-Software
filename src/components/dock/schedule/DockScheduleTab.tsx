@@ -151,7 +151,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
       {/* Chemical filter toggle */}
       <div className="flex items-center justify-between px-5 pb-4">
-        <label htmlFor="chemical-toggle" className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+        <label htmlFor="chemical-toggle" className="text-base text-[hsl(var(--platform-foreground-muted))]">
           Show Color & Chemical Service Appointments Only
         </label>
         <Switch
