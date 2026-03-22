@@ -133,7 +133,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
               <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
 
               {/* Lock Station */}
-              <div className="px-4 pb-8">
+              <div className="px-4 pb-4">
                 <button
                   onClick={handleLock}
                   className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"

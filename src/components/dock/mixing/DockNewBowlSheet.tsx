@@ -45,18 +45,18 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
 
           {/* Sheet */}
           <motion.div
-            className="bg-[hsl(var(--platform-bg-elevated))] rounded-t-2xl border-t border-[hsl(var(--platform-border)/0.3)] max-h-[85vh] flex flex-col"
-            initial={{ y: '100%' }}
+            className="bg-[hsl(var(--platform-bg-elevated))] rounded-b-2xl border-b border-[hsl(var(--platform-border)/0.3)] max-h-[85vh] flex flex-col"
+            initial={{ y: '-100%' }}
             animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            exit={{ y: '-100%' }}
             transition={SPRING}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
+            dragElastic={{ top: 0.6, bottom: 0 }}
             onDragEnd={(_e, info) => {
-              if (info.offset.y > 120 || info.velocity.y > 500) {
+              if (info.offset.y < -120 || info.velocity.y < -500) {
                 onClose();
               }
             }}
