@@ -1,40 +1,29 @@
 
 
-## Add Distinct Colorway for Non-Color/Chemical Appointments
+## Add L-Shaped Hook Connector to Assistant Line
 
-**Problem:** All appointment cards share the same dark card background regardless of whether they involve color/chemical services. When the "Color & Chemical" filter is off, there's no visual distinction between chemical and non-chemical appointments.
+**Goal:** Indent the assistant info line and add an L-shaped visual connector (like a tree-view branch) to show that the assistant is subordinate/attached to the appointment. This is a common UI pattern in threaded lists and org charts.
 
-**Approach:** Give non-color/chemical appointment cards a subtly different card background — a cooler, slightly muted tone — while color/chemical cards keep the current warm-tinted style. This lets staff instantly scan which clients need chemical prep.
+**File:** `src/components/dock/schedule/DockAppointmentCard.tsx` — lines 174-181
 
-### Changes
-
-**File: `src/components/dock/schedule/DockScheduleTab.tsx`**
-
-1. **Determine color/chemical status per appointment** before passing to card. In the `AppointmentGroup` render, compute and pass an `isChemical` prop:
+**Change:** Replace the current flat assistant row with an indented version that has an L-shaped connector drawn with a border trick:
 
 ```tsx
-<DockAppointmentCard
-  key={a.id}
-  appointment={a}
-  accentColor={accentColor}
-  isChemical={isColorOrChemicalService(a.service_name)}
-  ...
-/>
+{appointment.assistant_names && appointment.assistant_names.length > 0 && (
+  <div className="flex items-start mt-1 ml-1">
+    {/* L-hook connector */}
+    <div className="w-3 h-4 border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm shrink-0 mr-1.5" />
+    <div className="flex items-center gap-1 pt-1">
+      <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0" />
+      <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
+        {formatAssistantLabel(appointment.assistant_names)}
+      </span>
+    </div>
+  </div>
+)}
 ```
 
-**File: `src/components/dock/schedule/DockAppointmentCard.tsx`**
+The L-hook is a simple `div` with `border-l` + `border-b` + `rounded-bl-sm` — a left edge going down then turning right. Muted at 25% opacity so it reads as a subtle structural connector, not a loud decoration. The `ml-1` indent shifts the whole block slightly right to nest it under the time line.
 
-2. **Accept `isChemical` prop** in the component interface.
-
-3. **Apply distinct card styling based on `isChemical`:**
-   - **Chemical appointments (current look):** Keep `bg-[hsl(var(--platform-bg-card))]` with existing border
-   - **Non-chemical appointments:** Use a cooler, slightly recessed tone: `bg-[hsl(var(--platform-bg-card)/0.6)]` with a subtle blue-grey left border instead of the status-based violet/blue/slate
-
-   Specifically, for non-chemical cards:
-   - Card background: `bg-[hsl(var(--platform-bg-card)/0.7)]` (slightly more transparent/recessed)
-   - Left border: `border-l-[hsl(var(--platform-foreground-muted)/0.3)]` (neutral muted tone instead of colored accent)
-
-   This creates a clear two-tier visual hierarchy: chemical cards "pop" with their colored accent borders and full card opacity, while non-chemical cards recede with muted borders and reduced opacity.
-
-Two files, minimal changes — a prop pass-through and conditional class application.
+Single file, one block replacement.
 
