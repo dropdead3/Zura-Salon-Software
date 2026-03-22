@@ -157,7 +157,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         <Switch
           id="chemical-toggle"
           checked={showChemicalOnly}
-          onCheckedChange={setShowChemicalOnly}
+          onCheckedChange={handleToggleChange}
           className="data-[state=checked]:bg-[hsl(var(--platform-primary))] data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
         />
       </div>
