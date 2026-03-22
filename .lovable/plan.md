@@ -1,25 +1,16 @@
 
 
-## Sort Appointments by Start Time Within Each Section
+## Add Top Padding to Scroll Content for Gradient Clearance
 
-**Problem:** Appointments within each group (Active, Scheduled, Completed, etc.) are displayed in insertion order rather than sorted by start time.
+**Problem:** The top gradient overlay (`h-12`) covers the first section header and card content because the scroll container has no top padding to offset it.
 
 ### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-In the `groupAppointments` function (lines 42-64), add a sort-by-`start_time` step to each array before returning:
+Line 243: Add `pt-12` to the scroll container to match the gradient height, pushing content below the fade zone:
 
-```ts
-const sortByTime = (a: DockAppointment, b: DockAppointment) =>
-  (a.start_time || '').localeCompare(b.start_time || '');
-
-return {
-  active: active.sort(sortByTime),
-  scheduled: scheduled.sort(sortByTime),
-  completed: completed.sort(sortByTime),
-  noShow: noShow.sort(sortByTime),
-  cancelled: cancelled.sort(sortByTime),
-};
+```tsx
+<div ref={scrollRef} onScroll={checkScroll} className="h-full overflow-y-auto px-5 pt-12 pb-56 space-y-8">
 ```
 
-Single function update, one file. String comparison on `HH:mm` format naturally gives chronological order.
+Single class addition, one line.
 
