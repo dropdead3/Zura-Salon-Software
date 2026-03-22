@@ -162,7 +162,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
                 </span>
               )}
             </p>
-            {appointment.has_mix_session && <div className="w-8 h-8" />}
+            {appointment.has_mix_session && <div className="w-9 h-9" />}
           </div>
 
           <div className="mt-0.5">
