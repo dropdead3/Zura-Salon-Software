@@ -62,7 +62,6 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
   // Tray opacity fades in as card slides left
   const trayOpacity = useTransform(x, [0, openOffset / 2, openOffset], [0, 0.6, 1]);
-  const contentOpacity = useTransform(x, [0, openOffset], [1, 0.4]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const offset = info.offset.x;
@@ -152,49 +151,33 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </div>
         )}
 
-        {/* Invisible spacer to maintain card height */}
-        <div className="p-5 opacity-0 pointer-events-none" aria-hidden="true">
+        {/* Card content — lives inside draggable layer, moves with swipe */}
+        <div className="p-5">
           <div className="flex items-start gap-2">
-            <p className="font-medium text-base flex-1 min-w-0 truncate">
+            <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
               {appointment.client_name || 'Walk-in'}
-              {appointment.service_name && <span className="font-normal ml-1.5">· {appointment.service_name}</span>}
+              {appointment.service_name && (
+                <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
+                  · {appointment.service_name}
+                </span>
+              )}
             </p>
             {appointment.has_mix_session && <div className="w-8 h-8" />}
           </div>
+
           <div className="mt-0.5">
-            <p className="text-sm">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}</p>
-            {appointment.assistant_names && appointment.assistant_names.length > 0 && <p className="text-sm mt-0.5">{formatAssistantLabel(appointment.assistant_names)}</p>}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Static text overlay — does NOT move */}
-      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-10 p-5 pointer-events-none">
-        {/* Top row: client name · service */}
-        <div className="flex items-start gap-2">
-          <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
-            {appointment.client_name || 'Walk-in'}
-            {appointment.service_name && (
-              <span className="font-normal text-[hsl(var(--platform-foreground-muted))] ml-1.5">
-                · {appointment.service_name}
-              </span>
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+              {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
+            </p>
+            {appointment.assistant_names && appointment.assistant_names.length > 0 && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                  {formatAssistantLabel(appointment.assistant_names)}
+                </span>
+              </div>
             )}
-          </p>
-        </div>
-
-        {/* Second row: time range · duration */}
-        <div className="mt-0.5">
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-            {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
-          </p>
-          {appointment.assistant_names && appointment.assistant_names.length > 0 && (
-            <div className="flex items-center gap-1 mt-0.5">
-              <Users className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-              <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
-                {formatAssistantLabel(appointment.assistant_names)}
-              </span>
-            </div>
-          )}
+          </div>
         </div>
       </motion.div>
     </div>
