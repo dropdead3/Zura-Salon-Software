@@ -1,42 +1,36 @@
 
-Fix the card so the appointment details are truly anchored in place while only the background shell slides.
 
-What’s happening now:
-- The current card still uses the draggable `motion.div` as the main layout box and height source.
-- Even though there is a static overlay, the interaction is only partially decoupled, so the visual result still feels like the card content is tied to the swipe.
+## Tokenize Dock Confirmation Dialogs
 
-Implementation plan:
-1. Refactor `src/components/dock/schedule/DockAppointmentCard.tsx` to use a fully separated 4-layer structure:
-   - Layer 1: static sizing shell in normal flow
-   - Layer 2: action tray behind the card
-   - Layer 3: sliding background shell (`motion.div`, absolute)
-   - Layer 4: stationary content overlay (`motion.div`, absolute, opacity only)
+**Problem:** The Cancel/No-Show confirmation dialog in `DockScheduleTab.tsx` uses raw inline classes (`bg-[hsl(var(--platform-bg-card))]`, `border-[hsl(var(--platform-border)/0.3)]`, etc.) instead of design tokens. This violates the project's tokenization standards and makes the dialog styling inconsistent and hard to maintain.
 
-2. Move the invisible sizing content out of the draggable layer:
-   - Keep one non-visible sizing block in the root container so the card height is determined without relying on the sliding element.
-   - Remove the current “invisible spacer inside the draggable layer” pattern.
+### Changes
 
-3. Make the draggable background truly absolute:
-   - Change the sliding `motion.div` to `absolute inset-0 z-10`.
-   - Leave only background, border, and flask icon in that layer.
-   - Do not place any text/content inside it.
+**File: `src/components/dock/dock-ui-tokens.ts`**
 
-4. Keep the appointment details in a separate stationary overlay:
-   - Keep the client, services, time, and assistant info in `absolute inset-0 z-20`.
-   - Retain the dimming effect with `contentOpacity`, but only animate opacity, never position.
+Add a `DOCK_DIALOG` token group:
 
-5. Preserve the swipe tray behavior:
-   - Keep scheduled cards at the wider 3-button reveal.
-   - Keep active cards at the existing finish width.
-   - Ensure the stationary overlay remains visible while the tray is exposed.
+```ts
+export const DOCK_DIALOG = {
+  overlay: 'absolute inset-0 bg-black/40 backdrop-blur-sm z-50',
+  content: 'bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] rounded-xl shadow-2xl',
+  title: 'font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]',
+  description: 'text-sm text-[hsl(var(--platform-foreground-muted))]',
+  cancelButton: 'bg-transparent border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground-muted)/0.1)]',
+  destructiveAction: 'bg-red-600 hover:bg-red-700 text-white',
+  warningAction: 'bg-amber-600 hover:bg-amber-700 text-white',
+} as const;
+```
 
-Technical notes:
-- File: `src/components/dock/schedule/DockAppointmentCard.tsx`
-- No backend changes needed.
-- This is a structural UI fix, not a logic change.
+**File: `src/components/dock/schedule/DockScheduleTab.tsx`**
 
-Verification:
-- Swipe a scheduled card left and confirm the text stays visually locked in place.
-- Confirm Cancel / No Show / Start remain fully visible behind the sliding shell.
-- Confirm active cards still reveal Finish correctly.
-- Confirm the dimming remains subtle and the flask icon still travels with the sliding shell.
+- Import `DOCK_DIALOG` from `dock-ui-tokens`
+- Replace all raw classes on the AlertDialog with token references:
+  - `AlertDialogContent` → `className={DOCK_DIALOG.content}`
+  - `AlertDialogTitle` → `className={DOCK_DIALOG.title}`
+  - `AlertDialogDescription` → `className={DOCK_DIALOG.description}`
+  - `AlertDialogCancel` → `className={DOCK_DIALOG.cancelButton}`
+  - `AlertDialogAction` → use `DOCK_DIALOG.destructiveAction` for Cancel, `DOCK_DIALOG.warningAction` for No-Show (conditionally)
+
+Two files, token definitions + class replacements. No logic changes.
+
