@@ -89,8 +89,8 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
             aria-label="Complete appointment"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="text-[9px] tracking-wide uppercase font-display text-emerald-400 leading-tight">Finish Appt</span>
+            <CheckCircle2 className="w-6 h-6" />
+            <span className="text-[11px] tracking-wide uppercase font-display text-emerald-400 leading-tight">Finish Appt</span>
           </button>
         )}
       </motion.div>
@@ -112,47 +112,47 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
       >
         {/* Mix session indicator — inside sliding layer so it moves with card */}
         {appointment.has_mix_session && (
-          <div className="absolute top-4 right-4 z-30 flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600/20">
-            <FlaskConical className="w-3.5 h-3.5 text-violet-400" />
+          <div className="absolute top-5 right-5 z-30 flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600/20">
+            <FlaskConical className="w-4 h-4 text-violet-400" />
           </div>
         )}
 
         {/* Invisible spacer to maintain card height */}
-        <div className="p-4 opacity-0 pointer-events-none" aria-hidden="true">
+        <div className="p-5 opacity-0 pointer-events-none" aria-hidden="true">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">{appointment.client_name || 'Walk-in'}</p>
-              {appointment.service_name && <p className="text-xs mt-0.5">{appointment.service_name}</p>}
-              {appointment.stylist_name && <div className="flex items-center gap-1 mt-1"><span className="text-[11px]">{appointment.stylist_name}</span></div>}
-              {appointment.assistant_names && appointment.assistant_names.length > 0 && <div className="flex items-center gap-1 mt-0.5"><span className="text-[11px]">w/ {appointment.assistant_names.join(', ')}</span></div>}
-              <div className="flex items-center gap-1.5 mt-1.5"><span className="text-[11px]">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span></div>
+              <p className="font-medium text-base">{appointment.client_name || 'Walk-in'}</p>
+              {appointment.service_name && <p className="text-sm mt-0.5">{appointment.service_name}</p>}
+              {appointment.stylist_name && <div className="flex items-center gap-1 mt-1.5"><span className="text-sm">{appointment.stylist_name}</span></div>}
+              {appointment.assistant_names && appointment.assistant_names.length > 0 && <div className="flex items-center gap-1 mt-0.5"><span className="text-sm">w/ {appointment.assistant_names.join(', ')}</span></div>}
+              <div className="flex items-center gap-1.5 mt-2"><span className="text-sm">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span></div>
             </div>
-            {appointment.has_mix_session && <div className="w-7 h-7" />}
+            {appointment.has_mix_session && <div className="w-8 h-8" />}
           </div>
         </div>
       </motion.div>
 
       {/* Static text overlay — does NOT move */}
-      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-4 pointer-events-none">
+      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-5 pointer-events-none">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Client name */}
-            <p className="font-medium text-sm text-[hsl(var(--platform-foreground))] truncate">
+            <p className="font-medium text-base text-[hsl(var(--platform-foreground))] truncate">
               {appointment.client_name || 'Walk-in'}
             </p>
 
             {/* Service */}
             {appointment.service_name && (
-              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5 truncate">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5 truncate">
                 {appointment.service_name}
               </p>
             )}
 
             {/* Stylist */}
             {appointment.stylist_name && (
-              <div className="flex items-center gap-1 mt-1">
-                <User className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-                <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">
+              <div className="flex items-center gap-1 mt-1.5">
+                <User className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+                <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {appointment.stylist_name}
                 </span>
               </div>
@@ -161,17 +161,17 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             {/* Assistants */}
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
               <div className="flex items-center gap-1 mt-0.5">
-                <Users className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-                <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.8)]">
                   w/ {appointment.assistant_names.join(', ')}
                 </span>
               </div>
             )}
 
             {/* Time */}
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <Clock className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-              <span className="text-[11px] text-[hsl(var(--platform-foreground-muted))]">
+            <div className="flex items-center gap-1.5 mt-2">
+              <Clock className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
+              <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                 {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
               </span>
             </div>
