@@ -66,6 +66,8 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
 
   // Tray opacity fades in as card slides left
   const trayOpacity = useTransform(x, [0, openOffset / 2, openOffset], [0, 0.6, 1]);
+  // Content dims as card slides open
+  const contentOpacity = useTransform(x, [openOffset, 0], [0.4, 1]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const offset = info.offset.x;
@@ -159,7 +161,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         )}
       </motion.div>
 
-      {/* Sliding card background — drags left to reveal tray */}
+      {/* Sliding background layer — drags left to reveal tray (z-10) */}
       <motion.div
         drag={canSwipe ? 'x' : false}
         dragConstraints={{ left: openOffset, right: 0 }}
@@ -169,52 +171,77 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
         className={cn(
-          'relative z-20 w-full border-l-[3px] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
+          'relative z-10 w-full h-full border-l-[3px] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
           isChemical ? 'bg-[hsl(var(--platform-bg-card))]' : 'bg-[hsl(var(--platform-bg-card)/0.7)]',
           borderClass
         )}
       >
-        {/* Mix session indicator — inside sliding layer so it moves with card */}
-        {appointment.has_mix_session && !['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase()) && (
+        {/* Flask icon anchored to sliding layer (z-30) */}
+        {appointment.has_mix_session && !TERMINAL_STATUSES.includes((appointment.status || '').toLowerCase()) && (
           <div className="absolute top-5 right-5 z-30 flex items-center justify-center w-9 h-9 rounded-lg bg-violet-600/20">
             <FlaskConical className="w-5 h-5 text-violet-400" />
           </div>
         )}
 
-        {/* Card content — lives inside draggable layer, moves with swipe */}
-        <div className="p-6">
+        {/* Invisible spacer to give the sliding bg its height from content */}
+        <div className="p-6 invisible">
           <div className="flex items-start gap-2">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-lg text-[hsl(var(--platform-foreground))] truncate">
-                {appointment.client_name || 'Walk-in'}
-              </p>
-              {appointment.service_name && (
-                <p className="text-base text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
-                  {appointment.service_name}
-                </p>
-              )}
+              <p className="text-lg">{appointment.client_name || 'Walk-in'}</p>
+              {appointment.service_name && <p className="text-base mt-0.5">{appointment.service_name}</p>}
             </div>
             {appointment.has_mix_session && <div className="w-9 h-9" />}
           </div>
-
           <div className="mt-0.5">
-            <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
-              {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
-            </p>
+            <p className="text-base">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}</p>
             {appointment.assistant_names && appointment.assistant_names.length > 0 && (
               <div className="flex items-start mt-1 ml-1">
-                {/* L-hook connector */}
-                <div className="w-3 h-4 border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm shrink-0 mr-1.5" />
+                <div className="w-3 h-4 shrink-0 mr-1.5" />
                 <div className="flex items-center gap-1 pt-1">
-                  <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0" />
-                  <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
-                    {formatAssistantLabel(appointment.assistant_names)}
-                  </span>
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span className="text-base">{formatAssistantLabel(appointment.assistant_names)}</span>
                 </div>
               </div>
             )}
           </div>
+        </div>
+      </motion.div>
+
+      {/* Static content overlay — stays in place, dims on swipe (z-20) */}
+      <motion.div
+        className="absolute inset-0 z-20 pointer-events-none p-6"
+        style={{ opacity: contentOpacity }}
+      >
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-lg text-[hsl(var(--platform-foreground))] truncate">
+              {appointment.client_name || 'Walk-in'}
+            </p>
+            {appointment.service_name && (
+              <p className="text-base text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
+                {appointment.service_name}
+              </p>
+            )}
+          </div>
+          {appointment.has_mix_session && <div className="w-9 h-9" />}
+        </div>
+
+        <div className="mt-0.5">
+          <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
+            {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
+          </p>
+          {appointment.assistant_names && appointment.assistant_names.length > 0 && (
+            <div className="flex items-start mt-1 ml-1">
+              <div className="w-3 h-4 border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm shrink-0 mr-1.5" />
+              <div className="flex items-center gap-1 pt-1">
+                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0" />
+                <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
+                  {formatAssistantLabel(appointment.assistant_names)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
