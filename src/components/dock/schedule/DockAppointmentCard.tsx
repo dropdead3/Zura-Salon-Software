@@ -118,16 +118,16 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         )}
 
         {/* Invisible spacer to maintain card height */}
-        <div className="p-4 opacity-0 pointer-events-none" aria-hidden="true">
+        <div className="p-5 opacity-0 pointer-events-none" aria-hidden="true">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">{appointment.client_name || 'Walk-in'}</p>
-              {appointment.service_name && <p className="text-xs mt-0.5">{appointment.service_name}</p>}
-              {appointment.stylist_name && <div className="flex items-center gap-1 mt-1"><span className="text-[11px]">{appointment.stylist_name}</span></div>}
-              {appointment.assistant_names && appointment.assistant_names.length > 0 && <div className="flex items-center gap-1 mt-0.5"><span className="text-[11px]">w/ {appointment.assistant_names.join(', ')}</span></div>}
-              <div className="flex items-center gap-1.5 mt-1.5"><span className="text-[11px]">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span></div>
+              <p className="font-medium text-base">{appointment.client_name || 'Walk-in'}</p>
+              {appointment.service_name && <p className="text-sm mt-0.5">{appointment.service_name}</p>}
+              {appointment.stylist_name && <div className="flex items-center gap-1 mt-1.5"><span className="text-sm">{appointment.stylist_name}</span></div>}
+              {appointment.assistant_names && appointment.assistant_names.length > 0 && <div className="flex items-center gap-1 mt-0.5"><span className="text-sm">w/ {appointment.assistant_names.join(', ')}</span></div>}
+              <div className="flex items-center gap-1.5 mt-2"><span className="text-sm">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}</span></div>
             </div>
-            {appointment.has_mix_session && <div className="w-7 h-7" />}
+            {appointment.has_mix_session && <div className="w-8 h-8" />}
           </div>
         </div>
       </motion.div>
