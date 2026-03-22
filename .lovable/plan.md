@@ -1,18 +1,44 @@
 
 
-## Persist Color & Chemical Toggle per User via localStorage
+## Fix Scroll Indicator Z-Index + Glass Floating Bottom Nav
 
-**Problem:** The `showChemicalOnly` toggle resets to `true` on every page load since it's just `useState(true)`.
+### Problem
+1. The scroll-down chevron indicator sits inside the scroll container's `relative` wrapper but gets clipped or hidden behind the bottom nav
+2. The content area has `pb-20` padding to avoid the bottom nav, creating dead space instead of letting cards flow edge-to-edge
+3. The bottom nav is a static flex child, not floating over content
 
-**Approach:** Use localStorage keyed by `staff.userId` — the Dock is PIN-gated and already has the user identity. No database needed for a simple UI preference on a station device.
+### Changes
 
-**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
+**File: `src/components/dock/DockLayout.tsx`**
 
-**Changes:**
+1. **Remove `pb-20` from content area** (line 71) — cards will now extend to the bottom edge
+2. **Make bottom nav absolutely positioned** at the bottom of the container, floating over cards with a glass effect:
+   - `absolute bottom-0 inset-x-0 z-30` positioning
+   - The nav already has `backdrop-blur-xl` and semi-transparent bg (`bg-[...]/0.75`), so it already looks glassy — just needs to float
 
-1. **Initialize state from localStorage** — Replace `useState(true)` with a lazy initializer that reads from `localStorage.getItem('dock-chemical-toggle::' + staff.userId)`. Default to `true` if no stored value.
+**File: `src/components/dock/schedule/DockScheduleTab.tsx`**
 
-2. **Persist on change** — Replace the bare `setShowChemicalOnly` in `onCheckedChange` with a wrapper that writes to localStorage before updating state.
+3. **Raise scroll indicator z-index** — add `z-20` to the scroll indicator wrapper (line 192) so it renders above card content
+4. **Add bottom padding to scroll list** — replace `pb-6` with `pb-28` on the scroll container (line 167) so the last cards aren't permanently hidden behind the floating nav
 
-Key format: `dock-chemical-toggle::{userId}` — scoped per staff member so each stylist keeps their own preference across sessions.
+**File: `src/components/dock/DockBottomNav.tsx`**
+
+5. **No structural changes needed** — the nav already has `backdrop-blur-xl` and `bg-[...]/0.75` for the glass effect. It just needs to be positioned absolutely by its parent.
+
+### Layout After Fix
+
+```text
+┌─────────────────────────┐
+│  Header                 │
+│  Toggle                 │
+│  ┌───────────────────┐  │
+│  │  Cards scroll     │  │
+│  │  all the way      │  │
+│  │  to bottom        │  │
+│  │  ...              │  │
+│  │      ↓ chevron    │  │ ← z-20, above cards
+│  │  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │  │ ← glass nav floats over
+│  └───────────────────┘  │
+└─────────────────────────┘
+```
 
