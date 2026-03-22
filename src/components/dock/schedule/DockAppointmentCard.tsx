@@ -52,8 +52,8 @@ const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
-const ACTIVE_OPEN_OFFSET = -128;
-const SCHEDULED_OPEN_OFFSET = -320;
+const ACTIVE_OPEN_OFFSET = -148;
+const SCHEDULED_OPEN_OFFSET = -370;
 const SNAP_THRESHOLD = 50;
 
 export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient }: DockAppointmentCardProps) {
@@ -182,7 +182,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
 
       {/* Layer 1: Action tray — behind everything */}
       <motion.div
-        className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
+        className="absolute inset-y-0 right-0 flex items-center pl-3 pr-2 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
         {canSwipe && isActive && (
@@ -192,7 +192,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
               close();
               onComplete?.(appointment);
             }}
-            className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
+            className="flex flex-col items-center justify-center gap-1 w-[132px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
             aria-label="Complete appointment"
           >
             <CheckCircle2 className="w-6 h-6" />
@@ -207,7 +207,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 close();
                 onCancel?.(appointment);
               }}
-              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 active:bg-red-500/25 active:scale-[0.97] transition-all"
+              className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 active:bg-red-500/25 active:scale-[0.97] transition-all"
               aria-label="Cancel appointment"
             >
               <XCircle className="w-6 h-6" />
@@ -219,7 +219,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 close();
                 onNoShow?.(appointment);
               }}
-              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 active:bg-amber-500/25 active:scale-[0.97] transition-all"
+              className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 active:bg-amber-500/25 active:scale-[0.97] transition-all"
               aria-label="Mark as no show"
             >
               <UserX className="w-6 h-6" />
@@ -231,7 +231,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 close();
                 onStart?.(appointment);
               }}
-              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
+              className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
               aria-label="Start appointment"
             >
               <Play className="w-6 h-6" />
