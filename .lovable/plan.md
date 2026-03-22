@@ -1,14 +1,32 @@
 
 
-## Widen Finish Appt Button
+## Transform Settings Tab Icon to Lock When Active
 
-**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+**Goal:** When the Settings tab is active, change its icon to Lock and label to "Lock Station" with a ghost-red style. Remove the existing "Lock Station" button from the settings page since the tab itself will serve that purpose.
 
-Increase the swipe reveal area and button width:
+### Changes
 
-1. **Line 29** — Change `OPEN_OFFSET` from `-96` to `-128` (more slide distance)
-2. **Line 35** — Change `trayWidth` from `96` to `128`
-3. **Line 88** — Change button width from `w-[80px]` to `w-[112px]`
+**1. `src/components/dock/DockBottomNav.tsx`**
 
-This widens the green button by ~32px while maintaining the 8px gap between card edge and button. The appointment card will be narrower when swiped open, giving the Finish Appt button more presence.
+- Accept a new `onLockStation` callback prop
+- Make the Settings tab entry dynamic: when `activeTab === 'settings'`, render the Lock icon and "Lock Station" label instead of Settings icon/label
+- When the Settings tab is already active and tapped again, call `onLockStation()` instead of `onTabChange('settings')`
+- Apply ghost-red styling (red-400 text, red-tinted pill) when active on settings tab
+
+**2. `src/components/dock/DockLayout.tsx`**
+
+- Pass `onLogout` as `onLockStation` to `DockBottomNav`
+
+**3. `src/components/dock/settings/DockSettingsTab.tsx`**
+
+- Remove the "Lock Station" button (lines 162-169) and its spacer
+- The `onLogout` prop can remain for the move-dock flow but the dedicated lock button is gone
+
+### Interaction flow
+
+```text
+User taps Settings → Settings page opens, tab icon morphs to Lock + "Lock Station" (red tint)
+User taps Lock Station tab again → triggers onLogout (locks the station)
+User taps any other tab → Settings tab reverts to gear icon
+```
 
