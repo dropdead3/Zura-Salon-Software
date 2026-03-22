@@ -118,7 +118,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'local',
       client_name: 'Emily Rodriguez',
       stylist_name: 'Jenna B.',
-      service_name: 'Full Highlight + Cut',
+      service_name: 'Full Highlight + Root Smudge + Glaze Add On + Signature Haircut',
       appointment_date: today,
       start_time: t4.startStr,
       end_time: t4.endStr,
