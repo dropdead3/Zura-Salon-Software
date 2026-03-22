@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, Plus, Loader2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockAppointmentCard } from './DockAppointmentCard';
@@ -13,20 +14,10 @@ import { DockNewBookingSheet } from './DockNewBookingSheet';
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { cn } from '@/lib/utils';
-import { DOCK_DIALOG } from '@/components/dock/dock-ui-tokens';
+import { DOCK_DIALOG, DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
 
 interface DockScheduleTabProps {
   staff: DockStaffSession;
