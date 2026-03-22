@@ -143,6 +143,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       phorest_client_id: 'demo-phorest-2',
       notes: 'Fixed banding from previous salon',
       has_mix_session: true,
+      payment_status: 'paid',
     },
     {
       id: 'demo-appt-5',
