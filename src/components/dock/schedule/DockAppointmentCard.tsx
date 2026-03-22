@@ -117,11 +117,16 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         <div className="flex-1 min-w-0">
           {(() => {
             const services = (appointment.service_name || '').split(' + ').filter(Boolean);
-            const serviceDisplay = services.length <= 1
-              ? services[0] || ''
-              : `${services[0]} +${services.length - 1} more`;
+            let serviceDisplay = '';
+            if (services.length === 1) {
+              serviceDisplay = services[0];
+            } else if (services.length === 2) {
+              serviceDisplay = services.join(' + ');
+            } else if (services.length > 2) {
+              serviceDisplay = `${services[0]} + ${services[1]} +${services.length - 2} more`;
+            }
             return (
-              <p className={cn('text-lg truncate', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
+              <p className={cn('text-lg', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
                 {appointment.client_name || 'Walk-in'}
                 {serviceDisplay && (
                   <span className={cn('font-normal', visible ? 'text-[hsl(var(--platform-foreground-muted))]' : '')}>
