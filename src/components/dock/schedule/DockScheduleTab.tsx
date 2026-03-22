@@ -12,9 +12,21 @@ import { DockAppointmentCard } from './DockAppointmentCard';
 import { DockNewBookingSheet } from './DockNewBookingSheet';
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
+import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+
 interface DockScheduleTabProps {
   staff: DockStaffSession;
   onOpenAppointment: (appointment: DockAppointment) => void;
@@ -65,6 +77,10 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     return saved !== null ? saved === 'true' : true;
   });
 
+  // Confirmation dialog state
+  const [confirmAction, setConfirmAction] = useState<{ appointment: DockAppointment; action: 'cancel' | 'no_show' } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleToggleChange = (checked: boolean) => {
     localStorage.setItem(storageKey, String(checked));
     setShowChemicalOnly(checked);
@@ -106,6 +122,43 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       toast.error('Failed to start: ' + (err as Error).message);
     }
   }, [queryClient]);
+
+  const handleCancelAppointment = useCallback((appointment: DockAppointment) => {
+    setConfirmAction({ appointment, action: 'cancel' });
+  }, []);
+
+  const handleNoShowAppointment = useCallback((appointment: DockAppointment) => {
+    setConfirmAction({ appointment, action: 'no_show' });
+  }, []);
+
+  const handleConfirmAction = useCallback(async () => {
+    if (!confirmAction) return;
+    const { appointment, action } = confirmAction;
+
+    if (appointment.id.startsWith('demo-')) {
+      toast.success(`Demo: Appointment ${action === 'cancel' ? 'cancelled' : 'marked as no-show'}`);
+      setConfirmAction(null);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const status = action === 'cancel' ? 'CANCELLED' : 'NO_SHOW';
+      const { error } = await supabase.functions.invoke('update-phorest-appointment', {
+        body: { appointment_id: appointment.id, status },
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success(action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show');
+    } catch (err) {
+      toast.error(`Failed: ${(err as Error).message}`);
+    } finally {
+      setIsSubmitting(false);
+      setConfirmAction(null);
+    }
+  }, [confirmAction, queryClient]);
 
   const filteredAppointments = useMemo(() => {
     const all = appointments || [];
@@ -175,13 +228,13 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           ) : (
             <>
               {active.length > 0 && (
-                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
               {scheduled.length > 0 && (
-                <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Scheduled" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
               {completed.length > 0 && (
-                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
             </>
           )}
@@ -204,6 +257,43 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         locationId={locationId}
         staffFilter={staffFilter}
       />
+
+      {/* Confirmation AlertDialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
+        <AlertDialogContent className="bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-display tracking-wide">
+              {confirmAction?.action === 'cancel' ? 'Cancel Appointment' : 'Mark as No-Show'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[hsl(var(--platform-foreground-muted))]">
+              {confirmAction?.action === 'cancel'
+                ? `Are you sure you want to cancel ${confirmAction?.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
+                : `Mark ${confirmAction?.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isSubmitting}
+              className="bg-transparent border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground-muted)/0.1)]"
+            >
+              {confirmAction?.action === 'cancel' ? 'Keep Appointment' : 'Go Back'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={isSubmitting}
+              className={cn(
+                'border-0',
+                confirmAction?.action === 'cancel'
+                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+              )}
+            >
+              {isSubmitting ? 'Processing…' : confirmAction?.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -216,6 +306,8 @@ function AppointmentGroup({
   onTap,
   onComplete,
   onStart,
+  onCancel,
+  onNoShow,
   onViewClient,
 }: {
   label: string;
@@ -225,6 +317,8 @@ function AppointmentGroup({
   onTap: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
+  onCancel?: (appointment: DockAppointment) => void;
+  onNoShow?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
 }) {
   const dotColor = {
@@ -246,7 +340,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-4">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} onTap={onTap} onComplete={onComplete} onStart={onStart} onViewClient={onViewClient} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} />
         ))}
       </div>
     </div>

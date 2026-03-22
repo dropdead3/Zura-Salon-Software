@@ -1,10 +1,10 @@
 /**
  * DockAppointmentCard — Appointment card with iOS Mail–style swipe-left
- * to reveal a "Finish Appt" action button.
+ * to reveal action buttons (Finish for active, Cancel/No-Show/Start for scheduled).
  */
 
 import { useRef, useState } from 'react';
-import { FlaskConical, Users, CheckCircle2, Play } from 'lucide-react';
+import { FlaskConical, Users, CheckCircle2, Play, XCircle, UserX } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { differenceInMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,8 @@ interface DockAppointmentCardProps {
   onTap?: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
+  onCancel?: (appointment: DockAppointment) => void;
+  onNoShow?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
 }
 
@@ -37,10 +39,11 @@ const BORDER_COLORS = {
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
-const OPEN_OFFSET = -128;
+const ACTIVE_OPEN_OFFSET = -128;
+const SCHEDULED_OPEN_OFFSET = -320;
 const SNAP_THRESHOLD = 50;
 
-export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onViewClient }: DockAppointmentCardProps) {
+export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient }: DockAppointmentCardProps) {
   const borderClass = isChemical ? BORDER_COLORS[accentColor] : 'border-l-[hsl(var(--platform-foreground-muted)/0.3)]';
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
   const isActive = ACTIVE_STATUSES.includes(appointment.status || '');
@@ -54,8 +57,8 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
   const durationMinutes = differenceInMinutes(end, start);
   const durationText = durationMinutes > 0 ? formatMinutesToDuration(durationMinutes) : '';
 
-  const trayWidth = canSwipe ? 128 : 0;
-  const openOffset = canSwipe ? OPEN_OFFSET : 0;
+  const openOffset = canSwipe ? (isScheduled ? SCHEDULED_OPEN_OFFSET : ACTIVE_OPEN_OFFSET) : 0;
+  const trayWidth = canSwipe ? Math.abs(openOffset) : 0;
 
   const x = useMotionValue(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -115,18 +118,44 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
           </button>
         )}
         {canSwipe && isScheduled && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              close();
-              onStart?.(appointment);
-            }}
-            className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
-            aria-label="Start appointment"
-          >
-            <Play className="w-6 h-6" />
-            <span className="text-[11px] tracking-wide uppercase font-display text-blue-400 leading-tight">Start Appt</span>
-          </button>
+          <div className="flex h-full gap-1.5">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                close();
+                onCancel?.(appointment);
+              }}
+              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 active:bg-red-500/25 active:scale-[0.97] transition-all"
+              aria-label="Cancel appointment"
+            >
+              <XCircle className="w-6 h-6" />
+              <span className="text-[11px] tracking-wide uppercase font-display text-red-400 leading-tight">Cancel</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                close();
+                onNoShow?.(appointment);
+              }}
+              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 active:bg-amber-500/25 active:scale-[0.97] transition-all"
+              aria-label="Mark as no show"
+            >
+              <UserX className="w-6 h-6" />
+              <span className="text-[11px] tracking-wide uppercase font-display text-amber-400 leading-tight">No Show</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                close();
+                onStart?.(appointment);
+              }}
+              className="flex flex-col items-center justify-center gap-1 w-[100px] h-full rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 active:bg-blue-500/25 active:scale-[0.97] transition-all"
+              aria-label="Start appointment"
+            >
+              <Play className="w-6 h-6" />
+              <span className="text-[11px] tracking-wide uppercase font-display text-blue-400 leading-tight">Start Appt</span>
+            </button>
+          </div>
         )}
       </motion.div>
 
