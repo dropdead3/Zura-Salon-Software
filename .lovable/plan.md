@@ -1,41 +1,17 @@
 
 
-## Split No-Show & Cancelled Into Separate Groups with Status Badges
+## Widen Action Buttons — Add Horizontal Padding
 
-**Problem:** Currently, `no_show` and `cancelled` appointments are lumped into the "Completed" group with no visual distinction. After marking an appointment as no-show or cancelled, it should appear in its own clearly labeled section with a status badge.
+**Problem:** "Finish Appt" and "Start Appt" text nearly touches the button edges. Buttons need more horizontal breathing room.
 
-### Changes
+### Changes — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-**File: `src/components/dock/schedule/DockScheduleTab.tsx`**
+1. **Increase `SCHEDULED_OPEN_OFFSET`** from `-320` to `-370` (line 56) — gives the 3-button tray 50px more total width
+2. **Increase `ACTIVE_OPEN_OFFSET`** from `-128` to `-148` (line 55) — gives the single Finish button 20px more width
+3. **Widen individual buttons:**
+   - Finish Appt: `w-[112px]` → `w-[132px]` (line 195)
+   - Cancel / No Show / Start: `w-[100px]` → `w-[112px]` each (lines 210, 222, 234)
+4. **Increase tray inner padding:** `pl-2 pr-1` → `pl-3 pr-2` (line 185)
 
-1. **Update `groupAppointments`** — split the current `completed` bucket into three: `completed`, `noShow`, `cancelled`
-
-```ts
-function groupAppointments(appointments) {
-  const active = [], scheduled = [], completed = [], noShow = [], cancelled = [];
-  for (const a of appointments) {
-    const status = a.status || 'pending';
-    if (ACTIVE_STATUSES.includes(status)) active.push(a);
-    else if (status === 'no_show') noShow.push(a);
-    else if (status === 'cancelled') cancelled.push(a);
-    else if (status === 'completed') completed.push(a);
-    else scheduled.push(a);
-  }
-  return { active, scheduled, completed, noShow, cancelled };
-}
-```
-
-2. **Render new groups** after "Completed" with distinct accent colors:
-   - No-Show: `amber` accent, label "No Show"
-   - Cancelled: `red` accent, label "Cancelled"
-
-3. **Extend `accentColor` type** in `AppointmentGroup` to include `'amber' | 'red'` and add dot colors for them.
-
-**File: `src/components/dock/schedule/DockAppointmentCard.tsx`**
-
-4. **Add a status badge** on cards when status is `no_show` or `cancelled`:
-   - Small pill badge in the top-right of the card content: "No Show" (amber) or "Cancelled" (red)
-   - Uses the existing `DOCK_CARD` token pattern with inline color
-
-Two files, additive changes. Grouping logic update + badge rendering.
+Single file, class-level width + padding bumps. No logic changes.
 
