@@ -88,7 +88,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       <div className="flex items-center justify-between px-5 pt-8 pb-5">
         <div>
           <h1 className="font-display text-2xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-            {staff.displayName}'s Appointments Today
+            Today's Appointments
           </h1>
           <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5">
             {today}
