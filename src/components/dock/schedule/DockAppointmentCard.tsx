@@ -1,6 +1,12 @@
 /**
  * DockAppointmentCard — Appointment card with iOS Mail–style swipe-left
  * to reveal action buttons (Finish for active, Cancel/No-Show/Start for scheduled).
+ *
+ * 4-layer architecture:
+ *   Layer 0: Invisible sizing shell (normal flow, sets card height)
+ *   Layer 1: Action tray (absolute, behind everything)
+ *   Layer 2: Sliding background shell (absolute z-10, drags left)
+ *   Layer 3: Stationary content overlay (absolute z-20, dims only)
  */
 
 import { useRef, useState } from 'react';
@@ -80,7 +86,6 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
       animate(x, 0, { ...DOCK_SHEET.spring });
       setIsOpen(false);
     }
-    // Small delay so the tap handler can check isDragging
     setTimeout(() => { isDragging.current = false; }, 50);
   };
 
@@ -98,9 +103,68 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
     onTap?.(appointment);
   };
 
+  /* ---- Shared content block (rendered invisible for sizing + visible for display) ---- */
+  const cardContent = (visible: boolean) => (
+    <>
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <p className={cn(
+            'text-lg truncate',
+            visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : ''
+          )}>
+            {appointment.client_name || 'Walk-in'}
+          </p>
+          {appointment.service_name && (
+            <p className={cn(
+              'text-base truncate mt-0.5',
+              visible ? 'text-[hsl(var(--platform-foreground-muted))]' : ''
+            )}>
+              {appointment.service_name}
+            </p>
+          )}
+        </div>
+        {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}
+      </div>
+
+      <div className="mt-0.5">
+        <p className={cn(
+          'text-base',
+          visible ? 'text-[hsl(var(--platform-foreground-muted))]' : ''
+        )}>
+          {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
+        </p>
+        {appointment.assistant_names && appointment.assistant_names.length > 0 && (
+          <div className="flex items-start mt-1 ml-1">
+            <div className={cn(
+              'w-3 h-4 shrink-0 mr-1.5',
+              visible ? 'border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm' : ''
+            )} />
+            <div className="flex items-center gap-1 pt-1">
+              <Users className={cn(
+                'w-4 h-4 shrink-0',
+                visible ? 'text-[hsl(var(--platform-foreground-muted)/0.5)]' : ''
+              )} />
+              <span className={cn(
+                'text-base',
+                visible ? 'text-[hsl(var(--platform-foreground-muted)/0.8)]' : ''
+              )}>
+                {formatAssistantLabel(appointment.assistant_names)}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="relative z-[1] overflow-hidden rounded-xl" onClick={handleTap}>
-      {/* Action tray behind the card */}
+      {/* Layer 0: Invisible sizing shell — in normal flow, sets card height */}
+      <div className="p-6 invisible" aria-hidden="true">
+        {cardContent(false)}
+      </div>
+
+      {/* Layer 1: Action tray — behind everything */}
       <motion.div
         className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
@@ -161,7 +225,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         )}
       </motion.div>
 
-      {/* Sliding background layer — drags left to reveal tray (z-10) */}
+      {/* Layer 2: Sliding background shell — absolute, drags left (z-10) */}
       <motion.div
         drag={canSwipe ? 'x' : false}
         dragConstraints={{ left: openOffset, right: 0 }}
@@ -171,78 +235,26 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
         className={cn(
-          'relative z-10 w-full h-full border-l-[3px] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
+          'absolute inset-0 z-10 border-l-[3px] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
           isChemical ? 'bg-[hsl(var(--platform-bg-card))]' : 'bg-[hsl(var(--platform-bg-card)/0.7)]',
           borderClass
         )}
       >
-        {/* Flask icon anchored to sliding layer (z-30) */}
+        {/* Flask icon anchored to sliding layer */}
         {appointment.has_mix_session && !TERMINAL_STATUSES.includes((appointment.status || '').toLowerCase()) && (
-          <div className="absolute top-5 right-5 z-30 flex items-center justify-center w-9 h-9 rounded-lg bg-violet-600/20">
+          <div className="absolute top-5 right-5 flex items-center justify-center w-9 h-9 rounded-lg bg-violet-600/20">
             <FlaskConical className="w-5 h-5 text-violet-400" />
           </div>
         )}
-
-        {/* Invisible spacer to give the sliding bg its height from content */}
-        <div className="p-6 invisible">
-          <div className="flex items-start gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-lg">{appointment.client_name || 'Walk-in'}</p>
-              {appointment.service_name && <p className="text-base mt-0.5">{appointment.service_name}</p>}
-            </div>
-            {appointment.has_mix_session && <div className="w-9 h-9" />}
-          </div>
-          <div className="mt-0.5">
-            <p className="text-base">{formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}</p>
-            {appointment.assistant_names && appointment.assistant_names.length > 0 && (
-              <div className="flex items-start mt-1 ml-1">
-                <div className="w-3 h-4 shrink-0 mr-1.5" />
-                <div className="flex items-center gap-1 pt-1">
-                  <Users className="w-4 h-4 shrink-0" />
-                  <span className="text-base">{formatAssistantLabel(appointment.assistant_names)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </motion.div>
 
-      {/* Static content overlay — stays in place, dims on swipe (z-20) */}
+      {/* Layer 3: Static content overlay — stays in place, dims on swipe (z-20) */}
       <motion.div
         className="absolute inset-0 z-20 pointer-events-none p-6"
         style={{ opacity: contentOpacity }}
       >
-        <div className="flex items-start gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-lg text-[hsl(var(--platform-foreground))] truncate">
-              {appointment.client_name || 'Walk-in'}
-            </p>
-            {appointment.service_name && (
-              <p className="text-base text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
-                {appointment.service_name}
-              </p>
-            )}
-          </div>
-          {appointment.has_mix_session && <div className="w-9 h-9" />}
-        </div>
-
-        <div className="mt-0.5">
-          <p className="text-base text-[hsl(var(--platform-foreground-muted))]">
-            {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}{durationText && ` · ${durationText}`}
-          </p>
-          {appointment.assistant_names && appointment.assistant_names.length > 0 && (
-            <div className="flex items-start mt-1 ml-1">
-              <div className="w-3 h-4 border-l border-b border-[hsl(var(--platform-foreground-muted)/0.25)] rounded-bl-sm shrink-0 mr-1.5" />
-              <div className="flex items-center gap-1 pt-1">
-                <Users className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0" />
-                <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.8)]">
-                  {formatAssistantLabel(appointment.assistant_names)}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
+        {cardContent(true)}
       </motion.div>
     </div>
   );
