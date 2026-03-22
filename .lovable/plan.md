@@ -1,45 +1,32 @@
 
 
-## Visual Separation Between Cards and Bottom Nav + Smoother Nav Animations
+## Add Top and Bottom Blur Fade Overlays to Scroll Container
 
-**Problem:** The last appointment card sits too close to the bottom navigation dock, making the UI feel crowded. Additionally, the bottom nav tab transitions lack smooth, polished animations when switching between tabs.
+**Problem:** Cards have no visual transition when approaching the header or the bottom nav — they appear/disappear abruptly at both edges.
 
-### Changes
+### Changes — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-#### 1. Increase bottom scroll padding — `src/components/dock/schedule/DockScheduleTab.tsx`
+Inside the scroll wrapper (`div` on line 225, the `relative flex-1 min-h-0` container), add two absolute-positioned gradient overlays:
 
-Line 226: The scroll container already has `pb-44`. Increase to `pb-56` to push the last card further above the bottom nav, ensuring clear separation even when scrolled to the end.
+**1. Top fade overlay** — fades cards into the background as they scroll up toward the header:
+```tsx
+<div className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
+  style={{
+    background: 'linear-gradient(to bottom, hsl(var(--platform-bg)), transparent)',
+  }}
+/>
+```
 
-#### 2. Smoother bottom nav animations — `src/components/dock/DockBottomNav.tsx`
+**2. Bottom fade overlay** — fades cards as they approach the bottom nav area. This replaces or supplements the existing `h-52` gradient in `DockLayout.tsx` (line 104) with a scroll-container-local version for tighter visual coupling:
+```tsx
+<div className="absolute bottom-0 left-0 right-0 h-16 z-10 pointer-events-none"
+  style={{
+    background: 'linear-gradient(to top, hsl(var(--platform-bg)), transparent)',
+  }}
+/>
+```
 
-- **Icon transitions:** Replace the abrupt `scale` animation with a combined scale + opacity shift. Icons that become inactive should fade slightly before settling, and active icons should scale up with a subtle y-translate (lift effect):
-  ```
-  animate={{ scale: isActive ? 1.15 : 0.95, y: isActive ? -2 : 0 }}
-  ```
+The existing `DockLayout.tsx` bottom gradient (line 104) stays as-is since it covers the nav area itself. The new bottom fade inside the scroll wrapper handles the content-to-gradient transition zone.
 
-- **Label animation:** Currently uses simple opacity (0 → 1). Add a subtle y-translate for a slide-up-fade-in feel:
-  ```
-  initial={{ opacity: 0, y: 4 }}
-  animate={{ opacity: 1, y: 0 }}
-  exit={{ opacity: 0, y: 4 }}
-  transition={{ duration: 0.2 }}
-  ```
-
-- **Inactive icon color transition:** The current `transition-colors duration-150` is fine but bump to `duration-200` for smoother color fade.
-
-- **Pill indicator:** Already uses `layoutId` with spring physics — this is solid. No change needed.
-
-#### 3. Increase gradient fade height — `src/components/dock/DockLayout.tsx`
-
-Line 104: The gradient overlay `h-44` could be increased to `h-52` to extend the fade zone, providing a more gradual transition from content to nav area.
-
-### Summary
-
-| File | Change |
-|------|--------|
-| `DockScheduleTab.tsx` | `pb-44` → `pb-56` for more bottom clearance |
-| `DockBottomNav.tsx` | Add y-translate to icon/label animations, extend color transition duration |
-| `DockLayout.tsx` | `h-44` → `h-52` for larger gradient fade |
-
-Three files, class-level and animation prop adjustments only. No logic changes.
+Two elements added, one file.
 
