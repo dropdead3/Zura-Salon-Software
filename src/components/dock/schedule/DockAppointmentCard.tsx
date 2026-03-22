@@ -121,7 +121,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
         className={cn(
-          'relative z-10 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
+          'relative z-20 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
           borderClass
         )}
