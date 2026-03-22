@@ -196,7 +196,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 
   return (
