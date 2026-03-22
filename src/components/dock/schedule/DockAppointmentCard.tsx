@@ -27,7 +27,7 @@ function formatAssistantLabel(names: string[]): string {
 
 interface DockAppointmentCardProps {
   appointment: DockAppointment;
-  accentColor: 'violet' | 'blue' | 'slate';
+  accentColor: 'violet' | 'blue' | 'slate' | 'amber' | 'red';
   isChemical?: boolean;
   onTap?: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
@@ -37,10 +37,17 @@ interface DockAppointmentCardProps {
   onViewClient?: (appointment: DockAppointment) => void;
 }
 
-const BORDER_COLORS = {
+const BORDER_COLORS: Record<string, string> = {
   violet: 'border-l-violet-500',
   blue: 'border-l-blue-500',
   slate: 'border-l-slate-500',
+  amber: 'border-l-amber-500',
+  red: 'border-l-red-500',
+};
+
+const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
+  no_show: { label: 'No Show', classes: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+  cancelled: { label: 'Cancelled', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
@@ -123,6 +130,15 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             </p>
           )}
         </div>
+        {/* Status badge for no-show / cancelled */}
+        {visible && STATUS_BADGE[appointment.status || ''] && (
+          <span className={cn(
+            'shrink-0 text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
+            STATUS_BADGE[appointment.status || ''].classes
+          )}>
+            {STATUS_BADGE[appointment.status || ''].label}
+          </span>
+        )}
         {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}
       </div>
 

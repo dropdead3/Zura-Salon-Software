@@ -38,25 +38,30 @@ interface DockScheduleTabProps {
 }
 
 const ACTIVE_STATUSES = ['checked_in', 'in_progress'];
-const COMPLETED_STATUSES = ['completed', 'no_show', 'cancelled'];
 
 function groupAppointments(appointments: DockAppointment[]) {
   const active: DockAppointment[] = [];
   const scheduled: DockAppointment[] = [];
   const completed: DockAppointment[] = [];
+  const noShow: DockAppointment[] = [];
+  const cancelled: DockAppointment[] = [];
 
   for (const a of appointments) {
     const status = a.status || 'pending';
     if (ACTIVE_STATUSES.includes(status)) {
       active.push(a);
-    } else if (COMPLETED_STATUSES.includes(status)) {
+    } else if (status === 'no_show') {
+      noShow.push(a);
+    } else if (status === 'cancelled') {
+      cancelled.push(a);
+    } else if (status === 'completed') {
       completed.push(a);
     } else {
       scheduled.push(a);
     }
   }
 
-  return { active, scheduled, completed };
+  return { active, scheduled, completed, noShow, cancelled };
 }
 
 function formatTime(time: string) {
@@ -181,7 +186,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     );
   }
 
-  const { active, scheduled, completed } = groupAppointments(filteredAppointments);
+  const { active, scheduled, completed, noShow, cancelled } = groupAppointments(filteredAppointments);
 
   return (
     <div className="relative flex flex-col h-full">
@@ -236,6 +241,12 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
               )}
               {completed.length > 0 && (
                 <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+              )}
+              {noShow.length > 0 && (
+                <AppointmentGroup label="No Show" count={noShow.length} appointments={noShow} accentColor="amber" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+              )}
+              {cancelled.length > 0 && (
+                <AppointmentGroup label="Cancelled" count={cancelled.length} appointments={cancelled} accentColor="red" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
             </>
           )}
@@ -309,7 +320,7 @@ function AppointmentGroup({
   label: string;
   count: number;
   appointments: DockAppointment[];
-  accentColor: 'violet' | 'blue' | 'slate';
+  accentColor: 'violet' | 'blue' | 'slate' | 'amber' | 'red';
   onTap: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
@@ -321,6 +332,8 @@ function AppointmentGroup({
     violet: 'bg-violet-500',
     blue: 'bg-blue-500',
     slate: 'bg-slate-500',
+    amber: 'bg-amber-500',
+    red: 'bg-red-500',
   }[accentColor];
 
   return (
