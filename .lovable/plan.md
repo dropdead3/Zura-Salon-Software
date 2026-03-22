@@ -1,21 +1,18 @@
 
 
-## Add Non-Chemical Demo Appointments
+## Persist Color & Chemical Toggle per User via localStorage
 
-**Problem:** All current demo appointments are color/chemical services (Balayage, Root Touch-Up, Highlight, Color Correction, Vivids, Toner). When the toggle is switched to show all appointments, no additional non-chemical appointments appear because none exist in the demo data.
+**Problem:** The `showChemicalOnly` toggle resets to `true` on every page load since it's just `useState(true)`.
 
-**File:** `src/hooks/dock/dockDemoData.ts`
+**Approach:** Use localStorage keyed by `staff.userId` — the Dock is PIN-gated and already has the user identity. No database needed for a simple UI preference on a station device.
 
-**Changes:** Add 4 non-chemical demo appointments across statuses so the toggle has visible effect:
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
 
-| Client | Service | Status | Timing |
-|---|---|---|---|
-| Olivia Barnes | Signature Haircut | `checked_in` (Active) | now-20 → now+40 |
-| Megan Foster | Blowout | `scheduled` | now+60 → now+105 |
-| Danielle Wright | Special Event Styling | `scheduled` | now+180 → now+270 |
-| Natalie Brooks | Signature Haircut + Deep Conditioning Treatment | `completed` | now-240 → now-180 |
+**Changes:**
 
-These use services from the existing demo catalog (Haircuts, Styling, Extras). None have `has_mix_session`, so they'll be filtered out in "Color & Chemical" mode but appear when toggled to "All Appointments."
+1. **Initialize state from localStorage** — Replace `useState(true)` with a lazy initializer that reads from `localStorage.getItem('dock-chemical-toggle::' + staff.userId)`. Default to `true` if no stored value.
 
-Also add corresponding `DemoClient` entries for the new clients (Megan Foster, Danielle Wright, Natalie Brooks).
+2. **Persist on change** — Replace the bare `setShowChemicalOnly` in `onCheckedChange` with a wrapper that writes to localStorage before updating state.
+
+Key format: `dock-chemical-toggle::{userId}` — scoped per staff member so each stylist keeps their own preference across sessions.
 
