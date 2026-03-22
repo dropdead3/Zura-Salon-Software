@@ -140,8 +140,9 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         onDragStart={() => { isDragging.current = true; }}
         onDragEnd={handleDragEnd}
         className={cn(
-          'relative z-20 w-full border-l-[3px] bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
+          'relative z-20 w-full border-l-[3px] border border-[hsl(var(--platform-border)/0.3)] rounded-xl cursor-grab active:cursor-grabbing',
           'touch-pan-y',
+          isChemical ? 'bg-[hsl(var(--platform-bg-card))]' : 'bg-[hsl(var(--platform-bg-card)/0.7)]',
           borderClass
         )}
       >
