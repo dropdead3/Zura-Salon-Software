@@ -1,36 +1,41 @@
 
 
-## Tokenize Dock Confirmation Dialogs
+## Split No-Show & Cancelled Into Separate Groups with Status Badges
 
-**Problem:** The Cancel/No-Show confirmation dialog in `DockScheduleTab.tsx` uses raw inline classes (`bg-[hsl(var(--platform-bg-card))]`, `border-[hsl(var(--platform-border)/0.3)]`, etc.) instead of design tokens. This violates the project's tokenization standards and makes the dialog styling inconsistent and hard to maintain.
+**Problem:** Currently, `no_show` and `cancelled` appointments are lumped into the "Completed" group with no visual distinction. After marking an appointment as no-show or cancelled, it should appear in its own clearly labeled section with a status badge.
 
 ### Changes
 
-**File: `src/components/dock/dock-ui-tokens.ts`**
-
-Add a `DOCK_DIALOG` token group:
-
-```ts
-export const DOCK_DIALOG = {
-  overlay: 'absolute inset-0 bg-black/40 backdrop-blur-sm z-50',
-  content: 'bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] rounded-xl shadow-2xl',
-  title: 'font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]',
-  description: 'text-sm text-[hsl(var(--platform-foreground-muted))]',
-  cancelButton: 'bg-transparent border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground-muted)/0.1)]',
-  destructiveAction: 'bg-red-600 hover:bg-red-700 text-white',
-  warningAction: 'bg-amber-600 hover:bg-amber-700 text-white',
-} as const;
-```
-
 **File: `src/components/dock/schedule/DockScheduleTab.tsx`**
 
-- Import `DOCK_DIALOG` from `dock-ui-tokens`
-- Replace all raw classes on the AlertDialog with token references:
-  - `AlertDialogContent` → `className={DOCK_DIALOG.content}`
-  - `AlertDialogTitle` → `className={DOCK_DIALOG.title}`
-  - `AlertDialogDescription` → `className={DOCK_DIALOG.description}`
-  - `AlertDialogCancel` → `className={DOCK_DIALOG.cancelButton}`
-  - `AlertDialogAction` → use `DOCK_DIALOG.destructiveAction` for Cancel, `DOCK_DIALOG.warningAction` for No-Show (conditionally)
+1. **Update `groupAppointments`** — split the current `completed` bucket into three: `completed`, `noShow`, `cancelled`
 
-Two files, token definitions + class replacements. No logic changes.
+```ts
+function groupAppointments(appointments) {
+  const active = [], scheduled = [], completed = [], noShow = [], cancelled = [];
+  for (const a of appointments) {
+    const status = a.status || 'pending';
+    if (ACTIVE_STATUSES.includes(status)) active.push(a);
+    else if (status === 'no_show') noShow.push(a);
+    else if (status === 'cancelled') cancelled.push(a);
+    else if (status === 'completed') completed.push(a);
+    else scheduled.push(a);
+  }
+  return { active, scheduled, completed, noShow, cancelled };
+}
+```
+
+2. **Render new groups** after "Completed" with distinct accent colors:
+   - No-Show: `amber` accent, label "No Show"
+   - Cancelled: `red` accent, label "Cancelled"
+
+3. **Extend `accentColor` type** in `AppointmentGroup` to include `'amber' | 'red'` and add dot colors for them.
+
+**File: `src/components/dock/schedule/DockAppointmentCard.tsx`**
+
+4. **Add a status badge** on cards when status is `no_show` or `cancelled`:
+   - Small pill badge in the top-right of the card content: "No Show" (amber) or "Cancelled" (red)
+   - Uses the existing `DOCK_CARD` token pattern with inline color
+
+Two files, additive changes. Grouping logic update + badge rendering.
 
