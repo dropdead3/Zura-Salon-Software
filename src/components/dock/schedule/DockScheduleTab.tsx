@@ -158,7 +158,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           id="chemical-toggle"
           checked={showChemicalOnly}
           onCheckedChange={handleToggleChange}
-          className="data-[state=checked]:bg-[hsl(var(--platform-primary))] data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
+          className="data-[state=checked]:bg-violet-500/60 data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
         />
       </div>
 
