@@ -52,8 +52,10 @@ function formatTime(time: string) {
 
 export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointment, onViewClient, locationId, staffFilter }: DockScheduleTabProps) {
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
+  const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
+  const [showChemicalOnly, setShowChemicalOnly] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +75,19 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     return () => el.removeEventListener('scroll', checkScroll);
   }, [checkScroll, appointments]);
 
+  const filteredAppointments = useMemo(() => {
+    const all = appointments || [];
+    if (!showChemicalOnly) return all;
+    return all.filter((a) => {
+      const services = (a.service_name || '').split(',').map((s) => s.trim().toLowerCase());
+      if (trackedSet) {
+        return services.some((s) => trackedSet.has(s));
+      }
+      // Fallback to regex when no tracked services configured
+      return services.some((s) => isColorOrChemicalService(s));
+    });
+  }, [appointments, showChemicalOnly, trackedSet]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -81,8 +96,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     );
   }
 
-  const all = appointments || [];
-  const { active, scheduled, completed } = groupAppointments(all);
+  const { active, scheduled, completed } = groupAppointments(filteredAppointments);
 
   return (
     <div className="relative flex flex-col h-full">
