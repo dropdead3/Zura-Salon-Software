@@ -1,22 +1,45 @@
 
 
-## Dynamic Truncation for Services When Card is Swiped
+## Visual Separation Between Cards and Bottom Nav + Smoother Nav Animations
 
-**Problem:** The client name + services line has a fixed `pr-20` padding (for badge space), but when the card slides left to reveal action buttons, the visible area shrinks dramatically. The text spills into or behind the action buttons because the text container doesn't adapt to the reduced card width. The `truncate` CSS is applied, but the container itself is too wide relative to the visible area.
+**Problem:** The last appointment card sits too close to the bottom navigation dock, making the UI feel crowded. Additionally, the bottom nav tab transitions lack smooth, polished animations when switching between tabs.
 
-**Root cause:** The card content is rendered at full width inside the sliding `motion.div`. The `truncate` works, but the parent container doesn't shrink — the entire card slides, so `truncate` clips based on the full-width container, not the visible portion.
+### Changes
 
-### Fix — `src/components/dock/schedule/DockAppointmentCard.tsx`
+#### 1. Increase bottom scroll padding — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-The card content `motion.div` already slides via `x` offset. The text inside needs to respect the *visible* width. The fix is to set `overflow-hidden` on the outer card container that stays in place, so as the card slides left, the content gets clipped at the card boundary.
+Line 226: The scroll container already has `pb-44`. Increase to `pb-56` to push the last card further above the bottom nav, ensuring clear separation even when scrolled to the end.
 
-1. **Add `overflow-hidden` to the static card wrapper** (the outer container that holds the sliding `motion.div`). This ensures that when the card translates left, any text extending beyond the visible card edge gets clipped automatically.
+#### 2. Smoother bottom nav animations — `src/components/dock/DockBottomNav.tsx`
 
-2. **Keep `truncate` on the `<p>` tag** (line 157) — this handles the resting-state text overflow.
+- **Icon transitions:** Replace the abrupt `scale` animation with a combined scale + opacity shift. Icons that become inactive should fade slightly before settling, and active icons should scale up with a subtle y-translate (lift effect):
+  ```
+  animate={{ scale: isActive ? 1.15 : 0.95, y: isActive ? -2 : 0 }}
+  ```
 
-3. **The `pr-20`** can stay for badge clearance since badges are `absolute` positioned.
+- **Label animation:** Currently uses simple opacity (0 → 1). Add a subtle y-translate for a slide-up-fade-in feel:
+  ```
+  initial={{ opacity: 0, y: 4 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: 4 }}
+  transition={{ duration: 0.2 }}
+  ```
 
-This is a single class addition on the card's outer container — the one that doesn't move. The sliding `motion.div` moves inside it, and `overflow-hidden` on the static parent clips everything that extends past the visible boundary.
+- **Inactive icon color transition:** The current `transition-colors duration-150` is fine but bump to `duration-200` for smoother color fade.
 
-One line change, one file.
+- **Pill indicator:** Already uses `layoutId` with spring physics — this is solid. No change needed.
+
+#### 3. Increase gradient fade height — `src/components/dock/DockLayout.tsx`
+
+Line 104: The gradient overlay `h-44` could be increased to `h-52` to extend the fade zone, providing a more gradual transition from content to nav area.
+
+### Summary
+
+| File | Change |
+|------|--------|
+| `DockScheduleTab.tsx` | `pb-44` → `pb-56` for more bottom clearance |
+| `DockBottomNav.tsx` | Add y-translate to icon/label animations, extend color transition duration |
+| `DockLayout.tsx` | `h-44` → `h-52` for larger gradient fade |
+
+Three files, class-level and animation prop adjustments only. No logic changes.
 
