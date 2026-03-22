@@ -1,16 +1,21 @@
 
 
-## Fix: Toggle "Off" State Too Bright
+## Add Non-Chemical Demo Appointments
 
-**Problem:** The Switch unchecked state uses `bg-muted` which resolves to a bright white/light color in the Dock's dark theme context.
+**Problem:** All current demo appointments are color/chemical services (Balayage, Root Touch-Up, Highlight, Color Correction, Vivids, Toner). When the toggle is switched to show all appointments, no additional non-chemical appointments appear because none exist in the demo data.
 
-**File:** `src/components/dock/schedule/DockScheduleTab.tsx` (line 152)
+**File:** `src/hooks/dock/dockDemoData.ts`
 
-**Fix:** Add a `data-[state=unchecked]` override to use a subtle dark gray matching the Dock palette:
+**Changes:** Add 4 non-chemical demo appointments across statuses so the toggle has visible effect:
 
-```tsx
-className="data-[state=checked]:bg-[hsl(var(--platform-primary))] data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
-```
+| Client | Service | Status | Timing |
+|---|---|---|---|
+| Olivia Barnes | Signature Haircut | `checked_in` (Active) | now-20 → now+40 |
+| Megan Foster | Blowout | `scheduled` | now+60 → now+105 |
+| Danielle Wright | Special Event Styling | `scheduled` | now+180 → now+270 |
+| Natalie Brooks | Signature Haircut + Deep Conditioning Treatment | `completed` | now-240 → now-180 |
 
-Single class addition — the unchecked track becomes a dim gray that's visible but not eye-catching.
+These use services from the existing demo catalog (Haircuts, Styling, Extras). None have `has_mix_session`, so they'll be filtered out in "Color & Chemical" mode but appear when toggled to "All Appointments."
+
+Also add corresponding `DemoClient` entries for the new clients (Megan Foster, Danielle Wright, Natalie Brooks).
 
