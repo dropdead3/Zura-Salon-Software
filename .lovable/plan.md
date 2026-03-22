@@ -1,33 +1,20 @@
 
 
-## Luxury Lock Animation Back to PIN Gate
+## Show Staff Name in Schedule Header
 
-### Problem
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
 
-Currently, `handleLogout` sets `unlocked = false` and `staff = null` simultaneously, causing an instant swap with no exit animation for the Dock content.
+**Change:** Replace the static "Schedule" heading with `"{displayName}'s Appointments Today"` using `staff.displayName` from the existing `staff` prop.
 
-### Solution
+**Line 72-77** — Update header:
+```tsx
+<h1 className="font-display text-2xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+  {staff.displayName}'s Appointments Today
+</h1>
+<p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+  {today}
+</p>
+```
 
-Create a two-phase logout: first animate the Dock out with a luxury ease-out, then reset staff state after the animation completes.
-
-### Changes
-
-**1. `src/pages/Dock.tsx` — Stagger the logout**
-
-- Set `unlocked = false` first (triggers AnimatePresence exit on the dock)
-- After a 500ms delay, set `staff = null` to fully reset
-- This gives `DockUnlockTransition` time to animate the dock out and the gate in
-
-**2. `src/components/dock/DockUnlockTransition.tsx` — Add dock exit + gate enter animations**
-
-Currently the dock `motion.div` has no `exit` props (it only has `initial`/`animate`). Add:
-
-| Element | Animation | Duration | Easing |
-|---------|-----------|----------|--------|
-| Dock exit | opacity 1→0, scale 1→0.96, y 0→8 | 400ms | cubic-bezier(0.4, 0, 0.2, 1) |
-| Gate enter | opacity 0→1, scale 1.02→1 | 350ms | cubic-bezier(0, 0, 0.2, 1), 100ms delay |
-
-Also add a subtle pulse overlay on lock (mirror of the unlock pulse but cooler-toned).
-
-Two files, small edits — no logic changes beyond the staggered timing.
+Single line change, no new imports needed — `staff` is already a prop with `displayName`.
 
