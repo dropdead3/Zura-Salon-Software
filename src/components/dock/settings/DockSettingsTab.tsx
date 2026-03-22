@@ -69,7 +69,14 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   }
 
   return (
-    <div className="relative flex flex-col h-full px-6 py-8">
+    <div className="relative flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
+        <h1 className="font-display text-3xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">Settings</h1>
+        <p className="text-base text-[hsl(var(--platform-foreground-muted))]">Station & account</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
       {/* Staff profile card */}
       <div className="flex items-center gap-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="w-12 h-12 rounded-full bg-violet-600/20 flex items-center justify-center">
