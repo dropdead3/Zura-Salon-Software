@@ -1,30 +1,21 @@
 
 
-## Style-Match Hamburger Menu to Booking Sheet
+## Add "Settings" Page Header to Dock Settings Tab
 
-**Problem:** The hamburger menu panel slides down from the top with `bg-[hsl(var(--platform-bg-elevated))]` and no drag handle, while the booking sheet slides up from the bottom with `bg-[hsl(var(--platform-bg))]`, a drag handle, rounded top corners, and pull-to-dismiss. They should share the same visual language.
+**Problem:** The Settings tab lacks a page header matching the Schedule tab's style ("TODAY'S APPOINTMENTS" + date). It jumps straight into the profile card.
 
-### Changes — `src/components/dock/DockHamburgerMenu.tsx`
+### Change — `src/components/dock/settings/DockSettingsTab.tsx`
 
-Convert the menu from a top-sliding panel to a bottom sheet matching `DockNewBookingSheet`:
+**Line 72:** Add a header block before the staff profile card, matching the Schedule tab's visual pattern:
 
-1. **Slide direction:** Change from `y: '-100%'` (top) to `y: '100%'` (bottom), anchored with `absolute inset-x-0 bottom-0`
-2. **Background:** `bg-[hsl(var(--platform-bg-elevated))]` → `bg-[hsl(var(--platform-bg))]` to match booking sheet
-3. **Border:** `border-b` → `border-t border-[hsl(var(--platform-border))]`
-4. **Corners:** `rounded-b-2xl` → `rounded-t-2xl`
-5. **Drag handle:** Add the standard dock drag handle (`mx-auto mt-3 h-1.5 w-12 rounded-full`) at the top
-6. **Pull-to-dismiss:** Add `drag="y"` with `useDragControls`, same dismiss threshold (offset 120, velocity 500)
-7. **Close button:** Replace the top-right X with an inline close button in the header row (matching booking sheet's `p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)]` pattern)
-8. **Max height:** Add `maxHeight: '92%'` style to match `DOCK_SHEET.maxHeight`
-9. **Keep hamburger trigger** in top-right, but only show the `Menu` icon (no `X` toggle — the sheet itself has a close button and pull-to-dismiss)
+```tsx
+<div className="px-5 pt-8 pb-5 border-b border-[hsl(var(--platform-border)/0.15)]">
+  <h1 className="font-display text-3xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">Settings</h1>
+  <p className="text-base text-[hsl(var(--platform-foreground-muted))]">Station & account</p>
+</div>
+```
 
-### Layout inside the sheet (top to bottom):
-- Drag handle
-- Header row: "Navigation" title + X close button
-- Tab items (same styling, unchanged)
-- Divider
-- Lock Station button
-- Bottom padding for safe area
+Move the existing content (profile card, menu items, station location) below the header inside a scrollable area, and adjust the outer container to remove the `py-8` top padding (the header now owns that spacing).
 
-One file changed. Purely class and animation direction updates + drag handle addition.
+One file, one addition + minor padding adjustment.
 
