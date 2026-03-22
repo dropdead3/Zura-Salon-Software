@@ -1,32 +1,25 @@
 
 
-## Add Top and Bottom Blur Fade Overlays to Scroll Container
+## Sort Appointments by Start Time Within Each Section
 
-**Problem:** Cards have no visual transition when approaching the header or the bottom nav — they appear/disappear abruptly at both edges.
+**Problem:** Appointments within each group (Active, Scheduled, Completed, etc.) are displayed in insertion order rather than sorted by start time.
 
-### Changes — `src/components/dock/schedule/DockScheduleTab.tsx`
+### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-Inside the scroll wrapper (`div` on line 225, the `relative flex-1 min-h-0` container), add two absolute-positioned gradient overlays:
+In the `groupAppointments` function (lines 42-64), add a sort-by-`start_time` step to each array before returning:
 
-**1. Top fade overlay** — fades cards into the background as they scroll up toward the header:
-```tsx
-<div className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
-  style={{
-    background: 'linear-gradient(to bottom, hsl(var(--platform-bg)), transparent)',
-  }}
-/>
+```ts
+const sortByTime = (a: DockAppointment, b: DockAppointment) =>
+  (a.start_time || '').localeCompare(b.start_time || '');
+
+return {
+  active: active.sort(sortByTime),
+  scheduled: scheduled.sort(sortByTime),
+  completed: completed.sort(sortByTime),
+  noShow: noShow.sort(sortByTime),
+  cancelled: cancelled.sort(sortByTime),
+};
 ```
 
-**2. Bottom fade overlay** — fades cards as they approach the bottom nav area. This replaces or supplements the existing `h-52` gradient in `DockLayout.tsx` (line 104) with a scroll-container-local version for tighter visual coupling:
-```tsx
-<div className="absolute bottom-0 left-0 right-0 h-16 z-10 pointer-events-none"
-  style={{
-    background: 'linear-gradient(to top, hsl(var(--platform-bg)), transparent)',
-  }}
-/>
-```
-
-The existing `DockLayout.tsx` bottom gradient (line 104) stays as-is since it covers the nav area itself. The new bottom fade inside the scroll wrapper handles the content-to-gradient transition zone.
-
-Two elements added, one file.
+Single function update, one file. String comparison on `HH:mm` format naturally gives chronological order.
 
