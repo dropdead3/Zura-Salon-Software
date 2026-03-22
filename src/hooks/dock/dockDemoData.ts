@@ -3,7 +3,7 @@
  * Used when staff.userId === 'dev-bypass-000'.
  */
 
-import { format, addMinutes, subMinutes } from 'date-fns';
+import { format, addMinutes, subMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import type { DockAppointment } from './useDockAppointments';
 import type { DockProduct } from './useDockProductCatalog';
 import type { DockMixSession } from './useDockMixSessions';
@@ -11,181 +11,232 @@ import type { DockMixSession } from './useDockMixSessions';
 const today = format(new Date(), 'yyyy-MM-dd');
 const now = new Date();
 
+// Operating hours — all demo times clamped to this window
+const OPEN_HOUR = 9;
+const CLOSE_HOUR = 20;
+
+function clampToOperatingHours(date: Date): Date {
+  const result = new Date(date);
+  const openTime = setSeconds(setMinutes(setHours(new Date(date), OPEN_HOUR), 0), 0);
+  const closeTime = setSeconds(setMinutes(setHours(new Date(date), CLOSE_HOUR), 0), 0);
+  if (result < openTime) return openTime;
+  if (result > closeTime) return closeTime;
+  return result;
+}
+
+/** Generate a clamped start/end pair preserving minimum duration */
+function clampedPair(start: Date, end: Date, minDurationMin = 30): { start: Date; end: Date } {
+  let s = clampToOperatingHours(start);
+  let e = clampToOperatingHours(end);
+  // Ensure minimum duration
+  const diffMs = e.getTime() - s.getTime();
+  if (diffMs < minDurationMin * 60_000) {
+    // Try extending end first
+    e = addMinutes(s, minDurationMin);
+    e = clampToOperatingHours(e);
+    // If still too short, pull start back
+    if (e.getTime() - s.getTime() < minDurationMin * 60_000) {
+      s = subMinutes(e, minDurationMin);
+      s = clampToOperatingHours(s);
+    }
+  }
+  return { start: s, end: e };
+}
+
 function timeStr(date: Date) {
   return format(date, 'HH:mm:ss');
 }
 
+function clampedTimeStr(start: Date, end: Date): { startStr: string; endStr: string } {
+  const pair = clampedPair(start, end);
+  return { startStr: timeStr(pair.start), endStr: timeStr(pair.end) };
+}
+
 // ─── Mock Appointments ───────────────────────────────────────
-export const DEMO_APPOINTMENTS: DockAppointment[] = [
-  {
-    id: 'demo-appt-1',
-    source: 'local',
-    client_name: 'Sarah Mitchell',
-    stylist_name: 'Jenna B.',
-    service_name: 'Balayage + Toner',
-    appointment_date: today,
-    start_time: timeStr(subMinutes(now, 30)),
-    end_time: timeStr(addMinutes(now, 60)),
-    status: 'checked_in',
-    location_id: null,
-    client_id: 'demo-client-1',
-    notes: 'Wants warm caramel tones, avoid going too ashy',
-    has_mix_session: true,
-    assistant_names: ['Alexis R.'],
-  },
-  {
-    id: 'demo-appt-7',
-    source: 'local',
-    client_name: 'Rachel Kim',
-    stylist_name: 'Jenna B.',
-    service_name: 'Root Touch-Up + Gloss',
-    appointment_date: today,
-    start_time: timeStr(subMinutes(now, 45)),
-    end_time: timeStr(addMinutes(now, 30)),
-    status: 'in_progress',
-    location_id: null,
-    client_id: 'demo-client-7',
-    notes: 'Keep it natural — level 7 base',
-    has_mix_session: true,
-  },
-  {
-    id: 'demo-appt-2',
-    source: 'phorest',
-    client_name: 'Jessica Chen',
-    stylist_name: 'Jenna B.',
-    service_name: 'Root Touch-Up + Gloss',
-    appointment_date: today,
-    start_time: timeStr(addMinutes(now, 30)),
-    end_time: timeStr(addMinutes(now, 90)),
-    status: 'scheduled',
-    location_id: null,
-    phorest_client_id: 'demo-phorest-1',
-    notes: null,
-    has_mix_session: false,
-  },
-  {
-    id: 'demo-appt-3',
-    source: 'local',
-    client_name: 'Emily Rodriguez',
-    stylist_name: 'Jenna B.',
-    service_name: 'Full Highlight + Cut',
-    appointment_date: today,
-    start_time: timeStr(addMinutes(now, 120)),
-    end_time: timeStr(addMinutes(now, 240)),
-    status: 'scheduled',
-    location_id: null,
-    client_id: 'demo-client-3',
-    assistant_names: ['Kylie M.', 'Alexis R.'],
-    notes: 'New client — consultation needed',
-    has_mix_session: false,
-  },
-  {
-    id: 'demo-appt-4',
-    source: 'phorest',
-    client_name: 'Amanda Park',
-    stylist_name: 'Jenna B.',
-    service_name: 'Color Correction',
-    appointment_date: today,
-    start_time: timeStr(subMinutes(now, 180)),
-    end_time: timeStr(subMinutes(now, 60)),
-    status: 'completed',
-    location_id: null,
-    phorest_client_id: 'demo-phorest-2',
-    notes: 'Fixed banding from previous salon',
-    has_mix_session: true,
-  },
-  {
-    id: 'demo-appt-5',
-    source: 'local',
-    client_name: 'Lauren Taylor',
-    stylist_name: 'Jenna B.',
-    service_name: 'Toner Refresh',
-    appointment_date: today,
-    start_time: timeStr(addMinutes(now, 270)),
-    end_time: timeStr(addMinutes(now, 330)),
-    status: 'scheduled',
-    location_id: null,
-    client_id: 'demo-client-5',
-    notes: null,
-    has_mix_session: false,
-  },
-  {
-    id: 'demo-appt-6',
-    source: 'phorest',
-    client_name: 'Maria Gonzalez',
-    stylist_name: 'Jenna B.',
-    service_name: 'Vivids (Fashion Color)',
-    appointment_date: today,
-    start_time: timeStr(subMinutes(now, 300)),
-    end_time: timeStr(subMinutes(now, 180)),
-    status: 'completed',
-    location_id: null,
-    phorest_client_id: 'demo-phorest-3',
-    notes: 'Purple and magenta panels',
-    has_mix_session: true,
-  },
-  // ── Non-chemical appointments (visible only with toggle off) ──
-  {
-    id: 'demo-appt-8',
-    source: 'local',
-    client_name: 'Olivia Barnes',
-    stylist_name: 'Jenna B.',
-    service_name: 'Signature Haircut',
-    appointment_date: today,
-    start_time: timeStr(subMinutes(now, 20)),
-    end_time: timeStr(addMinutes(now, 40)),
-    status: 'checked_in',
-    location_id: null,
-    client_id: 'demo-client-8',
-    notes: null,
-    has_mix_session: false,
-  },
-  {
-    id: 'demo-appt-9',
-    source: 'local',
-    client_name: 'Megan Foster',
-    stylist_name: 'Jenna B.',
-    service_name: 'Blowout',
-    appointment_date: today,
-    start_time: timeStr(addMinutes(now, 60)),
-    end_time: timeStr(addMinutes(now, 105)),
-    status: 'scheduled',
-    location_id: null,
-    client_id: 'demo-client-9',
-    notes: null,
-    has_mix_session: false,
-  },
-  {
-    id: 'demo-appt-10',
-    source: 'local',
-    client_name: 'Danielle Wright',
-    stylist_name: 'Jenna B.',
-    service_name: 'Special Event Styling',
-    appointment_date: today,
-    start_time: timeStr(addMinutes(now, 180)),
-    end_time: timeStr(addMinutes(now, 270)),
-    status: 'scheduled',
-    location_id: null,
-    client_id: 'demo-client-10',
-    notes: 'Wedding updo — bring inspiration photos',
-    has_mix_session: false,
-  },
-  {
-    id: 'demo-appt-11',
-    source: 'local',
-    client_name: 'Natalie Brooks',
-    stylist_name: 'Jenna B.',
-    service_name: 'Signature Haircut, Deep Conditioning Treatment',
-    appointment_date: today,
-    start_time: timeStr(subMinutes(now, 240)),
-    end_time: timeStr(subMinutes(now, 180)),
-    status: 'completed',
-    location_id: null,
-    client_id: 'demo-client-11',
-    notes: null,
-    has_mix_session: false,
-  },
-];
+export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
+  const t1 = clampedTimeStr(subMinutes(now, 30), addMinutes(now, 60));
+  const t2 = clampedTimeStr(subMinutes(now, 45), addMinutes(now, 30));
+  const t3 = clampedTimeStr(addMinutes(now, 30), addMinutes(now, 90));
+  const t4 = clampedTimeStr(addMinutes(now, 120), addMinutes(now, 240));
+  const t5 = clampedTimeStr(subMinutes(now, 180), subMinutes(now, 60));
+  const t6 = clampedTimeStr(addMinutes(now, 270), addMinutes(now, 330));
+  const t7 = clampedTimeStr(subMinutes(now, 300), subMinutes(now, 180));
+  const t8 = clampedTimeStr(subMinutes(now, 20), addMinutes(now, 40));
+  const t9 = clampedTimeStr(addMinutes(now, 60), addMinutes(now, 105));
+  const t10 = clampedTimeStr(addMinutes(now, 180), addMinutes(now, 270));
+  const t11 = clampedTimeStr(subMinutes(now, 240), subMinutes(now, 180));
+
+  return [
+    {
+      id: 'demo-appt-1',
+      source: 'local',
+      client_name: 'Sarah Mitchell',
+      stylist_name: 'Jenna B.',
+      service_name: 'Balayage + Toner',
+      appointment_date: today,
+      start_time: t1.startStr,
+      end_time: t1.endStr,
+      status: 'checked_in',
+      location_id: null,
+      client_id: 'demo-client-1',
+      notes: 'Wants warm caramel tones, avoid going too ashy',
+      has_mix_session: true,
+      assistant_names: ['Alexis R.'],
+    },
+    {
+      id: 'demo-appt-7',
+      source: 'local',
+      client_name: 'Rachel Kim',
+      stylist_name: 'Jenna B.',
+      service_name: 'Root Touch-Up + Gloss',
+      appointment_date: today,
+      start_time: t2.startStr,
+      end_time: t2.endStr,
+      status: 'in_progress',
+      location_id: null,
+      client_id: 'demo-client-7',
+      notes: 'Keep it natural — level 7 base',
+      has_mix_session: true,
+    },
+    {
+      id: 'demo-appt-2',
+      source: 'phorest',
+      client_name: 'Jessica Chen',
+      stylist_name: 'Jenna B.',
+      service_name: 'Root Touch-Up + Gloss',
+      appointment_date: today,
+      start_time: t3.startStr,
+      end_time: t3.endStr,
+      status: 'scheduled',
+      location_id: null,
+      phorest_client_id: 'demo-phorest-1',
+      notes: null,
+      has_mix_session: false,
+    },
+    {
+      id: 'demo-appt-3',
+      source: 'local',
+      client_name: 'Emily Rodriguez',
+      stylist_name: 'Jenna B.',
+      service_name: 'Full Highlight + Cut',
+      appointment_date: today,
+      start_time: t4.startStr,
+      end_time: t4.endStr,
+      status: 'scheduled',
+      location_id: null,
+      client_id: 'demo-client-3',
+      assistant_names: ['Kylie M.', 'Alexis R.'],
+      notes: 'New client — consultation needed',
+      has_mix_session: false,
+    },
+    {
+      id: 'demo-appt-4',
+      source: 'phorest',
+      client_name: 'Amanda Park',
+      stylist_name: 'Jenna B.',
+      service_name: 'Color Correction',
+      appointment_date: today,
+      start_time: t5.startStr,
+      end_time: t5.endStr,
+      status: 'completed',
+      location_id: null,
+      phorest_client_id: 'demo-phorest-2',
+      notes: 'Fixed banding from previous salon',
+      has_mix_session: true,
+    },
+    {
+      id: 'demo-appt-5',
+      source: 'local',
+      client_name: 'Lauren Taylor',
+      stylist_name: 'Jenna B.',
+      service_name: 'Toner Refresh',
+      appointment_date: today,
+      start_time: t6.startStr,
+      end_time: t6.endStr,
+      status: 'scheduled',
+      location_id: null,
+      client_id: 'demo-client-5',
+      notes: null,
+      has_mix_session: false,
+    },
+    {
+      id: 'demo-appt-6',
+      source: 'phorest',
+      client_name: 'Maria Gonzalez',
+      stylist_name: 'Jenna B.',
+      service_name: 'Vivids (Fashion Color)',
+      appointment_date: today,
+      start_time: t7.startStr,
+      end_time: t7.endStr,
+      status: 'completed',
+      location_id: null,
+      phorest_client_id: 'demo-phorest-3',
+      notes: 'Purple and magenta panels',
+      has_mix_session: true,
+    },
+    // ── Non-chemical appointments (visible only with toggle off) ──
+    {
+      id: 'demo-appt-8',
+      source: 'local',
+      client_name: 'Olivia Barnes',
+      stylist_name: 'Jenna B.',
+      service_name: 'Signature Haircut',
+      appointment_date: today,
+      start_time: t8.startStr,
+      end_time: t8.endStr,
+      status: 'checked_in',
+      location_id: null,
+      client_id: 'demo-client-8',
+      notes: null,
+      has_mix_session: false,
+    },
+    {
+      id: 'demo-appt-9',
+      source: 'local',
+      client_name: 'Megan Foster',
+      stylist_name: 'Jenna B.',
+      service_name: 'Blowout',
+      appointment_date: today,
+      start_time: t9.startStr,
+      end_time: t9.endStr,
+      status: 'scheduled',
+      location_id: null,
+      client_id: 'demo-client-9',
+      notes: null,
+      has_mix_session: false,
+    },
+    {
+      id: 'demo-appt-10',
+      source: 'local',
+      client_name: 'Danielle Wright',
+      stylist_name: 'Jenna B.',
+      service_name: 'Special Event Styling',
+      appointment_date: today,
+      start_time: t10.startStr,
+      end_time: t10.endStr,
+      status: 'scheduled',
+      location_id: null,
+      client_id: 'demo-client-10',
+      notes: 'Wedding updo — bring inspiration photos',
+      has_mix_session: false,
+    },
+    {
+      id: 'demo-appt-11',
+      source: 'local',
+      client_name: 'Natalie Brooks',
+      stylist_name: 'Jenna B.',
+      service_name: 'Signature Haircut, Deep Conditioning Treatment',
+      appointment_date: today,
+      start_time: t11.startStr,
+      end_time: t11.endStr,
+      status: 'completed',
+      location_id: null,
+      client_id: 'demo-client-11',
+      notes: null,
+      has_mix_session: false,
+    },
+  ];
+})();
 
 // ─── Mock Products ───────────────────────────────────────────
 export const DEMO_PRODUCTS: DockProduct[] = [
