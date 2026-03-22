@@ -1,18 +1,22 @@
 
 
-## Reduce Header Crowding in Dock Schedule Tab
+## Dynamic Truncation for Services When Card is Swiped
 
-**Problem:** The top section (title, date, + button, toggle) feels cramped — elements are packed tightly with minimal vertical breathing room between them.
+**Problem:** The client name + services line has a fixed `pr-20` padding (for badge space), but when the card slides left to reveal action buttons, the visible area shrinks dramatically. The text spills into or behind the action buttons because the text container doesn't adapt to the reduced card width. The `truncate` CSS is applied, but the container itself is too wide relative to the visible area.
 
-### Changes — `src/components/dock/schedule/DockScheduleTab.tsx`
+**Root cause:** The card content is rendered at full width inside the sliding `motion.div`. The `truncate` works, but the parent container doesn't shrink — the entire card slides, so `truncate` clips based on the full-width container, not the visible portion.
 
-1. **Increase header vertical padding:** `pt-8 pb-3` → `pt-8 pb-5` (line 194) — more space below the title/date before the toggle row
+### Fix — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-2. **Add spacing between date and toggle:** Insert a subtle separator or simply increase the toggle row's top padding: `pb-4` → `pt-2 pb-5` (line 212) — gives the toggle row its own breathing room above and below
+The card content `motion.div` already slides via `x` offset. The text inside needs to respect the *visible* width. The fix is to set `overflow-hidden` on the outer card container that stays in place, so as the card slides left, the content gets clipped at the card boundary.
 
-3. **Add a thin divider** between the header block and the toggle row using a `border-b border-[hsl(var(--platform-border)/0.15)]` on the header container, visually separating the title area from the filter controls
+1. **Add `overflow-hidden` to the static card wrapper** (the outer container that holds the sliding `motion.div`). This ensures that when the card translates left, any text extending beyond the visible card edge gets clipped automatically.
 
-**Result:** The top section goes from 3 tightly stacked rows to a more breathable layout with clear separation between the title area and the filter toggle, before the appointment list begins.
+2. **Keep `truncate` on the `<p>` tag** (line 157) — this handles the resting-state text overflow.
 
-Single file, padding/border class adjustments only.
+3. **The `pr-20`** can stay for badge clearance since badges are `absolute` positioned.
+
+This is a single class addition on the card's outer container — the one that doesn't move. The sliding `motion.div` moves inside it, and `overflow-hidden` on the static parent clips everything that extends past the visible boundary.
+
+One line change, one file.
 
