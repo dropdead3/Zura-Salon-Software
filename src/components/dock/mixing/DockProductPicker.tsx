@@ -97,17 +97,17 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
           {/* Full-screen sheet with pull-to-dismiss */}
           <motion.div
             className="absolute inset-0 bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))] flex flex-col"
-            initial={{ y: '100%' }}
+            initial={{ y: '-100%' }}
             animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            exit={{ y: '-100%' }}
             transition={SPRING}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
+            dragElastic={{ top: 0.6, bottom: 0 }}
             onDragEnd={(_e, info) => {
-              if (info.offset.y > 120 || info.velocity.y > 500) {
+              if (info.offset.y < -120 || info.velocity.y < -500) {
                 onClose();
               }
             }}

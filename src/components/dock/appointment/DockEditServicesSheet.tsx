@@ -120,17 +120,17 @@ export function DockEditServicesSheet({
           <motion.div
             className={cn(DOCK_SHEET.panel, 'z-[61]')}
             style={{ maxHeight: DOCK_SHEET.maxHeight }}
-            initial={{ y: '100%' }}
+            initial={{ y: '-100%' }}
             animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            exit={{ y: '-100%' }}
             transition={DOCK_SHEET.spring}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
+            dragElastic={{ top: 0.6, bottom: 0 }}
             onDragEnd={(_e, info) => {
-              if (info.offset.y > DOCK_SHEET.dismissThreshold.offset || info.velocity.y > DOCK_SHEET.dismissThreshold.velocity) {
+              if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
                 onClose();
               }
             }}

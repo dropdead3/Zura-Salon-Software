@@ -40,7 +40,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
   };
 
   const handleDragEnd = (_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
-    if (info.offset.y > DOCK_SHEET.dismissThreshold.offset || info.velocity.y > DOCK_SHEET.dismissThreshold.velocity) {
+    if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
       setOpen(false);
     }
   };
@@ -73,18 +73,18 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
             {/* Sheet panel — slides up from bottom */}
             <motion.div
               drag="y"
-              dragConstraints={{ top: 0 }}
+              dragConstraints={{ bottom: 0 }}
               dragElastic={0.1}
               onDragEnd={handleDragEnd}
-              initial={{ y: '100%' }}
+              initial={{ y: '-100%' }}
               animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+              exit={{ y: '-100%' }}
               transition={SPRING}
-              className="absolute inset-x-0 bottom-0 flex flex-col bg-[hsl(var(--platform-bg))] border-t border-[hsl(var(--platform-border))] rounded-t-2xl shadow-2xl"
+              className="absolute inset-x-0 top-0 flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl shadow-2xl"
               style={{ zIndex: 46, maxHeight: DOCK_SHEET.maxHeight }}
             >
-              {/* Drag handle */}
-              <div className={DOCK_SHEET.dragHandle} />
+              {/* Top spacer for rounded corners */}
+              <div className="h-2" />
 
               {/* Header row */}
               <div className="flex items-center justify-between px-6 pt-4 pb-2">
@@ -133,7 +133,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
               <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
 
               {/* Lock Station */}
-              <div className="px-4 pb-8">
+              <div className="px-4 pb-4">
                 <button
                   onClick={handleLock}
                   className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"

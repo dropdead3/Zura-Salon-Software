@@ -88,16 +88,16 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
 
           {/* Sheet */}
           <motion.div
-            className="absolute bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-[hsl(var(--platform-bg-elevated))] border-t border-[hsl(var(--platform-border)/0.3)] max-h-[70%] overflow-hidden flex flex-col"
-            initial={{ y: '100%' }}
+            className="absolute top-0 left-0 right-0 z-50 rounded-b-2xl bg-[hsl(var(--platform-bg-elevated))] border-b border-[hsl(var(--platform-border)/0.3)] max-h-[70%] overflow-hidden flex flex-col"
+            initial={{ y: '-100%' }}
             animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            exit={{ y: '-100%' }}
             transition={{ type: 'spring', ...spring }}
             drag="y"
-            dragConstraints={{ top: 0 }}
+            dragConstraints={{ bottom: 0 }}
             dragElastic={0.2}
             onDragEnd={(_, info) => {
-              if (info.offset.y > 100) onClose();
+              if (info.offset.y < -100) onClose();
             }}
           >
             {/* Drag handle */}
