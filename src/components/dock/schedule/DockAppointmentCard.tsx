@@ -130,6 +130,15 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             </p>
           )}
         </div>
+        {/* Status badge for no-show / cancelled */}
+        {visible && STATUS_BADGE[appointment.status || ''] && (
+          <span className={cn(
+            'shrink-0 text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
+            STATUS_BADGE[appointment.status || ''].classes
+          )}>
+            {STATUS_BADGE[appointment.status || ''].label}
+          </span>
+        )}
         {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}
       </div>
 
