@@ -182,7 +182,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
 
       {/* Layer 1: Action tray — behind everything */}
       <motion.div
-        className="absolute inset-y-0 right-0 flex items-center pl-2 pr-1 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
+        className="absolute inset-y-0 right-0 flex items-center pl-3 pr-2 bg-gradient-to-l from-[hsl(var(--platform-bg)/0.8)] to-transparent"
         style={{ width: trayWidth, opacity: trayOpacity }}
       >
         {canSwipe && isActive && (
