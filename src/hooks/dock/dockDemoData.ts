@@ -3,7 +3,7 @@
  * Used when staff.userId === 'dev-bypass-000'.
  */
 
-import { format, addMinutes, subMinutes } from 'date-fns';
+import { format, addMinutes, subMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
 import type { DockAppointment } from './useDockAppointments';
 import type { DockProduct } from './useDockProductCatalog';
 import type { DockMixSession } from './useDockMixSessions';
@@ -11,8 +11,45 @@ import type { DockMixSession } from './useDockMixSessions';
 const today = format(new Date(), 'yyyy-MM-dd');
 const now = new Date();
 
+// Operating hours — all demo times clamped to this window
+const OPEN_HOUR = 9;
+const CLOSE_HOUR = 20;
+
+function clampToOperatingHours(date: Date): Date {
+  const result = new Date(date);
+  const openTime = setSeconds(setMinutes(setHours(new Date(date), OPEN_HOUR), 0), 0);
+  const closeTime = setSeconds(setMinutes(setHours(new Date(date), CLOSE_HOUR), 0), 0);
+  if (result < openTime) return openTime;
+  if (result > closeTime) return closeTime;
+  return result;
+}
+
+/** Generate a clamped start/end pair preserving minimum duration */
+function clampedPair(start: Date, end: Date, minDurationMin = 30): { start: Date; end: Date } {
+  let s = clampToOperatingHours(start);
+  let e = clampToOperatingHours(end);
+  // Ensure minimum duration
+  const diffMs = e.getTime() - s.getTime();
+  if (diffMs < minDurationMin * 60_000) {
+    // Try extending end first
+    e = addMinutes(s, minDurationMin);
+    e = clampToOperatingHours(e);
+    // If still too short, pull start back
+    if (e.getTime() - s.getTime() < minDurationMin * 60_000) {
+      s = subMinutes(e, minDurationMin);
+      s = clampToOperatingHours(s);
+    }
+  }
+  return { start: s, end: e };
+}
+
 function timeStr(date: Date) {
   return format(date, 'HH:mm:ss');
+}
+
+function clampedTimeStr(start: Date, end: Date): { startStr: string; endStr: string } {
+  const pair = clampedPair(start, end);
+  return { startStr: timeStr(pair.start), endStr: timeStr(pair.end) };
 }
 
 // ─── Mock Appointments ───────────────────────────────────────
