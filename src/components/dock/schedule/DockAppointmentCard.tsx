@@ -89,8 +89,8 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
             className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
             aria-label="Complete appointment"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="text-[9px] tracking-wide uppercase font-display text-emerald-400 leading-tight">Finish Appt</span>
+            <CheckCircle2 className="w-6 h-6" />
+            <span className="text-[11px] tracking-wide uppercase font-display text-emerald-400 leading-tight">Finish Appt</span>
           </button>
         )}
       </motion.div>
