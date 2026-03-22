@@ -59,7 +59,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         // Fetch today's phorest appointments for this specific location
         let query = supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes, stylist_user_id')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, phorest_client_id, notes, stylist_user_id')
           .eq('location_id', locationId)
           .eq('appointment_date', today)
           .is('deleted_at', null)
