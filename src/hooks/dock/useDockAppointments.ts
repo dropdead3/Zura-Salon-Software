@@ -189,7 +189,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       const [phorestResult, localResult] = await Promise.all([
         supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, location_id, phorest_client_id, notes, stylist_user_id')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, phorest_client_id, notes, stylist_user_id')
           .eq('stylist_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
