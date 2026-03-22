@@ -26,13 +26,13 @@ const BORDER_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
-const OPEN_OFFSET = -96;
+const OPEN_OFFSET = -128;
 const SNAP_THRESHOLD = 50;
 
 export function DockAppointmentCard({ appointment, accentColor, onTap, onComplete, onViewClient }: DockAppointmentCardProps) {
   const borderClass = BORDER_COLORS[accentColor];
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
-  const trayWidth = isTerminal ? 0 : 96;
+  const trayWidth = isTerminal ? 0 : 128;
   const openOffset = isTerminal ? 0 : OPEN_OFFSET;
 
   const x = useMotionValue(0);
@@ -85,7 +85,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
               close();
               onComplete?.(appointment);
             }}
-            className="flex flex-col items-center justify-center gap-1 w-[80px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
+            className="flex flex-col items-center justify-center gap-1 w-[112px] h-full rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:bg-emerald-500/25 active:scale-[0.97] transition-all"
             aria-label="Complete appointment"
           >
             <CheckCircle2 className="w-5 h-5" />
