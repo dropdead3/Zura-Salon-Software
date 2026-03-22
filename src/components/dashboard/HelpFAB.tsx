@@ -52,12 +52,14 @@ export function HelpFAB() {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
       >
+        {/* Radial glow behind FAB for separation from cards */}
+        <div className="absolute inset-0 -m-6 rounded-full bg-[radial-gradient(circle,hsl(var(--platform-bg)/0.9)_0%,transparent_70%)] pointer-events-none" />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-14 w-14 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 hover:scale-110"
+              className="h-14 w-14 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.6)] transition-all duration-300 bg-[hsl(var(--platform-bg-elevated)/0.6)] backdrop-blur-2xl backdrop-saturate-150 border border-white/[0.08] ring-1 ring-white/[0.04] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-elevated)/0.8)] hover:scale-110"
               aria-label="AI Copilot"
               onClick={handleCopilotToggle}
             >
