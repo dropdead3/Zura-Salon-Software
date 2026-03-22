@@ -12,6 +12,7 @@ import { DockAppointmentCard } from './DockAppointmentCard';
 import { DockNewBookingSheet } from './DockNewBookingSheet';
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
+import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
