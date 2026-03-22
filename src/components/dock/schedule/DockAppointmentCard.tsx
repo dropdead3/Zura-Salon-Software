@@ -145,7 +145,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
         )}
       >
         {/* Mix session indicator — inside sliding layer so it moves with card */}
-        {appointment.has_mix_session && (
+        {appointment.has_mix_session && !['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase()) && (
           <div className="absolute top-5 right-5 z-30 flex items-center justify-center w-9 h-9 rounded-lg bg-violet-600/20">
             <FlaskConical className="w-5 h-5 text-violet-400" />
           </div>
