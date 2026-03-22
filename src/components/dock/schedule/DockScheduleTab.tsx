@@ -232,13 +232,25 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
       {/* Appointment list + scroll indicator wrapper */}
       <div className="relative flex-1 min-h-0">
-        {/* Top fade overlay */}
-        <div className="absolute top-0 left-0 right-0 h-12 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, hsl(var(--platform-bg)), transparent)' }}
+        {/* Top fade + blur overlay */}
+        <div className="absolute top-0 left-0 right-0 h-16 z-10 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, hsl(var(--platform-bg)) 20%, transparent)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            maskImage: 'linear-gradient(to bottom, black 30%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent)',
+          }}
         />
-        {/* Bottom fade overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, hsl(var(--platform-bg)), transparent)' }}
+        {/* Bottom fade + blur overlay */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 z-10 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to top, hsl(var(--platform-bg)) 20%, transparent)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            maskImage: 'linear-gradient(to top, black 30%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to top, black 30%, transparent)',
+          }}
         />
         <div ref={scrollRef} onScroll={checkScroll} className="h-full overflow-y-auto px-5 pt-16 pb-56 space-y-8">
           {filteredAppointments.length === 0 ? (
