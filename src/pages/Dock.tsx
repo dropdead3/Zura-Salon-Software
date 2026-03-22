@@ -91,10 +91,12 @@ export default function Dock() {
   }, [demoOrgId, canAccessDemo]);
 
   const handleLogout = useCallback(() => {
-    setStaff(null);
+    // Phase 1: trigger exit animation
     setUnlocked(false);
     setActiveTab('schedule');
     setView({ screen: 'tabs' });
+    // Phase 2: reset staff after animation completes
+    setTimeout(() => setStaff(null), 500);
   }, []);
 
   const handleOpenAppointment = useCallback((appointment: DockAppointment) => {
