@@ -150,7 +150,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
       </motion.div>
 
       {/* Static text overlay — does NOT move */}
-      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-5 pointer-events-none">
+      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-10 p-5 pointer-events-none">
         {/* Top row: client name · service */}
         <div className="flex items-start gap-2">
           <p className="font-medium text-base text-[hsl(var(--platform-foreground))] flex-1 min-w-0 truncate">
