@@ -287,6 +287,49 @@ serve(async (req) => {
       localUpdate.service_category = services[0]?.category || null;
     }
 
+    // ── Cross-table status sync ──
+    // If we updated phorest_appointments, also sync status to the linked appointments row
+    if (status) {
+      const normalizedStatus = statusFromPhorest[status] || status.toLowerCase();
+      try {
+        if (targetTable === 'phorest_appointments') {
+          // Find the phorest_id of the record we just updated
+          const lookupCol = matchColumn as string;
+          const { data: phorestRow } = await supabase
+            .from('phorest_appointments')
+            .select('phorest_id')
+            .eq(lookupCol, appointment_id)
+            .maybeSingle();
+
+          if (phorestRow?.phorest_id) {
+            // Update linked appointments row via external_id
+            await supabase
+              .from('appointments')
+              .update({ status: normalizedStatus, updated_at: new Date().toISOString() })
+              .eq('external_id', phorestRow.phorest_id);
+            console.log(`Cross-synced status "${normalizedStatus}" to appointments via external_id=${phorestRow.phorest_id}`);
+          }
+        } else {
+          // We updated the appointments table — sync back to phorest_appointments
+          const { data: localRow } = await supabase
+            .from('appointments')
+            .select('external_id')
+            .eq('id', appointment_id)
+            .maybeSingle();
+
+          if (localRow?.external_id) {
+            await supabase
+              .from('phorest_appointments')
+              .update({ status: normalizedStatus, updated_at: new Date().toISOString() })
+              .eq('phorest_id', localRow.external_id);
+            console.log(`Cross-synced status "${normalizedStatus}" to phorest_appointments via phorest_id=${localRow.external_id}`);
+          }
+        }
+      } catch (syncErr: any) {
+        console.warn('Cross-table status sync failed (non-fatal):', syncErr.message);
+      }
+    }
+
     console.log(`Updating ${targetTable}.${matchColumn} = ${appointment_id}`, JSON.stringify(localUpdate));
 
     const { error: updateError, data: updatedAppointment } = await supabase

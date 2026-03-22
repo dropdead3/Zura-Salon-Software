@@ -22,6 +22,7 @@ export interface DockAppointment {
   start_time: string;
   end_time: string;
   status: string | null;
+  payment_status?: string | null;
   location_id: string | null;
   phorest_client_id?: string | null;
   client_id?: string | null;
