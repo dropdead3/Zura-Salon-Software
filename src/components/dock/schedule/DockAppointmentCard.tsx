@@ -11,6 +11,12 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 import { DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
 
+function formatAssistantLabel(names: string[]): string {
+  if (names.length === 1) return `Assisted by ${names[0]}`;
+  if (names.length === 2) return `Assisted by ${names[0]} & ${names[1]}`;
+  return `Assisted by ${names[0]}, ${names[1]} & ${names.length - 2} more`;
+}
+
 interface DockAppointmentCardProps {
   appointment: DockAppointment;
   accentColor: 'violet' | 'blue' | 'slate';
