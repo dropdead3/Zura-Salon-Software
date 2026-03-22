@@ -143,7 +143,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
       )}
 
       <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0 pr-20">
+        <div className="flex-1 min-w-0">
           {(() => {
             const services = (appointment.service_name || '').split(' + ').filter(Boolean);
             let serviceDisplay = '';
