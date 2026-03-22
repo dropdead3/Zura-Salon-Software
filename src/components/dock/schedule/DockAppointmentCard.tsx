@@ -41,6 +41,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
 
   // Tray opacity fades in as card slides left
   const trayOpacity = useTransform(x, [0, openOffset / 2, openOffset], [0, 0.6, 1]);
+  const contentOpacity = useTransform(x, [0, openOffset], [1, 0.6]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const offset = info.offset.x;
@@ -132,7 +133,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
       </motion.div>
 
       {/* Static text overlay — does NOT move */}
-      <div className="absolute inset-0 z-20 p-4 pointer-events-none">
+      <motion.div style={{ opacity: contentOpacity }} className="absolute inset-0 z-20 p-4 pointer-events-none">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Client name */}
@@ -177,7 +178,7 @@ export function DockAppointmentCard({ appointment, accentColor, onTap, onComplet
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
