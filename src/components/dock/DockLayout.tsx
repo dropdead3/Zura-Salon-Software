@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
-import { DockBottomNav } from './DockBottomNav';
+import { DockHamburgerMenu } from './DockHamburgerMenu';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
 import { DockDemoBadge } from './DockDemoBadge';
 import { useDockDemo } from '@/contexts/DockDemoContext';
@@ -95,14 +95,9 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
         )}
       </div>
 
-      {/* Bottom navigation — hidden during detail view */}
+      {/* Hamburger menu — hidden during detail view */}
       {!showingDetail && (
-        <>
-          <div className="absolute bottom-0 inset-x-0 z-30">
-            <DockBottomNav activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
-          </div>
-          <div className="absolute bottom-0 left-0 right-3 z-20 h-56 bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent pointer-events-none" />
-        </>
+        <DockHamburgerMenu activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
       )}
 
       {/* Client quick view sheet */}
