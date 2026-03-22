@@ -67,20 +67,20 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   return (
     <div className="relative flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-4">
+      <div className="flex items-center justify-between px-5 pt-8 pb-5">
         <div>
-          <h1 className="font-display text-lg tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+          <h1 className="font-display text-2xl tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Schedule
           </h1>
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+          <p className="text-sm text-[hsl(var(--platform-foreground-muted))] mt-0.5">
             {today}
           </p>
         </div>
         <button
           onClick={() => setShowNewBooking(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
+          className="flex items-center justify-center w-12 h-12 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-6 h-6" />
         </button>
       </div>
 
