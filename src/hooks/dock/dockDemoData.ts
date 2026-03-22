@@ -174,6 +174,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       phorest_client_id: 'demo-phorest-3',
       notes: 'Purple and magenta panels',
       has_mix_session: true,
+      payment_status: 'unpaid',
     },
     // ── Non-chemical appointments (visible only with toggle off) ──
     {
