@@ -36,9 +36,26 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
   const handleDemoReset = () => {
     try { localStorage.removeItem('dock-location-id'); } catch {}
     try { localStorage.removeItem('dock-staff-filter'); } catch {}
+
+    // Clear all demo sessionStorage keys
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (
+        key?.startsWith('dock-demo-') ||
+        key?.startsWith('dock-alerts-dismissed-demo-')
+      ) {
+        sessionStorage.removeItem(key);
+      }
+    }
+
     queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
     queryClient.invalidateQueries({ queryKey: ['dock-mix-sessions'] });
     queryClient.invalidateQueries({ queryKey: ['dock-client-profile'] });
+    queryClient.invalidateQueries({ queryKey: ['appointment-notes'] });
+    queryClient.invalidateQueries({ queryKey: ['instant-formula-memory'] });
+    queryClient.invalidateQueries({ queryKey: ['client-formula-history'] });
+    queryClient.invalidateQueries({ queryKey: ['client-visit-history'] });
+    queryClient.invalidateQueries({ queryKey: ['client-product-affinity'] });
     window.dispatchEvent(new CustomEvent('dock-demo-reset'));
     toast.success('Demo reset');
   };

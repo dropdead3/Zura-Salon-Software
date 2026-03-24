@@ -53,6 +53,14 @@ export function useAppointmentNotes(appointmentId: string | null) {
     }
   }, [demoNotes, appointmentId, isDemo]);
 
+  // Listen for demo reset to clear in-memory demo notes
+  useEffect(() => {
+    if (!isDemo) return;
+    const handleReset = () => setDemoNotes([]);
+    window.addEventListener('dock-demo-reset', handleReset);
+    return () => window.removeEventListener('dock-demo-reset', handleReset);
+  }, [isDemo]);
+
   // Real mode query
   const { data: realNotes = [], isLoading: realLoading } = useQuery({
     queryKey: ['appointment-notes', appointmentId],
