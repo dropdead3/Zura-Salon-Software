@@ -294,7 +294,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       />
       <div className={cn(
         'px-7 py-4 flex-1 overflow-y-auto',
-        !hasChemicalServices && allBowlCount === 0 ? 'flex flex-col' : 'space-y-5'
+        !hasChemicalServices && allBowlCount === 0 ? 'flex flex-col' : 'space-y-6'
       )}>
         {hasChemicalServices ? (
           <>
@@ -314,16 +314,16 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                 <div key={serviceLabel}>
                   {/* Service header */}
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                    <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
                       {serviceLabel}
                     </h3>
-                    <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                    <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
                       {svcBowlCount} bowl{svcBowlCount !== 1 ? 's' : ''}
                     </span>
                   </div>
 
                   {/* Bowl grid */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     {remote.map((session) => {
                       bowlIdx++;
                       return (
@@ -357,7 +357,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           </>
         ) : allBowlCount > 0 ? (
           /* Fallback: flat grid for appointments with no parseable chemical services but existing bowls */
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {remoteBowls.map((session, idx) => (
               <BowlCard
                 key={session.id}
@@ -579,17 +579,17 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[140px]',
+        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[160px]',
         'border-violet-500/30 text-violet-400',
         'hover:bg-violet-600/10 hover:border-violet-500/50',
         'active:scale-[0.98] transition-all duration-150',
         'disabled:opacity-40'
       )}
     >
-      <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-        <Plus className="w-5 h-5" />
+      <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+        <Plus className="w-6 h-6" />
       </div>
-      <span className="text-xs font-medium">Add Bowl</span>
+      <span className="text-sm font-medium">Add Bowl</span>
     </button>
   );
 }
@@ -604,7 +604,7 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
     <button
       onClick={onTap}
       className={cn(
-        'w-full text-left rounded-xl p-4 border transition-all duration-150 min-h-[140px] flex flex-col',
+        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
         'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
         'hover:border-[hsl(var(--platform-border)/0.5)]',
         'active:scale-[0.98]',
@@ -614,14 +614,14 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
       {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className={cn('w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
+          <div className={cn('w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
             <StatusIcon className={cn('w-4.5 h-4.5', status.color)} />
           </div>
           <div className="min-w-0">
-            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
               Bowl {index}
             </p>
-            <p className={cn('text-[11px] mt-0.5', status.color)}>
+            <p className={cn('text-xs mt-0.5', status.color)}>
               {status.label}
             </p>
           </div>
@@ -653,7 +653,7 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
     <button
       onClick={onTap}
       className={cn(
-        'w-full text-left rounded-xl p-4 border transition-all duration-150 min-h-[140px] flex flex-col',
+        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
         'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
         'hover:border-[hsl(var(--platform-border)/0.5)]',
         'active:scale-[0.98]',
@@ -662,14 +662,14 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
       {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
             <FlaskConical className="w-4.5 h-4.5 text-amber-400" />
           </div>
           <div className="min-w-0">
-            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
               New Formula
             </p>
-            <p className="text-[11px] mt-0.5 text-amber-400">
+            <p className="text-xs mt-0.5 text-amber-400">
               In Progress
             </p>
           </div>
@@ -680,14 +680,14 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
       {/* Ingredient lines preview */}
       <div className="flex-1 mt-1 space-y-1">
         {previewLines.map((line, i) => (
-          <p key={i} className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
+          <p key={i} className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
             <span className="text-[hsl(var(--platform-foreground-muted)/0.8)]">{line.product.name}</span>
             <span className="mx-1">·</span>
             <span>{(line.targetWeight * line.ratio).toFixed(1)}g</span>
           </p>
         ))}
         {overflowCount > 0 && (
-          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+           <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
             +{overflowCount} more
           </p>
         )}
@@ -700,10 +700,10 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
 
       {/* Footer stats */}
       <div className="mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.15)] flex items-center justify-between">
-        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+         <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
           {bowl.totalWeight.toFixed(0)}g total
         </span>
-        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+        <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
           ${bowl.totalCost.toFixed(2)}
         </span>
       </div>

@@ -72,16 +72,16 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={onBack}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
+            className="flex items-center justify-center w-11 h-11 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
+            <h1 className="font-display text-xl tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
               {appointment.client_name || 'Walk-in'}
             </h1>
             <div className="flex items-center gap-1 mt-0.5">
-              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate">
                 {appointment.service_name && <span>{appointment.service_name} · </span>}
                 {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
               </p>
@@ -90,7 +90,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
                   onClick={() => setEditServicesOpen(true)}
                   className="shrink-0 p-0.5 rounded text-[hsl(var(--platform-foreground-muted)/0.6)] hover:text-[hsl(var(--platform-foreground))] transition-colors"
                 >
-                  <Pencil className="w-3 h-3" />
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -98,19 +98,19 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-2xl p-1.5 border border-[hsl(var(--platform-border)/0.2)]">
+        <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-2xl p-2 border border-[hsl(var(--platform-border)/0.2)]">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
               className={cn(
-                'flex items-center justify-center gap-1.5 flex-1 h-10 rounded-xl text-xs font-medium transition-all duration-150',
+                'flex items-center justify-center gap-1.5 flex-1 h-12 rounded-xl text-sm font-medium transition-all duration-150',
                 tab === id
                   ? 'bg-violet-600/30 text-violet-300'
                   : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
               )}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               {label}
             </button>
           ))}
