@@ -173,7 +173,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       phorest_client_id: 'demo-phorest-3',
       notes: 'Purple and magenta panels',
-      has_mix_session: true,
+      mix_bowl_count: 2,
       payment_status: 'unpaid',
     },
     // ── Non-chemical appointments (visible only with toggle off) ──
