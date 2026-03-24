@@ -56,12 +56,10 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
     enabled: !!(phorestClientId || clientId),
   });
 
-  if (!client) return null;
-
-  const allergyText = detectAllergyFlags(
+  const allergyText = client ? detectAllergyFlags(
     (client as any)?.medical_alerts ?? null,
     client?.notes ?? null,
-  );
+  ) : null;
   const profileNotes = client?.notes?.trim() || null;
   const trimmedBooking = bookingNotes?.trim() || null;
 
