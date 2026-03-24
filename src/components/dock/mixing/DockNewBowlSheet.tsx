@@ -18,6 +18,7 @@ interface DockNewBowlSheetProps {
 export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlSheetProps) {
   const [lines, setLines] = useState<FormulaLine[]>([]);
   const [baseWeight, setBaseWeight] = useState(40);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const dragControls = useDragControls();
 
   const handleCreate = () => {
