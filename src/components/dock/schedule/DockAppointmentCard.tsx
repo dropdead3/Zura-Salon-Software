@@ -166,7 +166,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             );
           })()}
         </div>
-        {appointment.has_mix_session && <div className="w-9 h-9 shrink-0" />}
+        {(appointment.mix_bowl_count ?? 0) > 0 && !isTerminal && <div className="w-28 h-6 shrink-0" />}
       </div>
 
       <div className="mt-0.5">
