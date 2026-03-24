@@ -135,8 +135,34 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           location_id: a.location_id,
           phorest_client_id: a.phorest_client_id,
           notes: a.notes,
-          has_mix_session: false,
+          mix_bowl_count: 0,
         }));
+
+        // Fetch bowl counts for these appointments via mix_sessions + mix_bowls
+        const demoApptIds = appointments.map(a => a.id);
+        if (demoApptIds.length > 0) {
+          const { data: sessionsData } = await supabase
+            .from('mix_sessions')
+            .select('id, appointment_id')
+            .in('appointment_id', demoApptIds);
+          if (sessionsData && sessionsData.length > 0) {
+            const sessionIds = sessionsData.map(s => s.id);
+            const sessionToAppt: Record<string, string> = {};
+            for (const s of sessionsData) sessionToAppt[s.id] = s.appointment_id;
+            const { data: bowlsData } = await supabase
+              .from('mix_bowls')
+              .select('mix_session_id')
+              .in('mix_session_id', sessionIds);
+            const bowlCounts: Record<string, number> = {};
+            for (const b of (bowlsData || [])) {
+              const apptId = sessionToAppt[b.mix_session_id];
+              if (apptId) bowlCounts[apptId] = (bowlCounts[apptId] || 0) + 1;
+            }
+            for (const a of appointments) {
+              a.mix_bowl_count = bowlCounts[a.id] || 0;
+            }
+          }
+        }
 
         // Also include appointments where the filtered staff is an assistant
         if (staffFilter && staffFilter !== 'all') {
