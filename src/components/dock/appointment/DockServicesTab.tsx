@@ -299,7 +299,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     totalCost: demoTotalCost,
   };
 
-  const sessionState = deriveSessionState(remoteBowls, demoBowls);
+  
 
   return (
     <div className="relative flex flex-col h-full">
