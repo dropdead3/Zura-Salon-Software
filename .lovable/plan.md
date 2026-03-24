@@ -1,29 +1,18 @@
 
 
-## Restyle Lock FAB — Right-Aligned Glass Morphism
+## Invert Chemical Toggle Logic
 
-### Change — `src/components/dock/DockLockFAB.tsx`
+**Problem:** The toggle currently says "Show Color & Chemical Service Appointments Only" and defaults ON (filtering to chemical-only). User wants the inverse: label says "Show All Appointments", toggle ON = show all, toggle OFF = show only chemical/color.
 
-Move from `left-6` to `right-6` and apply a glass morphism style:
+### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-```tsx
-<button
-  onClick={onLock}
-  className="absolute bottom-6 right-6 z-30 w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.06] backdrop-blur-xl border border-white/[0.12] shadow-lg shadow-black/20 active:scale-95 transition-all duration-150 hover:bg-white/[0.10]"
-  aria-label="Lock station"
->
-  <Lock className="w-5 h-5 text-white/50" />
-</button>
-```
+1. **Rename state:** `showChemicalOnly` → `showAll` (or just invert the semantics in-place)
+2. **Default value:** Flip the default from `true` → `false` (so it starts showing chemical-only)
+3. **Label text:** `"Show Color & Chemical Service Appointments Only"` → `"Show All Appointments"`
+4. **Filter logic:** Invert the condition — currently `if (!showChemicalOnly) return all;` becomes `if (showAll) return all;` (same logic, just the variable name/semantics flip)
+5. **localStorage:** Keep same storage key for continuity, but the stored boolean now means the opposite
 
-Key changes:
-- Position: `left-6` → `right-6`
-- Background: solid dark → `bg-white/[0.06]` frosted glass
-- Blur: add `backdrop-blur-xl`
-- Border: platform token → `border-white/[0.12]` subtle glass edge
-- Shadow: add `shadow-lg shadow-black/20` for depth
-- Icon: muted token → `text-white/50` for elegance
-- Hover: `hover:bg-white/[0.10]` subtle brightening
+Lines affected: ~81-83 (default), ~90-93 (handler), ~169-171 (filter), ~205-206 (label), ~210 (checked prop).
 
-One file, class-only update.
+One file, semantic inversion only.
 
