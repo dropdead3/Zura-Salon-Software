@@ -89,7 +89,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
   const handleToggleChange = (checked: boolean) => {
     localStorage.setItem(storageKey, String(checked));
-    setShowChemicalOnly(checked);
+    setShowAll(checked);
   };
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
