@@ -653,7 +653,7 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
     <button
       onClick={onTap}
       className={cn(
-        'w-full text-left rounded-xl p-4 border transition-all duration-150 min-h-[140px] flex flex-col',
+        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
         'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
         'hover:border-[hsl(var(--platform-border)/0.5)]',
         'active:scale-[0.98]',
