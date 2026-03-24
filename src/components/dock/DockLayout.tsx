@@ -62,10 +62,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const dockContent = (
     <div
-      ref={(el) => {
-        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-        (idleRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-      }}
+      ref={idleRef}
       className="relative h-full flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
       data-dock-device={device}
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
