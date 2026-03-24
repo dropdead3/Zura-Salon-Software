@@ -687,7 +687,7 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
           </p>
         ))}
         {overflowCount > 0 && (
-          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+           <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
             +{overflowCount} more
           </p>
         )}
