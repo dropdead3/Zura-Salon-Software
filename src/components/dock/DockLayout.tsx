@@ -47,6 +47,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const completeAppointment = useDockCompleteAppointment();
   const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
+  const [showNewBooking, setShowNewBooking] = useState(false);
 
   const { containerRef: idleRef } = useDockIdleTimer({
     onIdle: onLogout,
