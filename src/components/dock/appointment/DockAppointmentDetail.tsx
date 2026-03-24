@@ -81,7 +81,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
               {appointment.client_name || 'Walk-in'}
             </h1>
             <div className="flex items-center gap-1 mt-0.5">
-              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate">
                 {appointment.service_name && <span>{appointment.service_name} · </span>}
                 {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
               </p>
