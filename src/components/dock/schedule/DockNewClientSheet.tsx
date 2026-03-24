@@ -50,6 +50,21 @@ export function DockNewClientSheet({
   // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+
+  // Auto-populate name from search query when sheet opens
+  useEffect(() => {
+    if (open && defaultName) {
+      const trimmed = defaultName.trim();
+      const spaceIdx = trimmed.indexOf(' ');
+      if (spaceIdx > 0) {
+        setFirstName(trimmed.slice(0, spaceIdx));
+        setLastName(trimmed.slice(spaceIdx + 1));
+      } else {
+        setFirstName(trimmed);
+        setLastName('');
+      }
+    }
+  }, [open, defaultName]);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('Female');
