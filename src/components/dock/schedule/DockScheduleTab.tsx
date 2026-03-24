@@ -267,13 +267,6 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         </div>
       </div>
 
-      <DockNewBookingSheet
-        open={showNewBooking}
-        onClose={() => setShowNewBooking(false)}
-        staff={staff}
-        locationId={locationId}
-        staffFilter={staffFilter}
-      />
 
       {/* Dock-native confirmation overlay */}
       <AnimatePresence>
