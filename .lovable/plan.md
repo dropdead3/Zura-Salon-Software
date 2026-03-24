@@ -1,59 +1,34 @@
 
 
-## Replace Mix Icon with Bowl Count Badge on Active Cards
+## Update Bowl Count Badges — Font, Color, and Visibility Rules
 
-**Goal:** Replace the FlaskConical icon on active appointment cards with a descriptive text badge like "No bowls mixed", "1 bowl mixed", "2 bowls mixed".
+### Problem
+The bowl count badges currently use `font-display` (Termina) and violet/purple styling. They also show on all non-terminal appointments. Need to:
+1. Switch to `font-sans` (Aeonik Pro)
+2. Use light blue ghost for bowls mixed, amber ghost for "No bowls mixed"
+3. Only show on active-status appointments, unless `mix_bowl_count > 0`
 
-### Change 1 — `src/hooks/dock/useDockAppointments.ts`
+### Change — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-**Expand `has_mix_session` to `mix_bowl_count`:**
+Update lines 288-293:
 
-- Update the `DockAppointment` interface: replace `has_mix_session?: boolean` with `mix_bowl_count?: number`
-- In the mix session query (line ~246), also fetch bowl counts by joining `mix_bowls`:
-  ```sql
-  select appointment_id, mix_sessions.id
-  from mix_sessions
-  left join mix_bowls on mix_bowls.mix_session_id = mix_sessions.id
-  ```
-  Or simpler: after getting active session IDs, run a second query on `mix_bowls` counting bowls per session, then map back to appointment IDs
-- Alternatively (simpler approach): query `mix_bowl_projections` grouped by session to get counts, since projections already exist
-- Map the count onto each appointment as `mix_bowl_count`
-
-**Simplest approach:** After fetching active session IDs, fetch bowl counts from `mix_bowls` for those sessions:
-```ts
-const { data: bowls } = await supabase
-  .from('mix_bowls')
-  .select('mix_session_id')
-  .in('mix_session_id', sessionIds);
-
-// Build map: appointment_id -> bowl count
+**Visibility logic:** Show badge if appointment is active OR if `mix_bowl_count > 0` (for any status except terminal):
+```tsx
+{(isActive || (appointment.mix_bowl_count ?? 0) > 0) && !isTerminal && (
 ```
 
-### Change 2 — `src/hooks/dock/dockDemoData.ts`
-
-Update demo appointments to use `mix_bowl_count` instead of `has_mix_session`:
-- Rachel Kim: `mix_bowl_count: 2`
-- Sarah Mitchell: `mix_bowl_count: 1`
-- Completed appointments with mix: `mix_bowl_count: 3`, etc.
-- Others: `mix_bowl_count: 0`
-
-### Change 3 — `src/components/dock/schedule/DockAppointmentCard.tsx`
-
-Replace the FlaskConical icon block (lines 288-292) with a text badge:
+**Styling:** Replace `font-display tracking-wide uppercase` with `font-sans`, and swap colors based on count:
+- `mix_bowl_count > 0`: light blue ghost — `bg-sky-500/15 text-sky-300 border border-sky-400/25`
+- `mix_bowl_count === 0`: amber ghost — `bg-amber-500/15 text-amber-300 border border-amber-400/25`
 
 ```tsx
-{(appointment.mix_bowl_count ?? 0) >= 0 && !TERMINAL_STATUSES.includes(...) && (
-  <div className="absolute top-5 right-5 px-2.5 py-1 rounded-lg bg-violet-600/20 text-violet-300 text-xs font-medium whitespace-nowrap">
-    {appointment.mix_bowl_count === 0
-      ? 'No bowls mixed'
-      : `${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
-  </div>
-)}
+<div className={cn(
+  "absolute top-5 right-5 px-2.5 py-1 rounded-lg text-[11px] font-sans whitespace-nowrap",
+  (appointment.mix_bowl_count ?? 0) > 0
+    ? "bg-sky-500/15 text-sky-300 border border-sky-400/25"
+    : "bg-amber-500/15 text-amber-300 border border-amber-400/25"
+)}>
 ```
 
-- Remove `FlaskConical` import if no longer used
-- Update the spacer div (line 169) that reserves room for the icon — adjust width to match badge width
-- Only show badge on active (non-terminal) chemical/mix appointments
-
-Three files changed.
+One file, one block updated.
 
