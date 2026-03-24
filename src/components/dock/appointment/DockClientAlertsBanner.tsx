@@ -4,7 +4,7 @@
  * Supports swipe-to-dismiss and X-to-close per card (session-only).
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle, CalendarPlus, X } from 'lucide-react';
@@ -40,6 +40,13 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
     } catch { return new Set(); }
   });
   const usingDemo = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
+
+  // Listen for demo reset to re-show dismissed alerts
+  useEffect(() => {
+    const handleReset = () => setDismissed(new Set());
+    window.addEventListener('dock-demo-reset', handleReset);
+    return () => window.removeEventListener('dock-demo-reset', handleReset);
+  }, []);
 
   const dismiss = useCallback((key: BannerKey) => {
     setDismissed(prev => {

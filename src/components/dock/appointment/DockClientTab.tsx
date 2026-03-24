@@ -116,6 +116,16 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   const [editingAlert, setEditingAlert] = useState(false);
   const [alertDraft, setAlertDraft] = useState('');
 
+  // Listen for demo reset to clear medical alert editing state
+  useEffect(() => {
+    const handleReset = () => {
+      setEditingAlert(false);
+      setAlertDraft('');
+    };
+    window.addEventListener('dock-demo-reset', handleReset);
+    return () => window.removeEventListener('dock-demo-reset', handleReset);
+  }, []);
+
   // Track whether we've logged recommendations this render
   const recLoggedRef = useRef(false);
 
