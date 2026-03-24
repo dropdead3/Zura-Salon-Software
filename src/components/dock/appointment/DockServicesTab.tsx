@@ -24,6 +24,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockClientAlertsBanner } from './DockClientAlertsBanner';
+import { DockFormulaHistorySheet } from './DockFormulaHistorySheet';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
