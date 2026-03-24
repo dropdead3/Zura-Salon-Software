@@ -23,6 +23,7 @@ import type { FormulaLine } from '../mixing/DockFormulaBuilder';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DockClientAlertsBanner } from './DockClientAlertsBanner';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
