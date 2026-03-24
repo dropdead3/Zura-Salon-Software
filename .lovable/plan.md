@@ -1,19 +1,12 @@
 
 
-## Add Bottom Gradient Fade to iPad Frame
+## Raise Down Arrow Above Gradient
 
-**Goal:** Add a smooth gradient overlay at the bottom of the dock content area that fades from transparent to the background color, sitting above cards but below the lock FAB and chevron indicator.
+**Problem:** The bouncing ChevronDown indicator and the bottom fade gradient both sit at `z-20`, so the gradient covers the arrow.
 
-### Change — `src/components/dock/DockLayout.tsx`
+### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-Add a `pointer-events-none` gradient div inside `dockContent`, positioned absolutely at the bottom, between the content area and the FAB (z-20, since FAB is z-30):
+Line 260: Change `z-20` → `z-25` on the scroll-down indicator div so it renders above the `z-20` gradient.
 
-```tsx
-{/* Bottom fade gradient */}
-<div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
-```
-
-Place it after the content `div` and before the Lock FAB. The gradient uses the platform background color so it blends seamlessly.
-
-One file, one line added.
+One class change, one file.
 
