@@ -618,10 +618,10 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
             <StatusIcon className={cn('w-4.5 h-4.5', status.color)} />
           </div>
           <div className="min-w-0">
-            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
               Bowl {index}
             </p>
-            <p className={cn('text-[11px] mt-0.5', status.color)}>
+            <p className={cn('text-xs mt-0.5', status.color)}>
               {status.label}
             </p>
           </div>
