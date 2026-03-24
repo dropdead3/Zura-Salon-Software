@@ -168,7 +168,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
   const filteredAppointments = useMemo(() => {
     const all = appointments || [];
-    if (!showChemicalOnly) return all;
+    if (showAll) return all;
     return all.filter((a) => {
       const services = (a.service_name || '').split(',').map((s) => s.trim().toLowerCase());
       if (trackedSet) {
@@ -176,7 +176,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       }
       return services.some((s) => isColorOrChemicalService(s));
     });
-  }, [appointments, showChemicalOnly, trackedSet]);
+  }, [appointments, showAll, trackedSet]);
 
   if (isLoading) {
     return (
