@@ -161,8 +161,8 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
               </div>
 
               {/* Drag handle — bottom position for top-anchored sheet */}
-              <div className="flex justify-center pb-3 pt-1">
-                <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] cursor-grab active:cursor-grabbing" />
+              <div className="flex justify-center pb-4 pt-2">
+                <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.5)] cursor-grab active:cursor-grabbing" />
               </div>
             </motion.div>
           </>
