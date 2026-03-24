@@ -579,7 +579,7 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[140px]',
+        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[160px]',
         'border-violet-500/30 text-violet-400',
         'hover:bg-violet-600/10 hover:border-violet-500/50',
         'active:scale-[0.98] transition-all duration-150',
