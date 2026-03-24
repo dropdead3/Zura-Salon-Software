@@ -124,18 +124,12 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
       {visible && (
         <div className="absolute top-0 right-0 z-10 flex items-center gap-1.5">
           {STATUS_BADGE[appointment.status || ''] && (
-            <span className={cn(
-              'text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
-              STATUS_BADGE[appointment.status || ''].classes
-            )}>
+            <span className={cn(DOCK_BADGE.base, STATUS_BADGE[appointment.status || ''].variant)}>
               {STATUS_BADGE[appointment.status || ''].label}
             </span>
           )}
           {appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
-            <span className={cn(
-              'text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
-              PAYMENT_BADGE[appointment.payment_status || ''].classes
-            )}>
+            <span className={cn(DOCK_BADGE.base, PAYMENT_BADGE[appointment.payment_status || ''].variant)}>
               {PAYMENT_BADGE[appointment.payment_status || ''].label}
             </span>
           )}
