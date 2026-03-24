@@ -3,7 +3,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Calendar, Plus, Loader2, ChevronDown } from 'lucide-react';
+import { Calendar, Loader2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
