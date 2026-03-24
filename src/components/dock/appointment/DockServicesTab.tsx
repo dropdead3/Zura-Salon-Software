@@ -314,10 +314,10 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                 <div key={serviceLabel}>
                   {/* Service header */}
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                    <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
                       {serviceLabel}
                     </h3>
-                    <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                    <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
                       {svcBowlCount} bowl{svcBowlCount !== 1 ? 's' : ''}
                     </span>
                   </div>
