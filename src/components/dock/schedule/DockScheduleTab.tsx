@@ -107,7 +107,17 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     if (!el) return;
     checkScroll();
     el.addEventListener('scroll', checkScroll, { passive: true });
-    return () => el.removeEventListener('scroll', checkScroll);
+
+    const resizeObserver = new ResizeObserver(() => checkScroll());
+    resizeObserver.observe(el);
+    if (el.firstElementChild) {
+      resizeObserver.observe(el.firstElementChild);
+    }
+
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      resizeObserver.disconnect();
+    };
   }, [checkScroll, appointments]);
 
   const handleStartAppointment = useCallback(async (appointment: DockAppointment) => {
