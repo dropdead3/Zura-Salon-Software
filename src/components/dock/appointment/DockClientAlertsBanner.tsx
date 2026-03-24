@@ -113,10 +113,10 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
           >
             <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className={cn(DOCK_TEXT.category, 'text-rose-400 mb-0.5')}>
+              <p className={cn(DOCK_TEXT.category, 'text-sm text-rose-400 mb-0.5')}>
                 Allergy / Sensitivity
               </p>
-              <p className="text-xs text-rose-300/90 leading-relaxed">
+              <p className="text-sm text-rose-300/90 leading-relaxed">
                 {allergyText}
               </p>
             </div>
