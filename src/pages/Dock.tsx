@@ -91,6 +91,15 @@ export default function Dock() {
   }, [demoOrgId, canAccessDemo]);
 
   const handleLogout = useCallback(() => {
+    // Clear demo sessionStorage on logout so next session starts fresh
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith('dock-demo-') || key?.startsWith('dock-alerts-dismissed-demo-')) {
+        sessionStorage.removeItem(key);
+      }
+    }
+    window.dispatchEvent(new Event('dock-demo-reset'));
+
     // Phase 1: trigger exit animation
     setUnlocked(false);
     setActiveTab('schedule');
