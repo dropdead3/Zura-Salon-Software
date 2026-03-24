@@ -200,7 +200,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                   location_id: a.location_id,
                   phorest_client_id: a.phorest_client_id,
                   notes: a.notes,
-                  has_mix_session: false,
+                  mix_bowl_count: 0,
                 });
               }
               appointments.sort((a, b) => a.start_time.localeCompare(b.start_time));
