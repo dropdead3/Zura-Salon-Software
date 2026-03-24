@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 import { formatMinutesToDuration } from '@/lib/formatDuration';
-import { DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
+import { DOCK_SHEET, DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
 
 function formatAssistantLabel(names: string[]): string {
   if (names.length === 1) return `Assisted by ${names[0]}`;
@@ -45,15 +45,15 @@ const BORDER_COLORS: Record<string, string> = {
   red: 'border-l-red-500',
 };
 
-const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
-  no_show: { label: 'No Show', classes: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-  cancelled: { label: 'Cancelled', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
+const STATUS_BADGE: Record<string, { label: string; variant: string }> = {
+  no_show: { label: 'No Show', variant: DOCK_BADGE.noShow },
+  cancelled: { label: 'Cancelled', variant: DOCK_BADGE.cancelled },
 };
 
-const PAYMENT_BADGE: Record<string, { label: string; classes: string }> = {
-  paid: { label: 'Paid', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  unpaid: { label: 'Unpaid', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
-  comp: { label: 'Comp', classes: 'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]' },
+const PAYMENT_BADGE: Record<string, { label: string; variant: string }> = {
+  paid: { label: 'Paid', variant: DOCK_BADGE.paid },
+  unpaid: { label: 'Unpaid', variant: DOCK_BADGE.unpaid },
+  comp: { label: 'Comp', variant: DOCK_BADGE.comp },
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
@@ -124,18 +124,12 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
       {visible && (
         <div className="absolute top-0 right-0 z-10 flex items-center gap-1.5">
           {STATUS_BADGE[appointment.status || ''] && (
-            <span className={cn(
-              'text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
-              STATUS_BADGE[appointment.status || ''].classes
-            )}>
+            <span className={cn(DOCK_BADGE.base, STATUS_BADGE[appointment.status || ''].variant)}>
               {STATUS_BADGE[appointment.status || ''].label}
             </span>
           )}
           {appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
-            <span className={cn(
-              'text-[11px] font-display tracking-wide uppercase px-2 py-0.5 rounded-full border',
-              PAYMENT_BADGE[appointment.payment_status || ''].classes
-            )}>
+            <span className={cn(DOCK_BADGE.base, PAYMENT_BADGE[appointment.payment_status || ''].variant)}>
               {PAYMENT_BADGE[appointment.payment_status || ''].label}
             </span>
           )}
@@ -287,12 +281,13 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         {/* Bowl count badge anchored to sliding layer */}
         {isActive && !isTerminal && (
           <div className={cn(
-            "absolute top-5 right-5 px-2.5 py-1 rounded-full text-[11px] font-sans whitespace-nowrap",
+            "absolute top-5 right-5 py-1",
+            DOCK_BADGE.base,
             !isChemical
-              ? "bg-slate-500/15 text-slate-400 border border-slate-400/25"
+              ? DOCK_BADGE.noChemical
               : (appointment.mix_bowl_count ?? 0) > 0
-                ? "bg-sky-500/15 text-sky-300 border border-sky-400/25"
-                : "bg-amber-500/15 text-amber-300 border border-amber-400/25"
+                ? DOCK_BADGE.bowlsMixed
+                : DOCK_BADGE.noBowlsMixed
           )}>
             {!isChemical
               ? 'No color/chemical services'
@@ -301,9 +296,8 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 : `${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
           </div>
         )}
-        {/* Show blue badge on non-active cards that have bowls mixed */}
         {!isActive && !isTerminal && isChemical && (appointment.mix_bowl_count ?? 0) > 0 && (
-          <div className="absolute top-5 right-5 px-2.5 py-1 rounded-full text-[11px] font-sans whitespace-nowrap bg-sky-500/15 text-sky-300 border border-sky-400/25">
+          <div className={cn("absolute top-5 right-5 py-1", DOCK_BADGE.base, DOCK_BADGE.bowlsMixed)}>
             {`${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
           </div>
         )}

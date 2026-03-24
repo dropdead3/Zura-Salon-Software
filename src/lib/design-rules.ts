@@ -92,6 +92,14 @@ export const TYPOGRAPHY_RULES = {
     prohibited: ['Initializing tab state to a non-first tab without URL param override'],
     note: 'URL search params (e.g. ?tab=inventory) may override the default, but the fallback must always be the first tab.',
   },
+
+  DOCK_BADGE_RULES: {
+    font: 'Aeonik Pro (font-sans) — NEVER font-display / Termina',
+    shape: 'rounded-full pill',
+    token: 'DOCK_BADGE from dock-ui-tokens.ts — base + variant',
+    prohibited: ['font-display on badges', 'font-bold on badges', 'uppercase on badges', 'inline hardcoded badge classes'],
+    note: 'All Dock badges use DOCK_BADGE.base for shared sizing/font and a variant key for color. Ghost style: low-opacity bg + border.',
+  },
 } as const;
 
 export function isProhibitedFontWeight(className: string): boolean {
