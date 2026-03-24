@@ -7,7 +7,7 @@ export function DockDemoBadge() {
   if (!isDemoMode) return null;
 
   return (
-    <div className="absolute top-[1.45rem] right-20 z-50">
+    <div className="absolute top-5 right-20 z-50 flex items-center h-[42px]">
       <span className={cn(DOCK_BADGE.base, DOCK_BADGE.demo, 'inline-flex items-center gap-1.5 backdrop-blur-md')}>
         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
         Demo
