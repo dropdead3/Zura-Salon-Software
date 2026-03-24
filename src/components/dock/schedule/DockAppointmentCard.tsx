@@ -281,12 +281,13 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         {/* Bowl count badge anchored to sliding layer */}
         {isActive && !isTerminal && (
           <div className={cn(
-            "absolute top-5 right-5 px-2.5 py-1 rounded-full text-[11px] font-sans whitespace-nowrap",
+            "absolute top-5 right-5 py-1",
+            DOCK_BADGE.base,
             !isChemical
-              ? "bg-slate-500/15 text-slate-400 border border-slate-400/25"
+              ? DOCK_BADGE.noChemical
               : (appointment.mix_bowl_count ?? 0) > 0
-                ? "bg-sky-500/15 text-sky-300 border border-sky-400/25"
-                : "bg-amber-500/15 text-amber-300 border border-amber-400/25"
+                ? DOCK_BADGE.bowlsMixed
+                : DOCK_BADGE.noBowlsMixed
           )}>
             {!isChemical
               ? 'No color/chemical services'
@@ -295,9 +296,8 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 : `${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
           </div>
         )}
-        {/* Show blue badge on non-active cards that have bowls mixed */}
         {!isActive && !isTerminal && isChemical && (appointment.mix_bowl_count ?? 0) > 0 && (
-          <div className="absolute top-5 right-5 px-2.5 py-1 rounded-full text-[11px] font-sans whitespace-nowrap bg-sky-500/15 text-sky-300 border border-sky-400/25">
+          <div className={cn("absolute top-5 right-5 py-1", DOCK_BADGE.base, DOCK_BADGE.bowlsMixed)}>
             {`${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
           </div>
         )}

@@ -30,6 +30,25 @@ export const DOCK_BUTTON = {
   iconColor: 'text-[hsl(var(--platform-foreground-muted))]',
 } as const;
 
+export const DOCK_BADGE = {
+  /** Base classes for all Dock pill badges — font-sans (Aeonik Pro), NEVER font-display */
+  base: 'text-[11px] font-sans whitespace-nowrap px-2.5 py-0.5 rounded-full border',
+
+  /** Payment variants */
+  paid:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  unpaid:    'bg-red-500/15 text-red-400 border-red-500/25',
+  comp:      'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]',
+
+  /** Status variants */
+  noShow:    'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/25',
+
+  /** Bowl count variants */
+  bowlsMixed:   'bg-sky-500/15 text-sky-300 border-sky-400/25',
+  noBowlsMixed: 'bg-amber-500/15 text-amber-300 border-amber-400/25',
+  noChemical:   'bg-slate-500/15 text-slate-400 border-slate-400/25',
+} as const;
+
 export const DOCK_DIALOG = {
   overlay: 'absolute inset-0 z-50 bg-black/60 backdrop-blur-sm',
   content: 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-sm bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-2xl shadow-2xl p-6 space-y-4',
