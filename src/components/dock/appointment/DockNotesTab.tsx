@@ -13,7 +13,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
   const notes = appointment.notes;
 
   return (
-    <div className="px-5 py-4">
+    <div className="px-7 py-4">
       {notes ? (
         <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4">
           <p className="text-sm text-[hsl(var(--platform-foreground))] leading-relaxed whitespace-pre-wrap">

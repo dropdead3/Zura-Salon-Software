@@ -142,7 +142,7 @@ export function DockEditServicesSheet({
             />
 
             {/* Header */}
-            <div className="flex-shrink-0 px-5 pt-2 pb-4">
+            <div className="flex-shrink-0 px-7 pt-2 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FlaskConical className="w-4 h-4 text-violet-400" />
@@ -158,7 +158,7 @@ export function DockEditServicesSheet({
             </div>
 
             {/* Search */}
-            <div className="flex-shrink-0 px-5 pb-3">
+            <div className="flex-shrink-0 px-7 pb-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
                 <input
@@ -173,7 +173,7 @@ export function DockEditServicesSheet({
 
             {/* Selected chips */}
             {selected.size > 0 && (
-              <div className="flex-shrink-0 px-5 pb-3 flex flex-wrap gap-1.5">
+              <div className="flex-shrink-0 px-7 pb-3 flex flex-wrap gap-1.5">
                 {Array.from(selected.values()).map(svc => (
                   <button
                     key={svc.name}
@@ -191,7 +191,7 @@ export function DockEditServicesSheet({
             <div className="h-px bg-[hsl(var(--platform-border)/0.3)]" />
 
             {/* Service list */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-3 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-7 py-3 space-y-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
@@ -248,7 +248,7 @@ export function DockEditServicesSheet({
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
+            <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
               <div className={DOCK_TEXT.subtitle}>
                 {selected.size} service{selected.size !== 1 ? 's' : ''}
                 {totalDuration > 0 && <span> · {totalDuration}m</span>}
@@ -261,7 +261,7 @@ export function DockEditServicesSheet({
                 disabled={selected.size === 0 || isSaving}
                 className={cn(
                   DOCK_BUTTON.primary,
-                  'h-9 px-5 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                  'h-9 px-7 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
                 )}
               >
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-1 inline" />}

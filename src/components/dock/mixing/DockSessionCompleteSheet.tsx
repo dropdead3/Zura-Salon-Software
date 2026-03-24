@@ -81,7 +81,7 @@ export function DockSessionCompleteSheet({
             }}
           >
             {/* Drag handle + header */}
-            <div className="flex-shrink-0 px-5 pt-3 pb-4">
+            <div className="flex-shrink-0 px-7 pt-3 pb-4">
               <div
                 className="w-10 h-1 rounded-full bg-[hsl(var(--platform-border)/0.4)] mx-auto mb-4 cursor-grab active:cursor-grabbing"
                 onPointerDown={(e) => dragControls.start(e)}
@@ -99,7 +99,7 @@ export function DockSessionCompleteSheet({
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-7 pb-4 space-y-4">
               {/* Warning if not all reweighed */}
               {!allReweighed && (
                 <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -171,7 +171,7 @@ export function DockSessionCompleteSheet({
             </div>
 
             {/* Action buttons */}
-            <div className="flex-shrink-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
+            <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
               {mode === 'confirm' ? (
                 <button
                   onClick={() => onComplete(notes || undefined)}

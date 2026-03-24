@@ -447,7 +447,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
             />
 
             {/* Header */}
-            <div className="px-5 pt-4 pb-3">
+            <div className="px-7 pt-4 pb-3">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
                   {stepTitle}
@@ -601,7 +601,7 @@ function ClientStepDock({
   const isSearching = searchQuery.length >= 2;
 
   return (
-    <div className="px-5 pb-6 flex flex-col h-full">
+    <div className="px-7 pb-6 flex flex-col h-full">
       {/* Selected client banner */}
       {selectedClient && (
         <div className="mb-4 p-3 rounded-xl border border-violet-500/40 bg-violet-600/10 flex items-center gap-3">
@@ -844,7 +844,7 @@ function ServiceStepDock({
 
   return (
     <div className="flex flex-col">
-      <div className="px-5 pb-4">
+      <div className="px-7 pb-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
@@ -986,7 +986,7 @@ function ServiceStepDock({
       </div>
 
       {/* Footer with chip summary */}
-      <div className="sticky bottom-0 px-5 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
+      <div className="sticky bottom-0 px-7 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
         {selectedDetails.length > 0 && (
           <>
             <div className="flex flex-wrap gap-1.5 mb-3">
@@ -1127,7 +1127,7 @@ function ConfirmStepDock({
 
   return (
     <div className="flex flex-col">
-      <div className="px-5 pb-4 space-y-4">
+      <div className="px-7 pb-4 space-y-4">
         {/* Client */}
         <div className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--platform-foreground)/0.04)]">
           <div className="w-10 h-10 rounded-full bg-violet-600/20 flex items-center justify-center">
@@ -1312,7 +1312,7 @@ function ConfirmStepDock({
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-0 px-5 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
+      <div className="sticky bottom-0 px-7 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">Estimated Total</span>
           <span className="text-lg font-medium text-[hsl(var(--platform-foreground))]">${totalPrice}</span>

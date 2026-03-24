@@ -422,7 +422,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   const currentStylistDiffers = !!preferredStylistId && !!appointment.stylist_user_id && appointment.stylist_user_id !== preferredStylistId;
 
   return (
-    <div className="px-5 py-4 space-y-5">
+    <div className="px-7 py-4 space-y-5">
       {/* ─── Allergy / Sensitivity Alert (Editable) ─── */}
       {editingAlert ? (
         <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 space-y-2">

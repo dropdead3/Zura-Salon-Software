@@ -66,7 +66,7 @@ export function DockFormulaBuilder({ lines, onLinesChange, baseWeight, onBaseWei
               key={w}
               onClick={() => onBaseWeightChange(w)}
               className={cn(
-                'h-10 px-5 rounded-xl text-sm font-medium transition-all duration-150',
+                'h-10 px-7 rounded-xl text-sm font-medium transition-all duration-150',
                 baseWeight === w
                   ? 'bg-violet-600/30 text-violet-300 border border-violet-500/40'
                   : 'bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground-muted))] border border-[hsl(var(--platform-border)/0.2)] hover:border-[hsl(var(--platform-border)/0.4)]'
