@@ -1,45 +1,25 @@
 
 
-## Fix Drag Handle Placement — Bottom of Top-Anchored Sheets
+## Dismissable Alert Banners — Swipe & X to Clear
 
-### Problem
-Top-anchored sheets slide down from the top, so the drag handle should be at the **bottom** of the panel (where the user grabs to dismiss upward). Several sheets incorrectly place it at the top. The `DOCK_SHEET.dragHandle` token doesn't encode position, so each sheet places it differently.
+### Change — `src/components/dock/appointment/DockClientAlertsBanner.tsx`
 
-### Token Change — `src/components/dock/dock-ui-tokens.ts`
+Each banner card (Allergy, Booking Note, Profile Notes) becomes individually dismissable via:
 
-Split `dragHandle` into two tokens to make placement explicit:
+1. **X button** — small `X` icon in the top-right corner of each card
+2. **Swipe-to-dismiss** — horizontal swipe (left or right) using `framer-motion`'s `drag="x"` with a threshold; once dragged past ~100px, the card animates out and is removed from view
 
-```ts
-dragHandle: 'mx-auto h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none',
-dragHandleWrapperBottom: 'flex justify-center pt-2 pb-4',
-```
+### Implementation
 
-The base `dragHandle` removes the `mb-3` margin (each wrapper controls spacing). The wrapper token standardizes the bottom-positioned container.
+- Add `dismissed` state: `useState<Set<string>>` tracking which banner types (`'allergy' | 'booking' | 'profile'`) have been cleared (session-only, resets on navigation)
+- Wrap each banner card in a `motion.div` with:
+  - `drag="x"`, `dragConstraints={{ left: 0, right: 0 }}` (elastic snap-back)
+  - `onDragEnd` handler: if `Math.abs(offset.x) > 100`, animate out (`opacity: 0, x: direction * 300`) then add to dismissed set
+  - `AnimatePresence` around the list for exit animations
+- Add an `X` (`lucide-react`) button absolutely positioned `top-2 right-2` on each card, semi-transparent, clicking adds to dismissed set
+- Cards animate out with `exit={{ opacity: 0, height: 0, marginBottom: 0 }}` for smooth collapse
 
-### Sheets to Fix (move drag handle to bottom of panel)
+### One file changed
 
-1. **`DockFormulaHistorySheet.tsx`** — Move drag handle from above header to after the scrollable content area (end of panel)
-2. **`DockClientQuickView.tsx`** — Move drag handle from top to bottom of panel
-
-### Sheets Already Correct (verify use token)
-
-3. **`DockNewBowlSheet.tsx`** — Already at bottom, just use the token class
-4. **`DockHamburgerMenu.tsx`** — Already at bottom, use token
-5. **`DockNewBookingSheet.tsx`** — Already at bottom, use token
-6. **`DockNewClientSheet.tsx`** — Already at bottom, use token
-7. **`DockSessionCompleteSheet.tsx`** — Already at bottom, use token
-8. **`DockProductPicker.tsx`** — Already at bottom, use token
-
-### Pattern
-Every top-anchored sheet should follow this structure:
-```
-<motion.div panel>
-  {/* Header */}
-  {/* Content */}
-  {/* Drag handle — always last child */}
-  <div className={DOCK_SHEET.dragHandleWrapperBottom}>
-    <div className={DOCK_SHEET.dragHandle} onPointerDown={...} />
-  </div>
-</motion.div>
-```
+`src/components/dock/appointment/DockClientAlertsBanner.tsx` — add `motion`, `AnimatePresence`, `X` icon import; wrap each card; add dismiss state and handlers.
 
