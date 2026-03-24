@@ -20,6 +20,12 @@ interface DockFormulaBuilderProps {
   onLinesChange: (lines: FormulaLine[]) => void;
   baseWeight: number;
   onBaseWeightChange: (weight: number) => void;
+  /** When false, hides the built-in "+ Add Product" button (parent renders its own) */
+  showAddButton?: boolean;
+  /** External control: when true, opens the product picker */
+  pickerOpen?: boolean;
+  /** External control: called when picker closes */
+  onPickerClose?: () => void;
 }
 
 const WEIGHT_PRESETS = [20, 40, 60];
