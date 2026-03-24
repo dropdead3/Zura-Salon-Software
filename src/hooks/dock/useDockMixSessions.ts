@@ -34,7 +34,7 @@ export function useDockMixSessions(appointmentId: string | null) {
 
       const { data, error } = await supabase
         .from('mix_sessions')
-        .select('id, status, notes, started_at, completed_at, is_manual_override, unresolved_flag, unresolved_reason')
+        .select('id, status, notes, started_at, completed_at, is_manual_override, unresolved_flag, unresolved_reason, service_label')
         .eq('appointment_id', appointmentId!)
         .order('created_at', { ascending: true });
 

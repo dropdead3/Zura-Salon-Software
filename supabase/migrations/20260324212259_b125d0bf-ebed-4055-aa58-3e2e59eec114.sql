@@ -1,0 +1,1 @@
+ALTER TABLE public.mix_sessions ADD COLUMN IF NOT EXISTS service_label TEXT;

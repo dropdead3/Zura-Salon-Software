@@ -10386,6 +10386,7 @@ export type Database = {
           organization_id: string
           prep_approved_at: string | null
           prep_approved_by: string | null
+          service_label: string | null
           service_performed_by_staff_id: string | null
           started_at: string
           station_id: string | null
@@ -10410,6 +10411,7 @@ export type Database = {
           organization_id: string
           prep_approved_at?: string | null
           prep_approved_by?: string | null
+          service_label?: string | null
           service_performed_by_staff_id?: string | null
           started_at?: string
           station_id?: string | null
@@ -10434,6 +10436,7 @@ export type Database = {
           organization_id?: string
           prep_approved_at?: string | null
           prep_approved_by?: string | null
+          service_label?: string | null
           service_performed_by_staff_id?: string | null
           started_at?: string
           station_id?: string | null
