@@ -25,7 +25,7 @@ const DEMO_CLIENT_MOCK = {
   medical_alerts: 'PPD sensitivity — always patch test 48h prior',
 };
 
-export function DockClientAlertsBanner({ phorestClientId, clientId, clientName }: DockClientAlertsBannerProps) {
+export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, bookingNotes }: DockClientAlertsBannerProps) {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const usingDemo = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
 
