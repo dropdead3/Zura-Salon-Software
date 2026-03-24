@@ -64,6 +64,14 @@ export const DOCK_BADGE = {
   demo:         'bg-amber-500/20 text-amber-300 border-amber-500/30',
 } as const;
 
+export const DOCK_TABS = {
+  bar: 'flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-full p-2 border border-[hsl(var(--platform-border)/0.2)]',
+  trigger: 'flex items-center justify-center gap-1.5 flex-1 h-12 rounded-full text-sm font-medium transition-all duration-150',
+  triggerActive: 'bg-violet-600/30 text-violet-300',
+  triggerInactive: 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]',
+  icon: 'w-4 h-4',
+} as const;
+
 export const DOCK_DIALOG = {
   overlay: 'absolute inset-0 z-50 bg-black/60 backdrop-blur-sm',
   content: 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-sm bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-2xl shadow-2xl p-6 space-y-4',
