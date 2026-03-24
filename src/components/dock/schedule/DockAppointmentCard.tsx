@@ -45,15 +45,15 @@ const BORDER_COLORS: Record<string, string> = {
   red: 'border-l-red-500',
 };
 
-const STATUS_BADGE: Record<string, { label: string; classes: string }> = {
-  no_show: { label: 'No Show', classes: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-  cancelled: { label: 'Cancelled', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
+const STATUS_BADGE: Record<string, { label: string; variant: string }> = {
+  no_show: { label: 'No Show', variant: DOCK_BADGE.noShow },
+  cancelled: { label: 'Cancelled', variant: DOCK_BADGE.cancelled },
 };
 
-const PAYMENT_BADGE: Record<string, { label: string; classes: string }> = {
-  paid: { label: 'Paid', classes: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  unpaid: { label: 'Unpaid', classes: 'bg-red-500/20 text-red-400 border-red-500/30' },
-  comp: { label: 'Comp', classes: 'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]' },
+const PAYMENT_BADGE: Record<string, { label: string; variant: string }> = {
+  paid: { label: 'Paid', variant: DOCK_BADGE.paid },
+  unpaid: { label: 'Unpaid', variant: DOCK_BADGE.unpaid },
+  comp: { label: 'Comp', variant: DOCK_BADGE.comp },
 };
 
 const TERMINAL_STATUSES = ['completed', 'cancelled', 'no_show'];
