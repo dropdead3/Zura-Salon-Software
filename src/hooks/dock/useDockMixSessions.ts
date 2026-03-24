@@ -19,6 +19,7 @@ export interface DockMixSession {
   is_manual_override: boolean;
   unresolved_flag: boolean;
   unresolved_reason: string | null;
+  service_label: string | null;
 }
 
 export function useDockMixSessions(appointmentId: string | null) {
