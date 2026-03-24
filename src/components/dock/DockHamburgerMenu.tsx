@@ -107,16 +107,12 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
                         key={id}
                         onClick={() => handleTabSelect(id)}
                         className={cn(
-                          'relative w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-colors',
+                          'relative w-full flex items-center gap-4 px-4 py-3 rounded-full transition-colors',
                           isActive
                             ? 'bg-violet-500/[0.12] text-violet-300'
                             : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.05)]'
                         )}
                       >
-                        {/* Active left accent bar */}
-                        {isActive && (
-                          <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-violet-400" />
-                        )}
                         <Icon className={cn('w-5 h-5', isActive ? 'text-violet-400' : '')} />
                         <span className={cn(
                           'font-display text-sm tracking-wide uppercase',
@@ -124,6 +120,9 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
                         )}>
                           {label}
                         </span>
+                        {isActive && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />
+                        )}
                       </button>
                     );
                   })}
