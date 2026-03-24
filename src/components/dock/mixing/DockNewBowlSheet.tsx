@@ -33,10 +33,10 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
   return (
     <AnimatePresence>
       {open && (
-        <div className="absolute inset-0 z-40 flex flex-col">
+        <div className="absolute inset-0 z-40">
           {/* Backdrop */}
           <motion.div
-            className="flex-1"
+            className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,9 +44,9 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
             onClick={onClose}
           />
 
-          {/* Sheet */}
+          {/* Sheet — top-anchored */}
           <motion.div
-            className="bg-[hsl(var(--platform-bg-elevated))] rounded-b-2xl border-b border-[hsl(var(--platform-border)/0.3)] max-h-[85vh] flex flex-col"
+            className="absolute inset-x-0 top-0 bg-[hsl(var(--platform-bg-elevated))] rounded-b-2xl border-b border-[hsl(var(--platform-border)/0.3)] max-h-[85vh] flex flex-col"
             initial={{ y: '-100%' }}
             animate={{ y: 0 }}
             exit={{ y: '-100%' }}
