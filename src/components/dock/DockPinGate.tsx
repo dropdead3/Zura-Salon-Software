@@ -207,7 +207,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
               key={i}
               onClick={() => handleKey(key)}
               disabled={loading}
-              className="flex items-center justify-center h-[72px] rounded-2xl text-2xl font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-600/20 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center h-[72px] rounded-2xl text-2xl font-medium bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-[hsl(var(--platform-bg-hover))] active:bg-violet-500/25 active:shadow-[inset_0_0_20px_rgba(139,92,246,0.15)] active:scale-[0.97] transition-all duration-500 ease-out disabled:opacity-50"
             >
               {key}
             </button>
