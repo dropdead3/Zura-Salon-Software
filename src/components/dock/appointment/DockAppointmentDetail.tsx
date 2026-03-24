@@ -77,7 +77,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
+            <h1 className="font-display text-xl tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
               {appointment.client_name || 'Walk-in'}
             </h1>
             <div className="flex items-center gap-1 mt-0.5">
