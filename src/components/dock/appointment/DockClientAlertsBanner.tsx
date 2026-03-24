@@ -15,6 +15,7 @@ interface DockClientAlertsBannerProps {
   phorestClientId: string | null | undefined;
   clientId: string | null | undefined;
   clientName: string | null | undefined;
+  bookingNotes?: string | null;
 }
 
 const isDemoClientId = (id: string | null | undefined) => id?.startsWith('demo-') ?? false;
