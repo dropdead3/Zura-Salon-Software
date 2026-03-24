@@ -428,34 +428,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         )}
       </div>
 
-      {/* Contextual Action Bar */}
-      {allBowlCount > 0 && (
-        <ContextualActionBar
-          state={sessionState}
-          onContinueMixing={() => {
-            const activeRemote = remoteBowls.find(s => isActiveSession(normalizeSessionStatus(s.status as any)));
-            if (activeRemote) {
-              const idx = remoteBowls.indexOf(activeRemote);
-              handleBowlTap(activeRemote, idx + 1);
-            } else if (demoBowls.length > 0) {
-              const activeDemoBowl = demoBowls.find(b => b.status === 'in_progress') || demoBowls[demoBowls.length - 1];
-              handleDemoBowlTap(activeDemoBowl);
-            }
-          }}
-          onAddBowl={() => {
-            setActiveServiceLabel(chemicalServices[0] || null);
-            if (!showBowlDetection) setShowBowlDetection(true);
-          }}
-          onReweigh={() => {
-            const reweighBowl = remoteBowls.find(s => requiresReweigh(normalizeSessionStatus(s.status as any)));
-            if (reweighBowl) {
-              const idx = remoteBowls.indexOf(reweighBowl);
-              handleBowlTap(reweighBowl, idx + 1);
-            }
-          }}
-          onCompleteSession={() => setShowComplete(true)}
-        />
-      )}
 
       {/* Bowl detection gate */}
       <DockBowlDetectionGate
