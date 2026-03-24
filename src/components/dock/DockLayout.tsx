@@ -11,6 +11,7 @@ import { useDockDemo } from '@/contexts/DockDemoContext';
 import type { DockTab, DockStaffSession, DockView } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockScheduleTab } from './schedule/DockScheduleTab';
+import { DockNewBookingSheet } from './schedule/DockNewBookingSheet';
 import { DockActiveTab } from './active/DockActiveTab';
 import { DockClientsTab } from './clients/DockClientsTab';
 import { DockScaleTab } from './scale/DockScaleTab';
