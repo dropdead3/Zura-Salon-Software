@@ -32,12 +32,22 @@ type BannerKey = 'allergy' | 'booking';
 const SWIPE_THRESHOLD = 100;
 
 export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, bookingNotes }: DockClientAlertsBannerProps) {
-  const [dismissed, setDismissed] = useState<Set<BannerKey>>(new Set());
+  const storageKey = `dock-alerts-dismissed-${clientId || phorestClientId}`;
+  const [dismissed, setDismissed] = useState<Set<BannerKey>>(() => {
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      return stored ? new Set(JSON.parse(stored) as BannerKey[]) : new Set();
+    } catch { return new Set(); }
+  });
   const usingDemo = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
 
   const dismiss = useCallback((key: BannerKey) => {
-    setDismissed(prev => new Set(prev).add(key));
-  }, []);
+    setDismissed(prev => {
+      const next = new Set(prev).add(key);
+      try { sessionStorage.setItem(storageKey, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }, [storageKey]);
 
   const handleDragEnd = useCallback((key: BannerKey, _: any, info: PanInfo) => {
     if (Math.abs(info.offset.x) > SWIPE_THRESHOLD) {
