@@ -20,6 +20,12 @@ interface DockFormulaBuilderProps {
   onLinesChange: (lines: FormulaLine[]) => void;
   baseWeight: number;
   onBaseWeightChange: (weight: number) => void;
+  /** When false, hides the built-in "+ Add Product" button (parent renders its own) */
+  showAddButton?: boolean;
+  /** External control: when true, opens the product picker */
+  pickerOpen?: boolean;
+  /** External control: called when picker closes */
+  onPickerClose?: () => void;
 }
 
 const WEIGHT_PRESETS = [20, 40, 60];
@@ -29,8 +35,15 @@ const RATIO_PRESETS = [
   { label: '2x', value: 2 },
 ];
 
-export function DockFormulaBuilder({ lines, onLinesChange, baseWeight, onBaseWeightChange }: DockFormulaBuilderProps) {
-  const [pickerOpen, setPickerOpen] = useState(false);
+export function DockFormulaBuilder({
+  lines, onLinesChange, baseWeight, onBaseWeightChange,
+  showAddButton = true,
+  pickerOpen: externalPickerOpen,
+  onPickerClose,
+}: DockFormulaBuilderProps) {
+  const [internalPickerOpen, setInternalPickerOpen] = useState(false);
+  const isPickerOpen = externalPickerOpen ?? internalPickerOpen;
+  const closePickerFn = onPickerClose ?? (() => setInternalPickerOpen(false));
 
   const existingIds = new Set(lines.map((l) => l.product.id));
 
@@ -126,19 +139,21 @@ export function DockFormulaBuilder({ lines, onLinesChange, baseWeight, onBaseWei
         )}
 
         {/* Add product button */}
-        <button
-          onClick={() => setPickerOpen(true)}
-          className="w-full flex items-center justify-center gap-2 h-11 mt-3 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
-        </button>
+        {showAddButton && (
+          <button
+            onClick={() => setInternalPickerOpen(true)}
+            className="w-full flex items-center justify-center gap-2 h-11 mt-3 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        )}
       </div>
 
       {/* Product picker modal */}
       <DockProductPicker
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        open={isPickerOpen}
+        onClose={closePickerFn}
         onAddProducts={handleAddProducts}
         selectedIds={existingIds}
       />
