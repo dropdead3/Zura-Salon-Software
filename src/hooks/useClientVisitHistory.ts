@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { DEMO_VISIT_HISTORY } from '@/hooks/dock/dockDemoData';
 
 export interface ClientVisit {
   id: string;
