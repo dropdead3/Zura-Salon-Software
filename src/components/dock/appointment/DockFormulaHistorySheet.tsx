@@ -153,7 +153,7 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
                               {line.product_name}
                             </span>
                             <span className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] shrink-0 ml-2">
-                              {line.dispensed_grams ? `${line.dispensed_grams}g` : line.target_grams ? `${line.target_grams}g` : ''}
+                              {line.quantity ? `${line.quantity}${line.unit || 'g'}` : ''}
                             </span>
                           </div>
                         ))}

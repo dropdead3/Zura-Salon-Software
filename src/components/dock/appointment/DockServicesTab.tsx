@@ -81,6 +81,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
 
   // Demo-mode local bowl state
   const [demoBowls, setDemoBowls] = useState<DemoBowl[]>([]);
+  const [showFormulaHistory, setShowFormulaHistory] = useState(false);
 
   // Listen for demo reset event
   useEffect(() => {
