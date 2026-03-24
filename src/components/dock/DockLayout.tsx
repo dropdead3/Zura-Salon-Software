@@ -11,6 +11,7 @@ import { useDockDemo } from '@/contexts/DockDemoContext';
 import type { DockTab, DockStaffSession, DockView } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockScheduleTab } from './schedule/DockScheduleTab';
+import { DockNewBookingSheet } from './schedule/DockNewBookingSheet';
 import { DockActiveTab } from './active/DockActiveTab';
 import { DockClientsTab } from './clients/DockClientsTab';
 import { DockScaleTab } from './scale/DockScaleTab';
@@ -46,6 +47,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const completeAppointment = useDockCompleteAppointment();
   const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
+  const [showNewBooking, setShowNewBooking] = useState(false);
 
   const { containerRef: idleRef } = useDockIdleTimer({
     onIdle: onLogout,
@@ -100,7 +102,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
       {/* Hamburger menu — hidden during detail view */}
       {!showingDetail && (
-        <DockHamburgerMenu activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
+        <DockHamburgerMenu activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} onAddAppointment={() => setShowNewBooking(true)} />
       )}
 
       {/* Client quick view sheet */}
@@ -114,6 +116,15 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
       {/* Bottom fade gradient */}
       <div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
+
+      {/* New Booking Sheet */}
+      <DockNewBookingSheet
+        open={showNewBooking}
+        onClose={() => setShowNewBooking(false)}
+        staff={staff}
+        locationId={staff.locationId}
+        staffFilter={staffFilter}
+      />
 
       {/* Lock FAB */}
       <DockLockFAB onLock={onLogout} />

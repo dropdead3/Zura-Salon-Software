@@ -3,14 +3,14 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Calendar, Plus, Loader2, ChevronDown } from 'lucide-react';
+import { Calendar, Loader2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockAppointmentCard } from './DockAppointmentCard';
-import { DockNewBookingSheet } from './DockNewBookingSheet';
+
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { cn } from '@/lib/utils';
@@ -76,7 +76,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
-  const [showNewBooking, setShowNewBooking] = useState(false);
+   
   const storageKey = `dock-chemical-toggle::${staff.userId}`;
   const [showAll, setShowAll] = useState(() => {
     const saved = localStorage.getItem(storageKey);
@@ -239,13 +239,6 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
             </div>
           ) : (
             <>
-              <button
-                onClick={() => setShowNewBooking(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors border border-violet-500/20"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="font-display text-xs tracking-wide uppercase">Add Appointment</span>
-              </button>
               {active.length > 0 && (
                 <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
               )}
@@ -274,13 +267,6 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         </div>
       </div>
 
-      <DockNewBookingSheet
-        open={showNewBooking}
-        onClose={() => setShowNewBooking(false)}
-        staff={staff}
-        locationId={locationId}
-        staffFilter={staffFilter}
-      />
 
       {/* Dock-native confirmation overlay */}
       <AnimatePresence>

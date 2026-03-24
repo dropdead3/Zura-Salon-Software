@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Menu, X, Calendar, FlaskConical, Users, Weight, Settings, Lock } from 'lucide-react';
+import { Menu, X, Calendar, FlaskConical, Users, Weight, Settings, Lock, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET } from './dock-ui-tokens';
@@ -14,6 +14,7 @@ interface DockHamburgerMenuProps {
   activeTab: DockTab;
   onTabChange: (tab: DockTab) => void;
   onLockStation: () => void;
+  onAddAppointment?: () => void;
 }
 
 const TABS: { id: DockTab; label: string; icon: typeof Calendar }[] = [
@@ -26,7 +27,7 @@ const TABS: { id: DockTab; label: string; icon: typeof Calendar }[] = [
 
 const SPRING = DOCK_SHEET.spring;
 
-export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: DockHamburgerMenuProps) {
+export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAddAppointment }: DockHamburgerMenuProps) {
   const [open, setOpen] = useState(false);
 
   const handleTabSelect = (id: DockTab) => {
@@ -128,6 +129,22 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
                   );
                 })}
               </div>
+
+              {/* Quick Actions */}
+              {onAddAppointment && (
+                <>
+                  <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
+                  <div className="px-4">
+                    <button
+                      onClick={() => { onAddAppointment(); setOpen(false); }}
+                      className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-violet-500/[0.12] text-violet-300 hover:bg-violet-500/[0.18] transition-colors"
+                    >
+                      <Plus className="w-5 h-5 text-violet-400" />
+                      <span className="font-sans text-sm">Add Appointment</span>
+                    </button>
+                  </div>
+                </>
+              )}
 
               {/* Divider */}
               <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
