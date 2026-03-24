@@ -18,7 +18,6 @@ import { DockSettingsTab } from './settings/DockSettingsTab';
 import { DockAppointmentDetail } from './appointment/DockAppointmentDetail';
 import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
-import { useDockLockGesture } from '@/hooks/dock/useDockLockGesture';
 import { useDockIdleTimer } from '@/hooks/dock/useDockIdleTimer';
 import { DockLockFAB } from './DockLockFAB';
 
@@ -48,11 +47,6 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   const completeAppointment = useDockCompleteAppointment();
   const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
 
-  const { containerRef, progress: lockProgress } = useDockLockGesture({
-    onLock: onLogout,
-    enabled: !showingDetail,
-  });
-
   const { containerRef: idleRef } = useDockIdleTimer({
     onIdle: onLogout,
     enabled: true,
@@ -68,10 +62,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const dockContent = (
     <div
-      ref={(el) => {
-        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-        (idleRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-      }}
+      ref={idleRef}
       className="relative h-full flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
       data-dock-device={device}
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
