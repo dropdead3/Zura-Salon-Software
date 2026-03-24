@@ -112,14 +112,6 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
               }
             }}
           >
-            {/* Drag handle */}
-            <div
-              className="flex-shrink-0 flex items-center justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
-              onPointerDown={(e) => dragControls.start(e)}
-            >
-              <div className="w-10 h-1 rounded-full bg-[hsl(var(--platform-border)/0.4)]" />
-            </div>
-
             {/* Header */}
             <div className="flex-shrink-0 px-7 pt-2 pb-3 space-y-3">
               <div className="flex items-center justify-between">
@@ -259,6 +251,14 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
                 </button>
               </div>
             )}
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div
+              className="flex-shrink-0 flex items-center justify-center pb-3 pt-1 cursor-grab active:cursor-grabbing touch-none"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)]" />
+            </div>
           </motion.div>
         </div>
       )}

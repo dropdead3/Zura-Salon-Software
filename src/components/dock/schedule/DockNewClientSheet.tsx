@@ -222,12 +222,6 @@ export function DockNewClientSheet({
             className="absolute inset-x-0 top-0 z-[71] flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl"
             style={{ maxHeight: 'calc(100dvh - 2rem)' }}
           >
-            {/* Drag handle */}
-            <div
-              onPointerDown={(e) => dragControls.start(e)}
-              className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            />
-
             {/* Header */}
             <div className="flex items-center gap-3 px-7 pt-4 pb-3">
               <div className="w-9 h-9 rounded-full bg-violet-600/20 flex items-center justify-center">
@@ -367,6 +361,12 @@ export function DockNewClientSheet({
                 )}
               </button>
             </div>
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div
+              onPointerDown={(e) => dragControls.start(e)}
+              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            />
           </motion.div>
         </>
       )}

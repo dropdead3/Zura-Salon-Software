@@ -80,12 +80,8 @@ export function DockSessionCompleteSheet({
               }
             }}
           >
-            {/* Drag handle + header */}
-            <div className="flex-shrink-0 px-7 pt-3 pb-4">
-              <div
-                className="w-10 h-1 rounded-full bg-[hsl(var(--platform-border)/0.4)] mx-auto mb-4 cursor-grab active:cursor-grabbing"
-                onPointerDown={(e) => dragControls.start(e)}
-              />
+            {/* Header */}
+            <div className="flex-shrink-0 px-7 pt-5 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FlaskConical className="w-4 h-4 text-violet-400" />
@@ -192,6 +188,12 @@ export function DockSessionCompleteSheet({
                 </button>
               )}
             </div>
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div
+              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
+              onPointerDown={(e) => dragControls.start(e)}
+            />
           </motion.div>
         </div>
       )}
