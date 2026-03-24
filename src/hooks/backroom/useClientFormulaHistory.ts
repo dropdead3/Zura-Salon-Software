@@ -4,6 +4,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { saveFormula } from '@/lib/backroom/services/formula-service';
 import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import { DEMO_FORMULA_HISTORY } from '@/hooks/dock/dockDemoData';
 
 export interface ClientFormula {
   id: string;
