@@ -190,7 +190,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-8',
       notes: null,
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-9',
