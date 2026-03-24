@@ -18,7 +18,6 @@ import { DockSettingsTab } from './settings/DockSettingsTab';
 import { DockAppointmentDetail } from './appointment/DockAppointmentDetail';
 import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
-import { useDockLockGesture } from '@/hooks/dock/useDockLockGesture';
 import { useDockIdleTimer } from '@/hooks/dock/useDockIdleTimer';
 import { DockLockFAB } from './DockLockFAB';
 
