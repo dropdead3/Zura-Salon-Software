@@ -1,43 +1,44 @@
 
 
-## Add "No color/chemical services" Badge for Non-Chemical Appointments
+## Tokenize Dock Badge System and Switch to Aeonik Pro
 
-**Goal:** When an appointment's service doesn't require color/chemical work, show a neutral badge reading "No color/chemical services" instead of the mixing-related badges.
+### Problem
+The payment badges (PAID, UNPAID, COMP) and status badges (No Show, Cancelled) on completed appointment cards use `font-display` (Termina). All badges in the Zura Backroom/Dock should consistently use `font-sans` (Aeonik Pro) to match the bowl count badges. Additionally, badge styles should be tokenized in `dock-ui-tokens.ts` for reuse and consistency.
 
-### Change — `src/components/dock/schedule/DockAppointmentCard.tsx`
+### Change 1 — `src/components/dock/dock-ui-tokens.ts`
 
-Update the badge block (lines 288-298) to add a third condition based on the existing `isChemical` prop:
+Add a new `DOCK_BADGE` token group:
 
-- **If `isChemical` is false** and the appointment is active and non-terminal → show "No color/chemical services" in a neutral ghost style (e.g., `bg-slate-500/15 text-slate-400 border border-slate-400/25`)
-- **If `isChemical` is true and `mix_bowl_count > 0`** → existing sky/blue badge
-- **If `isChemical` is true and `mix_bowl_count === 0`** → existing amber badge
+```ts
+export const DOCK_BADGE = {
+  /** Base classes for all Dock pill badges */
+  base: 'text-[11px] font-sans whitespace-nowrap px-2.5 py-0.5 rounded-full border',
 
-The visibility condition expands: show badge on active non-terminal cards regardless of chemical status.
+  /** Color variants — ghost style with low-opacity bg + border */
+  paid:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  unpaid:    'bg-red-500/15 text-red-400 border-red-500/25',
+  comp:      'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]',
+  noShow:    'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/25',
 
-```tsx
-{isActive && !isTerminal && (
-  <div className={cn(
-    "absolute top-5 right-5 px-2.5 py-1 rounded-full text-[11px] font-sans whitespace-nowrap",
-    !isChemical
-      ? "bg-slate-500/15 text-slate-400 border border-slate-400/25"
-      : (appointment.mix_bowl_count ?? 0) > 0
-        ? "bg-sky-500/15 text-sky-300 border border-sky-400/25"
-        : "bg-amber-500/15 text-amber-300 border border-amber-400/25"
-  )}>
-    {!isChemical
-      ? 'No color/chemical services'
-      : (appointment.mix_bowl_count ?? 0) === 0
-        ? 'No bowls mixed'
-        : `${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
-  </div>
-)}
-{/* Keep showing badge for non-active cards that have bowls mixed */}
-{!isActive && !isTerminal && isChemical && (appointment.mix_bowl_count ?? 0) > 0 && (
-  <div className="absolute top-5 right-5 px-2.5 py-1 rounded-full text-[11px] font-sans whitespace-nowrap bg-sky-500/15 text-sky-300 border border-sky-400/25">
-    {`${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
-  </div>
-)}
+  /** Bowl count variants */
+  bowlsMixed:   'bg-sky-500/15 text-sky-300 border-sky-400/25',
+  noBowlsMixed: 'bg-amber-500/15 text-amber-300 border-amber-400/25',
+  noChemical:   'bg-slate-500/15 text-slate-400 border-slate-400/25',
+} as const;
 ```
 
-One file, one block updated.
+### Change 2 — `src/components/dock/schedule/DockAppointmentCard.tsx`
+
+1. Import `DOCK_BADGE` from `dock-ui-tokens`
+2. Replace the inline `STATUS_BADGE` and `PAYMENT_BADGE` maps to reference `DOCK_BADGE` tokens
+3. Update the badge `<span>` at line 136: replace `font-display tracking-wide uppercase` with the `DOCK_BADGE.base` token
+4. Update the bowl count badge div (~line 288) to also use `DOCK_BADGE.base` + the appropriate variant token
+5. Remove old hardcoded class strings from the maps
+
+### Change 3 — Update memory for Dock appointment card and UI standards
+
+Record that all Dock badges use `DOCK_BADGE` tokens from `dock-ui-tokens.ts`, with `font-sans` (Aeonik Pro) as the mandatory font — never `font-display`.
+
+Two files modified, one new token group.
 
