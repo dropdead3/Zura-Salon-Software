@@ -124,7 +124,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
               onClick={() => dismiss('allergy')}
               className="absolute top-2 right-2 p-1 rounded-full text-rose-400/30 hover:text-rose-400/60 transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+               <X className="w-4 h-4" />
             </button>
           </motion.div>
         )}
@@ -138,9 +138,9 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
             dragConstraints={dragConstraints}
             onDragEnd={(_, info) => handleDragEnd('booking', _, info)}
             exit={exitAnim}
-            className="relative flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]"
+            className="relative flex items-start gap-2.5 px-4 py-3.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]"
           >
-            <CalendarPlus className="w-4 h-4 text-violet-400/60 shrink-0 mt-0.5" />
+            <CalendarPlus className="w-5 h-5 text-violet-400/60 shrink-0 mt-0.5" />
             <div className="min-w-0">
               <p className={cn(DOCK_TEXT.category, 'mb-0.5')}>
                 Booking Note
