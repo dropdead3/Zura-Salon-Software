@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertTriangle, FileText, ChevronDown, ChevronUp, CalendarPlus } from 'lucide-react';
 import { detectAllergyFlags } from '@/lib/backroom/detect-allergy-flags';
 import { DOCK_TEXT } from '@/components/dock/dock-ui-tokens';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ interface DockClientAlertsBannerProps {
   phorestClientId: string | null | undefined;
   clientId: string | null | undefined;
   clientName: string | null | undefined;
+  bookingNotes?: string | null;
 }
 
 const isDemoClientId = (id: string | null | undefined) => id?.startsWith('demo-') ?? false;
@@ -24,7 +25,7 @@ const DEMO_CLIENT_MOCK = {
   medical_alerts: 'PPD sensitivity — always patch test 48h prior',
 };
 
-export function DockClientAlertsBanner({ phorestClientId, clientId, clientName }: DockClientAlertsBannerProps) {
+export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, bookingNotes }: DockClientAlertsBannerProps) {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const usingDemo = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
 
@@ -55,15 +56,14 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName }
     enabled: !!(phorestClientId || clientId),
   });
 
-  if (!client) return null;
-
-  const allergyText = detectAllergyFlags(
+  const allergyText = client ? detectAllergyFlags(
     (client as any)?.medical_alerts ?? null,
     client?.notes ?? null,
-  );
+  ) : null;
   const profileNotes = client?.notes?.trim() || null;
+  const trimmedBooking = bookingNotes?.trim() || null;
 
-  if (!allergyText && !profileNotes) return null;
+  if (!allergyText && !profileNotes && !trimmedBooking) return null;
 
   const notesIsLong = profileNotes ? profileNotes.length > 120 : false;
 
@@ -79,6 +79,21 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName }
             </p>
             <p className="text-xs text-rose-300/90 leading-relaxed">
               {allergyText}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Note (from scheduling) */}
+      {trimmedBooking && (
+        <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
+          <CalendarPlus className="w-4 h-4 text-violet-400/60 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className={cn(DOCK_TEXT.category, 'mb-0.5')}>
+              Booking Note
+            </p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+              {trimmedBooking}
             </p>
           </div>
         </div>

@@ -240,6 +240,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         phorestClientId={appointment.phorest_client_id}
         clientId={appointment.client_id}
         clientName={appointment.client_name}
+        bookingNotes={appointment.notes}
       />
       <div className={`px-7 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
         {/* Bowl grid */}
