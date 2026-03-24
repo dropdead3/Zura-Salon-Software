@@ -1,37 +1,38 @@
 
 
-## Two-Column Quick Actions Row
+## Update Hamburger Menu Active State Styling
 
 ### Change — `src/components/dock/DockHamburgerMenu.tsx`
 
-Merge "Add Appointment" and "Lock Station" into a single two-column grid under the "Quick Actions" label. Remove the separate Lock Station section.
+**Lines 110–118:**
 
-**Lines 133–156** replaced with:
+1. Change `rounded-xl` to `rounded-full` on the nav button for a fully rounded pill highlight
+2. Remove the left accent bar (`absolute left-0 top-2 bottom-2 w-0.5 ...`)
+3. Add a small violet dot on the right side of the active item using `ml-auto`
 
 ```tsx
-{/* Quick Actions — two-column grid */}
-<div className="px-5 mt-5">
-  <p className={cn(DOCK_TEXT.category, 'px-1 mb-2')}>Quick Actions</p>
-  <div className="grid grid-cols-2 gap-3">
-    {onAddAppointment && (
-      <button
-        onClick={() => { onAddAppointment(); setOpen(false); }}
-        className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 border-dashed border-violet-500/30 text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/[0.06] transition-colors"
-      >
-        <Plus className="w-5 h-5" />
-        <span className="font-sans text-xs">Add Appointment</span>
-      </button>
-    )}
-    <button
-      onClick={handleLock}
-      className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 border-dashed border-red-500/30 text-red-400 hover:border-red-500/50 hover:bg-red-500/[0.06] transition-colors"
-    >
-      <Lock className="w-5 h-5" />
-      <span className="font-sans text-xs">Lock Station</span>
-    </button>
-  </div>
-</div>
+<button
+  key={id}
+  onClick={() => handleTabSelect(id)}
+  className={cn(
+    'relative w-full flex items-center gap-4 px-4 py-3 rounded-full transition-colors',
+    isActive
+      ? 'bg-violet-500/[0.12] text-violet-300'
+      : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.05)]'
+  )}
+>
+  <Icon className={cn('w-5 h-5', isActive ? 'text-violet-400' : '')} />
+  <span className={cn(
+    'font-display text-sm tracking-wide uppercase',
+    isActive ? 'text-violet-300' : ''
+  )}>
+    {label}
+  </span>
+  {isActive && (
+    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />
+  )}
+</button>
 ```
 
-Both buttons become equal-sized tiles in a `grid-cols-2` layout. Lock Station adopts the same dashed-border card style but in red. Text switches to `font-sans text-xs` with icons stacked above labels for a clean tile look. One file, one section replaced.
+One file, one section. Pill shape + right-side dot replaces left accent bar.
 
