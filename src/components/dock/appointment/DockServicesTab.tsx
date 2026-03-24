@@ -680,7 +680,7 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
       {/* Ingredient lines preview */}
       <div className="flex-1 mt-1 space-y-1">
         {previewLines.map((line, i) => (
-          <p key={i} className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
+          <p key={i} className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
             <span className="text-[hsl(var(--platform-foreground-muted)/0.8)]">{line.product.name}</span>
             <span className="mx-1">·</span>
             <span>{(line.targetWeight * line.ratio).toFixed(1)}g</span>
