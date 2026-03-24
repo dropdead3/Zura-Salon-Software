@@ -29,8 +29,9 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
-import { DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
+import { DOCK_BADGE, DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
 import { cn } from '@/lib/utils';
+
 interface DockClientTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
@@ -413,7 +414,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-2">
         <User className="w-8 h-8 text-[hsl(var(--platform-foreground-muted)/0.3)]" />
-        <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">Walk-in — no client profile</p>
+        <p className={DOCK_CONTENT.bodyMuted}>Walk-in — no client profile</p>
       </div>
     );
   }
@@ -426,9 +427,9 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
     <div className="px-7 py-4 space-y-5">
       {/* ─── Allergy / Sensitivity Alert (Editable) ─── */}
       {editingAlert ? (
-        <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 space-y-2">
+        <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-display text-[10px] tracking-wider uppercase text-rose-400">
+            <span className="font-display text-xs tracking-wider uppercase text-rose-400">
               Medical Alert
             </span>
             <div className="flex items-center gap-1">
@@ -437,13 +438,13 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                 disabled={saveMedicalAlert.isPending}
                 className="p-1 rounded-full hover:bg-rose-500/20 transition-colors"
               >
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <Check className="w-4 h-4 text-emerald-400" />
               </button>
               <button
                 onClick={() => setEditingAlert(false)}
                 className="p-1 rounded-full hover:bg-rose-500/20 transition-colors"
               >
-                <X className="w-3.5 h-3.5 text-rose-400" />
+                <X className="w-4 h-4 text-rose-400" />
               </button>
             </div>
           </div>
@@ -452,53 +453,53 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
             onChange={(e) => setAlertDraft(e.target.value)}
             placeholder="Note allergies, sensitivities, reactions…"
             rows={3}
-            className="w-full bg-[hsl(var(--platform-bg))] border border-rose-500/20 rounded-lg px-3 py-2 text-xs text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] focus:outline-none focus:ring-1 focus:ring-rose-500/50 resize-none"
+            className="w-full bg-[hsl(var(--platform-bg))] border border-rose-500/20 rounded-lg px-3 py-2 text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] focus:outline-none focus:ring-1 focus:ring-rose-500/50 resize-none"
           />
         </div>
       ) : allergyText ? (
-        <div className="flex items-start gap-2.5 px-3 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
-          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <div className={cn('flex items-start gap-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30', DOCK_CONTENT.cardPadding)}>
+          <AlertTriangle className={cn(DOCK_CONTENT.sectionIcon, 'text-rose-400 shrink-0 mt-0.5')} />
           <div className="flex-1">
-            <span className="font-display text-[10px] tracking-wider uppercase text-rose-400">
+            <span className="font-display text-xs tracking-wider uppercase text-rose-400">
               Allergy / Sensitivity
             </span>
-            <p className="text-xs text-rose-300/90 mt-0.5 leading-relaxed">{allergyText}</p>
+            <p className="text-sm text-rose-300/90 mt-0.5 leading-relaxed">{allergyText}</p>
           </div>
           <button
             onClick={() => { setAlertDraft((client as any)?.medical_alerts || ''); setEditingAlert(true); }}
             className="p-1 rounded-full hover:bg-rose-500/20 transition-colors shrink-0"
           >
-            <Pencil className="w-3 h-3 text-rose-400" />
+            <Pencil className="w-3.5 h-3.5 text-rose-400" />
           </button>
         </div>
       ) : (
         <button
           onClick={() => { setAlertDraft(''); setEditingAlert(true); }}
-          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-dashed border-[hsl(var(--platform-border)/0.3)] hover:border-rose-500/30 hover:bg-rose-500/5 transition-colors"
+          className={cn('flex items-center gap-2 w-full rounded-xl border border-dashed border-[hsl(var(--platform-border)/0.3)] hover:border-rose-500/30 hover:bg-rose-500/5 transition-colors', DOCK_CONTENT.cardPadding)}
         >
-          <Plus className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-          <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">Add Medical Alert</span>
+          <Plus className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+          <span className={DOCK_CONTENT.bodyMuted}>Add Medical Alert</span>
         </button>
       )}
 
       {/* ─── Identity Card ─── */}
       <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-violet-600/20 flex items-center justify-center shrink-0">
-            <span className="font-display text-sm tracking-wide text-violet-300">
+          <div className="w-14 h-14 rounded-full bg-violet-600/20 flex items-center justify-center shrink-0">
+            <span className="font-display text-base tracking-wide text-violet-300">
               {getInitials(displayName)}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
+            <h3 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
               {displayName}
             </h3>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               {client?.phone && (
-                <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{client.phone}</span>
+                <span className={DOCK_CONTENT.caption}>{client.phone}</span>
               )}
               {client?.email && (
-                <span className="text-xs text-[hsl(var(--platform-foreground-muted))] truncate">{client.email}</span>
+                <span className={cn(DOCK_CONTENT.caption, 'truncate')}>{client.email}</span>
               )}
             </div>
           </div>
@@ -548,8 +549,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
         {/* Different stylist warning */}
         {currentStylistDiffers && preferredStylist && (
           <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
-            <span className="text-[10px] text-amber-400">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className={cn(DOCK_CONTENT.caption, 'text-amber-400')}>
               Seeing different stylist today — prefers {preferredStylistName}
             </span>
           </div>
@@ -560,12 +561,12 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {formulaMemory && (formulaMemory as any).lines?.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <FlaskConical className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+            <FlaskConical className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+            <span className={DOCK_CONTENT.sectionHeader}>
               Last Formula
             </span>
             {formulaMemory.serviceName && (
-              <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+              <span className={DOCK_CONTENT.captionDim}>
                 — {formulaMemory.serviceName}
               </span>
             )}
@@ -574,26 +575,26 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
             {((formulaMemory as any).lines || []).map((line: any, i: number) => (
               <div
                 key={i}
-                className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--platform-border)/0.1)] last:border-b-0"
+                className="flex items-center justify-between px-4 py-2.5 border-b border-[hsl(var(--platform-border)/0.1)] last:border-b-0"
               >
-                <span className="text-xs text-[hsl(var(--platform-foreground))]">
+                <span className={DOCK_CONTENT.body}>
                   {line.product_name}
                 </span>
-                <span className="text-xs font-display tracking-wide text-violet-400">
+                <span className="text-sm font-display tracking-wide text-violet-400">
                   {line.weight_g}g
                 </span>
               </div>
             ))}
             {formulaMemory.ratio && (
-              <div className="px-3 py-2 bg-[hsl(var(--platform-bg-elevated))]">
-                <span className="text-[10px] tracking-wide text-[hsl(var(--platform-foreground-muted))]">
+              <div className="px-4 py-2 bg-[hsl(var(--platform-bg-elevated))]">
+                <span className={DOCK_CONTENT.caption}>
                   Ratio: {formulaMemory.ratio}
                 </span>
               </div>
             )}
             {formulaMemory.createdAt && (
-              <div className="px-3 py-1.5 bg-[hsl(var(--platform-bg-elevated))]">
-                <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+              <div className="px-4 py-2 bg-[hsl(var(--platform-bg-elevated))]">
+                <span className={DOCK_CONTENT.captionDim}>
                   {formulaMemory.sourceLabel} · {format(parseISO(formulaMemory.createdAt), 'MMM d, yyyy')}
                 </span>
               </div>
@@ -606,11 +607,11 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {formulaHistory.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <History className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+            <History className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+            <span className={DOCK_CONTENT.sectionHeader}>
               Formula History
             </span>
-            <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+            <span className={DOCK_CONTENT.captionDim}>
               ({formulaHistory.length})
             </span>
           </div>
@@ -621,14 +622,14 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
               return (
                 <div key={f.id}>
                   <div
-                    className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] px-3 py-2.5"
+                    className={cn('rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.cardPadding)}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-[hsl(var(--platform-foreground))]">
+                      <span className={DOCK_CONTENT.body}>
                         {f.service_name || 'Formula'}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                        <span className={DOCK_CONTENT.caption}>
                           {f.created_at ? format(parseISO(f.created_at), 'MMM d, yyyy') : ''}
                         </span>
                         {activeBowlId && f.formula_data?.length > 0 && (
@@ -641,7 +642,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                             className="p-1 rounded-lg hover:bg-violet-500/15 transition-colors"
                             title="Clone into active bowl"
                           >
-                            <Copy className="w-3 h-3 text-violet-400" />
+                            <Copy className="w-3.5 h-3.5 text-violet-400" />
                           </button>
                         )}
                         {!activeBowlId && f.formula_data?.length > 0 && (
@@ -653,7 +654,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                             className="p-1 rounded-lg opacity-40 cursor-not-allowed"
                             title="No active bowl"
                           >
-                            <Copy className="w-3 h-3 text-[hsl(var(--platform-foreground-muted))]" />
+                            <Copy className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted))]" />
                           </button>
                         )}
                       </div>
@@ -661,19 +662,19 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                     {lines.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                         {lines.map((line, i) => (
-                          <span key={i} className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                          <span key={i} className={DOCK_CONTENT.caption}>
                             {line.product_name} {line.quantity ? `${line.quantity}${line.unit || 'g'}` : ''}
                           </span>
                         ))}
                         {(f.formula_data || []).length > 2 && (
-                          <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+                          <span className={DOCK_CONTENT.captionDim}>
                             +{(f.formula_data || []).length - 2} more
                           </span>
                         )}
                       </div>
                     )}
                     {f.staff_name && (
-                      <span className="text-[9px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-0.5 block">
+                      <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)] mt-0.5 block">
                         by {f.staff_name}
                       </span>
                     )}
@@ -712,7 +713,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
           {formulaHistory.length > 5 && (
             <button
               onClick={() => setShowAllFormulas(!showAllFormulas)}
-              className="mt-2 text-[10px] font-display tracking-wide uppercase text-violet-400 hover:text-violet-300 transition-colors"
+              className="mt-2 text-xs font-display tracking-wide uppercase text-violet-400 hover:text-violet-300 transition-colors"
             >
               {showAllFormulas ? 'Show less' : `Show all ${formulaHistory.length}`}
             </button>
@@ -722,9 +723,9 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
 
       {/* ─── Processing Time Hint ─── */}
       {memory?.lastProcessingTimeMinutes && (
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]">
-          <Clock className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-          <span className="text-xs text-[hsl(var(--platform-foreground))]">
+        <div className={cn('flex items-center gap-2 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.cardPadding)}>
+          <Clock className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+          <span className={DOCK_CONTENT.body}>
             Avg. {memory.lastProcessingTimeMinutes} min processing
           </span>
         </div>
@@ -734,8 +735,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {affinities && affinities.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <ShoppingBag className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+            <ShoppingBag className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+            <span className={DOCK_CONTENT.sectionHeader}>
               Frequently Purchased
             </span>
           </div>
@@ -743,12 +744,12 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
             {affinities.map((a) => (
               <span
                 key={a.itemName}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] text-xs text-[hsl(var(--platform-foreground))]"
+                className={cn('inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.body)}
               >
                 {a.itemName}
-                <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">×{a.purchaseCount}</span>
+                <span className={DOCK_CONTENT.caption}>×{a.purchaseCount}</span>
                 {a.mayNeedRestock && (
-                  <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-display tracking-wide uppercase text-amber-400">
+                  <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-display tracking-wide uppercase text-amber-400">
                     Restock
                   </span>
                 )}
@@ -762,8 +763,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {crossSellProducts && crossSellProducts.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+            <Sparkles className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+            <span className={DOCK_CONTENT.sectionHeader}>
               Suggested Retail
             </span>
             {conversionRate !== null && conversionRate !== undefined && (
@@ -776,10 +777,10 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
             {crossSellProducts.map((p) => (
               <div
                 key={p.name}
-                className="flex items-center justify-between rounded-xl bg-violet-500/5 border border-violet-500/15 px-3 py-2.5"
+                className={cn('flex items-center justify-between rounded-xl bg-violet-500/5 border border-violet-500/15', DOCK_CONTENT.cardPadding)}
               >
-                <span className="text-xs text-[hsl(var(--platform-foreground))]">{p.name}</span>
-                <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                <span className={DOCK_CONTENT.body}>{p.name}</span>
+                <span className={DOCK_CONTENT.caption}>
                   {p.buyerCount} similar clients
                 </span>
               </div>
@@ -791,8 +792,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {photos && photos.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Camera className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+            <Camera className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+            <span className={DOCK_CONTENT.sectionHeader}>
               Transformations
             </span>
           </div>
@@ -804,19 +805,19 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
                     <img
                       src={photo.before_url}
                       alt="Before"
-                      className="w-16 h-16 rounded-lg object-cover border border-[hsl(var(--platform-border)/0.2)]"
+                      className="w-20 h-20 rounded-lg object-cover border border-[hsl(var(--platform-border)/0.2)]"
                     />
                   )}
                   {photo.after_url && (
                     <img
                       src={photo.after_url}
                       alt="After"
-                      className="w-16 h-16 rounded-lg object-cover border border-[hsl(var(--platform-border)/0.2)]"
+                      className="w-20 h-20 rounded-lg object-cover border border-[hsl(var(--platform-border)/0.2)]"
                     />
                   )}
                 </div>
                 <div className="text-center">
-                  <span className="text-[9px] text-[hsl(var(--platform-foreground-muted))]">
+                  <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
                     {photo.taken_at ? format(parseISO(photo.taken_at), 'MMM d') : ''}
                   </span>
                 </div>
@@ -830,12 +831,12 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {client?.notes && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <FileText className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-            <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+            <FileText className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+            <span className={DOCK_CONTENT.sectionHeader}>
               Profile Notes
             </span>
           </div>
-          <p className="text-sm text-[hsl(var(--platform-foreground))] bg-[hsl(var(--platform-bg-card))] rounded-xl p-3 border border-[hsl(var(--platform-border)/0.2)] leading-relaxed">
+          <p className={cn(DOCK_CONTENT.body, 'bg-[hsl(var(--platform-bg-card))] rounded-xl p-4 border border-[hsl(var(--platform-border)/0.2)] leading-relaxed')}>
             {client.notes}
           </p>
         </div>
@@ -844,8 +845,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       {/* ─── Visit History ─── */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <CalendarDays className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.6)]" />
-          <span className="font-display text-xs tracking-wider uppercase text-[hsl(var(--platform-foreground-muted))]">
+          <CalendarDays className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.6)]')} />
+          <span className={DOCK_CONTENT.sectionHeader}>
             Recent Visits
           </span>
         </div>
@@ -854,38 +855,38 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
             {recentVisits.map((v) => (
               <div
                 key={v.id}
-                className="flex items-center justify-between rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] px-3 py-2.5"
+                className={cn('flex items-center justify-between rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.cardPadding)}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-[hsl(var(--platform-foreground))] truncate">
+                  <p className={cn(DOCK_CONTENT.body, 'truncate')}>
                     {v.service_name || 'Service'}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                    <span className={DOCK_CONTENT.caption}>
                       {v.appointment_date ? format(parseISO(v.appointment_date), 'MMM d, yyyy') : ''}
                     </span>
                     {v.stylist_name && (
                       <>
-                        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.3)]">·</span>
-                        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted))]">
+                        <span className={DOCK_CONTENT.captionDim}>·</span>
+                        <span className={DOCK_CONTENT.caption}>
                           {v.stylist_name}
                         </span>
                       </>
                     )}
                   </div>
                 </div>
-                <span className={`text-[9px] uppercase tracking-wide font-display ${
+                <span className={cn('text-[10px] uppercase tracking-wide font-display',
                   v.status === 'completed' ? 'text-emerald-400' :
                   v.status === 'cancelled' || v.status === 'no_show' ? 'text-rose-400' :
                   'text-[hsl(var(--platform-foreground-muted)/0.5)]'
-                }`}>
+                )}>
                   {v.status || 'completed'}
                 </span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">No previous visits</p>
+          <p className={DOCK_CONTENT.bodyMuted}>No previous visits</p>
         )}
       </div>
     </div>

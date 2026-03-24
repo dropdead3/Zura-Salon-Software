@@ -10,6 +10,8 @@ import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 import { normalizeSessionStatus } from '@/lib/backroom/session-state-machine';
 import { DockSessionTimeline } from '../mixing/DockSessionTimeline';
 import { roundWeight, roundCost } from '@/lib/backroom/mix-calculations';
+import { cn } from '@/lib/utils';
+import { DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
 
 interface DockSummaryTabProps {
   appointment: DockAppointment;
@@ -45,7 +47,7 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
   return (
     <div className="px-7 py-4 space-y-4">
       {/* Appointment info */}
-      <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 space-y-2">
+      <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-5 space-y-2.5">
         <InfoRow label="Client" value={appointment.client_name || 'Walk-in'} />
         <InfoRow label="Service" value={appointment.service_name || '—'} />
         <InfoRow label="Status" value={appointment.status || 'Pending'} />
@@ -58,13 +60,13 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
           {bowlStats.map(({ label, value, icon: Icon }) => (
             <div
               key={label}
-              className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-3 text-center"
+              className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 text-center"
             >
-              <Icon className="w-4 h-4 text-violet-400 mx-auto mb-1" />
-              <p className="font-display text-lg tracking-wide text-[hsl(var(--platform-foreground))]">
+              <Icon className={cn(DOCK_CONTENT.sectionIcon, 'text-violet-400 mx-auto mb-1')} />
+              <p className="font-display text-xl tracking-wide text-[hsl(var(--platform-foreground))]">
                 {value}
               </p>
-              <p className="text-[10px] text-[hsl(var(--platform-foreground-muted))] mt-0.5">
+              <p className={cn(DOCK_CONTENT.caption, 'mt-0.5')}>
                 {label}
               </p>
             </div>
@@ -74,8 +76,8 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
 
       {/* Cost & usage aggregation from projections */}
       {stats && stats.totalDispensed > 0 && (
-        <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 space-y-3">
-          <h3 className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
+        <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-5 space-y-3">
+          <h3 className={DOCK_CONTENT.sectionHeader}>
             Session Totals
           </h3>
           <div className="grid grid-cols-2 gap-2">
@@ -86,10 +88,10 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
           </div>
           {stats.totalDispensed > 0 && (
             <div className="flex items-center justify-between pt-2 border-t border-[hsl(var(--platform-border)/0.1)]">
-              <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">Waste %</span>
-              <span className={`text-xs font-medium ${
+              <span className={DOCK_CONTENT.captionDim}>Waste %</span>
+              <span className={cn('text-sm font-medium',
                 (stats.totalLeftover / stats.totalDispensed) * 100 > 25 ? 'text-amber-400' : 'text-emerald-400'
-              }`}>
+              )}>
                 {roundWeight((stats.totalLeftover / stats.totalDispensed) * 100)}%
               </span>
             </div>
@@ -105,7 +107,7 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
       {bowls.length === 0 && (
         <div className="flex flex-col items-center justify-center pt-8 text-center">
           <Receipt className="w-10 h-10 text-violet-400/30 mb-3" />
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+          <p className={DOCK_CONTENT.bodyMuted}>
             No mixing activity yet
           </p>
         </div>
@@ -117,8 +119,8 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">{label}</span>
-      <span className="text-xs text-[hsl(var(--platform-foreground))] font-medium">{value}</span>
+      <span className={DOCK_CONTENT.caption}>{label}</span>
+      <span className={cn(DOCK_CONTENT.body, 'font-medium')}>{value}</span>
     </div>
   );
 }
@@ -130,12 +132,12 @@ function StatTile({ icon: Icon, label, value, highlight }: {
   highlight?: boolean;
 }) {
   return (
-    <div className="rounded-lg bg-[hsl(var(--platform-bg-elevated))] border border-[hsl(var(--platform-border)/0.1)] p-2.5">
+    <div className="rounded-lg bg-[hsl(var(--platform-bg-elevated))] border border-[hsl(var(--platform-border)/0.1)] p-3.5">
       <div className="flex items-center gap-1.5 mb-1">
-        <Icon className="w-3 h-3 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.6)] uppercase tracking-wide">{label}</span>
+        <Icon className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+        <span className={cn(DOCK_CONTENT.caption, 'uppercase tracking-wide')}>{label}</span>
       </div>
-      <p className={`font-display text-sm tracking-tight ${highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]'}`}>
+      <p className={cn('font-display text-base tracking-tight', highlight ? 'text-violet-400' : 'text-[hsl(var(--platform-foreground))]')}>
         {value}
       </p>
     </div>

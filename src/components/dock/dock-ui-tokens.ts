@@ -72,6 +72,28 @@ export const DOCK_TABS = {
   icon: 'w-4 h-4',
 } as const;
 
+export const DOCK_CONTENT = {
+  /** Section headers (e.g. "Booking Note", "Team Notes") */
+  sectionHeader: 'text-sm font-display uppercase tracking-wider text-[hsl(var(--platform-foreground-muted))]',
+  /** Body text in cards */
+  body: 'text-sm text-[hsl(var(--platform-foreground))]',
+  bodyMuted: 'text-sm text-[hsl(var(--platform-foreground-muted))]',
+  /** Small supporting text (dates, counts, staff names) */
+  caption: 'text-xs text-[hsl(var(--platform-foreground-muted))]',
+  captionDim: 'text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]',
+  /** Section icons */
+  sectionIcon: 'w-5 h-5',
+  /** Card padding */
+  cardPadding: 'px-4 py-3.5',
+  /** Input fields */
+  input: 'h-12 px-4 text-sm rounded-xl',
+  /** Avatars in thread */
+  avatar: 'w-8 h-8',
+  avatarFallback: 'text-[10px]',
+  /** Card icon containers */
+  iconBox: 'w-5 h-5',
+} as const;
+
 export const DOCK_DIALOG = {
   overlay: 'absolute inset-0 z-50 bg-black/60 backdrop-blur-sm',
   content: 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-sm bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] rounded-2xl shadow-2xl p-6 space-y-4',

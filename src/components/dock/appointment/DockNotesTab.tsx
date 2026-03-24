@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarPlus, FileText, MessageSquare, Send, Trash2, Lock, ChevronDown, ChevronUp, StickyNote } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DOCK_TEXT } from '@/components/dock/dock-ui-tokens';
+import { DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
@@ -78,10 +78,10 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
       {/* Booking Note (from scheduling) */}
       {bookingNotes && (
         <div>
-          <p className={cn(DOCK_TEXT.category, 'mb-2')}>Booking Note</p>
-          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
-            <CalendarPlus className="w-4 h-4 text-violet-400/60 shrink-0 mt-0.5" />
-            <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed whitespace-pre-wrap">
+          <p className={cn(DOCK_CONTENT.sectionHeader, 'mb-2')}>Booking Note</p>
+          <div className={cn('flex items-start gap-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]', DOCK_CONTENT.cardPadding)}>
+            <CalendarPlus className={cn(DOCK_CONTENT.sectionIcon, 'text-violet-400/60 shrink-0 mt-0.5')} />
+            <p className={cn(DOCK_CONTENT.bodyMuted, 'leading-relaxed whitespace-pre-wrap')}>
               {bookingNotes}
             </p>
           </div>
@@ -91,12 +91,12 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
       {/* Profile Notes (from client record) */}
       {profileNotes && (
         <div>
-          <p className={cn(DOCK_TEXT.category, 'mb-2')}>Profile Notes</p>
-          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]">
-            <FileText className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0 mt-0.5" />
+          <p className={cn(DOCK_CONTENT.sectionHeader, 'mb-2')}>Profile Notes</p>
+          <div className={cn('flex items-start gap-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.cardPadding)}>
+            <FileText className={cn(DOCK_CONTENT.sectionIcon, 'text-[hsl(var(--platform-foreground-muted)/0.5)] shrink-0 mt-0.5')} />
             <div className="min-w-0 flex-1">
               <p className={cn(
-                'text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed whitespace-pre-wrap',
+                DOCK_CONTENT.bodyMuted, 'leading-relaxed whitespace-pre-wrap',
                 !notesExpanded && profileNotesIsLong && 'line-clamp-2',
               )}>
                 {profileNotes}
@@ -104,7 +104,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
               {profileNotesIsLong && (
                 <button
                   onClick={() => setNotesExpanded(!notesExpanded)}
-                  className="flex items-center gap-1 mt-1 text-[10px] text-violet-400 hover:text-violet-300 transition-colors"
+                  className="flex items-center gap-1 mt-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
                 >
                   {notesExpanded ? (
                     <>Show less <ChevronUp className="w-3 h-3" /></>
@@ -120,7 +120,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
 
       {/* Team Notes (threaded, interactive) */}
       <div>
-        <p className={cn(DOCK_TEXT.category, 'mb-2')}>Team Notes</p>
+        <p className={cn(DOCK_CONTENT.sectionHeader, 'mb-2')}>Team Notes</p>
 
         {/* Add note form */}
         <form onSubmit={handleSubmit} className="flex gap-2 mb-3">
@@ -129,14 +129,14 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             placeholder="Add a note…"
-            className="flex-1 h-10 px-3 text-sm rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+            className={cn(DOCK_CONTENT.input, 'flex-1 bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.4)] focus:outline-none focus:ring-1 focus:ring-violet-500/50')}
           />
           <button
             type="submit"
             disabled={!newNote.trim() || isAdding}
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center w-12 h-12 rounded-xl bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <Send className="w-4 h-4" />
+            <Send className={DOCK_CONTENT.iconBox} />
           </button>
         </form>
 
@@ -150,27 +150,27 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
               return (
                 <div
                   key={note.id}
-                  className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]"
+                  className={cn('flex items-start gap-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.cardPadding)}
                 >
-                  <Avatar className="w-6 h-6 shrink-0 mt-0.5">
+                  <Avatar className={cn(DOCK_CONTENT.avatar, 'shrink-0 mt-0.5')}>
                     {note.author?.photo_url && <AvatarImage src={note.author.photo_url} />}
-                    <AvatarFallback className="text-[9px] bg-violet-500/20 text-violet-300">
+                    <AvatarFallback className={cn(DOCK_CONTENT.avatarFallback, 'bg-violet-500/20 text-violet-300')}>
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[11px] font-medium text-[hsl(var(--platform-foreground))]">
+                      <span className={cn(DOCK_CONTENT.body, 'font-medium')}>
                         {authorName}
                       </span>
-                      <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                      <span className={DOCK_CONTENT.captionDim}>
                         {format(new Date(note.created_at), 'MMM d, h:mm a')}
                       </span>
                       {note.is_private && (
                         <Lock className="w-3 h-3 text-amber-400/60" />
                       )}
                     </div>
-                    <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed whitespace-pre-wrap">
+                    <p className={cn(DOCK_CONTENT.bodyMuted, 'leading-relaxed whitespace-pre-wrap')}>
                       {note.note}
                     </p>
                   </div>
@@ -178,7 +178,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
                     onClick={() => deleteNote(note.id)}
                     className="shrink-0 p-1 rounded text-[hsl(var(--platform-foreground-muted)/0.3)] hover:text-red-400 transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               );
@@ -186,8 +186,8 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center pt-8 text-center">
-            <MessageSquare className="w-8 h-8 text-violet-400/20 mb-2" />
-            <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
+            <MessageSquare className="w-10 h-10 text-violet-400/20 mb-2" />
+            <p className={DOCK_CONTENT.bodyMuted}>
               No team notes yet
             </p>
           </div>
@@ -198,7 +198,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
       {!hasAnyContent && !teamLoading && (
         <div className="flex flex-col items-center justify-center pt-12 text-center">
           <StickyNote className="w-10 h-10 text-violet-400/20 mb-3" />
-          <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+          <p className={DOCK_CONTENT.bodyMuted}>
             No notes
           </p>
         </div>
