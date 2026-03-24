@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DOCK_TABS } from '@/components/dock/dock-ui-tokens';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from '../schedule/DockScheduleTab';
@@ -98,19 +99,14 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-2xl p-2 border border-[hsl(var(--platform-border)/0.2)]">
+        <div className={DOCK_TABS.bar}>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={cn(
-                'flex items-center justify-center gap-1.5 flex-1 h-12 rounded-xl text-sm font-medium transition-all duration-150',
-                tab === id
-                  ? 'bg-violet-600/30 text-violet-300'
-                  : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
-              )}
+              className={cn(DOCK_TABS.trigger, tab === id ? DOCK_TABS.triggerActive : DOCK_TABS.triggerInactive)}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className={DOCK_TABS.icon} />
               {label}
             </button>
           ))}
