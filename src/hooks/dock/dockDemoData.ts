@@ -798,13 +798,20 @@ DEMO_FORMULA_MEMORY['demo-client-1::Balayage + Toner'] = {
 
 // ─── Demo Product Affinity ──────────────────────────────
 
-import type { ClientProductAffinity } from '@/hooks/useClientProductAffinity';
+interface DemoProductAffinity {
+  itemName: string;
+  purchaseCount: number;
+  lastPurchaseDate: string;
+  avgDaysBetween: number | null;
+  daysSinceLastPurchase: number | null;
+  mayNeedRestock: boolean;
+}
 
 const affinityDate4w = format(subWeeks(new Date(), 4), 'yyyy-MM-dd');
 const affinityDate8w = format(subWeeks(new Date(), 8), 'yyyy-MM-dd');
 const affinityDate6w = format(subWeeks(new Date(), 6), 'yyyy-MM-dd');
 
-export const DEMO_PRODUCT_AFFINITY: Record<string, ClientProductAffinity[]> = {
+export const DEMO_PRODUCT_AFFINITY: Record<string, DemoProductAffinity[]> = {
   'demo-pc-7': [
     { itemName: 'Olaplex No. 3', purchaseCount: 4, lastPurchaseDate: affinityDate4w, avgDaysBetween: 28, daysSinceLastPurchase: 28, mayNeedRestock: true },
     { itemName: 'Color Wow Dream Coat', purchaseCount: 3, lastPurchaseDate: affinityDate6w, avgDaysBetween: 42, daysSinceLastPurchase: 42, mayNeedRestock: false },
