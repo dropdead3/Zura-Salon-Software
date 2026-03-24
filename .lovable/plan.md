@@ -1,27 +1,33 @@
 
 
-## Move "Add Appointment" Button into Hamburger Menu
+## Move Drag Handle to Bottom of Top-Anchored Sheets
 
-**Goal:** Remove the inline "Add Appointment" button from the schedule scroll area and place it as a quick action in the hamburger menu, decluttering the working screen.
+**Problem:** All Dock top-anchored sheets (slide down from top, swipe up to dismiss) have their drag handle bar at the top. The handle should be at the bottom edge of the sheet to visually indicate "swipe up to close."
 
-### Change 1 — `src/components/dock/DockHamburgerMenu.tsx`
+### Files to update
 
-1. Add `onAddAppointment` callback to props interface
-2. Import `Plus` icon from lucide-react
-3. Add a new "Quick Actions" section between the tab items and the divider/Lock Station area:
-   - A violet-themed "Add Appointment" button with `Plus` icon, matching the existing tab item styling but with violet accent (similar to how the active tab looks)
-   - On click: call `onAddAppointment()` and close the menu
+**1. `src/components/dock/dock-ui-tokens.ts`**
+- Rename/add a `dragHandleBottom` token with `mb-3` instead of `mt-3`, positioned at the bottom of the sheet content area
 
-### Change 2 — `src/components/dock/schedule/DockScheduleTab.tsx`
+**2. `src/components/dock/mixing/DockNewBowlSheet.tsx`**
+- Move the drag handle div from above the header (inside the top `pt-3 pb-4` wrapper) to after the Create button, at the very bottom of the sheet
 
-1. Remove the inline `<button>` block (lines 242-248) that renders "Add Appointment"
-2. The `setShowNewBooking(true)` trigger will now be called from the hamburger menu callback instead
+**3. `src/components/dock/mixing/DockSessionCompleteSheet.tsx`**
+- Same: move drag handle from top to bottom of the sheet content
 
-### Change 3 — `src/components/dock/DockLayout.tsx`
+**4. `src/components/dock/schedule/DockNewBookingSheet.tsx`**
+- Move the `DOCK_SHEET.dragHandle` div from the top of the panel to the bottom
 
-1. Lift `showNewBooking` state (or pass a callback) so the hamburger menu can trigger the new booking sheet
-2. Pass `onAddAppointment` prop to `DockHamburgerMenu`
-3. Wire it to open the `DockNewBookingSheet` (the same sheet currently triggered from the schedule tab)
+**5. `src/components/dock/schedule/DockNewClientSheet.tsx`**
+- Same: relocate drag handle to bottom
 
-**Result:** The schedule screen starts directly with the Active/Upcoming appointment groups, and "Add Appointment" lives in the hamburger menu as a quick action.
+**6. `src/components/dock/mixing/DockProductPicker.tsx`**
+- Move drag handle from top to bottom
+
+**7. `src/components/dock/DockHamburgerMenu.tsx`**
+- Move drag handle (if present) to bottom of menu
+
+For each file, the handle is moved from above the header/content to below the last content section, just before the closing `</motion.div>`. Styling adjusts from `mt-3` to `mb-3` (or `pt-3` to `pb-3`), and the handle remains the grab target for `dragControls.start(e)`.
+
+Seven files updated, one token adjusted.
 
