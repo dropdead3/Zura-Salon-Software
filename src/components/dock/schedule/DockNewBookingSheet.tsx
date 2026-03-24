@@ -440,12 +440,6 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
             className="absolute inset-x-0 top-0 z-[61] flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl"
             style={{ maxHeight: '92%' }}
           >
-            {/* Drag handle */}
-            <div
-              onPointerDown={(e) => dragControls.start(e)}
-              className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            />
-
             {/* Header */}
             <div className="px-7 pt-4 pb-3">
               <div className="flex items-center justify-between mb-3">
