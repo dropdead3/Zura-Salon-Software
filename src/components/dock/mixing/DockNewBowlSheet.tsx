@@ -86,18 +86,30 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
                 onLinesChange={setLines}
                 baseWeight={baseWeight}
                 onBaseWeightChange={setBaseWeight}
+                showAddButton={false}
+                pickerOpen={pickerOpen}
+                onPickerClose={() => setPickerOpen(false)}
               />
             </div>
 
-            {/* Create button */}
+            {/* Action buttons — side-by-side large rectangles */}
             <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
-              <button
-                onClick={handleCreate}
-                disabled={lines.length === 0}
-                className="w-full h-12 rounded-full bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
-              >
-                Create Bowl ({lines.length} ingredient{lines.length !== 1 ? 's' : ''})
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Product
+                </button>
+                <button
+                  onClick={handleCreate}
+                  disabled={lines.length === 0}
+                  className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+                >
+                  Create Bowl ({lines.length})
+                </button>
+              </div>
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
