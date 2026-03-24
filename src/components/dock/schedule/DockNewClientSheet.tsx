@@ -3,7 +3,7 @@
  * from the Dock booking flow. Minimal fields, duplicate detection, and Phorest sync.
  */
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X, Loader2, UserPlus, AlertTriangle } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +24,7 @@ interface DockNewClientSheetProps {
   onClose: () => void;
   locationId: string;
   organizationId: string;
+  defaultName?: string;
   onClientCreated: (client: {
     id: string;
     phorest_client_id: string;
@@ -38,6 +39,7 @@ export function DockNewClientSheet({
   onClose,
   locationId,
   organizationId,
+  defaultName,
   onClientCreated,
 }: DockNewClientSheetProps) {
   const queryClient = useQueryClient();
@@ -48,6 +50,21 @@ export function DockNewClientSheet({
   // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+
+  // Auto-populate name from search query when sheet opens
+  useEffect(() => {
+    if (open && defaultName) {
+      const trimmed = defaultName.trim();
+      const spaceIdx = trimmed.indexOf(' ');
+      if (spaceIdx > 0) {
+        setFirstName(trimmed.slice(0, spaceIdx));
+        setLastName(trimmed.slice(spaceIdx + 1));
+      } else {
+        setFirstName(trimmed);
+        setLastName('');
+      }
+    }
+  }, [open, defaultName]);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('Female');

@@ -510,11 +510,12 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
                       setSelectedServices([]);
                     }}
                   />
-                  <DockNewClientSheet
+                   <DockNewClientSheet
                     open={showNewClientSheet}
                     onClose={() => setShowNewClientSheet(false)}
                     locationId={locationId}
                     organizationId={organizationId}
+                    defaultName={clientSearch}
                     onClientCreated={(c) => {
                       setSelectedClient({ ...c, client_since: null });
                       setStep('service');
