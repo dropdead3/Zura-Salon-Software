@@ -233,7 +233,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
 
   return (
     <div className={`flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
-      <div className={`px-5 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
+      <div className={`px-7 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
         {/* Bowl grid */}
         {allBowlCount > 0 ? (
           <div className="grid grid-cols-2 gap-3">
@@ -397,7 +397,7 @@ function ContextualActionBar({
   }, [state, onContinueMixing, onAddBowl, onReweigh, onCompleteSession]);
 
   return (
-    <div className="sticky bottom-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg))/0.8] backdrop-blur-xl">
+    <div className="sticky bottom-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg))/0.8] backdrop-blur-xl">
       <div className="flex gap-3">
         <button
           onClick={config.secondary.onClick}

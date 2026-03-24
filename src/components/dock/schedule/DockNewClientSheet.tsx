@@ -229,7 +229,7 @@ export function DockNewClientSheet({
             />
 
             {/* Header */}
-            <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+            <div className="flex items-center gap-3 px-7 pt-4 pb-3">
               <div className="w-9 h-9 rounded-full bg-violet-600/20 flex items-center justify-center">
                 <UserPlus className="w-4 h-4 text-violet-400" />
               </div>
@@ -242,7 +242,7 @@ export function DockNewClientSheet({
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-7 pb-6 space-y-4">
               {/* Name row */}
               <div className="grid grid-cols-2 gap-3">
                 <FieldGroup label="First Name *">
@@ -349,7 +349,7 @@ export function DockNewClientSheet({
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
+            <div className="px-7 py-4 border-t border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg))]">
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit || createClient.isPending}

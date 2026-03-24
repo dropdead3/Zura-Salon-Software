@@ -189,7 +189,7 @@ export function DockScaleTab() {
   const isLiveReading = connectionState === 'stable_reading' || connectionState === 'unstable_reading';
 
   return (
-    <div className="flex flex-col h-full px-5 py-6">
+    <div className="flex flex-col h-full px-7 py-6">
       {/* Header */}
       <h2 className="font-display text-lg tracking-wide uppercase text-[hsl(var(--platform-foreground))] mb-6">
         Scale Connection

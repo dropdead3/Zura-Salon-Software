@@ -121,7 +121,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
             </div>
 
             {/* Header */}
-            <div className="flex-shrink-0 px-5 pt-2 pb-3 space-y-3">
+            <div className="flex-shrink-0 px-7 pt-2 pb-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {selectedBrand && !isSearching ? (
@@ -158,7 +158,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6">
+            <div className="flex-1 min-h-0 overflow-y-auto px-7 pb-6">
               {!selectedBrand && !isSearching ? (
                 /* Brand grid */
                 <div className="flex gap-2">
@@ -250,7 +250,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
 
             {/* Bottom bar — selection count + Add button */}
             {picked.size > 0 && (
-              <div className="flex-shrink-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-elevated))]">
+              <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-elevated))]">
                 <button
                   onClick={handleAdd}
                   className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"

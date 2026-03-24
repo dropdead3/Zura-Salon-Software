@@ -68,7 +68,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex-shrink-0 px-5 pt-6 pb-3">
+      <div className="flex-shrink-0 px-7 pt-6 pb-3">
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={onBack}

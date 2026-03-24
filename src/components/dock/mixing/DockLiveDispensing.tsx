@@ -160,7 +160,7 @@ export function DockLiveDispensing({
     const editingLine = lines?.find((l) => l.id === editingLineId);
     return (
       <div className="flex flex-col h-full bg-[hsl(var(--platform-bg))]">
-        <div className="flex-shrink-0 px-5 pt-6 pb-2">
+        <div className="flex-shrink-0 px-7 pt-6 pb-2">
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mb-1">Dispensing</p>
           <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             {editingLine?.product_name_snapshot || 'Product'}
@@ -183,7 +183,7 @@ export function DockLiveDispensing({
   if (activeView === 'reweigh-input') {
     return (
       <div className="flex flex-col h-full bg-[hsl(var(--platform-bg))]">
-        <div className="flex-shrink-0 px-5 pt-6 pb-2">
+        <div className="flex-shrink-0 px-7 pt-6 pb-2">
           <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             Bowl {bowlNumber} — Reweigh
           </p>
@@ -205,7 +205,7 @@ export function DockLiveDispensing({
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--platform-bg))]">
       {/* Header */}
-      <div className="flex-shrink-0 px-5 pt-6 pb-3">
+      <div className="flex-shrink-0 px-7 pt-6 pb-3">
         <div className="flex items-center gap-3 mb-3">
           <button
             onClick={onBack}
@@ -250,7 +250,7 @@ export function DockLiveDispensing({
       </div>
 
       {/* Line items + reweigh summary */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-3 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-7 py-3 space-y-3">
         {/* Reweigh summary card — shown after reweigh */}
         {isComplete && capturedLeftover !== null && (
           <DockReweighSummary
@@ -282,7 +282,7 @@ export function DockLiveDispensing({
       </div>
 
       {/* Bottom actions */}
-      <div className="flex-shrink-0 px-5 py-4 border-t border-[hsl(var(--platform-border)/0.2)] space-y-2">
+      <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)] space-y-2">
         {!isSealed && (
           <button
             onClick={handleSeal}

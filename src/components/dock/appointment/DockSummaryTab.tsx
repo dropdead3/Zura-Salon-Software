@@ -43,7 +43,7 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
   ];
 
   return (
-    <div className="px-5 py-4 space-y-4">
+    <div className="px-7 py-4 space-y-4">
       {/* Appointment info */}
       <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-4 space-y-2">
         <InfoRow label="Client" value={appointment.client_name || 'Walk-in'} />

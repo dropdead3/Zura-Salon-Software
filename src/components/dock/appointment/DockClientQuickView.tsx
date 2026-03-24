@@ -106,7 +106,7 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3">
+            <div className="flex items-center justify-between px-7 pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-violet-600/20 flex items-center justify-center">
                   <User className="w-5 h-5 text-violet-400" />
@@ -126,7 +126,7 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-5">
+            <div className="flex-1 overflow-y-auto px-7 pb-6 space-y-5">
               {loadingClient ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
