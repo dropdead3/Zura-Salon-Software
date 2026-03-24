@@ -299,7 +299,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     totalCost: demoTotalCost,
   };
 
-  const sessionState = deriveSessionState(remoteBowls, demoBowls);
+  
 
   return (
     <div className="relative flex flex-col h-full">
@@ -428,34 +428,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         )}
       </div>
 
-      {/* Contextual Action Bar */}
-      {allBowlCount > 0 && (
-        <ContextualActionBar
-          state={sessionState}
-          onContinueMixing={() => {
-            const activeRemote = remoteBowls.find(s => isActiveSession(normalizeSessionStatus(s.status as any)));
-            if (activeRemote) {
-              const idx = remoteBowls.indexOf(activeRemote);
-              handleBowlTap(activeRemote, idx + 1);
-            } else if (demoBowls.length > 0) {
-              const activeDemoBowl = demoBowls.find(b => b.status === 'in_progress') || demoBowls[demoBowls.length - 1];
-              handleDemoBowlTap(activeDemoBowl);
-            }
-          }}
-          onAddBowl={() => {
-            setActiveServiceLabel(chemicalServices[0] || null);
-            if (!showBowlDetection) setShowBowlDetection(true);
-          }}
-          onReweigh={() => {
-            const reweighBowl = remoteBowls.find(s => requiresReweigh(normalizeSessionStatus(s.status as any)));
-            if (reweighBowl) {
-              const idx = remoteBowls.indexOf(reweighBowl);
-              handleBowlTap(reweighBowl, idx + 1);
-            }
-          }}
-          onCompleteSession={() => setShowComplete(true)}
-        />
-      )}
 
       {/* Bowl detection gate */}
       <DockBowlDetectionGate
@@ -513,81 +485,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   );
 }
 
-// ─── Session State Derivation ─────────────────────────
-type SessionActionState = 'has_active' | 'needs_reweigh' | 'all_complete' | 'mixed';
-
-function deriveSessionState(remote: DockMixSession[], demo: DemoBowl[]): SessionActionState {
-  const hasActive = remote.some(s => isActiveSession(normalizeSessionStatus(s.status as any))) || demo.some(b => b.status === 'in_progress');
-  const hasReweigh = remote.some(s => requiresReweigh(normalizeSessionStatus(s.status as any)));
-  const allTerminal = remote.every(s => isTerminalSessionStatus(s.status as any)) && demo.every(b => b.status !== 'in_progress');
-
-  if (hasActive) return 'has_active';
-  if (hasReweigh) return 'needs_reweigh';
-  if (allTerminal && (remote.length + demo.length) > 0) return 'all_complete';
-  return 'mixed';
-}
-
-// ─── Contextual Action Bar ────────────────────────────
-function ContextualActionBar({
-  state,
-  onContinueMixing,
-  onAddBowl,
-  onReweigh,
-  onCompleteSession,
-}: {
-  state: SessionActionState;
-  onContinueMixing: () => void;
-  onAddBowl: () => void;
-  onReweigh: () => void;
-  onCompleteSession: () => void;
-}) {
-  const config = useMemo(() => {
-    switch (state) {
-      case 'has_active':
-        return {
-          primary: { label: 'Continue Mixing', onClick: onContinueMixing, className: 'bg-violet-600 hover:bg-violet-500 text-white' },
-          secondary: { label: 'Add Bowl', onClick: onAddBowl },
-        };
-      case 'needs_reweigh':
-        return {
-          primary: { label: 'Reweigh Bowl', onClick: onReweigh, className: 'bg-rose-600 hover:bg-rose-500 text-white' },
-          secondary: { label: 'Complete Session', onClick: onCompleteSession },
-        };
-      case 'all_complete':
-        return {
-          primary: { label: 'Complete Session', onClick: onCompleteSession, className: 'bg-emerald-600 hover:bg-emerald-500 text-white' },
-          secondary: { label: 'Mix More', onClick: onAddBowl },
-        };
-      default: // mixed
-        return {
-          primary: { label: 'Continue Mixing', onClick: onContinueMixing, className: 'bg-violet-600 hover:bg-violet-500 text-white' },
-          secondary: { label: 'Complete Session', onClick: onCompleteSession },
-        };
-    }
-  }, [state, onContinueMixing, onAddBowl, onReweigh, onCompleteSession]);
-
-  return (
-    <div className="sticky bottom-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg))/0.8] backdrop-blur-xl">
-      <div className="flex gap-3">
-        <button
-          onClick={config.secondary.onClick}
-          className="flex-1 h-11 rounded-xl border border-[hsl(var(--platform-border)/0.4)] text-[hsl(var(--platform-foreground-muted))] text-sm font-medium transition-colors hover:bg-[hsl(var(--platform-bg-hover))]"
-        >
-          {config.secondary.label}
-        </button>
-        <button
-          onClick={config.primary.onClick}
-          className={cn(
-            'flex-[1.5] h-11 rounded-xl text-sm font-medium transition-all active:scale-[0.98]',
-            config.primary.className
-          )}
-        >
-          {config.primary.label}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Inline Add Bowl Card ─────────────────────────────
 function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {

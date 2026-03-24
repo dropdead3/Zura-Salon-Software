@@ -28,7 +28,7 @@ interface DockAppointmentDetailProps {
 }
 
 const TABS: { id: DetailTab; label: string; icon: typeof FlaskConical }[] = [
-  { id: 'services', label: 'Services', icon: FlaskConical },
+  { id: 'services', label: 'Formulations', icon: FlaskConical },
   { id: 'notes', label: 'Notes', icon: StickyNote },
   { id: 'summary', label: 'Summary', icon: Receipt },
   { id: 'client', label: 'Client', icon: User },
@@ -81,20 +81,19 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             <h1 className="font-display text-xl tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
               {appointment.client_name || 'Walk-in'}
             </h1>
-            <div className="flex items-center gap-1 mt-0.5">
-              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate">
-                {appointment.service_name && <span>{appointment.service_name} · </span>}
-                {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
-              </p>
-              {!isTerminal && (
-                <button
-                  onClick={() => setEditServicesOpen(true)}
-                  className="shrink-0 p-0.5 rounded text-[hsl(var(--platform-foreground-muted)/0.6)] hover:text-[hsl(var(--platform-foreground))] transition-colors"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
+              {appointment.service_name && <span>{appointment.service_name} · </span>}
+              {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
+            </p>
+            {!isTerminal && (
+              <button
+                onClick={() => setEditServicesOpen(true)}
+                className="mt-2 px-3 py-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 text-violet-400 text-xs font-medium flex items-center gap-1.5 active:scale-[0.97] transition-all"
+              >
+                <Pencil className="w-3 h-3" />
+                Edit Services
+              </button>
+            )}
           </div>
         </div>
 
