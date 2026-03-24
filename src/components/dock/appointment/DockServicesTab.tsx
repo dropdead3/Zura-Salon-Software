@@ -700,10 +700,10 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
 
       {/* Footer stats */}
       <div className="mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.15)] flex items-center justify-between">
-        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+         <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
           {bowl.totalWeight.toFixed(0)}g total
         </span>
-        <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+        <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
           ${bowl.totalCost.toFixed(2)}
         </span>
       </div>

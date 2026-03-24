@@ -110,7 +110,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
                   : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
               )}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               {label}
             </button>
           ))}

@@ -153,7 +153,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
               onClick={() => dismiss('booking')}
               className="absolute top-2 right-2 p-1 rounded-full text-[hsl(var(--platform-foreground-muted)/0.3)] hover:text-[hsl(var(--platform-foreground-muted)/0.6)] transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+               <X className="w-4 h-4" />
             </button>
           </motion.div>
         )}
