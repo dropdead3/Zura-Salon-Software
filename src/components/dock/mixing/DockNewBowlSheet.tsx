@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { X, FlaskConical } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 

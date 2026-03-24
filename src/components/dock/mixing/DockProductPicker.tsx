@@ -9,6 +9,7 @@ import { X, Search, ArrowLeft, Check } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDockBrands, useDockBrandProducts, useDockProductSearch, type DockProduct } from '@/hooks/dock/useDockProductCatalog';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 

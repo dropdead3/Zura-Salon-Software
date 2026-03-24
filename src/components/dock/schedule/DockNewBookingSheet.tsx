@@ -9,6 +9,7 @@ import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { useDebounce } from '@/hooks/use-debounce';
 import { format, formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2, Users,

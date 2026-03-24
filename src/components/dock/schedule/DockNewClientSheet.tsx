@@ -13,6 +13,7 @@ import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
 import { toast } from 'sonner';
 import { cn, formatPhoneNumber } from '@/lib/utils';
 import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
 

@@ -9,6 +9,7 @@ import { Check, AlertTriangle, FlaskConical, X, Flag } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { roundWeight, roundCost } from '@/lib/backroom/mix-calculations';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
