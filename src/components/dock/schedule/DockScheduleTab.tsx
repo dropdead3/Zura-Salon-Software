@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useDockAppointments, type DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { DockAppointmentCard } from './DockAppointmentCard';
-import { DockNewBookingSheet } from './DockNewBookingSheet';
+
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { cn } from '@/lib/utils';
