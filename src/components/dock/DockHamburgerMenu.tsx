@@ -130,29 +130,27 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              {onAddAppointment && (
-                <div className="px-5 mt-5">
-                  <p className={cn(DOCK_TEXT.category, 'px-1 mb-2')}>Quick Actions</p>
+              {/* Quick Actions — two-column grid */}
+              <div className="px-5 mt-5">
+                <p className={cn(DOCK_TEXT.category, 'px-1 mb-2')}>Quick Actions</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {onAddAppointment && (
+                    <button
+                      onClick={() => { onAddAppointment(); setOpen(false); }}
+                      className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 border-dashed border-violet-500/30 text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/[0.06] transition-colors"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span className="font-sans text-xs">Add Appointment</span>
+                    </button>
+                  )}
                   <button
-                    onClick={() => { onAddAppointment(); setOpen(false); }}
-                    className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl border-2 border-dashed border-violet-500/30 text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/[0.06] transition-colors"
+                    onClick={handleLock}
+                    className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 border-dashed border-red-500/30 text-red-400 hover:border-red-500/50 hover:bg-red-500/[0.06] transition-colors"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span className="font-sans text-sm">Add Appointment</span>
+                    <Lock className="w-5 h-5" />
+                    <span className="font-sans text-xs">Lock Station</span>
                   </button>
                 </div>
-              )}
-
-              {/* Lock Station — isolated zone */}
-              <div className="px-5 mt-6 pb-1">
-                <button
-                  onClick={handleLock}
-                  className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"
-                >
-                  <Lock className="w-5 h-5" />
-                  <span className="font-display text-sm tracking-wide uppercase">Lock Station</span>
-                </button>
               </div>
 
               {/* Drag handle — bottom position for top-anchored sheet */}
