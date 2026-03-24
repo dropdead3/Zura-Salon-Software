@@ -86,6 +86,20 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
         </div>
       )}
 
+      {/* Booking Note (from scheduling) */}
+      {trimmedBooking && (
+        <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
+          <CalendarPlus className="w-4 h-4 text-violet-400/60 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className={cn(DOCK_TEXT.category, 'mb-0.5')}>
+              Booking Note
+            </p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+              {trimmedBooking}
+            </p>
+          </div>
+        </div>
+
       {/* Profile Notes */}
       {profileNotes && (
         <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]">
