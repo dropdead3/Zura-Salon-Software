@@ -4,6 +4,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { saveFormula } from '@/lib/backroom/services/formula-service';
 import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import { DEMO_FORMULA_HISTORY } from '@/hooks/dock/dockDemoData';
 
 export interface ClientFormula {
   id: string;
@@ -29,6 +30,9 @@ export function useClientFormulaHistory(clientId: string | null) {
   return useQuery({
     queryKey: ['client-formula-history', orgId, clientId],
     queryFn: async (): Promise<ClientFormula[]> => {
+      if (clientId?.startsWith('demo-')) {
+        return DEMO_FORMULA_HISTORY[clientId] ?? [];
+      }
       const { data, error } = await supabase
         .from('client_formula_history')
         .select('*')

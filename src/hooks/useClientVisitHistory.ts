@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { DEMO_VISIT_HISTORY } from '@/hooks/dock/dockDemoData';
 
 export interface ClientVisit {
   id: string;
@@ -19,6 +20,9 @@ export function useClientVisitHistory(phorestClientId: string | null | undefined
     queryKey: ['client-visit-history', phorestClientId],
     queryFn: async () => {
       if (!phorestClientId) return [];
+      if (phorestClientId.startsWith('demo-')) {
+        return DEMO_VISIT_HISTORY[phorestClientId] ?? [];
+      }
 
       const { data, error } = await supabase
         .from('phorest_appointments')
