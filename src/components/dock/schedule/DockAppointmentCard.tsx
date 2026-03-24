@@ -285,8 +285,13 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
         )}
       >
         {/* Bowl count badge anchored to sliding layer */}
-        {!TERMINAL_STATUSES.includes((appointment.status || '').toLowerCase()) && (
-          <div className="absolute top-5 right-5 px-2.5 py-1 rounded-lg bg-violet-600/20 text-violet-300 text-[11px] font-display tracking-wide uppercase whitespace-nowrap">
+        {(isActive || (appointment.mix_bowl_count ?? 0) > 0) && !TERMINAL_STATUSES.includes((appointment.status || '').toLowerCase()) && (
+          <div className={cn(
+            "absolute top-5 right-5 px-2.5 py-1 rounded-lg text-[11px] font-sans whitespace-nowrap",
+            (appointment.mix_bowl_count ?? 0) > 0
+              ? "bg-sky-500/15 text-sky-300 border border-sky-400/25"
+              : "bg-amber-500/15 text-amber-300 border border-amber-400/25"
+          )}>
             {(appointment.mix_bowl_count ?? 0) === 0
               ? 'No bowls mixed'
               : `${appointment.mix_bowl_count} bowl${appointment.mix_bowl_count === 1 ? '' : 's'} mixed`}
