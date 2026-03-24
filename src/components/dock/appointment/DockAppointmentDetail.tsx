@@ -74,7 +74,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             onClick={onBack}
             className="flex items-center justify-center w-11 h-11 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
             <h1 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))] truncate">
