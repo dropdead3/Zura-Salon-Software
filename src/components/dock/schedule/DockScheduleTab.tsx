@@ -78,9 +78,9 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
   const storageKey = `dock-chemical-toggle::${staff.userId}`;
-  const [showChemicalOnly, setShowChemicalOnly] = useState(() => {
+  const [showAll, setShowAll] = useState(() => {
     const saved = localStorage.getItem(storageKey);
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : false;
   });
 
   // Confirmation dialog state
@@ -89,7 +89,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
   const handleToggleChange = (checked: boolean) => {
     localStorage.setItem(storageKey, String(checked));
-    setShowChemicalOnly(checked);
+    setShowAll(checked);
   };
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -168,7 +168,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
   const filteredAppointments = useMemo(() => {
     const all = appointments || [];
-    if (!showChemicalOnly) return all;
+    if (showAll) return all;
     return all.filter((a) => {
       const services = (a.service_name || '').split(',').map((s) => s.trim().toLowerCase());
       if (trackedSet) {
@@ -176,7 +176,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       }
       return services.some((s) => isColorOrChemicalService(s));
     });
-  }, [appointments, showChemicalOnly, trackedSet]);
+  }, [appointments, showAll, trackedSet]);
 
   if (isLoading) {
     return (
@@ -203,11 +203,11 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
       {/* Chemical filter toggle */}
       <div className="flex items-center justify-between px-7 pt-2 pb-5">
         <label htmlFor="chemical-toggle" className="text-base text-[hsl(var(--platform-foreground-muted))]">
-          Show Color & Chemical Service Appointments Only
+          Show All Appointments
         </label>
         <Switch
           id="chemical-toggle"
-          checked={showChemicalOnly}
+          checked={showAll}
           onCheckedChange={handleToggleChange}
           className="data-[state=checked]:bg-violet-500/60 data-[state=unchecked]:bg-[hsl(var(--platform-foreground-muted)/0.25)]"
         />
