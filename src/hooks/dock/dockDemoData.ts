@@ -3,10 +3,13 @@
  * Used when staff.userId === 'dev-bypass-000'.
  */
 
-import { format, addMinutes, subMinutes, setHours, setMinutes, setSeconds } from 'date-fns';
+import { format, addMinutes, subMinutes, subWeeks, setHours, setMinutes, setSeconds } from 'date-fns';
 import type { DockAppointment } from './useDockAppointments';
 import type { DockProduct } from './useDockProductCatalog';
 import type { DockMixSession } from './useDockMixSessions';
+import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { ClientVisit } from '@/hooks/useClientVisitHistory';
+import type { ResolvedFormulaMemory } from '@/lib/backroom/services/formula-resolver';
 
 const today = format(new Date(), 'yyyy-MM-dd');
 const now = new Date();
