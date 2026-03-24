@@ -139,19 +139,21 @@ export function DockFormulaBuilder({
         )}
 
         {/* Add product button */}
-        <button
-          onClick={() => setPickerOpen(true)}
-          className="w-full flex items-center justify-center gap-2 h-11 mt-3 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
-        </button>
+        {showAddButton && (
+          <button
+            onClick={() => setInternalPickerOpen(true)}
+            className="w-full flex items-center justify-center gap-2 h-11 mt-3 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        )}
       </div>
 
       {/* Product picker modal */}
       <DockProductPicker
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        open={isPickerOpen}
+        onClose={closePickerFn}
         onAddProducts={handleAddProducts}
         selectedIds={existingIds}
       />
