@@ -1,35 +1,27 @@
 
 
-## Fix Down Arrow Indicator Not Showing at Top of Scroll
+## Move "Add Appointment" Button into Hamburger Menu
 
-**Problem:** The `showScrollIndicator` state initializes as `false`, and `checkScroll` runs on mount — but the scroll container may not have rendered its content yet when `checkScroll` first fires, so `scrollHeight` equals `clientHeight` and the indicator stays hidden.
+**Goal:** Remove the inline "Add Appointment" button from the schedule scroll area and place it as a quick action in the hamburger menu, decluttering the working screen.
 
-**Root cause:** The `checkScroll` runs synchronously on mount via `useEffect`. At that point, the appointment cards may not have fully rendered, so the container doesn't report overflow yet.
+### Change 1 — `src/components/dock/DockHamburgerMenu.tsx`
 
-### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
+1. Add `onAddAppointment` callback to props interface
+2. Import `Plus` icon from lucide-react
+3. Add a new "Quick Actions" section between the tab items and the divider/Lock Station area:
+   - A violet-themed "Add Appointment" button with `Plus` icon, matching the existing tab item styling but with violet accent (similar to how the active tab looks)
+   - On click: call `onAddAppointment()` and close the menu
 
-1. Add a `ResizeObserver` on the scroll container to re-run `checkScroll` whenever content size changes. This catches the moment cards finish rendering and the container becomes scrollable:
+### Change 2 — `src/components/dock/schedule/DockScheduleTab.tsx`
 
-```ts
-useEffect(() => {
-  const el = scrollRef.current;
-  if (!el) return;
-  checkScroll();
-  el.addEventListener('scroll', checkScroll, { passive: true });
-  
-  const resizeObserver = new ResizeObserver(() => checkScroll());
-  resizeObserver.observe(el);
-  // Also observe the first child (content container) for height changes
-  if (el.firstElementChild) {
-    resizeObserver.observe(el.firstElementChild);
-  }
-  
-  return () => {
-    el.removeEventListener('scroll', checkScroll);
-    resizeObserver.disconnect();
-  };
-}, [checkScroll, appointments]);
-```
+1. Remove the inline `<button>` block (lines 242-248) that renders "Add Appointment"
+2. The `setShowNewBooking(true)` trigger will now be called from the hamburger menu callback instead
 
-This ensures `checkScroll` re-evaluates once the content actually renders and `scrollHeight > clientHeight` becomes true. One file, one block updated.
+### Change 3 — `src/components/dock/DockLayout.tsx`
+
+1. Lift `showNewBooking` state (or pass a callback) so the hamburger menu can trigger the new booking sheet
+2. Pass `onAddAppointment` prop to `DockHamburgerMenu`
+3. Wire it to open the `DockNewBookingSheet` (the same sheet currently triggered from the schedule tab)
+
+**Result:** The schedule screen starts directly with the Active/Upcoming appointment groups, and "Add Appointment" lives in the hamburger menu as a quick action.
 
