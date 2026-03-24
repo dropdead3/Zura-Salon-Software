@@ -614,7 +614,7 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
       {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className={cn('w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
+          <div className={cn('w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
             <StatusIcon className={cn('w-4.5 h-4.5', status.color)} />
           </div>
           <div className="min-w-0">
