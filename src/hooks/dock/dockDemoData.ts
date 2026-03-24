@@ -497,3 +497,156 @@ export function searchDemoClients(query: string): DemoClient[] {
       (c.phone && c.phone.includes(q))
   );
 }
+
+// ─── Rachel Kim — Demo Formula History ──────────────────
+
+const rachelFormulaDate3w = format(subWeeks(new Date(), 3), 'yyyy-MM-dd\'T\'HH:mm:ss');
+const rachelFormulaDate6w = format(subWeeks(new Date(), 6), 'yyyy-MM-dd\'T\'HH:mm:ss');
+const rachelFormulaDate10w = format(subWeeks(new Date(), 10), 'yyyy-MM-dd\'T\'HH:mm:ss');
+
+export const DEMO_FORMULA_HISTORY: Record<string, ClientFormula[]> = {
+  'demo-client-7': [
+    {
+      id: 'demo-formula-rk-1',
+      organization_id: 'demo-org-000',
+      client_id: 'demo-client-7',
+      appointment_id: 'demo-apt-rk-3w',
+      appointment_service_id: null,
+      mix_session_id: null,
+      service_name: 'Root Touch-Up + Gloss',
+      formula_type: 'actual',
+      formula_data: [
+        { product_id: 'demo-prod-kp60', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 25, unit: 'g' },
+        { product_id: 'demo-prod-kp71', product_name: 'Koleston Perfect 7/1', brand: 'Wella', quantity: 5, unit: 'g' },
+        { product_id: 'demo-prod-welloxon20', product_name: 'Welloxon 20 Vol', brand: 'Wella', quantity: 30, unit: 'ml' },
+        { product_id: 'demo-prod-sf0913', product_name: 'Shinefinity 09/13', brand: 'Wella', quantity: 40, unit: 'g' },
+      ],
+      staff_id: 'demo-staff-jenna',
+      staff_name: 'Jenna B.',
+      notes: 'Level 7 base maintained, added 7/1 for dimension',
+      version_number: 2,
+      created_at: rachelFormulaDate3w,
+    },
+    {
+      id: 'demo-formula-rk-2',
+      organization_id: 'demo-org-000',
+      client_id: 'demo-client-7',
+      appointment_id: 'demo-apt-rk-6w',
+      appointment_service_id: null,
+      mix_session_id: null,
+      service_name: 'Root Touch-Up + Gloss',
+      formula_type: 'actual',
+      formula_data: [
+        { product_id: 'demo-prod-kp60', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 30, unit: 'g' },
+        { product_id: 'demo-prod-welloxon20', product_name: 'Welloxon 20 Vol', brand: 'Wella', quantity: 30, unit: 'ml' },
+        { product_id: 'demo-prod-sf0913', product_name: 'Shinefinity 09/13', brand: 'Wella', quantity: 40, unit: 'g' },
+      ],
+      staff_id: 'demo-staff-jenna',
+      staff_name: 'Jenna B.',
+      notes: 'Keep it natural — level 7 base',
+      version_number: 1,
+      created_at: rachelFormulaDate6w,
+    },
+    {
+      id: 'demo-formula-rk-3',
+      organization_id: 'demo-org-000',
+      client_id: 'demo-client-7',
+      appointment_id: 'demo-apt-rk-10w',
+      appointment_service_id: null,
+      mix_session_id: null,
+      service_name: 'Single Process Color',
+      formula_type: 'actual',
+      formula_data: [
+        { product_id: 'demo-prod-igora50', product_name: 'Igora Royal 5-0', brand: 'Schwarzkopf', quantity: 40, unit: 'g' },
+        { product_id: 'demo-prod-igdev20', product_name: 'Igora Developer 20 Vol', brand: 'Schwarzkopf', quantity: 40, unit: 'ml' },
+      ],
+      staff_id: 'demo-staff-jenna',
+      staff_name: 'Jenna B.',
+      notes: 'Initial color — transitioning from box dye',
+      version_number: 1,
+      created_at: rachelFormulaDate10w,
+    },
+  ],
+};
+
+// ─── Rachel Kim — Demo Visit History ────────────────────
+
+const rachelVisitDate3w = format(subWeeks(new Date(), 3), 'yyyy-MM-dd');
+const rachelVisitDate6w = format(subWeeks(new Date(), 6), 'yyyy-MM-dd');
+const rachelVisitDate10w = format(subWeeks(new Date(), 10), 'yyyy-MM-dd');
+const rachelVisitDate14w = format(subWeeks(new Date(), 14), 'yyyy-MM-dd');
+
+export const DEMO_VISIT_HISTORY: Record<string, ClientVisit[]> = {
+  'demo-client-7': [
+    {
+      id: 'demo-visit-rk-1',
+      appointment_date: rachelVisitDate3w,
+      start_time: '10:00:00',
+      end_time: '11:45:00',
+      service_name: 'Root Touch-Up + Gloss',
+      service_category: 'Color',
+      stylist_name: 'Jenna B.',
+      status: 'completed',
+      total_price: 185,
+      notes: 'Level 7 base maintained, added 7/1 for dimension',
+    },
+    {
+      id: 'demo-visit-rk-2',
+      appointment_date: rachelVisitDate6w,
+      start_time: '14:00:00',
+      end_time: '15:30:00',
+      service_name: 'Root Touch-Up + Gloss',
+      service_category: 'Color',
+      stylist_name: 'Jenna B.',
+      status: 'completed',
+      total_price: 175,
+      notes: 'Keep it natural — level 7 base',
+    },
+    {
+      id: 'demo-visit-rk-3',
+      appointment_date: rachelVisitDate10w,
+      start_time: '11:00:00',
+      end_time: '12:30:00',
+      service_name: 'Single Process Color',
+      service_category: 'Color',
+      stylist_name: 'Jenna B.',
+      status: 'completed',
+      total_price: 150,
+      notes: 'Initial color — transitioning from box dye',
+    },
+    {
+      id: 'demo-visit-rk-4',
+      appointment_date: rachelVisitDate14w,
+      start_time: '09:30:00',
+      end_time: '10:15:00',
+      service_name: 'Signature Haircut',
+      service_category: 'Cut',
+      stylist_name: 'Jenna B.',
+      status: 'completed',
+      total_price: 75,
+      notes: 'Consultation — discussed going lighter',
+    },
+  ],
+  'demo-pc-7': [], // alias resolved below
+};
+
+// Alias phorest client ID to same data
+DEMO_VISIT_HISTORY['demo-pc-7'] = DEMO_VISIT_HISTORY['demo-client-7'];
+
+// ─── Rachel Kim — Demo Formula Memory ───────────────────
+
+const rachelMostRecentFormula = DEMO_FORMULA_HISTORY['demo-client-7'][0];
+
+export const DEMO_FORMULA_MEMORY: Record<string, ResolvedFormulaMemory> = {
+  'demo-client-7::Root Touch-Up + Gloss': {
+    lines: rachelMostRecentFormula.formula_data,
+    source: 'client_last_visit',
+    sourceLabel: "Client's Last Visit",
+    referenceId: rachelMostRecentFormula.id,
+    ratio: '5 : 1 : 6 : 8',
+    serviceName: 'Root Touch-Up + Gloss',
+    staffName: 'Jenna B.',
+    notes: rachelMostRecentFormula.notes,
+    createdAt: rachelMostRecentFormula.created_at,
+  },
+};

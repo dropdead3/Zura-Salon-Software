@@ -30,6 +30,9 @@ export function useClientFormulaHistory(clientId: string | null) {
   return useQuery({
     queryKey: ['client-formula-history', orgId, clientId],
     queryFn: async (): Promise<ClientFormula[]> => {
+      if (clientId?.startsWith('demo-')) {
+        return DEMO_FORMULA_HISTORY[clientId] ?? [];
+      }
       const { data, error } = await supabase
         .from('client_formula_history')
         .select('*')
