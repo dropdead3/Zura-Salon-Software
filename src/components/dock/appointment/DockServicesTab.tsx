@@ -586,10 +586,10 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
         'disabled:opacity-40'
       )}
     >
-      <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-        <Plus className="w-5 h-5" />
+      <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+        <Plus className="w-6 h-6" />
       </div>
-      <span className="text-xs font-medium">Add Bowl</span>
+      <span className="text-sm font-medium">Add Bowl</span>
     </button>
   );
 }
