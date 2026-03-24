@@ -1,23 +1,19 @@
 
 
-## Show Demo Badge Inside the iPad Device Frame
+## Add Bottom Gradient Fade to iPad Frame
 
-**Problem:** The `DockDemoBadge` currently renders with `fixed top-3 left-3` positioning outside the device mockup. It appears on the outer page but not inside the simulated iPad screen where users are looking.
+**Goal:** Add a smooth gradient overlay at the bottom of the dock content area that fades from transparent to the background color, sitting above cards but below the lock FAB and chevron indicator.
 
 ### Change — `src/components/dock/DockLayout.tsx`
 
-Move `<DockDemoBadge />` inside `dockContent` so it renders within the device frame on all screens (schedule, active, clients, settings, appointment detail). It's already inside the `DockDemoProvider` context so `isDemoMode` will work.
+Add a `pointer-events-none` gradient div inside `dockContent`, positioned absolutely at the bottom, between the content area and the FAB (z-20, since FAB is z-30):
 
-- Add `<DockDemoBadge />` inside the `dockContent` div, above the content area
-- Keep the existing outer `<DockDemoBadge />` for the non-constrained (full) layout as well
-
-### Change — `src/components/dock/DockDemoBadge.tsx`
-
-Change positioning from `fixed` to `absolute` so it's contained within the device frame's `relative` container. This ensures it stays inside the iPad mockup.
-
-```
-fixed top-3 left-3 → absolute top-3 left-3
+```tsx
+{/* Bottom fade gradient */}
+<div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
 ```
 
-Two files, minimal changes.
+Place it after the content `div` and before the Lock FAB. The gradient uses the platform background color so it blends seamlessly.
+
+One file, one line added.
 
