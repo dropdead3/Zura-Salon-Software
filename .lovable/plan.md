@@ -1,33 +1,49 @@
 
 
-## Add Formula History Quick-Access on Services Tab
+## Consolidate Notes & Surface Appointment Notes on Services Tab
 
-### Approach
+### Current state
+- **Services tab**: Shows allergy banner + profile notes (from client record)
+- **Notes tab**: Shows only `appointment.notes` (single text field from scheduling)
+- **`appointment_notes` table**: Threaded notes with authors — exists but NOT shown in Dock
 
-Add a small floating button in the bottom-left corner of the Services tab (mirroring the lock icon position on the opposite side). Tapping it opens a bottom sheet showing the client's formula history — each entry with date, service name, stylist, formula type, and a compact ingredient list.
+### Plan
 
-### Changes
+**1. Redesign the Notes tab — show everything**
 
-**1. New component: `src/components/dock/appointment/DockFormulaHistorySheet.tsx`**
+Update `DockNotesTab.tsx` to consolidate three note sources:
 
-A top-anchored sheet (matching Dock conventions) containing:
-- Header: "Formula History" + client name
-- List of formula entries from `useClientFormulaHistory(clientId)`, each showing:
-  - Date (formatted), service name, stylist name
-  - Formula type badge (actual/refined)
-  - Compact ingredient list (product name + weight, truncated to 3 lines)
-- Empty state if no history
-- Uses `DOCK_SHEET` tokens, `px-7` spacing
+- **Appointment note** (from `appointment.notes`) — labeled "Booking Note", shown in a muted card with a `CalendarPlus` icon. Read-only. This is what the receptionist added at scheduling time.
+- **Profile notes** (from client record) — labeled "Profile Notes", same query as the banner. Read-only here too.
+- **Threaded appointment notes** (from `appointment_notes` table via `useAppointmentNotes`) — labeled "Team Notes", with author avatars, timestamps, and an input to add new notes. This is the interactive section.
 
-**2. Update `src/components/dock/appointment/DockServicesTab.tsx`**
+Each section gets a `DOCK_TEXT.category` label. Empty sections are omitted.
 
-- Import the new sheet + `History` icon from lucide
-- Add state: `showFormulaHistory`
-- Render a small circular button in the bottom-left (absolute positioned, `bottom-4 left-5 z-[25]`) with a `History` icon — subtle glass style matching the lock button aesthetic
-- Render `<DockFormulaHistorySheet>` controlled by that state, passing `appointment.client_id` and `appointment.client_name`
-- Only show the button when a `client_id` exists on the appointment
+**2. Update Services tab banner — add booking note**
+
+Update `DockClientAlertsBanner.tsx` to also accept and display `appointment.notes` (the scheduling/booking note). Add a new compact card between allergies and profile notes, styled with a `CalendarPlus` icon and "Booking Note" label. This ensures stylists see receptionist reminders before mixing.
+
+### Files to change
+
+**`src/components/dock/appointment/DockNotesTab.tsx`** — Major rewrite:
+- Import `useAppointmentNotes` hook + `useQuery` for client profile
+- Add the three sections (Booking Note, Profile Notes, Team Notes)
+- Add input form for new team notes at the top
+- Accept additional props: `clientId`, `phorestClientId`, `clientName`
+
+**`src/components/dock/appointment/DockClientAlertsBanner.tsx`**:
+- Accept new `bookingNotes` prop (the `appointment.notes` string)
+- Render a compact card for booking notes between allergy and profile sections
+
+**`src/components/dock/appointment/DockAppointmentDetail.tsx`**:
+- Pass `appointment.client_id`, `appointment.phorest_client_id`, and `appointment.client_name` to `DockNotesTab`
+- Pass `appointment.notes` to `DockClientAlertsBanner` via `DockServicesTab`
+
+**`src/components/dock/appointment/DockServicesTab.tsx`**:
+- Pass `appointment.notes` through to `DockClientAlertsBanner` as `bookingNotes`
 
 ### Result
-
-Stylists get one-tap access to the client's full formula history without leaving the Services tab. The button sits unobtrusively in the bottom-left, balancing the lock icon in the bottom-right.
+- Notes tab becomes the single hub for all note types
+- Services tab surfaces booking notes (receptionist reminders) alongside allergies and profile notes
+- Team notes are finally visible and interactive in the Dock
 
