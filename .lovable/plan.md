@@ -1,21 +1,14 @@
 
 
-## Make Drag Handle Visible on Hamburger Menu
+## Change "Comp" Badge Label to "Waived"
 
-**Problem:** The drag handle exists in code (lines 163-166) but is nearly invisible due to the 30% opacity on the dark background.
+### Change — `src/components/dock/schedule/DockAppointmentCard.tsx`
 
-### Change — `src/components/dock/DockHamburgerMenu.tsx`
+Update line 56 in the `PAYMENT_BADGE` map:
 
-1. Increase handle opacity from `0.3` to `0.5` for better visibility on the dark platform background
-2. Add more bottom padding (`pb-4` instead of `pb-3`) so the handle has breathing room and doesn't feel clipped
-3. Increase `pt-1` to `pt-2` for better visual separation from Lock Station
-
-```tsx
-{/* Drag handle — bottom position for top-anchored sheet */}
-<div className="flex justify-center pb-4 pt-2">
-  <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.5)] cursor-grab active:cursor-grabbing" />
-</div>
+```ts
+comp: { label: 'Waived', variant: DOCK_BADGE.comp },
 ```
 
-One file, one line block updated.
+One word change, one file.
 
