@@ -35,8 +35,15 @@ const RATIO_PRESETS = [
   { label: '2x', value: 2 },
 ];
 
-export function DockFormulaBuilder({ lines, onLinesChange, baseWeight, onBaseWeightChange }: DockFormulaBuilderProps) {
-  const [pickerOpen, setPickerOpen] = useState(false);
+export function DockFormulaBuilder({
+  lines, onLinesChange, baseWeight, onBaseWeightChange,
+  showAddButton = true,
+  pickerOpen: externalPickerOpen,
+  onPickerClose,
+}: DockFormulaBuilderProps) {
+  const [internalPickerOpen, setInternalPickerOpen] = useState(false);
+  const isPickerOpen = externalPickerOpen ?? internalPickerOpen;
+  const closePickerFn = onPickerClose ?? (() => setInternalPickerOpen(false));
 
   const existingIds = new Set(lines.map((l) => l.product.id));
 
