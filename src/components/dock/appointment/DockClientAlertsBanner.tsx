@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertTriangle, FileText, ChevronDown, ChevronUp, CalendarPlus } from 'lucide-react';
 import { detectAllergyFlags } from '@/lib/backroom/detect-allergy-flags';
 import { DOCK_TEXT } from '@/components/dock/dock-ui-tokens';
 import { cn } from '@/lib/utils';
