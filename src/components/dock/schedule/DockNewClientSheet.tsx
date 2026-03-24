@@ -24,6 +24,7 @@ interface DockNewClientSheetProps {
   onClose: () => void;
   locationId: string;
   organizationId: string;
+  defaultName?: string;
   onClientCreated: (client: {
     id: string;
     phorest_client_id: string;
@@ -38,6 +39,7 @@ export function DockNewClientSheet({
   onClose,
   locationId,
   organizationId,
+  defaultName,
   onClientCreated,
 }: DockNewClientSheetProps) {
   const queryClient = useQueryClient();
