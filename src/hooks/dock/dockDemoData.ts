@@ -80,7 +80,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-1',
       notes: 'Wants warm caramel tones, avoid going too ashy',
-      has_mix_session: true,
+      mix_bowl_count: 1,
       assistant_names: ['Alexis R.'],
     },
     {
@@ -96,7 +96,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-7',
       notes: 'Keep it natural — level 7 base',
-      has_mix_session: true,
+      mix_bowl_count: 2,
     },
     {
       id: 'demo-appt-2',
@@ -111,7 +111,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       phorest_client_id: 'demo-phorest-1',
       notes: null,
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-3',
@@ -127,7 +127,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       client_id: 'demo-client-3',
       assistant_names: ['Kylie M.', 'Alexis R.'],
       notes: 'New client — consultation needed',
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-4',
@@ -142,7 +142,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       phorest_client_id: 'demo-phorest-2',
       notes: 'Fixed banding from previous salon',
-      has_mix_session: true,
+      mix_bowl_count: 3,
       payment_status: 'paid',
     },
     {
@@ -158,7 +158,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-5',
       notes: null,
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-6',
@@ -173,7 +173,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       phorest_client_id: 'demo-phorest-3',
       notes: 'Purple and magenta panels',
-      has_mix_session: true,
+      mix_bowl_count: 2,
       payment_status: 'unpaid',
     },
     // ── Non-chemical appointments (visible only with toggle off) ──
@@ -190,7 +190,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-8',
       notes: null,
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-9',
@@ -205,7 +205,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-9',
       notes: null,
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-10',
@@ -220,7 +220,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-10',
       notes: 'Wedding updo — bring inspiration photos',
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-11',
@@ -235,7 +235,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-11',
       notes: null,
-      has_mix_session: false,
+      mix_bowl_count: 0,
       payment_status: 'comp',
     },
   ];
