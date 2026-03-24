@@ -78,9 +78,9 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   const today = format(new Date(), 'EEEE, MMMM d');
   const [showNewBooking, setShowNewBooking] = useState(false);
   const storageKey = `dock-chemical-toggle::${staff.userId}`;
-  const [showChemicalOnly, setShowChemicalOnly] = useState(() => {
+  const [showAll, setShowAll] = useState(() => {
     const saved = localStorage.getItem(storageKey);
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : false;
   });
 
   // Confirmation dialog state
