@@ -1,7 +1,6 @@
 /**
- * DockNewBowlSheet — Bottom sheet for creating a new formula bowl.
- * Wraps DockFormulaBuilder with session creation logic.
- * Supports pull-to-dismiss and tap-outside-to-close.
+ * DockNewBowlSheet — Top-anchored sheet for creating a new formula bowl.
+ * Uses standard DOCK_SHEET tokens for visual consistency.
  */
 
 import { useState } from 'react';
@@ -9,8 +8,6 @@ import { X, FlaskConical } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
 import { DOCK_SHEET } from '../dock-ui-tokens';
-
-const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
 interface DockNewBowlSheetProps {
   open: boolean;
@@ -36,7 +33,7 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
         <div className="absolute inset-0 z-40">
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0"
+            className={DOCK_SHEET.backdrop}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -46,18 +43,19 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
 
           {/* Sheet — top-anchored */}
           <motion.div
-            className="absolute inset-x-0 top-0 bg-[hsl(var(--platform-bg-elevated))] rounded-b-2xl border-b border-[hsl(var(--platform-border)/0.3)] max-h-[85vh] flex flex-col"
+            className={DOCK_SHEET.panel}
+            style={{ maxHeight: DOCK_SHEET.maxHeight }}
             initial={{ y: '-100%' }}
             animate={{ y: 0 }}
             exit={{ y: '-100%' }}
-            transition={SPRING}
+            transition={DOCK_SHEET.spring}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0.6, bottom: 0 }}
             onDragEnd={(_e, info) => {
-              if (info.offset.y < -120 || info.velocity.y < -500) {
+              if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
                 onClose();
               }
             }}
@@ -95,7 +93,7 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
               <button
                 onClick={handleCreate}
                 disabled={lines.length === 0}
-                className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+                className="w-full h-12 rounded-full bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
               >
                 Create Bowl ({lines.length} ingredient{lines.length !== 1 ? 's' : ''})
               </button>
