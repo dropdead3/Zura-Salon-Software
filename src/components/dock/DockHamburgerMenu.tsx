@@ -27,7 +27,7 @@ const TABS: { id: DockTab; label: string; icon: typeof Calendar }[] = [
 
 const SPRING = DOCK_SHEET.spring;
 
-export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: DockHamburgerMenuProps) {
+export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAddAppointment }: DockHamburgerMenuProps) {
   const [open, setOpen] = useState(false);
 
   const handleTabSelect = (id: DockTab) => {
