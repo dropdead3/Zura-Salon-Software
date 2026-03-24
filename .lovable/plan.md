@@ -1,18 +1,33 @@
 
 
-## Invert Chemical Toggle Logic
+## Luxury Press Feedback on PIN Numpad Buttons
 
-**Problem:** The toggle currently says "Show Color & Chemical Service Appointments Only" and defaults ON (filtering to chemical-only). User wants the inverse: label says "Show All Appointments", toggle ON = show all, toggle OFF = show only chemical/color.
+**Problem:** The numpad buttons currently use `active:bg-violet-600/20` with a basic `transition-colors` — the purple flash is instant and snaps back immediately. No lingering feedback to show which digit was just pressed.
 
-### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
+### Change — `src/components/dock/DockPinGate.tsx`
 
-1. **Rename state:** `showChemicalOnly` → `showAll` (or just invert the semantics in-place)
-2. **Default value:** Flip the default from `true` → `false` (so it starts showing chemical-only)
-3. **Label text:** `"Show Color & Chemical Service Appointments Only"` → `"Show All Appointments"`
-4. **Filter logic:** Invert the condition — currently `if (!showChemicalOnly) return all;` becomes `if (showAll) return all;` (same logic, just the variable name/semantics flip)
-5. **localStorage:** Keep same storage key for continuity, but the stored boolean now means the opposite
+Replace the plain CSS `active:` state with a CSS approach using a longer `transition-duration` on release, creating a "press glow that slowly fades":
 
-Lines affected: ~81-83 (default), ~90-93 (handler), ~169-171 (filter), ~205-206 (label), ~210 (checked prop).
+**Button class update (digit buttons, line ~210):**
 
-One file, semantic inversion only.
+```
+// Before
+active:bg-violet-600/20 transition-colors
+
+// After — luxury ease-out glow
+active:bg-violet-500/25 active:shadow-[inset_0_0_20px_rgba(139,92,246,0.15)] 
+active:scale-[0.97] 
+transition-all duration-500 ease-out
+```
+
+Key changes:
+1. **Longer transition duration:** `transition-colors` → `transition-all duration-500 ease-out` — the release fade takes 500ms, giving a visible "afterglow" effect
+2. **Richer active color:** `violet-600/20` → `violet-500/25` — slightly brighter, warmer violet
+3. **Inset glow shadow:** `active:shadow-[inset_0_0_20px_rgba(139,92,246,0.15)]` — soft inner glow on press
+4. **Subtle scale:** `active:scale-[0.97]` — minimal press-down feel that eases back smoothly over 500ms
+5. **Remove hover state** or soften it: `hover:bg-[hsl(var(--platform-bg-hover))]` stays but won't conflict
+
+The 500ms `ease-out` on release means the purple tint and scale visibly return to normal over half a second — you can see which button was just tapped.
+
+One file, one className string update.
 
