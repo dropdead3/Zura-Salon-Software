@@ -323,7 +323,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                   </div>
 
                   {/* Bowl grid */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     {remote.map((session) => {
                       bowlIdx++;
                       return (
