@@ -150,7 +150,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
               <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
 
               {/* Lock Station */}
-              <div className="px-4 pb-4">
+              <div className="px-4 pb-2">
                 <button
                   onClick={handleLock}
                   className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"
@@ -158,6 +158,11 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
                   <Lock className="w-5 h-5" />
                   <span className="font-display text-sm tracking-wide uppercase">Lock Station</span>
                 </button>
+              </div>
+
+              {/* Drag handle — bottom position for top-anchored sheet */}
+              <div className="flex justify-center pb-3 pt-1">
+                <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] cursor-grab active:cursor-grabbing" />
               </div>
             </motion.div>
           </>

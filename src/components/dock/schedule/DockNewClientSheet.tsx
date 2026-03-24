@@ -361,6 +361,12 @@ export function DockNewClientSheet({
                 )}
               </button>
             </div>
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div
+              onPointerDown={(e) => dragControls.start(e)}
+              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            />
           </motion.div>
         </>
       )}
