@@ -29,6 +29,8 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
+import { DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
+import { cn } from '@/lib/utils';
 interface DockClientTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
@@ -505,40 +507,40 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
 
         {/* Badges row */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-display tracking-wide uppercase text-violet-400">
+          <span className={cn(DOCK_BADGE.base, DOCK_BADGE.visits, 'inline-flex items-center gap-1')}>
             <CalendarDays className="w-3 h-3" />
             {memory?.visitCount || completedVisits.length} visits
           </span>
           {firstVisitDate && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[hsl(var(--platform-bg-elevated))] border border-[hsl(var(--platform-border)/0.2)] text-[10px] tracking-wide text-[hsl(var(--platform-foreground-muted))]">
+            <span className={cn(DOCK_BADGE.base, DOCK_BADGE.neutral)}>
               Since {format(parseISO(firstVisitDate), 'MMM yyyy')}
             </span>
           )}
           {clvTier && (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-display tracking-wide uppercase ${
-              clvTier.tier === 'platinum' ? 'bg-violet-500/10 border-violet-500/20 text-violet-400' :
-              clvTier.tier === 'gold' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
-              clvTier.tier === 'silver' ? 'bg-slate-400/10 border-slate-400/20 text-slate-400' :
-              'bg-orange-500/10 border-orange-500/20 text-orange-400'
-            }`}>
+            <span className={cn(DOCK_BADGE.base, 'inline-flex items-center gap-1',
+              clvTier.tier === 'platinum' ? DOCK_BADGE.clvPlatinum :
+              clvTier.tier === 'gold' ? DOCK_BADGE.clvGold :
+              clvTier.tier === 'silver' ? DOCK_BADGE.clvSilver :
+              DOCK_BADGE.clvBronze
+            )}>
               <Star className="w-3 h-3" />
               {clvTier.label}
             </span>
           )}
           {memory?.isFirstVisit && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-display tracking-wide uppercase text-emerald-400">
+            <span className={cn(DOCK_BADGE.base, DOCK_BADGE.firstVisit)}>
               First Visit
             </span>
           )}
           {noShowRate > 10 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-display tracking-wide uppercase text-rose-400">
+            <span className={cn(DOCK_BADGE.base, DOCK_BADGE.noShowRisk, 'inline-flex items-center gap-1')}>
               <AlertCircle className="w-3 h-3" />
               {noShowRate}% No-Show
             </span>
           )}
           {/* Preferred Stylist */}
           {preferredStylistId && preferredStylist && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-[10px] font-display tracking-wide uppercase text-violet-400">
+            <span className={cn(DOCK_BADGE.base, DOCK_BADGE.preferred, 'inline-flex items-center gap-1')}>
               <Heart className="w-3 h-3" />
               Prefers: {preferredStylistName}
             </span>
