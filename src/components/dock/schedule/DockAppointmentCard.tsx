@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 import { formatMinutesToDuration } from '@/lib/formatDuration';
-import { DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
+import { DOCK_SHEET, DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
 
 function formatAssistantLabel(names: string[]): string {
   if (names.length === 1) return `Assisted by ${names[0]}`;
