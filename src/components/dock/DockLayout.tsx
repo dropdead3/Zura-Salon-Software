@@ -115,7 +115,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       />
 
       {/* Bottom fade gradient — schedule tab only */}
-      {activeTab === 'schedule' && (
+      {activeTab === 'schedule' && !showingDetail && (
         <div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
       )}
 
