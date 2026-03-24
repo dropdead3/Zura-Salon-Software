@@ -91,7 +91,7 @@ export function DockDeviceSwitcher({ device, onChange, orientation, onOrientatio
           <select
             value={locationId || ''}
             onChange={handleLocationChange}
-            className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[120px] truncate"
+            className="bg-transparent text-xs text-white/80 outline-none cursor-pointer appearance-none pr-1 max-w-[160px] truncate"
           >
             <option value="" disabled className="bg-[hsl(0_0%_14%)] text-white/60">
               Set location
