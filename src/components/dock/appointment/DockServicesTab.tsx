@@ -1,8 +1,8 @@
 /**
- * DockServicesTab — Bowl cards grid + "Add Bowl" + session complete action.
- * Queries mix sessions for this appointment and displays bowl status.
- * Tapping a bowl opens DockLiveDispensing. Creating a bowl wires through command layer.
- * In demo mode, bowls are managed in local state (no DB writes).
+ * DockServicesTab — Per-service bowl configurator.
+ * Groups bowls by individual color/chemical service on the appointment.
+ * Each service section has its own bowl grid and "Add Bowl" card.
+ * Non-mixing services (haircuts, styling) are excluded.
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
@@ -25,6 +25,7 @@ import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockClientAlertsBanner } from './DockClientAlertsBanner';
 import { DockFormulaHistorySheet } from './DockFormulaHistorySheet';
+import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -65,6 +66,20 @@ interface DemoBowl {
   totalWeight: number;
   totalCost: number;
   createdAt: string;
+  serviceLabel: string | null;
+}
+
+/** Parse service_name into individual service tokens */
+function parseServices(serviceName: string | null | undefined): string[] {
+  if (!serviceName) return [];
+  // Try ` + ` first (Phorest multi-service), then `, `
+  const delim = serviceName.includes(' + ') ? ' + ' : ', ';
+  return serviceName.split(delim).map(s => s.trim()).filter(Boolean);
+}
+
+/** Get only color/chemical services from an appointment */
+function getChemicalServices(serviceName: string | null | undefined): string[] {
+  return parseServices(serviceName).filter(s => isColorOrChemicalService(s));
 }
 
 export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
@@ -74,6 +89,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const [showComplete, setShowComplete] = useState(false);
   const [showBowlDetection, setShowBowlDetection] = useState(false);
   const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
+  const [activeServiceLabel, setActiveServiceLabel] = useState<string | null>(null);
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
   const markUnresolved = useMarkDockSessionUnresolved();
@@ -90,9 +106,17 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     return () => window.removeEventListener('dock-demo-reset', handleReset);
   }, []);
 
+  // Parse chemical services
+  const chemicalServices = useMemo(() => getChemicalServices(appointment.service_name), [appointment.service_name]);
+
   // Get the first session ID for stats query
   const primarySessionId = sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);
+
+  const handleAddBowlForService = useCallback((serviceLabel: string) => {
+    setActiveServiceLabel(serviceLabel);
+    if (!showBowlDetection) setShowBowlDetection(true);
+  }, [showBowlDetection]);
 
   const handleCreateBowl = useCallback((lines: FormulaLine[], _baseWeight: number) => {
     if (isDemoMode) {
@@ -109,6 +133,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         totalWeight,
         totalCost,
         createdAt: new Date().toISOString(),
+        serviceLabel: activeServiceLabel,
       };
       setDemoBowls((prev) => [...prev, newBowl]);
       setActiveBowl({
@@ -117,6 +142,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         bowlNumber,
         status: 'open',
       });
+      setActiveServiceLabel(null);
       return;
     }
 
@@ -129,6 +155,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       staffUserId: staff.userId,
       lines,
       baseWeight: _baseWeight,
+      serviceLabel: activeServiceLabel || undefined,
     }, {
       onSuccess: (result: CreatedBowlResult) => {
         setActiveBowl({
@@ -137,9 +164,10 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           bowlNumber: result.bowlNumber,
           status: 'open',
         });
+        setActiveServiceLabel(null);
       },
     });
-  }, [isDemoMode, sessions, demoBowls, effectiveOrganization, createBowl, appointment, staff]);
+  }, [isDemoMode, sessions, demoBowls, effectiveOrganization, createBowl, appointment, staff, activeServiceLabel]);
 
   const handleBowlTap = (session: DockMixSession, index: number) => {
     setActiveBowl({
@@ -234,17 +262,104 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   // Derive contextual action bar state
   const sessionState = deriveSessionState(remoteBowls, demoBowls);
 
+  // Group bowls by service label
+  const bowlsByService = useMemo(() => {
+    const map = new Map<string, { remote: DockMixSession[]; demo: DemoBowl[] }>();
+    // Init with all chemical services
+    for (const svc of chemicalServices) {
+      map.set(svc, { remote: [], demo: [] });
+    }
+    // Distribute remote bowls
+    for (const s of remoteBowls) {
+      const label = s.service_label || chemicalServices[0] || 'Uncategorized';
+      if (!map.has(label)) map.set(label, { remote: [], demo: [] });
+      map.get(label)!.remote.push(s);
+    }
+    // Distribute demo bowls
+    for (const b of demoBowls) {
+      const label = b.serviceLabel || chemicalServices[0] || 'Uncategorized';
+      if (!map.has(label)) map.set(label, { remote: [], demo: [] });
+      map.get(label)!.demo.push(b);
+    }
+    return map;
+  }, [chemicalServices, remoteBowls, demoBowls]);
+
+  // If no chemical services detected, show the flat "Start Mixing" prompt
+  const hasChemicalServices = chemicalServices.length > 0;
+
   return (
-    <div className={`relative flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
+    <div className="relative flex flex-col h-full">
       <DockClientAlertsBanner
         phorestClientId={appointment.phorest_client_id}
         clientId={appointment.client_id}
         clientName={appointment.client_name}
         bookingNotes={appointment.notes}
       />
-      <div className={`px-7 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
-        {/* Bowl grid */}
-        {allBowlCount > 0 ? (
+      <div className={cn(
+        'px-7 py-4 flex-1 overflow-y-auto',
+        !hasChemicalServices && allBowlCount === 0 ? 'flex flex-col' : 'space-y-5'
+      )}>
+        {hasChemicalServices ? (
+          <>
+            {/* Per-service sections */}
+            {Array.from(bowlsByService.entries()).map(([serviceLabel, { remote, demo }]) => {
+              const svcBowlCount = remote.length + demo.length;
+              // Running bowl index across all services
+              let bowlIdx = 0;
+              // Count bowls in previous services for numbering
+              let globalOffset = 0;
+              for (const [lbl, entry] of bowlsByService.entries()) {
+                if (lbl === serviceLabel) break;
+                globalOffset += entry.remote.length + entry.demo.length;
+              }
+
+              return (
+                <div key={serviceLabel}>
+                  {/* Service header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+                      {serviceLabel}
+                    </h3>
+                    <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                      {svcBowlCount} bowl{svcBowlCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+
+                  {/* Bowl grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {remote.map((session) => {
+                      bowlIdx++;
+                      return (
+                        <BowlCard
+                          key={session.id}
+                          session={session}
+                          index={globalOffset + bowlIdx}
+                          onTap={() => handleBowlTap(session, globalOffset + bowlIdx)}
+                        />
+                      );
+                    })}
+                    {demo.map((bowl) => {
+                      bowlIdx++;
+                      return (
+                        <DemoBowlCard
+                          key={bowl.id}
+                          bowl={bowl}
+                          onTap={() => handleDemoBowlTap(bowl)}
+                        />
+                      );
+                    })}
+                    {/* Inline Add Bowl card */}
+                    <AddBowlCard
+                      onClick={() => handleAddBowlForService(serviceLabel)}
+                      disabled={createBowl.isPending}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : allBowlCount > 0 ? (
+          /* Fallback: flat grid for appointments with no parseable chemical services but existing bowls */
           <div className="grid grid-cols-2 gap-3">
             {remoteBowls.map((session, idx) => (
               <BowlCard
@@ -261,15 +376,21 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                 onTap={() => handleDemoBowlTap(bowl)}
               />
             ))}
-            {/* Inline Add Bowl card */}
             <AddBowlCard
-              onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
+              onClick={() => {
+                setActiveServiceLabel(null);
+                if (!showBowlDetection) setShowBowlDetection(true);
+              }}
               disabled={createBowl.isPending}
             />
           </div>
         ) : (
+          /* Empty state — Start Mixing */
           <button
-            onClick={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
+            onClick={() => {
+              setActiveServiceLabel(chemicalServices[0] || null);
+              if (!showBowlDetection) setShowBowlDetection(true);
+            }}
             disabled={createBowl.isPending}
             className="flex-1 flex flex-col items-center justify-center text-center hover:opacity-80 active:opacity-60 active:scale-[0.98] transition-all cursor-pointer"
           >
@@ -298,7 +419,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         <ContextualActionBar
           state={sessionState}
           onContinueMixing={() => {
-            // Find first active bowl and open it
             const activeRemote = remoteBowls.find(s => isActiveSession(normalizeSessionStatus(s.status as any)));
             if (activeRemote) {
               const idx = remoteBowls.indexOf(activeRemote);
@@ -308,9 +428,11 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
               handleDemoBowlTap(activeDemoBowl);
             }
           }}
-          onAddBowl={() => { if (!showBowlDetection) setShowBowlDetection(true); }}
+          onAddBowl={() => {
+            setActiveServiceLabel(chemicalServices[0] || null);
+            if (!showBowlDetection) setShowBowlDetection(true);
+          }}
           onReweigh={() => {
-            // Open first bowl needing reweigh
             const reweighBowl = remoteBowls.find(s => requiresReweigh(normalizeSessionStatus(s.status as any)));
             if (reweighBowl) {
               const idx = remoteBowls.indexOf(reweighBowl);
@@ -329,13 +451,19 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           setShowBowlDetection(false);
           setShowNewBowl(true);
         }}
-        onCancel={() => setShowBowlDetection(false)}
+        onCancel={() => {
+          setShowBowlDetection(false);
+          setActiveServiceLabel(null);
+        }}
       />
 
       {/* New bowl sheet */}
       <DockNewBowlSheet
         open={showNewBowl}
-        onClose={() => setShowNewBowl(false)}
+        onClose={() => {
+          setShowNewBowl(false);
+          setActiveServiceLabel(null);
+        }}
         onCreateBowl={handleCreateBowl}
       />
 

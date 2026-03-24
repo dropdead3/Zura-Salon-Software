@@ -276,6 +276,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       is_manual_override: false,
       unresolved_flag: false,
       unresolved_reason: null,
+      service_label: 'Balayage',
     },
   ],
   'demo-appt-4': [
@@ -288,6 +289,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       is_manual_override: false,
       unresolved_flag: false,
       unresolved_reason: null,
+      service_label: 'Color Correction',
     },
   ],
   'demo-appt-6': [
@@ -300,6 +302,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       is_manual_override: false,
       unresolved_flag: true,
       unresolved_reason: 'Leftover product not weighed',
+      service_label: 'Vivids (Fashion Color)',
     },
   ],
 };
