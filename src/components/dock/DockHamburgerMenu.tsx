@@ -87,11 +87,8 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
               {/* Top spacer for rounded corners */}
               <div className="h-2" />
 
-              {/* Header row */}
-              <div className="flex items-center justify-between px-6 pt-4 pb-2">
-                <h2 className="font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-                  Navigation
-                </h2>
+              {/* Header row — close button only */}
+              <div className="flex items-center justify-end px-5 pt-4 pb-1">
                 <button
                   onClick={() => setOpen(false)}
                   className="p-1.5 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors"
@@ -100,60 +97,58 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
                 </button>
               </div>
 
-              {/* Tab items */}
-              <div className="px-4 space-y-1">
-                {TABS.map(({ id, label, icon: Icon }) => {
-                  const isActive = activeTab === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => handleTabSelect(id)}
-                      className={cn(
-                        'w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors',
-                        isActive
-                          ? 'bg-violet-500/[0.12] text-violet-300'
-                          : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.05)]'
-                      )}
-                    >
-                      <Icon className={cn('w-5 h-5', isActive ? 'text-violet-400' : '')} />
-                      <span className={cn(
-                        'font-display text-sm tracking-wide uppercase',
-                        isActive ? 'text-violet-300' : ''
-                      )}>
-                        {label}
-                      </span>
-                      {isActive && (
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />
-                      )}
-                    </button>
-                  );
-                })}
+              {/* Nav items — grouped card container */}
+              <div className="px-5 pt-1">
+                <div className="bg-[hsl(var(--platform-bg-card)/0.5)] rounded-2xl p-1.5 space-y-0.5">
+                  {TABS.map(({ id, label, icon: Icon }) => {
+                    const isActive = activeTab === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => handleTabSelect(id)}
+                        className={cn(
+                          'relative w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-colors',
+                          isActive
+                            ? 'bg-violet-500/[0.12] text-violet-300'
+                            : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground)/0.05)]'
+                        )}
+                      >
+                        {/* Active left accent bar */}
+                        {isActive && (
+                          <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-violet-400" />
+                        )}
+                        <Icon className={cn('w-5 h-5', isActive ? 'text-violet-400' : '')} />
+                        <span className={cn(
+                          'font-display text-sm tracking-wide uppercase',
+                          isActive ? 'text-violet-300' : ''
+                        )}>
+                          {label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Quick Actions */}
               {onAddAppointment && (
-                <>
-                  <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
-                  <div className="px-4">
-                    <button
-                      onClick={() => { onAddAppointment(); setOpen(false); }}
-                      className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-violet-500/[0.12] text-violet-300 hover:bg-violet-500/[0.18] transition-colors"
-                    >
-                      <Plus className="w-5 h-5 text-violet-400" />
-                      <span className="font-sans text-sm">Add Appointment</span>
-                    </button>
-                  </div>
-                </>
+                <div className="px-5 mt-5">
+                  <p className={cn(DOCK_TEXT.category, 'px-1 mb-2')}>Quick Actions</p>
+                  <button
+                    onClick={() => { onAddAppointment(); setOpen(false); }}
+                    className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl border-2 border-dashed border-violet-500/30 text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/[0.06] transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="font-sans text-sm">Add Appointment</span>
+                  </button>
+                </div>
               )}
 
-              {/* Divider */}
-              <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
-
-              {/* Lock Station */}
-              <div className="px-4 pb-2">
+              {/* Lock Station — isolated zone */}
+              <div className="px-5 mt-6 pb-1">
                 <button
                   onClick={handleLock}
-                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"
+                  className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/[0.1] transition-colors"
                 >
                   <Lock className="w-5 h-5" />
                   <span className="font-display text-sm tracking-wide uppercase">Lock Station</span>
