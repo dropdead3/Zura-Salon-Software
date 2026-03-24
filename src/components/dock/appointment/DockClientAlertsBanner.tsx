@@ -111,7 +111,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
             exit={exitAnim}
             className="relative flex items-start gap-2.5 px-4 py-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20"
           >
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div className="min-w-0">
               <p className={cn(DOCK_TEXT.category, 'text-rose-400 mb-0.5')}>
                 Allergy / Sensitivity
