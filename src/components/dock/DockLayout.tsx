@@ -117,6 +117,15 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       {/* Bottom fade gradient */}
       <div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
 
+      {/* New Booking Sheet */}
+      <DockNewBookingSheet
+        open={showNewBooking}
+        onClose={() => setShowNewBooking(false)}
+        staff={staff}
+        locationId={staff.locationId}
+        staffFilter={staffFilter}
+      />
+
       {/* Lock FAB */}
       <DockLockFAB onLock={onLogout} />
     </div>
