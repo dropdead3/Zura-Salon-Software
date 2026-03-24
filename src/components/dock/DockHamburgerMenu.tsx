@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Menu, X, Calendar, FlaskConical, Users, Weight, Settings, Lock } from 'lucide-react';
+import { Menu, X, Calendar, FlaskConical, Users, Weight, Settings, Lock, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET } from './dock-ui-tokens';
