@@ -142,10 +142,10 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
           >
             <CalendarPlus className="w-5 h-5 text-violet-400/60 shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className={cn(DOCK_TEXT.category, 'mb-0.5')}>
+              <p className={cn(DOCK_TEXT.category, 'text-sm mb-0.5')}>
                 Booking Note
               </p>
-              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+              <p className="text-sm text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
                 {trimmedBooking}
               </p>
             </div>
