@@ -260,7 +260,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
 
         {/* Scroll-down indicator (no gradient) */}
         <div
-          className="pointer-events-none absolute bottom-2 left-0 right-0 z-25 flex justify-center transition-opacity duration-300"
+          className="pointer-events-none absolute bottom-2 left-0 right-0 z-[30] flex justify-center transition-opacity duration-300"
           style={{ opacity: showScrollIndicator ? 1 : 0 }}
         >
           <ChevronDown className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))] animate-bounce" />
