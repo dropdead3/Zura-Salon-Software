@@ -1,44 +1,37 @@
 
 
-## Propagate DOCK_BADGE Tokens to Remaining Badge Instances
+## Redesign Dock Hamburger Menu
 
-### Problem
-Three badge locations in the Dock still use hardcoded `font-display` classes instead of the `DOCK_BADGE` token system:
-- **DockDemoBadge** — Termina + uppercase
-- **DockClientTab** — 6 badge variants (visits, CLV tier, first visit, no-show, preferred stylist, "since" date) all with inline `font-display`
-- **DockNewBookingSheet** — service tag pills (already `font-sans` but not using `DOCK_BADGE` tokens)
+**Current issues:** The menu feels flat and unstructured — nav items, quick actions, and lock station all blur together visually. The "Add Appointment" button looks like a duplicate nav item. Too much vertical space between elements. The title "Navigation" is generic.
 
-### Change 1 — `src/components/dock/dock-ui-tokens.ts`
+### Design direction
 
-Add new badge variant tokens for client profile badges:
+Restructure into clear visual zones with subtle section grouping, tighter spacing, and better visual hierarchy:
 
-```ts
-/** Client profile variants */
-visits:       'bg-violet-500/10 text-violet-400 border-violet-500/20',
-clvPlatinum:  'bg-violet-500/10 text-violet-400 border-violet-500/20',
-clvGold:      'bg-amber-500/10 text-amber-400 border-amber-500/20',
-clvSilver:    'bg-slate-500/10 text-slate-400 border-slate-500/20',
-firstVisit:   'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-noShowRisk:   'bg-rose-500/10 text-rose-400 border-rose-500/20',
-neutral:      'bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-border)/0.2)]',
+1. **Header** — Remove the generic "Navigation" title. Show the staff member's name or station identifier instead (or simply remove the title and let the close button stand alone with the Demo badge).
 
-/** System indicator */
-demo:         'bg-amber-500/20 text-amber-300 border-amber-500/30',
-```
+2. **Nav items** — Tighten vertical rhythm from `py-3.5` to `py-3`. Use a subtle elevated card background (`bg-[hsl(var(--platform-bg-card))]`) as a grouped container around all nav items, with `rounded-2xl` and inner padding. This visually separates navigation from actions.
 
-### Change 2 — `src/components/dock/DockDemoBadge.tsx`
+3. **Active indicator** — Replace the small dot with a left-edge accent bar (2px wide violet strip) for a more polished feel, similar to sidebar active states.
 
-Replace inline classes with `DOCK_BADGE.base` + `DOCK_BADGE.demo`:
+4. **Quick Actions section** — Give it a visible section label ("Quick Actions" in `DOCK_TEXT.category` style). Style the "Add Appointment" button as a distinct action — outlined/dashed border style rather than looking like another nav item.
 
-```tsx
-<span className={cn(DOCK_BADGE.base, DOCK_BADGE.demo, 'inline-flex items-center gap-1.5 backdrop-blur-md')}>
-```
+5. **Lock Station** — Move into its own isolated zone at the bottom with more breathing room. Keep red styling but make it feel intentionally separated (not just another list item).
 
-### Change 3 — `src/components/dock/appointment/DockClientTab.tsx`
+6. **Spacing & polish** — Reduce overall vertical gaps. Use `px-5` consistently (matching dock standard). The drag handle stays at the bottom.
 
-Replace all 6 hardcoded badge `<span>` elements to use `DOCK_BADGE.base` + the appropriate variant token. Remove `font-display tracking-wide uppercase` from each.
+### Files to change
 
-### Result
+**`src/components/dock/DockHamburgerMenu.tsx`**
 
-Every pill badge in the Dock uses `DOCK_BADGE` tokens with `font-sans` (Aeonik Pro). Three files updated, zero visual regressions (colors stay identical).
+- Remove "Navigation" heading (or replace with station name if available from props)
+- Wrap nav items in a grouped card container: `bg-[hsl(var(--platform-bg-card)/0.5)] rounded-2xl p-1.5`
+- Change active indicator from dot to left border accent
+- Reduce item padding from `py-3.5` to `py-3`
+- Add "Quick Actions" category label above the Add Appointment button using `DOCK_TEXT.category`
+- Restyle Add Appointment as outlined: dashed border, no fill background, violet text
+- Add more top margin before Lock Station for visual separation
+- Standardize horizontal padding to `px-5`
+
+One file updated. No logic changes — purely layout and visual hierarchy improvements.
 
