@@ -1,12 +1,13 @@
 
 
-## Raise Down Arrow Above Gradient
+## Fix Location Selector Text Clipping
 
-**Problem:** The bouncing ChevronDown indicator and the bottom fade gradient both sit at `z-20`, so the gradient covers the arrow.
+**Problem:** The location name in the top-bar selector is truncated to "N..." because the native `<select>` element has `max-w-[120px]`. The container is too tight to show the full location name.
 
-### Change — `src/components/dock/schedule/DockScheduleTab.tsx`
+### Change — `src/components/dock/DockDeviceSwitcher.tsx`
 
-Line 260: Change `z-20` → `z-25` on the scroll-down indicator div so it renders above the `z-20` gradient.
+1. **Widen select max-width:** Line 94 — change `max-w-[120px]` → `max-w-[160px]` on the location `<select>` to allow longer location names to display
+2. **Match on staff filter:** Line 115 — same change `max-w-[120px]` → `max-w-[160px]` for consistency
 
-One class change, one file.
+One file, two class tweaks.
 
