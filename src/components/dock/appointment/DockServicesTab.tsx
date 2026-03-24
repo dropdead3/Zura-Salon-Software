@@ -222,6 +222,31 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   };
 
   // Full-screen dispensing view
+  const remoteBowls = sessions || [];
+  const allBowlCount = remoteBowls.length + demoBowls.length;
+
+  // Group bowls by service label (must be before early returns)
+  const bowlsByService = useMemo(() => {
+    const map = new Map<string, { remote: DockMixSession[]; demo: DemoBowl[] }>();
+    for (const svc of chemicalServices) {
+      map.set(svc, { remote: [], demo: [] });
+    }
+    for (const s of remoteBowls) {
+      const label = s.service_label || chemicalServices[0] || 'Uncategorized';
+      if (!map.has(label)) map.set(label, { remote: [], demo: [] });
+      map.get(label)!.remote.push(s);
+    }
+    for (const b of demoBowls) {
+      const label = b.serviceLabel || chemicalServices[0] || 'Uncategorized';
+      if (!map.has(label)) map.set(label, { remote: [], demo: [] });
+      map.get(label)!.demo.push(b);
+    }
+    return map;
+  }, [chemicalServices, remoteBowls, demoBowls]);
+
+  const hasChemicalServices = chemicalServices.length > 0;
+
+  // Full-screen dispensing view
   if (activeBowl) {
     return (
       <DockLiveDispensing
@@ -243,8 +268,6 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     );
   }
 
-  const remoteBowls = sessions || [];
-  const allBowlCount = remoteBowls.length + demoBowls.length;
   const hasActiveSessions = remoteBowls.some((s) => !isTerminalSessionStatus(s.status as any)) || demoBowls.length > 0;
 
   const demoTotalDispensed = demoBowls.reduce((sum, b) => sum + b.totalWeight, 0);
@@ -259,33 +282,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     totalCost: demoTotalCost,
   };
 
-  // Derive contextual action bar state
   const sessionState = deriveSessionState(remoteBowls, demoBowls);
-
-  // Group bowls by service label
-  const bowlsByService = useMemo(() => {
-    const map = new Map<string, { remote: DockMixSession[]; demo: DemoBowl[] }>();
-    // Init with all chemical services
-    for (const svc of chemicalServices) {
-      map.set(svc, { remote: [], demo: [] });
-    }
-    // Distribute remote bowls
-    for (const s of remoteBowls) {
-      const label = s.service_label || chemicalServices[0] || 'Uncategorized';
-      if (!map.has(label)) map.set(label, { remote: [], demo: [] });
-      map.get(label)!.remote.push(s);
-    }
-    // Distribute demo bowls
-    for (const b of demoBowls) {
-      const label = b.serviceLabel || chemicalServices[0] || 'Uncategorized';
-      if (!map.has(label)) map.set(label, { remote: [], demo: [] });
-      map.get(label)!.demo.push(b);
-    }
-    return map;
-  }, [chemicalServices, remoteBowls, demoBowls]);
-
-  // If no chemical services detected, show the flat "Start Mixing" prompt
-  const hasChemicalServices = chemicalServices.length > 0;
 
   return (
     <div className="relative flex flex-col h-full">
