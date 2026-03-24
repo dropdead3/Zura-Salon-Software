@@ -372,6 +372,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   useEffect(() => {
     if (!debouncedCrossSell || debouncedCrossSell.length === 0 || recLoggedRef.current) return;
     if (!phorestClientId || !staff.organizationId) return;
+    // Skip DB logging for demo orgs
+    if (staff.organizationId === 'demo-org-000' || isDemoClientId(phorestClientId)) return;
     recLoggedRef.current = true;
 
     const today = new Date().toISOString().split('T')[0];

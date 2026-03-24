@@ -650,3 +650,168 @@ export const DEMO_FORMULA_MEMORY: Record<string, ResolvedFormulaMemory> = {
     createdAt: rachelMostRecentFormula.created_at,
   },
 };
+
+// ─── Sarah Mitchell — Demo Formula History ──────────────
+
+const sarahFormulaDate2w = format(subWeeks(new Date(), 2), "yyyy-MM-dd'T'HH:mm:ss");
+const sarahFormulaDate5w = format(subWeeks(new Date(), 5), "yyyy-MM-dd'T'HH:mm:ss");
+const sarahFormulaDate9w = format(subWeeks(new Date(), 9), "yyyy-MM-dd'T'HH:mm:ss");
+
+DEMO_FORMULA_HISTORY['demo-client-1'] = [
+  {
+    id: 'demo-formula-sm-1',
+    organization_id: 'demo-org-000',
+    client_id: 'demo-client-1',
+    appointment_id: 'demo-apt-sm-2w',
+    appointment_service_id: null,
+    mix_session_id: null,
+    service_name: 'Balayage + Toner',
+    formula_type: 'actual',
+    formula_data: [
+      { product_id: 'demo-prod-r3', product_name: 'Flash Lift Bonder Inside', brand: 'Redken', quantity: 30, unit: 'g' },
+      { product_id: 'demo-prod-r4', product_name: 'Pro-Oxide 30 Vol', brand: 'Redken', quantity: 60, unit: 'ml' },
+      { product_id: 'demo-prod-r1', product_name: 'Shades EQ 06NB', brand: 'Redken', quantity: 30, unit: 'ml' },
+      { product_id: 'demo-prod-r2', product_name: 'Shades EQ 09V', brand: 'Redken', quantity: 15, unit: 'ml' },
+    ],
+    staff_id: 'demo-staff-jenna',
+    staff_name: 'Jenna B.',
+    notes: 'Warm caramel balayage — SEQ 06NB + 09V toner',
+    version_number: 2,
+    created_at: sarahFormulaDate2w,
+  },
+  {
+    id: 'demo-formula-sm-2',
+    organization_id: 'demo-org-000',
+    client_id: 'demo-client-1',
+    appointment_id: 'demo-apt-sm-5w',
+    appointment_service_id: null,
+    mix_session_id: null,
+    service_name: 'Balayage + Toner',
+    formula_type: 'actual',
+    formula_data: [
+      { product_id: 'demo-prod-r3', product_name: 'Flash Lift Bonder Inside', brand: 'Redken', quantity: 35, unit: 'g' },
+      { product_id: 'demo-prod-r4', product_name: 'Pro-Oxide 30 Vol', brand: 'Redken', quantity: 70, unit: 'ml' },
+      { product_id: 'demo-prod-r1', product_name: 'Shades EQ 06NB', brand: 'Redken', quantity: 30, unit: 'ml' },
+    ],
+    staff_id: 'demo-staff-jenna',
+    staff_name: 'Jenna B.',
+    notes: 'First balayage — warm tones, Flash Lift',
+    version_number: 1,
+    created_at: sarahFormulaDate5w,
+  },
+  {
+    id: 'demo-formula-sm-3',
+    organization_id: 'demo-org-000',
+    client_id: 'demo-client-1',
+    appointment_id: 'demo-apt-sm-9w',
+    appointment_service_id: null,
+    mix_session_id: null,
+    service_name: 'Root Touch-Up + Gloss',
+    formula_type: 'actual',
+    formula_data: [
+      { product_id: 'demo-prod-w1', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 30, unit: 'g' },
+      { product_id: 'demo-prod-w4', product_name: 'Welloxon 20 Vol', brand: 'Wella', quantity: 30, unit: 'ml' },
+    ],
+    staff_id: 'demo-staff-jenna',
+    staff_name: 'Jenna B.',
+    notes: 'Root touch-up before transitioning to balayage',
+    version_number: 1,
+    created_at: sarahFormulaDate9w,
+  },
+];
+
+// ─── Sarah Mitchell — Demo Visit History ────────────────
+
+const sarahVisitDate2w = format(subWeeks(new Date(), 2), 'yyyy-MM-dd');
+const sarahVisitDate5w = format(subWeeks(new Date(), 5), 'yyyy-MM-dd');
+const sarahVisitDate9w = format(subWeeks(new Date(), 9), 'yyyy-MM-dd');
+const sarahVisitDate12w = format(subWeeks(new Date(), 12), 'yyyy-MM-dd');
+
+DEMO_VISIT_HISTORY['demo-client-1'] = [
+  {
+    id: 'demo-visit-sm-1',
+    appointment_date: sarahVisitDate2w,
+    start_time: '11:00:00',
+    end_time: '14:30:00',
+    service_name: 'Balayage + Toner',
+    service_category: 'Blonding',
+    stylist_name: 'Jenna B.',
+    status: 'completed',
+    total_price: 275,
+    notes: 'Warm caramel balayage — SEQ 06NB + 09V toner',
+  },
+  {
+    id: 'demo-visit-sm-2',
+    appointment_date: sarahVisitDate5w,
+    start_time: '10:00:00',
+    end_time: '13:30:00',
+    service_name: 'Balayage + Toner',
+    service_category: 'Blonding',
+    stylist_name: 'Jenna B.',
+    status: 'completed',
+    total_price: 260,
+    notes: 'First balayage — warm tones, Flash Lift',
+  },
+  {
+    id: 'demo-visit-sm-3',
+    appointment_date: sarahVisitDate9w,
+    start_time: '14:00:00',
+    end_time: '15:30:00',
+    service_name: 'Root Touch-Up + Gloss',
+    service_category: 'Color',
+    stylist_name: 'Jenna B.',
+    status: 'completed',
+    total_price: 185,
+    notes: 'Root touch-up before transitioning to balayage',
+  },
+  {
+    id: 'demo-visit-sm-4',
+    appointment_date: sarahVisitDate12w,
+    start_time: '09:30:00',
+    end_time: '10:30:00',
+    service_name: 'Signature Haircut',
+    service_category: 'Cut',
+    stylist_name: 'Jenna B.',
+    status: 'completed',
+    total_price: 75,
+    notes: 'Consultation — wants to go warmer and brighter',
+  },
+];
+
+DEMO_VISIT_HISTORY['demo-pc-1'] = DEMO_VISIT_HISTORY['demo-client-1'];
+
+// ─── Sarah Mitchell — Demo Formula Memory ───────────────
+
+const sarahMostRecentFormula = DEMO_FORMULA_HISTORY['demo-client-1'][0];
+
+DEMO_FORMULA_MEMORY['demo-client-1::Balayage + Toner'] = {
+  lines: sarahMostRecentFormula.formula_data,
+  source: 'client_last_visit',
+  sourceLabel: "Client's Last Visit",
+  referenceId: sarahMostRecentFormula.id,
+  ratio: '1 : 2 : 1 : 0.5',
+  serviceName: 'Balayage + Toner',
+  staffName: 'Jenna B.',
+  notes: sarahMostRecentFormula.notes,
+  createdAt: sarahMostRecentFormula.created_at,
+};
+
+// ─── Demo Product Affinity ──────────────────────────────
+
+import type { ClientProductAffinity } from '@/hooks/useClientProductAffinity';
+
+const affinityDate4w = format(subWeeks(new Date(), 4), 'yyyy-MM-dd');
+const affinityDate8w = format(subWeeks(new Date(), 8), 'yyyy-MM-dd');
+const affinityDate6w = format(subWeeks(new Date(), 6), 'yyyy-MM-dd');
+
+export const DEMO_PRODUCT_AFFINITY: Record<string, ClientProductAffinity[]> = {
+  'demo-pc-7': [
+    { itemName: 'Olaplex No. 3', purchaseCount: 4, lastPurchaseDate: affinityDate4w, avgDaysBetween: 28, daysSinceLastPurchase: 28, mayNeedRestock: true },
+    { itemName: 'Color Wow Dream Coat', purchaseCount: 3, lastPurchaseDate: affinityDate6w, avgDaysBetween: 42, daysSinceLastPurchase: 42, mayNeedRestock: false },
+    { itemName: 'K18 Leave-In Mask', purchaseCount: 2, lastPurchaseDate: affinityDate8w, avgDaysBetween: null, daysSinceLastPurchase: 56, mayNeedRestock: false },
+  ],
+  'demo-pc-1': [
+    { itemName: 'Redken Acidic Bonding Concentrate', purchaseCount: 3, lastPurchaseDate: affinityDate4w, avgDaysBetween: 35, daysSinceLastPurchase: 28, mayNeedRestock: false },
+    { itemName: 'Olaplex No. 3', purchaseCount: 2, lastPurchaseDate: affinityDate6w, avgDaysBetween: null, daysSinceLastPurchase: 42, mayNeedRestock: false },
+  ],
+};
