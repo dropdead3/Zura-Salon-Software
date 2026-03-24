@@ -63,8 +63,9 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
     client?.notes ?? null,
   );
   const profileNotes = client?.notes?.trim() || null;
+  const trimmedBooking = bookingNotes?.trim() || null;
 
-  if (!allergyText && !profileNotes) return null;
+  if (!allergyText && !profileNotes && !trimmedBooking) return null;
 
   const notesIsLong = profileNotes ? profileNotes.length > 120 : false;
 
