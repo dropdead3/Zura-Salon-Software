@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, parseISO } from 'date-fns';
+import { DEMO_PRODUCT_AFFINITY } from '@/hooks/dock/dockDemoData';
 
 export interface ClientProductAffinity {
   itemName: string;
@@ -15,6 +16,10 @@ export function useClientProductAffinity(phorestClientId: string | null | undefi
   return useQuery({
     queryKey: ['client-product-affinity', phorestClientId],
     queryFn: async () => {
+      // Demo mode: return static affinity data
+      if (phorestClientId?.startsWith('demo-')) {
+        return DEMO_PRODUCT_AFFINITY[phorestClientId] ?? [];
+      }
       const { data, error } = await supabase
         .from('phorest_transaction_items')
         .select('item_name, transaction_date')

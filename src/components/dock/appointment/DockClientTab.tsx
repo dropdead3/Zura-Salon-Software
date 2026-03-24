@@ -283,6 +283,12 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   // ─── Medical alerts mutation ───
   const saveMedicalAlert = useMutation({
     mutationFn: async (alertText: string) => {
+      // Demo mode: persist in sessionStorage only
+      if (usingDemoClient) {
+        const key = `dock-demo-medical-alert::${phorestClientId || clientId}`;
+        sessionStorage.setItem(key, alertText.trim());
+        return;
+      }
       const trimmed = alertText.trim() || null;
       if (phorestClientId && client) {
         const { error } = await supabase
@@ -366,6 +372,8 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   useEffect(() => {
     if (!debouncedCrossSell || debouncedCrossSell.length === 0 || recLoggedRef.current) return;
     if (!phorestClientId || !staff.organizationId) return;
+    // Skip DB logging for demo orgs
+    if (staff.organizationId === 'demo-org-000' || isDemoClientId(phorestClientId)) return;
     recLoggedRef.current = true;
 
     const today = new Date().toISOString().split('T')[0];

@@ -27,6 +27,9 @@ export { SOURCE_LABELS, computeRatio };
 // ─── Settings Check ─────────────────────────────────
 
 export async function isSmartMixAssistEnabled(orgId: string): Promise<boolean> {
+  // Demo org bypass — always enabled for demos
+  if (orgId === 'demo-org-000') return true;
+
   const { data } = await supabase
     .from('smart_mix_assist_settings' as any)
     .select('is_enabled')
