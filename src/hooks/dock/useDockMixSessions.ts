@@ -19,6 +19,7 @@ export interface DockMixSession {
   is_manual_override: boolean;
   unresolved_flag: boolean;
   unresolved_reason: string | null;
+  service_label: string | null;
 }
 
 export function useDockMixSessions(appointmentId: string | null) {
@@ -33,7 +34,7 @@ export function useDockMixSessions(appointmentId: string | null) {
 
       const { data, error } = await supabase
         .from('mix_sessions')
-        .select('id, status, notes, started_at, completed_at, is_manual_override, unresolved_flag, unresolved_reason')
+        .select('id, status, notes, started_at, completed_at, is_manual_override, unresolved_flag, unresolved_reason, service_label')
         .eq('appointment_id', appointmentId!)
         .order('created_at', { ascending: true });
 

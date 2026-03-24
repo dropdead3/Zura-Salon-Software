@@ -36,6 +36,7 @@ export function useCreateDockBowl() {
       staffUserId: string;
       lines: FormulaLine[];
       baseWeight: number;
+      serviceLabel?: string;
     }): Promise<CreatedBowlResult> => {
       const meta = await buildCommandMeta('ui');
 
@@ -49,6 +50,7 @@ export function useCreateDockBowl() {
           stylist_user_id: params.staffUserId,
           status: 'draft',
           is_manual_override: true,
+          service_label: params.serviceLabel || null,
         })
         .select('id')
         .single();
