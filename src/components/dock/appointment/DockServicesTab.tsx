@@ -235,7 +235,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const sessionState = deriveSessionState(remoteBowls, demoBowls);
 
   return (
-    <div className={`flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
+    <div className={`relative flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
       <DockClientAlertsBanner
         phorestClientId={appointment.phorest_client_id}
         clientId={appointment.client_id}
