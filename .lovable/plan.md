@@ -1,20 +1,37 @@
 
 
-## Fix Scroll-Down Indicator Z-Index
+## Two-Column Quick Actions Row
 
-**Problem:** The bouncing ChevronDown scroll indicator is hidden behind appointment cards and the gradient overlay. `z-25` is not a standard Tailwind class — it gets ignored, so the element has no z-index applied.
+### Change — `src/components/dock/DockHamburgerMenu.tsx`
 
-### Change — `src/components/dock/schedule/DockScheduleTab.tsx` (line 263)
+Merge "Add Appointment" and "Lock Station" into a single two-column grid under the "Quick Actions" label. Remove the separate Lock Station section.
 
-Replace `z-25` with `z-[30]` (arbitrary value Tailwind supports) to ensure the indicator renders above the cards and the top fade overlay (`z-10`).
+**Lines 133–156** replaced with:
 
 ```tsx
-// Before
-className="pointer-events-none absolute bottom-2 left-0 right-0 z-25 flex justify-center transition-opacity duration-300"
-
-// After
-className="pointer-events-none absolute bottom-2 left-0 right-0 z-[30] flex justify-center transition-opacity duration-300"
+{/* Quick Actions — two-column grid */}
+<div className="px-5 mt-5">
+  <p className={cn(DOCK_TEXT.category, 'px-1 mb-2')}>Quick Actions</p>
+  <div className="grid grid-cols-2 gap-3">
+    {onAddAppointment && (
+      <button
+        onClick={() => { onAddAppointment(); setOpen(false); }}
+        className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 border-dashed border-violet-500/30 text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/[0.06] transition-colors"
+      >
+        <Plus className="w-5 h-5" />
+        <span className="font-sans text-xs">Add Appointment</span>
+      </button>
+    )}
+    <button
+      onClick={handleLock}
+      className="flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 border-dashed border-red-500/30 text-red-400 hover:border-red-500/50 hover:bg-red-500/[0.06] transition-colors"
+    >
+      <Lock className="w-5 h-5" />
+      <span className="font-sans text-xs">Lock Station</span>
+    </button>
+  </div>
+</div>
 ```
 
-One class change, one file.
+Both buttons become equal-sized tiles in a `grid-cols-2` layout. Lock Station adopts the same dashed-border card style but in red. Text switches to `font-sans text-xs` with icons stacked above labels for a clean tile look. One file, one section replaced.
 
