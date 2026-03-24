@@ -10,7 +10,7 @@
  */
 
 import { useRef, useState } from 'react';
-import { FlaskConical, Users, CheckCircle2, Play, XCircle, UserX } from 'lucide-react';
+import { Users, CheckCircle2, Play, XCircle, UserX } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { differenceInMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
