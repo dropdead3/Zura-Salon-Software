@@ -14,6 +14,7 @@ interface DockHamburgerMenuProps {
   activeTab: DockTab;
   onTabChange: (tab: DockTab) => void;
   onLockStation: () => void;
+  onAddAppointment?: () => void;
 }
 
 const TABS: { id: DockTab; label: string; icon: typeof Calendar }[] = [
