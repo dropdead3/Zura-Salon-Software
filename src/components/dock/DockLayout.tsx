@@ -102,7 +102,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
       {/* Hamburger menu — hidden during detail view */}
       {!showingDetail && (
-        <DockHamburgerMenu activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} />
+        <DockHamburgerMenu activeTab={activeTab} onTabChange={onTabChange} onLockStation={onLogout} onAddAppointment={() => setShowNewBooking(true)} />
       )}
 
       {/* Client quick view sheet */}
