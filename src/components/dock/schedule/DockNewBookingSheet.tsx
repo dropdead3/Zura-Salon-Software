@@ -565,10 +565,12 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              onPointerDown={(e) => dragControls.start(e)}
-              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
+            </div>
           </motion.div>
         </>
       )}

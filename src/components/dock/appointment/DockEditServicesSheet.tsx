@@ -262,6 +262,14 @@ export function DockEditServicesSheet({
                 Save Changes
               </button>
             </div>
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
+            </div>
           </motion.div>
         </div>
       )}

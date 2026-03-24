@@ -253,11 +253,11 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
             )}
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              className="flex-shrink-0 flex items-center justify-center pb-3 pt-1 cursor-grab active:cursor-grabbing touch-none"
-              onPointerDown={(e) => dragControls.start(e)}
-            >
-              <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)]" />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
             </div>
           </motion.div>
         </div>
