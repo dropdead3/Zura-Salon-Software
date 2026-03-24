@@ -104,7 +104,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
               key={id}
               onClick={() => setTab(id)}
               className={cn(
-                'flex items-center justify-center gap-1.5 flex-1 h-10 rounded-xl text-xs font-medium transition-all duration-150',
+                'flex items-center justify-center gap-1.5 flex-1 h-12 rounded-xl text-sm font-medium transition-all duration-150',
                 tab === id
                   ? 'bg-violet-600/30 text-violet-300'
                   : 'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]'
