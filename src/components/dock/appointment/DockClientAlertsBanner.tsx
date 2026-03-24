@@ -41,12 +41,23 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
   });
   const usingDemo = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
 
+  // Re-sync dismissed state when switching clients
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      setDismissed(stored ? new Set(JSON.parse(stored) as BannerKey[]) : new Set());
+    } catch { setDismissed(new Set()); }
+  }, [storageKey]);
+
   // Listen for demo reset to re-show dismissed alerts
   useEffect(() => {
-    const handleReset = () => setDismissed(new Set());
+    const handleReset = () => {
+      setDismissed(new Set());
+      try { sessionStorage.removeItem(storageKey); } catch {}
+    };
     window.addEventListener('dock-demo-reset', handleReset);
     return () => window.removeEventListener('dock-demo-reset', handleReset);
-  }, []);
+  }, [storageKey]);
 
   const dismiss = useCallback((key: BannerKey) => {
     setDismissed(prev => {
