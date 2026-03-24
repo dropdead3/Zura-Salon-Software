@@ -1,39 +1,35 @@
 
 
-## Add Session Persistence to Banner Dismissals
+## Auto-populate Name in New Client Sheet
 
 ### Problem
-Dismissed alert banners reset when navigating between tabs or re-entering the appointment, because the `dismissed` state is local `useState` — lost on unmount.
+When a user searches for "Eric Day", gets no results, and clicks "Create 'Eric Day' as new client", the New Client form opens with empty name fields instead of pre-filling with the searched name.
 
-### Approach
-Use `sessionStorage` keyed per appointment to persist which banners have been dismissed. On mount, read from sessionStorage; on dismiss, write to it. Banners stay dismissed for that appointment until the browser tab is closed.
+### Changes
 
-### Change — `src/components/dock/appointment/DockClientAlertsBanner.tsx`
+**1. `src/components/dock/schedule/DockNewClientSheet.tsx`**
+- Add optional `defaultName?: string` prop to `DockNewClientSheetProps`
+- On open (when `open` transitions to `true`), parse `defaultName` into first/last name by splitting on the first space — first token → `firstName`, remainder → `lastName`
+- Use a `useEffect` keyed on `open` and `defaultName` to set the initial values, only when `open` becomes `true`
 
-**Storage key**: `dock-alerts-dismissed-{clientId || phorestClientId}` — stores a JSON array of dismissed banner keys (e.g. `["allergy","booking"]`).
+**2. `src/components/dock/schedule/DockNewBookingSheet.tsx`**
+- Pass `defaultName={clientSearch}` to `<DockNewClientSheet>` (line ~513) so the current search query flows through
 
-**Init state from sessionStorage**:
+### Logic
 ```ts
-const storageKey = `dock-alerts-dismissed-${clientId || phorestClientId}`;
-
-const [dismissed, setDismissed] = useState<Set<BannerKey>>(() => {
-  try {
-    const stored = sessionStorage.getItem(storageKey);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
-  } catch { return new Set(); }
-});
+// DockNewClientSheet — inside useEffect on open
+if (open && defaultName) {
+  const trimmed = defaultName.trim();
+  const spaceIdx = trimmed.indexOf(' ');
+  if (spaceIdx > 0) {
+    setFirstName(trimmed.slice(0, spaceIdx));
+    setLastName(trimmed.slice(spaceIdx + 1));
+  } else {
+    setFirstName(trimmed);
+    setLastName('');
+  }
+}
 ```
 
-**Update dismiss callback** to also write to sessionStorage:
-```ts
-const dismiss = useCallback((key: BannerKey) => {
-  setDismissed(prev => {
-    const next = new Set(prev).add(key);
-    try { sessionStorage.setItem(storageKey, JSON.stringify([...next])); } catch {}
-    return next;
-  });
-}, [storageKey]);
-```
-
-One file, minimal change. Dismissed banners persist across tab switches within the same session.
+Two files, minimal change.
 
