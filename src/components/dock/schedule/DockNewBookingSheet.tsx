@@ -9,6 +9,7 @@ import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { useDebounce } from '@/hooks/use-debounce';
 import { format, formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 import {
   ArrowLeft, X, Search, UserPlus, Clock, Check, Loader2, Users,
@@ -565,10 +566,12 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              onPointerDown={(e) => dragControls.start(e)}
-              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
+            </div>
           </motion.div>
         </>
       )}

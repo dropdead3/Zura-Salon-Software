@@ -9,6 +9,7 @@ import { X, Search, ArrowLeft, Check } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDockBrands, useDockBrandProducts, useDockProductSearch, type DockProduct } from '@/hooks/dock/useDockProductCatalog';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
@@ -253,11 +254,11 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
             )}
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              className="flex-shrink-0 flex items-center justify-center pb-3 pt-1 cursor-grab active:cursor-grabbing touch-none"
-              onPointerDown={(e) => dragControls.start(e)}
-            >
-              <div className="w-12 h-1.5 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)]" />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
             </div>
           </motion.div>
         </div>

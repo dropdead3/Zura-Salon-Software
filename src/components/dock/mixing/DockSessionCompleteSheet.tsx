@@ -9,6 +9,7 @@ import { Check, AlertTriangle, FlaskConical, X, Flag } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { roundWeight, roundCost } from '@/lib/backroom/mix-calculations';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
@@ -190,10 +191,12 @@ export function DockSessionCompleteSheet({
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-              onPointerDown={(e) => dragControls.start(e)}
-            />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
+            </div>
           </motion.div>
         </div>
       )}

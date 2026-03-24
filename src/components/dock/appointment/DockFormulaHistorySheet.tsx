@@ -47,11 +47,6 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
             exit={{ y: '-100%' }}
             transition={DOCK_SHEET.spring}
           >
-            {/* Drag handle */}
-            <div className="pt-3 px-7">
-              <div className={DOCK_SHEET.dragHandle} />
-            </div>
-
             {/* Header */}
             <div className="flex items-center justify-between px-7 pb-4">
               <div>
@@ -167,6 +162,11 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
                   </button>
                 );
               })}
+            </div>
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div className={DOCK_SHEET.dragHandle} />
             </div>
           </motion.div>
         </>

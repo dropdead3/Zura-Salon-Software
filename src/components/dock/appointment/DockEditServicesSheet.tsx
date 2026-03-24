@@ -135,12 +135,6 @@ export function DockEditServicesSheet({
               }
             }}
           >
-            {/* Drag handle */}
-            <div
-              className={DOCK_SHEET.dragHandle}
-              onPointerDown={(e) => dragControls.start(e)}
-            />
-
             {/* Header */}
             <div className="flex-shrink-0 px-7 pt-2 pb-4">
               <div className="flex items-center justify-between">
@@ -267,6 +261,14 @@ export function DockEditServicesSheet({
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-1 inline" />}
                 Save Changes
               </button>
+            </div>
+
+            {/* Drag handle — bottom position for top-anchored sheet */}
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
             </div>
           </motion.div>
         </div>

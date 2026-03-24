@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { X, FlaskConical } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
 
@@ -101,10 +102,12 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-              onPointerDown={(e) => dragControls.start(e)}
-            />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
+            </div>
           </motion.div>
         </div>
       )}

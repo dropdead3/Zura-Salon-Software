@@ -13,6 +13,7 @@ import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
 import { toast } from 'sonner';
 import { cn, formatPhoneNumber } from '@/lib/utils';
 import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DOCK_SHEET } from '../dock-ui-tokens';
 
 const SPRING = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.8 };
 
@@ -363,10 +364,12 @@ export function DockNewClientSheet({
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div
-              onPointerDown={(e) => dragControls.start(e)}
-              className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
+            </div>
           </motion.div>
         </>
       )}

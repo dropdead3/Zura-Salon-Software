@@ -6,7 +6,8 @@
 export const DOCK_SHEET = {
   backdrop: 'absolute inset-0 bg-black/40 backdrop-blur-sm',
   panel: 'absolute inset-x-0 top-0 flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl',
-  dragHandle: 'mx-auto mb-3 h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none',
+  dragHandle: 'mx-auto h-1.5 w-12 rounded-full bg-[hsl(var(--platform-foreground-muted)/0.3)] shrink-0 cursor-grab active:cursor-grabbing touch-none',
+  dragHandleWrapperBottom: 'flex justify-center pt-2 pb-4',
   maxHeight: '92%',
   spring: { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 },
   dismissThreshold: { offset: 120, velocity: 500 },
