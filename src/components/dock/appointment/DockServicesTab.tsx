@@ -357,7 +357,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           </>
         ) : allBowlCount > 0 ? (
           /* Fallback: flat grid for appointments with no parseable chemical services but existing bowls */
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {remoteBowls.map((session, idx) => (
               <BowlCard
                 key={session.id}
