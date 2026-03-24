@@ -220,7 +220,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-10',
       notes: 'Wedding updo — bring inspiration photos',
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-11',
