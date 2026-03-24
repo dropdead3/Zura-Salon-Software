@@ -234,6 +234,11 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
 
   return (
     <div className={`flex flex-col h-full ${allBowlCount === 0 ? '' : ''}`}>
+      <DockClientAlertsBanner
+        phorestClientId={appointment.phorest_client_id}
+        clientId={appointment.client_id}
+        clientName={appointment.client_name}
+      />
       <div className={`px-7 py-4 flex-1 overflow-y-auto ${allBowlCount === 0 ? 'flex flex-col' : 'space-y-3'}`}>
         {/* Bowl grid */}
         {allBowlCount > 0 ? (

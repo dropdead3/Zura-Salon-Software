@@ -42,16 +42,7 @@ function getInitials(name: string | null): string {
   return name.split(' ').map(w => w[0]).filter(Boolean).join('').toUpperCase().slice(0, 2);
 }
 
-const ALLERGY_KEYWORDS = ['allergy', 'allergic', 'sensitive', 'sensitivity', 'reaction', 'irritation', 'dermatitis', 'rash'];
-
-function detectAllergyFlags(medicalAlerts: string | null, notes: string | null): string | null {
-  if (medicalAlerts && medicalAlerts.trim()) return medicalAlerts.trim();
-  if (!notes) return null;
-  const lower = notes.toLowerCase();
-  const hasKeyword = ALLERGY_KEYWORDS.some(kw => lower.includes(kw));
-  if (hasKeyword) return notes;
-  return null;
-}
+import { detectAllergyFlags } from '@/lib/backroom/detect-allergy-flags';
 
 // ─── Smart Formula Diffing ───
 interface FormulaDiff {
