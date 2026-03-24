@@ -53,6 +53,11 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
     enabled: !showingDetail,
   });
 
+  const { containerRef: idleRef } = useDockIdleTimer({
+    onIdle: onLogout,
+    enabled: true,
+  });
+
   const handleComplete = (appointment: DockAppointment) => {
     completeAppointment.mutate({
       appointmentId: appointment.id,
