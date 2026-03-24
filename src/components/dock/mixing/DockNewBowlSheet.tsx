@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { X, FlaskConical } from 'lucide-react';
+import { X, FlaskConical, Plus } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
 import { DOCK_SHEET } from '../dock-ui-tokens';
