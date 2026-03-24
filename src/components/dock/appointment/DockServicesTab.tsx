@@ -95,13 +95,30 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   const markUnresolved = useMarkDockSessionUnresolved();
   const { effectiveOrganization } = useOrganizationContext();
 
-  // Demo-mode local bowl state
-  const [demoBowls, setDemoBowls] = useState<DemoBowl[]>([]);
+  // Demo-mode local bowl state — persisted in sessionStorage per appointment
+  const demoBowlsKey = `dock-demo-bowls::${appointment.id}`;
+  const [demoBowls, setDemoBowls] = useState<DemoBowl[]>(() => {
+    try {
+      const stored = sessionStorage.getItem(demoBowlsKey);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
   const [showFormulaHistory, setShowFormulaHistory] = useState(false);
+
+  // Sync demo bowls to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(demoBowlsKey, JSON.stringify(demoBowls));
+  }, [demoBowls, demoBowlsKey]);
 
   // Listen for demo reset event
   useEffect(() => {
-    const handleReset = () => setDemoBowls([]);
+    const handleReset = () => {
+      setDemoBowls([]);
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key?.startsWith('dock-demo-bowls::')) sessionStorage.removeItem(key);
+      }
+    };
     window.addEventListener('dock-demo-reset', handleReset);
     return () => window.removeEventListener('dock-demo-reset', handleReset);
   }, []);
