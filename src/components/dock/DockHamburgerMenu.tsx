@@ -50,7 +50,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation }: Doc
       {/* Hamburger trigger — top-right */}
       <button
         onClick={() => setOpen(true)}
-        className="absolute top-5 right-5 z-40 p-2.5 rounded-xl bg-[hsl(var(--platform-bg-elevated)/0.8)] border border-[hsl(var(--platform-border)/0.2)] backdrop-blur-md transition-colors hover:bg-[hsl(var(--platform-bg-elevated))]"
+        className="absolute top-5 right-5 z-40 p-2.5 rounded-xl bg-[hsl(var(--platform-bg-elevated)/0.95)] border border-[hsl(var(--platform-border)/0.35)] backdrop-blur-md transition-colors hover:bg-[hsl(var(--platform-bg-elevated))]"
       >
         <Menu className="w-5 h-5 text-[hsl(var(--platform-foreground-muted))]" />
       </button>
