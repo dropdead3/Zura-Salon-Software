@@ -666,10 +666,10 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
             <FlaskConical className="w-4.5 h-4.5 text-amber-400" />
           </div>
           <div className="min-w-0">
-            <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
               New Formula
             </p>
-            <p className="text-[11px] mt-0.5 text-amber-400">
+            <p className="text-xs mt-0.5 text-amber-400">
               In Progress
             </p>
           </div>
