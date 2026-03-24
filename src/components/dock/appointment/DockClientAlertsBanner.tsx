@@ -41,6 +41,13 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
   });
   const usingDemo = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
 
+  // Listen for demo reset to re-show dismissed alerts
+  useEffect(() => {
+    const handleReset = () => setDismissed(new Set());
+    window.addEventListener('dock-demo-reset', handleReset);
+    return () => window.removeEventListener('dock-demo-reset', handleReset);
+  }, []);
+
   const dismiss = useCallback((key: BannerKey) => {
     setDismissed(prev => {
       const next = new Set(prev).add(key);
