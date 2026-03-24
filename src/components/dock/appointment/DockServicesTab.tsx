@@ -294,7 +294,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       />
       <div className={cn(
         'px-7 py-4 flex-1 overflow-y-auto',
-        !hasChemicalServices && allBowlCount === 0 ? 'flex flex-col' : 'space-y-5'
+        !hasChemicalServices && allBowlCount === 0 ? 'flex flex-col' : 'space-y-6'
       )}>
         {hasChemicalServices ? (
           <>
