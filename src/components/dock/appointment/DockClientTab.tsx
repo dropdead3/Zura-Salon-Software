@@ -29,6 +29,8 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
+import { DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
+import { cn } from '@/lib/utils';
 interface DockClientTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
