@@ -283,6 +283,12 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   // ─── Medical alerts mutation ───
   const saveMedicalAlert = useMutation({
     mutationFn: async (alertText: string) => {
+      // Demo mode: persist in sessionStorage only
+      if (usingDemoClient) {
+        const key = `dock-demo-medical-alert::${phorestClientId || clientId}`;
+        sessionStorage.setItem(key, alertText.trim());
+        return;
+      }
       const trimmed = alertText.trim() || null;
       if (phorestClientId && client) {
         const { error } = await supabase
