@@ -76,7 +76,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   const { data: appointments, isLoading } = useDockAppointments(staff.userId, locationId, staffFilter);
   const { data: trackedSet } = useDockTrackedServices(staff.organizationId);
   const today = format(new Date(), 'EEEE, MMMM d');
-  const [showNewBooking, setShowNewBooking] = useState(false);
+   const [showNewBooking, setShowNewBooking] = useState(false);
   const storageKey = `dock-chemical-toggle::${staff.userId}`;
   const [showAll, setShowAll] = useState(() => {
     const saved = localStorage.getItem(storageKey);
