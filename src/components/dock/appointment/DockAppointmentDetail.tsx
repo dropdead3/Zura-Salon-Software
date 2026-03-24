@@ -90,7 +90,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
                   onClick={() => setEditServicesOpen(true)}
                   className="shrink-0 p-0.5 rounded text-[hsl(var(--platform-foreground-muted)/0.6)] hover:text-[hsl(var(--platform-foreground))] transition-colors"
                 >
-                  <Pencil className="w-3 h-3" />
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
