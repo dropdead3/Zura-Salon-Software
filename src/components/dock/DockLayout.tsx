@@ -67,6 +67,9 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       data-dock-device={device}
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
     >
+      {/* Demo badge inside device frame */}
+      <DockDemoBadge />
+
       {/* Content area */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {showingDetail ? (
