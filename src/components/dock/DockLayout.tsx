@@ -4,7 +4,6 @@
  */
 
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
 import { DockHamburgerMenu } from './DockHamburgerMenu';
 import { DockDeviceSwitcher } from './DockDeviceSwitcher';
 import { DockDemoBadge } from './DockDemoBadge';
@@ -20,6 +19,8 @@ import { DockAppointmentDetail } from './appointment/DockAppointmentDetail';
 import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
 import { useDockLockGesture } from '@/hooks/dock/useDockLockGesture';
+import { useDockIdleTimer } from '@/hooks/dock/useDockIdleTimer';
+import { DockLockFAB } from './DockLockFAB';
 
 interface DockLayoutProps {
   activeTab: DockTab;
@@ -52,6 +53,11 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
     enabled: !showingDetail,
   });
 
+  const { containerRef: idleRef } = useDockIdleTimer({
+    onIdle: onLogout,
+    enabled: true,
+  });
+
   const handleComplete = (appointment: DockAppointment) => {
     completeAppointment.mutate({
       appointmentId: appointment.id,
@@ -62,7 +68,10 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
 
   const dockContent = (
     <div
-      ref={containerRef}
+      ref={(el) => {
+        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        (idleRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      }}
       className="relative h-full flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
       data-dock-device={device}
       style={isConstrained ? { width: '100%', height: '100%' } : undefined}
@@ -109,18 +118,8 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
         clientName={clientViewAppt?.client_name}
       />
 
-      {/* Lock gesture affordance — bottom-right corner */}
-      {!showingDetail && (
-        <div
-          className="absolute bottom-24 right-4 pointer-events-none transition-all duration-150"
-          style={{
-            opacity: lockProgress > 0 ? 0.15 + lockProgress * 0.6 : 0.12,
-            transform: `scale(${0.8 + lockProgress * 0.4})`,
-          }}
-        >
-          <Lock className="w-4 h-4 text-[hsl(var(--platform-foreground))]" />
-        </div>
-      )}
+      {/* Lock FAB */}
+      <DockLockFAB onLock={onLogout} />
     </div>
   );
 
