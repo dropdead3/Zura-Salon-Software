@@ -114,8 +114,10 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
         clientName={clientViewAppt?.client_name}
       />
 
-      {/* Bottom fade gradient */}
-      <div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
+      {/* Bottom fade gradient — schedule tab only */}
+      {activeTab === 'schedule' && (
+        <div className="absolute bottom-0 inset-x-0 h-24 z-20 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-bg))] to-transparent" />
+      )}
 
       {/* New Booking Sheet */}
       <DockNewBookingSheet
