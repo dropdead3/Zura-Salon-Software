@@ -99,6 +99,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
             </p>
           </div>
         </div>
+      )}
 
       {/* Profile Notes */}
       {profileNotes && (
