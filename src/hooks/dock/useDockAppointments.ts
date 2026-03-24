@@ -266,23 +266,32 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         notes: a.notes,
       }));
 
-      // Check for active mix sessions on these appointments
-      const allIds = [...phorest, ...local].map((a) => a.id);
+      // Fetch bowl counts for appointments
+      const all = [...phorest, ...local];
+      const allIds = all.map((a) => a.id);
       if (allIds.length > 0) {
         const { data: sessions } = await supabase
           .from('mix_sessions')
-          .select('appointment_id')
-          .in('appointment_id', allIds)
-          .not('status', 'in', '("completed","cancelled")');
-
-        const activeSessionIds = new Set((sessions || []).map((s) => s.appointment_id));
-        return [...phorest, ...local].map((a) => ({
-          ...a,
-          has_mix_session: activeSessionIds.has(a.id),
-        }));
+          .select('id, appointment_id')
+          .in('appointment_id', allIds);
+        if (sessions && sessions.length > 0) {
+          const sessionIds = sessions.map(s => s.id);
+          const sessionToAppt: Record<string, string> = {};
+          for (const s of sessions) sessionToAppt[s.id] = s.appointment_id;
+          const { data: bowlsData } = await supabase
+            .from('mix_bowls')
+            .select('mix_session_id')
+            .in('mix_session_id', sessionIds);
+          const bowlCounts: Record<string, number> = {};
+          for (const b of (bowlsData || [])) {
+            const apptId = sessionToAppt[b.mix_session_id];
+            if (apptId) bowlCounts[apptId] = (bowlCounts[apptId] || 0) + 1;
+          }
+          return all.map((a) => ({ ...a, mix_bowl_count: bowlCounts[a.id] || 0 }));
+        }
       }
 
-      return [...phorest, ...local];
+      return all.map((a) => ({ ...a, mix_bowl_count: 0 }));
     },
     enabled: !!staffUserId || (isDemoMode && usesRealData),
     staleTime: 30_000,
