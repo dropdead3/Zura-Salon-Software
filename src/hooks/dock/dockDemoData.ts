@@ -127,7 +127,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       client_id: 'demo-client-3',
       assistant_names: ['Kylie M.', 'Alexis R.'],
       notes: 'New client — consultation needed',
-      has_mix_session: false,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-4',
