@@ -130,6 +130,22 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
                 })}
               </div>
 
+              {/* Quick Actions */}
+              {onAddAppointment && (
+                <>
+                  <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
+                  <div className="px-4">
+                    <button
+                      onClick={() => { onAddAppointment(); setOpen(false); }}
+                      className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-violet-500/[0.12] text-violet-300 hover:bg-violet-500/[0.18] transition-colors"
+                    >
+                      <Plus className="w-5 h-5 text-violet-400" />
+                      <span className="font-sans text-sm">Add Appointment</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
               {/* Divider */}
               <div className="mx-6 my-4 h-px bg-[hsl(var(--platform-border)/0.2)]" />
 
