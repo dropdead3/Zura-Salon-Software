@@ -47,6 +47,20 @@ export const DOCK_BADGE = {
   bowlsMixed:   'bg-sky-500/15 text-sky-300 border-sky-400/25',
   noBowlsMixed: 'bg-amber-500/15 text-amber-300 border-amber-400/25',
   noChemical:   'bg-slate-500/15 text-slate-400 border-slate-400/25',
+
+  /** Client profile variants */
+  visits:       'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  clvPlatinum:  'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  clvGold:      'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  clvSilver:    'bg-slate-400/10 text-slate-400 border-slate-400/20',
+  clvBronze:    'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  firstVisit:   'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  noShowRisk:   'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  neutral:      'bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-border)/0.2)]',
+  preferred:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+
+  /** System indicator */
+  demo:         'bg-amber-500/20 text-amber-300 border-amber-500/30',
 } as const;
 
 export const DOCK_DIALOG = {
