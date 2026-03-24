@@ -17,6 +17,11 @@ export function useCloneFormula() {
 
   return useMutation({
     mutationFn: async ({ bowlId, formulaLines }: CloneFormulaParams) => {
+      // Demo mode: short-circuit — don't write to DB
+      if (bowlId.startsWith('demo-')) {
+        toast.success('Formula cloned into bowl (demo)');
+        return [];
+      }
       // Get current max sequence order
       const { data: maxRow } = await supabase
         .from('mix_bowl_lines')
