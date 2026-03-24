@@ -47,11 +47,6 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   const completeAppointment = useDockCompleteAppointment();
   const [clientViewAppt, setClientViewAppt] = useState<DockAppointment | null>(null);
 
-  const { containerRef, progress: lockProgress } = useDockLockGesture({
-    onLock: onLogout,
-    enabled: !showingDetail,
-  });
-
   const { containerRef: idleRef } = useDockIdleTimer({
     onIdle: onLogout,
     enabled: true,
