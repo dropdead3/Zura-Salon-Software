@@ -24,6 +24,7 @@ import { SidebarFeedbackButtons } from './SidebarFeedbackButtons';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
+import { useOrganizationApps } from '@/hooks/useOrganizationApps';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -53,6 +54,7 @@ interface SidebarNavContentProps {
   managerNavItems: NavItem[];
   websiteNavItems: NavItem[];
   adminOnlyNavItems: NavItem[];
+  appsNavItems?: NavItem[];
   platformNavItems?: NavItem[];
   footerNavItems?: NavItem[];
   isPlatformUser?: boolean;
@@ -82,6 +84,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     managerNavItems,
     websiteNavItems,
     adminOnlyNavItems,
+    appsNavItems: appsNavItemsProp = [],
     platformNavItems = [],
     footerNavItems = [],
     isPlatformUser = false,
@@ -108,6 +111,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
+  const { apps: activatedApps } = useOrganizationApps();
   
   // Map section IDs to nav items (for built-in sections)
   // New consolidated sections: myTools (replaces growth+stats), manage (replaces manager), system (replaces adminOnly)
@@ -116,6 +120,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     main: mainNavItems,
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
     manage: managerNavItems,
+    apps: appsNavItemsProp,
     system: adminOnlyNavItems,
     housekeeping: housekeepingNavItems,
     website: websiteNavItems,
@@ -125,7 +130,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     stats: statsNavItems,
     manager: managerNavItems,
     adminOnly: adminOnlyNavItems,
-  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
+  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, appsNavItemsProp, platformNavItems]);
 
   // Create a map of all nav items by href (for custom sections that can contain any link)
   const allNavItemsByHref = useMemo(() => {
@@ -137,6 +142,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       ...managerNavItems,
       ...websiteNavItems,
       ...adminOnlyNavItems,
+      ...appsNavItemsProp,
       ...platformNavItems,
     ];
     const map: Record<string, NavItem> = {};
@@ -144,7 +150,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       map[item.href] = item;
     });
     return map;
-  }, [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
+  }, [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, appsNavItemsProp, platformNavItems]);
 
   // Apply custom link ordering to nav items
   const getOrderedItems = (sectionId: string, items: NavItem[]): NavItem[] => {
@@ -558,6 +564,19 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             }
           }
           
+          // Apps section: only show when org has activated apps
+          // Filter individual app items by their app_key mapping
+          if (sectionId === 'apps') {
+            const APP_KEY_MAP: Record<string, string> = {
+              '/dashboard/admin/backroom-settings': 'backroom',
+            };
+            filteredItems = filteredItems.filter(item => {
+              const appKey = APP_KEY_MAP[item.href];
+              return appKey ? activatedApps.includes(appKey) : true;
+            });
+            shouldShow = filteredItems.length > 0;
+          }
+
           // Platform section should NEVER show in org dashboard
           if (sectionId === 'platform') {
             shouldShow = false;

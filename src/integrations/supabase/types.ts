@@ -10940,6 +10940,35 @@ export type Database = {
           },
         ]
       }
+      organization_apps: {
+        Row: {
+          activated_at: string
+          app_key: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          activated_at?: string
+          app_key: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          activated_at?: string
+          app_key?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_apps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_benchmarks: {
         Row: {
           calculated_at: string

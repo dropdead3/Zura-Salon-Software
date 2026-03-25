@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { platformNavGroups } from '@/config/platformNav';
-import { LayoutDashboard, Wrench, BarChart3, Settings, Terminal, Users, Rocket, HeartPulse } from 'lucide-react';
+import { LayoutDashboard, Wrench, BarChart3, Settings, Terminal, Users, Rocket, HeartPulse, Package } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Section icon mapping for collapsed sidebar popovers
@@ -10,6 +10,7 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
   main: LayoutDashboard,
   myTools: Wrench,
   manage: BarChart3,
+  apps: Package,
   system: Settings,
   platform: Terminal,
   // Legacy mappings for stored layouts that reference old section IDs
@@ -25,6 +26,7 @@ export const DEFAULT_SECTION_ORDER = [
   'main',
   'myTools',    // Staff-facing daily tools (replaces growth + stats)
   'manage',     // Admin hub-only links (replaces manager with 22+ items)
+  'apps',       // Org-activated add-on apps (Backroom, etc.)
   'system',     // Admin config (replaces adminOnly)
   'platform',
 ];
@@ -42,6 +44,7 @@ export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
   myTools: 'My Tools',
   manage: 'Manage',
+  apps: 'Apps',
   system: 'System',
   platform: 'Platform Admin',
   housekeeping: 'Resources',
@@ -88,6 +91,9 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/admin/growth-hub',
     '/dashboard/admin/payroll',
     '/dashboard/admin/booth-renters',
+  ],
+  apps: [
+    '/dashboard/admin/backroom-settings',
   ],
   system: [
     '/dashboard/admin/access-hub',

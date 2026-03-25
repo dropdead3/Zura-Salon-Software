@@ -142,6 +142,7 @@ import {
   adminOnlyNavItems as adminOnlyNavFromConfig,
   footerNavItems as footerNavFromConfig,
   websiteNavItems as websiteNavFromConfig,
+  appsNavItems as appsNavFromConfig,
 } from '@/config/dashboardNav';
 import Logo from '@/assets/brand-logo-secondary.svg';
 import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
@@ -189,6 +190,7 @@ const managerNavItems: NavItem[] = managerNavFromConfig;
 const adminOnlyNavItems: NavItem[] = adminOnlyNavFromConfig;
 const footerNavItems: NavItem[] = footerNavFromConfig;
 const websiteNavItems: NavItem[] = websiteNavFromConfig;
+const appsNavItems: NavItem[] = appsNavFromConfig;
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
@@ -433,6 +435,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           managerNavItems={managerNavItems}
           websiteNavItems={websiteNavItems}
           adminOnlyNavItems={adminOnlyNavItems}
+          appsNavItems={appsNavItems}
           footerNavItems={footerNavItems}
           isPlatformUser={isPlatformUser}
           isMultiOrgOwner={isMultiOrgOwner}
@@ -468,6 +471,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             managerNavItems={managerNavItems}
             websiteNavItems={websiteNavItems}
             adminOnlyNavItems={adminOnlyNavItems}
+            appsNavItems={appsNavItems}
             footerNavItems={footerNavItems}
             isPlatformUser={isPlatformUser}
             isMultiOrgOwner={isMultiOrgOwner}
