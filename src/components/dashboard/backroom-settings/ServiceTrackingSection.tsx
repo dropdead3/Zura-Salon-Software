@@ -699,10 +699,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               Variance Threshold
                                               <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
                                             </label>
-                                            <div className="flex items-center gap-2 py-1">
+                                            <div className="flex items-center gap-2 py-1" onPointerDown={(e) => e.stopPropagation()}>
                                               <Slider
-                                                value={[service.variance_threshold_pct]}
-                                                onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
+                                                key={`${service.id}-${service.variance_threshold_pct}`}
+                                                defaultValue={[service.variance_threshold_pct]}
+                                                onValueCommit={([v]) => {
+                                                  if (v !== service.variance_threshold_pct) {
+                                                    updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } });
+                                                  }
+                                                }}
                                                 min={5}
                                                 max={50}
                                                 step={5}
