@@ -5,7 +5,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUpsertTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
+import { useUpsertTrackingComponent, useServiceTrackingComponents, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
 import { isSuggestedChemicalService, getServiceCategory, SERVICE_CATEGORIES } from '@/utils/serviceCategorization';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
