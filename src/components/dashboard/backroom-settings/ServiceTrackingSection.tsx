@@ -277,17 +277,17 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         </CardContent>
       </Card>
 
-      {/* Untracked services */}
-      {untracked.length > 0 && (
+      {/* Available chemical services (untracked) */}
+      {chemicalUntracked.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className={tokens.card.title}>Available Services</CardTitle>
             <CardDescription>
-              Enable backroom tracking for these services.
+              Color and chemical services not yet tracked. Enable tracking or mark services as chemical in the Service Editor.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
-            {untracked.map((service) => (
+            {chemicalUntracked.map((service) => (
               <div key={service.id} className="flex items-center gap-4 rounded-lg border p-3 bg-muted/20">
                 <Switch
                   checked={false}
@@ -297,8 +297,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   <p className="text-sm font-sans text-muted-foreground truncate">{service.name}</p>
                   {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
                 </div>
-                {isColorOrChemicalService(service.name, service.category) && (
-                  <Badge variant="default" className="text-xs">Suggested</Badge>
+                {service.is_chemical_service ? (
+                  <Badge variant="default" className="text-xs">Chemical</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">Suggested</Badge>
                 )}
               </div>
             ))}

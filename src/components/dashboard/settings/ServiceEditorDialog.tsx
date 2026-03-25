@@ -129,6 +129,7 @@ export function ServiceEditorDialog({
       deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
       deposit_amount_flat: depositAmountFlat ? parseFloat(depositAmountFlat) : null,
       is_chemical_service: isChemicalService,
+      is_backroom_tracked: isChemicalService ? true : false,
       container_types: isChemicalService ? containerTypes : [],
     } as Partial<Service>);
   };
