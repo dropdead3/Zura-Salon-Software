@@ -39,6 +39,8 @@ interface Props {
 export function ServiceTrackingSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const queryClient = useQueryClient();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [showSuggested, setShowSuggested] = useState(false);
