@@ -1,19 +1,26 @@
 
 
-## Fix: Move Demo Badge Left to Avoid Overlapping Edit Services Button
+## Rename "Seal Bowl" → "Finish Formulation" + Swap Icons
 
 ### Problem
-The global `DockDemoBadge` is positioned at `right-20` (80px from right edge), which lands directly on top of the "Edit Services" button in the appointment detail header.
+"Seal Bowl" is internal jargon leaking into the UI. The lock icon reinforces a wrong mental model. The action means the stylist finished dispensing — "Finish Formulation" is clearer.
 
-### Fix — `src/components/dock/DockDemoBadge.tsx`
+### Changes
 
-Change the positioning class from `right-20` to `right-52` (208px from right) so the badge sits clearly to the left of the Edit Services button with comfortable spacing between them.
+**1. `src/components/dock/mixing/DockLiveDispensing.tsx`**
+- Line 293: `'Seal Bowl'` → `'Finish Formulation'`, `'Sealing...'` → `'Finishing...'`
+- Line 292: `Lock` icon → `Check` icon (already imported)
+- Line 234: Status badge icon `Lock` → `Check`
+- Line 235: Badge text `'Sealed'` → `'Finalized'`
+- Line 191: Copy `'Place sealed bowl on scale...'` → `'Place finished bowl on scale...'`
 
-```
-Before: "absolute top-5 right-20 z-50 ..."
-After:  "absolute top-5 right-52 z-50 ..."
-```
+**2. `src/components/dock/mixing/DockSessionTimeline.tsx`**
+- Line 34: `bowl_sealed` label `'Bowl Sealed'` → `'Formulation Finalized'`, icon `Lock` → `Check`
 
-### One file changed
-`src/components/dock/DockDemoBadge.tsx`
+**3. `src/hooks/dock/useDockMixSession.ts`**
+- Line 218: Error message `'Failed to seal bowl'` → `'Failed to finish formulation'`
+- Line 234: Toast error `'Failed to seal bowl'` → `'Failed to finish formulation'`
+
+### Not changed
+Internal variable names (`sealBowl`, `handleSeal`, `isSealed`) and DB state values (`sealed`, `bowl_sealed`) remain as-is — only user-facing copy and icons change.
 
