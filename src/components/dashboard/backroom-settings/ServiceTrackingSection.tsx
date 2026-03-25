@@ -13,15 +13,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText } from 'lucide-react';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
+import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
 
 interface ServiceRow {
   id: string;
@@ -50,6 +54,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [wizardOpen, setWizardOpen] = useState(false);
   const { data: allowancePolicies } = useServiceAllowancePolicies();
   const { data: allComponents } = useServiceTrackingComponents();
 
@@ -200,6 +207,23 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     }
   }, [allServices, activeFilter, componentsByService, allowanceByService]);
 
+  // Search filter (applied after tab filter)
+  const searchedServices = useMemo(() => {
+    if (!searchQuery.trim()) return filteredServices;
+    const q = searchQuery.toLowerCase();
+    return filteredServices.filter(s => s.name.toLowerCase().includes(q));
+  }, [filteredServices, searchQuery]);
+
+  // Expand toggle helper
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Counts for filter tabs
   const filterCounts = useMemo(() => ({
     all: allServices.length,
@@ -263,7 +287,20 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       {/* Configuration Progress */}
       <Card>
         <CardContent className="py-4">
-          <ServiceTrackingProgressBar milestones={milestones} />
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <ServiceTrackingProgressBar milestones={milestones} />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setWizardOpen(true)}
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Quick Setup
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -326,37 +363,54 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filter tabs */}
-          <div className="flex flex-wrap gap-1.5">
-            {filters.map(f => (
-              <button
-                key={f.key}
-                onClick={() => { setActiveFilter(f.key); setSelectedIds(new Set()); }}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
-                  activeFilter === f.key
-                    ? 'bg-primary/10 border-primary/30 text-primary'
-                    : 'bg-muted/50 border-border text-muted-foreground hover:bg-muted',
-                  f.key === 'attention' && filterCounts.attention > 0 && activeFilter !== f.key && 'border-amber-500/30 text-amber-600 dark:text-amber-400',
-                )}
-              >
-                {f.label}
-                <span className="ml-1.5 tabular-nums">{filterCounts[f.key]}</span>
-              </button>
-            ))}
+          {/* Search + Filter tabs */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-1.5">
+              {filters.map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => { setActiveFilter(f.key); setSelectedIds(new Set()); }}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+                    activeFilter === f.key
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-muted/50 border-border text-muted-foreground hover:bg-muted',
+                    f.key === 'attention' && filterCounts.attention > 0 && activeFilter !== f.key && 'border-amber-500/30 text-amber-600 dark:text-amber-400',
+                  )}
+                >
+                  {f.label}
+                  <span className="ml-1.5 tabular-nums">{filterCounts[f.key]}</span>
+                </button>
+              ))}
+            </div>
+            {allServices.length >= 15 && (
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  autoCapitalize="off"
+                  placeholder="Search services..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-8 text-xs rounded-full"
+                />
+              </div>
+            )}
           </div>
 
           {/* Table */}
-          {filteredServices.length === 0 ? (
+          {searchedServices.length === 0 ? (
             <div className={tokens.empty.container}>
               <Wrench className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>
-                {activeFilter === 'attention' ? 'All clear!' : 'No services found'}
+                {searchQuery ? 'No matching services' : activeFilter === 'attention' ? 'All clear!' : 'No services found'}
               </h3>
               <p className={tokens.empty.description}>
-                {activeFilter === 'attention'
-                  ? 'All chemical services are tracked and configured.'
-                  : 'Adjust your filter or add services in the Service Editor.'}
+                {searchQuery
+                  ? 'Try a different search term.'
+                  : activeFilter === 'attention'
+                    ? 'All chemical services are tracked and configured.'
+                    : 'Adjust your filter or add services in the Service Editor.'}
               </p>
             </div>
           ) : (
@@ -367,8 +421,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     <TableHead className="w-10">
                       <Checkbox
                         checked={
-                          filteredServices.filter(s => !s.is_backroom_tracked).length > 0 &&
-                          filteredServices.filter(s => !s.is_backroom_tracked).every(s => selectedIds.has(s.id))
+                          searchedServices.filter(s => !s.is_backroom_tracked).length > 0 &&
+                          searchedServices.filter(s => !s.is_backroom_tracked).every(s => selectedIds.has(s.id))
                         }
                         onCheckedChange={selectAll}
                       />
@@ -383,115 +437,188 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredServices.map((service) => {
+                  {searchedServices.map((service) => {
                     const type = getServiceType(service);
                     const hasComponents = componentsByService.has(service.id);
                     const hasAllowance = allowanceByService.has(service.id);
                     const attention = needsAttention(service);
+                    const isExpanded = expandedIds.has(service.id);
 
                     return (
-                      <TableRow key={service.id} className={cn(attention && 'bg-amber-500/[0.03]')}>
-                        {/* Checkbox */}
-                        <TableCell>
-                          {!service.is_backroom_tracked && (
-                            <Checkbox
-                              checked={selectedIds.has(service.id)}
-                              onCheckedChange={() => toggleSelect(service.id)}
-                            />
-                          )}
-                        </TableCell>
+                      <Collapsible key={service.id} open={isExpanded} onOpenChange={() => toggleExpand(service.id)} asChild>
+                        <>
+                          <TableRow className={cn(attention && 'bg-amber-500/[0.03]')}>
+                            {/* Checkbox */}
+                            <TableCell>
+                              {!service.is_backroom_tracked && (
+                                <Checkbox
+                                  checked={selectedIds.has(service.id)}
+                                  onCheckedChange={() => toggleSelect(service.id)}
+                                />
+                              )}
+                            </TableCell>
 
-                        {/* Status dot */}
-                        <TableCell>
-                          <div className={cn(
-                            'w-2.5 h-2.5 rounded-full',
-                            service.is_backroom_tracked
-                              ? 'bg-primary'
-                              : (type === 'chemical' || type === 'suggested')
-                                ? 'bg-amber-500'
-                                : 'bg-muted-foreground/30',
-                          )} />
-                        </TableCell>
+                            {/* Status dot */}
+                            <TableCell>
+                              <div className={cn(
+                                'w-2.5 h-2.5 rounded-full',
+                                service.is_backroom_tracked
+                                  ? 'bg-primary'
+                                  : (type === 'chemical' || type === 'suggested')
+                                    ? 'bg-amber-500'
+                                    : 'bg-muted-foreground/30',
+                              )} />
+                            </TableCell>
 
-                        {/* Name */}
-                        <TableCell>
-                          <span className={cn(
-                            'text-sm font-sans',
-                            service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
-                          )}>
-                            {service.name}
-                          </span>
-                        </TableCell>
+                            {/* Name */}
+                            <TableCell>
+                              <span className={cn(
+                                'text-sm font-sans',
+                                service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
+                              )}>
+                                {service.name}
+                              </span>
+                            </TableCell>
 
-                        {/* Category */}
-                        <TableCell>
-                          {service.category ? (
-                            <span className="text-xs text-muted-foreground">{service.category}</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/50 italic">None</span>
-                          )}
-                        </TableCell>
+                            {/* Category */}
+                            <TableCell>
+                              {service.category ? (
+                                <span className="text-xs text-muted-foreground">{service.category}</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground/50 italic">None</span>
+                              )}
+                            </TableCell>
 
-                        {/* Type badge */}
-                        <TableCell>
-                          {type === 'chemical' && (
-                            <Badge variant="default" className="text-[10px]">Chemical</Badge>
-                          )}
-                          {type === 'suggested' && (
-                            <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
-                          )}
-                          {type === 'standard' && (
-                            <Badge variant="secondary" className="text-[10px]">Standard</Badge>
-                          )}
-                        </TableCell>
+                            {/* Type badge */}
+                            <TableCell>
+                              {type === 'chemical' && (
+                                <Badge variant="default" className="text-[10px]">Chemical</Badge>
+                              )}
+                              {type === 'suggested' && (
+                                <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
+                              )}
+                              {type === 'standard' && (
+                                <Badge variant="secondary" className="text-[10px]">Standard</Badge>
+                              )}
+                            </TableCell>
 
-                        {/* Tracking toggle */}
-                        <TableCell>
-                          <Switch
-                            checked={service.is_backroom_tracked}
-                            onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
-                            className="scale-90"
-                          />
-                        </TableCell>
+                            {/* Tracking toggle */}
+                            <TableCell>
+                              <Switch
+                                checked={service.is_backroom_tracked}
+                                onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                className="scale-90"
+                              />
+                            </TableCell>
 
-                        {/* Config status */}
-                        <TableCell>
-                          {service.is_backroom_tracked ? (
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-0.5">
-                                <Package className={cn(
-                                  'w-3.5 h-3.5',
-                                  hasComponents ? 'text-primary' : 'text-muted-foreground/30',
-                                )} />
-                                <MetricInfoTooltip description={hasComponents ? 'Product components mapped' : 'No product components mapped yet'} />
+                            {/* Config status */}
+                            <TableCell>
+                              {service.is_backroom_tracked ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-0.5">
+                                    <Package className={cn(
+                                      'w-3.5 h-3.5',
+                                      hasComponents ? 'text-primary' : 'text-muted-foreground/30',
+                                    )} />
+                                    <MetricInfoTooltip description={hasComponents ? 'Product components mapped' : 'No product components mapped yet'} />
+                                  </div>
+                                  <div className="flex items-center gap-0.5">
+                                    <FileText className={cn(
+                                      'w-3.5 h-3.5',
+                                      hasAllowance ? 'text-primary' : 'text-muted-foreground/30',
+                                    )} />
+                                    <MetricInfoTooltip description={hasAllowance ? 'Allowance policy configured' : 'No allowance policy set'} />
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground/40">—</span>
+                              )}
+                            </TableCell>
+
+                            {/* Actions */}
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {service.is_backroom_tracked && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 text-xs"
+                                      onClick={() => setSelectedServiceId(service.id)}
+                                    >
+                                      Components
+                                    </Button>
+                                    <button
+                                      onClick={() => toggleExpand(service.id)}
+                                      className="p-1 rounded-md hover:bg-muted transition-colors"
+                                    >
+                                      <ChevronDown className={cn(
+                                        'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                                        isExpanded && 'rotate-180',
+                                      )} />
+                                    </button>
+                                  </>
+                                )}
                               </div>
-                              <div className="flex items-center gap-0.5">
-                                <FileText className={cn(
-                                  'w-3.5 h-3.5',
-                                  hasAllowance ? 'text-primary' : 'text-muted-foreground/30',
-                                )} />
-                                <MetricInfoTooltip description={hasAllowance ? 'Allowance policy configured' : 'No allowance policy set'} />
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/40">—</span>
-                          )}
-                        </TableCell>
+                            </TableCell>
+                          </TableRow>
 
-                        {/* Actions */}
-                        <TableCell className="text-right">
+                          {/* Expandable config row */}
                           {service.is_backroom_tracked && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => setSelectedServiceId(service.id)}
-                            >
-                              Components
-                            </Button>
+                            <CollapsibleContent asChild>
+                              <tr>
+                                <td colSpan={8} className="p-0">
+                                  <div className="px-6 py-4 bg-muted/30 border-t border-border/30">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                      <div className="space-y-1.5">
+                                        <label className="text-[10px] font-sans text-muted-foreground">Assistant Prep</label>
+                                        <Switch
+                                          checked={service.assistant_prep_allowed}
+                                          onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
+                                          className="scale-90"
+                                        />
+                                      </div>
+                                      <div className="space-y-1.5">
+                                        <label className="text-[10px] font-sans text-muted-foreground">Smart Mix Assist</label>
+                                        <Switch
+                                          checked={service.smart_mix_assist_enabled}
+                                          onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
+                                          className="scale-90"
+                                        />
+                                      </div>
+                                      <div className="space-y-1.5">
+                                        <label className="text-[10px] font-sans text-muted-foreground">Formula Memory</label>
+                                        <Switch
+                                          checked={service.formula_memory_enabled}
+                                          onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
+                                          className="scale-90"
+                                        />
+                                      </div>
+                                      <div className="space-y-1.5">
+                                        <label className="text-[10px] font-sans text-muted-foreground">
+                                          Variance Threshold
+                                          <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                          <Slider
+                                            value={[service.variance_threshold_pct]}
+                                            onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
+                                            min={5}
+                                            max={50}
+                                            step={5}
+                                            className="flex-1"
+                                          />
+                                          <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{service.variance_threshold_pct}%</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </CollapsibleContent>
                           )}
-                        </TableCell>
-                      </TableRow>
+                        </>
+                      </Collapsible>
                     );
                   })}
                 </TableBody>
@@ -509,6 +636,20 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {/* Quick Setup Wizard */}
+      {orgId && (
+        <ServiceTrackingQuickSetup
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+          orgId={orgId}
+          services={allServices}
+          milestones={milestones}
+          componentsByService={componentsByService}
+          allowanceByService={allowanceByService}
+          onNavigateAllowances={onNavigate ? () => onNavigate('allowances') : undefined}
+        />
+      )}
 
       {/* Component mapping dialog */}
       {selectedServiceId && (
