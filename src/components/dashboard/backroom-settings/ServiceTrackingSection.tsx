@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceTrackingComponents, useUpsertTrackingComponent, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
 import { useServiceAllowancePolicies } from '@/hooks/billing/useServiceAllowancePolicies';
-import { isColorOrChemicalService } from '@/utils/serviceCategorization';
+import { isSuggestedChemicalService } from '@/utils/serviceCategorization';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

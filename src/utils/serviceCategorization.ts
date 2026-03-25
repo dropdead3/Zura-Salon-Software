@@ -62,6 +62,32 @@ export const SERVICE_CATEGORIES = [
 export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
 
 /**
+ * Categories that NEVER need chemical/color tracking (even if name matches a keyword).
+ * Extension installs, haircuts, styling, and consultations don't consume color products.
+ */
+export const NON_CHEMICAL_CATEGORIES = new Set<string>([
+  'Haircut',
+  'Haircuts',
+  'Extensions',
+  'Styling',
+  'New Client Consultation',
+]);
+
+/**
+ * Returns true if a service should be *suggested* for chemical tracking.
+ * Combines the regex keyword match with a category exclusion list so that
+ * haircuts, extension installs, styling, and consultations are never suggested.
+ */
+export function isSuggestedChemicalService(
+  serviceName: string | null,
+  serviceCategory?: string | null,
+): boolean {
+  // If the category is explicitly non-chemical, never suggest
+  if (serviceCategory && NON_CHEMICAL_CATEGORIES.has(serviceCategory)) return false;
+  return isColorOrChemicalService(serviceName, serviceCategory);
+}
+
+/**
  * Color/chemical service keywords — union of Blonding + Color categories
  * plus additional chemical-processing terms.
  */
