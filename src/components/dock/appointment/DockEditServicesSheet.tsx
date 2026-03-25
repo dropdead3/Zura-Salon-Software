@@ -169,9 +169,11 @@ export function DockEditServicesSheet({
               </div>
             </div>
 
-            {/* Selected chips */}
+            {/* Selected chips — "On this appointment" */}
             {selected.size > 0 && (
-              <div className="flex-shrink-0 px-7 pb-3 flex flex-wrap gap-1.5">
+              <div className="flex-shrink-0 px-7 pb-3">
+                <p className={cn(DOCK_TEXT.category, 'mb-2')}>On This Appointment</p>
+                <div className="flex flex-wrap gap-1.5">
                 {Array.from(selected.values()).map(svc => (
                   <button
                     key={svc.name}
