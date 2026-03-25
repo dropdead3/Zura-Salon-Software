@@ -188,7 +188,7 @@ export function ServiceEditorDialog({
                     <Input id="service-duration" type="number" min="5" step="5" value={duration} onChange={e => setDuration(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="service-price">Price ($)</Label>
+                    <Label htmlFor="service-price" className="flex items-center gap-1.5">Price ($) <MetricInfoTooltip description="Default service price before level, location, or seasonal adjustments." /></Label>
                     <Input id="service-price" type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="Optional" />
                   </div>
                   <div className="space-y-2">
