@@ -1,37 +1,77 @@
 
 
-## Add "Mixed by" Attribution to Bowl Cards
+## Container Types for Services (Bowl vs Bottle)
 
 ### Problem
-Bowl cards don't show who mixed them. When assistants are linked to appointments, it's important to see who actually prepared each formula — on the card, in history, and in audit trails.
+All formulations are labeled "Bowl" regardless of the actual vessel. Toner services use bottles, not bowls. Some services (e.g., Full Balayage) require both bowls and bottles.
 
-### Changes
+### Phase 1 — Core Implementation
 
-**1. `src/hooks/dock/useDockMixSessions.ts`**
-- Add `mixed_by_staff_id` to the `DockMixSession` interface and the Supabase select query
-- Add `mixed_by_name` as a resolved display name (fetched via a second query against `employee_profiles` for all unique staff IDs in the session results)
+**1. Database Migration**
+- Create `container_type` enum: `'bowl'`, `'bottle'`
+- Add `container_types container_type[] NOT NULL DEFAULT '{bowl}'` to `public.services`
+- Add `container_type container_type NOT NULL DEFAULT 'bowl'` to `public.mix_bowls`
 
-**2. `src/hooks/dock/dockDemoData.ts`**
-- Add `mixed_by_staff_id` and `mixed_by_name` to demo session records (e.g., "Demo User", or specific demo assistant names)
+Both default to `bowl` so all existing data remains correct.
 
-**3. `src/components/dock/appointment/DockServicesTab.tsx`**
-- **`BowlCard`**: Display `session.mixed_by_name` in the info area as a subtle "Mixed by [Name]" line (text-[11px], muted foreground)
-- **`DemoBowlCard`**: Same treatment using the demo bowl's mixer name
+**2. Service Editor — Container Type Setting**
+`src/components/dashboard/settings/ServiceEditorDialog.tsx`
+- Add a "Container Types" multi-select (checkboxes for Bowl / Bottle) in the Details tab, below the existing toggles
+- Persist via the existing `onSubmit` flow — add `container_types` to the `Service` interface in `useServicesData.ts`
 
-**4. Formula History & Audit Trails** (existing infrastructure)
-- `mix_sessions` already stores `mixed_by_staff_id` — the formula history (`client_formula_history`) and audit log (`appointment_audit_log`) already reference session data. The key gap is the Dock UI display, which this fixes. If formula history cards also need the name, the `DockFormulaHistorySheet` will be updated to resolve and show the mixer name.
+**3. Service Lookup — Expose Container Types**
+`src/hooks/useServiceLookup.ts`
+- Add `container_types` to `ServiceLookupEntry` and the select query
+- The Dock formulations tab already uses this lookup to resolve service metadata
 
-### Approach for name resolution
-Rather than a JOIN (not available via Supabase JS client on this query pattern), the hook will:
-1. Fetch sessions
-2. Collect unique `mixed_by_staff_id` values
-3. Batch-fetch `employee_profiles` for those IDs
-4. Map `mixed_by_name` onto each session before returning
+**4. Dock Formulations Tab — Dynamic Labels & Buttons**
+`src/components/dock/appointment/DockServicesTab.tsx`
+- Resolve `container_types` from the service lookup for each service section
+- If service allows only bottles → show "Add Bottle" instead of "Add Bowl"
+- If service allows both → show "Add Bowl" and "Add Bottle" buttons
+- `BowlCard`: display "Bowl {n}" or "Bottle {n}" based on `session.container_type` (fetched from mix_bowls via a new field on `DockMixSession`)
+- `AddBowlCard`: accept a `containerLabel` prop for the button text
+- Section header: show "N bowl(s)" / "N bottle(s)" / "N formulation(s)" dynamically
 
-This keeps it efficient (2 queries max) and avoids N+1 patterns.
+**5. Bowl Creation — Persist Container Type**
+`src/hooks/dock/useDockMixSession.ts` — `useCreateDockBowl`
+- Accept `containerType` param, set `bowl_name` to `'Bowl 1'` or `'Bottle 1'` accordingly
+- Insert `container_type` into `mix_bowls`
 
-### Files
-- `src/hooks/dock/useDockMixSessions.ts` — add staff ID + name resolution
-- `src/hooks/dock/dockDemoData.ts` — add demo mixer names
-- `src/components/dock/appointment/DockServicesTab.tsx` — render "Mixed by" on both card types
+`src/hooks/backroom/useMixBowls.ts` — `useCreateMixBowl`
+- Same: accept and persist `container_type`
+
+**6. New Bowl Sheet**
+`src/components/dock/mixing/DockNewBowlSheet.tsx`
+- Accept `containerType` prop, update header to "New Bowl" or "New Bottle"
+
+**7. Bowl Action Sheet & Rename Dialog**
+- `DockBowlActionSheet.tsx`: accept `containerLabel` to show "Edit Bowl" vs "Edit Bottle" etc.
+- `DockRenameBowlDialog.tsx`: dynamic title "Rename Bowl" / "Rename Bottle"
+
+**8. Demo Data**
+`src/hooks/dock/dockDemoData.ts`
+- Add `container_type` to demo mix sessions and demo bowls
+
+### Phase 2 — Follow-ups (after core)
+
+1. **Seed known toner services**: One-time data update to set `container_types = '{bottle}'` for services with names containing "Toner", "Gloss", etc.
+2. **Dashboard MixSessionManager**: Update admin-side bowl labels to respect container type
+3. **Formula History**: Show container type on `DockFormulaHistorySheet` cards
+4. **Icon differentiation**: Use `TestTube2` for bottles vs `FlaskConical` for bowls on cards
+5. **Reporting labels**: Check `useBackroomAnalytics` and related hooks for user-facing "bowl" text
+
+### Files (Phase 1)
+- **Migration SQL** — new enum + two ALTER TABLE statements
+- `src/hooks/useServicesData.ts` — add `container_types` to `Service` interface
+- `src/hooks/useServiceLookup.ts` — add `container_types` to lookup
+- `src/components/dashboard/settings/ServiceEditorDialog.tsx` — container type checkboxes
+- `src/components/dock/appointment/DockServicesTab.tsx` — dynamic labels, buttons, card text
+- `src/hooks/dock/useDockMixSession.ts` — accept + persist container type
+- `src/hooks/dock/useDockMixSessions.ts` — expose container_type from mix_bowls
+- `src/hooks/backroom/useMixBowls.ts` — accept + persist container type
+- `src/components/dock/mixing/DockNewBowlSheet.tsx` — dynamic header
+- `src/components/dock/mixing/DockBowlActionSheet.tsx` — dynamic action labels
+- `src/components/dock/mixing/DockRenameBowlDialog.tsx` — dynamic title
+- `src/hooks/dock/dockDemoData.ts` — demo data updates
 
