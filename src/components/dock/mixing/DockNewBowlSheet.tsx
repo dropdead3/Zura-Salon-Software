@@ -17,6 +17,7 @@ interface DockNewBowlSheetProps {
   onClose: () => void;
   onCreateBowl: (lines: FormulaLine[], baseWeight: number) => void;
   clientId?: string | null;
+  containerType?: 'bowl' | 'bottle';
 }
 
 export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: DockNewBowlSheetProps) {
