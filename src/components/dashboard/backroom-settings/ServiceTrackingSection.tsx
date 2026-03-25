@@ -673,28 +673,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         </div>
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                          <div className="space-y-1.5">
-                                            <label className="text-[10px] font-sans text-muted-foreground">Assistant Prep</label>
+                                          <div className="flex items-center gap-2">
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
                                             <Switch
                                               checked={service.assistant_prep_allowed}
                                               onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
-                                              className="scale-90"
                                             />
                                           </div>
-                                          <div className="space-y-1.5">
-                                            <label className="text-[10px] font-sans text-muted-foreground">Smart Mix Assist</label>
+                                          <div className="flex items-center gap-2">
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Smart Mix Assist</label>
                                             <Switch
                                               checked={service.smart_mix_assist_enabled}
                                               onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
-                                              className="scale-90"
                                             />
                                           </div>
-                                          <div className="space-y-1.5">
-                                            <label className="text-[10px] font-sans text-muted-foreground">Formula Memory</label>
+                                          <div className="flex items-center gap-2">
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Formula Memory</label>
                                             <Switch
                                               checked={service.formula_memory_enabled}
                                               onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
-                                              className="scale-90"
                                             />
                                           </div>
                                           <div className="space-y-1.5">
@@ -702,7 +699,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               Variance Threshold
                                               <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
                                             </label>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 py-1">
                                               <Slider
                                                 value={[service.variance_threshold_pct]}
                                                 onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
