@@ -716,6 +716,55 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             )}
                                           </div>
                                         </div>
+                                        {/* Chemical toggle + vessel selector */}
+                                        <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
+                                          <div className="flex items-center gap-2">
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                            <Switch
+                                              checked={service.is_chemical_service}
+                                              onCheckedChange={(v) => {
+                                                if (v) {
+                                                  const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                  updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
+                                                } else {
+                                                  updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          {service.is_chemical_service && (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-[10px] font-sans text-muted-foreground">Vessels:</span>
+                                              {(['bowl', 'bottle'] as const).map((vt) => {
+                                                const active = (service.container_types || []).includes(vt);
+                                                const isOnly = (service.container_types || []).length === 1 && active;
+                                                return (
+                                                  <button
+                                                    key={vt}
+                                                    disabled={isOnly}
+                                                    className={cn(
+                                                      'px-2.5 py-0.5 rounded-full text-[10px] font-sans capitalize transition-colors border',
+                                                      active
+                                                        ? 'bg-primary/10 border-primary/30 text-primary'
+                                                        : 'bg-muted/50 border-border/40 text-muted-foreground hover:bg-muted',
+                                                      isOnly && 'opacity-60 cursor-not-allowed'
+                                                    )}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      const current = service.container_types || [];
+                                                      const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                                      if (next.length > 0) {
+                                                        updateService.mutate({ id: service.id, updates: { container_types: next } });
+                                                      }
+                                                    }}
+                                                  >
+                                                    {vt}
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                           <div className="flex items-center gap-2">
