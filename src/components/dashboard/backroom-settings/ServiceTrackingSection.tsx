@@ -291,7 +291,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           <CardHeader>
             <CardTitle className={tokens.card.title}>Available Services</CardTitle>
             <CardDescription>
-              Color and chemical services not yet tracked. Enable tracking or mark services as chemical in the Service Editor.
+              Color and chemical services not yet tracked. Enable tracking or mark services as chemical in the{' '}
+              <button
+                type="button"
+                className="underline text-foreground/80 hover:text-foreground cursor-pointer transition-colors"
+                onClick={() => navigate(dashPath('/admin/settings?category=services'))}
+              >
+                Service Editor
+              </button>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
