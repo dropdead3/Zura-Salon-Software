@@ -686,7 +686,7 @@ DEMO_FORMULA_HISTORY['demo-client-1'] = [
     appointment_id: 'demo-apt-sm-5w',
     appointment_service_id: null,
     mix_session_id: null,
-    service_name: 'Full Balayage + Vivid Toner',
+    service_name: 'Full Balayage, Vivid Toner',
     formula_type: 'actual',
     formula_data: [
       { product_id: 'demo-prod-r3', product_name: 'Flash Lift Bonder Inside', brand: 'Redken', quantity: 35, unit: 'g' },
