@@ -140,7 +140,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       : baseDims;
     return (
       <div className="platform-theme platform-dark fixed inset-0 flex items-center justify-center bg-[hsl(0_0%_8%)] bg-[image:radial-gradient(hsl(0_0%_15%)_1px,transparent_1px)] bg-[size:20px_20px]">
-        <DockDemoBadge />
+        
         <DockDeviceSwitcher device={device} onChange={setDevice} orientation={orientation} onOrientationChange={setOrientation} locationId={staff.locationId} onLocationChange={onLocationChange} organizationId={staff.organizationId} staffFilter={staffFilter} onStaffFilterChange={onStaffFilterChange} />
         <div
           className="relative rounded-[2rem] border border-[hsl(0_0%_20%)] shadow-2xl overflow-hidden transition-all duration-300"
