@@ -230,7 +230,7 @@ export function ServiceTrackingQuickSetup({
 
       case 'allowances':
         return (
-          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+          <div className="space-y-2">
             {trackedNoAllowance.length === 0 ? (
               <StepComplete message="All tracked services have allowance policies." />
             ) : (
