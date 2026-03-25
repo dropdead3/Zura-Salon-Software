@@ -1,18 +1,19 @@
 
 
-## Remove Redundant Demo Badge + Enlarge Edit Services Button
+## Fix: Move Demo Badge Left to Avoid Overlapping Edit Services Button
 
 ### Problem
-Two "Demo" badges are stacking/overlapping in the appointment detail view — the global `DockDemoBadge` (absolute-positioned) and the inline one added to the appointment header.
+The global `DockDemoBadge` is positioned at `right-20` (80px from right edge), which lands directly on top of the "Edit Services" button in the appointment detail header.
 
-### Fix — 2 files
+### Fix — `src/components/dock/DockDemoBadge.tsx`
 
-**1. `src/components/dock/appointment/DockAppointmentDetail.tsx`**
-- Remove the inline Demo badge from the header (lines 107–112) — the global `DockDemoBadge` already handles this
-- Enlarge the Edit Services button: increase padding from `px-3 py-1.5` → `px-4 py-2`, text from `text-xs` → `text-sm`, icon from `w-3 h-3` → `w-3.5 h-3.5`
+Change the positioning class from `right-20` to `right-52` (208px from right) so the badge sits clearly to the left of the Edit Services button with comfortable spacing between them.
 
-**2. No changes needed to `DockDemoBadge.tsx` or `DockLayout.tsx`** — the global badge continues to render as before
+```
+Before: "absolute top-5 right-20 z-50 ..."
+After:  "absolute top-5 right-52 z-50 ..."
+```
 
-### Result
-Single Demo badge (global), larger Edit Services button that's easier to tap.
+### One file changed
+`src/components/dock/DockDemoBadge.tsx`
 
