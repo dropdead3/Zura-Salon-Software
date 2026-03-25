@@ -142,6 +142,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       ...managerNavItems,
       ...websiteNavItems,
       ...adminOnlyNavItems,
+      ...appsNavItemsProp,
       ...platformNavItems,
     ];
     const map: Record<string, NavItem> = {};
@@ -149,7 +150,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       map[item.href] = item;
     });
     return map;
-  }, [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
+  }, [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, appsNavItemsProp, platformNavItems]);
 
   // Apply custom link ordering to nav items
   const getOrderedItems = (sectionId: string, items: NavItem[]): NavItem[] => {
