@@ -1,41 +1,30 @@
 
 
-## Show Linked Components in Wizard Service Rows
+## Remove "Map Components" Step from Quick Setup Wizard
 
-### Problem
-After linking a product, the row only shows "2 linked" as a badge — the user can't see **which** products are linked.
+### Rationale
+Product-to-service mapping happens automatically during the mixing/dispensing workflow when stylists weigh ingredients on the scale. A manual "Map Components" step in the wizard is redundant and confusing for users who have no context for it.
 
-### Solution
-Enhance `WizardComponentRow` to fetch its linked components (with product names) and display them as removable chips below the service name.
+### Changes
 
-### Changes — `ServiceTrackingQuickSetup.tsx`
+**1. Remove the "Map Components" step from STEPS array**
+In `ServiceTrackingQuickSetup.tsx`, delete the `components` step entry from the `STEPS` array (line 44) and remove the entire `case 'components'` block (lines 263–299).
 
-**1. Add `useServiceTrackingComponents` and `useDeleteTrackingComponent` imports**
+**2. Remove unused imports and props**
+- Remove `useServiceTrackingComponents`, `useDeleteTrackingComponent`, `useUpsertTrackingComponent` imports
+- Remove `componentsByService` from the Props interface and destructuring
+- Remove the `WizardComponentRow` sub-component entirely
+- Remove the `backroomProducts` query and `upsertComponent` mutation used only by that step
+- Remove `trackedServices` and `trackedNoComponents` derived state
+- Clean up unused icon imports (e.g. `Package` if no longer used, `X`)
 
-**2. Inside `WizardComponentRow`, fetch linked components for that service**
-```tsx
-const { data: linked } = useServiceTrackingComponents(serviceId);
-```
+**3. Remove "Components" progress milestone from parent**
+In `ServiceTrackingSection.tsx`, remove the "Components" milestone from the `milestones` array (lines 254–259). Remove `componentsByService` from the `ServiceTrackingQuickSetup` props passed on line 920. Remove `componentsByService` from the Props interface in the wizard.
 
-**3. Fetch product names to resolve `product_id` → name**
-Already have the `backroomProducts` query — build a lookup map from it.
+**4. Clean up "Components" references in the main table**
+In `ServiceTrackingSection.tsx`, remove the component count display in the drill-down rows (lines 671–674) and the `needsAttention` check for missing components (line 229). Remove the `componentsByService` map computation if it's no longer used elsewhere, or keep it if the drill-down still references it for informational purposes.
 
-**4. Render linked products as small chips below the service name**
-```text
-┌─────────────────────────────────────────────────┐
-│  3+ Color Blocks / Calico Placement   [2 linked]│
-│  ┌──────────────┐ ┌─────────────────┐           │
-│  │ Lightener  ✕ │ │ Developer 20V ✕ │           │
-│  └──────────────┘ └─────────────────┘           │
-│                              [Link Product]     │
-└─────────────────────────────────────────────────┘
-```
-
-Each chip shows the product name with an `X` button to unlink (calls `useDeleteTrackingComponent`). Styled as `text-[10px] bg-muted/50 rounded-full px-2 py-0.5` with an inline `X` icon.
-
-**5. Replace the `linkedCount` prop with live data**
-Use `linked?.length` instead of the parent-provided count, so the badge updates reactively after mutations.
-
-### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (`WizardComponentRow` component)
+### Files Modified
+- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
