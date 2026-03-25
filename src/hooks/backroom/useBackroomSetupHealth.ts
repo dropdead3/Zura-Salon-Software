@@ -25,6 +25,7 @@ export interface SetupHealthMetrics {
   stationsConfigured: number;
   alertRulesConfigured: number;
   billingConfigured: boolean;
+  trackedServicesWithComponents: number;
   warnings: SetupWarning[];
 }
 
