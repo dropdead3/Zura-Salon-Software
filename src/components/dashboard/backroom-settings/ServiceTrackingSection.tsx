@@ -518,7 +518,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {searchedServices.map((service) => {
+                  {searchedServices.map((service, idx) => {
+                    const prevCategory = idx > 0 ? (searchedServices[idx - 1].category || 'Other') : null;
+                    const currentCategory = service.category || 'Other';
+                    const showCategoryHeader = currentCategory !== prevCategory;
                     const type = getServiceType(service);
                     const hasComponents = componentsByService.has(service.id);
                     const hasAllowance = allowanceByService.has(service.id);
