@@ -585,21 +585,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                     )}>
                                       {service.name}
                                     </span>
-                                    {type === 'chemical' && (
-                                      <Badge variant="default" className="text-[10px] shrink-0">Chemical</Badge>
-                                    )}
-                                    {type === 'suggested' && (
-                                      <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
-                                    )}
-                                    {service.backroom_config_dismissed && (
-                                      <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">Configured ✓</Badge>
-                                    )}
-                                    {service.is_backroom_tracked && !service.backroom_config_dismissed && (
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        <Package className={cn('w-3 h-3', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
-                                        <FileText className={cn('w-3 h-3', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
-                                      </div>
-                                    )}
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     {service.category && (
