@@ -122,6 +122,8 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     } catch { return []; }
   });
   const [showFormulaHistory, setShowFormulaHistory] = useState(false);
+  const [bowlMenuTarget, setBowlMenuTarget] = useState<{ type: 'remote'; session: DockMixSession; index: number } | { type: 'demo'; bowl: DemoBowl } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ type: 'remote'; session: DockMixSession } | { type: 'demo'; bowl: DemoBowl } | null>(null);
 
   // Sync demo bowls to sessionStorage
   useEffect(() => {
