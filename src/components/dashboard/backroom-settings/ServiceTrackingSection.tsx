@@ -106,6 +106,27 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const { data: allowancePolicies } = useServiceAllowancePolicies();
   const { data: allComponents } = useServiceTrackingComponents();
 
+  const { data: categoryOrder } = useQuery({
+    queryKey: ['service-category-colors-order', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_category_colors')
+        .select('category_name, display_order')
+        .eq('organization_id', orgId!)
+        .order('display_order')
+        .order('category_name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+  });
+
+  const categoryOrderMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (categoryOrder ?? []).forEach(c => map.set(c.category_name, c.display_order));
+    return map;
+  }, [categoryOrder]);
+
   const { data: services, isLoading } = useQuery({
     queryKey: ['backroom-services', orgId],
     queryFn: async () => {
@@ -114,6 +135,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .select('id, name, category, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
+        .order('category')
         .order('name');
       if (error) throw error;
       return data as unknown as ServiceRow[];
