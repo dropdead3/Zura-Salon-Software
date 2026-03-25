@@ -11,7 +11,7 @@ import { useDockScale } from '@/hooks/dock/useDockScale';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { DockWeightInput } from './DockWeightInput';
+import { DockReweighCapture } from './DockReweighCapture';
 import { DockReweighSummary } from './DockReweighSummary';
 import { DockIngredientDispensing } from './DockIngredientDispensing';
 import { useRecordDispensedWeight, useSealDockBowl, useReweighDockBowl } from '@/hooks/dock/useDockMixSession';
