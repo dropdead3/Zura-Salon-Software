@@ -594,8 +594,11 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
 }
 
 
-// ─── Inline Add Bowl Card ─────────────────────────────
-function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+// ─── Inline Add Bowl/Bottle Card ─────────────────────────────
+function AddBowlCard({ onClick, disabled, containerType = 'bowl' }: { onClick: () => void; disabled: boolean; containerType?: ContainerType }) {
+  const isBottle = containerType === 'bottle';
+  const Icon = isBottle ? TestTube2 : FlaskConical;
+  const label = isBottle ? 'Add Bottle' : 'Add Bowl';
   return (
     <button
       onClick={onClick}
@@ -611,7 +614,7 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
       <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
         <Plus className="w-6 h-6" />
       </div>
-      <span className="text-sm font-medium">Add Bowl</span>
+      <span className="text-sm font-medium">{label}</span>
     </button>
   );
 }
