@@ -88,7 +88,8 @@ export function ServiceTrackingQuickSetup({
   const untrackedChemical = services.filter(s =>
     !s.is_backroom_tracked && (s.is_chemical_service || isSuggestedChemicalService(s.name, s.category))
   );
-  const trackedNoComponents = services.filter(s => s.is_backroom_tracked && !componentsByService.has(s.id));
+  const trackedServices = services.filter(s => s.is_backroom_tracked);
+  const trackedNoComponents = trackedServices.filter(s => !componentsByService.has(s.id));
   const trackedNoAllowance = services.filter(s => s.is_backroom_tracked && !allowanceByService.has(s.id));
 
   const next = () => {
