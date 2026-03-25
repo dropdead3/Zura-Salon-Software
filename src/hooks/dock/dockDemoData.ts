@@ -106,7 +106,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'phorest',
       client_name: 'Jessica Chen',
       stylist_name: 'Jenna B.',
-      service_name: 'Root Touch-Up + Gloss',
+      service_name: 'Natural Root Retouch + Glaze Add On',
       appointment_date: today,
       start_time: t3.startStr,
       end_time: t3.endStr,
