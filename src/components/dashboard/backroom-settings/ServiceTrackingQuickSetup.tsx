@@ -419,14 +419,15 @@ function StepComplete({ message }: { message: string }) {
   );
 }
 
-function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, linkedCount = 0 }: {
+function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent }: {
   serviceId: string;
   serviceName: string;
   orgId: string;
   upsertComponent: ReturnType<typeof useUpsertTrackingComponent>;
-  linkedCount?: number;
 }) {
   const [adding, setAdding] = useState(false);
+  const { data: linked } = useServiceTrackingComponents(serviceId);
+  const deleteComponent = useDeleteTrackingComponent();
 
   const { data: backroomProducts } = useQuery({
     queryKey: ['backroom-products-for-mapping', orgId],
@@ -443,6 +444,14 @@ function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, li
     },
     enabled: !!orgId,
   });
+
+  const productMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (backroomProducts || []).forEach(p => m.set(p.id, p.name));
+    return m;
+  }, [backroomProducts]);
+
+  const linkedCount = linked?.length || 0;
 
   return (
     <div className="rounded-lg border p-3 space-y-2">
@@ -464,6 +473,19 @@ function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, li
           )}
         </div>
       </div>
+      {linkedCount > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {linked!.map(item => (
+            <Badge key={item.id} variant="outline" className="text-[10px] gap-1 px-2 py-0.5 bg-muted/50">
+              {productMap.get(item.product_id) || 'Unknown'}
+              <X
+                className="h-2.5 w-2.5 cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                onClick={() => deleteComponent.mutate(item.id)}
+              />
+            </Badge>
+          ))}
+        </div>
+      )}
       {adding && (
         <Select
           onValueChange={(productId) => {
