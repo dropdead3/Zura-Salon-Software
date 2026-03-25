@@ -513,7 +513,7 @@ export const DEMO_FORMULA_HISTORY: Record<string, ClientFormula[]> = {
       appointment_id: 'demo-apt-rk-3w',
       appointment_service_id: null,
       mix_session_id: null,
-      service_name: 'Root Touch-Up + Gloss',
+      service_name: 'Natural Root Retouch + Glaze Add On',
       formula_type: 'actual',
       formula_data: [
         { product_id: 'demo-prod-kp60', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 25, unit: 'g' },
