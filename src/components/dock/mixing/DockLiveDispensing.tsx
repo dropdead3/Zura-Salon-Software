@@ -288,6 +288,8 @@ export function DockLiveDispensing({
                   if (!isSealed) {
                     setActiveLineId(line.id);
                     setActiveView('ingredient');
+                    // Tare the scale when entering ingredient view
+                    scale.tare();
                   }
                 }}
               />

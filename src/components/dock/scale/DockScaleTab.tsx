@@ -1,17 +1,12 @@
 /**
  * DockScaleTab — BLE scale connection management.
- * Connects to Acaia Pearl via Capacitor BLE or falls back to manual mode.
+ * Uses shared useDockScale context for unified scale state across the Dock.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
 import { Weight, WifiOff, Bluetooth, BluetoothSearching, BluetoothConnected, RefreshCw, Zap, Radio, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDockDemo } from '@/contexts/DockDemoContext';
+import { useDockScale } from '@/hooks/dock/useDockScale';
 import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
-import type { WeightEvent } from '@/lib/backroom/weight-event-schema';
-import { createScaleAdapter, BLEScaleAdapter } from '@/lib/backroom/scale-adapter';
-
-type ScaleMode = 'manual' | 'ble';
 
 const CONNECTION_STATE_UI: Record<ConnectionState, {
   label: string;
@@ -86,102 +81,8 @@ const CONNECTION_STATE_UI: Record<ConnectionState, {
 const BLE_STEPS: ConnectionState[] = ['disconnected', 'scanning', 'pairing', 'connected'];
 
 export function DockScaleTab() {
-  const { isDemoMode } = useDockDemo();
-  const [mode, setMode] = useState<ScaleMode>(isDemoMode ? 'ble' : 'manual');
-  const [connectionState, setConnectionState] = useState<ConnectionState>(isDemoMode ? 'connected' : 'manual_override');
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [lastReading, setLastReading] = useState<number | null>(isDemoMode ? 0.0 : null);
-  const [lastUnit, setLastUnit] = useState<string>('g');
-  const [deviceName, setDeviceName] = useState<string | null>(isDemoMode ? 'Acaia Pearl (Demo)' : null);
-  const [bleError, setBleError] = useState<string | null>(null);
-  const adapterRef = useRef(createScaleAdapter('manual'));
-
-  // Demo mode: simulate weight fluctuation
-  useEffect(() => {
-    if (!isDemoMode) return;
-    const interval = setInterval(() => {
-      setLastReading(prev => {
-        const base = prev ?? 0;
-        const fluctuation = (Math.random() - 0.5) * 0.4;
-        return Math.max(0, parseFloat((base + fluctuation).toFixed(1)));
-      });
-    }, 800);
-    return () => clearInterval(interval);
-  }, [isDemoMode]);
-
-  // Listen for readings from the adapter
-  useEffect(() => {
-    const handler = (event: WeightEvent) => {
-      setConnectionState(event.connection_state);
-      if (event.confidence_score > 0) {
-        setLastReading(event.raw_weight);
-        setLastUnit(event.unit);
-      }
-    };
-    adapterRef.current.onReading(handler);
-    return () => {
-      adapterRef.current.offReading(handler);
-      adapterRef.current.disconnect();
-    };
-  }, []);
-
-  const handleModeSwitch = useCallback((newMode: ScaleMode) => {
-    adapterRef.current.disconnect();
-    setLastReading(null);
-    setDeviceName(null);
-    setBleError(null);
-
-    if (newMode === 'ble') {
-      adapterRef.current = createScaleAdapter('ble');
-      setConnectionState('disconnected');
-    } else {
-      adapterRef.current = createScaleAdapter('manual');
-      setConnectionState('manual_override');
-    }
-    setMode(newMode);
-
-    // Re-attach listener to new adapter
-    const handler = (event: WeightEvent) => {
-      setConnectionState(event.connection_state);
-      if (event.confidence_score > 0) {
-        setLastReading(event.raw_weight);
-        setLastUnit(event.unit);
-      }
-    };
-    adapterRef.current.onReading(handler);
-  }, []);
-
-  const handleConnect = useCallback(async () => {
-    if (mode !== 'ble' || isConnecting) return;
-    setIsConnecting(true);
-    setBleError(null);
-
-    try {
-      await adapterRef.current.connect();
-      const adapter = adapterRef.current as BLEScaleAdapter;
-      setDeviceName(adapter.getDeviceName());
-    } catch (err: any) {
-      if (err?.message === 'BLE_NOT_AVAILABLE') {
-        setBleError('Bluetooth requires the native Zura Dock app. BLE is not available in the browser.');
-      } else {
-        setBleError('Could not connect to scale. Make sure it\'s powered on and nearby.');
-      }
-      setConnectionState('disconnected');
-    } finally {
-      setIsConnecting(false);
-    }
-  }, [mode, isConnecting]);
-
-  const handleDisconnect = useCallback(async () => {
-    await adapterRef.current.disconnect();
-    setConnectionState('disconnected');
-    setLastReading(null);
-    setDeviceName(null);
-  }, []);
-
-  const handleTare = useCallback(async () => {
-    await adapterRef.current.tare();
-  }, []);
+  const scale = useDockScale();
+  const { mode, connectionState, liveWeight, unit, deviceName, bleError, isConnecting } = scale;
 
   const stateUI = CONNECTION_STATE_UI[connectionState];
   const StateIcon = stateUI.icon;
@@ -198,7 +99,7 @@ export function DockScaleTab() {
       {/* Mode toggle */}
       <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-xl p-1 border border-[hsl(var(--platform-border)/0.2)] mb-6">
         <button
-          onClick={() => handleModeSwitch('manual')}
+          onClick={() => scale.setMode('manual')}
           className={cn(
             'flex-1 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5',
             mode === 'manual' ? 'bg-violet-600/30 text-violet-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -208,7 +109,7 @@ export function DockScaleTab() {
           Manual
         </button>
         <button
-          onClick={() => handleModeSwitch('ble')}
+          onClick={() => scale.setMode('ble')}
           className={cn(
             'flex-1 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5',
             mode === 'ble' ? 'bg-violet-600/30 text-violet-300' : 'text-[hsl(var(--platform-foreground-muted))]'
@@ -277,7 +178,7 @@ export function DockScaleTab() {
       )}
 
       {/* Live reading */}
-      {lastReading !== null && (connectionState === 'connected' || isLiveReading) && (
+      {liveWeight > 0 && (connectionState === 'connected' || isLiveReading) && (
         <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)] p-4 mb-6 text-center">
           <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)] uppercase tracking-wide mb-1">
             {connectionState === 'unstable_reading' ? 'Stabilizing...' : 'Live Weight'}
@@ -286,8 +187,8 @@ export function DockScaleTab() {
             'font-display text-3xl tracking-tight text-[hsl(var(--platform-foreground))]',
             connectionState === 'unstable_reading' && 'opacity-60'
           )}>
-            {lastReading.toFixed(1)}
-            <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)] ml-0.5">{lastUnit}</span>
+            {liveWeight.toFixed(1)}
+            <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)] ml-0.5">{unit}</span>
           </p>
         </div>
       )}
@@ -296,7 +197,7 @@ export function DockScaleTab() {
       <div className="mt-auto space-y-3">
         {mode === 'ble' && connectionState === 'disconnected' && (
           <button
-            onClick={handleConnect}
+            onClick={scale.connect}
             disabled={isConnecting}
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
@@ -307,14 +208,14 @@ export function DockScaleTab() {
         {mode === 'ble' && (connectionState === 'connected' || isLiveReading) && (
           <div className="flex gap-3">
             <button
-              onClick={handleTare}
+              onClick={scale.tare}
               className="flex-1 h-12 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 font-medium text-sm transition-colors flex items-center justify-center gap-2 hover:bg-violet-600/30"
             >
               <RotateCcw className="w-4 h-4" />
               Tare
             </button>
             <button
-              onClick={handleDisconnect}
+              onClick={scale.disconnect}
               className="flex-1 h-12 rounded-xl border border-red-500/30 text-red-400 font-medium text-sm transition-colors flex items-center justify-center gap-2 hover:bg-red-500/10"
             >
               <WifiOff className="w-4 h-4" />
