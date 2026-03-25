@@ -264,7 +264,7 @@ export function DockIngredientDispensing({
                     className="w-6 h-6 rounded-md flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
                     style={{ backgroundColor: l.swatch_color || 'hsl(var(--platform-bg-elevated))' }}
                   />
-                  <p className="text-[10px] text-[hsl(var(--platform-foreground))] truncate font-medium">
+                  <p className="text-xs text-[hsl(var(--platform-foreground))] truncate font-medium">
                     {l.product_name_snapshot}
                   </p>
                 </div>
