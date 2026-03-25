@@ -203,6 +203,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       bowlId: bowl.id,
       bowlNumber: bowl.bowlNumber,
       status: bowl.status,
+      demoLines: bowl.lines,
     });
   };
 
