@@ -22,10 +22,16 @@ interface DockClientAlertsBannerProps {
 
 const isDemoClientId = (id: string | null | undefined) => id?.startsWith('demo-') ?? false;
 
-const DEMO_CLIENT_MOCK = {
-  notes: 'Prefers low-ammonia formulas. Sensitive scalp — patch test recommended.',
-  medical_alerts: 'PPD sensitivity — always patch test 48h prior',
-};
+const RACHEL_KIM_IDS = ['demo-client-7', 'demo-pc-7'];
+
+function getDemoClientMock(clientId: string | null | undefined, phorestClientId: string | null | undefined, clientName: string | null | undefined) {
+  const isRachel = RACHEL_KIM_IDS.includes(clientId ?? '') || RACHEL_KIM_IDS.includes(phorestClientId ?? '');
+  return {
+    notes: isRachel ? 'Prefers low-ammonia formulas. Sensitive scalp — patch test recommended.' : null,
+    medical_alerts: isRachel ? 'PPD sensitivity — always patch test 48h prior' : null,
+    name: clientName || 'Client',
+  };
+}
 
 type BannerKey = 'allergy' | 'booking';
 
@@ -77,7 +83,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
     queryKey: ['dock-client-profile', phorestClientId, clientId, usingDemo],
     queryFn: async () => {
       if (usingDemo) {
-        return { ...DEMO_CLIENT_MOCK, name: clientName || 'Client' };
+        return getDemoClientMock(clientId, phorestClientId, clientName);
       }
       if (phorestClientId) {
         const { data } = await supabase
