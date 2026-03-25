@@ -1,52 +1,26 @@
 
 
-## Redesign Classify Step: Local State + Save Button
+## Fix Quick Setup Dialog: Wider + Fully In-View
 
 ### Problem
-Currently, clicking "Standard" or "Chemical" immediately fires a mutation and the service disappears from the list. The user wants to review all choices before committing, and both buttons should start unselected.
-
-### Solution
-Use local state to track selections, show all services persistently, and add a "Save & Next" action.
+The dialog is `max-w-md` (28rem / 448px) which clips the "Standard" / "Chemical" buttons. The service list uses `max-h-[40vh]` inside a `max-h-[85vh]` container, wasting vertical space.
 
 ### Changes — `ServiceTrackingQuickSetup.tsx`
 
-**1. Add local state for classifications**
+**1. Widen the dialog** (line 264)
+- Change `max-w-md` → `max-w-2xl` (672px) so buttons and service names fit without clipping.
 
-```tsx
-const [classifications, setClassifications] = useState<Record<string, boolean>>({});
-```
+**2. Use flex layout for proper height distribution** (line 264)
+- Add `flex flex-col` to DialogContent and change `overflow-y-auto` to only apply to the scrollable content area, not the whole dialog. This keeps header, step tabs, progress bar, and footer always visible.
 
-Reset it when the dialog opens or step changes.
+**3. Expand the service list scroll area** (line 146)
+- Change `max-h-[40vh]` → `flex-1 overflow-y-auto min-h-0` so the list fills all available space between the header/progress and footer.
 
-**2. Redesign the classify row UI**
-
-Each service shows two outline buttons ("Standard" / "Chemical") that both start unselected. Clicking one highlights it (e.g. fills with primary for Chemical, secondary for Standard) while the other stays outline. This uses the local `classifications` state — no mutation fires on click.
-
-```tsx
-// Both buttons start as outline (unselected look)
-// Selected Standard → secondary variant
-// Selected Chemical → default variant  
-// Unselected → outline variant
-```
-
-Services with a "Suggested" badge still show the hint but don't pre-select anything.
-
-**3. Show ALL services (not just uncategorized)**
-
-The list shows all services in the org, not just `uncategorized`. Services already classified from a previous session show their saved state as the initial local value (pre-populated from `service.is_chemical_service`). Users can change them.
-
-**4. Replace "Next Step" with "Save & Next"**
-
-The footer button becomes "Save & Next Step". On click:
-- Batch-update all services that have a local classification differing from their DB value using a single mutation loop.
-- On success, advance to next step.
-
-If nothing changed, just advance.
-
-**5. Progress bar update**
-
-The progress still reflects DB state (how many have `is_chemical_service !== null`), so it updates after save.
+**4. Restructure DialogContent layout**
+- Header + step tabs + progress: fixed (no scroll)
+- Step content: flex-1 with overflow scroll
+- Footer nav: fixed at bottom (no scroll)
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (classify step UI + local state + batch save)
+- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx`
 
