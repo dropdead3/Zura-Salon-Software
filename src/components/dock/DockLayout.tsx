@@ -21,6 +21,7 @@ import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
 import { useDockIdleTimer } from '@/hooks/dock/useDockIdleTimer';
 import { DockLockFAB } from './DockLockFAB';
+import { DockScaleProvider } from './DockScaleProvider';
 
 interface DockLayoutProps {
   activeTab: DockTab;
