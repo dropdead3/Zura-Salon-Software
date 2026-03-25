@@ -1,28 +1,38 @@
 
 
-## Fix: Demo Formula History Not Appearing
+## Verify & Fix: Drawer Handle Swipe-Up Dismiss + Haptic Feedback
 
-### Root cause
-`useClientFormulaHistory` requires `!!orgId` in its `enabled` condition. The `orgId` comes from `useOrganizationContext().effectiveOrganization?.id`. In Dock demo mode, there's no authenticated user, so `effectiveOrganization` is null — the query never fires, even though the `queryFn` has a demo-data shortcut for `demo-` client IDs.
+### Issues Found
 
-### Fix — `src/hooks/backroom/useClientFormulaHistory.ts`
+**1. Two sheets have non-functional drag handles** — missing `onPointerDown` + `dragControls`:
+- `DockFormulaHistorySheet.tsx` — drag handle is purely decorative (no `useDragControls`, no `onPointerDown`, no `drag` prop on panel)
+- `DockHamburgerMenu.tsx` — same issue: drag handle exists visually but isn't wired to `dragControls`
 
-Update the `enabled` condition to allow demo clients through without requiring `orgId`:
+**2. No haptic feedback on any sheet dismiss** — none of the `onDragEnd` handlers call `navigator.vibrate()` when the swipe threshold is met
 
-```ts
-// Before
-enabled: !!orgId && !!clientId,
+### Sheets that ARE working (have `dragControls` + `onPointerDown` on handle):
+- `DockNewBowlSheet` ✅
+- `DockEditServicesSheet` ✅
+- `DockProductPicker` ✅
+- `DockSessionCompleteSheet` ✅
+- `DockNewBookingSheet` ✅
+- `DockNewClientSheet` ✅
 
-// After
-enabled: (!!orgId || clientId?.startsWith('demo-')) && !!clientId,
-```
+### Fix
 
-This lets the query fire for demo clients even when there's no organization context. The `queryFn` already returns `DEMO_FORMULA_HISTORY[clientId]` for demo IDs before touching Supabase.
+**1. `DockFormulaHistorySheet.tsx`**
+- Import `useDragControls` from framer-motion
+- Add `drag="y"`, `dragControls`, `dragConstraints`, `dragElastic`, and `onDragEnd` to the panel `motion.div`
+- Wire `onPointerDown={(e) => dragControls.start(e)}` to the drag handle div
 
-### Same issue in `useInstantFormulaMemory`
-`src/hooks/backroom/useInstantFormulaMemory.ts` has the same pattern — `enabled: !!orgId && !!clientId`. Apply the same fix so formula memory also works in demo mode.
+**2. `DockHamburgerMenu.tsx`**
+- Already has `drag="y"` and `onDragEnd` on the panel — but the handle div is missing `onPointerDown`
+- Import `useDragControls`, add `dragControls` to the panel, wire handle's `onPointerDown`
 
-### Files changed
-1. `src/hooks/backroom/useClientFormulaHistory.ts` — relax `enabled` for demo clients
-2. `src/hooks/backroom/useInstantFormulaMemory.ts` — relax `enabled` for demo clients
+**3. Add haptic feedback to ALL sheet `onDragEnd` dismiss handlers** (8 files total)
+- In each `onDragEnd` callback, add `try { navigator.vibrate?.(15); } catch {}` right before calling `onClose()` / `handleClose()`
+- Files: `DockNewBowlSheet`, `DockEditServicesSheet`, `DockProductPicker`, `DockSessionCompleteSheet`, `DockNewBookingSheet`, `DockNewClientSheet`, `DockFormulaHistorySheet`, `DockHamburgerMenu`
+
+### Summary — 8 files touched
+All dock sheets get consistent: functional drag handle → swipe-up dismiss → haptic pulse on dismiss.
 
