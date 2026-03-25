@@ -1,23 +1,35 @@
 
 
-## Fix Progress Bar — Clear Visual State
+## Enhance Service Tracking Drill-Down UX
 
-### Problem
-The bar looks full at 60% because each segment's **outer container** has a colored background (`bg-primary`, `bg-primary/60`, or `bg-muted-foreground/20`), making incomplete segments appear filled. The visual distinction between complete, partial, and empty is too subtle.
+Three improvements: animated expand/collapse, inline config summary for tracked services, and touch gesture support.
 
-### Solution
-Replace the confusing nested-segment approach with a **single continuous bar** that fills to the actual overall percentage, plus add visual separators between segments so users can see where each milestone's portion starts/ends.
+### 1. Animated Expand/Collapse with framer-motion
 
-### Changes — `ServiceTrackingProgressBar.tsx`
+Replace `CollapsibleContent` with framer-motion's `AnimatePresence` + `motion.div` for smooth height transitions on drill-down rows.
 
-1. **Single fill bar**: Render one `<div>` inside the track, width = `overallPct%`, colored `bg-primary`. This immediately makes 60% look like 60%.
+- Wrap expanded content in `<AnimatePresence>` and conditionally render a `motion.tr` / `motion.div` with `initial={{ height: 0, opacity: 0 }}`, `animate={{ height: 'auto', opacity: 1 }}`, `exit={{ height: 0, opacity: 0 }}` using 200ms ease-out (per motion standards).
+- Remove `Collapsible`/`CollapsibleContent` usage from rows; keep `expandedIds` state for open/close logic.
+- Wrap each row pair in a fragment keyed by service ID.
 
-2. **Segment dividers**: Overlay thin vertical lines at each segment boundary (cumulative `m.total / overallTotal` positions) so users can still see the 4 milestone regions.
+### 2. Inline Config Summary on Main Row
 
-3. **Color-coded fill segments**: Instead of one flat fill, render each milestone's filled portion sequentially (complete = `bg-primary`, partial = `bg-amber-500`, empty = transparent). No outer background color — the track's `bg-muted` shows through for unfilled areas.
+For tracked services, show a compact summary like "3 of 4 on" or "2 toggles · Components ✓" next to the service name to reduce need to expand.
 
-4. **Enhanced percentage label**: Make the percentage more prominent with slightly larger text and color that reflects status (muted when low, primary when high, success when 100%).
+- Count active toggles: `assistant_prep_allowed`, `smart_mix_assist_enabled`, `formula_memory_enabled` (3 booleans). Show e.g. "2/3 on".
+- Include component/allowance status as compact icons (already present — keep those, add the toggle count as a subtle text label).
+- Place this summary on the second line alongside category, e.g. `"Color · 2/3 toggles on"`.
+
+### 3. Swipe-to-Expand for Mobile/Tablet
+
+Add touch gesture support using framer-motion's drag gesture (no Capacitor-specific API needed — works in browser and native webview).
+
+- On mobile (`useIsMobile()`), add `onTouchStart`/`onTouchEnd` handlers to each `TableRow` that detect a downward swipe (>40px vertical delta) to expand, and upward swipe to collapse.
+- Keep it simple: plain touch event math, no external gesture library needed. This works in both browser and Capacitor webview.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingProgressBar.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+  - Replace Collapsible with framer-motion AnimatePresence for expand rows
+  - Add toggle count summary text in Service cell for tracked services
+  - Add touch swipe handlers for mobile expand/collapse
 
