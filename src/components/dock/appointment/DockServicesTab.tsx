@@ -87,6 +87,7 @@ interface DemoBowl {
   totalCost: number;
   createdAt: string;
   serviceLabel: string | null;
+  containerType: ContainerType;
 }
 
 /** Parse service_name into individual service tokens */
