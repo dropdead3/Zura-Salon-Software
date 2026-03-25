@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { Search, Clock, X, Check, Loader2, FlaskConical, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
