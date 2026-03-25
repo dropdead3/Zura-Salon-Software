@@ -54,6 +54,7 @@ interface SidebarNavContentProps {
   managerNavItems: NavItem[];
   websiteNavItems: NavItem[];
   adminOnlyNavItems: NavItem[];
+  appsNavItems?: NavItem[];
   platformNavItems?: NavItem[];
   footerNavItems?: NavItem[];
   isPlatformUser?: boolean;
