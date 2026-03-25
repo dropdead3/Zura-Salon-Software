@@ -75,7 +75,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'local',
       client_name: 'Sarah Mitchell',
       stylist_name: 'Jenna B.',
-      service_name: 'Full Balayage + Vivid Toner',
+      service_name: 'Full Balayage, Vivid Toner',
       appointment_date: today,
       start_time: t1.startStr,
       end_time: t1.endStr,
@@ -91,7 +91,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'local',
       client_name: 'Rachel Kim',
       stylist_name: 'Jenna B.',
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       appointment_date: today,
       start_time: t2.startStr,
       end_time: t2.endStr,
@@ -106,7 +106,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'phorest',
       client_name: 'Jessica Chen',
       stylist_name: 'Jenna B.',
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       appointment_date: today,
       start_time: t3.startStr,
       end_time: t3.endStr,
@@ -121,7 +121,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'local',
       client_name: 'Emily Rodriguez',
       stylist_name: 'Jenna B.',
-      service_name: 'Full Highlight + Root Smudge (Add On) + Glaze Add On + Signature Haircut',
+      service_name: 'Full Highlight, Root Smudge (Add On), Glaze Add On, Signature Haircut',
       appointment_date: today,
       start_time: t4.startStr,
       end_time: t4.endStr,
@@ -513,7 +513,7 @@ export const DEMO_FORMULA_HISTORY: Record<string, ClientFormula[]> = {
       appointment_id: 'demo-apt-rk-3w',
       appointment_service_id: null,
       mix_session_id: null,
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       formula_type: 'actual',
       formula_data: [
         { product_id: 'demo-prod-kp60', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 25, unit: 'g' },
@@ -534,7 +534,7 @@ export const DEMO_FORMULA_HISTORY: Record<string, ClientFormula[]> = {
       appointment_id: 'demo-apt-rk-6w',
       appointment_service_id: null,
       mix_session_id: null,
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       formula_type: 'actual',
       formula_data: [
         { product_id: 'demo-prod-kp60', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 30, unit: 'g' },
@@ -583,7 +583,7 @@ export const DEMO_VISIT_HISTORY: Record<string, ClientVisit[]> = {
       appointment_date: rachelVisitDate3w,
       start_time: '10:00:00',
       end_time: '11:45:00',
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       service_category: 'Color',
       stylist_name: 'Jenna B.',
       status: 'completed',
@@ -595,7 +595,7 @@ export const DEMO_VISIT_HISTORY: Record<string, ClientVisit[]> = {
       appointment_date: rachelVisitDate6w,
       start_time: '14:00:00',
       end_time: '15:30:00',
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       service_category: 'Color',
       stylist_name: 'Jenna B.',
       status: 'completed',
@@ -638,13 +638,13 @@ DEMO_VISIT_HISTORY['demo-pc-7'] = DEMO_VISIT_HISTORY['demo-client-7'];
 const rachelMostRecentFormula = DEMO_FORMULA_HISTORY['demo-client-7'][0];
 
 export const DEMO_FORMULA_MEMORY: Record<string, ResolvedFormulaMemory> = {
-  'demo-client-7::Natural Root Retouch + Glaze Add On': {
+  'demo-client-7::Natural Root Retouch, Glaze Add On': {
     lines: rachelMostRecentFormula.formula_data,
     source: 'client_last_visit',
     sourceLabel: "Client's Last Visit",
     referenceId: rachelMostRecentFormula.id,
     ratio: '5 : 1 : 6 : 8',
-    serviceName: 'Natural Root Retouch + Glaze Add On',
+    serviceName: 'Natural Root Retouch, Glaze Add On',
     staffName: 'Jenna B.',
     notes: rachelMostRecentFormula.notes,
     createdAt: rachelMostRecentFormula.created_at,
@@ -665,7 +665,7 @@ DEMO_FORMULA_HISTORY['demo-client-1'] = [
     appointment_id: 'demo-apt-sm-2w',
     appointment_service_id: null,
     mix_session_id: null,
-    service_name: 'Full Balayage + Vivid Toner',
+    service_name: 'Full Balayage, Vivid Toner',
     formula_type: 'actual',
     formula_data: [
       { product_id: 'demo-prod-r3', product_name: 'Flash Lift Bonder Inside', brand: 'Redken', quantity: 30, unit: 'g' },
@@ -686,7 +686,7 @@ DEMO_FORMULA_HISTORY['demo-client-1'] = [
     appointment_id: 'demo-apt-sm-5w',
     appointment_service_id: null,
     mix_session_id: null,
-    service_name: 'Full Balayage + Vivid Toner',
+    service_name: 'Full Balayage, Vivid Toner',
     formula_type: 'actual',
     formula_data: [
       { product_id: 'demo-prod-r3', product_name: 'Flash Lift Bonder Inside', brand: 'Redken', quantity: 35, unit: 'g' },
@@ -706,7 +706,7 @@ DEMO_FORMULA_HISTORY['demo-client-1'] = [
     appointment_id: 'demo-apt-sm-9w',
     appointment_service_id: null,
     mix_session_id: null,
-    service_name: 'Natural Root Retouch + Glaze Add On',
+    service_name: 'Natural Root Retouch, Glaze Add On',
     formula_type: 'actual',
     formula_data: [
       { product_id: 'demo-prod-w1', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 30, unit: 'g' },
@@ -733,7 +733,7 @@ DEMO_VISIT_HISTORY['demo-client-1'] = [
     appointment_date: sarahVisitDate2w,
     start_time: '11:00:00',
     end_time: '14:30:00',
-    service_name: 'Full Balayage + Vivid Toner',
+    service_name: 'Full Balayage, Vivid Toner',
     service_category: 'Blonding',
     stylist_name: 'Jenna B.',
     status: 'completed',
@@ -745,7 +745,7 @@ DEMO_VISIT_HISTORY['demo-client-1'] = [
     appointment_date: sarahVisitDate5w,
     start_time: '10:00:00',
     end_time: '13:30:00',
-    service_name: 'Full Balayage + Vivid Toner',
+    service_name: 'Full Balayage, Vivid Toner',
     service_category: 'Blonding',
     stylist_name: 'Jenna B.',
     status: 'completed',
@@ -757,7 +757,7 @@ DEMO_VISIT_HISTORY['demo-client-1'] = [
     appointment_date: sarahVisitDate9w,
     start_time: '14:00:00',
     end_time: '15:30:00',
-    service_name: 'Natural Root Retouch + Glaze Add On',
+    service_name: 'Natural Root Retouch, Glaze Add On',
     service_category: 'Color',
     stylist_name: 'Jenna B.',
     status: 'completed',
@@ -784,13 +784,13 @@ DEMO_VISIT_HISTORY['demo-pc-1'] = DEMO_VISIT_HISTORY['demo-client-1'];
 
 const sarahMostRecentFormula = DEMO_FORMULA_HISTORY['demo-client-1'][0];
 
-DEMO_FORMULA_MEMORY['demo-client-1::Full Balayage + Vivid Toner'] = {
+DEMO_FORMULA_MEMORY['demo-client-1::Full Balayage, Vivid Toner'] = {
   lines: sarahMostRecentFormula.formula_data,
   source: 'client_last_visit',
   sourceLabel: "Client's Last Visit",
   referenceId: sarahMostRecentFormula.id,
   ratio: '1 : 2 : 1 : 0.5',
-  serviceName: 'Full Balayage + Vivid Toner',
+  serviceName: 'Full Balayage, Vivid Toner',
   staffName: 'Jenna B.',
   notes: sarahMostRecentFormula.notes,
   createdAt: sarahMostRecentFormula.created_at,
