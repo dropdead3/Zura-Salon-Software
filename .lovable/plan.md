@@ -1,35 +1,40 @@
 
 
-## Fix Drill-Down Toggle Alignment & Slider Interaction
+## Live Slider Value Display
 
-### Problems
-1. **Toggle labels sit above pills** (`space-y-1.5` stacks them vertically) instead of being horizontally aligned
-2. **Slider thumb ungrabbable** — the parent `motion.tr` has `style={{ overflow: 'hidden' }}` which clips the slider thumb, and the thumb is small (14px)
+### Problem
+The percentage label (`15%`) only updates after the mutation completes because it reads from `service.variance_threshold_pct` (server state). Need local state to show the value in real-time during drag.
 
-### Changes — `ServiceTrackingSection.tsx`
+### Changes — `ServiceTrackingSection.tsx` (lines 702–716)
 
-**1. Horizontal toggle layout (lines 676–699)**
-
-Change each toggle from vertical `space-y-1.5` to horizontal `flex items-center gap-2`:
+Add `onValueChange` to track the live value in local state, while keeping `onValueCommit` for persistence:
 
 ```tsx
-<div className="flex items-center gap-2">
-  <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
-  <Switch ... />
-</div>
+// Add a local state map at the component level (near other useState calls)
+const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
+
+// In the slider area:
+<Slider
+  key={`${service.id}-${service.variance_threshold_pct}`}
+  defaultValue={[service.variance_threshold_pct]}
+  onValueChange={([v]) => {
+    setLiveThresholds(prev => ({ ...prev, [service.id]: v }));
+  }}
+  onValueCommit={([v]) => {
+    if (v !== service.variance_threshold_pct) {
+      updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } });
+    }
+  }}
+  min={5} max={50} step={5}
+  className="flex-1"
+/>
+<span className="text-xs tabular-nums text-muted-foreground w-8 text-right">
+  {(liveThresholds[service.id] ?? service.variance_threshold_pct)}%
+</span>
 ```
 
-Same for Smart Mix Assist and Formula Memory toggles.
-
-**2. Fix slider interaction (line 640 + slider area)**
-
-- On the `motion.tr`, change `overflow: 'hidden'` to use `overflow: 'clip'` only during the enter/exit animation (or wrap the content div with its own overflow control so the slider thumb isn't clipped during interaction).
-- Simpler fix: remove `scale-90` from Switch components (not needed), and ensure the slider area has enough padding so the thumb isn't clipped by overflow hidden. Add `py-1` to the slider's container div so the thumb has breathing room.
-
-**3. Variance Threshold layout**
-
-Keep the label above the slider (it makes sense for a range control), but ensure the label row and slider row are visually grouped with proper spacing.
+The label now reflects the dragged value instantly via local state, while the DB save still happens on release.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (lines 675–716)
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
