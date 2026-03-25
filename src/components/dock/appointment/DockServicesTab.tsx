@@ -699,11 +699,11 @@ function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () =>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-            <FlaskConical className="w-4.5 h-4.5 text-amber-400" />
+            <CardIcon className="w-4.5 h-4.5 text-amber-400" />
           </div>
           <div className="min-w-0">
              <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              New Formula
+              {containerLabel}
             </p>
             <p className="text-xs mt-0.5 text-amber-400">
               In Progress
