@@ -204,7 +204,7 @@ export function ServiceEditorDialog({
                     <Input id="finishing-time" type="number" min="0" step="5" value={finishingTime} onChange={e => setFinishingTime(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="content-creation-time">Content (min)</Label>
+                    <Label htmlFor="content-creation-time" className="flex items-center gap-1.5">Content (min) <MetricInfoTooltip description="Time reserved for photos or social content creation during the appointment." /></Label>
                     <Input id="content-creation-time" type="number" min="0" step="5" value={contentCreationTime} onChange={e => setContentCreationTime(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
