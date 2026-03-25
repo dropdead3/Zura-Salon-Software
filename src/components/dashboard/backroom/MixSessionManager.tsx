@@ -594,7 +594,7 @@ export function MixSessionManager({
               locationId,
             });
           }
-          toast.success('All bowls approved');
+          toast.success('All formulations approved');
         }}
         onApprove={async () => {
           await emitSessionEvent({
