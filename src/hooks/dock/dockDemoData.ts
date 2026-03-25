@@ -298,6 +298,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       service_label: 'Corrective Color - By The Hour',
       mixed_by_staff_id: 'demo-assistant-001',
       mixed_by_name: 'Mia Chen (Assistant)',
+      container_type: 'bowl',
     },
   ],
   'demo-appt-6': [
