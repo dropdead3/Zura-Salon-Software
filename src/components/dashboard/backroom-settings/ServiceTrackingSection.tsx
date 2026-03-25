@@ -39,6 +39,7 @@ interface ServiceRow {
   formula_memory_enabled: boolean;
   variance_threshold_pct: number;
   backroom_config_dismissed: boolean;
+  container_types: ('bowl' | 'bottle')[];
 }
 
 type FilterTab = 'all' | 'tracked' | 'untracked' | 'attention' | 'uncategorized';
@@ -134,7 +135,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct')
+        .select('id, name, category, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct, backroom_config_dismissed, container_types')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('category')
@@ -187,6 +188,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['org-services'] });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -712,6 +716,55 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             )}
                                           </div>
                                         </div>
+                                        {/* Chemical toggle + vessel selector */}
+                                        <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
+                                          <div className="flex items-center gap-2">
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                            <Switch
+                                              checked={service.is_chemical_service}
+                                              onCheckedChange={(v) => {
+                                                if (v) {
+                                                  const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                  updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
+                                                } else {
+                                                  updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          {service.is_chemical_service && (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-[10px] font-sans text-muted-foreground">Vessels:</span>
+                                              {(['bowl', 'bottle'] as const).map((vt) => {
+                                                const active = (service.container_types || []).includes(vt);
+                                                const isOnly = (service.container_types || []).length === 1 && active;
+                                                return (
+                                                  <button
+                                                    key={vt}
+                                                    disabled={isOnly}
+                                                    className={cn(
+                                                      'px-2.5 py-0.5 rounded-full text-[10px] font-sans capitalize transition-colors border',
+                                                      active
+                                                        ? 'bg-primary/10 border-primary/30 text-primary'
+                                                        : 'bg-muted/50 border-border/40 text-muted-foreground hover:bg-muted',
+                                                      isOnly && 'opacity-60 cursor-not-allowed'
+                                                    )}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      const current = service.container_types || [];
+                                                      const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                                      if (next.length > 0) {
+                                                        updateService.mutate({ id: service.id, updates: { container_types: next } });
+                                                      }
+                                                    }}
+                                                  >
+                                                    {vt}
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                           <div className="flex items-center gap-2">
@@ -764,17 +817,18 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       </div>
                                     ) : (
                                       /* Untracked service drill-down */
-                                      <div className="flex items-center justify-between">
-                                        <div className="space-y-1 text-xs text-muted-foreground">
-                                          <div className="flex items-center gap-3">
-                                            <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
-                                            <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                      <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                          <div className="space-y-1 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-3">
+                                              <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
+                                              <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                            </div>
+                                            {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
+                                              <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+                                            )}
                                           </div>
-                                          {(type === 'chemical' || type === 'suggested') && (
-                                            <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
+                                          <div className="flex items-center gap-2 shrink-0">
                                           {(type === 'chemical' || type === 'suggested') && !service.backroom_config_dismissed && (
                                             <Button
                                               size="sm"
@@ -811,6 +865,23 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           >
                                             Enable Tracking
                                           </Button>
+                                          </div>
+                                        </div>
+                                        {/* Chemical toggle for untracked services */}
+                                        <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+                                          <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                          <Switch
+                                            checked={service.is_chemical_service}
+                                            onCheckedChange={(v) => {
+                                              if (v) {
+                                                const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                updateService.mutate({ id: service.id, updates: { is_chemical_service: true, is_backroom_tracked: true, container_types: containers } });
+                                              } else {
+                                                updateService.mutate({ id: service.id, updates: { is_chemical_service: false, container_types: [] } });
+                                              }
+                                            }}
+                                          />
+                                          <span className="text-[10px] text-muted-foreground/60 font-sans">Enabling also turns on tracking</span>
                                         </div>
                                       </div>
                                     )}
