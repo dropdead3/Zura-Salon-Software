@@ -411,7 +411,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   ? 'Try a different search term.'
                   : activeFilter === 'attention'
                     ? 'All chemical services are tracked and configured.'
-                    : 'Adjust your filter or add services in the Service Editor.'}
+                    : 'Adjust your filter or add services in the Services Configurator.'}
               </p>
             </div>
           ) : (
