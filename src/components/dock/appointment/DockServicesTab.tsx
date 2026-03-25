@@ -59,7 +59,7 @@ function formulaLinesToBowlLines(lines: FormulaLine[]): BowlLine[] {
     brand_snapshot: l.product.brand ?? null,
     dispensed_quantity: l.targetWeight * (l.ratio || 1),
     dispensed_unit: 'g',
-    dispensed_cost_snapshot: l.product.cost_per_unit ?? 0,
+    dispensed_cost_snapshot: l.product.wholesale_price ?? 0,
     swatch_color: l.product.swatch_color ?? null,
   }));
 }
