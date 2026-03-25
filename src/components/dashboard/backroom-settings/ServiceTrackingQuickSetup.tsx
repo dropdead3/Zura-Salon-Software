@@ -143,7 +143,7 @@ export function ServiceTrackingQuickSetup({
     switch (step.key) {
       case 'classify':
         return (
-          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+          <div className="space-y-2">
             <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
               Classify each service as Standard or Chemical, then save.
             </p>
