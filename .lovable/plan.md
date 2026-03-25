@@ -1,50 +1,52 @@
 
 
-## Redesign Classify Step with Clear Two-Button Choice
+## Redesign Classify Step: Local State + Save Button
 
 ### Problem
-The current UI has a confusing mix of a ghost "Standard" button and a "Chemical" label + Switch toggle. It's unclear what action each element performs.
+Currently, clicking "Standard" or "Chemical" immediately fires a mutation and the service disappears from the list. The user wants to review all choices before committing, and both buttons should start unselected.
 
 ### Solution
-Replace the Switch + Standard button combo with two clear, mutually exclusive pill buttons per service row: **"Standard"** and **"Chemical"**. Tapping one classifies the service and it disappears from the list. This is a simple segmented-button pattern — no ambiguity.
+Use local state to track selections, show all services persistently, and add a "Save & Next" action.
 
-### Implementation — `ServiceTrackingQuickSetup.tsx` (lines 113–137)
+### Changes — `ServiceTrackingQuickSetup.tsx`
 
-Replace the current row layout with:
+**1. Add local state for classifications**
 
 ```tsx
-{uncategorized.map(s => (
-  <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
-    <div className="flex items-center gap-2 min-w-0">
-      <span className="text-sm font-sans truncate">{s.name}</span>
-      {isSuggestedChemicalService(s.name, s.category) && (
-        <Badge variant="outline" className="...amber...">Suggested</Badge>
-      )}
-    </div>
-    <div className="flex items-center gap-1 shrink-0">
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-7 px-3 text-xs"
-        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: false })}
-      >
-        Standard
-      </Button>
-      <Button
-        variant="default"
-        size="sm"
-        className="h-7 px-3 text-xs"
-        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: true })}
-      >
-        Chemical
-      </Button>
-    </div>
-  </div>
-))}
+const [classifications, setClassifications] = useState<Record<string, boolean>>({});
 ```
 
-Two distinct buttons with clear labels — no toggle ambiguity. "Chemical" uses the primary/default variant to stand out. Services with the "Suggested" badge nudge users toward Chemical.
+Reset it when the dialog opens or step changes.
+
+**2. Redesign the classify row UI**
+
+Each service shows two outline buttons ("Standard" / "Chemical") that both start unselected. Clicking one highlights it (e.g. fills with primary for Chemical, secondary for Standard) while the other stays outline. This uses the local `classifications` state — no mutation fires on click.
+
+```tsx
+// Both buttons start as outline (unselected look)
+// Selected Standard → secondary variant
+// Selected Chemical → default variant  
+// Unselected → outline variant
+```
+
+Services with a "Suggested" badge still show the hint but don't pre-select anything.
+
+**3. Show ALL services (not just uncategorized)**
+
+The list shows all services in the org, not just `uncategorized`. Services already classified from a previous session show their saved state as the initial local value (pre-populated from `service.is_chemical_service`). Users can change them.
+
+**4. Replace "Next Step" with "Save & Next"**
+
+The footer button becomes "Save & Next Step". On click:
+- Batch-update all services that have a local classification differing from their DB value using a single mutation loop.
+- On success, advance to next step.
+
+If nothing changed, just advance.
+
+**5. Progress bar update**
+
+The progress still reflects DB state (how many have `is_chemical_service !== null`), so it updates after save.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (lines 113–137)
+- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (classify step UI + local state + batch save)
 
