@@ -287,19 +287,15 @@ export function ServiceTrackingQuickSetup({
                 {trackedNoComponents.length} service{trackedNoComponents.length > 1 ? 's' : ''} still need{trackedNoComponents.length === 1 ? 's' : ''} at least one linked product.
               </p>
             )}
-            {trackedServices.map(s => {
-              const linkedCount = componentsByService.get(s.id) || 0;
-              return (
+            {trackedServices.map(s => (
                 <WizardComponentRow
                   key={s.id}
                   serviceId={s.id}
                   serviceName={s.name}
                   orgId={orgId}
                   upsertComponent={upsertComponent}
-                  linkedCount={linkedCount}
                 />
-              );
-            })}
+            ))}
           </div>
         );
 
