@@ -282,6 +282,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       service_label: 'Full Balayage',
       mixed_by_staff_id: 'dev-bypass-000',
       mixed_by_name: 'Demo Stylist',
+      container_type: 'bowl',
     },
   ],
   'demo-appt-4': [
