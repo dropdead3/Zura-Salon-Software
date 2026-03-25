@@ -13,15 +13,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText } from 'lucide-react';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
+import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
 
 interface ServiceRow {
   id: string;
