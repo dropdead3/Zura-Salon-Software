@@ -548,7 +548,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           </TableRow>
                         )}
                           <TableRow
-                            className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')}
+                            className={cn(
+                              attention && 'bg-amber-500/[0.03]',
+                              service.backroom_config_dismissed && 'opacity-60',
+                              'cursor-pointer'
+                            )}
                             onClick={() => toggleExpand(service.id)}
                             {...(isMobile ? {
                               onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
