@@ -43,7 +43,7 @@ export function useClientFormulaHistory(clientId: string | null) {
       if (error) throw error;
       return data as unknown as ClientFormula[];
     },
-    enabled: !!orgId && !!clientId,
+    enabled: (!!orgId || !!clientId?.startsWith('demo-')) && !!clientId,
     staleTime: 60_000,
   });
 }

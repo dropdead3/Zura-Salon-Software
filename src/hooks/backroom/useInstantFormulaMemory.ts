@@ -40,7 +40,7 @@ export function useInstantFormulaMemory(
       }
       return resolveFormulaMemory(orgId!, clientId!, serviceName);
     },
-    enabled: !!orgId && !!clientId,
+    enabled: (!!orgId || !!clientId?.startsWith('demo-')) && !!clientId,
     staleTime: Infinity,
   });
 }
