@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles } from 'lucide-react';
+import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles, CheckCircle2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -38,6 +38,7 @@ interface ServiceRow {
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
   variance_threshold_pct: number;
+  backroom_config_dismissed: boolean;
 }
 
 type FilterTab = 'all' | 'tracked' | 'untracked' | 'attention' | 'uncategorized';
@@ -216,6 +217,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   };
 
   const needsAttention = (s: ServiceRow): boolean => {
+    if (s.backroom_config_dismissed) return false;
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
@@ -546,7 +548,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           </TableRow>
                         )}
                           <TableRow
-                            className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')}
+                            className={cn(
+                              attention && 'bg-amber-500/[0.03]',
+                              service.backroom_config_dismissed && 'opacity-60',
+                              'cursor-pointer'
+                            )}
                             onClick={() => toggleExpand(service.id)}
                             {...(isMobile ? {
                               onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
@@ -585,7 +591,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                     {type === 'suggested' && (
                                       <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
                                     )}
-                                    {service.is_backroom_tracked && (
+                                    {service.backroom_config_dismissed && (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">Configured ✓</Badge>
+                                    )}
+                                    {service.is_backroom_tracked && !service.backroom_config_dismissed && (
                                       <div className="flex items-center gap-1 shrink-0">
                                         <Package className={cn('w-3 h-3', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
                                         <FileText className={cn('w-3 h-3', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
@@ -662,15 +671,44 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
                                             </div>
                                           </div>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-7 text-xs"
-                                            onClick={() => setSelectedServiceId(service.id)}
-                                          >
-                                            <Package className="w-3 h-3 mr-1" />
-                                            Components
-                                          </Button>
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-7 text-xs"
+                                              onClick={() => setSelectedServiceId(service.id)}
+                                            >
+                                              <Package className="w-3 h-3 mr-1" />
+                                              Components
+                                            </Button>
+                                            {service.backroom_config_dismissed ? (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs text-muted-foreground"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                                }}
+                                              >
+                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                Re-flag
+                                              </Button>
+                                            ) : (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs text-primary"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                }}
+                                              >
+                                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                Mark Configured
+                                              </Button>
+                                            )}
+                                          </div>
                                         </div>
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -734,14 +772,44 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
                                           )}
                                         </div>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-7 text-xs shrink-0"
-                                          onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
-                                        >
-                                          Enable Tracking
-                                        </Button>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          {(type === 'chemical' || type === 'suggested') && !service.backroom_config_dismissed && (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-7 text-xs text-primary"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                              }}
+                                            >
+                                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                                              Mark Configured
+                                            </Button>
+                                          )}
+                                          {service.backroom_config_dismissed && (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-7 text-xs text-muted-foreground"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                              }}
+                                            >
+                                              <RotateCcw className="w-3 h-3 mr-1" />
+                                              Re-flag
+                                            </Button>
+                                          )}
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 text-xs shrink-0"
+                                            onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
+                                          >
+                                            Enable Tracking
+                                          </Button>
+                                        </div>
                                       </div>
                                     )}
                                   </motion.div>

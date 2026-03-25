@@ -18835,6 +18835,7 @@ export type Database = {
           allow_same_day_booking: boolean | null
           archived_at: string | null
           assistant_prep_allowed: boolean
+          backroom_config_dismissed: boolean
           bookable_online: boolean
           category: string | null
           container_types: Database["public"]["Enums"]["container_type"][]
@@ -18879,6 +18880,7 @@ export type Database = {
           allow_same_day_booking?: boolean | null
           archived_at?: string | null
           assistant_prep_allowed?: boolean
+          backroom_config_dismissed?: boolean
           bookable_online?: boolean
           category?: string | null
           container_types?: Database["public"]["Enums"]["container_type"][]
@@ -18923,6 +18925,7 @@ export type Database = {
           allow_same_day_booking?: boolean | null
           archived_at?: string | null
           assistant_prep_allowed?: boolean
+          backroom_config_dismissed?: boolean
           bookable_online?: boolean
           category?: string | null
           container_types?: Database["public"]["Enums"]["container_type"][]
