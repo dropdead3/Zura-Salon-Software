@@ -2,15 +2,17 @@
  * DockLiveDispensing — Full-screen bowl mixing view.
  * Shows ingredient list with target vs actual weights,
  * progress visualization, seal/reweigh actions, and post-reweigh summary.
+ * Tapping an ingredient opens the Vish-inspired teardrop dispensing view.
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ArrowLeft, FlaskConical, Scale, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DockWeightInput } from './DockWeightInput';
 import { DockReweighSummary } from './DockReweighSummary';
+import { DockIngredientDispensing } from './DockIngredientDispensing';
 import { useRecordDispensedWeight, useSealDockBowl, useReweighDockBowl } from '@/hooks/dock/useDockMixSession';
 import { roundWeight } from '@/lib/backroom/mix-calculations';
 
@@ -95,7 +97,7 @@ function useBowlLines(bowlId: string | null, demoLinesOverride?: BowlLine[]) {
   });
 }
 
-type DispensingView = 'lines' | 'weight-input' | 'reweigh-input';
+type DispensingView = 'lines' | 'ingredient' | 'reweigh-input';
 
 export function DockLiveDispensing({
   sessionId,
@@ -109,9 +111,10 @@ export function DockLiveDispensing({
 }: DockLiveDispensingProps) {
   const { data: lines, isLoading } = useBowlLines(bowlId, demoLinesFromProps);
   const [activeView, setActiveView] = useState<DispensingView>('lines');
-  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const [bowlStatus, setBowlStatus] = useState(initialBowlStatus);
   const [capturedLeftover, setCapturedLeftover] = useState<number | null>(initialLeftover ?? null);
+  const [currentWeights, setCurrentWeights] = useState<Map<string, number>>(new Map());
 
   const recordWeight = useRecordDispensedWeight();
   const sealBowl = useSealDockBowl();
@@ -125,22 +128,28 @@ export function DockLiveDispensing({
   const totalDispensed = (lines || []).reduce((sum, l) => sum + l.dispensed_quantity, 0);
   const totalCost = (lines || []).reduce((sum, l) => sum + l.dispensed_quantity * l.dispensed_cost_snapshot, 0);
 
-  const handleWeightSubmit = (weight: number) => {
-    if (!editingLineId) return;
-    recordWeight.mutate({
-      sessionId,
-      organizationId,
-      bowlId,
-      lineId: editingLineId,
-      actualWeight: weight,
-    }, {
-      onSuccess: () => {
-        setActiveView('lines');
-        setEditingLineId(null);
-        queryClient.invalidateQueries({ queryKey: ['dock-bowl-lines', bowlId] });
-      },
+  const handleWeightUpdate = useCallback((lineId: string, weight: number) => {
+    setCurrentWeights((prev) => {
+      const next = new Map(prev);
+      next.set(lineId, weight);
+      return next;
     });
-  };
+
+    // Also persist via mutation for non-demo bowls
+    if (!bowlId.startsWith('demo-')) {
+      recordWeight.mutate({
+        sessionId,
+        organizationId,
+        bowlId,
+        lineId,
+        actualWeight: weight,
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['dock-bowl-lines', bowlId] });
+        },
+      });
+    }
+  }, [bowlId, sessionId, organizationId, recordWeight, queryClient]);
 
   const handleSeal = () => {
     sealBowl.mutate({ sessionId, organizationId, bowlId }, {
@@ -158,28 +167,21 @@ export function DockLiveDispensing({
     });
   };
 
-  if (activeView === 'weight-input' && editingLineId) {
-    const editingLine = lines?.find((l) => l.id === editingLineId);
-    return (
-      <div className="flex flex-col h-full bg-[hsl(var(--platform-bg))]">
-        <div className="flex-shrink-0 px-7 pt-6 pb-2">
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mb-1">Dispensing</p>
-          <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-            {editingLine?.product_name_snapshot || 'Product'}
-          </p>
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
-            Target: {editingLine?.dispensed_quantity || 0}g
-          </p>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <DockWeightInput
-            onSubmit={handleWeightSubmit}
-            onCancel={() => { setActiveView('lines'); setEditingLineId(null); }}
-            label="Actual Dispensed Weight"
-          />
-        </div>
-      </div>
-    );
+  // Ingredient dispensing view (teardrop)
+  if (activeView === 'ingredient' && activeLineId && lines) {
+    const activeLine = lines.find((l) => l.id === activeLineId);
+    if (activeLine) {
+      return (
+        <DockIngredientDispensing
+          line={activeLine}
+          allLines={lines}
+          currentWeights={currentWeights}
+          onWeightUpdate={handleWeightUpdate}
+          onBack={() => { setActiveView('lines'); setActiveLineId(null); }}
+          onNavigate={(lineId) => setActiveLineId(lineId)}
+        />
+      );
+    }
   }
 
   if (activeView === 'reweigh-input') {
@@ -267,19 +269,23 @@ export function DockLiveDispensing({
             <div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          (lines || []).map((line) => (
-            <LineItemCard
-              key={line.id}
-              line={line}
-              isSealed={isSealed}
-              onTapWeight={() => {
-                if (!isSealed) {
-                  setEditingLineId(line.id);
-                  setActiveView('weight-input');
-                }
-              }}
-            />
-          ))
+          (lines || []).map((line) => {
+            const dispensedWeight = currentWeights.get(line.id) ?? 0;
+            return (
+              <LineItemCard
+                key={line.id}
+                line={line}
+                dispensedWeight={dispensedWeight}
+                isSealed={isSealed}
+                onTapWeight={() => {
+                  if (!isSealed) {
+                    setActiveLineId(line.id);
+                    setActiveView('ingredient');
+                  }
+                }}
+              />
+            );
+          })
         )}
       </div>
 
@@ -320,13 +326,18 @@ export function DockLiveDispensing({
 
 function LineItemCard({
   line,
+  dispensedWeight,
   isSealed,
   onTapWeight,
 }: {
   line: BowlLine;
+  dispensedWeight: number;
   isSealed: boolean;
   onTapWeight: () => void;
 }) {
+  const fillPct = line.dispensed_quantity > 0 ? dispensedWeight / line.dispensed_quantity : 0;
+  const isFilled = fillPct >= 1;
+
   return (
     <button
       onClick={onTapWeight}
@@ -355,14 +366,22 @@ function LineItemCard({
           </p>
         </div>
 
-        {/* Weight */}
-        <div className="text-right flex-shrink-0">
-          <p className="font-display text-sm tracking-tight text-[hsl(var(--platform-foreground))]">
-            {roundWeight(line.dispensed_quantity)}<span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">g</span>
-          </p>
-          <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
-            ${roundWeight(line.dispensed_quantity * line.dispensed_cost_snapshot).toFixed(2)}
-          </p>
+        {/* Weight + fill indicator */}
+        <div className="text-right flex-shrink-0 flex items-center gap-2">
+          {dispensedWeight > 0 && (
+            <div className={cn(
+              'w-2 h-2 rounded-full',
+              isFilled ? 'bg-emerald-500' : 'bg-violet-500'
+            )} />
+          )}
+          <div>
+            <p className="font-display text-sm tracking-tight text-[hsl(var(--platform-foreground))]">
+              {roundWeight(line.dispensed_quantity)}<span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">g</span>
+            </p>
+            <p className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
+              ${roundWeight(line.dispensed_quantity * line.dispensed_cost_snapshot).toFixed(2)}
+            </p>
+          </div>
         </div>
       </div>
     </button>

@@ -12,6 +12,8 @@ interface DockWeightInputProps {
   onCancel: () => void;
   label?: string;
   unit?: string;
+  targetWeight?: number;
+  initialValue?: string;
 }
 
 const NUMPAD_KEYS = [
@@ -21,8 +23,8 @@ const NUMPAD_KEYS = [
   ['.', '0', 'del'],
 ];
 
-export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', unit = 'g' }: DockWeightInputProps) {
-  const [value, setValue] = useState('');
+export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', unit = 'g', targetWeight, initialValue }: DockWeightInputProps) {
+  const [value, setValue] = useState(initialValue ?? '');
 
   const handleKey = (key: string) => {
     if (key === 'del') {
