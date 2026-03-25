@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { DockBowlActionSheet, type BowlAction } from '../mixing/DockBowlActionSheet';
 import { DockRenameBowlDialog } from '../mixing/DockRenameBowlDialog';
 import { cn } from '@/lib/utils';
+import { DOCK_CARD } from '@/components/dock/dock-ui-tokens';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
