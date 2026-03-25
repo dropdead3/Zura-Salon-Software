@@ -3,6 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Trash2, Search } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -115,9 +116,12 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
 
   return (
     <div className="space-y-4">
-      <p className={tokens.body.muted}>
-        Set individual pricing per stylist. Overrides take priority over level pricing.
-      </p>
+      <div className="flex items-start gap-1.5">
+        <p className={tokens.body.muted}>
+          Set individual pricing per stylist. Overrides take priority over level pricing.
+        </p>
+        <MetricInfoTooltip description="Set a custom price for an individual stylist on this service. Takes priority over both level pricing and the base price." />
+      </div>
       <div className="space-y-4 max-h-[40vh] overflow-y-auto p-1">
         {/* Existing overrides */}
         {overriddenEmployees.length > 0 && (

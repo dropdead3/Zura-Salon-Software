@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import type { Service } from '@/hooks/useServicesData';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
@@ -132,7 +133,7 @@ export function ServiceEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {isCreateMode ? 'Add Service' : `Edit ${initialData?.name || 'Service'}`}
@@ -183,15 +184,15 @@ export function ServiceEditorDialog({
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="service-duration">Duration (min) *</Label>
+                    <Label htmlFor="service-duration" className="flex items-center gap-1.5">Duration (min) * <MetricInfoTooltip description="Total chair time including processing. Used for scheduling and calendar blocking." /></Label>
                     <Input id="service-duration" type="number" min="5" step="5" value={duration} onChange={e => setDuration(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="service-price">Price ($)</Label>
+                    <Label htmlFor="service-price" className="flex items-center gap-1.5">Price ($) <MetricInfoTooltip description="Default service price before level, location, or seasonal adjustments." /></Label>
                     <Input id="service-price" type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="Optional" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="service-cost">Cost ($)</Label>
+                    <Label htmlFor="service-cost" className="flex items-center gap-1.5">Cost ($) <MetricInfoTooltip description="Internal cost of supplies/product for this service. Used for margin reporting." /></Label>
                     <Input id="service-cost" type="number" min="0" step="0.01" value={cost} onChange={e => setCost(e.target.value)} placeholder="Optional" />
                   </div>
                 </div>
@@ -199,15 +200,15 @@ export function ServiceEditorDialog({
                 {/* Time breakdown fields */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="finishing-time">Finishing (min)</Label>
+                    <Label htmlFor="finishing-time" className="flex items-center gap-1.5">Finishing (min) <MetricInfoTooltip description="Time allocated after processing for blowout, styling, and finishing. Not included in processing time." /></Label>
                     <Input id="finishing-time" type="number" min="0" step="5" value={finishingTime} onChange={e => setFinishingTime(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="content-creation-time">Content (min)</Label>
+                    <Label htmlFor="content-creation-time" className="flex items-center gap-1.5">Content (min) <MetricInfoTooltip description="Time reserved for photos or social content creation during the appointment." /></Label>
                     <Input id="content-creation-time" type="number" min="0" step="5" value={contentCreationTime} onChange={e => setContentCreationTime(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="processing-time">Processing (min)</Label>
+                    <Label htmlFor="processing-time" className="flex items-center gap-1.5">Processing (min) <MetricInfoTooltip description="Chemical or treatment processing time where the stylist may serve other clients." /></Label>
                     <Input id="processing-time" type="number" min="0" step="5" value={processingTime} onChange={e => setProcessingTime(e.target.value)} placeholder="0" />
                   </div>
                 </div>
@@ -220,7 +221,10 @@ export function ServiceEditorDialog({
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Requires Qualification</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Requires Qualification</p>
+                        <MetricInfoTooltip description="When enabled, only team members with this service's qualification can be booked for it." />
+                      </div>
                       <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
                     </div>
                     <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
@@ -228,7 +232,10 @@ export function ServiceEditorDialog({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Bookable Online</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Bookable Online</p>
+                        <MetricInfoTooltip description="Controls whether this service appears on your website and can be booked by clients online." />
+                      </div>
                       <p className={tokens.body.muted}>Show on website and allow online booking</p>
                     </div>
                     <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
@@ -236,7 +243,10 @@ export function ServiceEditorDialog({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Same-Day Booking</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Same-Day Booking</p>
+                        <MetricInfoTooltip description="When disabled, clients must book this service at least the specified lead time in advance." />
+                      </div>
                       <p className={tokens.body.muted}>Allow clients to book this service same day</p>
                     </div>
                     <Switch checked={allowSameDayBooking} onCheckedChange={setAllowSameDayBooking} />
@@ -251,7 +261,10 @@ export function ServiceEditorDialog({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
+                        <MetricInfoTooltip description="New clients must complete a consultation appointment before booking this service." />
+                      </div>
                       <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
                     </div>
                     <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
@@ -260,7 +273,10 @@ export function ServiceEditorDialog({
                   {/* Container Types */}
                   <div className="pt-2 border-t border-border/60">
                     <div className="mb-2">
-                      <p className={tokens.body.emphasis}>Backroom Container Types</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Backroom Container Types</p>
+                        <MetricInfoTooltip description="Determines which vessel types (bowls, bottles) appear in Zura Backroom when mixing formulations for this service." />
+                      </div>
                       <p className={tokens.body.muted}>Used by Zura Backroom to track supply usage for this service's formulations. Select both if the service uses bowls and bottles.</p>
                     </div>
                     <div className="flex gap-6">
@@ -291,7 +307,10 @@ export function ServiceEditorDialog({
                   <div className="pt-2 border-t border-border/60">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className={tokens.body.emphasis}>Requires Deposit</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className={tokens.body.emphasis}>Requires Deposit</p>
+                          <MetricInfoTooltip description="Collect a deposit or prepayment to confirm the booking. Helps reduce no-shows for high-value services." />
+                        </div>
                         <p className={tokens.body.muted}>Collect a deposit or prepayment before confirming this service</p>
                       </div>
                       <Switch checked={requiresDeposit} onCheckedChange={setRequiresDeposit} />

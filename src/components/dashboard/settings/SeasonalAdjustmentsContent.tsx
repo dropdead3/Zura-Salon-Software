@@ -7,6 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Trash2, Plus, CalendarIcon } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { format, isPast, parseISO } from 'date-fns';
@@ -81,9 +82,12 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className={tokens.body.muted}>
-          Apply percentage or fixed-amount modifiers during date ranges.
-        </p>
+        <div className="flex items-start gap-1.5">
+          <p className={tokens.body.muted}>
+            Apply percentage or fixed-amount modifiers during date ranges.
+          </p>
+          <MetricInfoTooltip description="Time-bound price modifiers applied on top of the resolved price. Use positive values for surcharges and negative for discounts." />
+        </div>
         {!showForm && (
           <Button variant="outline" size={tokens.button.card} onClick={() => setShowForm(true)}>
             <Plus className="w-3.5 h-3.5 mr-1" />
