@@ -33,6 +33,7 @@ import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 interface DockServicesTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
+  effectiveServiceName?: string | null;
 }
 
 type BowlStatusInfo = {
@@ -100,7 +101,7 @@ function getChemicalServices(serviceName: string | null | undefined): string[] {
   return parseServices(serviceName).filter(s => isColorOrChemicalService(s));
 }
 
-export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
+export function DockServicesTab({ appointment, staff, effectiveServiceName }: DockServicesTabProps) {
   const { isDemoMode } = useDockDemo();
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
   const [showNewBowl, setShowNewBowl] = useState(false);
@@ -144,7 +145,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
   }, []);
 
   // Parse chemical services
-  const chemicalServices = useMemo(() => getChemicalServices(appointment.service_name), [appointment.service_name]);
+  const chemicalServices = useMemo(() => getChemicalServices(effectiveServiceName ?? appointment.service_name), [effectiveServiceName, appointment.service_name]);
 
   // Get the first session ID for stats query
   const primarySessionId = sessions?.[0]?.id || null;

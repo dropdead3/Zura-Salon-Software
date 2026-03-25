@@ -124,7 +124,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
 
       {/* Tab content */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {tab === 'services' && <DockServicesTab appointment={appointment} staff={staff} />}
+        {tab === 'services' && <DockServicesTab appointment={appointment} staff={staff} effectiveServiceName={effectiveServiceName} />}
         {tab === 'notes' && <DockNotesTab appointment={appointment} />}
         {tab === 'summary' && <DockSummaryTab appointment={appointment} staff={staff} />}
         {tab === 'client' && <DockClientTab appointment={appointment} staff={staff} activeBowlId={activeBowlId} />}
