@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, FlaskConical, StickyNote, Receipt, Pencil, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DOCK_TABS } from '@/components/dock/dock-ui-tokens';
+import { DOCK_TABS, DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
+import { useDockDemo } from '@/contexts/DockDemoContext';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from '../schedule/DockScheduleTab';
@@ -35,6 +36,7 @@ const TABS: { id: DetailTab; label: string; icon: typeof FlaskConical }[] = [
 ];
 
 export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppointmentDetailProps) {
+  const { isDemoMode } = useDockDemo();
   const [tab, setTab] = useState<DetailTab>('services');
   const [editServicesOpen, setEditServicesOpen] = useState(false);
   const updateServicesMutation = useUpdateAppointmentServices();
@@ -91,14 +93,22 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
               {effectiveServiceName && <span>{effectiveServiceName} · </span>}
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
             </p>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
             {!isTerminal && (
               <button
                 onClick={() => setEditServicesOpen(true)}
-                className="mt-2 px-4 py-2.5 rounded-xl border border-violet-500/40 bg-violet-500/10 text-violet-400 text-sm font-medium flex items-center gap-2 active:scale-[0.97] transition-all"
+                className="px-3 py-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 text-violet-400 text-xs font-medium flex items-center gap-1.5 active:scale-[0.97] transition-all whitespace-nowrap"
               >
                 <Pencil className="w-3 h-3" />
                 Edit Services
               </button>
+            )}
+            {isDemoMode && (
+              <span className={cn(DOCK_BADGE.base, DOCK_BADGE.demo, 'inline-flex items-center gap-1.5 backdrop-blur-md')}>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Demo
+              </span>
             )}
           </div>
         </div>
