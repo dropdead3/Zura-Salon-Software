@@ -1,37 +1,19 @@
 
 
-## Add Visual Aid Preference to Dock Settings
+## Fix DockBowlActionSheet to Slide Top-Down
 
-### Concept
-Add a "Dispensing Visual" preference in Dock Settings that lets the user choose between two visual aids for the ingredient dispensing flow: **Teardrop** (current default) or **Progress Bar** (a thick vertical bar).
+The action sheet currently slides up from the bottom, violating the Dock design system. All Dock sheets must slide down from the top per `DOCK_SHEET.panel` token.
 
-### Changes
+### Changes — `src/components/dock/mixing/DockBowlActionSheet.tsx`
 
-**1. New file: `src/components/dock/mixing/ProgressBarFill.tsx`**
-- Vertical progress bar component matching `TeardropFill` API: `fillPercent`, `fillColor`, `size`
-- Thick rounded vertical bar (~60px wide, height based on `size`) with fill rising from bottom
-- Same overfill glow, specular highlight, and transition styling as the teardrop
-- Shell uses same platform tokens for consistency
+**1. Sheet positioning**: Change from `bottom-0 border-t rounded-t-2xl` to use `DOCK_SHEET.panel` token (`top-0 border-b rounded-b-2xl`)
 
-**2. Modified: `src/components/dock/settings/DockSettingsTab.tsx`**
-- Add new settings card: "Dispensing Visual" with two selectable options (Teardrop / Progress Bar)
-- Store choice in `localStorage` key `dock-dispensing-visual` (`'teardrop' | 'bar'`)
-- Show small preview thumbnails of each option as radio-style selectors
-- Place it between "Team Compliance" and "Station Location" sections
+**2. Animation direction**: Flip `y: '100%'` → `y: '-100%'` for initial/exit (slides down from top, exits back up)
 
-**3. New hook: `src/hooks/dock/useDockDispensingVisual.ts`**
-- Reads from `localStorage` key `dock-dispensing-visual`
-- Returns `'teardrop' | 'bar'` (default: `'teardrop'`)
-- Provides setter to update preference
+**3. Drag handle**: Move from top of content to bottom (using `DOCK_SHEET.dragHandleWrapperBottom`) since the sheet hangs from the top
 
-**4. Modified: `src/components/dock/mixing/DockIngredientDispensing.tsx`**
-- Import `useDockDispensingVisual` and `ProgressBarFill`
-- Conditionally render `TeardropFill` or `ProgressBarFill` based on preference
-- Both components receive identical `fillPercent`, `fillColor`, and `size` props
+**4. Content order**: Reorder so title comes first, action buttons next, drag handle at the bottom
 
-### Files
-- `src/components/dock/mixing/ProgressBarFill.tsx` — new
-- `src/hooks/dock/useDockDispensingVisual.ts` — new
-- `src/components/dock/settings/DockSettingsTab.tsx` — add visual selector
-- `src/components/dock/mixing/DockIngredientDispensing.tsx` — conditional render
+### One file changed
+`src/components/dock/mixing/DockBowlActionSheet.tsx`
 
