@@ -43,6 +43,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
 
   const handleDragEnd = (_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
     if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
+      try { navigator.vibrate?.(15); } catch {}
       setOpen(false);
     }
   };
