@@ -140,7 +140,7 @@ export function DockEditServicesSheet({
             }}
           >
             {/* Header */}
-            <div className="flex-shrink-0 px-7 pt-2 pb-4">
+            <div className="flex-shrink-0 px-7 pt-6 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FlaskConical className="w-4 h-4 text-violet-400" />
@@ -169,9 +169,11 @@ export function DockEditServicesSheet({
               </div>
             </div>
 
-            {/* Selected chips */}
+            {/* Selected chips — "On this appointment" */}
             {selected.size > 0 && (
-              <div className="flex-shrink-0 px-7 pb-3 flex flex-wrap gap-1.5">
+              <div className="flex-shrink-0 px-7 pb-3">
+                <p className={cn(DOCK_TEXT.category, 'mb-2')}>On This Appointment</p>
+                <div className="flex flex-wrap gap-1.5">
                 {Array.from(selected.values()).map(svc => (
                   <button
                     key={svc.name}
@@ -182,6 +184,7 @@ export function DockEditServicesSheet({
                     <X className="h-3 w-3" />
                   </button>
                 ))}
+                </div>
               </div>
             )}
 
