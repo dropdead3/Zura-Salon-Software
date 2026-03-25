@@ -622,48 +622,32 @@ function BowlCard({ session, index, onTap, onMenuTap, containerType = 'bowl' }: 
   return (
     <button
       onClick={onTap}
-      className={cn(
-        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
-        'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
-        'hover:border-[hsl(var(--platform-border)/0.5)]',
-        'active:scale-[0.98]',
-        isTerminal && 'opacity-60'
-      )}
+      className={cn(DOCK_CARD.wrapper, isTerminal && 'opacity-60')}
     >
-      {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className={cn('w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
-            <StatusIcon className={cn('w-4.5 h-4.5', status.color)} />
+          <div className={cn(DOCK_CARD.iconBox, status.iconBg)}>
+            <StatusIcon className={cn(DOCK_CARD.icon, status.color)} />
           </div>
           <div className="min-w-0">
-             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              {containerLabel} {index}
-            </p>
-            <p className={cn('text-xs mt-0.5', status.color)}>
-              {status.label}
-            </p>
+            <p className={DOCK_CARD.title}>{containerLabel} {index}</p>
+            <p className={cn(DOCK_CARD.statusLabel, status.color)}>{status.label}</p>
           </div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-          <MoreVertical className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className={DOCK_CARD.menuButton}>
+          <MoreVertical className={DOCK_CARD.menuIcon} />
         </button>
       </div>
 
-      {/* Info area */}
       <div className="flex-1 mt-1">
         {session.mixed_by_name && (
-          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] mb-1">
-            Mixed by {session.mixed_by_name}
-          </p>
+          <p className={cn(DOCK_CARD.meta, 'mb-1')}>Mixed by {session.mixed_by_name}</p>
         )}
         {session.unresolved_flag && (
-          <p className="text-[10px] text-amber-400/70 mb-1">⚠ Flagged for review</p>
+          <p className={cn(DOCK_CARD.flag, 'mb-1')}>⚠ Flagged for review</p>
         )}
         {session.notes && (
-          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)] truncate">
-            {session.notes}
-          </p>
+          <p className={DOCK_CARD.notes}>{session.notes}</p>
         )}
       </div>
     </button>
