@@ -42,6 +42,7 @@ export function useCreateDockBowl() {
       const meta = await buildCommandMeta('ui');
 
       // 1. Create mix_session row
+      const ct = params.containerType || 'bowl';
       const { data: session, error: sessionErr } = await supabase
         .from('mix_sessions')
         .insert({
@@ -52,7 +53,8 @@ export function useCreateDockBowl() {
           status: 'draft',
           is_manual_override: true,
           service_label: params.serviceLabel || null,
-        })
+          container_type: ct,
+        } as any)
         .select('id')
         .single();
 
