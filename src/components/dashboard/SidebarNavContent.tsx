@@ -111,6 +111,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
+  const { apps: activatedApps } = useOrganizationApps();
   
   // Map section IDs to nav items (for built-in sections)
   // New consolidated sections: myTools (replaces growth+stats), manage (replaces manager), system (replaces adminOnly)
