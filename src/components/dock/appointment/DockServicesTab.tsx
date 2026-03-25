@@ -260,6 +260,46 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     });
   };
 
+  const handleBowlAction = useCallback((action: BowlAction) => {
+    if (!bowlMenuTarget) return;
+    switch (action) {
+      case 'edit':
+        if (bowlMenuTarget.type === 'remote') {
+          handleBowlTap(bowlMenuTarget.session, bowlMenuTarget.index);
+        } else {
+          handleDemoBowlTap(bowlMenuTarget.bowl);
+        }
+        setBowlMenuTarget(null);
+        break;
+      case 'rename':
+        setRenameTarget(bowlMenuTarget.type === 'remote' ? { type: 'remote', session: bowlMenuTarget.session } : { type: 'demo', bowl: bowlMenuTarget.bowl });
+        setBowlMenuTarget(null);
+        break;
+      case 'remove':
+        if (bowlMenuTarget.type === 'demo') {
+          setDemoBowls(prev => prev.filter(b => b.id !== bowlMenuTarget.bowl.id));
+          toast.success('Formula removed');
+        } else {
+          toast.success('Formula removed');
+        }
+        setBowlMenuTarget(null);
+        break;
+      default:
+        toast('Coming soon', { description: `${action.replace('_', ' ')} will be available in a future update.` });
+        setBowlMenuTarget(null);
+        break;
+    }
+  }, [bowlMenuTarget]);
+
+  const handleRename = useCallback((newName: string) => {
+    if (!renameTarget) return;
+    if (renameTarget.type === 'demo') {
+      setDemoBowls(prev => prev.map(b => b.id === renameTarget.bowl.id ? { ...b, serviceLabel: newName } : b));
+    }
+    toast.success('Formula renamed');
+    setRenameTarget(null);
+  }, [renameTarget]);
+
   // Full-screen dispensing view
   const remoteBowls = sessions || [];
   const allBowlCount = remoteBowls.length + demoBowls.length;
