@@ -99,7 +99,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       location_id: null,
       client_id: 'demo-client-7',
       notes: 'Keep it natural — level 7 base',
-      mix_bowl_count: 2,
+      mix_bowl_count: 0,
     },
     {
       id: 'demo-appt-2',
