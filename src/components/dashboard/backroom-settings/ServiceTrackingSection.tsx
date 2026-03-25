@@ -287,7 +287,20 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       {/* Configuration Progress */}
       <Card>
         <CardContent className="py-4">
-          <ServiceTrackingProgressBar milestones={milestones} />
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <ServiceTrackingProgressBar milestones={milestones} />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setWizardOpen(true)}
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Quick Setup
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
