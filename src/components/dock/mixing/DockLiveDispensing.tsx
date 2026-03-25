@@ -188,7 +188,7 @@ export function DockLiveDispensing({
             Bowl {bowlNumber} — Reweigh
           </p>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
-            Place sealed bowl on scale and enter leftover weight
+            Place finished bowl on scale and enter leftover weight
           </p>
         </div>
         <div className="flex-1 flex items-center justify-center">
