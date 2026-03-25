@@ -96,6 +96,7 @@ export function ServiceEditorDialog({
         setContentCreationTime('0');
         setProcessingTime('0');
         setRequiresNewClientConsultation(false);
+        setIsChemicalService(false);
         setContainerTypes(['bowl']);
         setRequiresDeposit(false);
         setDepositType('percentage');
