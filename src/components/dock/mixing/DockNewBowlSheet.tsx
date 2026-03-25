@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { X, FlaskConical, Plus, History } from 'lucide-react';
+import { X, FlaskConical, Plus, History, TestTube2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
 import { DockFormulaHistoryPicker } from './DockFormulaHistoryPicker';
