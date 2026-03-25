@@ -234,7 +234,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const milestones: ProgressMilestone[] = useMemo(() => {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
-    const classified = allServices.filter(s => s.is_chemical_service || s.category !== null);
+    const classified = allServices.filter(s => s.is_chemical_service !== null);
     const withComponents = tracked.filter(s => componentsByService.has(s.id));
     const withAllowance = tracked.filter(s => allowanceByService.has(s.id));
 

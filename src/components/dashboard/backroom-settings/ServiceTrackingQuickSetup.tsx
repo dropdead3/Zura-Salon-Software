@@ -83,7 +83,7 @@ export function ServiceTrackingQuickSetup({
   });
 
   // Step-specific items
-  const uncategorized = services.filter(s => !s.is_chemical_service && !s.category);
+  const uncategorized = services.filter(s => s.is_chemical_service === null);
   const suggestedUncategorized = uncategorized.filter(s => isSuggestedChemicalService(s.name, s.category));
   const untrackedChemical = services.filter(s =>
     !s.is_backroom_tracked && (s.is_chemical_service || isSuggestedChemicalService(s.name, s.category))
