@@ -92,8 +92,9 @@ export function useBackroomSetupHealth() {
       }
 
       // Tracked services with no components
+      const componentServiceIds = new Set((componentsRes.data || []).map((c: { service_id: string }) => c.service_id));
+      const trackedServicesWithComponents = trackedServices.filter((s: { id: string }) => componentServiceIds.has(s.id)).length;
       if (trackedServices.length > 0) {
-        const componentServiceIds = new Set((componentsRes.data || []).map((c: { service_id: string }) => c.service_id));
         const servicesWithoutComponents = trackedServices.filter((s: { id: string }) => !componentServiceIds.has(s.id));
         if (servicesWithoutComponents.length > 0) {
           warnings.push({
