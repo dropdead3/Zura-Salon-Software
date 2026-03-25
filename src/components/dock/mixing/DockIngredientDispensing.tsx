@@ -269,7 +269,7 @@ export function DockIngredientDispensing({
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                  <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
                     {w > 0 ? `${roundWeight(w)}g` : 'Pending'} / {roundWeight(l.dispensed_quantity)}g
                   </span>
                 </div>
