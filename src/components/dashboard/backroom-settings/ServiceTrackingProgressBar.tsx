@@ -1,13 +1,12 @@
 /**
- * ServiceTrackingProgressBar — 4-segment progress indicator for service tracking setup.
- * Shows: Services Classified, Chemical Tracked, Components Mapped, Allowances Set.
- * Includes a completion celebration when all milestones hit 100%.
+ * ServiceTrackingProgressBar — Vertical step checklist for service tracking setup.
+ * Shows three sequential steps with individual progress bars and descriptions.
  */
 import { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { CheckCircle2 } from 'lucide-react';
-import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -23,10 +22,6 @@ interface Props {
 }
 
 export function ServiceTrackingProgressBar({ milestones }: Props) {
-  const overallCurrent = milestones.reduce((s, m) => s + m.current, 0);
-  const overallTotal = milestones.reduce((s, m) => s + m.total, 0);
-  const overallPct = overallTotal > 0 ? Math.round((overallCurrent / overallTotal) * 100) : 0;
-
   const allComplete = milestones.length > 0 && milestones.every(m => m.current === m.total && m.total > 0);
   const prevComplete = useRef(allComplete);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -40,7 +35,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
   }, [allComplete]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Completion celebration overlay */}
       <AnimatePresence>
         {showCelebration && (
@@ -91,81 +86,63 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Overall bar */}
-      <div className="flex items-center gap-3">
-        <span className={cn(tokens.label.tiny, 'shrink-0')}>Setup Progress</span>
-        <div className="relative flex-1 h-2 rounded-full bg-muted overflow-hidden">
-          {/* Color-coded fill segments rendered sequentially */}
-          <div className="absolute inset-0 flex">
-            {milestones.map((m, i) => {
-              const segmentWidthPct = overallTotal > 0 ? (m.total / overallTotal) * 100 : 0;
-              const fillPct = m.total > 0 ? (m.current / m.total) * 100 : 0;
-              const done = m.current === m.total && m.total > 0;
-              const partial = m.current > 0 && !done;
-              return (
-                <div
-                  key={i}
-                  className="h-full relative"
-                  style={{ width: `${segmentWidthPct}%` }}
-                >
-                  {/* Filled portion only — no outer bg */}
-                  <div
-                    className={cn(
-                      'h-full transition-all duration-500',
-                      done ? 'bg-primary' : partial ? 'bg-amber-500' : '',
-                    )}
-                    style={{ width: `${fillPct}%` }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          {/* Segment dividers */}
-          {(() => {
-            let cumulative = 0;
-            return milestones.slice(0, -1).map((m, i) => {
-              cumulative += overallTotal > 0 ? (m.total / overallTotal) * 100 : 0;
-              return (
-                <div
-                  key={`div-${i}`}
-                  className="absolute top-0 bottom-0 w-px bg-background/60"
-                  style={{ left: `${cumulative}%` }}
-                />
-              );
-            });
-          })()}
-        </div>
-        <span className={cn(
-          'shrink-0 tabular-nums text-sm font-sans font-medium',
-          allComplete ? 'text-primary' : overallPct >= 50 ? 'text-foreground' : 'text-muted-foreground',
-        )}>
-          {overallPct}%
-        </span>
-      </div>
-
-      {/* Milestone chips */}
-      <div className="flex flex-wrap gap-2">
+      {/* Vertical step checklist */}
+      <div className="space-y-4">
         {milestones.map((m, i) => {
+          const pct = m.total > 0 ? Math.round((m.current / m.total) * 100) : 0;
           const done = m.current === m.total && m.total > 0;
-          const partial = m.current > 0 && !done;
+          const inProgress = m.current > 0 && !done;
+          const notStarted = m.current === 0;
+
           return (
-            <div
-              key={i}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-sans border transition-colors',
-                done
-                  ? 'bg-primary/10 border-primary/30 text-primary'
-                  : partial
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
-                    : 'bg-muted border-border text-muted-foreground',
+            <div key={i} className="space-y-1.5">
+              {/* Header row: step number + label + count */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {done ? (
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                  ) : (
+                    <span className={cn(
+                      'flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-sans shrink-0',
+                      inProgress
+                        ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                        : 'bg-muted text-muted-foreground',
+                    )}>
+                      {i + 1}
+                    </span>
+                  )}
+                  <span className={cn(
+                    'text-sm font-sans',
+                    done ? 'text-primary' : inProgress ? 'text-foreground' : 'text-muted-foreground',
+                  )}>
+                    {m.label}
+                  </span>
+                </div>
+                <span className={cn(
+                  'text-xs tabular-nums font-sans',
+                  done ? 'text-primary' : 'text-muted-foreground',
+                )}>
+                  {m.current} of {m.total}
+                </span>
+              </div>
+
+              {/* Progress bar — skip for completed steps */}
+              {!done && (
+                <Progress
+                  value={pct}
+                  className="h-1.5"
+                  indicatorClassName={cn(
+                    inProgress ? 'bg-amber-500' : 'bg-muted-foreground/20',
+                  )}
+                />
               )}
-            >
-              {done && <CheckCircle2 className="w-3 h-3" />}
-              <span>{m.label}</span>
-              <span className="tabular-nums">
-                {m.current}/{m.total}
-              </span>
-              <MetricInfoTooltip description={m.tooltip} />
+
+              {/* Description */}
+              {!done && (
+                <p className="text-xs text-muted-foreground pl-6">
+                  {m.tooltip}
+                </p>
+              )}
             </div>
           );
         })}
