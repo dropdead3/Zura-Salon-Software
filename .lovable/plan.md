@@ -1,61 +1,56 @@
 
 
-## Redesign Bowl Dispensing: Visual Ingredient-Focused Flow (Vish-Inspired)
+## Analysis: Gaps & Enhancements in the Mixing/Dispensing Flow
 
-### Concept
-Replace the current flat list-based dispensing view with an immersive, single-ingredient-at-a-time flow. When you tap an ingredient, instead of jumping to a bare numpad, you see a **teardrop/droplet visual** that fills proportionally as weight is entered — giving real-time visual feedback of progress toward the target weight.
+After reviewing the full implementation, here are the actionable improvements worth considering:
 
-### New UX Flow
-1. **Bowl overview** (current list view) — tap an ingredient
-2. **Ingredient dispensing screen** — full-screen with:
-   - Top: Formula/Ingredient toggle (segmented control)
-   - Center: Large teardrop SVG that fills from bottom to top based on `currentWeight / targetWeight`
-   - Below teardrop: Product name + `{current}g / {target}g` pill
-   - Pagination dots for swiping between ingredients
-   - Action bar: Balance, Notes, More, Done buttons
-   - Bottom: Horizontal ingredient carousel showing all bowl items with fill status
-3. Scale readings (or manual numpad entry) fill the teardrop in real-time
+### 1. Progress bar is hardcoded, not data-driven
+**File:** `DockLiveDispensing.tsx` line 251
+The bowl overview progress bar uses a static `75` when in-progress. It should reflect actual dispensing progress: `(lines with weight entered) / (total lines) * 100`.
 
-### Technical Changes
+### 2. No auto-advance to next ingredient after dispensing
+When a stylist enters weight for one ingredient and taps confirm, they return to the bowl overview. The Vish flow auto-advances to the **next unfilled ingredient**, saving a tap per item.
 
-**1. New file: `src/components/dock/mixing/DockIngredientDispensing.tsx`**
-- Full-screen view shown when an ingredient is selected
-- Props: `line: BowlLine`, `allLines: BowlLine[]`, `onDone`, `onBack`, `onWeightUpdate`, `currentWeights: Map<string, number>`
-- SVG teardrop shape with a `clipPath` fill that animates based on fill percentage (`currentWeight / targetWeight`)
-- Product name + weight pill (`0g / 30g`) below the droplet
-- Swatch color tints the fill (falls back to violet-500)
-- Pagination dots for multi-ingredient navigation
-- Bottom carousel: horizontal scroll of ingredient cards showing name, category, and `current / target` weight
-- Action bar with: Balance (scale icon), Notes, More (ellipsis), Done (checkmark) — large touch buttons
+### 3. "Done" in ingredient view doesn't confirm weight
+The "Done" action button in `DockIngredientDispensing` just calls `onBack` — it exits without persisting anything. If the stylist entered weight via numpad, it's already saved. But "Done" should have clear completion semantics (e.g., mark ingredient as dispensed, show checkmark feedback, then advance).
 
-**2. New file: `src/components/dock/mixing/TeardropFill.tsx`**
-- Reusable SVG teardrop component
-- Props: `fillPercent: number` (0–1), `fillColor: string`, `size: number`
-- SVG path for teardrop shape with a `clipRect` that rises from bottom based on fill
-- Smooth CSS transition on the clip (`transition-all duration-300`)
-- Subtle glow/shadow effect when fill > 0
+### 4. No haptic feedback on dispensing actions
+Per the Dock UI standards, interactions should trigger `navigator.vibrate(15)`. The ingredient dispensing view's action buttons and weight confirmation don't include this.
 
-**3. Modified: `src/components/dock/mixing/DockLiveDispensing.tsx`**
-- When `activeView === 'weight-input'`, render `DockIngredientDispensing` instead of the bare `DockWeightInput`
-- Track `currentWeights` state as a `Map<string, number>` for each line's actual dispensed weight
-- Pass all lines + current weights to enable carousel navigation
-- "Done" from ingredient view updates the line weight and returns to bowl overview
-- Keep numpad accessible: tapping the weight pill on the ingredient screen opens `DockWeightInput` as an overlay/modal for manual entry (scale would update automatically in production)
+### 5. Carousel doesn't auto-scroll to active item
+The bottom carousel in `DockIngredientDispensing` doesn't scroll to keep the active ingredient card visible when navigating via the chevron buttons.
 
-**4. Modified: `src/components/dock/mixing/DockWeightInput.tsx`**
-- Add optional `targetWeight` prop to show target context
-- Add optional `initialValue` prop to pre-fill with current weight
+### 6. No "Undo" for weight entry
+Once a weight is submitted, there's no way to clear or redo it without re-entering the numpad. A quick-undo or "Reset" option on the ingredient view would prevent errors.
 
-### Visual Details
-- Teardrop: ~200px tall SVG, centered, with subtle radial gradient for 3D depth (matching the Vish reference — gray/silver base with color fill rising)
-- Fill color: uses `swatch_color` from the product if available, otherwise violet-500
-- Overfill (>100%): teardrop fully filled + subtle red/amber glow border to indicate excess
-- Weight pill: dark rounded-full badge showing `{current}g / {target}g`
-- Bottom carousel: cards ~140px wide with small swatch circle + weight status, active card has a white/light border
+### 7. Weight pill shows "0" ambiguously
+The weight pill shows `0 / 30g` before any entry. In the Vish reference, un-started ingredients show a distinct "Tap to weigh" prompt rather than a zero value.
 
-### Files
-- `src/components/dock/mixing/TeardropFill.tsx` — new
-- `src/components/dock/mixing/DockIngredientDispensing.tsx` — new
-- `src/components/dock/mixing/DockLiveDispensing.tsx` — modified
-- `src/components/dock/mixing/DockWeightInput.tsx` — minor additions
+---
+
+### Recommended Priority (effort vs impact)
+
+| # | Enhancement | Effort | Impact |
+|---|-------------|--------|--------|
+| 1 | Data-driven progress bar | Small | Medium |
+| 2 | Auto-advance to next ingredient | Small | High |
+| 7 | "Tap to weigh" prompt vs "0" | Small | Medium |
+| 4 | Haptic feedback | Small | Medium |
+| 5 | Carousel auto-scroll | Small | Medium |
+| 3 | Done button semantics | Medium | Medium |
+| 6 | Undo/reset weight | Medium | Low |
+
+### Proposed Plan — Batch All Quick Wins
+
+**`src/components/dock/mixing/DockLiveDispensing.tsx`**
+- Replace hardcoded `75` with actual `(filledCount / totalCount) * 100` using `currentWeights`
+
+**`src/components/dock/mixing/DockIngredientDispensing.tsx`**
+- After numpad weight submit: auto-navigate to next unfilled ingredient instead of staying on current
+- Replace `0 / 30g` with `Tap to weigh / 30g` when `currentWeight === 0`
+- Add `navigator.vibrate?.(15)` on action button taps and weight submission
+- On `onNavigate`, scroll carousel to bring active card into view via `scrollIntoView`
+- "Done" button: if all ingredients have weight, call `onBack`; otherwise advance to next unfilled
+
+**Files changed:** 2 files, all small targeted edits.
 
