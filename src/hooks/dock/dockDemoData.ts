@@ -784,13 +784,13 @@ DEMO_VISIT_HISTORY['demo-pc-1'] = DEMO_VISIT_HISTORY['demo-client-1'];
 
 const sarahMostRecentFormula = DEMO_FORMULA_HISTORY['demo-client-1'][0];
 
-DEMO_FORMULA_MEMORY['demo-client-1::Full Balayage + Vivid Toner'] = {
+DEMO_FORMULA_MEMORY['demo-client-1::Full Balayage, Vivid Toner'] = {
   lines: sarahMostRecentFormula.formula_data,
   source: 'client_last_visit',
   sourceLabel: "Client's Last Visit",
   referenceId: sarahMostRecentFormula.id,
   ratio: '1 : 2 : 1 : 0.5',
-  serviceName: 'Full Balayage + Vivid Toner',
+  serviceName: 'Full Balayage, Vivid Toner',
   staffName: 'Jenna B.',
   notes: sarahMostRecentFormula.notes,
   createdAt: sarahMostRecentFormula.created_at,
