@@ -662,10 +662,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         <div className="flex items-center justify-between">
                                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                             <div className="flex items-center gap-1">
-                                              <Package className={cn('w-3.5 h-3.5', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
-                                              <span>{hasComponents ? `${componentsByService.get(service.id)} component${(componentsByService.get(service.id) || 0) > 1 ? 's' : ''}` : 'No components'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
                                               <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
                                               <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
                                             </div>
