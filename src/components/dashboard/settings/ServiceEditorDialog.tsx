@@ -273,7 +273,10 @@ export function ServiceEditorDialog({
                   {/* Container Types */}
                   <div className="pt-2 border-t border-border/60">
                     <div className="mb-2">
-                      <p className={tokens.body.emphasis}>Backroom Container Types</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Backroom Container Types</p>
+                        <MetricInfoTooltip description="Determines which vessel types (bowls, bottles) appear in Zura Backroom when mixing formulations for this service." />
+                      </div>
                       <p className={tokens.body.muted}>Used by Zura Backroom to track supply usage for this service's formulations. Select both if the service uses bowls and bottles.</p>
                     </div>
                     <div className="flex gap-6">
