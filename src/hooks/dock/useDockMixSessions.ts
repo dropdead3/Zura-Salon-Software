@@ -23,6 +23,7 @@ export interface DockMixSession {
   service_label: string | null;
   mixed_by_staff_id: string | null;
   mixed_by_name: string | null;
+  container_type: 'bowl' | 'bottle';
 }
 
 export function useDockMixSessions(appointmentId: string | null) {
