@@ -88,7 +88,8 @@ export function ServiceTrackingQuickSetup({
   const untrackedChemical = services.filter(s =>
     !s.is_backroom_tracked && (s.is_chemical_service || isSuggestedChemicalService(s.name, s.category))
   );
-  const trackedNoComponents = services.filter(s => s.is_backroom_tracked && !componentsByService.has(s.id));
+  const trackedServices = services.filter(s => s.is_backroom_tracked);
+  const trackedNoComponents = trackedServices.filter(s => !componentsByService.has(s.id));
   const trackedNoAllowance = services.filter(s => s.is_backroom_tracked && !allowanceByService.has(s.id));
 
   const next = () => {
@@ -282,25 +283,23 @@ export function ServiceTrackingQuickSetup({
             {trackedNoComponents.length === 0 ? (
               <StepComplete message="All tracked services have components mapped." />
             ) : (
-              <>
-                <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-                  {trackedNoComponents.length} service{trackedNoComponents.length > 1 ? 's' : ''} need{trackedNoComponents.length === 1 ? 's' : ''} at least one linked product.
-                </p>
-                {trackedNoComponents.map(s => {
-                  const linkedCount = componentsByService.get(s.id) || 0;
-                  return (
-                    <WizardComponentRow
-                      key={s.id}
-                      serviceId={s.id}
-                      serviceName={s.name}
-                      orgId={orgId}
-                      upsertComponent={upsertComponent}
-                      linkedCount={linkedCount}
-                    />
-                  );
-                })}
-              </>
+              <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
+                {trackedNoComponents.length} service{trackedNoComponents.length > 1 ? 's' : ''} still need{trackedNoComponents.length === 1 ? 's' : ''} at least one linked product.
+              </p>
             )}
+            {trackedServices.map(s => {
+              const linkedCount = componentsByService.get(s.id) || 0;
+              return (
+                <WizardComponentRow
+                  key={s.id}
+                  serviceId={s.id}
+                  serviceName={s.name}
+                  orgId={orgId}
+                  upsertComponent={upsertComponent}
+                  linkedCount={linkedCount}
+                />
+              );
+            })}
           </div>
         );
 
