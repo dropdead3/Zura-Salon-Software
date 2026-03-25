@@ -39,6 +39,7 @@ interface ServiceRow {
   formula_memory_enabled: boolean;
   variance_threshold_pct: number;
   backroom_config_dismissed: boolean;
+  container_types: ('bowl' | 'bottle')[];
 }
 
 type FilterTab = 'all' | 'tracked' | 'untracked' | 'attention' | 'uncategorized';
