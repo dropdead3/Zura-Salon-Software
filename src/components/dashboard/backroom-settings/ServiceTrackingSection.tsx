@@ -865,6 +865,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           >
                                             Enable Tracking
                                           </Button>
+                                          </div>
                                         </div>
                                         {/* Chemical toggle for untracked services */}
                                         <div className="flex items-center gap-2 pt-2 border-t border-border/40">
