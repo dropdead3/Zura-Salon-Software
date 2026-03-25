@@ -35,7 +35,9 @@ export function DockEditServicesSheet({
 }: DockEditServicesSheetProps) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, PhorestService>>(new Map());
-  const { data: grouped, isLoading } = useServicesByCategory(locationId);
+  const { isDemoMode } = useDockDemo();
+  const { data: realGrouped, isLoading } = useServicesByCategory(locationId);
+  const grouped = isDemoMode && !locationId ? DEMO_SERVICES_BY_CATEGORY as unknown as Record<string, PhorestService[]> : realGrouped;
   const { formatCurrency } = useFormatCurrency();
   const dragControls = useDragControls();
 

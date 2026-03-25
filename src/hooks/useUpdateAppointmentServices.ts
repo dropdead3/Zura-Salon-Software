@@ -25,6 +25,15 @@ export function useUpdateAppointmentServices() {
 
   return useMutation({
     mutationFn: async ({ appointmentId, services }: UpdateServicesParams) => {
+      // Demo mode — persist to sessionStorage, skip edge function
+      if (appointmentId.startsWith('demo-')) {
+        const newServiceName = services.map(s => s.name).join(', ');
+        try {
+          sessionStorage.setItem(`dock-demo-services::${appointmentId}`, newServiceName);
+        } catch {}
+        return { success: true, service_name: newServiceName };
+      }
+
       const { data, error } = await supabase.functions.invoke('update-phorest-appointment', {
         body: {
           appointment_id: appointmentId,
