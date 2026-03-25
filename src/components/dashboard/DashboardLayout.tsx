@@ -142,6 +142,7 @@ import {
   adminOnlyNavItems as adminOnlyNavFromConfig,
   footerNavItems as footerNavFromConfig,
   websiteNavItems as websiteNavFromConfig,
+  appsNavItems as appsNavFromConfig,
 } from '@/config/dashboardNav';
 import Logo from '@/assets/brand-logo-secondary.svg';
 import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
