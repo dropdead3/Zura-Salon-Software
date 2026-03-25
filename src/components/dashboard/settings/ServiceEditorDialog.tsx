@@ -243,7 +243,10 @@ export function ServiceEditorDialog({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Same-Day Booking</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Same-Day Booking</p>
+                        <MetricInfoTooltip description="When disabled, clients must book this service at least the specified lead time in advance." />
+                      </div>
                       <p className={tokens.body.muted}>Allow clients to book this service same day</p>
                     </div>
                     <Switch checked={allowSameDayBooking} onCheckedChange={setAllowSameDayBooking} />
