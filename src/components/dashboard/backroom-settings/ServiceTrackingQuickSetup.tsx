@@ -107,7 +107,7 @@ export function ServiceTrackingQuickSetup({
               <>
                 {suggestedUncategorized.length > 0 && (
                   <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-                    These services may use chemicals based on their name. Toggle to confirm.
+                    Classify each service as Standard or Chemical.
                   </p>
                 )}
                 {uncategorized.map(s => (
@@ -118,21 +118,23 @@ export function ServiceTrackingQuickSetup({
                         <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400 shrink-0">Suggested</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-7 px-2 text-[10px] text-muted-foreground"
+                        className="h-7 px-3 text-xs font-sans"
                         onClick={() => classifyMutation.mutate({ id: s.id, isChemical: false })}
                       >
                         Standard
                       </Button>
-                      <span className="text-[10px] text-muted-foreground">Chemical</span>
-                      <Switch
-                        checked={s.is_chemical_service === true}
-                        onCheckedChange={(v) => classifyMutation.mutate({ id: s.id, isChemical: v })}
-                        className="scale-90"
-                      />
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="h-7 px-3 text-xs font-sans"
+                        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: true })}
+                      >
+                        Chemical
+                      </Button>
                     </div>
                   </div>
                 ))}
