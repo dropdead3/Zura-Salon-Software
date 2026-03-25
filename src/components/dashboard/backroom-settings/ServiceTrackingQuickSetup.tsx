@@ -5,7 +5,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUpsertTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
+import { useUpsertTrackingComponent, useServiceTrackingComponents, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
 import { isSuggestedChemicalService, getServiceCategory, SERVICE_CATEGORIES } from '@/utils/serviceCategorization';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, ChevronRight, SkipForward, Beaker, Layers, Package, FileText, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, SkipForward, Beaker, Layers, Package, FileText, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProgressMilestone } from './ServiceTrackingProgressBar';
 
@@ -287,19 +287,15 @@ export function ServiceTrackingQuickSetup({
                 {trackedNoComponents.length} service{trackedNoComponents.length > 1 ? 's' : ''} still need{trackedNoComponents.length === 1 ? 's' : ''} at least one linked product.
               </p>
             )}
-            {trackedServices.map(s => {
-              const linkedCount = componentsByService.get(s.id) || 0;
-              return (
+            {trackedServices.map(s => (
                 <WizardComponentRow
                   key={s.id}
                   serviceId={s.id}
                   serviceName={s.name}
                   orgId={orgId}
                   upsertComponent={upsertComponent}
-                  linkedCount={linkedCount}
                 />
-              );
-            })}
+            ))}
           </div>
         );
 
@@ -419,14 +415,15 @@ function StepComplete({ message }: { message: string }) {
   );
 }
 
-function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, linkedCount = 0 }: {
+function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent }: {
   serviceId: string;
   serviceName: string;
   orgId: string;
   upsertComponent: ReturnType<typeof useUpsertTrackingComponent>;
-  linkedCount?: number;
 }) {
   const [adding, setAdding] = useState(false);
+  const { data: linked } = useServiceTrackingComponents(serviceId);
+  const deleteComponent = useDeleteTrackingComponent();
 
   const { data: backroomProducts } = useQuery({
     queryKey: ['backroom-products-for-mapping', orgId],
@@ -443,6 +440,14 @@ function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, li
     },
     enabled: !!orgId,
   });
+
+  const productMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (backroomProducts || []).forEach(p => m.set(p.id, p.name));
+    return m;
+  }, [backroomProducts]);
+
+  const linkedCount = linked?.length || 0;
 
   return (
     <div className="rounded-lg border p-3 space-y-2">
@@ -464,6 +469,19 @@ function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, li
           )}
         </div>
       </div>
+      {linkedCount > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {linked!.map(item => (
+            <Badge key={item.id} variant="outline" className="text-[10px] gap-1 px-2 py-0.5 bg-muted/50">
+              {productMap.get(item.product_id) || 'Unknown'}
+              <X
+                className="h-2.5 w-2.5 cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                onClick={() => deleteComponent.mutate(item.id)}
+              />
+            </Badge>
+          ))}
+        </div>
+      )}
       {adding && (
         <Select
           onValueChange={(productId) => {
