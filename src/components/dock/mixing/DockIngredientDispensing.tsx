@@ -158,11 +158,11 @@ export function DockIngredientDispensing({
 
         {/* Product name */}
         <div className="text-center">
-          <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+          <p className="font-display text-lg tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             {line.product_name_snapshot}
           </p>
           {line.brand_snapshot && (
-            <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
               {line.brand_snapshot}
             </p>
           )}
