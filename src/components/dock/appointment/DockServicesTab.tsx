@@ -665,62 +665,42 @@ function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () =>
   return (
     <button
       onClick={onTap}
-      className={cn(
-        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
-        'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
-        'hover:border-[hsl(var(--platform-border)/0.5)]',
-        'active:scale-[0.98]',
-      )}
+      className={DOCK_CARD.wrapper}
     >
-      {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-            <CardIcon className="w-4.5 h-4.5 text-amber-400" />
+          <div className={cn(DOCK_CARD.iconBox, 'bg-amber-500/15 border-amber-500/20')}>
+            <CardIcon className={cn(DOCK_CARD.icon, 'text-amber-400')} />
           </div>
           <div className="min-w-0">
-             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              {containerLabel}
-            </p>
-            <p className="text-xs mt-0.5 text-amber-400">
-              In Progress
-            </p>
+            <p className={DOCK_CARD.title}>{containerLabel}</p>
+            <p className={cn(DOCK_CARD.statusLabel, 'text-amber-400')}>In Progress</p>
           </div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-          <MoreVertical className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className={DOCK_CARD.menuButton}>
+          <MoreVertical className={DOCK_CARD.menuIcon} />
         </button>
       </div>
 
-      {/* Ingredient lines preview */}
       <div className="flex-1 mt-1 space-y-1">
         {previewLines.map((line, i) => (
-          <p key={i} className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
-            <span className="text-[hsl(var(--platform-foreground-muted)/0.8)]">{line.product.name}</span>
+          <p key={i} className={DOCK_CARD.ingredientLine}>
+            <span className={DOCK_CARD.ingredientName}>{line.product.name}</span>
             <span className="mx-1">·</span>
             <span>{(line.targetWeight * line.ratio).toFixed(1)}g</span>
           </p>
         ))}
         {overflowCount > 0 && (
-           <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
-            +{overflowCount} more
-          </p>
+          <p className={DOCK_CARD.overflow}>+{overflowCount} more</p>
         )}
         {previewLines.length === 0 && (
-          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)] italic">
-            No ingredients yet
-          </p>
+          <p className={cn(DOCK_CARD.overflow, 'italic')}>No ingredients yet</p>
         )}
       </div>
 
-      {/* Footer stats */}
-      <div className="mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.15)] flex items-center justify-between">
-         <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
-          {bowl.totalWeight.toFixed(0)}g total
-        </span>
-        <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
-          ${bowl.totalCost.toFixed(2)}
-        </span>
+      <div className={DOCK_CARD.footer}>
+        <span className={DOCK_CARD.footerText}>{bowl.totalWeight.toFixed(0)}g total</span>
+        <span className={DOCK_CARD.footerText}>${bowl.totalCost.toFixed(2)}</span>
       </div>
     </button>
   );
