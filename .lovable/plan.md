@@ -1,35 +1,32 @@
 
 
-## Enhance Service Tracking Drill-Down UX
+## Fix: Services Setup Step Completion Logic
 
-Three improvements: animated expand/collapse, inline config summary for tracked services, and touch gesture support.
+### Problem
+Line 107 in `useBackroomDashboard.ts` marks the "Services" step as complete when `trackedServices > 0` — i.e., as soon as **any** service is tracked. But tracking a service is just the first step; tracked services also need usage components mapped to be considered fully configured. The screenshot confirms: "Services" shows a green checkmark even though service tracking setup is incomplete.
 
-### 1. Animated Expand/Collapse with framer-motion
+### Root Cause
+```typescript
+// Current (line 107)
+{ label: 'Services', done: h.trackedServices > 0 },
+```
+This only checks if services exist with `is_backroom_tracked = true`. It ignores whether those services have components configured.
 
-Replace `CollapsibleContent` with framer-motion's `AnimatePresence` + `motion.div` for smooth height transitions on drill-down rows.
+### Solution
+The `useBackroomSetupHealth` hook already queries `service_tracking_components` and generates a warning (`services-no-components`) when tracked services lack components. We need to expose a flag or count, then use it in the step completion check.
 
-- Wrap expanded content in `<AnimatePresence>` and conditionally render a `motion.tr` / `motion.div` with `initial={{ height: 0, opacity: 0 }}`, `animate={{ height: 'auto', opacity: 1 }}`, `exit={{ height: 0, opacity: 0 }}` using 200ms ease-out (per motion standards).
-- Remove `Collapsible`/`CollapsibleContent` usage from rows; keep `expandedIds` state for open/close logic.
-- Wrap each row pair in a fragment keyed by service ID.
+### Changes
 
-### 2. Inline Config Summary on Main Row
+**File: `src/hooks/backroom/useBackroomSetupHealth.ts`**
+- Add `trackedServicesWithComponents: number` to the `SetupHealthMetrics` interface
+- Compute the count of tracked services that **do** have at least one component mapped (using the existing `componentsRes` data)
+- Return it in the metrics object
 
-For tracked services, show a compact summary like "3 of 4 on" or "2 toggles · Components ✓" next to the service name to reduce need to expand.
+**File: `src/hooks/backroom/useBackroomDashboard.ts`**
+- Update the Services step to require that **all** tracked services have components:
+```typescript
+{ label: 'Services', done: h.trackedServices > 0 && h.trackedServicesWithComponents === h.trackedServices },
+```
 
-- Count active toggles: `assistant_prep_allowed`, `smart_mix_assist_enabled`, `formula_memory_enabled` (3 booleans). Show e.g. "2/3 on".
-- Include component/allowance status as compact icons (already present — keep those, add the toggle count as a subtle text label).
-- Place this summary on the second line alongside category, e.g. `"Color · 2/3 toggles on"`.
-
-### 3. Swipe-to-Expand for Mobile/Tablet
-
-Add touch gesture support using framer-motion's drag gesture (no Capacitor-specific API needed — works in browser and native webview).
-
-- On mobile (`useIsMobile()`), add `onTouchStart`/`onTouchEnd` handlers to each `TableRow` that detect a downward swipe (>40px vertical delta) to expand, and upward swipe to collapse.
-- Keep it simple: plain touch event math, no external gesture library needed. This works in both browser and Capacitor webview.
-
-### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
-  - Replace Collapsible with framer-motion AnimatePresence for expand rows
-  - Add toggle count summary text in Service cell for tracked services
-  - Add touch swipe handlers for mobile expand/collapse
+This means the Services checkmark only appears when every tracked service has at least one usage component mapped — matching the user's expectation that "service tracking setup" means fully configured, not just toggled on.
 
