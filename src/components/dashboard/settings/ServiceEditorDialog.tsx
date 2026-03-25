@@ -162,7 +162,7 @@ export function ServiceEditorDialog({
             </SubTabsTrigger>
           </SubTabsList>
 
-          <div className="flex-1 overflow-y-auto mt-4 p-1">
+          <div className="flex-1 overflow-y-auto mt-4 p-1 min-h-[480px]">
             <TabsContent value="details" className="mt-0 p-px">
               <form id="service-details-form" onSubmit={handleDetailsSubmit} className="space-y-4">
                 <div className="space-y-2">
