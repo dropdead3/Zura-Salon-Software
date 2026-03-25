@@ -171,10 +171,10 @@ export function DockIngredientDispensing({
         {/* Weight pill — tappable to open numpad */}
         <button
           onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
-          className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-7 py-3.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
         >
           <span className={cn(
-            'font-display text-2xl tracking-tight',
+            'font-display text-3xl tracking-tight',
             currentWeight > 0
               ? 'text-[hsl(var(--platform-foreground))]'
               : 'text-[hsl(var(--platform-foreground-muted)/0.4)]'
