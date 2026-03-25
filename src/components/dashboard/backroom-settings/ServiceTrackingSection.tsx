@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,8 +7,10 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceTrackingComponents, useUpsertTrackingComponent, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
 import { useServiceAllowancePolicies } from '@/hooks/billing/useServiceAllowancePolicies';
 import { isSuggestedChemicalService } from '@/utils/serviceCategorization';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
@@ -51,8 +52,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchRef = useRef<HTMLInputElement>(null);
+  const touchStartRef = useRef<{ y: number; id: string } | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const activeFilter = (searchParams.get('filter') as FilterTab) || 'all';
   const setActiveFilter = (tab: FilterTab) => {
@@ -67,6 +70,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Swipe gesture handlers for mobile
+  const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
+    touchStartRef.current = { y: e.touches[0].clientY, id: serviceId };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    const id = touchStartRef.current.id;
+    touchStartRef.current = null;
+    if (Math.abs(deltaY) < 40) return;
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (deltaY > 0 && !next.has(id)) next.add(id);       // swipe down = expand
+      else if (deltaY < 0 && next.has(id)) next.delete(id); // swipe up = collapse
+      return next;
+    });
+  }, []);
 
   // Keyboard shortcut: `/` to focus search
   useEffect(() => {
@@ -469,10 +491,21 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     const attention = needsAttention(service);
                     const isExpanded = expandedIds.has(service.id);
 
+                    // Inline config summary for tracked services
+                    const activeToggles = service.is_backroom_tracked
+                      ? [service.assistant_prep_allowed, service.smart_mix_assist_enabled, service.formula_memory_enabled].filter(Boolean).length
+                      : 0;
+
                     return (
-                      <Collapsible key={service.id} open={isExpanded} onOpenChange={() => toggleExpand(service.id)} asChild>
-                        <>
-                          <TableRow className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')} onClick={() => toggleExpand(service.id)}>
+                      <React.Fragment key={service.id}>
+                          <TableRow
+                            className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')}
+                            onClick={() => toggleExpand(service.id)}
+                            {...(isMobile ? {
+                              onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
+                              onTouchEnd: handleTouchEnd,
+                            } : {})}
+                          >
                             {/* Checkbox / Status dot */}
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               {!service.is_backroom_tracked ? (
@@ -488,7 +521,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                               )}
                             </TableCell>
 
-                            {/* Service — Name + Category subtitle + Type badge */}
+                            {/* Service — Name + Category subtitle + Type badge + Inline summary */}
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="min-w-0 flex-1">
@@ -512,9 +545,22 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       </div>
                                     )}
                                   </div>
-                                  {service.category && (
-                                    <span className="text-[11px] text-muted-foreground">{service.category}</span>
-                                  )}
+                                  <div className="flex items-center gap-1.5">
+                                    {service.category && (
+                                      <span className="text-[11px] text-muted-foreground">{service.category}</span>
+                                    )}
+                                    {service.is_backroom_tracked && (
+                                      <>
+                                        {service.category && <span className="text-[11px] text-muted-foreground/40">·</span>}
+                                        <span className={cn(
+                                          'text-[11px]',
+                                          activeToggles === 3 ? 'text-primary' : 'text-muted-foreground',
+                                        )}>
+                                          {activeToggles}/3 on
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </TableCell>
@@ -537,108 +583,121 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                             </TableCell>
                           </TableRow>
 
-                          {/* Expandable detail row — always available */}
-                          <CollapsibleContent asChild>
-                            <tr>
-                              <td colSpan={4} className="p-0">
-                                <div className="px-6 py-4 bg-muted/30 border-t border-border/30">
-                                  {service.is_backroom_tracked ? (
-                                    <div className="space-y-4">
-                                      {/* Config status + actions */}
+                          {/* Animated expandable detail row */}
+                          <AnimatePresence initial={false}>
+                            {isExpanded && (
+                              <motion.tr
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: 'easeOut' }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <td colSpan={4} className="p-0">
+                                  <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="px-6 py-4 bg-muted/30 border-t border-border/30"
+                                  >
+                                    {service.is_backroom_tracked ? (
+                                      <div className="space-y-4">
+                                        {/* Config status + actions */}
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-1">
+                                              <Package className={cn('w-3.5 h-3.5', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
+                                              <span>{hasComponents ? `${componentsByService.get(service.id)} component${(componentsByService.get(service.id) || 0) > 1 ? 's' : ''}` : 'No components'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                              <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
+                                              <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
+                                            </div>
+                                          </div>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs"
+                                            onClick={() => setSelectedServiceId(service.id)}
+                                          >
+                                            <Package className="w-3 h-3 mr-1" />
+                                            Components
+                                          </Button>
+                                        </div>
+                                        {/* Toggles grid */}
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                          <div className="space-y-1.5">
+                                            <label className="text-[10px] font-sans text-muted-foreground">Assistant Prep</label>
+                                            <Switch
+                                              checked={service.assistant_prep_allowed}
+                                              onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
+                                              className="scale-90"
+                                            />
+                                          </div>
+                                          <div className="space-y-1.5">
+                                            <label className="text-[10px] font-sans text-muted-foreground">Smart Mix Assist</label>
+                                            <Switch
+                                              checked={service.smart_mix_assist_enabled}
+                                              onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
+                                              className="scale-90"
+                                            />
+                                          </div>
+                                          <div className="space-y-1.5">
+                                            <label className="text-[10px] font-sans text-muted-foreground">Formula Memory</label>
+                                            <Switch
+                                              checked={service.formula_memory_enabled}
+                                              onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
+                                              className="scale-90"
+                                            />
+                                          </div>
+                                          <div className="space-y-1.5">
+                                            <label className="text-[10px] font-sans text-muted-foreground">
+                                              Variance Threshold
+                                              <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                              <Slider
+                                                value={[service.variance_threshold_pct]}
+                                                onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
+                                                min={5}
+                                                max={50}
+                                                step={5}
+                                                className="flex-1"
+                                              />
+                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{service.variance_threshold_pct}%</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      /* Untracked service drill-down */
                                       <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                          <div className="flex items-center gap-1">
-                                            <Package className={cn('w-3.5 h-3.5', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
-                                            <span>{hasComponents ? `${componentsByService.get(service.id)} component${(componentsByService.get(service.id) || 0) > 1 ? 's' : ''}` : 'No components'}</span>
+                                        <div className="space-y-1 text-xs text-muted-foreground">
+                                          <div className="flex items-center gap-3">
+                                            <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
+                                            <span>Type: <span className="text-foreground capitalize">{type}</span></span>
                                           </div>
-                                          <div className="flex items-center gap-1">
-                                            <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
-                                            <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
-                                          </div>
+                                          {(type === 'chemical' || type === 'suggested') && (
+                                            <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+                                          )}
                                         </div>
                                         <Button
-                                          variant="outline"
                                           size="sm"
-                                          className="h-7 text-xs"
-                                          onClick={() => setSelectedServiceId(service.id)}
+                                          variant="outline"
+                                          className="h-7 text-xs shrink-0"
+                                          onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
                                         >
-                                          <Package className="w-3 h-3 mr-1" />
-                                          Components
+                                          Enable Tracking
                                         </Button>
                                       </div>
-                                      {/* Toggles grid */}
-                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                        <div className="space-y-1.5">
-                                          <label className="text-[10px] font-sans text-muted-foreground">Assistant Prep</label>
-                                          <Switch
-                                            checked={service.assistant_prep_allowed}
-                                            onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
-                                            className="scale-90"
-                                          />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                          <label className="text-[10px] font-sans text-muted-foreground">Smart Mix Assist</label>
-                                          <Switch
-                                            checked={service.smart_mix_assist_enabled}
-                                            onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
-                                            className="scale-90"
-                                          />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                          <label className="text-[10px] font-sans text-muted-foreground">Formula Memory</label>
-                                          <Switch
-                                            checked={service.formula_memory_enabled}
-                                            onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
-                                            className="scale-90"
-                                          />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                          <label className="text-[10px] font-sans text-muted-foreground">
-                                            Variance Threshold
-                                            <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
-                                          </label>
-                                          <div className="flex items-center gap-2">
-                                            <Slider
-                                              value={[service.variance_threshold_pct]}
-                                              onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
-                                              min={5}
-                                              max={50}
-                                              step={5}
-                                              className="flex-1"
-                                            />
-                                            <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{service.variance_threshold_pct}%</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    /* Untracked service drill-down */
-                                    <div className="flex items-center justify-between">
-                                      <div className="space-y-1 text-xs text-muted-foreground">
-                                        <div className="flex items-center gap-3">
-                                          <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
-                                          <span>Type: <span className="text-foreground capitalize">{type}</span></span>
-                                        </div>
-                                        {(type === 'chemical' || type === 'suggested') && (
-                                          <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
-                                        )}
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-7 text-xs shrink-0"
-                                        onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
-                                      >
-                                        Enable Tracking
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          </CollapsibleContent>
-                        </>
-                      </Collapsible>
+                                    )}
+                                  </motion.div>
+                                </td>
+                              </motion.tr>
+                            )}
+                          </AnimatePresence>
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>
