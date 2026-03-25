@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -37,6 +39,8 @@ interface Props {
 export function ServiceTrackingSection({ onNavigate }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const queryClient = useQueryClient();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [showSuggested, setShowSuggested] = useState(false);
@@ -287,7 +291,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           <CardHeader>
             <CardTitle className={tokens.card.title}>Available Services</CardTitle>
             <CardDescription>
-              Color and chemical services not yet tracked. Enable tracking or mark services as chemical in the Service Editor.
+              Color and chemical services not yet tracked. Enable tracking or mark services as chemical in the{' '}
+              <button
+                type="button"
+                className="underline text-foreground/80 hover:text-foreground cursor-pointer transition-colors"
+                onClick={() => navigate(dashPath('/admin/settings?category=services'))}
+              >
+                Service Editor
+              </button>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
