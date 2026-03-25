@@ -14,7 +14,7 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
-import { DockLiveDispensing } from '../mixing/DockLiveDispensing';
+import { DockLiveDispensing, type BowlLine } from '../mixing/DockLiveDispensing';
 import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
 import { DockBowlDetectionGate } from '../mixing/DockBowlDetectionGate';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
@@ -50,11 +50,26 @@ function getStatusDisplay(status: string): BowlStatusInfo {
   return { icon: Circle, label: 'Draft', color: 'text-blue-400', iconBg: 'bg-blue-500/15 border-blue-500/20' };
 }
 
+/** Convert builder FormulaLine[] to dispensing BowlLine[] */
+function formulaLinesToBowlLines(lines: FormulaLine[]): BowlLine[] {
+  return lines.map((l, i) => ({
+    id: `demo-line-${i}`,
+    product_id: l.product.id,
+    product_name_snapshot: l.product.name,
+    brand_snapshot: l.product.brand ?? null,
+    dispensed_quantity: l.targetWeight * (l.ratio || 1),
+    dispensed_unit: 'g',
+    dispensed_cost_snapshot: l.product.wholesale_price ?? 0,
+    swatch_color: l.product.swatch_color ?? null,
+  }));
+}
+
 interface ActiveBowl {
   sessionId: string;
   bowlId: string;
   bowlNumber: number;
   status: string;
+  demoLines?: BowlLine[];
 }
 
 /** Local demo bowl with ingredient info */
@@ -158,6 +173,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         bowlId: newBowl.id,
         bowlNumber,
         status: 'open',
+        demoLines: formulaLinesToBowlLines(lines),
       });
       setActiveServiceLabel(null);
       return;
@@ -201,6 +217,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
       bowlId: bowl.id,
       bowlNumber: bowl.bowlNumber,
       status: bowl.status,
+      demoLines: formulaLinesToBowlLines(bowl.lines),
     });
   };
 
@@ -272,6 +289,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         bowlNumber={activeBowl.bowlNumber}
         organizationId={effectiveOrganization?.id || ''}
         bowlStatus={activeBowl.status}
+        demoLines={activeBowl.demoLines}
         onBack={() => setActiveBowl(null)}
       />
     );

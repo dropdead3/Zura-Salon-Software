@@ -21,10 +21,11 @@ interface DockLiveDispensingProps {
   organizationId: string;
   bowlStatus: string;
   leftoverWeight?: number;
+  demoLines?: BowlLine[];
   onBack: () => void;
 }
 
-interface BowlLine {
+export interface BowlLine {
   id: string;
   product_id: string | null;
   product_name_snapshot: string;
@@ -58,11 +59,11 @@ const DEMO_BOWL_LINES: BowlLine[] = [
   },
 ];
 
-function useBowlLines(bowlId: string | null) {
+function useBowlLines(bowlId: string | null, demoLinesOverride?: BowlLine[]) {
   return useQuery({
     queryKey: ['dock-bowl-lines', bowlId],
     queryFn: async (): Promise<BowlLine[]> => {
-      if (bowlId?.startsWith('demo-')) return DEMO_BOWL_LINES;
+      if (bowlId?.startsWith('demo-')) return demoLinesOverride ?? DEMO_BOWL_LINES;
 
       const { data, error } = await supabase
         .from('mix_bowl_lines')
@@ -103,9 +104,10 @@ export function DockLiveDispensing({
   organizationId,
   bowlStatus: initialBowlStatus,
   leftoverWeight: initialLeftover,
+  demoLines: demoLinesFromProps,
   onBack,
 }: DockLiveDispensingProps) {
-  const { data: lines, isLoading } = useBowlLines(bowlId);
+  const { data: lines, isLoading } = useBowlLines(bowlId, demoLinesFromProps);
   const [activeView, setActiveView] = useState<DispensingView>('lines');
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [bowlStatus, setBowlStatus] = useState(initialBowlStatus);
