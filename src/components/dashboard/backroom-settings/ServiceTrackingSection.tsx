@@ -457,19 +457,21 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                         {/* Config status */}
                         <TableCell>
                           {service.is_backroom_tracked ? (
-                            <div className="flex items-center gap-1.5">
-                              <MetricInfoTooltip description={hasComponents ? 'Product components mapped' : 'No product components mapped yet'}>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-0.5">
                                 <Package className={cn(
                                   'w-3.5 h-3.5',
                                   hasComponents ? 'text-primary' : 'text-muted-foreground/30',
                                 )} />
-                              </MetricInfoTooltip>
-                              <MetricInfoTooltip description={hasAllowance ? 'Allowance policy configured' : 'No allowance policy set'}>
+                                <MetricInfoTooltip description={hasComponents ? 'Product components mapped' : 'No product components mapped yet'} />
+                              </div>
+                              <div className="flex items-center gap-0.5">
                                 <FileText className={cn(
                                   'w-3.5 h-3.5',
                                   hasAllowance ? 'text-primary' : 'text-muted-foreground/30',
                                 )} />
-                              </MetricInfoTooltip>
+                                <MetricInfoTooltip description={hasAllowance ? 'Allowance policy configured' : 'No allowance policy set'} />
+                              </div>
                             </div>
                           ) : (
                             <span className="text-xs text-muted-foreground/40">—</span>
