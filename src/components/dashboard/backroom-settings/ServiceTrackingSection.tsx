@@ -906,7 +906,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           orgId={orgId}
           services={allServices}
           milestones={milestones}
-          componentsByService={componentsByService}
           allowanceByService={allowanceByService}
           onNavigateAllowances={onNavigate ? () => onNavigate('allowances') : undefined}
         />
