@@ -1,16 +1,18 @@
 /**
  * DockIngredientDispensing — Full-screen single-ingredient view with teardrop fill.
- * Vish-inspired: large visual cue fills proportionally as weight is entered.
+ * Vish-inspired: large visual cue fills proportionally as weight is entered or streamed from scale.
+ * When scale is connected, teardrop fills in real-time from live weight readings.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Scale, StickyNote, MoreHorizontal, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Scale, StickyNote, MoreHorizontal, Check, ChevronLeft, ChevronRight, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeardropFill } from './TeardropFill';
 import { DockWeightInput } from './DockWeightInput';
 import type { BowlLine } from './DockLiveDispensing';
 import { roundWeight } from '@/lib/backroom/mix-calculations';
 import { toast } from 'sonner';
+import { useDockScale } from '@/hooks/dock/useDockScale';
 
 interface DockIngredientDispensingProps {
   line: BowlLine;
@@ -32,15 +34,51 @@ export function DockIngredientDispensing({
   const [showNumpad, setShowNumpad] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const activeCardRef = useRef<HTMLButtonElement>(null);
+  const scale = useDockScale();
 
   const currentWeight = currentWeights.get(line.id) ?? 0;
   const targetWeight = line.dispensed_quantity;
-  const fillPercent = targetWeight > 0 ? currentWeight / targetWeight : 0;
   const fillColor = line.swatch_color || 'hsl(262 83% 58%)';
+
+  // Use live weight from scale when connected & actively dispensing, otherwise use stored weight
+  const displayWeight = scale.isConnected && !showNumpad && scale.liveWeight > 0
+    ? scale.liveWeight
+    : currentWeight;
+  const fillPercent = targetWeight > 0 ? displayWeight / targetWeight : 0;
 
   const currentIndex = allLines.findIndex((l) => l.id === line.id);
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < allLines.length - 1;
+
+  const isLiveStreaming = scale.isConnected && !showNumpad && scale.liveWeight > 0;
+  const isNearTarget = isLiveStreaming && scale.liveWeight >= targetWeight * 0.95;
+  const isAtTarget = isLiveStreaming && scale.isStable && scale.liveWeight >= targetWeight * 0.95;
+
+  // Haptic + visual feedback when reaching target
+  useEffect(() => {
+    if (isAtTarget) {
+      navigator.vibrate?.([15, 50, 15]);
+    }
+  }, [isAtTarget]);
+
+  // Start demo simulation when entering ingredient view
+  useEffect(() => {
+    if (scale.isDemoSimulating) return; // Don't restart if already running
+    // In demo mode with no current weight, start simulation after a short delay
+    if (currentWeight <= 0 && targetWeight > 0) {
+      const timer = setTimeout(() => {
+        scale.startDemoSimulation(targetWeight);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [line.id]); // Only on ingredient change
+
+  // Stop simulation on unmount or ingredient change
+  useEffect(() => {
+    return () => {
+      scale.stopDemoSimulation();
+    };
+  }, [line.id, scale.stopDemoSimulation]);
 
   // Auto-scroll carousel to active item
   useEffect(() => {
@@ -61,6 +99,7 @@ export function DockIngredientDispensing({
 
   const handleWeightSubmit = (weight: number) => {
     navigator.vibrate?.(15);
+    scale.stopDemoSimulation();
     onWeightUpdate(line.id, weight);
     setShowNumpad(false);
 
@@ -71,20 +110,44 @@ export function DockIngredientDispensing({
     }
   };
 
+  const handleConfirmScaleWeight = () => {
+    if (scale.liveWeight <= 0) return;
+    navigator.vibrate?.(15);
+    scale.stopDemoSimulation();
+    onWeightUpdate(line.id, scale.liveWeight);
+
+    // Auto-advance
+    const nextId = findNextUnfilled();
+    if (nextId) {
+      setTimeout(() => onNavigate(nextId), 300);
+    }
+  };
+
   const handleNavigate = (lineId: string) => {
     navigator.vibrate?.(15);
+    scale.stopDemoSimulation();
     onNavigate(lineId);
   };
 
   const handleDone = () => {
     navigator.vibrate?.(15);
-    // If all ingredients have weight, go back; otherwise advance to next unfilled
+    scale.stopDemoSimulation();
+    // If scale has a live reading, confirm it first
+    if (isLiveStreaming && scale.liveWeight > 0 && currentWeight <= 0) {
+      onWeightUpdate(line.id, scale.liveWeight);
+    }
     const nextId = findNextUnfilled();
     if (nextId) {
       onNavigate(nextId);
     } else {
       onBack();
     }
+  };
+
+  const handleTare = () => {
+    navigator.vibrate?.(15);
+    scale.tare();
+    toast.info('Scale tared to zero');
   };
 
   if (showNumpad) {
@@ -149,12 +212,22 @@ export function DockIngredientDispensing({
 
       {/* Main content — teardrop + product info */}
       <div className="flex-1 flex flex-col items-center justify-center px-7 gap-4">
-        {/* Teardrop */}
-        <TeardropFill
-          fillPercent={fillPercent}
-          fillColor={fillColor}
-          size={200}
-        />
+        {/* Teardrop with glow effect when near target */}
+        <div className={cn('relative', isNearTarget && 'animate-pulse')}>
+          <TeardropFill
+            fillPercent={fillPercent}
+            fillColor={fillColor}
+            size={200}
+          />
+          {/* Stable reading indicator */}
+          {isAtTarget && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center backdrop-blur-sm">
+                <Check className="w-6 h-6 text-emerald-400" />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Product name */}
         <div className="text-center">
@@ -168,23 +241,69 @@ export function DockIngredientDispensing({
           )}
         </div>
 
-        {/* Weight pill — tappable to open numpad */}
-        <button
-          onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
-          className="flex items-center gap-1.5 px-7 py-3.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
-        >
-          <span className={cn(
-            'font-display text-3xl tracking-tight',
-            currentWeight > 0
-              ? 'text-[hsl(var(--platform-foreground))]'
-              : 'text-[hsl(var(--platform-foreground-muted)/0.4)]'
-          )}>
-            {currentWeight > 0 ? roundWeight(currentWeight) : 'Tap to weigh'}
-          </span>
-          <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.5)]">
-            / {roundWeight(targetWeight)}g
-          </span>
-        </button>
+        {/* Weight pill — shows live weight or tap to weigh */}
+        {isLiveStreaming ? (
+          <div className="flex flex-col items-center gap-2">
+            {/* Live weight display */}
+            <div className={cn(
+              'flex items-center gap-1.5 px-7 py-3.5 rounded-full border transition-all',
+              isAtTarget
+                ? 'bg-emerald-500/10 border-emerald-500/40'
+                : 'bg-[hsl(var(--platform-bg-card))] border-violet-500/30',
+              scale.isDemoSimulating && !isAtTarget && 'animate-pulse'
+            )}>
+              <Radio className={cn(
+                'w-4 h-4',
+                isAtTarget ? 'text-emerald-400' : 'text-violet-400'
+              )} />
+              <span className={cn(
+                'font-display text-3xl tracking-tight',
+                isAtTarget ? 'text-emerald-400' : 'text-[hsl(var(--platform-foreground))]'
+              )}>
+                {roundWeight(scale.liveWeight)}
+              </span>
+              <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                / {roundWeight(targetWeight)}g
+              </span>
+            </div>
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
+              {isAtTarget ? 'Weight stable — ready to confirm' : 'Dispensing...'}
+            </p>
+
+            {/* Confirm scale weight button */}
+            {scale.liveWeight > 0 && (
+              <button
+                onClick={handleConfirmScaleWeight}
+                className={cn(
+                  'flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm transition-all active:scale-95',
+                  isAtTarget
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    : 'bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30'
+                )}
+              >
+                <Check className="w-4 h-4" />
+                Confirm {roundWeight(scale.liveWeight)}g
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
+            className="flex items-center gap-1.5 px-7 py-3.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
+          >
+            <span className={cn(
+              'font-display text-3xl tracking-tight',
+              currentWeight > 0
+                ? 'text-[hsl(var(--platform-foreground))]'
+                : 'text-[hsl(var(--platform-foreground-muted)/0.4)]'
+            )}>
+              {currentWeight > 0 ? roundWeight(currentWeight) : 'Tap to weigh'}
+            </span>
+            <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.5)]">
+              / {roundWeight(targetWeight)}g
+            </span>
+          </button>
+        )}
 
         {/* Pagination dots */}
         <div className="flex gap-1.5 mt-1">
@@ -214,8 +333,8 @@ export function DockIngredientDispensing({
         <div className="flex items-center justify-center gap-8">
           <ActionButton
             icon={<Scale className="w-6 h-6" />}
-            label="Balance"
-            onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
+            label={scale.isConnected ? 'Tare' : 'Balance'}
+            onClick={scale.isConnected ? handleTare : () => { navigator.vibrate?.(15); setShowNumpad(true); }}
           />
           <ActionButton
             icon={<StickyNote className="w-6 h-6" />}

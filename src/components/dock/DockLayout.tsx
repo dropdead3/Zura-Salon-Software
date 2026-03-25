@@ -133,6 +133,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       {/* Lock FAB */}
       <DockLockFAB onLock={onLogout} />
     </div>
+    </DockScaleProvider>
   );
 
   if (isConstrained) {
