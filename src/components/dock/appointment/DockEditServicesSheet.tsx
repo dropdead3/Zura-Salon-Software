@@ -13,6 +13,8 @@ import type { PhorestService } from '@/hooks/usePhorestServices';
 import type { ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET, DOCK_TEXT, DOCK_INPUT, DOCK_BUTTON } from '../dock-ui-tokens';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_SERVICES_BY_CATEGORY } from '@/hooks/dock/dockDemoData';
 
 interface DockEditServicesSheetProps {
   open: boolean;
