@@ -866,6 +866,22 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             Enable Tracking
                                           </Button>
                                         </div>
+                                        {/* Chemical toggle for untracked services */}
+                                        <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+                                          <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                          <Switch
+                                            checked={service.is_chemical_service}
+                                            onCheckedChange={(v) => {
+                                              if (v) {
+                                                const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                updateService.mutate({ id: service.id, updates: { is_chemical_service: true, is_backroom_tracked: true, container_types: containers } });
+                                              } else {
+                                                updateService.mutate({ id: service.id, updates: { is_chemical_service: false, container_types: [] } });
+                                              }
+                                            }}
+                                          />
+                                          <span className="text-[10px] text-muted-foreground/60 font-sans">Enabling also turns on tracking</span>
+                                        </div>
                                       </div>
                                     )}
                                   </motion.div>
