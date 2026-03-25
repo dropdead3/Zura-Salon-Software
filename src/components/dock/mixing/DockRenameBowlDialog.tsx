@@ -9,11 +9,12 @@ import { DOCK_DIALOG } from '../dock-ui-tokens';
 interface DockRenameBowlDialogProps {
   open: boolean;
   currentName: string;
+  containerLabel?: string;
   onConfirm: (newName: string) => void;
   onClose: () => void;
 }
 
-export function DockRenameBowlDialog({ open, currentName, onConfirm, onClose }: DockRenameBowlDialogProps) {
+export function DockRenameBowlDialog({ open, currentName, containerLabel = 'Formula', onConfirm, onClose }: DockRenameBowlDialogProps) {
   const [name, setName] = useState(currentName);
 
   useEffect(() => {
