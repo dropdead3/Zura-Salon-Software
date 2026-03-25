@@ -1,48 +1,21 @@
 
 
-## Add Action Menu to Formula Bowl Card (3-Dot Ellipsis)
+## Redesign DockWeightInput Numpad Layout
 
 ### Problem
-The MoreVertical icon on bowl cards is purely decorative — tapping it does nothing. Based on the reference screenshot, it should open an action menu with options.
+The numpad buttons are too squished — small `h-14` height, tight `gap-2`, and narrow `max-w-[280px]`. The Confirm button text/icon lack proper internal spacing. Overall the component feels cramped for gloved-hand salon use.
 
-### Design
-When the 3-dot icon is tapped on a bowl card, show a bottom action sheet (consistent with the Dock's mobile-first UX) with these options:
+### Changes — `src/components/dock/mixing/DockWeightInput.tsx`
 
-1. **Edit Formula** — opens the bowl detail/dispensing view (same as tapping the card)
-2. **Change Service** — reassign the bowl to a different service on the appointment
-3. **Add To Favorites** — placeholder action (toast for now)
-4. **View Notes** — placeholder action (toast for now)
-5. **Rename Formula** — inline rename with a small dialog
-6. **Remove Formula** — destructive action with confirmation
+1. **Increase numpad button size**: `h-14` → `h-16`, `rounded-xl` → `rounded-2xl`
+2. **Widen grid**: `max-w-[280px]` → `max-w-[320px]`, `gap-2` → `gap-3`
+3. **Bump font size**: `text-lg` → `text-xl` on numpad keys
+4. **Action buttons**: `h-12` → `h-14`, `rounded-xl` → `rounded-2xl`, `gap-3` → `gap-4` between them
+5. **Confirm button padding**: Add explicit `px-6` and increase icon/text `gap-2` → `gap-2.5`
+6. **Display value**: Increase from `text-4xl` → `text-5xl` for better readability
+7. **Spacing**: `mb-6` after display → `mb-8`, `mt-4` before action buttons → `mt-6`
+8. **Delete icon**: `w-5 h-5` → `w-6 h-6`
 
-The menu will be triggered by stopping propagation on the 3-dot icon tap (so it doesn't also open the bowl), then rendering an action sheet overlay.
-
-### Changes
-
-**1. New file: `src/components/dock/mixing/DockBowlActionSheet.tsx`**
-- Bottom sheet overlay with 6 action buttons (full-width, large touch targets)
-- Props: `open`, `onClose`, `onAction(action: string)`
-- Styled to match Dock's platform tokens and the reference screenshot (rounded buttons, dark bg)
-- "Remove Formula" in red/destructive styling at the bottom
-
-**2. `src/components/dock/appointment/DockServicesTab.tsx`**
-- Add state: `bowlMenuTarget` (which bowl's menu is open)
-- Wrap the MoreVertical icon in both `BowlCard` and `DemoBowlCard` with an `onClick` handler that stops propagation and opens the action sheet
-- Render `DockBowlActionSheet` conditionally
-- Handle actions:
-  - **Edit Formula**: trigger the same `onTap` as the card
-  - **Change Service**: placeholder toast for now
-  - **Add To Favorites**: placeholder toast
-  - **View Notes**: placeholder toast
-  - **Rename Formula**: open a small rename dialog (text input + confirm)
-  - **Remove Formula**: confirmation overlay, then remove bowl from state (demo) or delete from DB
-
-**3. New file: `src/components/dock/mixing/DockRenameBowlDialog.tsx`**
-- Small dialog with text input for renaming the formula
-- Updates the bowl's display name in state (demo) or DB
-
-### Files
-- `src/components/dock/mixing/DockBowlActionSheet.tsx` — new
-- `src/components/dock/mixing/DockRenameBowlDialog.tsx` — new
-- `src/components/dock/appointment/DockServicesTab.tsx` — wire up menu
+### Result
+Larger touch targets, more breathing room between elements, and properly padded button labels — optimized for iPad/tablet backroom use with gloves.
 
