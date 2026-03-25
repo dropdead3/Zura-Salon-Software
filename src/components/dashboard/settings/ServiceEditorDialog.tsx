@@ -72,6 +72,7 @@ export function ServiceEditorDialog({
         setContentCreationTime(String(initialData.content_creation_time_minutes || 0));
         setProcessingTime(String(initialData.processing_time_minutes || 0));
         setRequiresNewClientConsultation(initialData.requires_new_client_consultation ?? false);
+        setContainerTypes((initialData as any).container_types || ['bowl']);
         setRequiresDeposit(initialData.requires_deposit ?? false);
         setDepositType(initialData.deposit_type ?? 'percentage');
         setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
