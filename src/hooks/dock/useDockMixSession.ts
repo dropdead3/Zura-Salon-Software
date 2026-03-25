@@ -228,7 +228,7 @@ export function useSealDockBowl() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dock-mix-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['mix-bowls'] });
-      toast.success('Bowl sealed');
+      toast.success('Formulation finalized');
     },
     onError: (error) => {
       toast.error('Failed to seal bowl: ' + (error as Error).message);
