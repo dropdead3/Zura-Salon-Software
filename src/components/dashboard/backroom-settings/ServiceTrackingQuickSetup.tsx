@@ -166,7 +166,7 @@ export function ServiceTrackingQuickSetup({
                       className="h-7 px-3 text-xs font-sans"
                       onClick={() => setClassifications(prev => ({ ...prev, [s.id]: false }))}
                     >
-                      Standard
+                      No Color/Chemical
                     </Button>
                     <Button
                       variant={isChemical ? 'default' : 'outline'}
