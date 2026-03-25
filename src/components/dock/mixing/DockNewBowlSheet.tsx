@@ -19,11 +19,34 @@ interface DockNewBowlSheetProps {
   clientId?: string | null;
 }
 
-export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlSheetProps) {
+export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: DockNewBowlSheetProps) {
   const [lines, setLines] = useState<FormulaLine[]>([]);
   const [baseWeight, setBaseWeight] = useState(40);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const dragControls = useDragControls();
+
+  const handleSelectFromHistory = (formula: ClientFormula) => {
+    const mapped: FormulaLine[] = formula.formula_data.map((line) => {
+      const syntheticProduct: DockProduct = {
+        id: line.product_id || `history-${Date.now()}-${Math.random()}`,
+        brand: line.brand || 'Unknown',
+        name: line.product_name,
+        category: '',
+        product_line: null,
+        swatch_color: null,
+        wholesale_price: null,
+        default_unit: line.unit,
+      };
+      return {
+        product: syntheticProduct,
+        targetWeight: line.quantity,
+        ratio: 1,
+      };
+    });
+    setLines(mapped);
+    setShowHistory(false);
+  };
 
   const handleCreate = () => {
     onCreateBowl(lines, baseWeight);
