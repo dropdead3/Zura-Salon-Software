@@ -1,77 +1,64 @@
 
 
-## Container Types for Services (Bowl vs Bottle)
+## Tokenize Bowl/Bottle Card Sizing
 
 ### Problem
-All formulations are labeled "Bowl" regardless of the actual vessel. Toner services use bottles, not bowls. Some services (e.g., Full Balayage) require both bowls and bottles.
+The bowl/bottle cards in the Dock formulations tab use hardcoded sizes that are too small for iPad/gloved use. Text like "BOWL 1", status labels, mixed-by info, and ingredient lines are all undersized and inconsistent.
 
-### Phase 1 — Core Implementation
+### Solution
+Add a `DOCK_CARD` token group to `dock-ui-tokens.ts` specifically for formulation cards, then apply those tokens in `BowlCard`, `DemoBowlCard`, and `AddBowlCard`.
 
-**1. Database Migration**
-- Create `container_type` enum: `'bowl'`, `'bottle'`
-- Add `container_types container_type[] NOT NULL DEFAULT '{bowl}'` to `public.services`
-- Add `container_type container_type NOT NULL DEFAULT 'bowl'` to `public.mix_bowls`
+### Token Definition
 
-Both default to `bowl` so all existing data remains correct.
+Add to `dock-ui-tokens.ts`:
 
-**2. Service Editor — Container Type Setting**
-`src/components/dashboard/settings/ServiceEditorDialog.tsx`
-- Add a "Container Types" multi-select (checkboxes for Bowl / Bottle) in the Details tab, below the existing toggles
-- Persist via the existing `onSubmit` flow — add `container_types` to the `Service` interface in `useServicesData.ts`
+```typescript
+export const DOCK_CARD = {
+  /** Outer card wrapper */
+  wrapper: 'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[180px] flex flex-col bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)] hover:border-[hsl(var(--platform-border)/0.5)] active:scale-[0.98]',
+  /** Icon box in card header */
+  iconBox: 'w-12 h-12 rounded-lg border flex items-center justify-center flex-shrink-0',
+  /** Icon inside iconBox */
+  icon: 'w-5 h-5',
+  /** Card title — e.g. "BOWL 1", "BOTTLE 2" */
+  title: 'font-display text-base tracking-wide uppercase text-[hsl(var(--platform-foreground))]',
+  /** Status label below title — e.g. "Draft", "Active" */
+  statusLabel: 'text-sm mt-0.5',
+  /** Supporting info — e.g. "Mixed by Demo Stylist" */
+  meta: 'text-sm text-[hsl(var(--platform-foreground-muted)/0.6)]',
+  /** Flagged/warning text */
+  flag: 'text-xs text-amber-400/70',
+  /** Notes / description preview */
+  notes: 'text-sm text-[hsl(var(--platform-foreground-muted)/0.5)] truncate',
+  /** Ingredient line text in demo cards */
+  ingredientLine: 'text-sm text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-snug',
+  ingredientName: 'text-[hsl(var(--platform-foreground-muted)/0.8)]',
+  /** Overflow "+N more" text */
+  overflow: 'text-xs text-[hsl(var(--platform-foreground-muted)/0.4)]',
+  /** Footer stats row */
+  footer: 'mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.15)] flex items-center justify-between',
+  footerText: 'text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]',
+  /** Menu button */
+  menuButton: 'p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors',
+  menuIcon: 'w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0',
+  /** Add card specific */
+  addWrapper: 'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[180px] border-violet-500/30 text-violet-400 hover:bg-violet-600/10 hover:border-violet-500/50 active:scale-[0.98] transition-all duration-150 disabled:opacity-40',
+  addIconBox: 'w-14 h-14 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center',
+  addIcon: 'w-7 h-7',
+  addLabel: 'text-sm font-medium',
+} as const;
+```
 
-**3. Service Lookup — Expose Container Types**
-`src/hooks/useServiceLookup.ts`
-- Add `container_types` to `ServiceLookupEntry` and the select query
-- The Dock formulations tab already uses this lookup to resolve service metadata
+Key size bumps vs current:
+- Icon box: `w-10 h-10` → `w-12 h-12`; icon `w-4.5` → `w-5`
+- Title: `text-sm` → `text-base`
+- Status label: `text-xs` → `text-sm`
+- Meta/notes: `text-[11px]` → `text-sm`
+- Ingredient lines: `text-xs` → `text-sm`
+- Card min height: `160px` → `180px`
+- Add card icon: `w-12 h-12` → `w-14 h-14`, plus icon `w-6` → `w-7`
 
-**4. Dock Formulations Tab — Dynamic Labels & Buttons**
-`src/components/dock/appointment/DockServicesTab.tsx`
-- Resolve `container_types` from the service lookup for each service section
-- If service allows only bottles → show "Add Bottle" instead of "Add Bowl"
-- If service allows both → show "Add Bowl" and "Add Bottle" buttons
-- `BowlCard`: display "Bowl {n}" or "Bottle {n}" based on `session.container_type` (fetched from mix_bowls via a new field on `DockMixSession`)
-- `AddBowlCard`: accept a `containerLabel` prop for the button text
-- Section header: show "N bowl(s)" / "N bottle(s)" / "N formulation(s)" dynamically
-
-**5. Bowl Creation — Persist Container Type**
-`src/hooks/dock/useDockMixSession.ts` — `useCreateDockBowl`
-- Accept `containerType` param, set `bowl_name` to `'Bowl 1'` or `'Bottle 1'` accordingly
-- Insert `container_type` into `mix_bowls`
-
-`src/hooks/backroom/useMixBowls.ts` — `useCreateMixBowl`
-- Same: accept and persist `container_type`
-
-**6. New Bowl Sheet**
-`src/components/dock/mixing/DockNewBowlSheet.tsx`
-- Accept `containerType` prop, update header to "New Bowl" or "New Bottle"
-
-**7. Bowl Action Sheet & Rename Dialog**
-- `DockBowlActionSheet.tsx`: accept `containerLabel` to show "Edit Bowl" vs "Edit Bottle" etc.
-- `DockRenameBowlDialog.tsx`: dynamic title "Rename Bowl" / "Rename Bottle"
-
-**8. Demo Data**
-`src/hooks/dock/dockDemoData.ts`
-- Add `container_type` to demo mix sessions and demo bowls
-
-### Phase 2 — Follow-ups ✅ Complete
-
-1. ✅ **Seed known toner services**: Migration sets `container_types = '{bottle}'` for services with names containing "Toner", "Gloss", "Glaze", "Rinse"
-2. ✅ **Dashboard MixSessionManager**: Updated all user-facing "bowl" labels to "formulation"; "Add Bowl" → "Add Formulation"; toast messages updated
-3. ✅ **Formula History**: Container type is session-level, not formula-level — no change needed; service name provides context
-4. ✅ **Icon differentiation**: `TestTube2` for bottles, `FlaskConical` for bowls on dashboard BowlCard (Dock already done in Phase 1)
-5. ✅ **Reporting labels**: SessionSummary "Bowls" → "Formulations"; internal analytics variable names unchanged (not user-facing)
-
-### Files (Phase 1)
-- **Migration SQL** — new enum + two ALTER TABLE statements
-- `src/hooks/useServicesData.ts` — add `container_types` to `Service` interface
-- `src/hooks/useServiceLookup.ts` — add `container_types` to lookup
-- `src/components/dashboard/settings/ServiceEditorDialog.tsx` — container type checkboxes
-- `src/components/dock/appointment/DockServicesTab.tsx` — dynamic labels, buttons, card text
-- `src/hooks/dock/useDockMixSession.ts` — accept + persist container type
-- `src/hooks/dock/useDockMixSessions.ts` — expose container_type from mix_bowls
-- `src/hooks/backroom/useMixBowls.ts` — accept + persist container type
-- `src/components/dock/mixing/DockNewBowlSheet.tsx` — dynamic header
-- `src/components/dock/mixing/DockBowlActionSheet.tsx` — dynamic action labels
-- `src/components/dock/mixing/DockRenameBowlDialog.tsx` — dynamic title
-- `src/hooks/dock/dockDemoData.ts` — demo data updates
+### Files
+1. `src/components/dock/dock-ui-tokens.ts` — add `DOCK_CARD` export
+2. `src/components/dock/appointment/DockServicesTab.tsx` — replace hardcoded classes in `BowlCard`, `DemoBowlCard`, and `AddBowlCard` with `DOCK_CARD.*` tokens
 
