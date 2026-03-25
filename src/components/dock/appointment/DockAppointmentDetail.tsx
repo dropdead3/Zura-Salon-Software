@@ -60,8 +60,14 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
   });
   const activeBowlId = activeBowl ?? null;
 
-  const currentServices = appointment.service_name
-    ? appointment.service_name.split(',').map(s => s.trim()).filter(Boolean)
+  // Read demo service overrides from sessionStorage
+  const demoServiceOverride = appointment.id.startsWith('demo-')
+    ? (() => { try { return sessionStorage.getItem(`dock-demo-services::${appointment.id}`); } catch { return null; } })()
+    : null;
+  const effectiveServiceName = demoServiceOverride ?? appointment.service_name;
+
+  const currentServices = effectiveServiceName
+    ? effectiveServiceName.split(',').map(s => s.trim()).filter(Boolean)
     : [];
 
   const isTerminal = ['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase());
