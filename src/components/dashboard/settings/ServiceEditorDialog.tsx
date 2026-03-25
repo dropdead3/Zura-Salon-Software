@@ -221,7 +221,10 @@ export function ServiceEditorDialog({
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Requires Qualification</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Requires Qualification</p>
+                        <MetricInfoTooltip description="When enabled, only team members with this service's qualification can be booked for it." />
+                      </div>
                       <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
                     </div>
                     <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
