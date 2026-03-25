@@ -328,7 +328,7 @@ export function DockEditServicesSheet({
             <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
               <div className="text-base text-[hsl(var(--platform-foreground-muted))]">
                 {selected.size} service{selected.size !== 1 ? 's' : ''}
-                {totalDuration > 0 && <span> · {formatMinutesToDuration(totalDuration)}</span>}
+                {totalDuration > 0 && <span> · {formatMinutesToDurationLong(totalDuration)}</span>}
                 {totalPrice > 0 && (
                   <span> · <BlurredAmount>{formatCurrency(totalPrice)}</BlurredAmount></span>
                 )}
