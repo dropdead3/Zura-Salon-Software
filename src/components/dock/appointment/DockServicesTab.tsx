@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { DockBowlActionSheet, type BowlAction } from '../mixing/DockBowlActionSheet';
 import { DockRenameBowlDialog } from '../mixing/DockRenameBowlDialog';
 import { cn } from '@/lib/utils';
+import { DOCK_CARD } from '@/components/dock/dock-ui-tokens';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
@@ -596,24 +597,17 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
 // ─── Inline Add Bowl/Bottle Card ─────────────────────────────
 function AddBowlCard({ onClick, disabled, containerType = 'bowl' }: { onClick: () => void; disabled: boolean; containerType?: ContainerType }) {
   const isBottle = containerType === 'bottle';
-  const Icon = isBottle ? TestTube2 : FlaskConical;
   const label = isBottle ? 'Add Bottle' : 'Add Bowl';
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={cn(
-        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[160px]',
-        'border-violet-500/30 text-violet-400',
-        'hover:bg-violet-600/10 hover:border-violet-500/50',
-        'active:scale-[0.98] transition-all duration-150',
-        'disabled:opacity-40'
-      )}
+      className={DOCK_CARD.addWrapper}
     >
-      <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-        <Plus className="w-6 h-6" />
+      <div className={DOCK_CARD.addIconBox}>
+        <Plus className={DOCK_CARD.addIcon} />
       </div>
-      <span className="text-sm font-medium">{label}</span>
+      <span className={DOCK_CARD.addLabel}>{label}</span>
     </button>
   );
 }
@@ -628,48 +622,32 @@ function BowlCard({ session, index, onTap, onMenuTap, containerType = 'bowl' }: 
   return (
     <button
       onClick={onTap}
-      className={cn(
-        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
-        'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
-        'hover:border-[hsl(var(--platform-border)/0.5)]',
-        'active:scale-[0.98]',
-        isTerminal && 'opacity-60'
-      )}
+      className={cn(DOCK_CARD.wrapper, isTerminal && 'opacity-60')}
     >
-      {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className={cn('w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0', status.iconBg)}>
-            <StatusIcon className={cn('w-4.5 h-4.5', status.color)} />
+          <div className={cn(DOCK_CARD.iconBox, status.iconBg)}>
+            <StatusIcon className={cn(DOCK_CARD.icon, status.color)} />
           </div>
           <div className="min-w-0">
-             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              {containerLabel} {index}
-            </p>
-            <p className={cn('text-xs mt-0.5', status.color)}>
-              {status.label}
-            </p>
+            <p className={DOCK_CARD.title}>{containerLabel} {index}</p>
+            <p className={cn(DOCK_CARD.statusLabel, status.color)}>{status.label}</p>
           </div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-          <MoreVertical className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className={DOCK_CARD.menuButton}>
+          <MoreVertical className={DOCK_CARD.menuIcon} />
         </button>
       </div>
 
-      {/* Info area */}
       <div className="flex-1 mt-1">
         {session.mixed_by_name && (
-          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] mb-1">
-            Mixed by {session.mixed_by_name}
-          </p>
+          <p className={cn(DOCK_CARD.meta, 'mb-1')}>Mixed by {session.mixed_by_name}</p>
         )}
         {session.unresolved_flag && (
-          <p className="text-[10px] text-amber-400/70 mb-1">⚠ Flagged for review</p>
+          <p className={cn(DOCK_CARD.flag, 'mb-1')}>⚠ Flagged for review</p>
         )}
         {session.notes && (
-          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)] truncate">
-            {session.notes}
-          </p>
+          <p className={DOCK_CARD.notes}>{session.notes}</p>
         )}
       </div>
     </button>
@@ -687,62 +665,42 @@ function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () =>
   return (
     <button
       onClick={onTap}
-      className={cn(
-        'w-full text-left rounded-xl p-5 border transition-all duration-150 min-h-[160px] flex flex-col',
-        'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.3)]',
-        'hover:border-[hsl(var(--platform-border)/0.5)]',
-        'active:scale-[0.98]',
-      )}
+      className={DOCK_CARD.wrapper}
     >
-      {/* Header: icon + title + menu */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-            <CardIcon className="w-4.5 h-4.5 text-amber-400" />
+          <div className={cn(DOCK_CARD.iconBox, 'bg-amber-500/15 border-amber-500/20')}>
+            <CardIcon className={cn(DOCK_CARD.icon, 'text-amber-400')} />
           </div>
           <div className="min-w-0">
-             <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              {containerLabel}
-            </p>
-            <p className="text-xs mt-0.5 text-amber-400">
-              In Progress
-            </p>
+            <p className={DOCK_CARD.title}>{containerLabel}</p>
+            <p className={cn(DOCK_CARD.statusLabel, 'text-amber-400')}>In Progress</p>
           </div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-          <MoreVertical className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className={DOCK_CARD.menuButton}>
+          <MoreVertical className={DOCK_CARD.menuIcon} />
         </button>
       </div>
 
-      {/* Ingredient lines preview */}
       <div className="flex-1 mt-1 space-y-1">
         {previewLines.map((line, i) => (
-          <p key={i} className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)] truncate leading-tight">
-            <span className="text-[hsl(var(--platform-foreground-muted)/0.8)]">{line.product.name}</span>
+          <p key={i} className={DOCK_CARD.ingredientLine}>
+            <span className={DOCK_CARD.ingredientName}>{line.product.name}</span>
             <span className="mx-1">·</span>
             <span>{(line.targetWeight * line.ratio).toFixed(1)}g</span>
           </p>
         ))}
         {overflowCount > 0 && (
-           <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)]">
-            +{overflowCount} more
-          </p>
+          <p className={DOCK_CARD.overflow}>+{overflowCount} more</p>
         )}
         {previewLines.length === 0 && (
-          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.4)] italic">
-            No ingredients yet
-          </p>
+          <p className={cn(DOCK_CARD.overflow, 'italic')}>No ingredients yet</p>
         )}
       </div>
 
-      {/* Footer stats */}
-      <div className="mt-2 pt-2 border-t border-[hsl(var(--platform-border)/0.15)] flex items-center justify-between">
-         <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
-          {bowl.totalWeight.toFixed(0)}g total
-        </span>
-        <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
-          ${bowl.totalCost.toFixed(2)}
-        </span>
+      <div className={DOCK_CARD.footer}>
+        <span className={DOCK_CARD.footerText}>{bowl.totalWeight.toFixed(0)}g total</span>
+        <span className={DOCK_CARD.footerText}>${bowl.totalCost.toFixed(2)}</span>
       </div>
     </button>
   );
