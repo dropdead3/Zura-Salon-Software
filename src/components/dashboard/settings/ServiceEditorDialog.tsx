@@ -52,6 +52,7 @@ export function ServiceEditorDialog({
   const [depositAmountFlat, setDepositAmountFlat] = useState('');
   const [processingTime, setProcessingTime] = useState('0');
   const [requiresNewClientConsultation, setRequiresNewClientConsultation] = useState(false);
+  const [containerTypes, setContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
 
   useEffect(() => {
     if (open) {
