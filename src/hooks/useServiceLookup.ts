@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export type ContainerType = 'bowl' | 'bottle';
+
 export interface ServiceLookupEntry {
   name: string;
   category: string | null;
   duration_minutes: number;
   price: number | null;
+  container_types: ContainerType[];
 }
 
 /**
