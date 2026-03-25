@@ -74,6 +74,8 @@ export function ServiceEditorDialog({
         setContentCreationTime(String(initialData.content_creation_time_minutes || 0));
         setProcessingTime(String(initialData.processing_time_minutes || 0));
         setRequiresNewClientConsultation(initialData.requires_new_client_consultation ?? false);
+        const hasContainers = Array.isArray((initialData as any).container_types) && (initialData as any).container_types.length > 0;
+        setIsChemicalService((initialData as any).is_chemical_service ?? hasContainers);
         setContainerTypes((initialData as any).container_types || ['bowl']);
         setRequiresDeposit(initialData.requires_deposit ?? false);
         setDepositType(initialData.deposit_type ?? 'percentage');
