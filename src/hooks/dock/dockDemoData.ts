@@ -305,7 +305,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       is_manual_override: false,
       unresolved_flag: true,
       unresolved_reason: 'Leftover product not weighed',
-      service_label: 'Vivids (Fashion Color)',
+      service_label: 'Full Vivid',
     },
   ],
 };
