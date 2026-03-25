@@ -407,11 +407,12 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                     {remote.map((session) => {
                       bowlIdx++;
                       return (
-                        <BowlCard
+                         <BowlCard
                           key={session.id}
                           session={session}
                           index={globalOffset + bowlIdx}
                           onTap={() => handleBowlTap(session, globalOffset + bowlIdx)}
+                          onMenuTap={() => setBowlMenuTarget({ type: 'remote', session, index: globalOffset + bowlIdx })}
                         />
                       );
                     })}
@@ -422,6 +423,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                           key={bowl.id}
                           bowl={bowl}
                           onTap={() => handleDemoBowlTap(bowl)}
+                          onMenuTap={() => setBowlMenuTarget({ type: 'demo', bowl })}
                         />
                       );
                     })}
