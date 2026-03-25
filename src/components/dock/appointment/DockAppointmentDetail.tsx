@@ -94,7 +94,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             {!isTerminal && (
               <button
                 onClick={() => setEditServicesOpen(true)}
-                className="mt-2 px-3 py-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 text-violet-400 text-xs font-medium flex items-center gap-1.5 active:scale-[0.97] transition-all"
+                className="mt-2 px-4 py-2.5 rounded-xl border border-violet-500/40 bg-violet-500/10 text-violet-400 text-sm font-medium flex items-center gap-2 active:scale-[0.97] transition-all"
               >
                 <Pencil className="w-3 h-3" />
                 Edit Services
