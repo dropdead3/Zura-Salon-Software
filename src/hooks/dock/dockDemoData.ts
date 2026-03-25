@@ -168,7 +168,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'phorest',
       client_name: 'Maria Gonzalez',
       stylist_name: 'Jenna B.',
-      service_name: 'Vivids (Fashion Color)',
+      service_name: 'Full Vivid',
       appointment_date: today,
       start_time: t7.startStr,
       end_time: t7.endStr,
