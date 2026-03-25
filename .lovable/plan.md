@@ -1,24 +1,25 @@
 
 
-## Fix Bowl Count Badges to Reflect Actual Mixed Bowls
+## Fix: Newly Added Services Not Appearing in Formulations Tab
 
-### Problem
-1. **Demo data**: Rachel Kim's card shows "2 bowls mixed" but has no mix sessions — the `mix_bowl_count` is hardcoded incorrectly
-2. **Real data**: The query counts ALL `mix_bowls` rows for an appointment, including empty/draft bowls with no dispensed product. Should only count bowls where mixing has actually occurred.
+### Root Cause
+
+`DockServicesTab` derives its service list from `appointment.service_name` (line 147), which is the original prop value. When services are edited:
+
+1. **Demo mode**: The updated service string is saved to `sessionStorage` (`dock-demo-services::${id}`), but `DockServicesTab` never reads this override — it always uses the stale `appointment.service_name`.
+2. **Real mode**: Query invalidation fires, but since the `appointment` object is passed as a prop from `DockLayout → DockAppointmentDetail → DockServicesTab`, it may not refresh until the parent re-renders with fresh data.
+
+The fix for demo mode (the immediate bug you're seeing) is straightforward. Real mode likely already works because query invalidation refreshes the appointment list.
 
 ### Changes
 
-**1. `src/hooks/dock/dockDemoData.ts`**
-- Fix Rachel Kim (`demo-appt-7`): set `mix_bowl_count: 0` (no sessions exist for her)
-- Audit other demo appointments and align counts with what `DEMO_MIX_SESSIONS` actually contains
+**`src/components/dock/appointment/DockAppointmentDetail.tsx`**
+- Pass `effectiveServiceName` to `DockServicesTab` as a new prop so it uses the demo-overridden service string
 
-**2. `src/hooks/dock/useDockAppointments.ts`**
-- Change the bowl count query to use `mix_bowl_projections` instead of raw `mix_bowls`
-- Filter to only count bowls where `line_item_count > 0` (has at least one dispensed ingredient)
-- This applies to both the demo-with-real-data path (~lines 160-168) and the normal path (~lines 289-297)
-- Query: `select mix_bowl_id, mix_session_id from mix_bowl_projections where line_item_count > 0` joined through sessions
+**`src/components/dock/appointment/DockServicesTab.tsx`**
+- Add an optional `effectiveServiceName` prop
+- Use `effectiveServiceName ?? appointment.service_name` when computing `chemicalServices` (line 147)
+- This ensures newly added color/chemical services appear immediately after saving in the Edit Services sheet
 
-### Files
-- `src/hooks/dock/dockDemoData.ts` — fix hardcoded counts
-- `src/hooks/dock/useDockAppointments.ts` — filter bowl counts by actual dispensed activity
+### Two files changed
 
