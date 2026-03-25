@@ -4,22 +4,49 @@
  */
 
 import { useState } from 'react';
-import { X, FlaskConical, Plus } from 'lucide-react';
+import { X, FlaskConical, Plus, History } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
+import { DockFormulaHistoryPicker } from './DockFormulaHistoryPicker';
 import { DOCK_SHEET } from '../dock-ui-tokens';
+import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { DockProduct } from '@/hooks/dock/useDockProductCatalog';
 
 interface DockNewBowlSheetProps {
   open: boolean;
   onClose: () => void;
   onCreateBowl: (lines: FormulaLine[], baseWeight: number) => void;
+  clientId?: string | null;
 }
 
-export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlSheetProps) {
+export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: DockNewBowlSheetProps) {
   const [lines, setLines] = useState<FormulaLine[]>([]);
   const [baseWeight, setBaseWeight] = useState(40);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const dragControls = useDragControls();
+
+  const handleSelectFromHistory = (formula: ClientFormula) => {
+    const mapped: FormulaLine[] = formula.formula_data.map((line) => {
+      const syntheticProduct: DockProduct = {
+        id: line.product_id || `history-${Date.now()}-${Math.random()}`,
+        brand: line.brand || 'Unknown',
+        name: line.product_name,
+        category: '',
+        product_line: null,
+        swatch_color: null,
+        wholesale_price: null,
+        default_unit: line.unit,
+      };
+      return {
+        product: syntheticProduct,
+        targetWeight: line.quantity,
+        ratio: 1,
+      };
+    });
+    setLines(mapped);
+    setShowHistory(false);
+  };
 
   const handleCreate = () => {
     onCreateBowl(lines, baseWeight);
@@ -80,38 +107,59 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlShe
               </div>
             </div>
 
-            {/* Formula builder */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-7 pb-4">
-              <DockFormulaBuilder
-                lines={lines}
-                onLinesChange={setLines}
-                baseWeight={baseWeight}
-                onBaseWeightChange={setBaseWeight}
-                showAddButton={false}
-                pickerOpen={pickerOpen}
-                onPickerClose={() => setPickerOpen(false)}
-              />
+            {/* Content area — toggles between builder and history picker */}
+            <div className="flex-1 min-h-0 overflow-y-auto pb-4">
+              {showHistory && clientId ? (
+                <DockFormulaHistoryPicker
+                  clientId={clientId}
+                  onSelect={handleSelectFromHistory}
+                  onBack={() => setShowHistory(false)}
+                />
+              ) : (
+                <div className="px-7">
+                  <DockFormulaBuilder
+                    lines={lines}
+                    onLinesChange={setLines}
+                    baseWeight={baseWeight}
+                    onBaseWeightChange={setBaseWeight}
+                    showAddButton={false}
+                    pickerOpen={pickerOpen}
+                    onPickerClose={() => setPickerOpen(false)}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Action buttons — side-by-side large rectangles */}
-            <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setPickerOpen(true)}
-                  className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Product
-                </button>
-                <button
-                  onClick={handleCreate}
-                  disabled={lines.length === 0}
-                  className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
-                >
-                  Create Bowl ({lines.length})
-                </button>
+            {/* Action buttons — 3-column layout */}
+            {!showHistory && (
+              <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPickerOpen(true)}
+                    className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Product
+                  </button>
+                  {clientId && (
+                    <button
+                      onClick={() => setShowHistory(true)}
+                      className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] bg-[hsl(var(--platform-bg-card))] hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors text-sm font-medium"
+                    >
+                      <History className="w-4 h-4" />
+                      From History
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCreate}
+                    disabled={lines.length === 0}
+                    className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+                  >
+                    Create Bowl ({lines.length})
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Drag handle — bottom position for top-anchored sheet */}
             <div className={DOCK_SHEET.dragHandleWrapperBottom}>
