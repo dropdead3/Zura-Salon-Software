@@ -114,7 +114,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
             }}
           >
             {/* Header */}
-            <div className="flex-shrink-0 px-7 pt-2 pb-3 space-y-3">
+            <div className="flex-shrink-0 px-7 pt-5 pb-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {selectedBrand && !isSearching ? (
