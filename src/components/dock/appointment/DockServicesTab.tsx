@@ -440,12 +440,13 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         ) : allBowlCount > 0 ? (
           /* Fallback: flat grid for appointments with no parseable chemical services but existing bowls */
           <div className="grid grid-cols-2 gap-4">
-            {remoteBowls.map((session, idx) => (
+             {remoteBowls.map((session, idx) => (
               <BowlCard
                 key={session.id}
                 session={session}
                 index={idx + 1}
                 onTap={() => handleBowlTap(session, idx + 1)}
+                onMenuTap={() => setBowlMenuTarget({ type: 'remote', session, index: idx + 1 })}
               />
             ))}
             {demoBowls.map((bowl) => (
@@ -453,6 +454,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                 key={bowl.id}
                 bowl={bowl}
                 onTap={() => handleDemoBowlTap(bowl)}
+                onMenuTap={() => setBowlMenuTarget({ type: 'demo', bowl })}
               />
             ))}
             <AddBowlCard
