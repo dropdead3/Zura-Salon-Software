@@ -1,30 +1,56 @@
 
 
-## Remove "Map Components" Step from Quick Setup Wizard
+## Redesign Service Tracking Progress for Clarity
 
-### Rationale
-Product-to-service mapping happens automatically during the mixing/dispensing workflow when stylists weigh ingredients on the scale. A manual "Map Components" step in the wizard is redundant and confusing for users who have no context for it.
+### Problem
+The current progress bar is confusing because:
+1. The segmented bar mixes amber/white/gray fills making it hard to read at a glance
+2. "Classified 66/74" is vague — classified *how*? What does the user need to do?
+3. The combined percentage (67%) is a weighted average across unrelated milestones, which is misleading
+4. Milestone chips use info tooltips for explanations that should be visible upfront
 
-### Changes
+### Redesign
 
-**1. Remove the "Map Components" step from STEPS array**
-In `ServiceTrackingQuickSetup.tsx`, delete the `components` step entry from the `STEPS` array (line 44) and remove the entire `case 'components'` block (lines 263–299).
+Replace the single segmented bar + chips with a **vertical step checklist** — three clear rows, each with its own mini progress bar, plain-language label, and status.
 
-**2. Remove unused imports and props**
-- Remove `useServiceTrackingComponents`, `useDeleteTrackingComponent`, `useUpsertTrackingComponent` imports
-- Remove `componentsByService` from the Props interface and destructuring
-- Remove the `WizardComponentRow` sub-component entirely
-- Remove the `backroomProducts` query and `upsertComponent` mutation used only by that step
-- Remove `trackedServices` and `trackedNoComponents` derived state
-- Clean up unused icon imports (e.g. `Package` if no longer used, `X`)
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  Setup Progress                              [Quick Setup]  │
+│                                                              │
+│  ① Classify Services              66 of 74 done             │
+│     ████████████████████████░░░░  89%                        │
+│     Review each service and mark whether it uses             │
+│     color or chemical products.                              │
+│                                                              │
+│  ② Enable Tracking                48 of 48  ✓               │
+│     ████████████████████████████  100%                       │
+│     Turn on backroom tracking for color/chemical services.   │
+│                                                              │
+│  ③ Set Allowances                 0 of 48                    │
+│     ░░░░░░░░░░░░░░░░░░░░░░░░░░░  0%                         │
+│     Define supply allowances and overage billing rules.      │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
 
-**3. Remove "Components" progress milestone from parent**
-In `ServiceTrackingSection.tsx`, remove the "Components" milestone from the `milestones` array (lines 254–259). Remove `componentsByService` from the `ServiceTrackingQuickSetup` props passed on line 920. Remove `componentsByService` from the Props interface in the wizard.
+### Key improvements
+- **Sequential steps** (①②③) make order obvious — classify first, then track, then set allowances
+- **Individual progress bars** per step instead of one confusing segmented bar
+- **Plain-language descriptions** replace tooltip-only explanations
+- **Green checkmark** on completed steps, amber for in-progress, muted for not started
+- Collapse completed steps to a single line to reduce noise as setup progresses
 
-**4. Clean up "Components" references in the main table**
-In `ServiceTrackingSection.tsx`, remove the component count display in the drill-down rows (lines 671–674) and the `needsAttention` check for missing components (line 229). Remove the `componentsByService` map computation if it's no longer used elsewhere, or keep it if the drill-down still references it for informational purposes.
+### Technical details
+
+**File: `ServiceTrackingProgressBar.tsx`** — Full rewrite of the component:
+- Replace segmented bar + chips with a vertical stepper layout
+- Each milestone renders as a row: step number, label, count, individual `Progress` bar, description text
+- Completed steps show condensed (single line with checkmark)
+- Keep celebration animation logic unchanged
+
+**File: `ServiceTrackingSection.tsx`** — Update milestone tooltips to be full descriptions (used as the subtitle text), no other changes needed.
 
 ### Files Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx`
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingProgressBar.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (milestone descriptions)
 
