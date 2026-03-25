@@ -407,7 +407,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
                       {serviceLabel}
                     </h3>
                     <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
-                      {svcBowlCount} bowl{svcBowlCount !== 1 ? 's' : ''}
+                      {svcBowlCount} formulation{svcBowlCount !== 1 ? 's' : ''}
                     </span>
                   </div>
 
@@ -415,11 +415,13 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
                   <div className="grid grid-cols-2 gap-4">
                     {remote.map((session) => {
                       bowlIdx++;
+                      const ct = (session.container_type as ContainerType) || 'bowl';
                       return (
                          <BowlCard
                           key={session.id}
                           session={session}
                           index={globalOffset + bowlIdx}
+                          containerType={ct}
                           onTap={() => handleBowlTap(session, globalOffset + bowlIdx)}
                           onMenuTap={() => setBowlMenuTarget({ type: 'remote', session, index: globalOffset + bowlIdx })}
                         />
@@ -436,11 +438,19 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
                         />
                       );
                     })}
-                    {/* Inline Add Bowl card */}
-                    <AddBowlCard
-                      onClick={() => handleAddBowlForService(serviceLabel)}
-                      disabled={createBowl.isPending}
-                    />
+                    {/* Inline Add cards based on service container types */}
+                    {(() => {
+                      const svcMeta = serviceLookup?.get(serviceLabel);
+                      const allowedTypes: ContainerType[] = svcMeta?.container_types || ['bowl'];
+                      return allowedTypes.map((ct) => (
+                        <AddBowlCard
+                          key={ct}
+                          containerType={ct}
+                          onClick={() => handleAddBowlForService(serviceLabel, ct)}
+                          disabled={createBowl.isPending}
+                        />
+                      ));
+                    })()}
                   </div>
                 </div>
               );
