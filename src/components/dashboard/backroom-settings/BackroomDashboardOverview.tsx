@@ -17,8 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet, DollarSign,
-  ClipboardList, FileText, Eye, Download, PackageOpen, TrendingUp, TrendingDown,
-  Users2, Package, ShieldAlert, Truck, BarChart3, Brain, MapPin,
+  PackageOpen, TrendingUp, TrendingDown,
+  Users2, Package, ShieldAlert, BarChart3, Brain, MapPin,
 } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
