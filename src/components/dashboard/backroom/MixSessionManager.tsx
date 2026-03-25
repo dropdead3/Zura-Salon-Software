@@ -569,7 +569,7 @@ export function MixSessionManager({
             newStatus: 'open',
             locationId,
           });
-          toast.info('Bowl opened for adjustments');
+          toast.info('Formulation opened for adjustments');
         }}
         onDiscardBowl={(bowlId) => handleDiscardBowl(bowlId)}
         onApproveAll={async () => {
