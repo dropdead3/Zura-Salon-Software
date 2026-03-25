@@ -704,6 +704,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               <Slider
                                                 key={`${service.id}-${service.variance_threshold_pct}`}
                                                 defaultValue={[service.variance_threshold_pct]}
+                                                onValueChange={([v]) => {
+                                                  setLiveThresholds(prev => ({ ...prev, [service.id]: v }));
+                                                }}
                                                 onValueCommit={([v]) => {
                                                   if (v !== service.variance_threshold_pct) {
                                                     updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } });
@@ -714,7 +717,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 step={5}
                                                 className="flex-1"
                                               />
-                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{service.variance_threshold_pct}%</span>
+                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{(liveThresholds[service.id] ?? service.variance_threshold_pct)}%</span>
                                             </div>
                                           </div>
                                         </div>
