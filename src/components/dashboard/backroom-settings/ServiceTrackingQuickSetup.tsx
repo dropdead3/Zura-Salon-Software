@@ -262,16 +262,43 @@ export function ServiceTrackingQuickSetup({
       case 'components':
         return (
           <div className="space-y-2">
+            {/* Educational intro */}
+            <div className="bg-muted/30 border border-border/60 rounded-xl p-4 mb-4">
+              <div className="flex gap-3 items-start">
+                <Package className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-sans font-medium text-foreground">What are product components?</p>
+                  <p className="text-xs font-sans text-muted-foreground leading-relaxed">
+                    Each color or chemical service uses specific products — lightener, color, developer, toner.
+                    Linking them here tells Zura what to track and measure per service.
+                  </p>
+                  <p className="text-[10px] font-sans text-muted-foreground/70 italic">
+                    Example: "Full Balayage" might use Lightener + Developer
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {trackedNoComponents.length === 0 ? (
               <StepComplete message="All tracked services have components mapped." />
             ) : (
               <>
                 <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-                  These tracked services need at least one product component.
+                  {trackedNoComponents.length} service{trackedNoComponents.length > 1 ? 's' : ''} need{trackedNoComponents.length === 1 ? 's' : ''} at least one linked product.
                 </p>
-                {trackedNoComponents.map(s => (
-                  <WizardComponentRow key={s.id} serviceId={s.id} serviceName={s.name} orgId={orgId} upsertComponent={upsertComponent} />
-                ))}
+                {trackedNoComponents.map(s => {
+                  const linkedCount = componentsByService.get(s.id) || 0;
+                  return (
+                    <WizardComponentRow
+                      key={s.id}
+                      serviceId={s.id}
+                      serviceName={s.name}
+                      orgId={orgId}
+                      upsertComponent={upsertComponent}
+                      linkedCount={linkedCount}
+                    />
+                  );
+                })}
               </>
             )}
           </div>
