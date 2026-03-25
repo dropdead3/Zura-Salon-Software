@@ -192,7 +192,7 @@ export function ServiceEditorDialog({
                     <Input id="service-price" type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="Optional" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="service-cost">Cost ($)</Label>
+                    <Label htmlFor="service-cost" className="flex items-center gap-1.5">Cost ($) <MetricInfoTooltip description="Internal cost of supplies/product for this service. Used for margin reporting." /></Label>
                     <Input id="service-cost" type="number" min="0" step="0.01" value={cost} onChange={e => setCost(e.target.value)} placeholder="Optional" />
                   </div>
                 </div>
