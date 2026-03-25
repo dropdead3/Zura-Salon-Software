@@ -66,7 +66,7 @@ export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
  * plus additional chemical-processing terms.
  */
 const COLOR_CHEMICAL_PATTERN =
-  /color|colour|toner|glaze|gloss|demi|semi|permanent|root touch|grey.?blend|coverage|vivid|fashion color|balayage|highlight|foil|lightener|blonde|bleach|ombre|root smudge|baby lights|teasy lights|chemical/i;
+  /color|colour|toner|glaze|gloss|demi|semi|permanent|root touch|retouch|touch.?up|grey.?blend|coverage|vivid|fashion color|balayage|highlight|foil|lightener|blonde|bleach|ombre|root smudge|baby lights|teasy lights|chemical/i;
 
 /**
  * Returns true if the given service name or category indicates a color/chemical service.
