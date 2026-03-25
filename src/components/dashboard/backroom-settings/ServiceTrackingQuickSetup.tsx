@@ -212,7 +212,7 @@ export function ServiceTrackingQuickSetup({
 
       case 'components':
         return (
-          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+          <div className="space-y-2">
             {trackedNoComponents.length === 0 ? (
               <StepComplete message="All tracked services have components mapped." />
             ) : (
