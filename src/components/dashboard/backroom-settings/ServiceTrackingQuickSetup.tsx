@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, ChevronRight, SkipForward, Beaker, Layers, Package, FileText, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, SkipForward, Beaker, Layers, Package, FileText, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProgressMilestone } from './ServiceTrackingProgressBar';
 
