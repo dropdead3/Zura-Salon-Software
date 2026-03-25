@@ -1,41 +1,24 @@
 
 
-## Auto-Reweigh from Scale
+## Fix Bowl Count Badges to Reflect Actual Mixed Bowls
 
-Replace the manual numpad reweigh input with a live scale-driven reweigh view that automatically captures leftover weight when the bowl is placed on the scale and the reading stabilizes.
-
-### Current behavior
-Tapping "Capture Reweigh" opens `DockWeightInput` (a manual numpad). The user types in leftover weight.
-
-### New behavior
-Tapping "Capture Reweigh" opens a full-screen reweigh view that:
-1. Tares the scale automatically on entry
-2. Shows the selected visual aid (teardrop or progress bar) filling as weight is detected
-3. Displays live weight reading from the scale
-4. Auto-confirms when reading stabilizes (stable flag + weight > 0 for ~1s)
-5. Shows a "Confirm" button for manual override if the user wants to lock in early
-6. Falls back to manual numpad entry via a "Enter Manually" link if scale is not connected
-7. In demo mode, runs the same simulation ramp as dispensing
+### Problem
+1. **Demo data**: Rachel Kim's card shows "2 bowls mixed" but has no mix sessions — the `mix_bowl_count` is hardcoded incorrectly
+2. **Real data**: The query counts ALL `mix_bowls` rows for an appointment, including empty/draft bowls with no dispensed product. Should only count bowls where mixing has actually occurred.
 
 ### Changes
 
-**1. New: `src/components/dock/mixing/DockReweighCapture.tsx`**
-- Full-screen view replacing `DockWeightInput` in the reweigh flow
-- Uses `useDockScale()` for live weight and stability
-- Uses `useDockDispensingVisual()` to show teardrop or progress bar (no target — fill based on weight > 0 with a visual max around ~100g or proportional to dispensed total)
-- Tares scale on mount; starts demo simulation in demo mode
-- Auto-confirm logic: when `isStable && liveWeight > 0`, start a 1.5s countdown, then call `onSubmit(liveWeight)`
-- Cancel countdown if weight changes significantly
-- Manual "Confirm" button always available
-- "Enter Manually" fallback button opens the existing `DockWeightInput`
-- Header: "BOWL X — REWEIGH" with subtitle "Place bowl on scale — weight will capture automatically"
+**1. `src/hooks/dock/dockDemoData.ts`**
+- Fix Rachel Kim (`demo-appt-7`): set `mix_bowl_count: 0` (no sessions exist for her)
+- Audit other demo appointments and align counts with what `DEMO_MIX_SESSIONS` actually contains
 
-**2. Modified: `src/components/dock/mixing/DockLiveDispensing.tsx`**
-- Replace the `reweigh-input` view (lines 189-208) to render `DockReweighCapture` instead of `DockWeightInput`
-- Pass `bowlNumber`, `totalDispensed`, `onSubmit={handleReweigh}`, `onCancel`
-- Keep manual fallback path inside `DockReweighCapture`
+**2. `src/hooks/dock/useDockAppointments.ts`**
+- Change the bowl count query to use `mix_bowl_projections` instead of raw `mix_bowls`
+- Filter to only count bowls where `line_item_count > 0` (has at least one dispensed ingredient)
+- This applies to both the demo-with-real-data path (~lines 160-168) and the normal path (~lines 289-297)
+- Query: `select mix_bowl_id, mix_session_id from mix_bowl_projections where line_item_count > 0` joined through sessions
 
 ### Files
-- `src/components/dock/mixing/DockReweighCapture.tsx` — new
-- `src/components/dock/mixing/DockLiveDispensing.tsx` — swap reweigh view
+- `src/hooks/dock/dockDemoData.ts` — fix hardcoded counts
+- `src/hooks/dock/useDockAppointments.ts` — filter bowl counts by actual dispensed activity
 
