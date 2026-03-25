@@ -239,22 +239,22 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
     return [
       {
-        label: 'Classified',
+        label: 'Classify Services',
         current: classified.length,
         total: allServices.length,
-        tooltip: 'Services classified as requiring color/chemical or not.',
+        tooltip: 'Review each service and mark whether it uses color or chemical products.',
       },
       {
-        label: 'Tracked',
+        label: 'Enable Tracking',
         current: tracked.length,
         total: Math.max(chemicalOrSuggested.length, tracked.length),
-        tooltip: 'Chemical services with backroom tracking enabled.',
+        tooltip: 'Turn on backroom tracking for color and chemical services.',
       },
       {
-        label: 'Allowances',
+        label: 'Set Allowances',
         current: withAllowance.length,
         total: tracked.length,
-        tooltip: 'Tracked services with a billing allowance policy configured.',
+        tooltip: 'Define supply allowances and overage billing rules for tracked services.',
       },
     ];
   }, [allServices, componentsByService, allowanceByService]);
