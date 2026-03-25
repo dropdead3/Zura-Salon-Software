@@ -184,7 +184,7 @@ export function ServiceEditorDialog({
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="service-duration">Duration (min) *</Label>
+                    <Label htmlFor="service-duration" className="flex items-center gap-1.5">Duration (min) * <MetricInfoTooltip description="Total chair time including processing. Used for scheduling and calendar blocking." /></Label>
                     <Input id="service-duration" type="number" min="5" step="5" value={duration} onChange={e => setDuration(e.target.value)} />
                   </div>
                   <div className="space-y-2">
