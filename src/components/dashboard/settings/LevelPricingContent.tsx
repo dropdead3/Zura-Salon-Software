@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
