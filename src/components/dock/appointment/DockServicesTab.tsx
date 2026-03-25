@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale, History } from 'lucide-react';
+import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale, History, TestTube2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DockBowlActionSheet, type BowlAction } from '../mixing/DockBowlActionSheet';
 import { DockRenameBowlDialog } from '../mixing/DockRenameBowlDialog';
