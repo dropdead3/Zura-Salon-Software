@@ -112,6 +112,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const [showBowlDetection, setShowBowlDetection] = useState(false);
   const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
   const [activeServiceLabel, setActiveServiceLabel] = useState<string | null>(null);
+  const [activeContainerType, setActiveContainerType] = useState<ContainerType>('bowl');
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
   const markUnresolved = useMarkDockSessionUnresolved();
