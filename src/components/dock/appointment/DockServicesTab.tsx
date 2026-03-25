@@ -549,6 +549,22 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         clientId={appointment.client_id}
         clientName={appointment.client_name}
       />
+
+      {/* Bowl action sheet */}
+      <DockBowlActionSheet
+        open={!!bowlMenuTarget}
+        onClose={() => setBowlMenuTarget(null)}
+        onAction={handleBowlAction}
+        bowlLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.serviceLabel || 'New Formula') : bowlMenuTarget ? `Bowl ${bowlMenuTarget.index}` : undefined}
+      />
+
+      {/* Rename dialog */}
+      <DockRenameBowlDialog
+        open={!!renameTarget}
+        currentName={renameTarget?.type === 'demo' ? (renameTarget.bowl.serviceLabel || 'New Formula') : 'Bowl'}
+        onConfirm={handleRename}
+        onClose={() => setRenameTarget(null)}
+      />
     </div>
   );
 }
