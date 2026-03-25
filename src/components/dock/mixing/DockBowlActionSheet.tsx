@@ -14,6 +14,7 @@ interface DockBowlActionSheetProps {
   onClose: () => void;
   onAction: (action: BowlAction) => void;
   bowlLabel?: string;
+  containerLabel?: string;
 }
 
 const actions: { key: BowlAction; label: string; icon: typeof Pencil; destructive?: boolean }[] = [
