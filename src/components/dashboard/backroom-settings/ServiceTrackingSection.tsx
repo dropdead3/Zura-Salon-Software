@@ -117,7 +117,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   const tracked = (services || []).filter((s) => s.is_backroom_tracked);
   const untracked = (services || []).filter((s) => !s.is_backroom_tracked);
-  const suggestedServices = untracked.filter((s) => isColorOrChemicalService(s.name, s.category));
+  // Only show chemical services in Available list; use is_chemical_service flag first, regex fallback for unconfigured
+  const chemicalUntracked = untracked.filter((s) => s.is_chemical_service || isColorOrChemicalService(s.name, s.category));
+  const suggestedServices = chemicalUntracked.filter((s) => s.is_chemical_service || isColorOrChemicalService(s.name, s.category));
 
   return (
     <div className="space-y-6">
