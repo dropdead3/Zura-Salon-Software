@@ -116,6 +116,7 @@ export function DockLiveDispensing({
   const [bowlStatus, setBowlStatus] = useState(initialBowlStatus);
   const [capturedLeftover, setCapturedLeftover] = useState<number | null>(initialLeftover ?? null);
   const [currentWeights, setCurrentWeights] = useState<Map<string, number>>(new Map());
+  const scale = useDockScale();
 
   const recordWeight = useRecordDispensedWeight();
   const sealBowl = useSealDockBowl();
