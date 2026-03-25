@@ -82,9 +82,12 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className={tokens.body.muted}>
-          Apply percentage or fixed-amount modifiers during date ranges.
-        </p>
+        <div className="flex items-start gap-1.5">
+          <p className={tokens.body.muted}>
+            Apply percentage or fixed-amount modifiers during date ranges.
+          </p>
+          <MetricInfoTooltip description="Time-bound price modifiers applied on top of the resolved price. Use positive values for surcharges and negative for discounts." />
+        </div>
         {!showForm && (
           <Button variant="outline" size={tokens.button.card} onClick={() => setShowForm(true)}>
             <Plus className="w-3.5 h-3.5 mr-1" />

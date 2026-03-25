@@ -307,7 +307,10 @@ export function ServiceEditorDialog({
                   <div className="pt-2 border-t border-border/60">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className={tokens.body.emphasis}>Requires Deposit</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className={tokens.body.emphasis}>Requires Deposit</p>
+                          <MetricInfoTooltip description="Collect a deposit or prepayment to confirm the booking. Helps reduce no-shows for high-value services." />
+                        </div>
                         <p className={tokens.body.muted}>Collect a deposit or prepayment before confirming this service</p>
                       </div>
                       <Switch checked={requiresDeposit} onCheckedChange={setRequiresDeposit} />

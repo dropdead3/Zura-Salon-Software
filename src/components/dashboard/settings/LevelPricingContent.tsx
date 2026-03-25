@@ -63,9 +63,12 @@ export function LevelPricingContent({ serviceId, basePrice, onSaved }: LevelPric
 
   return (
     <div className="space-y-4">
-      <p className={tokens.body.muted}>
-        Set pricing by stylist level. Leave blank if no level-specific price applies.
-      </p>
+      <div className="flex items-start gap-1.5">
+        <p className={tokens.body.muted}>
+          Set pricing by stylist level. Leave blank if no level-specific price applies.
+        </p>
+        <MetricInfoTooltip description="Override the base price per stylist level. The most specific price wins: stylist override > level price > base price." />
+      </div>
       <div className="space-y-3 max-h-[40vh] overflow-y-auto p-1">
         {activeLevels.map(level => (
           <div key={level.id} className="flex items-center gap-3">

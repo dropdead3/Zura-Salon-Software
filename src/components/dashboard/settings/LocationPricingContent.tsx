@@ -63,9 +63,12 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
 
   return (
     <div className="space-y-4">
-      <p className={tokens.body.muted}>
-        Set a location-specific price. Leave blank if no location-specific price applies.
-      </p>
+      <div className="flex items-start gap-1.5">
+        <p className={tokens.body.muted}>
+          Set a location-specific price. Leave blank if no location-specific price applies.
+        </p>
+        <MetricInfoTooltip description="Set a different price for this service at a specific location. Applies before level and stylist overrides." />
+      </div>
       <div className="space-y-3 max-h-[40vh] overflow-y-auto p-1">
         {activeLocations.map(loc => (
           <div key={loc.id} className="flex items-center gap-3">
