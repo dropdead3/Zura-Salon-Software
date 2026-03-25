@@ -252,7 +252,7 @@ export function DockIngredientDispensing({
                 ref={isActive ? activeCardRef : undefined}
                 onClick={() => handleNavigate(l.id)}
                 className={cn(
-                  'flex-shrink-0 w-[140px] rounded-xl p-3 border transition-all duration-150',
+                  'flex-shrink-0 w-[170px] rounded-xl p-3.5 border transition-all duration-150',
                   'bg-[hsl(var(--platform-bg-card))]',
                   isActive
                     ? 'border-violet-500/50 shadow-lg shadow-violet-500/10'
