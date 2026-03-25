@@ -94,35 +94,51 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
       {/* Overall bar */}
       <div className="flex items-center gap-3">
         <span className={cn(tokens.label.tiny, 'shrink-0')}>Setup Progress</span>
-        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden flex">
-          {milestones.map((m, i) => {
-            return (
-              <div
-                key={i}
-                className={cn(
-                  'h-full transition-all duration-500',
-                  m.current === m.total && m.total > 0
-                    ? 'bg-primary'
-                    : m.current > 0
-                      ? 'bg-primary/60'
-                      : 'bg-muted-foreground/20',
-                )}
-                style={{ width: `${(m.total / overallTotal) * 100}%` }}
-              >
+        <div className="relative flex-1 h-2 rounded-full bg-muted overflow-hidden">
+          {/* Color-coded fill segments rendered sequentially */}
+          <div className="absolute inset-0 flex">
+            {milestones.map((m, i) => {
+              const segmentWidthPct = overallTotal > 0 ? (m.total / overallTotal) * 100 : 0;
+              const fillPct = m.total > 0 ? (m.current / m.total) * 100 : 0;
+              const done = m.current === m.total && m.total > 0;
+              const partial = m.current > 0 && !done;
+              return (
                 <div
-                  className={cn(
-                    'h-full rounded-full',
-                    m.current === m.total && m.total > 0
-                      ? 'bg-primary'
-                      : 'bg-primary/60',
-                  )}
-                  style={{ width: m.total > 0 ? `${(m.current / m.total) * 100}%` : '0%' }}
+                  key={i}
+                  className="h-full relative"
+                  style={{ width: `${segmentWidthPct}%` }}
+                >
+                  {/* Filled portion only — no outer bg */}
+                  <div
+                    className={cn(
+                      'h-full transition-all duration-500',
+                      done ? 'bg-primary' : partial ? 'bg-amber-500' : '',
+                    )}
+                    style={{ width: `${fillPct}%` }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          {/* Segment dividers */}
+          {(() => {
+            let cumulative = 0;
+            return milestones.slice(0, -1).map((m, i) => {
+              cumulative += overallTotal > 0 ? (m.total / overallTotal) * 100 : 0;
+              return (
+                <div
+                  key={`div-${i}`}
+                  className="absolute top-0 bottom-0 w-px bg-background/60"
+                  style={{ left: `${cumulative}%` }}
                 />
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
-        <span className={cn(tokens.body.emphasis, 'shrink-0 tabular-nums text-xs')}>
+        <span className={cn(
+          'shrink-0 tabular-nums text-sm font-sans font-medium',
+          allComplete ? 'text-primary' : overallPct >= 50 ? 'text-foreground' : 'text-muted-foreground',
+        )}>
           {overallPct}%
         </span>
       </div>
