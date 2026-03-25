@@ -158,9 +158,10 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             const sessionToAppt: Record<string, string> = {};
             for (const s of sessionsData) sessionToAppt[s.id] = s.appointment_id;
             const { data: bowlsData } = await supabase
-              .from('mix_bowls')
-              .select('mix_session_id')
-              .in('mix_session_id', sessionIds);
+              .from('mix_bowl_projections')
+              .select('mix_bowl_id, mix_session_id')
+              .in('mix_session_id', sessionIds)
+              .gt('line_item_count', 0);
             const bowlCounts: Record<string, number> = {};
             for (const b of (bowlsData || [])) {
               const apptId = sessionToAppt[b.mix_session_id];
