@@ -153,7 +153,7 @@ export function DockIngredientDispensing({
         <TeardropFill
           fillPercent={fillPercent}
           fillColor={fillColor}
-          size={160}
+          size={200}
         />
 
         {/* Product name */}
