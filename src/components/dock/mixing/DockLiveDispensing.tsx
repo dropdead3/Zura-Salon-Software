@@ -21,6 +21,7 @@ interface DockLiveDispensingProps {
   organizationId: string;
   bowlStatus: string;
   leftoverWeight?: number;
+  demoLines?: BowlLine[];
   onBack: () => void;
 }
 
