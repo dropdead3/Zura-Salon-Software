@@ -172,7 +172,7 @@ export function MixSessionManager({
         if (discarded.length) parts.push(`Discarded empty formulation${discarded.length > 1 ? 's' : ''} ${discarded.join(', ')}`);
         if (parts.length) toast.info(parts.join('. '));
       } catch {
-        toast.error('Failed to auto-finalize bowls');
+        toast.error('Failed to auto-finalize formulations');
         return;
       }
     }
