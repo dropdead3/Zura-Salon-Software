@@ -37,6 +37,7 @@ export function useCreateDockBowl() {
       lines: FormulaLine[];
       baseWeight: number;
       serviceLabel?: string;
+      containerType?: 'bowl' | 'bottle';
     }): Promise<CreatedBowlResult> => {
       const meta = await buildCommandMeta('ui');
 
