@@ -123,7 +123,8 @@ export function ServiceEditorDialog({
       deposit_type: depositType,
       deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
       deposit_amount_flat: depositAmountFlat ? parseFloat(depositAmountFlat) : null,
-    });
+      container_types: containerTypes,
+    } as Partial<Service>);
   };
 
   const isCreateMode = mode === 'create';
