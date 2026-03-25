@@ -42,20 +42,16 @@ export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel }: Dock
 
           {/* Sheet */}
           <motion.div
-            className="absolute inset-x-0 bottom-0 z-[61] bg-[hsl(var(--platform-bg-card))] border-t border-[hsl(var(--platform-border)/0.3)] rounded-t-2xl"
-            initial={{ y: '100%' }}
+            className={cn(DOCK_SHEET.panel, 'z-[61]')}
+            style={{ maxHeight: DOCK_SHEET.maxHeight }}
+            initial={{ y: '-100%' }}
             animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            exit={{ y: '-100%' }}
             transition={DOCK_SHEET.spring}
           >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className={DOCK_SHEET.dragHandle} />
-            </div>
-
             {/* Title */}
             {bowlLabel && (
-              <div className="px-6 pb-3">
+              <div className="px-7 pt-6 pb-3">
                 <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">
                   {bowlLabel}
                 </p>
@@ -63,7 +59,7 @@ export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel }: Dock
             )}
 
             {/* Action buttons */}
-            <div className="px-4 pb-6 space-y-1.5">
+            <div className="px-4 pb-4 space-y-1.5">
               {actions.map(({ key, label, icon: Icon, destructive }) => (
                 <button
                   key={key}
@@ -83,6 +79,11 @@ export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel }: Dock
                   <span className="text-sm font-medium">{label}</span>
                 </button>
               ))}
+            </div>
+
+            {/* Drag handle at bottom */}
+            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
+              <div className={DOCK_SHEET.dragHandle} />
             </div>
           </motion.div>
         </>
