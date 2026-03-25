@@ -137,7 +137,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             appointmentId: appointment.id,
             organizationId: staff.organizationId,
             services: newServices,
-            previousServiceName: appointment.service_name,
+            previousServiceName: effectiveServiceName,
           }, {
             onSuccess: () => setEditServicesOpen(false),
           });
