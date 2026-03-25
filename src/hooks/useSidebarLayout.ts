@@ -10,6 +10,7 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
   main: LayoutDashboard,
   myTools: Wrench,
   manage: BarChart3,
+  apps: Package,
   system: Settings,
   platform: Terminal,
   // Legacy mappings for stored layouts that reference old section IDs
