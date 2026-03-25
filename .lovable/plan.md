@@ -1,38 +1,18 @@
 
 
-## Verify & Fix: Drawer Handle Swipe-Up Dismiss + Haptic Feedback
+## Remove Redundant Demo Badge + Enlarge Edit Services Button
 
-### Issues Found
+### Problem
+Two "Demo" badges are stacking/overlapping in the appointment detail view — the global `DockDemoBadge` (absolute-positioned) and the inline one added to the appointment header.
 
-**1. Two sheets have non-functional drag handles** — missing `onPointerDown` + `dragControls`:
-- `DockFormulaHistorySheet.tsx` — drag handle is purely decorative (no `useDragControls`, no `onPointerDown`, no `drag` prop on panel)
-- `DockHamburgerMenu.tsx` — same issue: drag handle exists visually but isn't wired to `dragControls`
+### Fix — 2 files
 
-**2. No haptic feedback on any sheet dismiss** — none of the `onDragEnd` handlers call `navigator.vibrate()` when the swipe threshold is met
+**1. `src/components/dock/appointment/DockAppointmentDetail.tsx`**
+- Remove the inline Demo badge from the header (lines 107–112) — the global `DockDemoBadge` already handles this
+- Enlarge the Edit Services button: increase padding from `px-3 py-1.5` → `px-4 py-2`, text from `text-xs` → `text-sm`, icon from `w-3 h-3` → `w-3.5 h-3.5`
 
-### Sheets that ARE working (have `dragControls` + `onPointerDown` on handle):
-- `DockNewBowlSheet` ✅
-- `DockEditServicesSheet` ✅
-- `DockProductPicker` ✅
-- `DockSessionCompleteSheet` ✅
-- `DockNewBookingSheet` ✅
-- `DockNewClientSheet` ✅
+**2. No changes needed to `DockDemoBadge.tsx` or `DockLayout.tsx`** — the global badge continues to render as before
 
-### Fix
-
-**1. `DockFormulaHistorySheet.tsx`**
-- Import `useDragControls` from framer-motion
-- Add `drag="y"`, `dragControls`, `dragConstraints`, `dragElastic`, and `onDragEnd` to the panel `motion.div`
-- Wire `onPointerDown={(e) => dragControls.start(e)}` to the drag handle div
-
-**2. `DockHamburgerMenu.tsx`**
-- Already has `drag="y"` and `onDragEnd` on the panel — but the handle div is missing `onPointerDown`
-- Import `useDragControls`, add `dragControls` to the panel, wire handle's `onPointerDown`
-
-**3. Add haptic feedback to ALL sheet `onDragEnd` dismiss handlers** (8 files total)
-- In each `onDragEnd` callback, add `try { navigator.vibrate?.(15); } catch {}` right before calling `onClose()` / `handleClose()`
-- Files: `DockNewBowlSheet`, `DockEditServicesSheet`, `DockProductPicker`, `DockSessionCompleteSheet`, `DockNewBookingSheet`, `DockNewClientSheet`, `DockFormulaHistorySheet`, `DockHamburgerMenu`
-
-### Summary — 8 files touched
-All dock sheets get consistent: functional drag handle → swipe-up dismiss → haptic pulse on dismiss.
+### Result
+Single Demo badge (global), larger Edit Services button that's easier to tap.
 
