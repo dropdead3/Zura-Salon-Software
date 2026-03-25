@@ -224,59 +224,8 @@ export function ServiceEditorDialog({
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className={tokens.body.emphasis}>Requires Qualification</p>
-                        <MetricInfoTooltip description="When enabled, only team members with this service's qualification can be booked for it." />
-                      </div>
-                      <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
-                    </div>
-                    <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className={tokens.body.emphasis}>Bookable Online</p>
-                        <MetricInfoTooltip description="Controls whether this service appears on your website and can be booked by clients online." />
-                      </div>
-                      <p className={tokens.body.muted}>Show on website and allow online booking</p>
-                    </div>
-                    <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className={tokens.body.emphasis}>Same-Day Booking</p>
-                        <MetricInfoTooltip description="When disabled, clients must book this service at least the specified lead time in advance." />
-                      </div>
-                      <p className={tokens.body.muted}>Allow clients to book this service same day</p>
-                    </div>
-                    <Switch checked={allowSameDayBooking} onCheckedChange={setAllowSameDayBooking} />
-                  </div>
-
-                  {!allowSameDayBooking && (
-                    <div className="space-y-2 pl-4 border-l-2 border-muted">
-                      <Label htmlFor="lead-time">Lead Time (days)</Label>
-                      <Input id="lead-time" type="number" min="1" value={leadTimeDays} onChange={e => setLeadTimeDays(e.target.value)} />
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
-                        <MetricInfoTooltip description="New clients must complete a consultation appointment before booking this service." />
-                      </div>
-                      <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
-                    </div>
-                    <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
-                  </div>
-
                   {/* Color/Chemical Service Toggle + Container Types */}
-                  <div className="pt-2 border-t border-border/60">
+                  <div>
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -328,6 +277,59 @@ export function ServiceEditorDialog({
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  <div className="pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className={tokens.body.emphasis}>Requires Qualification</p>
+                          <MetricInfoTooltip description="When enabled, only team members with this service's qualification can be booked for it." />
+                        </div>
+                        <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
+                      </div>
+                      <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Bookable Online</p>
+                        <MetricInfoTooltip description="Controls whether this service appears on your website and can be booked by clients online." />
+                      </div>
+                      <p className={tokens.body.muted}>Show on website and allow online booking</p>
+                    </div>
+                    <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Same-Day Booking</p>
+                        <MetricInfoTooltip description="When disabled, clients must book this service at least the specified lead time in advance." />
+                      </div>
+                      <p className={tokens.body.muted}>Allow clients to book this service same day</p>
+                    </div>
+                    <Switch checked={allowSameDayBooking} onCheckedChange={setAllowSameDayBooking} />
+                  </div>
+
+                  {!allowSameDayBooking && (
+                    <div className="space-y-2 pl-4 border-l-2 border-muted">
+                      <Label htmlFor="lead-time">Lead Time (days)</Label>
+                      <Input id="lead-time" type="number" min="1" value={leadTimeDays} onChange={e => setLeadTimeDays(e.target.value)} />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
+                        <MetricInfoTooltip description="New clients must complete a consultation appointment before booking this service." />
+                      </div>
+                      <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
+                    </div>
+                    <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
                   </div>
 
                   {/* Deposit Configuration */}
