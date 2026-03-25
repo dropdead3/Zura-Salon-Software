@@ -107,20 +107,31 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: Dock
               </div>
             </div>
 
-            {/* Formula builder */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-7 pb-4">
-              <DockFormulaBuilder
-                lines={lines}
-                onLinesChange={setLines}
-                baseWeight={baseWeight}
-                onBaseWeightChange={setBaseWeight}
-                showAddButton={false}
-                pickerOpen={pickerOpen}
-                onPickerClose={() => setPickerOpen(false)}
-              />
+            {/* Content area — toggles between builder and history picker */}
+            <div className="flex-1 min-h-0 overflow-y-auto pb-4">
+              {showHistory && clientId ? (
+                <DockFormulaHistoryPicker
+                  clientId={clientId}
+                  onSelect={handleSelectFromHistory}
+                  onBack={() => setShowHistory(false)}
+                />
+              ) : (
+                <div className="px-7">
+                  <DockFormulaBuilder
+                    lines={lines}
+                    onLinesChange={setLines}
+                    baseWeight={baseWeight}
+                    onBaseWeightChange={setBaseWeight}
+                    showAddButton={false}
+                    pickerOpen={pickerOpen}
+                    onPickerClose={() => setPickerOpen(false)}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Action buttons — side-by-side large rectangles */}
+            {/* Action buttons — 3-column layout */}
+            {!showHistory && (
             <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
               <div className="flex gap-3">
                 <button
@@ -130,6 +141,15 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: Dock
                   <Plus className="w-4 h-4" />
                   Add Product
                 </button>
+                {clientId && (
+                  <button
+                    onClick={() => setShowHistory(true)}
+                    className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] bg-[hsl(var(--platform-bg-card))] hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors text-sm font-medium"
+                  >
+                    <History className="w-4 h-4" />
+                    From History
+                  </button>
+                )}
                 <button
                   onClick={handleCreate}
                   disabled={lines.length === 0}

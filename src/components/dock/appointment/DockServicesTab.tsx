@@ -451,6 +451,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
           setActiveServiceLabel(null);
         }}
         onCreateBowl={handleCreateBowl}
+        clientId={appointment.client_id}
       />
 
       {/* Session complete sheet */}
