@@ -192,7 +192,7 @@ export function MixSessionManager({
     // Check for unreweighed bowls
     const sealedNotReweighed = bowls.filter((b) => b.status === 'sealed');
     const unresolvedReason = sealedNotReweighed.length > 0
-      ? `${sealedNotReweighed.length} bowl(s) not reweighed`
+      ? `${sealedNotReweighed.length} formulation(s) not reweighed`
       : undefined;
 
     // Calculate confidence score before completing
