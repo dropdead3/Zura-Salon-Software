@@ -7,7 +7,7 @@ import { Pencil, ArrowRightLeft, Star, StickyNote, Type, Trash2, X } from 'lucid
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET } from '../dock-ui-tokens';
 
-export type BowlAction = 'edit' | 'change_service' | 'favorite' | 'view_notes' | 'rename' | 'remove';
+export type BowlAction = 'edit' | 'change_service' | 'favorite' | 'view_notes' | 'rename' | 'discard';
 
 interface DockBowlActionSheetProps {
   open: boolean;
@@ -22,7 +22,7 @@ const actions: { key: BowlAction; label: string; icon: typeof Pencil; destructiv
   { key: 'favorite', label: 'Add To Favorites', icon: Star },
   { key: 'view_notes', label: 'View Notes', icon: StickyNote },
   { key: 'rename', label: 'Rename Formula', icon: Type },
-  { key: 'remove', label: 'Remove Formula', icon: Trash2, destructive: true },
+  { key: 'discard', label: 'Discard Formula', icon: Trash2, destructive: true },
 ];
 
 export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel }: DockBowlActionSheetProps) {
