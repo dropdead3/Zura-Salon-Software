@@ -32,6 +32,8 @@ export interface Service {
   deposit_amount: number | null;
   deposit_amount_flat: number | null;
   container_types: ('bowl' | 'bottle')[];
+  is_chemical_service: boolean;
+  is_backroom_tracked: boolean;
 }
 
 /**
