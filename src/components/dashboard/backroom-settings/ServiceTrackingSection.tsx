@@ -703,7 +703,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             <div className="flex items-center gap-2 py-1" onPointerDown={(e) => e.stopPropagation()}>
                                               <Slider
                                                 key={`${service.id}-${service.variance_threshold_pct}`}
-                                                defaultValue={[service.variance_threshold_pct]}
+                                                defaultValue={[service.variance_threshold_pct || 10]}
                                                 onValueChange={([v]) => {
                                                   setLiveThresholds(prev => ({ ...prev, [service.id]: v }));
                                                 }}
@@ -717,7 +717,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 step={5}
                                                 className="flex-1"
                                               />
-                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{(liveThresholds[service.id] ?? service.variance_threshold_pct)}%</span>
+                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{(liveThresholds[service.id] ?? (service.variance_threshold_pct || 10))}%</span>
                                             </div>
                                           </div>
                                         </div>
