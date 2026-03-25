@@ -140,7 +140,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
     queryFn: async () => {
       // Demo client IDs don't exist in DB — return mock
       if (usingDemoClient) {
-        return { ...DEMO_CLIENT_MOCK, name: appointment.client_name || DEMO_CLIENT_MOCK.name };
+        return getDemoClientMock(clientId, phorestClientId, appointment.client_name);
       }
 
       if (phorestClientId) {

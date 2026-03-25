@@ -83,7 +83,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
     queryKey: ['dock-client-profile', phorestClientId, clientId, usingDemo],
     queryFn: async () => {
       if (usingDemo) {
-        return { ...DEMO_CLIENT_MOCK, name: clientName || 'Client' };
+        return getDemoClientMock(clientId, phorestClientId, clientName);
       }
       if (phorestClientId) {
         const { data } = await supabase
