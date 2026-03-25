@@ -1,34 +1,35 @@
 
 
-## Add Smooth Animation to Service Line Item Drill-Down
+## Fix Drill-Down Toggle Alignment & Slider Interaction
 
-### Current State
-The expand/collapse already uses `AnimatePresence` + `motion.tr` (lines 633–641), but the animation is basic — just height 0→auto and opacity 0→1 with a fast 200ms duration. The inner content fades independently at 150ms. This feels abrupt.
+### Problems
+1. **Toggle labels sit above pills** (`space-y-1.5` stacks them vertically) instead of being horizontally aligned
+2. **Slider thumb ungrabbable** — the parent `motion.tr` has `style={{ overflow: 'hidden' }}` which clips the slider thumb, and the thumb is small (14px)
 
 ### Changes — `ServiceTrackingSection.tsx`
 
-**Improve the `motion.tr` transition** (lines 635–640):
-- Increase duration to 300ms with a cubic-bezier ease `[0.4, 0, 0.2, 1]` for a smoother Apple-grade feel
-- Add a slight y-translate on the inner `motion.div` (lines 643–648) so content slides up into place as it fades in
-- Stagger the inner content opacity to start after the height begins opening (add `delay: 0.08`)
+**1. Horizontal toggle layout (lines 676–699)**
 
-**Updated animation values:**
+Change each toggle from vertical `space-y-1.5` to horizontal `flex items-center gap-2`:
+
 ```tsx
-// motion.tr (container)
-initial={{ height: 0, opacity: 0 }}
-animate={{ height: 'auto', opacity: 1 }}
-exit={{ height: 0, opacity: 0 }}
-transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-
-// motion.div (inner content)
-initial={{ opacity: 0, y: -8 }}
-animate={{ opacity: 1, y: 0 }}
-exit={{ opacity: 0, y: -8 }}
-transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
+<div className="flex items-center gap-2">
+  <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
+  <Switch ... />
+</div>
 ```
 
-This gives a polished feel: the row height expands smoothly while the content gently slides and fades in with a slight stagger.
+Same for Smart Mix Assist and Formula Memory toggles.
+
+**2. Fix slider interaction (line 640 + slider area)**
+
+- On the `motion.tr`, change `overflow: 'hidden'` to use `overflow: 'clip'` only during the enter/exit animation (or wrap the content div with its own overflow control so the slider thumb isn't clipped during interaction).
+- Simpler fix: remove `scale-90` from Switch components (not needed), and ensure the slider area has enough padding so the thumb isn't clipped by overflow hidden. Add `py-1` to the slider's container div so the thumb has breathing room.
+
+**3. Variance Threshold layout**
+
+Keep the label above the slider (it makes sense for a range control), but ensure the label row and slider row are visually grouped with proper spacing.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (lines 635–648 only)
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (lines 675–716)
 
