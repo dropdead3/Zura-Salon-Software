@@ -1,81 +1,50 @@
 
 
-## Fix "Classify Services" False Completion
+## Redesign Classify Step with Clear Two-Button Choice
 
-### Root Cause
+### Problem
+The current UI has a confusing mix of a ghost "Standard" button and a "Chemical" label + Switch toggle. It's unclear what action each element performs.
 
-The "Classified" milestone and Quick Setup filter treat any service with a non-null `category` as classified. Since categories come from POS imports, nearly every service already has one — so 74/74 shows on day one without any user action.
+### Solution
+Replace the Switch + Standard button combo with two clear, mutually exclusive pill buttons per service row: **"Standard"** and **"Chemical"**. Tapping one classifies the service and it disappears from the list. This is a simple segmented-button pattern — no ambiguity.
 
-The deeper issue: `is_chemical_service` is a `boolean NOT NULL DEFAULT false`. There's no distinction between "user explicitly marked as standard" and "never reviewed."
+### Implementation — `ServiceTrackingQuickSetup.tsx` (lines 113–137)
 
-### Fix: Make `is_chemical_service` Nullable
-
-Change the column to `boolean DEFAULT NULL`. The three states become:
-- `NULL` → unclassified (needs review)
-- `true` → chemical
-- `false` → explicitly standard
-
-### Changes
-
-**1. Database migration**
-
-```sql
-ALTER TABLE public.services
-  ALTER COLUMN is_chemical_service DROP NOT NULL,
-  ALTER COLUMN is_chemical_service SET DEFAULT NULL;
-
--- Reset all services that were never explicitly classified
--- (those still at the old default of false)
--- We keep true values since the user explicitly set those.
--- For false values, we can't distinguish user-set from default,
--- so reset all false to NULL. Users will re-classify via the wizard.
-UPDATE public.services
-  SET is_chemical_service = NULL
-  WHERE is_chemical_service = false;
-```
-
-**2. Update milestone logic — `ServiceTrackingSection.tsx` (line 237)**
+Replace the current row layout with:
 
 ```tsx
-// OLD
-const classified = allServices.filter(s => s.is_chemical_service || s.category !== null);
-
-// NEW — classified means user explicitly set is_chemical_service to true or false
-const classified = allServices.filter(s => s.is_chemical_service !== null);
+{uncategorized.map(s => (
+  <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="text-sm font-sans truncate">{s.name}</span>
+      {isSuggestedChemicalService(s.name, s.category) && (
+        <Badge variant="outline" className="...amber...">Suggested</Badge>
+      )}
+    </div>
+    <div className="flex items-center gap-1 shrink-0">
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 px-3 text-xs"
+        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: false })}
+      >
+        Standard
+      </Button>
+      <Button
+        variant="default"
+        size="sm"
+        className="h-7 px-3 text-xs"
+        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: true })}
+      >
+        Chemical
+      </Button>
+    </div>
+  </div>
+))}
 ```
 
-**3. Update Quick Setup filter — `ServiceTrackingQuickSetup.tsx` (line 86)**
+Two distinct buttons with clear labels — no toggle ambiguity. "Chemical" uses the primary/default variant to stand out. Services with the "Suggested" badge nudge users toward Chemical.
 
-```tsx
-// OLD
-const uncategorized = services.filter(s => !s.is_chemical_service && !s.category);
-
-// NEW — show services where is_chemical_service is null (never reviewed)
-const uncategorized = services.filter(s => s.is_chemical_service === null);
-```
-
-**4. Update `getServiceType` helper — `ServiceTrackingSection.tsx` (line 217)**
-
-```tsx
-const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
-  if (s.is_chemical_service === true) return 'chemical';
-  if (s.is_chemical_service === null && isSuggestedChemicalService(s.name, s.category)) return 'suggested';
-  return 'standard';
-};
-```
-
-Services explicitly set to `false` won't get the "suggested" badge — user already decided.
-
-**5. Update `ServiceRow` interface**
-
-Change `is_chemical_service: boolean` → `is_chemical_service: boolean | null` in both files.
-
-**6. Quick Setup classify action**
-
-The toggle already sets `is_chemical_service: true/false`. Add a "Mark as Standard" button for non-chemical services so users can explicitly set `false` (classifying them) without toggling chemical on.
-
-### Files Modified
-- New SQL migration (make `is_chemical_service` nullable, reset false→NULL)
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (milestone calc, getServiceType, interface)
-- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (filter logic, interface, add "Standard" action)
+### File Modified
+- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (lines 113–137)
 
