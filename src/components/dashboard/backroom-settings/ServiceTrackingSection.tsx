@@ -207,6 +207,23 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     }
   }, [allServices, activeFilter, componentsByService, allowanceByService]);
 
+  // Search filter (applied after tab filter)
+  const searchedServices = useMemo(() => {
+    if (!searchQuery.trim()) return filteredServices;
+    const q = searchQuery.toLowerCase();
+    return filteredServices.filter(s => s.name.toLowerCase().includes(q));
+  }, [filteredServices, searchQuery]);
+
+  // Expand toggle helper
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Counts for filter tabs
   const filterCounts = useMemo(() => ({
     all: allServices.length,
