@@ -55,6 +55,7 @@ interface ActiveBowl {
   bowlId: string;
   bowlNumber: number;
   status: string;
+  demoLines?: FormulaLine[];
 }
 
 /** Local demo bowl with ingredient info */
