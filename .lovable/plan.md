@@ -1,36 +1,42 @@
 
 
-## Default Variance Threshold to 10% & Ensure Save
+## Allow Dismissing "Needs Attention" on Configured Services
 
 ### Problem
-The DB column defaults to 15%, but the user wants 10% as the default. The slider needs to reliably save when adjusted.
+The `needsAttention` logic flags any chemical service that isn't tracked, or any tracked service missing components/allowance. There's no way to say "I've reviewed this and it's intentionally configured this way" — so the attention count stays inflated.
+
+### Approach: "Dismiss" per service
+
+Add a `backroom_config_dismissed` boolean column on `services`. When set, `needsAttention()` returns false for that service regardless of its tracking/component/allowance state.
 
 ### Changes
 
-**1. Database migration — change column default to 10**
-
+**1. Database migration**
 ```sql
 ALTER TABLE public.services
-  ALTER COLUMN variance_threshold_pct SET DEFAULT 10.0;
-
-UPDATE public.services
-  SET variance_threshold_pct = 10.0
-  WHERE variance_threshold_pct = 15.0;
+  ADD COLUMN backroom_config_dismissed boolean NOT NULL DEFAULT false;
 ```
 
-The UPDATE normalizes existing rows that still have the old default (15). Only rows matching exactly 15 are updated — any user-customized values are preserved.
+**2. Update `needsAttention()` logic (~line 218)**
 
-**2. Frontend fallback — `ServiceTrackingSection.tsx`**
-
-Use `10` as the fallback when `variance_threshold_pct` is null/0:
-
+Add early return:
 ```tsx
-const threshold = service.variance_threshold_pct || 10;
+if (s.backroom_config_dismissed) return false;
 ```
 
-Apply this in both the `defaultValue` prop and the display `<span>`. No other changes needed — the `onValueCommit` mutation already saves correctly.
+**3. Add dismiss/restore action in the drill-down row**
+
+Inside each expanded service row, add a small button:
+- If the service currently needs attention → show a "Mark Configured" button (check icon) that sets `backroom_config_dismissed = true`
+- If already dismissed → show a subtle "Re-flag" link to reset it back to false
+
+This uses the existing `updateService` mutation. The button sits near the status badges (next to "No components" / "No allowance" indicators).
+
+**4. Visual treatment**
+
+Dismissed services in the "All" tab get a subtle muted style and a small "Configured ✓" badge so users know they were intentionally skipped.
 
 ### Files Modified
-- New SQL migration (default 10, bulk-update old default rows)
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (lines 706, 720)
+- New SQL migration (`backroom_config_dismissed` column)
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (attention logic + dismiss button in drill-down)
 
