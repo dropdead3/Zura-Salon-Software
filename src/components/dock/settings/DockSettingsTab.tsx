@@ -4,11 +4,13 @@
  */
 
 import { useState } from 'react';
-import { User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
+import { User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight, Droplets, BarChart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDockDispensingVisual, type DispensingVisual } from '@/hooks/dock/useDockDispensingVisual';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
@@ -135,6 +137,9 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
         <ChevronRight className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
       </button>
 
+      {/* Dispensing Visual preference */}
+      <DispensingVisualSelector />
+
       {/* Station Location module */}
       <div className="mt-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="flex items-center gap-3 mb-3">
@@ -211,6 +216,43 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function DispensingVisualSelector() {
+  const { visual, setVisual } = useDockDispensingVisual();
+
+  const options: { value: DispensingVisual; label: string; icon: React.ReactNode }[] = [
+    { value: 'teardrop', label: 'Teardrop', icon: <Droplets className="w-5 h-5" /> },
+    { value: 'bar', label: 'Progress Bar', icon: <BarChart className="w-5 h-5" /> },
+  ];
+
+  return (
+    <div className="mt-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
+      <p className="text-sm font-medium text-[hsl(var(--platform-foreground))] mb-1">
+        Dispensing Visual
+      </p>
+      <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mb-3">
+        Choose the visual aid shown during ingredient dispensing
+      </p>
+      <div className="flex gap-3">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => { navigator.vibrate?.(15); setVisual(opt.value); }}
+            className={cn(
+              'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
+              visual === opt.value
+                ? 'bg-violet-600/15 border-violet-500/40 text-violet-300'
+                : 'bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border)/0.2)] text-[hsl(var(--platform-foreground-muted))] hover:border-[hsl(var(--platform-border)/0.4)]'
+            )}
+          >
+            {opt.icon}
+            <span className="text-xs font-medium">{opt.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

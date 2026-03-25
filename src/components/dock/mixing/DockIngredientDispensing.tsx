@@ -8,6 +8,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, Scale, StickyNote, MoreHorizontal, Check, ChevronLeft, ChevronRight, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeardropFill } from './TeardropFill';
+import { ProgressBarFill } from './ProgressBarFill';
+import { useDockDispensingVisual } from '@/hooks/dock/useDockDispensingVisual';
 import { DockWeightInput } from './DockWeightInput';
 import type { BowlLine } from './DockLiveDispensing';
 import { roundWeight } from '@/lib/backroom/mix-calculations';
@@ -35,6 +37,7 @@ export function DockIngredientDispensing({
   const carouselRef = useRef<HTMLDivElement>(null);
   const activeCardRef = useRef<HTMLButtonElement>(null);
   const scale = useDockScale();
+  const { visual } = useDockDispensingVisual();
 
   const currentWeight = currentWeights.get(line.id) ?? 0;
   const targetWeight = line.dispensed_quantity;
@@ -212,13 +215,21 @@ export function DockIngredientDispensing({
 
       {/* Main content — teardrop + product info */}
       <div className="flex-1 flex flex-col items-center justify-center px-7 gap-4">
-        {/* Teardrop with glow effect when near target */}
+        {/* Visual aid — teardrop or progress bar based on preference */}
         <div className={cn('relative', isNearTarget && 'animate-pulse')}>
-          <TeardropFill
-            fillPercent={fillPercent}
-            fillColor={fillColor}
-            size={260}
-          />
+          {visual === 'bar' ? (
+            <ProgressBarFill
+              fillPercent={fillPercent}
+              fillColor={fillColor}
+              size={260}
+            />
+          ) : (
+            <TeardropFill
+              fillPercent={fillPercent}
+              fillColor={fillColor}
+              size={260}
+            />
+          )}
           {/* Stable reading indicator */}
           {isAtTarget && (
             <div className="absolute inset-0 flex items-center justify-center z-20">
