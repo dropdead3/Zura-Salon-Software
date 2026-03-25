@@ -215,7 +215,7 @@ export function useSealDockBowl() {
       });
 
       if (!result.success) {
-        throw new Error(result.errors?.[0]?.message || 'Failed to seal bowl');
+        throw new Error(result.errors?.[0]?.message || 'Failed to finish formulation');
       }
 
       await supabase
