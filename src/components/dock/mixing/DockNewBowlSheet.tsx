@@ -132,33 +132,34 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: Dock
 
             {/* Action buttons — 3-column layout */}
             {!showHistory && (
-            <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setPickerOpen(true)}
-                  className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Product
-                </button>
-                {clientId && (
+              <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)]">
+                <div className="flex gap-3">
                   <button
-                    onClick={() => setShowHistory(true)}
-                    className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] bg-[hsl(var(--platform-bg-card))] hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors text-sm font-medium"
+                    onClick={() => setPickerOpen(true)}
+                    className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-dashed border-violet-500/40 text-violet-400 bg-violet-600/10 hover:bg-violet-600/20 transition-colors text-sm font-medium"
                   >
-                    <History className="w-4 h-4" />
-                    From History
+                    <Plus className="w-4 h-4" />
+                    Add Product
                   </button>
-                )}
-                <button
-                  onClick={handleCreate}
-                  disabled={lines.length === 0}
-                  className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
-                >
-                  Create Bowl ({lines.length})
-                </button>
+                  {clientId && (
+                    <button
+                      onClick={() => setShowHistory(true)}
+                      className="flex-1 h-14 flex items-center justify-center gap-2 rounded-xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] bg-[hsl(var(--platform-bg-card))] hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors text-sm font-medium"
+                    >
+                      <History className="w-4 h-4" />
+                      From History
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCreate}
+                    disabled={lines.length === 0}
+                    className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+                  >
+                    Create Bowl ({lines.length})
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Drag handle — bottom position for top-anchored sheet */}
             <div className={DOCK_SHEET.dragHandleWrapperBottom}>
