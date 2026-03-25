@@ -68,18 +68,8 @@ export function ServiceTrackingQuickSetup({
   const milestone = milestones[currentStep];
   const stepPct = milestone && milestone.total > 0 ? Math.round((milestone.current / milestone.total) * 100) : 0;
 
-  // Mutations
-  const classifyMutation = useMutation({
-    mutationFn: async ({ id, isChemical }: { id: string; isChemical: boolean }) => {
-      const { error } = await supabase.from('services').update({ is_chemical_service: isChemical }).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
-    },
-    onError: (e) => toast.error(e.message),
-  });
+
+
 
   const trackMutation = useMutation({
     mutationFn: async (ids: string[]) => {
