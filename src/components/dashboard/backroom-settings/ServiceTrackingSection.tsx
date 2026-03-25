@@ -243,7 +243,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         label: 'Classified',
         current: classified.length,
         total: allServices.length,
-        tooltip: 'Services with a category assigned or explicitly marked as chemical/non-chemical.',
+        tooltip: 'Services classified as requiring color/chemical or not.',
       },
       {
         label: 'Tracked',
@@ -396,7 +396,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
           <Zap className="w-4 h-4 text-amber-500 shrink-0" />
           <p className={cn(tokens.body.muted, 'flex-1')}>
-            <span className="text-foreground font-sans font-medium">{chemicalUntracked.length} chemical service{chemicalUntracked.length > 1 ? 's' : ''}</span>{' '}
+            <span className="text-foreground font-sans font-medium">{chemicalUntracked.length} color/chemical service{chemicalUntracked.length > 1 ? 's' : ''}</span>{' '}
             detected but not yet tracked.
           </p>
           <Button
@@ -501,7 +501,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 {searchQuery
                   ? 'Try a different search term.'
                   : activeFilter === 'attention'
-                    ? 'All chemical services are tracked and configured.'
+                    ? 'All color/chemical services are tracked and configured.'
                     : 'Adjust your filter or add services in the Services Configurator.'}
               </p>
             </div>
@@ -614,7 +614,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center gap-2 justify-end">
                                 {type === 'chemical' && (
-                                  <Badge variant="default" className="text-[10px] shrink-0">Chemical</Badge>
+                                  <Badge variant="default" className="text-[10px] shrink-0">Requires Color/Chemical</Badge>
                                 )}
                                 {type === 'suggested' && (
                                   <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
@@ -719,7 +719,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {/* Chemical toggle + vessel selector */}
                                         <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
                                           <div className="flex items-center gap-2">
-                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
                                             <Switch
                                               checked={service.is_chemical_service}
                                               onCheckedChange={(v) => {

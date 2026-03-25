@@ -39,7 +39,7 @@ interface Props {
 }
 
 const STEPS = [
-  { key: 'classify', label: 'Classify Services', icon: Beaker, description: 'Mark services as chemical or standard.' },
+  { key: 'classify', label: 'Classify Services', icon: Beaker, description: 'Mark services as requiring color/chemical or not.' },,
   { key: 'track', label: 'Enable Tracking', icon: Layers, description: 'Turn on backroom tracking for chemical services.' },
   { key: 'components', label: 'Map Components', icon: Package, description: 'Link products to tracked services.' },
   { key: 'allowances', label: 'Set Allowances', icon: FileText, description: 'Configure billing allowances for tracked services.' },
@@ -145,7 +145,7 @@ export function ServiceTrackingQuickSetup({
         return (
           <div className="space-y-2">
             <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-              Classify each service as Standard or Chemical, then save.
+              Classify each service, then save.
             </p>
             {services.map(s => {
               const localVal = classifications[s.id];
@@ -166,7 +166,7 @@ export function ServiceTrackingQuickSetup({
                       className="h-7 px-3 text-xs font-sans"
                       onClick={() => setClassifications(prev => ({ ...prev, [s.id]: false }))}
                     >
-                      Standard
+                      No Color/Chemical
                     </Button>
                     <Button
                       variant={isChemical ? 'default' : 'outline'}
@@ -174,7 +174,7 @@ export function ServiceTrackingQuickSetup({
                       className="h-7 px-3 text-xs font-sans"
                       onClick={() => setClassifications(prev => ({ ...prev, [s.id]: true }))}
                     >
-                      Chemical
+                      Requires Color/Chemical
                     </Button>
                   </div>
                 </div>
