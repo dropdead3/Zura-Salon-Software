@@ -446,28 +446,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
             </Card>
           </div>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:counts')} className="font-sans gap-1.5">
-                  <ClipboardList className="w-3.5 h-3.5" /> Start Count
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('inventory:orders')} className="font-sans gap-1.5">
-                  <FileText className="w-3.5 h-3.5" /> Create PO
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('alerts')} className="font-sans gap-1.5">
-                  <Eye className="w-3.5 h-3.5" /> View Exceptions
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => onNavigate('suppliers')} className="font-sans gap-1.5">
-                  <Truck className="w-3.5 h-3.5" /> Manage Suppliers
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setActiveSubTab('analytics')} className="font-sans gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> Export Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* ── Analytics ── */}
