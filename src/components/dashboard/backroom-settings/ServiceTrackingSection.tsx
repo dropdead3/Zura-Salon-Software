@@ -396,7 +396,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
           <Zap className="w-4 h-4 text-amber-500 shrink-0" />
           <p className={cn(tokens.body.muted, 'flex-1')}>
-            <span className="text-foreground font-sans font-medium">{chemicalUntracked.length} chemical service{chemicalUntracked.length > 1 ? 's' : ''}</span>{' '}
+            <span className="text-foreground font-sans font-medium">{chemicalUntracked.length} color/chemical service{chemicalUntracked.length > 1 ? 's' : ''}</span>{' '}
             detected but not yet tracked.
           </p>
           <Button
