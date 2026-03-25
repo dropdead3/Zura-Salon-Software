@@ -11,7 +11,7 @@ import { useDockScale } from '@/hooks/dock/useDockScale';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { DockWeightInput } from './DockWeightInput';
+import { DockReweighCapture } from './DockReweighCapture';
 import { DockReweighSummary } from './DockReweighSummary';
 import { DockIngredientDispensing } from './DockIngredientDispensing';
 import { useRecordDispensedWeight, useSealDockBowl, useReweighDockBowl } from '@/hooks/dock/useDockMixSession';
@@ -188,23 +188,12 @@ export function DockLiveDispensing({
 
   if (activeView === 'reweigh-input') {
     return (
-      <div className="flex flex-col h-full bg-[hsl(var(--platform-bg))]">
-        <div className="flex-shrink-0 px-7 pt-6 pb-2">
-          <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-            Bowl {bowlNumber} — Reweigh
-          </p>
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
-            Place finished bowl on scale and enter leftover weight
-          </p>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <DockWeightInput
-            onSubmit={handleReweigh}
-            onCancel={() => setActiveView('lines')}
-            label="Leftover Weight"
-          />
-        </div>
-      </div>
+      <DockReweighCapture
+        bowlNumber={bowlNumber}
+        totalDispensed={totalDispensed}
+        onSubmit={handleReweigh}
+        onCancel={() => setActiveView('lines')}
+      />
     );
   }
 
