@@ -88,7 +88,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
               {appointment.client_name || 'Walk-in'}
             </h1>
             <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
-              {appointment.service_name && <span>{appointment.service_name} · </span>}
+              {effectiveServiceName && <span>{effectiveServiceName} · </span>}
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
             </p>
             {!isTerminal && (
