@@ -1,40 +1,36 @@
 
 
-## Live Slider Value Display
+## Default Variance Threshold to 10% & Ensure Save
 
 ### Problem
-The percentage label (`15%`) only updates after the mutation completes because it reads from `service.variance_threshold_pct` (server state). Need local state to show the value in real-time during drag.
+The DB column defaults to 15%, but the user wants 10% as the default. The slider needs to reliably save when adjusted.
 
-### Changes — `ServiceTrackingSection.tsx` (lines 702–716)
+### Changes
 
-Add `onValueChange` to track the live value in local state, while keeping `onValueCommit` for persistence:
+**1. Database migration — change column default to 10**
 
-```tsx
-// Add a local state map at the component level (near other useState calls)
-const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
+```sql
+ALTER TABLE public.services
+  ALTER COLUMN variance_threshold_pct SET DEFAULT 10.0;
 
-// In the slider area:
-<Slider
-  key={`${service.id}-${service.variance_threshold_pct}`}
-  defaultValue={[service.variance_threshold_pct]}
-  onValueChange={([v]) => {
-    setLiveThresholds(prev => ({ ...prev, [service.id]: v }));
-  }}
-  onValueCommit={([v]) => {
-    if (v !== service.variance_threshold_pct) {
-      updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } });
-    }
-  }}
-  min={5} max={50} step={5}
-  className="flex-1"
-/>
-<span className="text-xs tabular-nums text-muted-foreground w-8 text-right">
-  {(liveThresholds[service.id] ?? service.variance_threshold_pct)}%
-</span>
+UPDATE public.services
+  SET variance_threshold_pct = 10.0
+  WHERE variance_threshold_pct = 15.0;
 ```
 
-The label now reflects the dragged value instantly via local state, while the DB save still happens on release.
+The UPDATE normalizes existing rows that still have the old default (15). Only rows matching exactly 15 are updated — any user-customized values are preserved.
 
-### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+**2. Frontend fallback — `ServiceTrackingSection.tsx`**
+
+Use `10` as the fallback when `variance_threshold_pct` is null/0:
+
+```tsx
+const threshold = service.variance_threshold_pct || 10;
+```
+
+Apply this in both the `defaultValue` prop and the display `<span>`. No other changes needed — the `onValueCommit` mutation already saves correctly.
+
+### Files Modified
+- New SQL migration (default 10, bulk-update old default rows)
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (lines 706, 720)
 
