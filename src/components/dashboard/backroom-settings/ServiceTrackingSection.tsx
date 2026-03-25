@@ -23,6 +23,7 @@ interface ServiceRow {
   name: string;
   category: string | null;
   is_backroom_tracked: boolean;
+  is_chemical_service: boolean;
   assistant_prep_allowed: boolean;
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
