@@ -535,6 +535,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
                     return (
                       <React.Fragment key={service.id}>
+                        {showCategoryHeader && (
+                          <TableRow className="bg-muted/30 pointer-events-none">
+                            <TableCell colSpan={4} className="py-1.5 px-4">
+                              <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
+                                {currentCategory}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        )}
                           <TableRow
                             className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')}
                             onClick={() => toggleExpand(service.id)}
