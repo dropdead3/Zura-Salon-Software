@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { platformNavGroups } from '@/config/platformNav';
-import { LayoutDashboard, Wrench, BarChart3, Settings, Terminal, Users, Rocket, HeartPulse } from 'lucide-react';
+import { LayoutDashboard, Wrench, BarChart3, Settings, Terminal, Users, Rocket, HeartPulse, Package } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Section icon mapping for collapsed sidebar popovers
