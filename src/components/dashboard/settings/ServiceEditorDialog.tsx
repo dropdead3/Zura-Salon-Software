@@ -261,7 +261,10 @@ export function ServiceEditorDialog({
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
+                        <MetricInfoTooltip description="New clients must complete a consultation appointment before booking this service." />
+                      </div>
                       <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
                     </div>
                     <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
