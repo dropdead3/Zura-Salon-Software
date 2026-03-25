@@ -428,7 +428,7 @@ export function MixSessionManager({
         },
       });
     } catch {
-      toast.error('Reweigh failed — bowl remains sealed. Please retry.');
+      toast.error('Reweigh failed — formulation remains sealed. Please retry.');
     }
   }, [activeSession, bowls, organizationId, locationId, createReweigh, updateBowlStatus]);
 
