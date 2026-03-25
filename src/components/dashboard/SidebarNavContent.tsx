@@ -564,6 +564,19 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             }
           }
           
+          // Apps section: only show when org has activated apps
+          // Filter individual app items by their app_key mapping
+          if (sectionId === 'apps') {
+            const APP_KEY_MAP: Record<string, string> = {
+              '/dashboard/admin/backroom-settings': 'backroom',
+            };
+            filteredItems = filteredItems.filter(item => {
+              const appKey = APP_KEY_MAP[item.href];
+              return appKey ? activatedApps.includes(appKey) : true;
+            });
+            shouldShow = filteredItems.length > 0;
+          }
+
           // Platform section should NEVER show in org dashboard
           if (sectionId === 'platform') {
             shouldShow = false;
