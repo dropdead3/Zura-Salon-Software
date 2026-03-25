@@ -828,7 +828,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
                                             )}
                                           </div>
-                                        <div className="flex items-center gap-2 shrink-0">
+                                          <div className="flex items-center gap-2 shrink-0">
                                           {(type === 'chemical' || type === 'suggested') && !service.backroom_config_dismissed && (
                                             <Button
                                               size="sm"
