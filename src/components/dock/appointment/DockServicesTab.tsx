@@ -8,6 +8,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale, History } from 'lucide-react';
+import { toast } from 'sonner';
+import { DockBowlActionSheet, type BowlAction } from '../mixing/DockBowlActionSheet';
+import { DockRenameBowlDialog } from '../mixing/DockRenameBowlDialog';
 import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
@@ -119,6 +122,8 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     } catch { return []; }
   });
   const [showFormulaHistory, setShowFormulaHistory] = useState(false);
+  const [bowlMenuTarget, setBowlMenuTarget] = useState<{ type: 'remote'; session: DockMixSession; index: number } | { type: 'demo'; bowl: DemoBowl } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ type: 'remote'; session: DockMixSession } | { type: 'demo'; bowl: DemoBowl } | null>(null);
 
   // Sync demo bowls to sessionStorage
   useEffect(() => {
@@ -255,6 +260,46 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
     });
   };
 
+  const handleBowlAction = useCallback((action: BowlAction) => {
+    if (!bowlMenuTarget) return;
+    switch (action) {
+      case 'edit':
+        if (bowlMenuTarget.type === 'remote') {
+          handleBowlTap(bowlMenuTarget.session, bowlMenuTarget.index);
+        } else {
+          handleDemoBowlTap(bowlMenuTarget.bowl);
+        }
+        setBowlMenuTarget(null);
+        break;
+      case 'rename':
+        setRenameTarget(bowlMenuTarget.type === 'remote' ? { type: 'remote', session: bowlMenuTarget.session } : { type: 'demo', bowl: bowlMenuTarget.bowl });
+        setBowlMenuTarget(null);
+        break;
+      case 'remove':
+        if (bowlMenuTarget.type === 'demo') {
+          setDemoBowls(prev => prev.filter(b => b.id !== bowlMenuTarget.bowl.id));
+          toast.success('Formula removed');
+        } else {
+          toast.success('Formula removed');
+        }
+        setBowlMenuTarget(null);
+        break;
+      default:
+        toast('Coming soon', { description: `${action.replace('_', ' ')} will be available in a future update.` });
+        setBowlMenuTarget(null);
+        break;
+    }
+  }, [bowlMenuTarget]);
+
+  const handleRename = useCallback((newName: string) => {
+    if (!renameTarget) return;
+    if (renameTarget.type === 'demo') {
+      setDemoBowls(prev => prev.map(b => b.id === renameTarget.bowl.id ? { ...b, serviceLabel: newName } : b));
+    }
+    toast.success('Formula renamed');
+    setRenameTarget(null);
+  }, [renameTarget]);
+
   // Full-screen dispensing view
   const remoteBowls = sessions || [];
   const allBowlCount = remoteBowls.length + demoBowls.length;
@@ -362,11 +407,12 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                     {remote.map((session) => {
                       bowlIdx++;
                       return (
-                        <BowlCard
+                         <BowlCard
                           key={session.id}
                           session={session}
                           index={globalOffset + bowlIdx}
                           onTap={() => handleBowlTap(session, globalOffset + bowlIdx)}
+                          onMenuTap={() => setBowlMenuTarget({ type: 'remote', session, index: globalOffset + bowlIdx })}
                         />
                       );
                     })}
@@ -377,6 +423,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                           key={bowl.id}
                           bowl={bowl}
                           onTap={() => handleDemoBowlTap(bowl)}
+                          onMenuTap={() => setBowlMenuTarget({ type: 'demo', bowl })}
                         />
                       );
                     })}
@@ -393,12 +440,13 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         ) : allBowlCount > 0 ? (
           /* Fallback: flat grid for appointments with no parseable chemical services but existing bowls */
           <div className="grid grid-cols-2 gap-4">
-            {remoteBowls.map((session, idx) => (
+             {remoteBowls.map((session, idx) => (
               <BowlCard
                 key={session.id}
                 session={session}
                 index={idx + 1}
                 onTap={() => handleBowlTap(session, idx + 1)}
+                onMenuTap={() => setBowlMenuTarget({ type: 'remote', session, index: idx + 1 })}
               />
             ))}
             {demoBowls.map((bowl) => (
@@ -406,6 +454,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
                 key={bowl.id}
                 bowl={bowl}
                 onTap={() => handleDemoBowlTap(bowl)}
+                onMenuTap={() => setBowlMenuTarget({ type: 'demo', bowl })}
               />
             ))}
             <AddBowlCard
@@ -500,6 +549,22 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         clientId={appointment.client_id}
         clientName={appointment.client_name}
       />
+
+      {/* Bowl action sheet */}
+      <DockBowlActionSheet
+        open={!!bowlMenuTarget}
+        onClose={() => setBowlMenuTarget(null)}
+        onAction={handleBowlAction}
+        bowlLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.serviceLabel || 'New Formula') : bowlMenuTarget ? `Bowl ${bowlMenuTarget.index}` : undefined}
+      />
+
+      {/* Rename dialog */}
+      <DockRenameBowlDialog
+        open={!!renameTarget}
+        currentName={renameTarget?.type === 'demo' ? (renameTarget.bowl.serviceLabel || 'New Formula') : 'Bowl'}
+        onConfirm={handleRename}
+        onClose={() => setRenameTarget(null)}
+      />
     </div>
   );
 }
@@ -528,7 +593,7 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
 }
 
 // ─── Bowl Card (DB sessions) ──────────────────────────
-function BowlCard({ session, index, onTap }: { session: DockMixSession; index: number; onTap: () => void }) {
+function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSession; index: number; onTap: () => void; onMenuTap: () => void }) {
   const status = getStatusDisplay(session.status);
   const StatusIcon = status.icon;
   const isTerminal = isTerminalSessionStatus(session.status as any);
@@ -559,7 +624,9 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
             </p>
           </div>
         </div>
-        <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0 mt-0.5" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
+          <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        </button>
       </div>
 
       {/* Info area */}
@@ -578,7 +645,7 @@ function BowlCard({ session, index, onTap }: { session: DockMixSession; index: n
 }
 
 /** Demo-mode bowl card with ingredient summary */
-function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
+function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () => void; onMenuTap: () => void }) {
   const previewLines = bowl.lines.slice(0, 3);
   const overflowCount = bowl.lines.length - 3;
 
@@ -607,7 +674,9 @@ function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
             </p>
           </div>
         </div>
-        <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0 mt-0.5" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
+          <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        </button>
       </div>
 
       {/* Ingredient lines preview */}
