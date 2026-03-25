@@ -235,7 +235,7 @@ export function DockNewClientSheet({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0.4, bottom: 0 }}
             onDragEnd={(_, info) => {
-              if (info.offset.y < -120 || info.velocity.y < -500) handleClose();
+              if (info.offset.y < -120 || info.velocity.y < -500) { try { navigator.vibrate?.(15); } catch {} handleClose(); }
             }}
             className="absolute inset-x-0 top-0 z-[71] flex flex-col bg-[hsl(var(--platform-bg))] border-b border-[hsl(var(--platform-border))] rounded-b-2xl"
             style={{ maxHeight: 'calc(100dvh - 2rem)' }}

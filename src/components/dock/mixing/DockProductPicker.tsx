@@ -109,6 +109,7 @@ export function DockProductPicker({ open, onClose, onAddProducts, selectedIds = 
             dragElastic={{ top: 0.6, bottom: 0 }}
             onDragEnd={(_e, info) => {
               if (info.offset.y < -120 || info.velocity.y < -500) {
+                try { navigator.vibrate?.(15); } catch {}
                 onClose();
               }
             }}

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X, Beaker, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useClientFormulaHistory, type ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
@@ -24,6 +24,7 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
   const { data: formulas = [], isLoading } = useClientFormulaHistory(clientId ?? null);
   const { formatDate } = useFormatDate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const dragControls = useDragControls();
 
   return (
     <AnimatePresence>
@@ -46,6 +47,17 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
             animate={{ y: 0 }}
             exit={{ y: '-100%' }}
             transition={DOCK_SHEET.spring}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.6, bottom: 0 }}
+            onDragEnd={(_e, info) => {
+              if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
+                try { navigator.vibrate?.(15); } catch {}
+                onClose();
+              }
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-7 pb-4">
@@ -166,7 +178,10 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
 
             {/* Drag handle — bottom position for top-anchored sheet */}
             <div className={DOCK_SHEET.dragHandleWrapperBottom}>
-              <div className={DOCK_SHEET.dragHandle} />
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
             </div>
           </motion.div>
         </>

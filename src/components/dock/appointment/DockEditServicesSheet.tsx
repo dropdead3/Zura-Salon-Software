@@ -135,6 +135,7 @@ export function DockEditServicesSheet({
             dragElastic={{ top: 0.6, bottom: 0 }}
             onDragEnd={(_e, info) => {
               if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
+                try { navigator.vibrate?.(15); } catch {}
                 onClose();
               }
             }}

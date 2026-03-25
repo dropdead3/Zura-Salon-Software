@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { Menu, X, Calendar, FlaskConical, Users, Weight, Settings, Lock, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET, DOCK_TEXT } from './dock-ui-tokens';
 import type { DockTab } from '@/pages/Dock';
@@ -29,6 +29,7 @@ const SPRING = DOCK_SHEET.spring;
 
 export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAddAppointment }: DockHamburgerMenuProps) {
   const [open, setOpen] = useState(false);
+  const dragControls = useDragControls();
 
   const handleTabSelect = (id: DockTab) => {
     onTabChange(id);
@@ -42,6 +43,7 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
 
   const handleDragEnd = (_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
     if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
+      try { navigator.vibrate?.(15); } catch {}
       setOpen(false);
     }
   };
@@ -74,8 +76,10 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
             {/* Sheet panel — slides up from bottom */}
             <motion.div
               drag="y"
-              dragConstraints={{ bottom: 0 }}
-              dragElastic={0.1}
+              dragControls={dragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0.6, bottom: 0 }}
               onDragEnd={handleDragEnd}
               initial={{ y: '-100%' }}
               animate={{ y: 0 }}
@@ -154,7 +158,10 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
 
               {/* Drag handle — bottom position for top-anchored sheet */}
               <div className={DOCK_SHEET.dragHandleWrapperBottom}>
-                <div className={DOCK_SHEET.dragHandle} />
+                <div
+                  className={DOCK_SHEET.dragHandle}
+                  onPointerDown={(e) => dragControls.start(e)}
+                />
               </div>
             </motion.div>
           </>
