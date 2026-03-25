@@ -321,9 +321,19 @@ export function useSidebarLayout() {
         stored = migrateLegacySections(stored);
       }
 
-      // Merge stored with defaults
-      const sectionOrder = stored?.sectionOrder?.length 
-        ? [...new Set([...stored.sectionOrder, ...DEFAULT_SECTION_ORDER])]
+      // Merge stored with defaults, inserting new sections at their correct default position
+      const sectionOrder = stored?.sectionOrder?.length
+        ? (() => {
+            const merged = [...stored.sectionOrder];
+            DEFAULT_SECTION_ORDER.forEach((id, defaultIdx) => {
+              if (!merged.includes(id)) {
+                const prevInDefault = DEFAULT_SECTION_ORDER[defaultIdx - 1];
+                const insertAfter = prevInDefault ? merged.indexOf(prevInDefault) : -1;
+                merged.splice(insertAfter + 1, 0, id);
+              }
+            });
+            return [...new Set(merged)];
+          })()
         : DEFAULT_SECTION_ORDER;
 
       const linkOrder: Record<string, string[]> = { ...DEFAULT_LINK_ORDER };
