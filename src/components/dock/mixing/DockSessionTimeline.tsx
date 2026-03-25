@@ -31,7 +31,7 @@ const EVENT_DISPLAY: Record<string, { label: string; icon: typeof Clock; color: 
   line_item_recorded: { label: 'Product Dispensed', icon: Zap, color: 'text-[hsl(var(--platform-foreground))]' },
   line_item_removed: { label: 'Product Removed', icon: Trash2, color: 'text-red-400' },
   weight_captured: { label: 'Weight Captured', icon: Scale, color: 'text-emerald-400' },
-  bowl_sealed: { label: 'Bowl Sealed', icon: Lock, color: 'text-amber-400' },
+  bowl_sealed: { label: 'Formulation Finalized', icon: Check, color: 'text-emerald-400' },
   bowl_discarded: { label: 'Bowl Discarded', icon: Trash2, color: 'text-red-400' },
   reweigh_captured: { label: 'Reweigh Captured', icon: Scale, color: 'text-emerald-400' },
   waste_recorded: { label: 'Waste Recorded', icon: AlertTriangle, color: 'text-amber-400' },

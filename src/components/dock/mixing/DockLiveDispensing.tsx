@@ -289,8 +289,8 @@ export function DockLiveDispensing({
             disabled={!lines?.length || sealBowl.isPending}
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
-            <Lock className="w-4 h-4" />
-            {sealBowl.isPending ? 'Sealing...' : 'Seal Bowl'}
+            <Check className="w-4 h-4" />
+            {sealBowl.isPending ? 'Finishing...' : 'Finish Formulation'}
           </button>
         )}
         {needsReweigh && !isComplete && (

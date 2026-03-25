@@ -231,7 +231,7 @@ export function useSealDockBowl() {
       toast.success('Formulation finalized');
     },
     onError: (error) => {
-      toast.error('Failed to seal bowl: ' + (error as Error).message);
+      toast.error('Failed to finish formulation: ' + (error as Error).message);
     },
   });
 }
