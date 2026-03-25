@@ -158,7 +158,10 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
 
               {/* Drag handle — bottom position for top-anchored sheet */}
               <div className={DOCK_SHEET.dragHandleWrapperBottom}>
-                <div className={DOCK_SHEET.dragHandle} />
+                <div
+                  className={DOCK_SHEET.dragHandle}
+                  onPointerDown={(e) => dragControls.start(e)}
+                />
               </div>
             </motion.div>
           </>

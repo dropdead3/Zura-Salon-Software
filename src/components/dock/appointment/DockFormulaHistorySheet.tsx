@@ -178,7 +178,10 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
 
             {/* Drag handle — bottom position for top-anchored sheet */}
             <div className={DOCK_SHEET.dragHandleWrapperBottom}>
-              <div className={DOCK_SHEET.dragHandle} />
+              <div
+                className={DOCK_SHEET.dragHandle}
+                onPointerDown={(e) => dragControls.start(e)}
+              />
             </div>
           </motion.div>
         </>

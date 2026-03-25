@@ -435,6 +435,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
             dragElastic={{ top: 0.4, bottom: 0 }}
             onDragEnd={(_, info) => {
               if (info.offset.y < -120 || info.velocity.y < -500) {
+                try { navigator.vibrate?.(15); } catch {}
                 handleClose();
               }
             }}
