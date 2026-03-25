@@ -83,17 +83,17 @@ export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', un
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3 w-full max-w-[280px] mt-4">
+      <div className="flex gap-4 w-full max-w-[320px] mt-6">
         <button
           onClick={onCancel}
-          className="flex-1 h-12 rounded-xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] text-sm font-medium transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
+          className="flex-1 h-14 rounded-2xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] text-sm font-medium transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
         >
           Cancel
         </button>
         <button
           onClick={handleConfirm}
           disabled={parsedValue <= 0}
-          className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+          className="flex-1 h-14 rounded-2xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2.5 px-6"
         >
           <Check className="w-4 h-4" />
           Confirm
