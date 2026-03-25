@@ -1,26 +1,30 @@
 
 
-## Rename "Seal Bowl" → "Finish Formulation" + Swap Icons
+## Fix: Align Demo Appointment Service Names with Demo Service Catalog
 
-### Problem
-"Seal Bowl" is internal jargon leaking into the UI. The lock icon reinforces a wrong mental model. The action means the stylist finished dispensing — "Finish Formulation" is clearer.
+### Root Cause
+Demo appointments use invented service names (e.g., "Balayage + Toner", "Root Touch-Up + Gloss", "Color Correction", "Toner Refresh", "Vivids (Fashion Color)") that don't exist in `DEMO_SERVICES`. The Edit Services sheet matches by exact name against the catalog — so nothing pre-selects.
 
-### Changes
+### Fix — `src/hooks/dock/dockDemoData.ts`
 
-**1. `src/components/dock/mixing/DockLiveDispensing.tsx`**
-- Line 293: `'Seal Bowl'` → `'Finish Formulation'`, `'Sealing...'` → `'Finishing...'`
-- Line 292: `Lock` icon → `Check` icon (already imported)
-- Line 234: Status badge icon `Lock` → `Check`
-- Line 235: Badge text `'Sealed'` → `'Finalized'`
-- Line 191: Copy `'Place sealed bowl on scale...'` → `'Place finished bowl on scale...'`
+Update `DEMO_APPOINTMENTS` service names to use exact names from `DEMO_SERVICES`, joined with ` + ` for multi-service appointments:
 
-**2. `src/components/dock/mixing/DockSessionTimeline.tsx`**
-- Line 34: `bowl_sealed` label `'Bowl Sealed'` → `'Formulation Finalized'`, icon `Lock` → `Check`
+| Appointment | Current `service_name` | New `service_name` |
+|---|---|---|
+| demo-appt-1 (Sarah Mitchell) | `Balayage + Toner` | `Full Balayage + Vivid Toner` |
+| demo-appt-7 (Rachel Kim) | `Root Touch-Up + Gloss` | `Natural Root Retouch + Glaze Add On` |
+| demo-appt-2 (Jessica Chen) | `Root Touch-Up + Gloss` | `Natural Root Retouch + Glaze Add On` |
+| demo-appt-3 (Emily Rodriguez) | `Full Highlight + Root Smudge + Glaze Add On + Signature Haircut` | `Full Highlight + Root Smudge (Add On) + Glaze Add On + Signature Haircut` |
+| demo-appt-4 (Amanda Park) | `Color Correction` | `Corrective Color - By The Hour` |
+| demo-appt-5 (Lauren Taylor) | `Toner Refresh` | `Vivid Toner` |
+| demo-appt-6 (Maria Gonzalez) | `Vivids (Fashion Color)` | `Full Vivid` |
 
-**3. `src/hooks/dock/useDockMixSession.ts`**
-- Line 218: Error message `'Failed to seal bowl'` → `'Failed to finish formulation'`
-- Line 234: Toast error `'Failed to seal bowl'` → `'Failed to finish formulation'`
+Non-chemical appointments (Signature Haircut, Blowout, etc.) already match the catalog — no changes needed.
 
-### Not changed
-Internal variable names (`sealBowl`, `handleSeal`, `isSealed`) and DB state values (`sealed`, `bowl_sealed`) remain as-is — only user-facing copy and icons change.
+### Also update related demo data references
+- `DEMO_FORMULA_HISTORY` and `DEMO_FORMULA_MEMORY` entries that reference old service names (e.g., "Root Touch-Up + Gloss") need to be updated to match the new names so formula memory continues to resolve correctly.
+- `DEMO_VISIT_HISTORY` entries referencing old names should also be updated for consistency.
+
+### Summary — 1 file changed
+`src/hooks/dock/dockDemoData.ts` — realign all demo service names to match the catalog exactly.
 
