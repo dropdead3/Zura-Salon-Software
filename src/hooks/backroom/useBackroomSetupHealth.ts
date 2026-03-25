@@ -143,6 +143,7 @@ export function useBackroomSetupHealth() {
         stationsConfigured: stationsRes.count || 0,
         alertRulesConfigured: alertsRes.count || 0,
         billingConfigured,
+        trackedServicesWithComponents,
         warnings,
       };
     },
