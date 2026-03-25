@@ -10177,6 +10177,7 @@ export type Database = {
           bowl_name: string | null
           bowl_number: number
           completed_at: string | null
+          container_type: Database["public"]["Enums"]["container_type"]
           created_at: string
           id: string
           leftover_weight: number | null
@@ -10194,6 +10195,7 @@ export type Database = {
           bowl_name?: string | null
           bowl_number?: number
           completed_at?: string | null
+          container_type?: Database["public"]["Enums"]["container_type"]
           created_at?: string
           id?: string
           leftover_weight?: number | null
@@ -10211,6 +10213,7 @@ export type Database = {
           bowl_name?: string | null
           bowl_number?: number
           completed_at?: string | null
+          container_type?: Database["public"]["Enums"]["container_type"]
           created_at?: string
           id?: string
           leftover_weight?: number | null
@@ -10376,6 +10379,7 @@ export type Database = {
           client_id: string | null
           completed_at: string | null
           confidence_score: number | null
+          container_type: Database["public"]["Enums"]["container_type"]
           created_at: string
           id: string
           is_manual_override: boolean
@@ -10401,6 +10405,7 @@ export type Database = {
           client_id?: string | null
           completed_at?: string | null
           confidence_score?: number | null
+          container_type?: Database["public"]["Enums"]["container_type"]
           created_at?: string
           id?: string
           is_manual_override?: boolean
@@ -10426,6 +10431,7 @@ export type Database = {
           client_id?: string | null
           completed_at?: string | null
           confidence_score?: number | null
+          container_type?: Database["public"]["Enums"]["container_type"]
           created_at?: string
           id?: string
           is_manual_override?: boolean
@@ -12814,6 +12820,7 @@ export type Database = {
         Row: {
           allow_same_day_booking: boolean | null
           category: string | null
+          container_types: Database["public"]["Enums"]["container_type"][]
           created_at: string | null
           duration_minutes: number
           id: string
@@ -12830,6 +12837,7 @@ export type Database = {
         Insert: {
           allow_same_day_booking?: boolean | null
           category?: string | null
+          container_types?: Database["public"]["Enums"]["container_type"][]
           created_at?: string | null
           duration_minutes?: number
           id?: string
@@ -12846,6 +12854,7 @@ export type Database = {
         Update: {
           allow_same_day_booking?: boolean | null
           category?: string | null
+          container_types?: Database["public"]["Enums"]["container_type"][]
           created_at?: string | null
           duration_minutes?: number
           id?: string
@@ -18796,6 +18805,7 @@ export type Database = {
           assistant_prep_allowed: boolean
           bookable_online: boolean
           category: string | null
+          container_types: Database["public"]["Enums"]["container_type"][]
           content_creation_time_minutes: number
           cost: number | null
           created_at: string | null
@@ -18838,6 +18848,7 @@ export type Database = {
           assistant_prep_allowed?: boolean
           bookable_online?: boolean
           category?: string | null
+          container_types?: Database["public"]["Enums"]["container_type"][]
           content_creation_time_minutes?: number
           cost?: number | null
           created_at?: string | null
@@ -18880,6 +18891,7 @@ export type Database = {
           assistant_prep_allowed?: boolean
           bookable_online?: boolean
           category?: string | null
+          container_types?: Database["public"]["Enums"]["container_type"][]
           content_creation_time_minutes?: number
           cost?: number | null
           created_at?: string | null
@@ -23623,6 +23635,7 @@ export type Database = {
       chat_channel_type: "public" | "private" | "dm" | "group_dm" | "location"
       chat_member_role: "owner" | "admin" | "member"
       chat_user_status_type: "available" | "busy" | "dnd" | "away"
+      container_type: "bowl" | "bottle"
       day_rate_booking_status:
         | "pending"
         | "confirmed"
@@ -23888,6 +23901,7 @@ export const Constants = {
       chat_channel_type: ["public", "private", "dm", "group_dm", "location"],
       chat_member_role: ["owner", "admin", "member"],
       chat_user_status_type: ["available", "busy", "dnd", "away"],
+      container_type: ["bowl", "bottle"],
       day_rate_booking_status: [
         "pending",
         "confirmed",

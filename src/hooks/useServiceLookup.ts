@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export type ContainerType = 'bowl' | 'bottle';
+
 export interface ServiceLookupEntry {
   name: string;
   category: string | null;
   duration_minutes: number;
   price: number | null;
+  container_types: ContainerType[];
 }
 
 /**
@@ -18,7 +21,7 @@ export function useServiceLookup() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_services')
-        .select('name, category, duration_minutes, price')
+        .select('name, category, duration_minutes, price, container_types')
         .eq('is_active', true);
 
       if (error) throw error;
@@ -33,6 +36,7 @@ export function useServiceLookup() {
             category: s.category,
             duration_minutes: s.duration_minutes,
             price: s.price,
+            container_types: (s.container_types as ContainerType[] | null) || ['bowl'],
           });
         }
       }

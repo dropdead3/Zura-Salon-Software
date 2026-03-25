@@ -37,10 +37,12 @@ export function useCreateDockBowl() {
       lines: FormulaLine[];
       baseWeight: number;
       serviceLabel?: string;
+      containerType?: 'bowl' | 'bottle';
     }): Promise<CreatedBowlResult> => {
       const meta = await buildCommandMeta('ui');
 
       // 1. Create mix_session row
+      const ct = params.containerType || 'bowl';
       const { data: session, error: sessionErr } = await supabase
         .from('mix_sessions')
         .insert({
@@ -51,7 +53,8 @@ export function useCreateDockBowl() {
           status: 'draft',
           is_manual_override: true,
           service_label: params.serviceLabel || null,
-        })
+          container_type: ct,
+        } as any)
         .select('id')
         .single();
 
@@ -76,14 +79,16 @@ export function useCreateDockBowl() {
       });
 
       // 4. Create bowl row
+      const bowlLabel = ct === 'bottle' ? 'Bottle 1' : 'Bowl 1';
       const { data: bowl, error: bowlErr } = await supabase
         .from('mix_bowls')
         .insert({
           mix_session_id: sessionId,
           bowl_number: 1,
-          bowl_name: 'Bowl 1',
+          bowl_name: bowlLabel,
           purpose: 'color',
-        })
+          container_type: ct,
+        } as any)
         .select('id')
         .single();
 

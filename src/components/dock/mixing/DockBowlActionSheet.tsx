@@ -14,18 +14,22 @@ interface DockBowlActionSheetProps {
   onClose: () => void;
   onAction: (action: BowlAction) => void;
   bowlLabel?: string;
+  containerLabel?: string;
 }
 
-const actions: { key: BowlAction; label: string; icon: typeof Pencil; destructive?: boolean }[] = [
-  { key: 'edit', label: 'Edit Formula', icon: Pencil },
-  { key: 'change_service', label: 'Change Service', icon: ArrowRightLeft },
-  { key: 'favorite', label: 'Add To Favorites', icon: Star },
-  { key: 'view_notes', label: 'View Notes', icon: StickyNote },
-  { key: 'rename', label: 'Rename Formula', icon: Type },
-  { key: 'discard', label: 'Discard Formula', icon: Trash2, destructive: true },
-];
+function getActions(containerLabel: string): { key: BowlAction; label: string; icon: typeof Pencil; destructive?: boolean }[] {
+  return [
+    { key: 'edit', label: `Edit ${containerLabel}`, icon: Pencil },
+    { key: 'change_service', label: 'Change Service', icon: ArrowRightLeft },
+    { key: 'favorite', label: 'Add To Favorites', icon: Star },
+    { key: 'view_notes', label: 'View Notes', icon: StickyNote },
+    { key: 'rename', label: `Rename ${containerLabel}`, icon: Type },
+    { key: 'discard', label: `Discard ${containerLabel}`, icon: Trash2, destructive: true },
+  ];
+}
 
-export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel }: DockBowlActionSheetProps) {
+export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel, containerLabel = 'Formula' }: DockBowlActionSheetProps) {
+  const actions = getActions(containerLabel);
   return (
     <AnimatePresence>
       {open && (

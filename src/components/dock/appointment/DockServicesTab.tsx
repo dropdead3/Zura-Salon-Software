@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale, History } from 'lucide-react';
+import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale, History, TestTube2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DockBowlActionSheet, type BowlAction } from '../mixing/DockBowlActionSheet';
 import { DockRenameBowlDialog } from '../mixing/DockRenameBowlDialog';
@@ -29,6 +29,7 @@ import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockClientAlertsBanner } from './DockClientAlertsBanner';
 import { DockFormulaHistorySheet } from './DockFormulaHistorySheet';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
+import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -86,6 +87,7 @@ interface DemoBowl {
   totalCost: number;
   createdAt: string;
   serviceLabel: string | null;
+  containerType: ContainerType;
 }
 
 /** Parse service_name into individual service tokens */
@@ -104,11 +106,13 @@ function getChemicalServices(serviceName: string | null | undefined): string[] {
 export function DockServicesTab({ appointment, staff, effectiveServiceName }: DockServicesTabProps) {
   const { isDemoMode } = useDockDemo();
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
+  const { data: serviceLookup } = useServiceLookup();
   const [showNewBowl, setShowNewBowl] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [showBowlDetection, setShowBowlDetection] = useState(false);
   const [activeBowl, setActiveBowl] = useState<ActiveBowl | null>(null);
   const [activeServiceLabel, setActiveServiceLabel] = useState<string | null>(null);
+  const [activeContainerType, setActiveContainerType] = useState<ContainerType>('bowl');
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
   const markUnresolved = useMarkDockSessionUnresolved();
@@ -151,8 +155,9 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const primarySessionId = sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);
 
-  const handleAddBowlForService = useCallback((serviceLabel: string) => {
+  const handleAddBowlForService = useCallback((serviceLabel: string, containerType: ContainerType = 'bowl') => {
     setActiveServiceLabel(serviceLabel);
+    setActiveContainerType(containerType);
     if (!showBowlDetection) setShowBowlDetection(true);
   }, [showBowlDetection]);
 
@@ -172,6 +177,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         totalCost,
         createdAt: new Date().toISOString(),
         serviceLabel: activeServiceLabel,
+        containerType: activeContainerType,
       };
       setDemoBowls((prev) => [...prev, newBowl]);
       setActiveBowl({
@@ -182,6 +188,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         demoLines: formulaLinesToBowlLines(lines),
       });
       setActiveServiceLabel(null);
+      setActiveContainerType('bowl');
       return;
     }
 
@@ -195,6 +202,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       lines,
       baseWeight: _baseWeight,
       serviceLabel: activeServiceLabel || undefined,
+      containerType: activeContainerType,
     }, {
       onSuccess: (result: CreatedBowlResult) => {
         setActiveBowl({
@@ -399,7 +407,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
                       {serviceLabel}
                     </h3>
                     <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)]">
-                      {svcBowlCount} bowl{svcBowlCount !== 1 ? 's' : ''}
+                      {svcBowlCount} formulation{svcBowlCount !== 1 ? 's' : ''}
                     </span>
                   </div>
 
@@ -407,11 +415,13 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
                   <div className="grid grid-cols-2 gap-4">
                     {remote.map((session) => {
                       bowlIdx++;
+                      const ct = (session.container_type as ContainerType) || 'bowl';
                       return (
                          <BowlCard
                           key={session.id}
                           session={session}
                           index={globalOffset + bowlIdx}
+                          containerType={ct}
                           onTap={() => handleBowlTap(session, globalOffset + bowlIdx)}
                           onMenuTap={() => setBowlMenuTarget({ type: 'remote', session, index: globalOffset + bowlIdx })}
                         />
@@ -428,11 +438,19 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
                         />
                       );
                     })}
-                    {/* Inline Add Bowl card */}
-                    <AddBowlCard
-                      onClick={() => handleAddBowlForService(serviceLabel)}
-                      disabled={createBowl.isPending}
-                    />
+                    {/* Inline Add cards based on service container types */}
+                    {(() => {
+                      const svcMeta = serviceLookup?.get(serviceLabel);
+                      const allowedTypes: ContainerType[] = svcMeta?.container_types || ['bowl'];
+                      return allowedTypes.map((ct) => (
+                        <AddBowlCard
+                          key={ct}
+                          containerType={ct}
+                          onClick={() => handleAddBowlForService(serviceLabel, ct)}
+                          disabled={createBowl.isPending}
+                        />
+                      ));
+                    })()}
                   </div>
                 </div>
               );
@@ -517,9 +535,11 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         onClose={() => {
           setShowNewBowl(false);
           setActiveServiceLabel(null);
+          setActiveContainerType('bowl');
         }}
         onCreateBowl={handleCreateBowl}
         clientId={appointment.client_id}
+        containerType={activeContainerType}
       />
 
       {/* Session complete sheet */}
@@ -556,13 +576,15 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         open={!!bowlMenuTarget}
         onClose={() => setBowlMenuTarget(null)}
         onAction={handleBowlAction}
-        bowlLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.serviceLabel || 'New Formula') : bowlMenuTarget ? `Bowl ${bowlMenuTarget.index}` : undefined}
+        bowlLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.serviceLabel || 'New Formula') : bowlMenuTarget ? `${(bowlMenuTarget.session.container_type === 'bottle' ? 'Bottle' : 'Bowl')} ${bowlMenuTarget.index}` : undefined}
+        containerLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.containerType === 'bottle' ? 'Bottle' : 'Bowl') : bowlMenuTarget?.session.container_type === 'bottle' ? 'Bottle' : 'Bowl'}
       />
 
       {/* Rename dialog */}
       <DockRenameBowlDialog
         open={!!renameTarget}
         currentName={renameTarget?.type === 'demo' ? (renameTarget.bowl.serviceLabel || 'New Formula') : 'Bowl'}
+        containerLabel={renameTarget?.type === 'demo' ? (renameTarget.bowl.containerType === 'bottle' ? 'Bottle' : 'Bowl') : 'Bowl'}
         onConfirm={handleRename}
         onClose={() => setRenameTarget(null)}
       />
@@ -571,8 +593,11 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
 }
 
 
-// ─── Inline Add Bowl Card ─────────────────────────────
-function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+// ─── Inline Add Bowl/Bottle Card ─────────────────────────────
+function AddBowlCard({ onClick, disabled, containerType = 'bowl' }: { onClick: () => void; disabled: boolean; containerType?: ContainerType }) {
+  const isBottle = containerType === 'bottle';
+  const Icon = isBottle ? TestTube2 : FlaskConical;
+  const label = isBottle ? 'Add Bottle' : 'Add Bowl';
   return (
     <button
       onClick={onClick}
@@ -588,16 +613,17 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
       <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
         <Plus className="w-6 h-6" />
       </div>
-      <span className="text-sm font-medium">Add Bowl</span>
+      <span className="text-sm font-medium">{label}</span>
     </button>
   );
 }
 
 // ─── Bowl Card (DB sessions) ──────────────────────────
-function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSession; index: number; onTap: () => void; onMenuTap: () => void }) {
+function BowlCard({ session, index, onTap, onMenuTap, containerType = 'bowl' }: { session: DockMixSession; index: number; onTap: () => void; onMenuTap: () => void; containerType?: ContainerType }) {
   const status = getStatusDisplay(session.status);
   const StatusIcon = status.icon;
   const isTerminal = isTerminalSessionStatus(session.status as any);
+  const containerLabel = containerType === 'bottle' ? 'Bottle' : 'Bowl';
 
   return (
     <button
@@ -618,7 +644,7 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
           </div>
           <div className="min-w-0">
              <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              Bowl {index}
+              {containerLabel} {index}
             </p>
             <p className={cn('text-xs mt-0.5', status.color)}>
               {status.label}
@@ -654,6 +680,9 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
 function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () => void; onMenuTap: () => void }) {
   const previewLines = bowl.lines.slice(0, 3);
   const overflowCount = bowl.lines.length - 3;
+  const isBottle = bowl.containerType === 'bottle';
+  const CardIcon = isBottle ? TestTube2 : FlaskConical;
+  const containerLabel = isBottle ? 'New Bottle' : 'New Formula';
 
   return (
     <button
@@ -669,11 +698,11 @@ function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () =>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-            <FlaskConical className="w-4.5 h-4.5 text-amber-400" />
+            <CardIcon className="w-4.5 h-4.5 text-amber-400" />
           </div>
           <div className="min-w-0">
              <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              New Formula
+              {containerLabel}
             </p>
             <p className="text-xs mt-0.5 text-amber-400">
               In Progress

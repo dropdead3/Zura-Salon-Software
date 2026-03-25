@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,6 +52,7 @@ export function ServiceEditorDialog({
   const [depositAmountFlat, setDepositAmountFlat] = useState('');
   const [processingTime, setProcessingTime] = useState('0');
   const [requiresNewClientConsultation, setRequiresNewClientConsultation] = useState(false);
+  const [containerTypes, setContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
 
   useEffect(() => {
     if (open) {
@@ -70,6 +72,7 @@ export function ServiceEditorDialog({
         setContentCreationTime(String(initialData.content_creation_time_minutes || 0));
         setProcessingTime(String(initialData.processing_time_minutes || 0));
         setRequiresNewClientConsultation(initialData.requires_new_client_consultation ?? false);
+        setContainerTypes((initialData as any).container_types || ['bowl']);
         setRequiresDeposit(initialData.requires_deposit ?? false);
         setDepositType(initialData.deposit_type ?? 'percentage');
         setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
@@ -89,6 +92,7 @@ export function ServiceEditorDialog({
         setContentCreationTime('0');
         setProcessingTime('0');
         setRequiresNewClientConsultation(false);
+        setContainerTypes(['bowl']);
         setRequiresDeposit(false);
         setDepositType('percentage');
         setDepositAmount('');
@@ -119,7 +123,8 @@ export function ServiceEditorDialog({
       deposit_type: depositType,
       deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
       deposit_amount_flat: depositAmountFlat ? parseFloat(depositAmountFlat) : null,
-    });
+      container_types: containerTypes,
+    } as Partial<Service>);
   };
 
   const isCreateMode = mode === 'create';
@@ -250,6 +255,36 @@ export function ServiceEditorDialog({
                       <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
                     </div>
                     <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
+                  </div>
+
+                  {/* Container Types */}
+                  <div className="pt-2 border-t border-border/60">
+                    <div className="mb-2">
+                      <p className={tokens.body.emphasis}>Container Types</p>
+                      <p className={tokens.body.muted}>What vessel types does this service use for formulations?</p>
+                    </div>
+                    <div className="flex gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={containerTypes.includes('bowl')}
+                          onCheckedChange={(checked) => {
+                            if (checked) setContainerTypes(prev => prev.includes('bowl') ? prev : [...prev, 'bowl']);
+                            else setContainerTypes(prev => prev.filter(t => t !== 'bowl').length > 0 ? prev.filter(t => t !== 'bowl') : prev);
+                          }}
+                        />
+                        <span className="text-sm">Bowl</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={containerTypes.includes('bottle')}
+                          onCheckedChange={(checked) => {
+                            if (checked) setContainerTypes(prev => prev.includes('bottle') ? prev : [...prev, 'bottle']);
+                            else setContainerTypes(prev => prev.filter(t => t !== 'bottle').length > 0 ? prev.filter(t => t !== 'bottle') : prev);
+                          }}
+                        />
+                        <span className="text-sm">Bottle</span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Deposit Configuration */}

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { X, FlaskConical, Plus, History } from 'lucide-react';
+import { X, FlaskConical, Plus, History, TestTube2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
 import { DockFormulaHistoryPicker } from './DockFormulaHistoryPicker';
@@ -17,9 +17,14 @@ interface DockNewBowlSheetProps {
   onClose: () => void;
   onCreateBowl: (lines: FormulaLine[], baseWeight: number) => void;
   clientId?: string | null;
+  containerType?: 'bowl' | 'bottle';
 }
 
-export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: DockNewBowlSheetProps) {
+export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId, containerType = 'bowl' }: DockNewBowlSheetProps) {
+  const isBottle = containerType === 'bottle';
+  const HeaderIcon = isBottle ? TestTube2 : FlaskConical;
+  const headerLabel = isBottle ? 'New Bottle' : 'New Bowl';
+  const createLabel = isBottle ? 'Create Bottle' : 'Create Bowl';
   const [lines, setLines] = useState<FormulaLine[]>([]);
   const [baseWeight, setBaseWeight] = useState(40);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -93,9 +98,9 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: Dock
             <div className="flex-shrink-0 px-7 pt-5 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4 text-violet-400" />
+                  <HeaderIcon className="w-4 h-4 text-violet-400" />
                   <h2 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-                    New Bowl
+                    {headerLabel}
                   </h2>
                 </div>
                 <button
@@ -155,7 +160,7 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: Dock
                     disabled={lines.length === 0}
                     className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
                   >
-                    Create Bowl ({lines.length})
+                    {createLabel} ({lines.length})
                   </button>
                 </div>
               </div>
