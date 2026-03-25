@@ -420,11 +420,12 @@ function StepComplete({ message }: { message: string }) {
   );
 }
 
-function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent }: {
+function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent, linkedCount = 0 }: {
   serviceId: string;
   serviceName: string;
   orgId: string;
   upsertComponent: ReturnType<typeof useUpsertTrackingComponent>;
+  linkedCount?: number;
 }) {
   const [adding, setAdding] = useState(false);
 
@@ -447,12 +448,22 @@ function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent }: 
   return (
     <div className="rounded-lg border p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-sans truncate">{serviceName}</span>
-        {!adding && (
-          <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setAdding(true)}>
-            Add Product
-          </Button>
-        )}
+        <div className="min-w-0 flex-1">
+          <span className="text-sm font-sans truncate block">{serviceName}</span>
+          {linkedCount === 0 && !adding && (
+            <span className="text-[10px] font-sans text-muted-foreground/60">Which products does this service use?</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {linkedCount > 0 && (
+            <Badge variant="secondary" className="text-[10px]">{linkedCount} linked</Badge>
+          )}
+          {!adding && (
+            <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setAdding(true)}>
+              Link Product
+            </Button>
+          )}
+        </div>
       </div>
       {adding && (
         <Select
@@ -462,7 +473,7 @@ function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent }: 
           }}
         >
           <SelectTrigger className="w-full text-xs h-8">
-            <SelectValue placeholder="Select product..." />
+            <SelectValue placeholder="Select a product to link..." />
           </SelectTrigger>
           <SelectContent>
             {(backroomProducts || []).map(p => (
