@@ -261,55 +261,58 @@ export function ServiceTrackingQuickSetup({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className={tokens.card.title}>Quick Setup</DialogTitle>
-          <DialogDescription className={tokens.body.muted}>
-            Walk through configuration step by step.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl sm:max-h-[85vh] flex flex-col p-0 gap-0">
+        {/* Fixed header */}
+        <div className="p-6 pb-4 space-y-3 shrink-0">
+          <DialogHeader>
+            <DialogTitle className={tokens.card.title}>Quick Setup</DialogTitle>
+            <DialogDescription className={tokens.body.muted}>
+              Walk through configuration step by step.
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-1 mt-2">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            const done = milestones[i] && milestones[i].current === milestones[i].total && milestones[i].total > 0;
-            return (
-              <button
-                key={s.key}
-                onClick={() => setCurrentStep(i)}
-                className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-sans transition-colors border',
-                  i === currentStep
-                    ? 'bg-primary/10 border-primary/30 text-primary'
-                    : done
-                      ? 'bg-primary/5 border-primary/20 text-primary/70'
-                      : 'bg-muted/50 border-border text-muted-foreground',
-                )}
-              >
-                {done ? <CheckCircle2 className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
-                <span className="hidden sm:inline">{s.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Step progress */}
-        <div className="space-y-1 mt-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-sans text-muted-foreground">{step.description}</span>
-            <span className="text-xs font-sans tabular-nums text-muted-foreground">{milestone?.current}/{milestone?.total}</span>
+          {/* Step indicator */}
+          <div className="flex items-center gap-1">
+            {STEPS.map((s, i) => {
+              const Icon = s.icon;
+              const done = milestones[i] && milestones[i].current === milestones[i].total && milestones[i].total > 0;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setCurrentStep(i)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-sans transition-colors border',
+                    i === currentStep
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : done
+                        ? 'bg-primary/5 border-primary/20 text-primary/70'
+                        : 'bg-muted/50 border-border text-muted-foreground',
+                  )}
+                >
+                  {done ? <CheckCircle2 className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
+                  <span className="hidden sm:inline">{s.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <Progress value={stepPct} className="h-1.5" />
+
+          {/* Step progress */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-sans text-muted-foreground">{step.description}</span>
+              <span className="text-xs font-sans tabular-nums text-muted-foreground">{milestone?.current}/{milestone?.total}</span>
+            </div>
+            <Progress value={stepPct} className="h-1.5" />
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="mt-4">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 pb-2">
           {renderStepContent()}
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+        {/* Fixed footer */}
+        <div className="flex items-center justify-between p-6 pt-3 border-t border-border/50 shrink-0">
           <Button variant="ghost" size="sm" onClick={next} className="text-xs text-muted-foreground">
             <SkipForward className="w-3 h-3 mr-1" />
             {currentStep < STEPS.length - 1 ? 'Skip' : 'Close'}
