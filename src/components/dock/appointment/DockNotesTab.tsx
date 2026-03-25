@@ -124,6 +124,66 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
         </div>
       )}
 
+      {/* Formulation Notes (from formula history) */}
+      {formulasWithNotes.length > 0 && (
+        <div>
+          <p className={cn(DOCK_CONTENT.sectionHeader, 'mb-2')}>Formulation Notes</p>
+          <div className="space-y-2">
+            {formulasWithNotes.map((formula) => (
+              <div
+                key={formula.id}
+                className={cn('rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.2)]', DOCK_CONTENT.cardPadding)}
+              >
+                {/* Date + service row */}
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <FlaskConical className="w-4 h-4 text-violet-400/60 shrink-0" />
+                    <span className={DOCK_CONTENT.body}>
+                      {formula.service_name || 'Formula'}
+                    </span>
+                  </div>
+                  <span className="flex items-center gap-1.5 text-xs text-[hsl(var(--platform-foreground-muted))]">
+                    <Clock className="w-3 h-3" />
+                    {format(new Date(formula.created_at), 'MMM d, yyyy')}
+                  </span>
+                </div>
+
+                {/* Stylist */}
+                {formula.staff_name && (
+                  <p className={cn(DOCK_CONTENT.caption, 'mb-1.5')}>
+                    by {formula.staff_name}
+                  </p>
+                )}
+
+                {/* Note text */}
+                <p className={cn(DOCK_CONTENT.bodyMuted, 'leading-relaxed italic')}>
+                  {formula.notes}
+                </p>
+
+                {/* Ingredient chips */}
+                {formula.formula_data.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {formula.formula_data.slice(0, 4).map((line, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-300 border border-violet-500/20 text-[11px]"
+                      >
+                        {line.product_name} · {line.quantity}{line.unit}
+                      </span>
+                    ))}
+                    {formula.formula_data.length > 4 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground-muted))] text-[11px]">
+                        +{formula.formula_data.length - 4} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Team Notes (threaded, interactive) */}
       <div>
         <p className={cn(DOCK_CONTENT.sectionHeader, 'mb-2')}>Team Notes</p>
