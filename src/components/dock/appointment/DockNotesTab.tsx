@@ -58,6 +58,11 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
     enabled: !!(phorestClientId || clientId),
   });
 
+  // Formula history
+  const formulaClientId = clientId || phorestClientId || null;
+  const { data: formulaHistory } = useClientFormulaHistory(formulaClientId);
+  const formulasWithNotes = formulaHistory?.filter(f => f.notes?.trim()) ?? [];
+
   // Team notes (threaded)
   const { notes: teamNotes, isLoading: teamLoading, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment.id);
 
@@ -65,7 +70,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
   const profileNotes = client?.notes?.trim() || null;
   const profileNotesIsLong = profileNotes ? profileNotes.length > 120 : false;
 
-  const hasAnyContent = bookingNotes || profileNotes || teamNotes.length > 0;
+  const hasAnyContent = bookingNotes || profileNotes || formulasWithNotes.length > 0 || teamNotes.length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
