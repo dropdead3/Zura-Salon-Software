@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { Menu, X, Calendar, FlaskConical, Users, Weight, Settings, Lock, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET, DOCK_TEXT } from './dock-ui-tokens';
 import type { DockTab } from '@/pages/Dock';
