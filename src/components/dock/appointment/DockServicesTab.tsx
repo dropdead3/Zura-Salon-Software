@@ -625,7 +625,7 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
           </div>
         </div>
         <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
-          <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+          <MoreVertical className="w-6 h-6 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
         </button>
       </div>
 
