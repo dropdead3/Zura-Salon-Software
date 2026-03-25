@@ -140,7 +140,7 @@ export function DockEditServicesSheet({
             }}
           >
             {/* Header */}
-            <div className="flex-shrink-0 px-7 pt-2 pb-4">
+            <div className="flex-shrink-0 px-7 pt-6 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FlaskConical className="w-4 h-4 text-violet-400" />
