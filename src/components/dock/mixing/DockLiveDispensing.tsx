@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowLeft, FlaskConical, Lock, Scale, Check } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Scale, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
