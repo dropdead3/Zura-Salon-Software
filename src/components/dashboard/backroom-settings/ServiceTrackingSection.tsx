@@ -188,6 +188,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['org-services'] });
     },
     onError: (e) => toast.error(e.message),
   });
