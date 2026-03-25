@@ -106,6 +106,7 @@ function getChemicalServices(serviceName: string | null | undefined): string[] {
 export function DockServicesTab({ appointment, staff, effectiveServiceName }: DockServicesTabProps) {
   const { isDemoMode } = useDockDemo();
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
+  const { data: serviceLookup } = useServiceLookup();
   const [showNewBowl, setShowNewBowl] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [showBowlDetection, setShowBowlDetection] = useState(false);
