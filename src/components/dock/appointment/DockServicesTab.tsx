@@ -597,24 +597,17 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
 // ─── Inline Add Bowl/Bottle Card ─────────────────────────────
 function AddBowlCard({ onClick, disabled, containerType = 'bowl' }: { onClick: () => void; disabled: boolean; containerType?: ContainerType }) {
   const isBottle = containerType === 'bottle';
-  const Icon = isBottle ? TestTube2 : FlaskConical;
   const label = isBottle ? 'Add Bottle' : 'Add Bowl';
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={cn(
-        'w-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed min-h-[160px]',
-        'border-violet-500/30 text-violet-400',
-        'hover:bg-violet-600/10 hover:border-violet-500/50',
-        'active:scale-[0.98] transition-all duration-150',
-        'disabled:opacity-40'
-      )}
+      className={DOCK_CARD.addWrapper}
     >
-      <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-        <Plus className="w-6 h-6" />
+      <div className={DOCK_CARD.addIconBox}>
+        <Plus className={DOCK_CARD.addIcon} />
       </div>
-      <span className="text-sm font-medium">{label}</span>
+      <span className={DOCK_CARD.addLabel}>{label}</span>
     </button>
   );
 }
