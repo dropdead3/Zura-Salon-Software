@@ -277,10 +277,22 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   // Search filter (applied after tab filter)
   const searchedServices = useMemo(() => {
-    if (!searchQuery.trim()) return filteredServices;
-    const q = searchQuery.toLowerCase();
-    return filteredServices.filter(s => s.name.toLowerCase().includes(q));
-  }, [filteredServices, searchQuery]);
+    let list = filteredServices;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(q));
+    }
+    // Sort by category display_order, then alphabetically by name
+    return [...list].sort((a, b) => {
+      const catA = a.category || '';
+      const catB = b.category || '';
+      const orderA = categoryOrderMap.get(catA) ?? 9999;
+      const orderB = categoryOrderMap.get(catB) ?? 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      if (catA !== catB) return catA.localeCompare(catB);
+      return a.name.localeCompare(b.name);
+    });
+  }, [filteredServices, searchQuery, categoryOrderMap]);
 
   // Expand toggle helper
   const toggleExpand = (id: string) => {
