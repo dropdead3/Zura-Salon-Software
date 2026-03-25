@@ -129,19 +129,19 @@ export function DockIngredientDispensing({
             <button
               onClick={() => canPrev && handleNavigate(allLines[currentIndex - 1].id)}
               disabled={!canPrev}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+            <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
               {currentIndex + 1} / {allLines.length}
             </span>
             <button
               onClick={() => canNext && handleNavigate(allLines[currentIndex + 1].id)}
               disabled={!canNext}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>
