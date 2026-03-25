@@ -38,6 +38,7 @@ interface ServiceRow {
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
   variance_threshold_pct: number;
+  backroom_config_dismissed: boolean;
 }
 
 type FilterTab = 'all' | 'tracked' | 'untracked' | 'attention' | 'uncategorized';
