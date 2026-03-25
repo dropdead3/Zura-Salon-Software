@@ -153,7 +153,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'local',
       client_name: 'Lauren Taylor',
       stylist_name: 'Jenna B.',
-      service_name: 'Toner Refresh',
+      service_name: 'Vivid Toner',
       appointment_date: today,
       start_time: t6.startStr,
       end_time: t6.endStr,
