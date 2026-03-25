@@ -60,8 +60,14 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
   });
   const activeBowlId = activeBowl ?? null;
 
-  const currentServices = appointment.service_name
-    ? appointment.service_name.split(',').map(s => s.trim()).filter(Boolean)
+  // Read demo service overrides from sessionStorage
+  const demoServiceOverride = appointment.id.startsWith('demo-')
+    ? (() => { try { return sessionStorage.getItem(`dock-demo-services::${appointment.id}`); } catch { return null; } })()
+    : null;
+  const effectiveServiceName = demoServiceOverride ?? appointment.service_name;
+
+  const currentServices = effectiveServiceName
+    ? effectiveServiceName.split(',').map(s => s.trim()).filter(Boolean)
     : [];
 
   const isTerminal = ['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase());
@@ -82,7 +88,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
               {appointment.client_name || 'Walk-in'}
             </h1>
             <p className="text-sm text-[hsl(var(--platform-foreground-muted))] truncate mt-0.5">
-              {appointment.service_name && <span>{appointment.service_name} · </span>}
+              {effectiveServiceName && <span>{effectiveServiceName} · </span>}
               {formatTime(appointment.start_time)} – {formatTime(appointment.end_time)}
             </p>
             {!isTerminal && (
@@ -131,7 +137,7 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             appointmentId: appointment.id,
             organizationId: staff.organizationId,
             services: newServices,
-            previousServiceName: appointment.service_name,
+            previousServiceName: effectiveServiceName,
           }, {
             onSuccess: () => setEditServicesOpen(false),
           });

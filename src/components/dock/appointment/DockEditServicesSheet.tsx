@@ -13,6 +13,8 @@ import type { PhorestService } from '@/hooks/usePhorestServices';
 import type { ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET, DOCK_TEXT, DOCK_INPUT, DOCK_BUTTON } from '../dock-ui-tokens';
+import { useDockDemo } from '@/contexts/DockDemoContext';
+import { DEMO_SERVICES_BY_CATEGORY } from '@/hooks/dock/dockDemoData';
 
 interface DockEditServicesSheetProps {
   open: boolean;
@@ -33,7 +35,9 @@ export function DockEditServicesSheet({
 }: DockEditServicesSheetProps) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, PhorestService>>(new Map());
-  const { data: grouped, isLoading } = useServicesByCategory(locationId);
+  const { isDemoMode } = useDockDemo();
+  const { data: realGrouped, isLoading } = useServicesByCategory(locationId);
+  const grouped = isDemoMode && !locationId ? DEMO_SERVICES_BY_CATEGORY as unknown as Record<string, PhorestService[]> : realGrouped;
   const { formatCurrency } = useFormatCurrency();
   const dragControls = useDragControls();
 

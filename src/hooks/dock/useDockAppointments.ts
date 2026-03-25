@@ -37,8 +37,16 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
   return useQuery({
     queryKey: ['dock-appointments', staffUserId, today, isDemoMode, usesRealData, organizationId, locationId, staffFilter],
     queryFn: async (): Promise<DockAppointment[]> => {
-      // Generic preview — pure faux data
-      if (isDemoMode && !usesRealData) return DEMO_APPOINTMENTS;
+      // Generic preview — pure faux data, merge any demo service overrides
+      if (isDemoMode && !usesRealData) {
+        return DEMO_APPOINTMENTS.map(a => {
+          try {
+            const override = sessionStorage.getItem(`dock-demo-services::${a.id}`);
+            if (override) return { ...a, service_name: override };
+          } catch {}
+          return a;
+        });
+      }
 
       // Org-specific demo — fetch real appointments for the selected location
       if (isDemoMode && usesRealData && organizationId) {
