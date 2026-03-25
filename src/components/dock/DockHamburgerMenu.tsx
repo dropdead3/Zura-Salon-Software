@@ -29,6 +29,7 @@ const SPRING = DOCK_SHEET.spring;
 
 export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAddAppointment }: DockHamburgerMenuProps) {
   const [open, setOpen] = useState(false);
+  const dragControls = useDragControls();
 
   const handleTabSelect = (id: DockTab) => {
     onTabChange(id);
