@@ -1,46 +1,18 @@
 
-## Fix Rachel’s missing service on the Formulations tab
 
-### Root cause
-`Natural Root Retouch` is already present in the demo services catalog, so this is not a demo-data wiring issue.
+## Fix: Demo Mix Session `service_label` Mismatch
 
-The actual problem is the chemical-service filter:
-- `DockServicesTab` builds the mixable service sections from `getChemicalServices(appointment.service_name)`
-- `getChemicalServices()` relies on `isColorOrChemicalService()`
-- In `src/utils/serviceCategorization.ts`, the regex matches `root touch` but not `retouch` / `root retouch`
+### Problem
+Sarah Mitchell's demo appointment has services `Full Balayage, Vivid Toner`, but her demo mix session (`demo-session-1`) has `service_label: 'Balayage'`. Since `'Balayage' !== 'Full Balayage'`, the grouping logic creates a third section instead of filing the bowl under "Full Balayage".
 
-So for Rachel’s appointment:
-- `Natural Root Retouch` gets filtered out
-- `Glaze Add On` passes
-- Result: only Glaze Add On appears on the Formulations page
+### Fix — `src/hooks/dock/dockDemoData.ts`
 
-### Implementation
+Line 282: Change `service_label: 'Balayage'` → `service_label: 'Full Balayage'`
 
-**1. Update `src/utils/serviceCategorization.ts`**
-Expand the color/chemical matching patterns to include retouch variants:
-- `retouch`
-- `root retouch`
-- `touch up`
-- `touch-up`
+Also audit the other demo sessions:
+- `demo-session-2` (appt-4): `service_label: 'Corrective Color'` → verify matches `'Corrective Color - By The Hour'` — needs update to `'Corrective Color - By The Hour'`
+- `demo-session-3` (appt-6): `service_label: 'Full Vivid'` — matches, no change needed
 
-Apply this to both:
-- the Color category pattern in `CATEGORY_PATTERNS`
-- the `COLOR_CHEMICAL_PATTERN` used by `isColorOrChemicalService()`
+### One file changed
+`src/hooks/dock/dockDemoData.ts`
 
-### Why this is the right fix
-This preserves the existing demo service name (`Natural Root Retouch`), which already matches the demo service list exactly, and fixes the real issue at the shared classification layer.
-
-That means the fix will also improve any other areas that rely on the same helper, including:
-- Formulations tab service grouping
-- schedule filtering for chemical/color appointments
-- any future demo or real appointment using “retouch” naming
-
-### Files to change
-- `src/utils/serviceCategorization.ts`
-
-### Expected result
-Rachel Kim’s demo appointment will show both:
-- `Natural Root Retouch`
-- `Glaze Add On`
-
-on the Formulations page, so a bowl can be mixed for either service.
