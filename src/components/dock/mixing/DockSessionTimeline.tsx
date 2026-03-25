@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronDown, ChevronRight, Clock, FlaskConical, Scale, Lock, AlertTriangle, Zap, Trash2, Play, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, FlaskConical, Scale, AlertTriangle, Zap, Trash2, Play, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
