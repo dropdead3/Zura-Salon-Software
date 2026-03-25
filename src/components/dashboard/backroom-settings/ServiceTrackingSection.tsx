@@ -217,6 +217,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   };
 
   const needsAttention = (s: ServiceRow): boolean => {
+    if (s.backroom_config_dismissed) return false;
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
