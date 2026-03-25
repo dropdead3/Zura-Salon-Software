@@ -200,7 +200,7 @@ export function ServiceEditorDialog({
                 {/* Time breakdown fields */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="finishing-time">Finishing (min)</Label>
+                    <Label htmlFor="finishing-time" className="flex items-center gap-1.5">Finishing (min) <MetricInfoTooltip description="Time allocated after processing for blowout, styling, and finishing. Not included in processing time." /></Label>
                     <Input id="finishing-time" type="number" min="0" step="5" value={finishingTime} onChange={e => setFinishingTime(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
