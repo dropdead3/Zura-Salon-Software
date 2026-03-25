@@ -12825,6 +12825,7 @@ export type Database = {
           duration_minutes: number
           id: string
           is_active: boolean | null
+          is_chemical_service: boolean
           lead_time_days: number | null
           name: string
           phorest_branch_id: string
@@ -12842,6 +12843,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean | null
+          is_chemical_service?: boolean
           lead_time_days?: number | null
           name: string
           phorest_branch_id: string
@@ -12859,6 +12861,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean | null
+          is_chemical_service?: boolean
           lead_time_days?: number | null
           name?: string
           phorest_branch_id?: string
