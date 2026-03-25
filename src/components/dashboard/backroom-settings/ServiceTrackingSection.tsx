@@ -235,7 +235,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
     const classified = allServices.filter(s => s.is_chemical_service !== null);
-    const withComponents = tracked.filter(s => componentsByService.has(s.id));
     const withAllowance = tracked.filter(s => allowanceByService.has(s.id));
 
     return [
@@ -250,12 +249,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         current: tracked.length,
         total: Math.max(chemicalOrSuggested.length, tracked.length),
         tooltip: 'Chemical services with backroom tracking enabled.',
-      },
-      {
-        label: 'Components',
-        current: withComponents.length,
-        total: tracked.length,
-        tooltip: 'Tracked services with at least one product component mapped.',
       },
       {
         label: 'Allowances',
