@@ -4,15 +4,19 @@
  */
 
 import { useState } from 'react';
-import { X, FlaskConical, Plus } from 'lucide-react';
+import { X, FlaskConical, Plus, History } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
+import { DockFormulaHistoryPicker } from './DockFormulaHistoryPicker';
 import { DOCK_SHEET } from '../dock-ui-tokens';
+import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { DockProduct } from '@/hooks/dock/useDockProductCatalog';
 
 interface DockNewBowlSheetProps {
   open: boolean;
   onClose: () => void;
   onCreateBowl: (lines: FormulaLine[], baseWeight: number) => void;
+  clientId?: string | null;
 }
 
 export function DockNewBowlSheet({ open, onClose, onCreateBowl }: DockNewBowlSheetProps) {
