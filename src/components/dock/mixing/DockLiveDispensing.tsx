@@ -104,9 +104,10 @@ export function DockLiveDispensing({
   organizationId,
   bowlStatus: initialBowlStatus,
   leftoverWeight: initialLeftover,
+  demoLines: demoLinesFromProps,
   onBack,
 }: DockLiveDispensingProps) {
-  const { data: lines, isLoading } = useBowlLines(bowlId);
+  const { data: lines, isLoading } = useBowlLines(bowlId, demoLinesFromProps);
   const [activeView, setActiveView] = useState<DispensingView>('lines');
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [bowlStatus, setBowlStatus] = useState(initialBowlStatus);
