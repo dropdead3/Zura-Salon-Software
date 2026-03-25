@@ -817,16 +817,17 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       </div>
                                     ) : (
                                       /* Untracked service drill-down */
-                                      <div className="flex items-center justify-between">
-                                        <div className="space-y-1 text-xs text-muted-foreground">
-                                          <div className="flex items-center gap-3">
-                                            <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
-                                            <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                      <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                          <div className="space-y-1 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-3">
+                                              <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
+                                              <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                            </div>
+                                            {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
+                                              <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+                                            )}
                                           </div>
-                                          {(type === 'chemical' || type === 'suggested') && (
-                                            <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
-                                          )}
-                                        </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                           {(type === 'chemical' || type === 'suggested') && !service.backroom_config_dismissed && (
                                             <Button
