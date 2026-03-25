@@ -20,7 +20,11 @@ interface DockNewBowlSheetProps {
   containerType?: 'bowl' | 'bottle';
 }
 
-export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId }: DockNewBowlSheetProps) {
+export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId, containerType = 'bowl' }: DockNewBowlSheetProps) {
+  const isBottle = containerType === 'bottle';
+  const HeaderIcon = isBottle ? TestTube2 : FlaskConical;
+  const headerLabel = isBottle ? 'New Bottle' : 'New Bowl';
+  const createLabel = isBottle ? 'Create Bottle' : 'Create Bowl';
   const [lines, setLines] = useState<FormulaLine[]>([]);
   const [baseWeight, setBaseWeight] = useState(40);
   const [pickerOpen, setPickerOpen] = useState(false);
