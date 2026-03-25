@@ -8,6 +8,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, Scale, StickyNote, MoreHorizontal, Check, ChevronLeft, ChevronRight, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeardropFill } from './TeardropFill';
+import { ProgressBarFill } from './ProgressBarFill';
+import { useDockDispensingVisual } from '@/hooks/dock/useDockDispensingVisual';
 import { DockWeightInput } from './DockWeightInput';
 import type { BowlLine } from './DockLiveDispensing';
 import { roundWeight } from '@/lib/backroom/mix-calculations';
