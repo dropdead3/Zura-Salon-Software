@@ -120,6 +120,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     main: mainNavItems,
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
     manage: managerNavItems,
+    apps: appsNavItemsProp,
     system: adminOnlyNavItems,
     housekeeping: housekeepingNavItems,
     website: websiteNavItems,
@@ -129,7 +130,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     stats: statsNavItems,
     manager: managerNavItems,
     adminOnly: adminOnlyNavItems,
-  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
+  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, appsNavItemsProp, platformNavItems]);
 
   // Create a map of all nav items by href (for custom sections that can contain any link)
   const allNavItemsByHref = useMemo(() => {
