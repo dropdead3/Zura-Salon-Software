@@ -92,6 +92,9 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/admin/payroll',
     '/dashboard/admin/booth-renters',
   ],
+  apps: [
+    '/dashboard/admin/backroom-settings',
+  ],
   system: [
     '/dashboard/admin/access-hub',
     '/dashboard/admin/settings',

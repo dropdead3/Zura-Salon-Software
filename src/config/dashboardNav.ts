@@ -99,6 +99,12 @@ export const manageNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
 ];
 
+// ─── SECTION: apps (org-activated add-ons) ───────────────────────────────────
+
+export const appsNavItems: DashboardNavItem[] = [
+  { href: '/dashboard/admin/backroom-settings', label: 'Zura Backroom', labelKey: 'zura_backroom', icon: Package, permission: 'manage_settings' },
+];
+
 // ─── SECTION: system (admin config) ──────────────────────────────────────────
 
 export const systemNavItems: DashboardNavItem[] = [
