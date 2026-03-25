@@ -145,7 +145,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   }, []);
 
   // Parse chemical services
-  const chemicalServices = useMemo(() => getChemicalServices(appointment.service_name), [appointment.service_name]);
+  const chemicalServices = useMemo(() => getChemicalServices(effectiveServiceName ?? appointment.service_name), [effectiveServiceName, appointment.service_name]);
 
   // Get the first session ID for stats query
   const primarySessionId = sessions?.[0]?.id || null;
