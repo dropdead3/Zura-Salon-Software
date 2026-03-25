@@ -1,32 +1,37 @@
 
 
-## Enlarge Drag Handle Touch Area Across All Dock Sheets
+## Add "Mixed by" Attribution to Bowl Cards
 
 ### Problem
-The swipe-to-dismiss target is limited to the tiny 48×6px drag handle pill. On iPad/gloved use this is too small and hard to hit.
+Bowl cards don't show who mixed them. When assistants are linked to appointments, it's important to see who actually prepared each formula — on the card, in history, and in audit trails.
 
-### Solution
-Two changes in `src/components/dock/dock-ui-tokens.ts`:
+### Changes
 
-1. **`dragHandleWrapperBottom`**: Expand from `'flex justify-center pt-2 pb-4'` to `'flex justify-center pt-4 pb-6 w-full cursor-grab active:cursor-grabbing touch-none'` — makes the entire bottom strip a full-width touch target with increased vertical padding.
+**1. `src/hooks/dock/useDockMixSessions.ts`**
+- Add `mixed_by_staff_id` to the `DockMixSession` interface and the Supabase select query
+- Add `mixed_by_name` as a resolved display name (fetched via a second query against `employee_profiles` for all unique staff IDs in the session results)
 
-2. **`dragHandle`**: Remove `cursor-grab active:cursor-grabbing touch-none` from the pill itself (moved to wrapper). Keep visual styling only.
+**2. `src/hooks/dock/dockDemoData.ts`**
+- Add `mixed_by_staff_id` and `mixed_by_name` to demo session records (e.g., "Demo User", or specific demo assistant names)
 
-Then in all 9 sheet files that use the drag handle, move `onPointerDown={(e) => dragControls.start(e)}` from the inner `dragHandle` div to the outer `dragHandleWrapperBottom` div. This makes the entire bottom bar (full width, ~40px tall) the swipe-to-dismiss zone instead of just the small pill.
+**3. `src/components/dock/appointment/DockServicesTab.tsx`**
+- **`BowlCard`**: Display `session.mixed_by_name` in the info area as a subtle "Mixed by [Name]" line (text-[11px], muted foreground)
+- **`DemoBowlCard`**: Same treatment using the demo bowl's mixer name
 
-For `DockBowlActionSheet.tsx` which doesn't use `dragControls` (it uses `onClose` directly), we add an `onPointerDown` or keep it as-is since it's a simple action sheet.
+**4. Formula History & Audit Trails** (existing infrastructure)
+- `mix_sessions` already stores `mixed_by_staff_id` — the formula history (`client_formula_history`) and audit log (`appointment_audit_log`) already reference session data. The key gap is the Dock UI display, which this fixes. If formula history cards also need the name, the `DockFormulaHistorySheet` will be updated to resolve and show the mixer name.
+
+### Approach for name resolution
+Rather than a JOIN (not available via Supabase JS client on this query pattern), the hook will:
+1. Fetch sessions
+2. Collect unique `mixed_by_staff_id` values
+3. Batch-fetch `employee_profiles` for those IDs
+4. Map `mixed_by_name` onto each session before returning
+
+This keeps it efficient (2 queries max) and avoids N+1 patterns.
 
 ### Files
-- `src/components/dock/dock-ui-tokens.ts` — update token classes
-- `src/components/dock/DockHamburgerMenu.tsx`
-- `src/components/dock/appointment/DockFormulaHistorySheet.tsx`
-- `src/components/dock/appointment/DockEditServicesSheet.tsx`
-- `src/components/dock/schedule/DockNewClientSheet.tsx`
-- `src/components/dock/schedule/DockNewBookingSheet.tsx`
-- `src/components/dock/mixing/DockProductPicker.tsx`
-- `src/components/dock/mixing/DockNewBowlSheet.tsx`
-- `src/components/dock/mixing/DockBowlActionSheet.tsx`
-- `src/components/dock/mixing/DockSessionCompleteSheet.tsx`
-
-All changes follow the same pattern: move `onPointerDown` to wrapper div.
+- `src/hooks/dock/useDockMixSessions.ts` — add staff ID + name resolution
+- `src/hooks/dock/dockDemoData.ts` — add demo mixer names
+- `src/components/dock/appointment/DockServicesTab.tsx` — render "Mixed by" on both card types
 
