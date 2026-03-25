@@ -92,6 +92,7 @@ export function ServiceEditorDialog({
         setContentCreationTime('0');
         setProcessingTime('0');
         setRequiresNewClientConsultation(false);
+        setContainerTypes(['bowl']);
         setRequiresDeposit(false);
         setDepositType('percentage');
         setDepositAmount('');
