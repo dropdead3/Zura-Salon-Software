@@ -733,7 +733,7 @@ export function MixSessionManager({
           className="w-full h-11 min-h-[44px] font-sans"
         >
           <Plus className="w-4 h-4 mr-1.5" />
-          Add Bowl
+          Add Formulation
         </Button>
       )}
 
