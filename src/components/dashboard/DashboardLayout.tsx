@@ -435,6 +435,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           managerNavItems={managerNavItems}
           websiteNavItems={websiteNavItems}
           adminOnlyNavItems={adminOnlyNavItems}
+          appsNavItems={appsNavItems}
           footerNavItems={footerNavItems}
           isPlatformUser={isPlatformUser}
           isMultiOrgOwner={isMultiOrgOwner}
