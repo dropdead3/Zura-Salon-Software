@@ -110,7 +110,8 @@ export function useCreateMixBowl() {
           bowl_number: params.bowl_number,
           bowl_name: params.bowl_name || null,
           purpose: params.purpose || null,
-        })
+          container_type: params.container_type || 'bowl',
+        } as any)
         .select()
         .single();
 

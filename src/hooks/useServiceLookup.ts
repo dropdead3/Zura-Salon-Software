@@ -36,6 +36,7 @@ export function useServiceLookup() {
             category: s.category,
             duration_minutes: s.duration_minutes,
             price: s.price,
+            container_types: (s.container_types as ContainerType[] | null) || ['bowl'],
           });
         }
       }

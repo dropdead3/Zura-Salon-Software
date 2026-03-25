@@ -31,6 +31,7 @@ export interface Service {
   deposit_type: string;
   deposit_amount: number | null;
   deposit_amount_flat: number | null;
+  container_types: ('bowl' | 'bottle')[];
 }
 
 /**
