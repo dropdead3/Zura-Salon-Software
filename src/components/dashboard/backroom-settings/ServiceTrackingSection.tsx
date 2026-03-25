@@ -357,7 +357,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 size="sm"
                 onClick={() => navigate(dashPath('/admin/settings?category=services'))}
               >
-                Service Editor
+                Services Configurator
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
