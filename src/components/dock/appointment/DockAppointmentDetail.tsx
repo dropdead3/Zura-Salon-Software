@@ -36,6 +36,7 @@ const TABS: { id: DetailTab; label: string; icon: typeof FlaskConical }[] = [
 ];
 
 export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppointmentDetailProps) {
+  const { isDemoMode } = useDockDemo();
   const [tab, setTab] = useState<DetailTab>('services');
   const [editServicesOpen, setEditServicesOpen] = useState(false);
   const updateServicesMutation = useUpdateAppointmentServices();
