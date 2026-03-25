@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowLeft, FlaskConical, Lock, Scale, Check } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Scale, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -188,7 +188,7 @@ export function DockLiveDispensing({
             Bowl {bowlNumber} — Reweigh
           </p>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
-            Place sealed bowl on scale and enter leftover weight
+            Place finished bowl on scale and enter leftover weight
           </p>
         </div>
         <div className="flex-1 flex items-center justify-center">
@@ -231,8 +231,8 @@ export function DockLiveDispensing({
           </div>
           {isSealed && (
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
-              <Lock className="w-3 h-3" />
-              <span className="text-[10px] font-medium uppercase tracking-wide">Sealed</span>
+              <Check className="w-3 h-3" />
+              <span className="text-[10px] font-medium uppercase tracking-wide">Finalized</span>
             </div>
           )}
         </div>
@@ -289,8 +289,8 @@ export function DockLiveDispensing({
             disabled={!lines?.length || sealBowl.isPending}
             className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
-            <Lock className="w-4 h-4" />
-            {sealBowl.isPending ? 'Sealing...' : 'Seal Bowl'}
+            <Check className="w-4 h-4" />
+            {sealBowl.isPending ? 'Finishing...' : 'Finish Formulation'}
           </button>
         )}
         {needsReweigh && !isComplete && (

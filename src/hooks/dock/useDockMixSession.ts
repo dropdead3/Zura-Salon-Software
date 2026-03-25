@@ -215,7 +215,7 @@ export function useSealDockBowl() {
       });
 
       if (!result.success) {
-        throw new Error(result.errors?.[0]?.message || 'Failed to seal bowl');
+        throw new Error(result.errors?.[0]?.message || 'Failed to finish formulation');
       }
 
       await supabase
@@ -228,10 +228,10 @@ export function useSealDockBowl() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dock-mix-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['mix-bowls'] });
-      toast.success('Bowl sealed');
+      toast.success('Formulation finalized');
     },
     onError: (error) => {
-      toast.error('Failed to seal bowl: ' + (error as Error).message);
+      toast.error('Failed to finish formulation: ' + (error as Error).message);
     },
   });
 }
