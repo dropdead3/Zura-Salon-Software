@@ -119,9 +119,17 @@ export function ServiceTrackingQuickSetup({
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-[10px] text-muted-foreground"
+                        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: false })}
+                      >
+                        Standard
+                      </Button>
                       <span className="text-[10px] text-muted-foreground">Chemical</span>
                       <Switch
-                        checked={s.is_chemical_service}
+                        checked={s.is_chemical_service === true}
                         onCheckedChange={(v) => classifyMutation.mutate({ id: s.id, isChemical: v })}
                         className="scale-90"
                       />
