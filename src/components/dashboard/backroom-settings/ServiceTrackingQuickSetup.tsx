@@ -41,7 +41,7 @@ interface Props {
 const STEPS = [
   { key: 'classify', label: 'Classify Services', icon: Beaker, description: 'Mark services as requiring color/chemical or not.' },
   { key: 'track', label: 'Enable Tracking', icon: Layers, description: 'Turn on backroom tracking for chemical services.' },
-  { key: 'components', label: 'Map Components', icon: Package, description: 'Link products to tracked services.' },
+  { key: 'components', label: 'Map Components', icon: Package, description: 'Connect the products each service uses so Zura can track usage automatically.' },
   { key: 'allowances', label: 'Set Allowances', icon: FileText, description: 'Configure billing allowances for tracked services.' },
 ] as const;
 
