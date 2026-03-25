@@ -117,9 +117,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   const tracked = (services || []).filter((s) => s.is_backroom_tracked);
   const untracked = (services || []).filter((s) => !s.is_backroom_tracked);
-  // Only show chemical services in Available list; use is_chemical_service flag first, regex fallback for unconfigured
-  const chemicalUntracked = untracked.filter((s) => s.is_chemical_service || isColorOrChemicalService(s.name, s.category));
-  const suggestedServices = chemicalUntracked.filter((s) => s.is_chemical_service || isColorOrChemicalService(s.name, s.category));
+  // Explicitly flagged by admin in Service Editor
+  const explicitChemicalUntracked = untracked.filter((s) => s.is_chemical_service);
+  // AI-suggested via category-aware regex (excludes haircuts, extensions, styling, consultations)
+  const suggestedUntracked = untracked.filter((s) => !s.is_chemical_service && isSuggestedChemicalService(s.name, s.category));
+  // Combined available list
+  const chemicalUntracked = [...explicitChemicalUntracked, ...suggestedUntracked];
+  const suggestedServices = suggestedUntracked;
 
   return (
     <div className="space-y-6">
