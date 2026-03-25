@@ -208,7 +208,7 @@ export function ServiceEditorDialog({
                     <Input id="content-creation-time" type="number" min="0" step="5" value={contentCreationTime} onChange={e => setContentCreationTime(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="processing-time">Processing (min)</Label>
+                    <Label htmlFor="processing-time" className="flex items-center gap-1.5">Processing (min) <MetricInfoTooltip description="Chemical or treatment processing time where the stylist may serve other clients." /></Label>
                     <Input id="processing-time" type="number" min="0" step="5" value={processingTime} onChange={e => setProcessingTime(e.target.value)} placeholder="0" />
                   </div>
                 </div>
