@@ -632,6 +632,11 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
 
       {/* Info area */}
       <div className="flex-1 mt-1">
+        {session.mixed_by_name && (
+          <p className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.6)] mb-1">
+            Mixed by {session.mixed_by_name}
+          </p>
+        )}
         {session.unresolved_flag && (
           <p className="text-[10px] text-amber-400/70 mb-1">⚠ Flagged for review</p>
         )}
