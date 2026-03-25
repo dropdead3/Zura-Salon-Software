@@ -18858,7 +18858,7 @@ export type Database = {
           is_active: boolean | null
           is_archived: boolean
           is_backroom_tracked: boolean
-          is_chemical_service: boolean
+          is_chemical_service: boolean | null
           is_popular: boolean
           lead_time_days: number | null
           location_id: string | null
@@ -18903,7 +18903,7 @@ export type Database = {
           is_active?: boolean | null
           is_archived?: boolean
           is_backroom_tracked?: boolean
-          is_chemical_service?: boolean
+          is_chemical_service?: boolean | null
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
@@ -18948,7 +18948,7 @@ export type Database = {
           is_active?: boolean | null
           is_archived?: boolean
           is_backroom_tracked?: boolean
-          is_chemical_service?: boolean
+          is_chemical_service?: boolean | null
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
