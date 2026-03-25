@@ -21,7 +21,7 @@ export function useServiceLookup() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_services')
-        .select('name, category, duration_minutes, price')
+        .select('name, category, duration_minutes, price, container_types')
         .eq('is_active', true);
 
       if (error) throw error;
