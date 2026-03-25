@@ -12,6 +12,8 @@ interface DockWeightInputProps {
   onCancel: () => void;
   label?: string;
   unit?: string;
+  targetWeight?: number;
+  initialValue?: string;
 }
 
 const NUMPAD_KEYS = [
