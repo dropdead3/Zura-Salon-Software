@@ -541,7 +541,6 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         clientId={appointment.client_id}
         containerType={activeContainerType}
       />
-      />
 
       {/* Session complete sheet */}
       <DockSessionCompleteSheet
