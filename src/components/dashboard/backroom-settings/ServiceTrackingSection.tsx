@@ -69,6 +69,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
 
   // Swipe gesture handlers for mobile
