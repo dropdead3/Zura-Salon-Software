@@ -1,32 +1,34 @@
 
 
-## Fix: Services Setup Step Completion Logic
+## Organize Services by Category, Then Alphabetically
 
 ### Problem
-Line 107 in `useBackroomDashboard.ts` marks the "Services" step as complete when `trackedServices > 0` — i.e., as soon as **any** service is tracked. But tracking a service is just the first step; tracked services also need usage components mapped to be considered fully configured. The screenshot confirms: "Services" shows a green checkmark even though service tracking setup is incomplete.
-
-### Root Cause
-```typescript
-// Current (line 107)
-{ label: 'Services', done: h.trackedServices > 0 },
-```
-This only checks if services exist with `is_backroom_tracked = true`. It ignores whether those services have components configured.
+Services are sorted only by name (alphabetically), making it hard to scan related services. The screenshot shows Extensions, Blonding, Styling, and Haircuts all interleaved.
 
 ### Solution
-The `useBackroomSetupHealth` hook already queries `service_tracking_components` and generates a warning (`services-no-components`) when tracked services lack components. We need to expose a flag or count, then use it in the step completion check.
+1. **Sort data by category first, then name** — update the query `.order('category').order('name')` instead of just `.order('name')`.
+2. **Add visual category group headers** — insert a subtle category separator row in the table whenever the category changes, so users can quickly scan sections (e.g., "Blonding", "Color", "Extensions", "Haircuts", "Styling").
+3. **Use `service_category_colors` display_order** — match the category ordering used elsewhere in the app (from the `service_category_colors` table) so categories appear in the same consistent order.
 
-### Changes
+### Changes — `ServiceTrackingSection.tsx`
 
-**File: `src/hooks/backroom/useBackroomSetupHealth.ts`**
-- Add `trackedServicesWithComponents: number` to the `SetupHealthMetrics` interface
-- Compute the count of tracked services that **do** have at least one component mapped (using the existing `componentsRes` data)
-- Return it in the metrics object
+1. **Query**: Change `.order('name')` to `.order('category').order('name')` (line 117).
 
-**File: `src/hooks/backroom/useBackroomDashboard.ts`**
-- Update the Services step to require that **all** tracked services have components:
-```typescript
-{ label: 'Services', done: h.trackedServices > 0 && h.trackedServicesWithComponents === h.trackedServices },
-```
+2. **Sort filtered results**: After filtering/searching, sort `searchedServices` using the `service_category_colors` display_order (fetch this data via existing query pattern). Services without a category go last.
 
-This means the Services checkmark only appears when every tracked service has at least one usage component mapped — matching the user's expectation that "service tracking setup" means fully configured, not just toggled on.
+3. **Category header rows**: In the table render loop, detect when a service's category differs from the previous one and insert a lightweight separator row:
+   ```tsx
+   <TableRow className="bg-muted/30 pointer-events-none">
+     <TableCell colSpan={4} className="py-1.5 px-4">
+       <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
+         {category}
+       </span>
+     </TableCell>
+   </TableRow>
+   ```
+
+4. **Add category order query**: Fetch `service_category_colors` with `display_order` to sort categories consistently (same pattern already used in `usePhorestServices.ts`).
+
+### File Modified
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
