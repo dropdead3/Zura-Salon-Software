@@ -217,7 +217,7 @@ export function DockIngredientDispensing({
           <TeardropFill
             fillPercent={fillPercent}
             fillColor={fillColor}
-            size={200}
+            size={260}
           />
           {/* Stable reading indicator */}
           {isAtTarget && (
