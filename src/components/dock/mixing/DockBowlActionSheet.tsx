@@ -7,7 +7,7 @@ import { Pencil, ArrowRightLeft, Star, StickyNote, Type, Trash2, X } from 'lucid
 import { cn } from '@/lib/utils';
 import { DOCK_SHEET } from '../dock-ui-tokens';
 
-export type BowlAction = 'edit' | 'change_service' | 'favorite' | 'view_notes' | 'rename' | 'remove';
+export type BowlAction = 'edit' | 'change_service' | 'favorite' | 'view_notes' | 'rename' | 'discard';
 
 interface DockBowlActionSheetProps {
   open: boolean;
