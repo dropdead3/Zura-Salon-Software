@@ -98,9 +98,9 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId, contai
             <div className="flex-shrink-0 px-7 pt-5 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4 text-violet-400" />
+                  <HeaderIcon className="w-4 h-4 text-violet-400" />
                   <h2 className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-                    New Bowl
+                    {headerLabel}
                   </h2>
                 </div>
                 <button
