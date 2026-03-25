@@ -65,19 +65,19 @@ export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', un
       </div>
 
       {/* Numpad */}
-      <div className="grid grid-cols-3 gap-2 w-full max-w-[280px]">
+      <div className="grid grid-cols-3 gap-3 w-full max-w-[320px]">
         {NUMPAD_KEYS.flat().map((key) => (
           <button
             key={key}
             onClick={() => handleKey(key)}
             className={cn(
-              'h-14 rounded-xl text-lg font-medium transition-all duration-100 active:scale-95',
+              'h-16 rounded-2xl text-xl font-medium transition-all duration-100 active:scale-95',
               key === 'del'
                 ? 'bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground-muted))] border border-[hsl(var(--platform-border)/0.2)]'
                 : 'bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground))] border border-[hsl(var(--platform-border)/0.15)] hover:bg-[hsl(var(--platform-bg-card))]'
             )}
           >
-            {key === 'del' ? <Delete className="w-5 h-5 mx-auto" /> : key}
+            {key === 'del' ? <Delete className="w-6 h-6 mx-auto" /> : key}
           </button>
         ))}
       </div>
