@@ -145,7 +145,7 @@ export function ServiceTrackingQuickSetup({
         return (
           <div className="space-y-2">
             <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-              Classify each service as Standard or Chemical, then save.
+              Classify each service, then save.
             </p>
             {services.map(s => {
               const localVal = classifications[s.id];
