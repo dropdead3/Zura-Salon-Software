@@ -64,6 +64,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   };
 
   const dockContent = (
+    <DockScaleProvider>
     <div
       ref={idleRef}
       className="relative h-full flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
