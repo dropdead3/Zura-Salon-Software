@@ -357,7 +357,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 size="sm"
                 onClick={() => navigate(dashPath('/admin/settings?category=services'))}
               >
-                Service Editor
+                Services Configurator
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -410,7 +411,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   ? 'Try a different search term.'
                   : activeFilter === 'attention'
                     ? 'All chemical services are tracked and configured.'
-                    : 'Adjust your filter or add services in the Service Editor.'}
+                    : 'Adjust your filter or add services in the Services Configurator.'}
               </p>
             </div>
           ) : (
