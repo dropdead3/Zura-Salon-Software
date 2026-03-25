@@ -49,8 +49,27 @@ export function ServiceTrackingQuickSetup({
   open, onOpenChange, orgId, services, milestones, componentsByService, allowanceByService, onNavigateAllowances,
 }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [classifications, setClassifications] = useState<Record<string, boolean>>({});
   const queryClient = useQueryClient();
   const upsertComponent = useUpsertTrackingComponent();
+
+  // Pre-populate local classifications from DB when services change
+  const classifyInitKey = services.map(s => `${s.id}:${s.is_chemical_service}`).join(',');
+  useState(() => {
+    const init: Record<string, boolean> = {};
+    for (const s of services) {
+      if (s.is_chemical_service !== null) init[s.id] = s.is_chemical_service;
+    }
+    setClassifications(init);
+  });
+  // Re-sync when services data changes
+  useMemo(() => {
+    const init: Record<string, boolean> = {};
+    for (const s of services) {
+      if (s.is_chemical_service !== null) init[s.id] = s.is_chemical_service;
+    }
+    setClassifications(init);
+  }, [classifyInitKey]);
 
   const step = STEPS[currentStep];
   const milestone = milestones[currentStep];
