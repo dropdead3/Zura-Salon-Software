@@ -260,8 +260,8 @@ export function ServiceEditorDialog({
                   {/* Container Types */}
                   <div className="pt-2 border-t border-border/60">
                     <div className="mb-2">
-                      <p className={tokens.body.emphasis}>Container Types</p>
-                      <p className={tokens.body.muted}>What vessel types does this service use for formulations?</p>
+                      <p className={tokens.body.emphasis}>Backroom Container Types</p>
+                      <p className={tokens.body.muted}>Used by Zura Backroom to track supply usage for this service's formulations.</p>
                     </div>
                     <div className="flex gap-6">
                       <label className="flex items-center gap-2 cursor-pointer">
