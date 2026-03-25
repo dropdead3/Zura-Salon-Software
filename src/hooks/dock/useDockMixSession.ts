@@ -79,7 +79,6 @@ export function useCreateDockBowl() {
       });
 
       // 4. Create bowl row
-      const ct = params.containerType || 'bowl';
       const bowlLabel = ct === 'bottle' ? 'Bottle 1' : 'Bowl 1';
       const { data: bowl, error: bowlErr } = await supabase
         .from('mix_bowls')
