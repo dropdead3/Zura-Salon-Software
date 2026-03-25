@@ -248,7 +248,12 @@ export function DockLiveDispensing({
               'h-full rounded-full transition-all duration-500',
               isComplete ? 'bg-emerald-500' : 'bg-violet-500'
             )}
-            style={{ width: `${Math.min(100, (lines?.length || 0) > 0 ? (isComplete ? 100 : 75) : 0)}%` }}
+            style={{ width: `${Math.min(100, (() => {
+              if (!lines?.length) return 0;
+              if (isComplete) return 100;
+              const filledCount = lines.filter(l => (currentWeights.get(l.id) || 0) > 0).length;
+              return Math.round((filledCount / lines.length) * 100);
+            })())}%` }}
           />
         </div>
       </div>

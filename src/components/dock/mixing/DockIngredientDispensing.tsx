@@ -3,7 +3,7 @@
  * Vish-inspired: large visual cue fills proportionally as weight is entered.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, Scale, StickyNote, MoreHorizontal, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeardropFill } from './TeardropFill';
@@ -31,6 +31,7 @@ export function DockIngredientDispensing({
 }: DockIngredientDispensingProps) {
   const [showNumpad, setShowNumpad] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const activeCardRef = useRef<HTMLButtonElement>(null);
 
   const currentWeight = currentWeights.get(line.id) ?? 0;
   const targetWeight = line.dispensed_quantity;
@@ -41,9 +42,49 @@ export function DockIngredientDispensing({
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < allLines.length - 1;
 
+  // Auto-scroll carousel to active item
+  useEffect(() => {
+    if (activeCardRef.current) {
+      activeCardRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [line.id]);
+
+  const findNextUnfilled = useCallback((): string | null => {
+    for (let i = 0; i < allLines.length; i++) {
+      const l = allLines[i];
+      if (l.id === line.id) continue;
+      const w = currentWeights.get(l.id) ?? 0;
+      if (w <= 0) return l.id;
+    }
+    return null;
+  }, [allLines, currentWeights, line.id]);
+
   const handleWeightSubmit = (weight: number) => {
+    navigator.vibrate?.(15);
     onWeightUpdate(line.id, weight);
     setShowNumpad(false);
+
+    // Auto-advance to next unfilled ingredient
+    const nextId = findNextUnfilled();
+    if (nextId) {
+      setTimeout(() => onNavigate(nextId), 300);
+    }
+  };
+
+  const handleNavigate = (lineId: string) => {
+    navigator.vibrate?.(15);
+    onNavigate(lineId);
+  };
+
+  const handleDone = () => {
+    navigator.vibrate?.(15);
+    // If all ingredients have weight, go back; otherwise advance to next unfilled
+    const nextId = findNextUnfilled();
+    if (nextId) {
+      onNavigate(nextId);
+    } else {
+      onBack();
+    }
   };
 
   if (showNumpad) {
@@ -86,7 +127,7 @@ export function DockIngredientDispensing({
           {/* Ingredient nav */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => canPrev && onNavigate(allLines[currentIndex - 1].id)}
+              onClick={() => canPrev && handleNavigate(allLines[currentIndex - 1].id)}
               disabled={!canPrev}
               className="w-8 h-8 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
             >
@@ -96,7 +137,7 @@ export function DockIngredientDispensing({
               {currentIndex + 1} / {allLines.length}
             </span>
             <button
-              onClick={() => canNext && onNavigate(allLines[currentIndex + 1].id)}
+              onClick={() => canNext && handleNavigate(allLines[currentIndex + 1].id)}
               disabled={!canNext}
               className="w-8 h-8 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
             >
@@ -129,7 +170,7 @@ export function DockIngredientDispensing({
 
         {/* Weight pill — tappable to open numpad */}
         <button
-          onClick={() => setShowNumpad(true)}
+          onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
           className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
         >
           <span className={cn(
@@ -138,7 +179,7 @@ export function DockIngredientDispensing({
               ? 'text-[hsl(var(--platform-foreground))]'
               : 'text-[hsl(var(--platform-foreground-muted)/0.4)]'
           )}>
-            {currentWeight > 0 ? roundWeight(currentWeight) : '0'}
+            {currentWeight > 0 ? roundWeight(currentWeight) : 'Tap to weigh'}
           </span>
           <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)]">
             / {roundWeight(targetWeight)}g
@@ -153,7 +194,7 @@ export function DockIngredientDispensing({
             return (
               <button
                 key={l.id}
-                onClick={() => onNavigate(l.id)}
+                onClick={() => handleNavigate(l.id)}
                 className={cn(
                   'w-2 h-2 rounded-full transition-all duration-200',
                   l.id === line.id
@@ -174,22 +215,22 @@ export function DockIngredientDispensing({
           <ActionButton
             icon={<Scale className="w-5 h-5" />}
             label="Balance"
-            onClick={() => setShowNumpad(true)}
+            onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
           />
           <ActionButton
             icon={<StickyNote className="w-5 h-5" />}
             label="Notes"
-            onClick={() => toast.info('Notes coming soon')}
+            onClick={() => { navigator.vibrate?.(15); toast.info('Notes coming soon'); }}
           />
           <ActionButton
             icon={<MoreHorizontal className="w-5 h-5" />}
             label="More"
-            onClick={() => toast.info('More options coming soon')}
+            onClick={() => { navigator.vibrate?.(15); toast.info('More options coming soon'); }}
           />
           <ActionButton
             icon={<Check className="w-5 h-5" />}
             label="Done"
-            onClick={onBack}
+            onClick={handleDone}
             accent
           />
         </div>
@@ -208,7 +249,8 @@ export function DockIngredientDispensing({
             return (
               <button
                 key={l.id}
-                onClick={() => onNavigate(l.id)}
+                ref={isActive ? activeCardRef : undefined}
+                onClick={() => handleNavigate(l.id)}
                 className={cn(
                   'flex-shrink-0 w-[140px] rounded-xl p-3 border transition-all duration-150',
                   'bg-[hsl(var(--platform-bg-card))]',
@@ -228,7 +270,7 @@ export function DockIngredientDispensing({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
-                    {roundWeight(w)}g / {roundWeight(l.dispensed_quantity)}g
+                    {w > 0 ? `${roundWeight(w)}g` : 'Pending'} / {roundWeight(l.dispensed_quantity)}g
                   </span>
                 </div>
                 {/* Mini progress bar */}
