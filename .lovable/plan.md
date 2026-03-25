@@ -1,30 +1,25 @@
 
 
-## Fix: Align Demo Appointment Service Names with Demo Service Catalog
+## Replace Absolute Demo Badge with Flow-Based Top Banner
 
-### Root Cause
-Demo appointments use invented service names (e.g., "Balayage + Toner", "Root Touch-Up + Gloss", "Color Correction", "Toner Refresh", "Vivids (Fashion Color)") that don't exist in `DEMO_SERVICES`. The Edit Services sheet matches by exact name against the catalog — so nothing pre-selects.
+### Problem
+The absolute-positioned `DockDemoBadge` keeps colliding with other UI elements (Edit Services button, hamburger menu). An absolute badge will always be a positioning headache.
 
-### Fix — `src/hooks/dock/dockDemoData.ts`
+### Solution
+Replace the floating badge with a **static top banner** that sits in the document flow and pushes content below it — no overlay conflicts possible.
 
-Update `DEMO_APPOINTMENTS` service names to use exact names from `DEMO_SERVICES`, joined with ` + ` for multi-service appointments:
+### Changes
 
-| Appointment | Current `service_name` | New `service_name` |
-|---|---|---|
-| demo-appt-1 (Sarah Mitchell) | `Balayage + Toner` | `Full Balayage + Vivid Toner` |
-| demo-appt-7 (Rachel Kim) | `Root Touch-Up + Gloss` | `Natural Root Retouch + Glaze Add On` |
-| demo-appt-2 (Jessica Chen) | `Root Touch-Up + Gloss` | `Natural Root Retouch + Glaze Add On` |
-| demo-appt-3 (Emily Rodriguez) | `Full Highlight + Root Smudge + Glaze Add On + Signature Haircut` | `Full Highlight + Root Smudge (Add On) + Glaze Add On + Signature Haircut` |
-| demo-appt-4 (Amanda Park) | `Color Correction` | `Corrective Color - By The Hour` |
-| demo-appt-5 (Lauren Taylor) | `Toner Refresh` | `Vivid Toner` |
-| demo-appt-6 (Maria Gonzalez) | `Vivids (Fashion Color)` | `Full Vivid` |
+**1. `src/components/dock/DockDemoBadge.tsx`** — Rewrite completely
+- Remove absolute positioning
+- Render a full-width slim banner: `w-full`, amber/warm background, centered text "Now viewing in Demo Mode"
+- Small pulsing dot + text, ~32px tall, `text-xs`
+- Sits in normal flow so it pushes content down
 
-Non-chemical appointments (Signature Haircut, Blowout, etc.) already match the catalog — no changes needed.
+**2. `src/components/dock/DockLayout.tsx`** — Move banner placement
+- In all three render paths (constrained inside frame, constrained outside frame, full-screen), place `<DockDemoBadge />` as the **first child inside** the `dockContent` div (before the scrollable content area), so it's part of the flex column and pushes everything below it
+- Remove the two **outer** `<DockDemoBadge />` calls on lines 143 and 157 (the ones outside the device frame / in the full-screen wrapper) — only keep the one inside `dockContent` at line 73
 
-### Also update related demo data references
-- `DEMO_FORMULA_HISTORY` and `DEMO_FORMULA_MEMORY` entries that reference old service names (e.g., "Root Touch-Up + Gloss") need to be updated to match the new names so formula memory continues to resolve correctly.
-- `DEMO_VISIT_HISTORY` entries referencing old names should also be updated for consistency.
-
-### Summary — 1 file changed
-`src/hooks/dock/dockDemoData.ts` — realign all demo service names to match the catalog exactly.
+### Result
+Single banner at top of dock content, flows naturally, no z-index or right-offset issues, visible on all tabs/views.
 
