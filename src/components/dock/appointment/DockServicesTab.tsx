@@ -620,10 +620,11 @@ function AddBowlCard({ onClick, disabled, containerType = 'bowl' }: { onClick: (
 }
 
 // ─── Bowl Card (DB sessions) ──────────────────────────
-function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSession; index: number; onTap: () => void; onMenuTap: () => void }) {
+function BowlCard({ session, index, onTap, onMenuTap, containerType = 'bowl' }: { session: DockMixSession; index: number; onTap: () => void; onMenuTap: () => void; containerType?: ContainerType }) {
   const status = getStatusDisplay(session.status);
   const StatusIcon = status.icon;
   const isTerminal = isTerminalSessionStatus(session.status as any);
+  const containerLabel = containerType === 'bottle' ? 'Bottle' : 'Bowl';
 
   return (
     <button
@@ -644,7 +645,7 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
           </div>
           <div className="min-w-0">
              <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
-              Bowl {index}
+              {containerLabel} {index}
             </p>
             <p className={cn('text-xs mt-0.5', status.color)}>
               {status.label}
@@ -680,6 +681,9 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
 function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () => void; onMenuTap: () => void }) {
   const previewLines = bowl.lines.slice(0, 3);
   const overflowCount = bowl.lines.length - 3;
+  const isBottle = bowl.containerType === 'bottle';
+  const CardIcon = isBottle ? TestTube2 : FlaskConical;
+  const containerLabel = isBottle ? 'New Bottle' : 'New Formula';
 
   return (
     <button
