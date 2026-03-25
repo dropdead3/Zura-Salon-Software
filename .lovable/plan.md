@@ -1,35 +1,27 @@
 
 
-## Add Formula History Notes to the Notes Tab, Organized by Appointment Date
+## Fix: Demo Bowl Detail View Should Show Actual Bowl Lines
 
 ### Problem
-The Notes tab only shows Booking Note, Profile Notes, and Team Notes. The formula history entries (from `DEMO_FORMULA_HISTORY` / `useClientFormulaHistory`) contain rich notes like "Level 7 base maintained, added 7/1 for dimension" that aren't surfaced here. These should appear organized by past appointment date.
+When a demo bowl is created (e.g., via "Mix from History"), the card preview correctly shows the bowl's actual ingredients (4 lines). But tapping into the bowl opens `DockLiveDispensing`, which uses a hardcoded `DEMO_BOWL_LINES` constant with only 2 ingredients. The actual lines from the created bowl are discarded.
 
-### Design
-Add a new **"Formulation Notes"** section below Profile Notes and above Team Notes. It pulls data from `useClientFormulaHistory` using the client ID, groups entries by appointment date, and renders them chronologically (newest first). Each entry shows:
-- Date header (e.g., "Mar 3, 2026")
-- Service name + stylist
-- Formula note text
-- Ingredient chips (compact summary)
+### Root Cause
+In `DockLiveDispensing.tsx`, the `useBowlLines` hook (line 65) checks `bowlId?.startsWith('demo-')` and immediately returns `DEMO_BOWL_LINES` — a static 2-item array. It has no way to access the actual `DemoBowl.lines` data.
 
-This gives the stylist a complete picture: booking context, client preferences, past formula decisions, and team communication — all in one tab.
+### Solution
+Pass the demo bowl's actual lines into `DockLiveDispensing` so they're used instead of the hardcoded fallback.
 
 ### Changes
 
-**`src/components/dock/appointment/DockNotesTab.tsx`**
+**1. `src/components/dock/mixing/DockLiveDispensing.tsx`**
+- Add optional `demoLines?: BowlLine[]` prop to the interface
+- In `useBowlLines`, accept `demoLines` param; when `bowlId` starts with `demo-` and `demoLines` is provided, return those instead of `DEMO_BOWL_LINES`
+- Keep `DEMO_BOWL_LINES` as fallback for legacy demo bowls without passed lines
 
-1. **Import** `useClientFormulaHistory` and `format`/`parseISO` from date-fns (format already imported)
-2. **Fetch formula history** using `useClientFormulaHistory(clientId || phorestClientId)` — the hook already handles demo IDs
-3. **New section** "Formulation Notes" between Profile Notes and Team Notes:
-   - Each formula entry rendered as a card with:
-     - Date + service name header row
-     - Stylist name (muted)
-     - Formula note in italics
-     - Small ingredient chips (product name + quantity)
-   - Grouped/sorted by `created_at` descending (already sorted from hook)
-   - Empty state hidden if no formulas exist
-4. Update `hasAnyContent` check to include formula history
+**2. `src/components/dock/appointment/DockServicesTab.tsx`**
+- When rendering `DockLiveDispensing` for a demo bowl, convert the `DemoBowl.lines` (which are `FormulaLine[]` from the builder) into `BowlLine[]` format and pass as `demoLines`
+- Mapping: `product.name` → `product_name_snapshot`, `product.brand` → `brand_snapshot`, `targetWeight * ratio` → `dispensed_quantity`, etc.
 
-### One file changed
-`src/components/dock/appointment/DockNotesTab.tsx`
+### Result
+Tapping a demo bowl card will show all the ingredients that were added, matching the preview card exactly.
 
