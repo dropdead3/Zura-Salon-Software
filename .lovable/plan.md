@@ -1,34 +1,34 @@
 
 
-## Organize Services by Category, Then Alphabetically
+## Add Smooth Animation to Service Line Item Drill-Down
 
-### Problem
-Services are sorted only by name (alphabetically), making it hard to scan related services. The screenshot shows Extensions, Blonding, Styling, and Haircuts all interleaved.
-
-### Solution
-1. **Sort data by category first, then name** — update the query `.order('category').order('name')` instead of just `.order('name')`.
-2. **Add visual category group headers** — insert a subtle category separator row in the table whenever the category changes, so users can quickly scan sections (e.g., "Blonding", "Color", "Extensions", "Haircuts", "Styling").
-3. **Use `service_category_colors` display_order** — match the category ordering used elsewhere in the app (from the `service_category_colors` table) so categories appear in the same consistent order.
+### Current State
+The expand/collapse already uses `AnimatePresence` + `motion.tr` (lines 633–641), but the animation is basic — just height 0→auto and opacity 0→1 with a fast 200ms duration. The inner content fades independently at 150ms. This feels abrupt.
 
 ### Changes — `ServiceTrackingSection.tsx`
 
-1. **Query**: Change `.order('name')` to `.order('category').order('name')` (line 117).
+**Improve the `motion.tr` transition** (lines 635–640):
+- Increase duration to 300ms with a cubic-bezier ease `[0.4, 0, 0.2, 1]` for a smoother Apple-grade feel
+- Add a slight y-translate on the inner `motion.div` (lines 643–648) so content slides up into place as it fades in
+- Stagger the inner content opacity to start after the height begins opening (add `delay: 0.08`)
 
-2. **Sort filtered results**: After filtering/searching, sort `searchedServices` using the `service_category_colors` display_order (fetch this data via existing query pattern). Services without a category go last.
+**Updated animation values:**
+```tsx
+// motion.tr (container)
+initial={{ height: 0, opacity: 0 }}
+animate={{ height: 'auto', opacity: 1 }}
+exit={{ height: 0, opacity: 0 }}
+transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
 
-3. **Category header rows**: In the table render loop, detect when a service's category differs from the previous one and insert a lightweight separator row:
-   ```tsx
-   <TableRow className="bg-muted/30 pointer-events-none">
-     <TableCell colSpan={4} className="py-1.5 px-4">
-       <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
-         {category}
-       </span>
-     </TableCell>
-   </TableRow>
-   ```
+// motion.div (inner content)
+initial={{ opacity: 0, y: -8 }}
+animate={{ opacity: 1, y: 0 }}
+exit={{ opacity: 0, y: -8 }}
+transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
+```
 
-4. **Add category order query**: Fetch `service_category_colors` with `display_order` to sort categories consistently (same pattern already used in `usePhorestServices.ts`).
+This gives a polished feel: the row height expands smoothly while the content gently slides and fades in with a slight stagger.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (lines 635–648 only)
 
