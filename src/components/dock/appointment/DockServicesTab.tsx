@@ -577,7 +577,7 @@ function AddBowlCard({ onClick, disabled }: { onClick: () => void; disabled: boo
 }
 
 // ─── Bowl Card (DB sessions) ──────────────────────────
-function BowlCard({ session, index, onTap }: { session: DockMixSession; index: number; onTap: () => void }) {
+function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSession; index: number; onTap: () => void; onMenuTap: () => void }) {
   const status = getStatusDisplay(session.status);
   const StatusIcon = status.icon;
   const isTerminal = isTerminalSessionStatus(session.status as any);
