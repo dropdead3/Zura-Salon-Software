@@ -155,8 +155,9 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const primarySessionId = sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);
 
-  const handleAddBowlForService = useCallback((serviceLabel: string) => {
+  const handleAddBowlForService = useCallback((serviceLabel: string, containerType: ContainerType = 'bowl') => {
     setActiveServiceLabel(serviceLabel);
+    setActiveContainerType(containerType);
     if (!showBowlDetection) setShowBowlDetection(true);
   }, [showBowlDetection]);
 
