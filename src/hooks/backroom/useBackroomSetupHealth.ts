@@ -25,6 +25,7 @@ export interface SetupHealthMetrics {
   stationsConfigured: number;
   alertRulesConfigured: number;
   billingConfigured: boolean;
+  trackedServicesWithComponents: number;
   warnings: SetupWarning[];
 }
 
@@ -91,8 +92,9 @@ export function useBackroomSetupHealth() {
       }
 
       // Tracked services with no components
+      const componentServiceIds = new Set((componentsRes.data || []).map((c: { service_id: string }) => c.service_id));
+      const trackedServicesWithComponents = trackedServices.filter((s: { id: string }) => componentServiceIds.has(s.id)).length;
       if (trackedServices.length > 0) {
-        const componentServiceIds = new Set((componentsRes.data || []).map((c: { service_id: string }) => c.service_id));
         const servicesWithoutComponents = trackedServices.filter((s: { id: string }) => !componentServiceIds.has(s.id));
         if (servicesWithoutComponents.length > 0) {
           warnings.push({
@@ -141,6 +143,7 @@ export function useBackroomSetupHealth() {
         stationsConfigured: stationsRes.count || 0,
         alertRulesConfigured: alertsRes.count || 0,
         billingConfigured,
+        trackedServicesWithComponents,
         warnings,
       };
     },

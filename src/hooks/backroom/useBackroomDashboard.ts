@@ -104,7 +104,7 @@ export function useBackroomDashboard(locationId?: string, startDateOverride?: st
     const steps = [
       { label: 'Products', done: h.trackedProducts > 0 },
       { label: 'Suppliers', done: h.suppliersConfigured > 0 },
-      { label: 'Services', done: h.trackedServices > 0 },
+      { label: 'Services', done: h.trackedServices > 0 && h.trackedServicesWithComponents === h.trackedServices },
       { label: 'Formulas', done: h.recipesConfigured > 0 },
       { label: 'Allowances', done: h.allowancePolicies > 0 },
       { label: 'Billing', done: h.billingConfigured },
