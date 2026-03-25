@@ -10379,6 +10379,7 @@ export type Database = {
           client_id: string | null
           completed_at: string | null
           confidence_score: number | null
+          container_type: Database["public"]["Enums"]["container_type"]
           created_at: string
           id: string
           is_manual_override: boolean
@@ -10404,6 +10405,7 @@ export type Database = {
           client_id?: string | null
           completed_at?: string | null
           confidence_score?: number | null
+          container_type?: Database["public"]["Enums"]["container_type"]
           created_at?: string
           id?: string
           is_manual_override?: boolean
@@ -10429,6 +10431,7 @@ export type Database = {
           client_id?: string | null
           completed_at?: string | null
           confidence_score?: number | null
+          container_type?: Database["public"]["Enums"]["container_type"]
           created_at?: string
           id?: string
           is_manual_override?: boolean
