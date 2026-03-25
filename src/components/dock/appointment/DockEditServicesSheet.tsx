@@ -195,7 +195,7 @@ export function DockEditServicesSheet({
                     <button
                       key={svc.name}
                       onClick={() => toggleService(svc)}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-xl bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-destructive/20 transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-xl bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-destructive/20 transition-colors"
                     >
                       {svc.name}
                       <X className="h-4 w-4" />
