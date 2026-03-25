@@ -1,18 +1,30 @@
 
 
-## Fix: Demo Mix Session `service_label` Mismatch
+## Fix: Only Rachel Kim Should Have Allergy Alerts in Demo Mode
 
 ### Problem
-Sarah Mitchell's demo appointment has services `Full Balayage, Vivid Toner`, but her demo mix session (`demo-session-1`) has `service_label: 'Balayage'`. Since `'Balayage' !== 'Full Balayage'`, the grouping logic creates a third section instead of filing the bowl under "Full Balayage".
+Both `DockClientAlertsBanner.tsx` and `DockClientTab.tsx` define a single `DEMO_CLIENT_MOCK` with `medical_alerts` and allergy-triggering `notes`. This mock is returned for **every** demo client, so all demo appointments incorrectly show an allergy banner.
 
-### Fix — `src/hooks/dock/dockDemoData.ts`
+### Solution
+Make the demo mock client-aware: only return allergy data for Rachel Kim (`demo-client-7` / `demo-pc-7`). All other demo clients get `null` for `medical_alerts` and neutral notes.
 
-Line 282: Change `service_label: 'Balayage'` → `service_label: 'Full Balayage'`
+### Changes
 
-Also audit the other demo sessions:
-- `demo-session-2` (appt-4): `service_label: 'Corrective Color'` → verify matches `'Corrective Color - By The Hour'` — needs update to `'Corrective Color - By The Hour'`
-- `demo-session-3` (appt-6): `service_label: 'Full Vivid'` — matches, no change needed
+**1. `src/components/dock/appointment/DockClientAlertsBanner.tsx`**
+- Replace the single `DEMO_CLIENT_MOCK` (lines 25-28) with a function that checks the client ID
+- If `demo-client-7` or `demo-pc-7` → return mock with `medical_alerts` and sensitivity notes
+- All others → return `{ notes: null, medical_alerts: null, name: clientName }`
+- Update line 80 to call the function with the current client ID
 
-### One file changed
-`src/hooks/dock/dockDemoData.ts`
+**2. `src/components/dock/appointment/DockClientTab.tsx`**
+- Same approach: replace the single `DEMO_CLIENT_MOCK` (lines 95-105) with a function
+- Rachel Kim variant includes allergy data; all others get clean mock with no `medical_alerts` and generic notes (or null)
+- Update the query function's demo branch to call with current client/phorest ID
+
+### Technical detail
+Both files already have the client IDs available (`phorestClientId`, `clientId`) at the point where the demo mock is used, so no new props or plumbing needed.
+
+### Files changed
+- `src/components/dock/appointment/DockClientAlertsBanner.tsx`
+- `src/components/dock/appointment/DockClientTab.tsx`
 
