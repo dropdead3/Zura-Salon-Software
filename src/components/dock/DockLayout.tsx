@@ -21,6 +21,7 @@ import { DockClientQuickView } from './appointment/DockClientQuickView';
 import { useDockCompleteAppointment } from '@/hooks/dock/useDockCompleteAppointment';
 import { useDockIdleTimer } from '@/hooks/dock/useDockIdleTimer';
 import { DockLockFAB } from './DockLockFAB';
+import { DockScaleProvider } from './DockScaleProvider';
 
 interface DockLayoutProps {
   activeTab: DockTab;
@@ -63,6 +64,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
   };
 
   const dockContent = (
+    <DockScaleProvider>
     <div
       ref={idleRef}
       className="relative h-full flex flex-col bg-[hsl(var(--platform-bg))] text-[hsl(var(--platform-foreground))]"
@@ -131,6 +133,7 @@ export function DockLayout({ activeTab, onTabChange, staff, onLogout, view, onOp
       {/* Lock FAB */}
       <DockLockFAB onLock={onLogout} />
     </div>
+    </DockScaleProvider>
   );
 
   if (isConstrained) {

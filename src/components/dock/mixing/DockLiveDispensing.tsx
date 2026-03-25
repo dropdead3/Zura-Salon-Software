@@ -7,6 +7,7 @@
 
 import { useState, useCallback } from 'react';
 import { ArrowLeft, FlaskConical, Scale, Check } from 'lucide-react';
+import { useDockScale } from '@/hooks/dock/useDockScale';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -115,6 +116,7 @@ export function DockLiveDispensing({
   const [bowlStatus, setBowlStatus] = useState(initialBowlStatus);
   const [capturedLeftover, setCapturedLeftover] = useState<number | null>(initialLeftover ?? null);
   const [currentWeights, setCurrentWeights] = useState<Map<string, number>>(new Map());
+  const scale = useDockScale();
 
   const recordWeight = useRecordDispensedWeight();
   const sealBowl = useSealDockBowl();
@@ -286,6 +288,8 @@ export function DockLiveDispensing({
                   if (!isSealed) {
                     setActiveLineId(line.id);
                     setActiveView('ingredient');
+                    // Tare the scale when entering ingredient view
+                    scale.tare();
                   }
                 }}
               />
