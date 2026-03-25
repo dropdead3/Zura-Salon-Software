@@ -1,25 +1,27 @@
 
 
-## Replace Absolute Demo Badge with Flow-Based Top Banner
+## Fix: Wire Demo Appointment Services to Demo Catalog
 
-### Problem
-The absolute-positioned `DockDemoBadge` keeps colliding with other UI elements (Edit Services button, hamburger menu). An absolute badge will always be a positioning headache.
+### Root Cause
+Two issues prevent the Edit Services sheet from pre-selecting services in demo mode:
 
-### Solution
-Replace the floating badge with a **static top banner** that sits in the document flow and pushes content below it — no overlay conflicts possible.
+1. **Separator mismatch**: Demo appointment `service_name` fields use ` + ` as a separator (e.g., `"Full Balayage + Vivid Toner"`), but `DockAppointmentDetail.tsx` splits on `,` — so the whole string becomes one entry that doesn't match any single catalog item.
 
-### Changes
+2. **Inconsistent separators**: One appointment (`demo-appt-11`) uses `, ` while all others use ` + `.
 
-**1. `src/components/dock/DockDemoBadge.tsx`** — Rewrite completely
-- Remove absolute positioning
-- Render a full-width slim banner: `w-full`, amber/warm background, centered text "Now viewing in Demo Mode"
-- Small pulsing dot + text, ~32px tall, `text-xs`
-- Sits in normal flow so it pushes content down
+### Fix — 2 files
 
-**2. `src/components/dock/DockLayout.tsx`** — Move banner placement
-- In all three render paths (constrained inside frame, constrained outside frame, full-screen), place `<DockDemoBadge />` as the **first child inside** the `dockContent` div (before the scrollable content area), so it's part of the flex column and pushes everything below it
-- Remove the two **outer** `<DockDemoBadge />` calls on lines 143 and 157 (the ones outside the device frame / in the full-screen wrapper) — only keep the one inside `dockContent` at line 73
+**1. `src/hooks/dock/dockDemoData.ts`**
+- Standardize the separator to `, ` (comma-space) for ALL demo appointments' `service_name` — this matches how the detail view parses them (`.split(',').map(s => s.trim())`):
+  - `'Full Balayage + Vivid Toner'` → `'Full Balayage, Vivid Toner'`
+  - `'Natural Root Retouch + Glaze Add On'` → `'Natural Root Retouch, Glaze Add On'`
+  - `'Full Highlight + Root Smudge (Add On) + Glaze Add On + Signature Haircut'` → `'Full Highlight, Root Smudge (Add On), Glaze Add On, Signature Haircut'`
+  - Single-service appointments stay unchanged
+- Update matching `service_name` references in `DEMO_FORMULA_HISTORY`, `DEMO_VISIT_HISTORY`, and `DEMO_FORMULA_MEMORY` for consistency
+
+**2. `src/components/dock/appointment/DockAppointmentDetail.tsx`**
+- No change needed — the existing `.split(',')` parsing already works once demo data uses comma separators
 
 ### Result
-Single banner at top of dock content, flows naturally, no z-index or right-offset issues, visible on all tabs/views.
+Opening Edit Services on any demo appointment will correctly pre-select the matching services from the demo catalog, allowing add/remove to work properly.
 
