@@ -54,9 +54,9 @@ export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', un
       </p>
 
       {/* Display */}
-      <div className="flex items-baseline justify-center gap-1 mb-6">
+      <div className="flex items-baseline justify-center gap-1 mb-8">
         <span className={cn(
-          'font-display text-4xl tracking-tight transition-colors',
+          'font-display text-5xl tracking-tight transition-colors',
           value ? 'text-[hsl(var(--platform-foreground))]' : 'text-[hsl(var(--platform-foreground-muted)/0.3)]'
         )}>
           {value || '0'}
@@ -65,35 +65,35 @@ export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', un
       </div>
 
       {/* Numpad */}
-      <div className="grid grid-cols-3 gap-2 w-full max-w-[280px]">
+      <div className="grid grid-cols-3 gap-3 w-full max-w-[320px]">
         {NUMPAD_KEYS.flat().map((key) => (
           <button
             key={key}
             onClick={() => handleKey(key)}
             className={cn(
-              'h-14 rounded-xl text-lg font-medium transition-all duration-100 active:scale-95',
+              'h-16 rounded-2xl text-xl font-medium transition-all duration-100 active:scale-95',
               key === 'del'
                 ? 'bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground-muted))] border border-[hsl(var(--platform-border)/0.2)]'
                 : 'bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground))] border border-[hsl(var(--platform-border)/0.15)] hover:bg-[hsl(var(--platform-bg-card))]'
             )}
           >
-            {key === 'del' ? <Delete className="w-5 h-5 mx-auto" /> : key}
+            {key === 'del' ? <Delete className="w-6 h-6 mx-auto" /> : key}
           </button>
         ))}
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3 w-full max-w-[280px] mt-4">
+      <div className="flex gap-4 w-full max-w-[320px] mt-6">
         <button
           onClick={onCancel}
-          className="flex-1 h-12 rounded-xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] text-sm font-medium transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
+          className="flex-1 h-14 rounded-2xl border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] text-sm font-medium transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
         >
           Cancel
         </button>
         <button
           onClick={handleConfirm}
           disabled={parsedValue <= 0}
-          className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+          className="flex-1 h-14 rounded-2xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2.5 px-6"
         >
           <Check className="w-4 h-4" />
           Confirm
