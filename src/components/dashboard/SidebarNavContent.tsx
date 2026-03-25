@@ -84,6 +84,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     managerNavItems,
     websiteNavItems,
     adminOnlyNavItems,
+    appsNavItems: appsNavItemsProp = [],
     platformNavItems = [],
     footerNavItems = [],
     isPlatformUser = false,
