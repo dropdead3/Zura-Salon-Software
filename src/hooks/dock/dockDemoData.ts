@@ -279,7 +279,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       is_manual_override: false,
       unresolved_flag: false,
       unresolved_reason: null,
-      service_label: 'Balayage',
+      service_label: 'Full Balayage',
     },
   ],
   'demo-appt-4': [
@@ -292,7 +292,7 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       is_manual_override: false,
       unresolved_flag: false,
       unresolved_reason: null,
-      service_label: 'Corrective Color',
+      service_label: 'Corrective Color - By The Hour',
     },
   ],
   'demo-appt-6': [
