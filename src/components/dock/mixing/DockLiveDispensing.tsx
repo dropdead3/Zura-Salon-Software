@@ -7,6 +7,7 @@
 
 import { useState, useCallback } from 'react';
 import { ArrowLeft, FlaskConical, Scale, Check } from 'lucide-react';
+import { useDockScale } from '@/hooks/dock/useDockScale';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
