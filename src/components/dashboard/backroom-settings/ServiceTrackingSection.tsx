@@ -456,13 +456,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                         onCheckedChange={selectAll}
                       />
                     </TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                     <TableHead className={tokens.table.columnHeader}>Service</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Category</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Type</TableHead>
                     <TableHead className={tokens.table.columnHeader}>Tracked</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Config</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Actions</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -476,63 +472,55 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     return (
                       <Collapsible key={service.id} open={isExpanded} onOpenChange={() => toggleExpand(service.id)} asChild>
                         <>
-                          <TableRow className={cn(attention && 'bg-amber-500/[0.03]')}>
-                            {/* Checkbox */}
-                            <TableCell>
-                              {!service.is_backroom_tracked && (
+                          <TableRow className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')} onClick={() => toggleExpand(service.id)}>
+                            {/* Checkbox / Status dot */}
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {!service.is_backroom_tracked ? (
                                 <Checkbox
                                   checked={selectedIds.has(service.id)}
                                   onCheckedChange={() => toggleSelect(service.id)}
                                 />
-                              )}
-                            </TableCell>
-
-                            {/* Status dot */}
-                            <TableCell>
-                              <div className={cn(
-                                'w-2.5 h-2.5 rounded-full',
-                                service.is_backroom_tracked
-                                  ? 'bg-primary'
-                                  : (type === 'chemical' || type === 'suggested')
-                                    ? 'bg-amber-500'
-                                    : 'bg-muted-foreground/30',
-                              )} />
-                            </TableCell>
-
-                            {/* Name */}
-                            <TableCell>
-                              <span className={cn(
-                                'text-sm font-sans',
-                                service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
-                              )}>
-                                {service.name}
-                              </span>
-                            </TableCell>
-
-                            {/* Category */}
-                            <TableCell>
-                              {service.category ? (
-                                <span className="text-xs text-muted-foreground">{service.category}</span>
                               ) : (
-                                <span className="text-xs text-muted-foreground/50 italic">None</span>
+                                <div className={cn(
+                                  'w-2.5 h-2.5 rounded-full',
+                                  'bg-primary',
+                                )} />
                               )}
                             </TableCell>
 
-                            {/* Type badge */}
+                            {/* Service — Name + Category subtitle + Type badge */}
                             <TableCell>
-                              {type === 'chemical' && (
-                                <Badge variant="default" className="text-[10px]">Chemical</Badge>
-                              )}
-                              {type === 'suggested' && (
-                                <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
-                              )}
-                              {type === 'standard' && (
-                                <Badge variant="secondary" className="text-[10px]">Standard</Badge>
-                              )}
+                              <div className="flex items-center gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={cn(
+                                      'text-sm font-sans truncate',
+                                      service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
+                                    )}>
+                                      {service.name}
+                                    </span>
+                                    {type === 'chemical' && (
+                                      <Badge variant="default" className="text-[10px] shrink-0">Chemical</Badge>
+                                    )}
+                                    {type === 'suggested' && (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
+                                    )}
+                                    {service.is_backroom_tracked && (
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <Package className={cn('w-3 h-3', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
+                                        <FileText className={cn('w-3 h-3', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
+                                      </div>
+                                    )}
+                                  </div>
+                                  {service.category && (
+                                    <span className="text-[11px] text-muted-foreground">{service.category}</span>
+                                  )}
+                                </div>
+                              </div>
                             </TableCell>
 
                             {/* Tracking toggle */}
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                               <Switch
                                 checked={service.is_backroom_tracked}
                                 onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
@@ -540,112 +528,115 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                               />
                             </TableCell>
 
-                            {/* Config status */}
+                            {/* Expand chevron */}
                             <TableCell>
-                              {service.is_backroom_tracked ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-0.5">
-                                    <Package className={cn(
-                                      'w-3.5 h-3.5',
-                                      hasComponents ? 'text-primary' : 'text-muted-foreground/30',
-                                    )} />
-                                    <MetricInfoTooltip description={hasComponents ? 'Product components mapped' : 'No product components mapped yet'} />
-                                  </div>
-                                  <div className="flex items-center gap-0.5">
-                                    <FileText className={cn(
-                                      'w-3.5 h-3.5',
-                                      hasAllowance ? 'text-primary' : 'text-muted-foreground/30',
-                                    )} />
-                                    <MetricInfoTooltip description={hasAllowance ? 'Allowance policy configured' : 'No allowance policy set'} />
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground/40">—</span>
-                              )}
-                            </TableCell>
-
-                            {/* Actions */}
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {service.is_backroom_tracked && (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-7 text-xs"
-                                      onClick={() => setSelectedServiceId(service.id)}
-                                    >
-                                      Components
-                                    </Button>
-                                    <button
-                                      onClick={() => toggleExpand(service.id)}
-                                      className="p-1 rounded-md hover:bg-muted transition-colors"
-                                    >
-                                      <ChevronDown className={cn(
-                                        'w-4 h-4 text-muted-foreground transition-transform duration-200',
-                                        isExpanded && 'rotate-180',
-                                      )} />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                              <ChevronDown className={cn(
+                                'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                                isExpanded && 'rotate-180',
+                              )} />
                             </TableCell>
                           </TableRow>
 
-                          {/* Expandable config row */}
-                          {service.is_backroom_tracked && (
-                            <CollapsibleContent asChild>
-                              <tr>
-                                <td colSpan={8} className="p-0">
-                                  <div className="px-6 py-4 bg-muted/30 border-t border-border/30">
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                      <div className="space-y-1.5">
-                                        <label className="text-[10px] font-sans text-muted-foreground">Assistant Prep</label>
-                                        <Switch
-                                          checked={service.assistant_prep_allowed}
-                                          onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
-                                          className="scale-90"
-                                        />
+                          {/* Expandable detail row — always available */}
+                          <CollapsibleContent asChild>
+                            <tr>
+                              <td colSpan={4} className="p-0">
+                                <div className="px-6 py-4 bg-muted/30 border-t border-border/30">
+                                  {service.is_backroom_tracked ? (
+                                    <div className="space-y-4">
+                                      {/* Config status + actions */}
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                          <div className="flex items-center gap-1">
+                                            <Package className={cn('w-3.5 h-3.5', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
+                                            <span>{hasComponents ? `${componentsByService.get(service.id)} component${(componentsByService.get(service.id) || 0) > 1 ? 's' : ''}` : 'No components'}</span>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
+                                            <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-7 text-xs"
+                                          onClick={() => setSelectedServiceId(service.id)}
+                                        >
+                                          <Package className="w-3 h-3 mr-1" />
+                                          Components
+                                        </Button>
                                       </div>
-                                      <div className="space-y-1.5">
-                                        <label className="text-[10px] font-sans text-muted-foreground">Smart Mix Assist</label>
-                                        <Switch
-                                          checked={service.smart_mix_assist_enabled}
-                                          onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
-                                          className="scale-90"
-                                        />
-                                      </div>
-                                      <div className="space-y-1.5">
-                                        <label className="text-[10px] font-sans text-muted-foreground">Formula Memory</label>
-                                        <Switch
-                                          checked={service.formula_memory_enabled}
-                                          onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
-                                          className="scale-90"
-                                        />
-                                      </div>
-                                      <div className="space-y-1.5">
-                                        <label className="text-[10px] font-sans text-muted-foreground">
-                                          Variance Threshold
-                                          <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                          <Slider
-                                            value={[service.variance_threshold_pct]}
-                                            onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
-                                            min={5}
-                                            max={50}
-                                            step={5}
-                                            className="flex-1"
+                                      {/* Toggles grid */}
+                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <div className="space-y-1.5">
+                                          <label className="text-[10px] font-sans text-muted-foreground">Assistant Prep</label>
+                                          <Switch
+                                            checked={service.assistant_prep_allowed}
+                                            onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
+                                            className="scale-90"
                                           />
-                                          <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{service.variance_threshold_pct}%</span>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                          <label className="text-[10px] font-sans text-muted-foreground">Smart Mix Assist</label>
+                                          <Switch
+                                            checked={service.smart_mix_assist_enabled}
+                                            onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
+                                            className="scale-90"
+                                          />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                          <label className="text-[10px] font-sans text-muted-foreground">Formula Memory</label>
+                                          <Switch
+                                            checked={service.formula_memory_enabled}
+                                            onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
+                                            className="scale-90"
+                                          />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                          <label className="text-[10px] font-sans text-muted-foreground">
+                                            Variance Threshold
+                                            <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
+                                          </label>
+                                          <div className="flex items-center gap-2">
+                                            <Slider
+                                              value={[service.variance_threshold_pct]}
+                                              onValueChange={([v]) => updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } })}
+                                              min={5}
+                                              max={50}
+                                              step={5}
+                                              className="flex-1"
+                                            />
+                                            <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{service.variance_threshold_pct}%</span>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </td>
-                              </tr>
-                            </CollapsibleContent>
-                          )}
+                                  ) : (
+                                    /* Untracked service drill-down */
+                                    <div className="flex items-center justify-between">
+                                      <div className="space-y-1 text-xs text-muted-foreground">
+                                        <div className="flex items-center gap-3">
+                                          <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
+                                          <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                        </div>
+                                        {(type === 'chemical' || type === 'suggested') && (
+                                          <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+                                        )}
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-xs shrink-0"
+                                        onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
+                                      >
+                                        Enable Tracking
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          </CollapsibleContent>
                         </>
                       </Collapsible>
                     );
