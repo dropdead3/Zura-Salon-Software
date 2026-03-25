@@ -284,11 +284,12 @@ export function ServiceEditorDialog({
                       <div>
                         <div className="flex items-center gap-1.5">
                           <p className={tokens.body.emphasis}>Requires Qualification</p>
-                        <MetricInfoTooltip description="When enabled, only team members with this service's qualification can be booked for it." />
+                          <MetricInfoTooltip description="When enabled, only team members with this service's qualification can be booked for it." />
+                        </div>
+                        <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
                       </div>
-                      <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
+                      <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
                     </div>
-                    <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -329,61 +330,6 @@ export function ServiceEditorDialog({
                       <p className={tokens.body.muted}>New clients must complete a consultation before booking</p>
                     </div>
                     <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
-                  </div>
-
-                  {/* Color/Chemical Service Toggle + Container Types */}
-                  <div className="pt-2 border-t border-border/60">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className={tokens.body.emphasis}>Color or Chemical Service</p>
-                          <MetricInfoTooltip description="Enable for services that involve color, lightener, toner, or other chemical formulations tracked by Zura Backroom." />
-                        </div>
-                        <p className={tokens.body.muted}>Track formulations and supply usage in Zura Backroom</p>
-                      </div>
-                      <Switch
-                        checked={isChemicalService}
-                        onCheckedChange={(checked) => {
-                          setIsChemicalService(checked);
-                          if (!checked) setContainerTypes([]);
-                          else if (containerTypes.length === 0) setContainerTypes(['bowl']);
-                        }}
-                      />
-                    </div>
-
-                    {isChemicalService && (
-                      <div className="pl-6 pt-3 mt-3 border-l-2 border-muted space-y-2">
-                        <div className="mb-1">
-                          <div className="flex items-center gap-1.5">
-                            <p className={tokens.body.emphasis}>Container Types</p>
-                            <MetricInfoTooltip description="Determines which vessel types (bowls, bottles) appear in Zura Backroom when mixing formulations for this service." />
-                          </div>
-                          <p className={tokens.body.muted}>Select both if the service uses bowls and bottles</p>
-                        </div>
-                        <div className="flex gap-6">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={containerTypes.includes('bowl')}
-                              onCheckedChange={(checked) => {
-                                if (checked) setContainerTypes(prev => prev.includes('bowl') ? prev : [...prev, 'bowl']);
-                                else setContainerTypes(prev => prev.filter(t => t !== 'bowl').length > 0 ? prev.filter(t => t !== 'bowl') : prev);
-                              }}
-                            />
-                            <span className="text-sm">Bowl</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={containerTypes.includes('bottle')}
-                              onCheckedChange={(checked) => {
-                                if (checked) setContainerTypes(prev => prev.includes('bottle') ? prev : [...prev, 'bottle']);
-                                else setContainerTypes(prev => prev.filter(t => t !== 'bottle').length > 0 ? prev.filter(t => t !== 'bottle') : prev);
-                              }}
-                            />
-                            <span className="text-sm">Bottle</span>
-                          </label>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Deposit Configuration */}
