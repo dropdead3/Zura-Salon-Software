@@ -1,27 +1,48 @@
 
 
-## Fix: Demo Bowl Detail View Should Show Actual Bowl Lines
+## Add Action Menu to Formula Bowl Card (3-Dot Ellipsis)
 
 ### Problem
-When a demo bowl is created (e.g., via "Mix from History"), the card preview correctly shows the bowl's actual ingredients (4 lines). But tapping into the bowl opens `DockLiveDispensing`, which uses a hardcoded `DEMO_BOWL_LINES` constant with only 2 ingredients. The actual lines from the created bowl are discarded.
+The MoreVertical icon on bowl cards is purely decorative — tapping it does nothing. Based on the reference screenshot, it should open an action menu with options.
 
-### Root Cause
-In `DockLiveDispensing.tsx`, the `useBowlLines` hook (line 65) checks `bowlId?.startsWith('demo-')` and immediately returns `DEMO_BOWL_LINES` — a static 2-item array. It has no way to access the actual `DemoBowl.lines` data.
+### Design
+When the 3-dot icon is tapped on a bowl card, show a bottom action sheet (consistent with the Dock's mobile-first UX) with these options:
 
-### Solution
-Pass the demo bowl's actual lines into `DockLiveDispensing` so they're used instead of the hardcoded fallback.
+1. **Edit Formula** — opens the bowl detail/dispensing view (same as tapping the card)
+2. **Change Service** — reassign the bowl to a different service on the appointment
+3. **Add To Favorites** — placeholder action (toast for now)
+4. **View Notes** — placeholder action (toast for now)
+5. **Rename Formula** — inline rename with a small dialog
+6. **Remove Formula** — destructive action with confirmation
+
+The menu will be triggered by stopping propagation on the 3-dot icon tap (so it doesn't also open the bowl), then rendering an action sheet overlay.
 
 ### Changes
 
-**1. `src/components/dock/mixing/DockLiveDispensing.tsx`**
-- Add optional `demoLines?: BowlLine[]` prop to the interface
-- In `useBowlLines`, accept `demoLines` param; when `bowlId` starts with `demo-` and `demoLines` is provided, return those instead of `DEMO_BOWL_LINES`
-- Keep `DEMO_BOWL_LINES` as fallback for legacy demo bowls without passed lines
+**1. New file: `src/components/dock/mixing/DockBowlActionSheet.tsx`**
+- Bottom sheet overlay with 6 action buttons (full-width, large touch targets)
+- Props: `open`, `onClose`, `onAction(action: string)`
+- Styled to match Dock's platform tokens and the reference screenshot (rounded buttons, dark bg)
+- "Remove Formula" in red/destructive styling at the bottom
 
 **2. `src/components/dock/appointment/DockServicesTab.tsx`**
-- When rendering `DockLiveDispensing` for a demo bowl, convert the `DemoBowl.lines` (which are `FormulaLine[]` from the builder) into `BowlLine[]` format and pass as `demoLines`
-- Mapping: `product.name` → `product_name_snapshot`, `product.brand` → `brand_snapshot`, `targetWeight * ratio` → `dispensed_quantity`, etc.
+- Add state: `bowlMenuTarget` (which bowl's menu is open)
+- Wrap the MoreVertical icon in both `BowlCard` and `DemoBowlCard` with an `onClick` handler that stops propagation and opens the action sheet
+- Render `DockBowlActionSheet` conditionally
+- Handle actions:
+  - **Edit Formula**: trigger the same `onTap` as the card
+  - **Change Service**: placeholder toast for now
+  - **Add To Favorites**: placeholder toast
+  - **View Notes**: placeholder toast
+  - **Rename Formula**: open a small rename dialog (text input + confirm)
+  - **Remove Formula**: confirmation overlay, then remove bowl from state (demo) or delete from DB
 
-### Result
-Tapping a demo bowl card will show all the ingredients that were added, matching the preview card exactly.
+**3. New file: `src/components/dock/mixing/DockRenameBowlDialog.tsx`**
+- Small dialog with text input for renaming the formula
+- Updates the bowl's display name in state (demo) or DB
+
+### Files
+- `src/components/dock/mixing/DockBowlActionSheet.tsx` — new
+- `src/components/dock/mixing/DockRenameBowlDialog.tsx` — new
+- `src/components/dock/appointment/DockServicesTab.tsx` — wire up menu
 
