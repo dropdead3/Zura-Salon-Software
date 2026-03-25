@@ -501,7 +501,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 {searchQuery
                   ? 'Try a different search term.'
                   : activeFilter === 'attention'
-                    ? 'All chemical services are tracked and configured.'
+                    ? 'All color/chemical services are tracked and configured.'
                     : 'Adjust your filter or add services in the Services Configurator.'}
               </p>
             </div>
