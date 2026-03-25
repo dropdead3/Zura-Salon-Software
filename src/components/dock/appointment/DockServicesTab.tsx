@@ -14,7 +14,7 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
-import { DockLiveDispensing } from '../mixing/DockLiveDispensing';
+import { DockLiveDispensing, type BowlLine } from '../mixing/DockLiveDispensing';
 import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
 import { DockBowlDetectionGate } from '../mixing/DockBowlDetectionGate';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
