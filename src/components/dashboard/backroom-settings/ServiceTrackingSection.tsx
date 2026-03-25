@@ -632,20 +632,20 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           {/* Animated expandable detail row */}
                           <AnimatePresence initial={false}>
                             {isExpanded && (
-                              <motion.tr
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2, ease: 'easeOut' }}
-                                style={{ overflow: 'hidden' }}
-                              >
-                                <td colSpan={4} className="p-0">
-                                  <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.15 }}
-                                    className="px-6 py-4 bg-muted/30 border-t border-border/30"
+                               <motion.tr
+                                 initial={{ height: 0, opacity: 0 }}
+                                 animate={{ height: 'auto', opacity: 1 }}
+                                 exit={{ height: 0, opacity: 0 }}
+                                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                                 style={{ overflow: 'hidden' }}
+                               >
+                                 <td colSpan={4} className="p-0">
+                                   <motion.div
+                                     initial={{ opacity: 0, y: -8 }}
+                                     animate={{ opacity: 1, y: 0 }}
+                                     exit={{ opacity: 0, y: -8 }}
+                                     transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
+                                     className="px-6 py-4 bg-muted/30 border-t border-border/30"
                                   >
                                     {service.is_backroom_tracked ? (
                                       <div className="space-y-4">
