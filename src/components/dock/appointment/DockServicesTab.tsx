@@ -275,7 +275,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         setRenameTarget(bowlMenuTarget.type === 'remote' ? { type: 'remote', session: bowlMenuTarget.session } : { type: 'demo', bowl: bowlMenuTarget.bowl });
         setBowlMenuTarget(null);
         break;
-      case 'remove':
+      case 'discard':
         if (bowlMenuTarget.type === 'demo') {
           setDemoBowls(prev => prev.filter(b => b.id !== bowlMenuTarget.bowl.id));
           toast.success('Formula removed');
