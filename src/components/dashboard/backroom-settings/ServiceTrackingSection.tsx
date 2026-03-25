@@ -215,8 +215,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   // Classification helpers
   const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
-    if (s.is_chemical_service) return 'chemical';
-    if (isSuggestedChemicalService(s.name, s.category)) return 'suggested';
+    if (s.is_chemical_service === true) return 'chemical';
+    if (s.is_chemical_service === null && isSuggestedChemicalService(s.name, s.category)) return 'suggested';
     return 'standard';
   };
 
