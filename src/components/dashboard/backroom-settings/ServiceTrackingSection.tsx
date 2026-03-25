@@ -33,7 +33,7 @@ interface ServiceRow {
   name: string;
   category: string | null;
   is_backroom_tracked: boolean;
-  is_chemical_service: boolean;
+  is_chemical_service: boolean | null;
   assistant_prep_allowed: boolean;
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
@@ -215,8 +215,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   // Classification helpers
   const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
-    if (s.is_chemical_service) return 'chemical';
-    if (isSuggestedChemicalService(s.name, s.category)) return 'suggested';
+    if (s.is_chemical_service === true) return 'chemical';
+    if (s.is_chemical_service === null && isSuggestedChemicalService(s.name, s.category)) return 'suggested';
     return 'standard';
   };
 
@@ -234,7 +234,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const milestones: ProgressMilestone[] = useMemo(() => {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
-    const classified = allServices.filter(s => s.is_chemical_service || s.category !== null);
+    const classified = allServices.filter(s => s.is_chemical_service !== null);
     const withComponents = tracked.filter(s => componentsByService.has(s.id));
     const withAllowance = tracked.filter(s => allowanceByService.has(s.id));
 

@@ -24,7 +24,7 @@ interface ServiceRow {
   name: string;
   category: string | null;
   is_backroom_tracked: boolean;
-  is_chemical_service: boolean;
+  is_chemical_service: boolean | null;
 }
 
 interface Props {
@@ -83,7 +83,7 @@ export function ServiceTrackingQuickSetup({
   });
 
   // Step-specific items
-  const uncategorized = services.filter(s => !s.is_chemical_service && !s.category);
+  const uncategorized = services.filter(s => s.is_chemical_service === null);
   const suggestedUncategorized = uncategorized.filter(s => isSuggestedChemicalService(s.name, s.category));
   const untrackedChemical = services.filter(s =>
     !s.is_backroom_tracked && (s.is_chemical_service || isSuggestedChemicalService(s.name, s.category))
@@ -119,9 +119,17 @@ export function ServiceTrackingQuickSetup({
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-[10px] text-muted-foreground"
+                        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: false })}
+                      >
+                        Standard
+                      </Button>
                       <span className="text-[10px] text-muted-foreground">Chemical</span>
                       <Switch
-                        checked={s.is_chemical_service}
+                        checked={s.is_chemical_service === true}
                         onCheckedChange={(v) => classifyMutation.mutate({ id: s.id, isChemical: v })}
                         className="scale-90"
                       />
