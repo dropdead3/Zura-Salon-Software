@@ -119,9 +119,9 @@ export function DockIngredientDispensing({
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
+            className="flex items-center justify-center w-11 h-11 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
 
           {/* Ingredient nav */}
@@ -129,19 +129,19 @@ export function DockIngredientDispensing({
             <button
               onClick={() => canPrev && handleNavigate(allLines[currentIndex - 1].id)}
               disabled={!canPrev}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+            <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
               {currentIndex + 1} / {allLines.length}
             </span>
             <button
               onClick={() => canNext && handleNavigate(allLines[currentIndex + 1].id)}
               disabled={!canNext}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[hsl(var(--platform-foreground-muted))] disabled:opacity-30 transition-colors hover:bg-[hsl(var(--platform-bg-card))]"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -153,16 +153,16 @@ export function DockIngredientDispensing({
         <TeardropFill
           fillPercent={fillPercent}
           fillColor={fillColor}
-          size={160}
+          size={200}
         />
 
         {/* Product name */}
         <div className="text-center">
-          <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
+          <p className="font-display text-lg tracking-wide uppercase text-[hsl(var(--platform-foreground))]">
             {line.product_name_snapshot}
           </p>
           {line.brand_snapshot && (
-            <p className="text-xs text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)] mt-0.5">
               {line.brand_snapshot}
             </p>
           )}
@@ -171,17 +171,17 @@ export function DockIngredientDispensing({
         {/* Weight pill — tappable to open numpad */}
         <button
           onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
-          className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-7 py-3.5 rounded-full bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] hover:border-violet-500/40 transition-all active:scale-95"
         >
           <span className={cn(
-            'font-display text-2xl tracking-tight',
+            'font-display text-3xl tracking-tight',
             currentWeight > 0
               ? 'text-[hsl(var(--platform-foreground))]'
               : 'text-[hsl(var(--platform-foreground-muted)/0.4)]'
           )}>
             {currentWeight > 0 ? roundWeight(currentWeight) : 'Tap to weigh'}
           </span>
-          <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)]">
+          <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.5)]">
             / {roundWeight(targetWeight)}g
           </span>
         </button>
@@ -196,9 +196,9 @@ export function DockIngredientDispensing({
                 key={l.id}
                 onClick={() => handleNavigate(l.id)}
                 className={cn(
-                  'w-2 h-2 rounded-full transition-all duration-200',
+                  'w-2.5 h-2.5 rounded-full transition-all duration-200',
                   l.id === line.id
-                    ? 'w-6 bg-violet-500'
+                    ? 'w-8 bg-violet-500'
                     : filled
                       ? 'bg-emerald-500/60'
                       : 'bg-[hsl(var(--platform-foreground-muted)/0.2)]'
@@ -211,24 +211,24 @@ export function DockIngredientDispensing({
 
       {/* Action bar */}
       <div className="flex-shrink-0 px-7 py-3">
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-8">
           <ActionButton
-            icon={<Scale className="w-5 h-5" />}
+            icon={<Scale className="w-6 h-6" />}
             label="Balance"
             onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
           />
           <ActionButton
-            icon={<StickyNote className="w-5 h-5" />}
+            icon={<StickyNote className="w-6 h-6" />}
             label="Notes"
             onClick={() => { navigator.vibrate?.(15); toast.info('Notes coming soon'); }}
           />
           <ActionButton
-            icon={<MoreHorizontal className="w-5 h-5" />}
+            icon={<MoreHorizontal className="w-6 h-6" />}
             label="More"
             onClick={() => { navigator.vibrate?.(15); toast.info('More options coming soon'); }}
           />
           <ActionButton
-            icon={<Check className="w-5 h-5" />}
+            icon={<Check className="w-6 h-6" />}
             label="Done"
             onClick={handleDone}
             accent
@@ -252,7 +252,7 @@ export function DockIngredientDispensing({
                 ref={isActive ? activeCardRef : undefined}
                 onClick={() => handleNavigate(l.id)}
                 className={cn(
-                  'flex-shrink-0 w-[140px] rounded-xl p-3 border transition-all duration-150',
+                  'flex-shrink-0 w-[170px] rounded-xl p-3.5 border transition-all duration-150',
                   'bg-[hsl(var(--platform-bg-card))]',
                   isActive
                     ? 'border-violet-500/50 shadow-lg shadow-violet-500/10'
@@ -261,15 +261,15 @@ export function DockIngredientDispensing({
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
-                    className="w-5 h-5 rounded-md flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
+                    className="w-6 h-6 rounded-md flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
                     style={{ backgroundColor: l.swatch_color || 'hsl(var(--platform-bg-elevated))' }}
                   />
-                  <p className="text-[10px] text-[hsl(var(--platform-foreground))] truncate font-medium">
+                  <p className="text-xs text-[hsl(var(--platform-foreground))] truncate font-medium">
                     {l.product_name_snapshot}
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
+                  <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">
                     {w > 0 ? `${roundWeight(w)}g` : 'Pending'} / {roundWeight(l.dispensed_quantity)}g
                   </span>
                 </div>
@@ -307,14 +307,14 @@ function ActionButton({
     <button
       onClick={onClick}
       className={cn(
-        'flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors active:scale-95',
+        'flex flex-col items-center gap-1 py-3 px-4 rounded-xl transition-colors active:scale-95',
         accent
           ? 'text-emerald-400 hover:bg-emerald-500/10'
           : 'text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-card))]'
       )}
     >
       {icon}
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-xs font-medium">{label}</span>
     </button>
   );
 }
