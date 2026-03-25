@@ -706,7 +706,7 @@ DEMO_FORMULA_HISTORY['demo-client-1'] = [
     appointment_id: 'demo-apt-sm-9w',
     appointment_service_id: null,
     mix_session_id: null,
-    service_name: 'Root Touch-Up + Gloss',
+    service_name: 'Natural Root Retouch + Glaze Add On',
     formula_type: 'actual',
     formula_data: [
       { product_id: 'demo-prod-w1', product_name: 'Koleston Perfect 6/0', brand: 'Wella', quantity: 30, unit: 'g' },
