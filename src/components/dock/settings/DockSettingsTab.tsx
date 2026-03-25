@@ -4,8 +4,9 @@
  */
 
 import { useState } from 'react';
-import { User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight } from 'lucide-react';
+import { User, MapPin, BarChart3, ShieldCheck, Lock, ChevronRight, Droplets, BarChart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDockDispensingVisual, type DispensingVisual } from '@/hooks/dock/useDockDispensingVisual';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
