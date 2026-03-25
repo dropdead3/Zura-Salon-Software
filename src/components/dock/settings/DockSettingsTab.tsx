@@ -136,6 +136,9 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
         <ChevronRight className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
       </button>
 
+      {/* Dispensing Visual preference */}
+      <DispensingVisualSelector />
+
       {/* Station Location module */}
       <div className="mt-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="flex items-center gap-3 mb-3">
