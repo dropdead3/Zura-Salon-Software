@@ -231,8 +231,8 @@ export function DockLiveDispensing({
           </div>
           {isSealed && (
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
-              <Lock className="w-3 h-3" />
-              <span className="text-[10px] font-medium uppercase tracking-wide">Sealed</span>
+              <Check className="w-3 h-3" />
+              <span className="text-[10px] font-medium uppercase tracking-wide">Finalized</span>
             </div>
           )}
         </div>
