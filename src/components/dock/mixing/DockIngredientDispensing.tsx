@@ -181,7 +181,7 @@ export function DockIngredientDispensing({
           )}>
             {currentWeight > 0 ? roundWeight(currentWeight) : 'Tap to weigh'}
           </span>
-          <span className="text-sm text-[hsl(var(--platform-foreground-muted)/0.5)]">
+          <span className="text-base text-[hsl(var(--platform-foreground-muted)/0.5)]">
             / {roundWeight(targetWeight)}g
           </span>
         </button>
