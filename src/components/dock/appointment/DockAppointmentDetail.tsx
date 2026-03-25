@@ -98,17 +98,11 @@ export function DockAppointmentDetail({ appointment, staff, onBack }: DockAppoin
             {!isTerminal && (
               <button
                 onClick={() => setEditServicesOpen(true)}
-                className="px-3 py-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 text-violet-400 text-xs font-medium flex items-center gap-1.5 active:scale-[0.97] transition-all whitespace-nowrap"
+                className="px-4 py-2 rounded-lg border border-violet-500/40 bg-violet-500/10 text-violet-400 text-sm font-medium flex items-center gap-1.5 active:scale-[0.97] transition-all whitespace-nowrap"
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-3.5 h-3.5" />
                 Edit Services
               </button>
-            )}
-            {isDemoMode && (
-              <span className={cn(DOCK_BADGE.base, DOCK_BADGE.demo, 'inline-flex items-center gap-1.5 backdrop-blur-md')}>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                Demo
-              </span>
             )}
           </div>
         </div>
