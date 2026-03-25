@@ -1,14 +1,15 @@
 /**
- * DockNotesTab — Consolidated notes view: Booking Note, Profile Notes, Team Notes.
+ * DockNotesTab — Consolidated notes view: Booking Note, Profile Notes, Formulation Notes, Team Notes.
  */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { CalendarPlus, FileText, MessageSquare, Send, Trash2, Lock, ChevronDown, ChevronUp, StickyNote } from 'lucide-react';
+import { CalendarPlus, FileText, FlaskConical, MessageSquare, Send, Trash2, Lock, ChevronDown, ChevronUp, StickyNote, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
+import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
