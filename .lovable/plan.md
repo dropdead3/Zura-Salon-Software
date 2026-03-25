@@ -1,31 +1,28 @@
 
 
-## Move Edit Services Button to Top Right, Inline with Demo Badge
+## Fix: Demo Formula History Not Appearing
 
-### Change — `src/components/dock/appointment/DockAppointmentDetail.tsx`
+### Root cause
+`useClientFormulaHistory` requires `!!orgId` in its `enabled` condition. The `orgId` comes from `useOrganizationContext().effectiveOrganization?.id`. In Dock demo mode, there's no authenticated user, so `effectiveOrganization` is null — the query never fires, even though the `queryFn` has a demo-data shortcut for `demo-` client IDs.
 
-Restructure the header so the Edit Services button moves from below the subtitle to the top-right of the header row, sitting to the left of the Demo badge with a gap between them.
+### Fix — `src/hooks/backroom/useClientFormulaHistory.ts`
 
-**Current layout:**
-```text
-[←]  RACHEL KIM                              [Demo badge is absolute-positioned elsewhere]
-     Root Touch-Up + Gloss · 4:38–5:53 PM
-     [Edit Services]
+Update the `enabled` condition to allow demo clients through without requiring `orgId`:
+
+```ts
+// Before
+enabled: !!orgId && !!clientId,
+
+// After
+enabled: (!!orgId || clientId?.startsWith('demo-')) && !!clientId,
 ```
 
-**New layout:**
-```text
-[←]  RACHEL KIM                    [Edit Services] [Demo]
-     Root Touch-Up + Gloss · 4:38–5:53 PM
-```
+This lets the query fire for demo clients even when there's no organization context. The `queryFn` already returns `DEMO_FORMULA_HISTORY[clientId]` for demo IDs before touching Supabase.
 
-**Implementation:**
-- Remove the Edit Services button from inside the `flex-1 min-w-0` subtitle div (lines 94–102)
-- Add a right-side `div` with `flex items-center gap-3` after the `flex-1` div, containing:
-  1. Edit Services button (same styling, slightly smaller padding to fit the row)
-  2. Inline Demo badge (import `useDockDemo` + `DOCK_BADGE`, render conditionally when `isDemoMode`)
-- The global `DockDemoBadge` component will still render but is hidden behind this inline badge when on the detail view — or we can rely on it being covered. Since it's absolute-positioned at `top-5 right-20`, moving the inline badge here provides the correct alignment.
+### Same issue in `useInstantFormulaMemory`
+`src/hooks/backroom/useInstantFormulaMemory.ts` has the same pattern — `enabled: !!orgId && !!clientId`. Apply the same fix so formula memory also works in demo mode.
 
-### One file changed
-`src/components/dock/appointment/DockAppointmentDetail.tsx`
+### Files changed
+1. `src/hooks/backroom/useClientFormulaHistory.ts` — relax `enabled` for demo clients
+2. `src/hooks/backroom/useInstantFormulaMemory.ts` — relax `enabled` for demo clients
 
