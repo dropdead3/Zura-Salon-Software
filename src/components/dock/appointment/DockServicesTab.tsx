@@ -585,6 +585,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       <DockRenameBowlDialog
         open={!!renameTarget}
         currentName={renameTarget?.type === 'demo' ? (renameTarget.bowl.serviceLabel || 'New Formula') : 'Bowl'}
+        containerLabel={renameTarget?.type === 'demo' ? (renameTarget.bowl.containerType === 'bottle' ? 'Bottle' : 'Bowl') : 'Bowl'}
         onConfirm={handleRename}
         onClose={() => setRenameTarget(null)}
       />
