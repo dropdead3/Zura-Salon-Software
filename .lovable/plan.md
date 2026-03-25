@@ -1,43 +1,23 @@
 
 
-## Make Service Table Responsive — No Horizontal Scroll
+## Fix Progress Bar — Clear Visual State
 
 ### Problem
-The table has 8 columns (Checkbox, Status, Service, Category, Type, Tracked, Config, Actions) which overflows on smaller screens, causing a horizontal scrollbar.
+The bar looks full at 60% because each segment's **outer container** has a colored background (`bg-primary`, `bg-primary/60`, or `bg-muted-foreground/20`), making incomplete segments appear filled. The visual distinction between complete, partial, and empty is too subtle.
 
 ### Solution
-Consolidate the table into fewer columns on all screen sizes, moving secondary data into the expandable row (which already exists for tracked services). Extend expandability to **all** services, not just tracked ones.
+Replace the confusing nested-segment approach with a **single continuous bar** that fills to the actual overall percentage, plus add visual separators between segments so users can see where each milestone's portion starts/ends.
 
-### New Column Layout (4 visible columns)
+### Changes — `ServiceTrackingProgressBar.tsx`
 
-| Column | Content |
-|--------|---------|
-| **Checkbox + Status** | Merge into one narrow column — checkbox (if untracked) or status dot |
-| **Service** | Name + Category subtitle + Type badge inline |
-| **Tracked** | Toggle switch |
-| **Expand** | Chevron to drill down (always visible) |
+1. **Single fill bar**: Render one `<div>` inside the track, width = `overallPct%`, colored `bg-primary`. This immediately makes 60% look like 60%.
 
-### What Moves into the Expandable Row
-- **Category** (shown as label, already visible as subtitle on the main row)
-- **Type badge** (if not enough room, but we keep it inline)
-- **Config status** icons (components mapped, allowance set)
-- **Actions** ("Components" button)
-- **Advanced toggles** (Asst Prep, Mix Assist, Formula Memory, Variance — already there for tracked services)
+2. **Segment dividers**: Overlay thin vertical lines at each segment boundary (cumulative `m.total / overallTotal` positions) so users can still see the 4 milestone regions.
 
-### Detailed Changes — `ServiceTrackingSection.tsx`
+3. **Color-coded fill segments**: Instead of one flat fill, render each milestone's filled portion sequentially (complete = `bg-primary`, partial = `bg-amber-500`, empty = transparent). No outer background color — the track's `bg-muted` shows through for unfilled areas.
 
-1. **Remove standalone columns**: Drop separate `Category`, `Type`, `Config`, and `Actions` `<TableHead>`/`<TableCell>` elements
-
-2. **Merge into Service cell**: Show service name as primary text, category as a subtle subtitle below it, type badge inline after the name
-
-3. **Always-expandable rows**: Move the `Collapsible` expand chevron to appear for **all** services (not just tracked). For untracked services the drill-down shows: category, type, and a prompt to enable tracking. For tracked services: existing config toggles + Components button + config status icons
-
-4. **Reduce `colSpan`** on the expandable `<td>` from 8 to 4
-
-5. **Update `TableHeader`** to only 4 columns: Checkbox, Service, Tracked, expand (no header label)
-
-This eliminates horizontal overflow entirely while preserving all data via drill-down.
+4. **Enhanced percentage label**: Make the percentage more prominent with slightly larger text and color that reflects status (muted when low, primary when high, success when 100%).
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingProgressBar.tsx`
 
