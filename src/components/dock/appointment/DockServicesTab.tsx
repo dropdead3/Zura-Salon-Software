@@ -577,7 +577,8 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         open={!!bowlMenuTarget}
         onClose={() => setBowlMenuTarget(null)}
         onAction={handleBowlAction}
-        bowlLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.serviceLabel || 'New Formula') : bowlMenuTarget ? `Bowl ${bowlMenuTarget.index}` : undefined}
+        bowlLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.serviceLabel || 'New Formula') : bowlMenuTarget ? `${(bowlMenuTarget.session.container_type === 'bottle' ? 'Bottle' : 'Bowl')} ${bowlMenuTarget.index}` : undefined}
+        containerLabel={bowlMenuTarget?.type === 'demo' ? (bowlMenuTarget.bowl.containerType === 'bottle' ? 'Bottle' : 'Bowl') : bowlMenuTarget?.session.container_type === 'bottle' ? 'Bottle' : 'Bowl'}
       />
 
       {/* Rename dialog */}
