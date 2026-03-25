@@ -159,6 +159,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         bowlId: newBowl.id,
         bowlNumber,
         status: 'open',
+        demoLines: lines,
       });
       setActiveServiceLabel(null);
       return;
