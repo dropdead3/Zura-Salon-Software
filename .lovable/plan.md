@@ -1,49 +1,41 @@
 
 
-## Fix: Allergy & Booking Notes Banners Not Appearing on Services/Formulations Tab
+## Populate Edit Services Menu in Demo Mode + Gap Analysis
 
-### Investigation
-
-The `DockClientAlertsBanner` is rendered at the top of `DockServicesTab`. For Rachel Kim (`client_id: 'demo-client-7'`), the demo mock returns allergy data (`PPD sensitivity`) and her appointment has booking notes (`Keep it natural — level 7 base`). Both should show.
+### Problem
+`DockEditServicesSheet` uses `useServicesByCategory(locationId)` which queries the real `phorest_services` DB table. Demo appointments have `location_id: null`, so the query is disabled → "No services found."
 
 ### Root cause
+No demo fallback exists for the services catalog in the edit sheet.
 
-The dismissed state is initialized from `sessionStorage` in `useState`. The key is `dock-alerts-dismissed-demo-client-7`. While the logout handler clears keys matching `dock-alerts-dismissed-demo-*`, there's a timing issue: if the user dismissed banners, navigated away, then came back WITHOUT logging out, the sessionStorage value persists and banners stay hidden. The user may also be hitting a scenario where the cleanup runs but the component's initial state already read the stale value.
+### Fix
 
-### Fix — two-part
+**1. `src/components/dock/appointment/DockEditServicesSheet.tsx`**
+- Import `useDockDemo` and `DEMO_SERVICES_BY_CATEGORY` from demo data
+- When `isDemoMode && !locationId`, skip the DB query and use `DEMO_SERVICES_BY_CATEGORY` directly as the grouped data (the `DemoService` type already matches `PhorestService` shape)
 
-**1. `src/components/dock/appointment/DockClientAlertsBanner.tsx`**
-- Add a `useEffect` that re-reads sessionStorage when the `storageKey` changes (i.e., when navigating to a different appointment). Currently the `useState` initializer only runs on first mount — if the component stays mounted while the key changes, stale dismissed state from the previous client carries over.
-- Also ensure the `dock-demo-reset` listener clears the sessionStorage entry too, not just the React state.
+**2. `src/hooks/useUpdateAppointmentServices.ts`** — Demo save short-circuit
+- Currently calls the `update-phorest-appointment` edge function, which will fail for `demo-appt-*` IDs
+- Add a demo check: if `appointmentId` starts with `demo-`, skip the edge function call and return a mock success
+- Update the local `DEMO_APPOINTMENTS` service_name in sessionStorage so the change persists within the session
 
-**2. `src/components/dock/appointment/DockClientAlertsBanner.tsx`** — Reset dismissed on key change
-```ts
-// When storageKey changes (different client), re-read from sessionStorage
-useEffect(() => {
-  try {
-    const stored = sessionStorage.getItem(storageKey);
-    setDismissed(stored ? new Set(JSON.parse(stored) as BannerKey[]) : new Set());
-  } catch {
-    setDismissed(new Set());
-  }
-}, [storageKey]);
-```
+**3. `src/components/dock/appointment/DockAppointmentDetail.tsx`** — Reflect saved demo services
+- After a demo save, update `appointment.service_name` locally so the header reflects the change without needing a real query refetch
+- Read from sessionStorage key `dock-demo-services::${appointmentId}` as override for `currentServices`
 
-And update the reset listener to also clear sessionStorage:
-```ts
-useEffect(() => {
-  const handleReset = () => {
-    setDismissed(new Set());
-    try { sessionStorage.removeItem(storageKey); } catch {}
-  };
-  window.addEventListener('dock-demo-reset', handleReset);
-  return () => window.removeEventListener('dock-demo-reset', handleReset);
-}, [storageKey]);
-```
+### Gap: Demo service edits don't persist across navigation
 
-### Result
-Banners reliably appear for every demo appointment on first view, survive navigation between appointments, and reset properly on logout.
+When the user saves edited services in demo mode, the appointment card on the schedule list won't reflect the change because `DEMO_APPOINTMENTS` is a static const. 
 
-### One file changed
-`src/components/dock/appointment/DockClientAlertsBanner.tsx`
+**Fix**: Store edited service names in sessionStorage (`dock-demo-services::demo-appt-X`), and have `useDockAppointments` merge these overrides when returning demo data. This follows the same pattern used for demo notes and demo bowls.
+
+### Gap: Reset handler missing service overrides
+
+**Fix in `DockDeviceSwitcher.tsx`**: The sessionStorage cleanup loop already clears all `dock-demo-*` keys, so `dock-demo-services::*` keys will be cleaned automatically. No additional code needed.
+
+### Summary — 4 files changed
+1. `src/components/dock/appointment/DockEditServicesSheet.tsx` — demo fallback for service catalog
+2. `src/hooks/useUpdateAppointmentServices.ts` — demo short-circuit on save
+3. `src/components/dock/appointment/DockAppointmentDetail.tsx` — read persisted demo service overrides
+4. `src/hooks/dock/useDockAppointments.ts` — merge `dock-demo-services::*` overrides into demo appointment data
 
