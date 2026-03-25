@@ -261,7 +261,7 @@ export function DockIngredientDispensing({
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
-                    className="w-5 h-5 rounded-md flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
+                    className="w-6 h-6 rounded-md flex-shrink-0 border border-[hsl(var(--platform-border)/0.3)]"
                     style={{ backgroundColor: l.swatch_color || 'hsl(var(--platform-bg-elevated))' }}
                   />
                   <p className="text-[10px] text-[hsl(var(--platform-foreground))] truncate font-medium">
