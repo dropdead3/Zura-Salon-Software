@@ -363,24 +363,39 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filter tabs */}
-          <div className="flex flex-wrap gap-1.5">
-            {filters.map(f => (
-              <button
-                key={f.key}
-                onClick={() => { setActiveFilter(f.key); setSelectedIds(new Set()); }}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
-                  activeFilter === f.key
-                    ? 'bg-primary/10 border-primary/30 text-primary'
-                    : 'bg-muted/50 border-border text-muted-foreground hover:bg-muted',
-                  f.key === 'attention' && filterCounts.attention > 0 && activeFilter !== f.key && 'border-amber-500/30 text-amber-600 dark:text-amber-400',
-                )}
-              >
-                {f.label}
-                <span className="ml-1.5 tabular-nums">{filterCounts[f.key]}</span>
-              </button>
-            ))}
+          {/* Search + Filter tabs */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-1.5">
+              {filters.map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => { setActiveFilter(f.key); setSelectedIds(new Set()); }}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-sans transition-colors border',
+                    activeFilter === f.key
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-muted/50 border-border text-muted-foreground hover:bg-muted',
+                    f.key === 'attention' && filterCounts.attention > 0 && activeFilter !== f.key && 'border-amber-500/30 text-amber-600 dark:text-amber-400',
+                  )}
+                >
+                  {f.label}
+                  <span className="ml-1.5 tabular-nums">{filterCounts[f.key]}</span>
+                </button>
+              ))}
+            </div>
+            {allServices.length >= 15 && (
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  autoCapitalize="off"
+                  placeholder="Search services..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-8 text-xs rounded-full"
+                />
+              </div>
+            )}
           </div>
 
           {/* Table */}
