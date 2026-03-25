@@ -106,6 +106,27 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const { data: allowancePolicies } = useServiceAllowancePolicies();
   const { data: allComponents } = useServiceTrackingComponents();
 
+  const { data: categoryOrder } = useQuery({
+    queryKey: ['service-category-colors-order', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_category_colors')
+        .select('category_name, display_order')
+        .eq('organization_id', orgId!)
+        .order('display_order')
+        .order('category_name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+  });
+
+  const categoryOrderMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (categoryOrder ?? []).forEach(c => map.set(c.category_name, c.display_order));
+    return map;
+  }, [categoryOrder]);
+
   const { data: services, isLoading } = useQuery({
     queryKey: ['backroom-services', orgId],
     queryFn: async () => {
@@ -114,6 +135,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .select('id, name, category, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
+        .order('category')
         .order('name');
       if (error) throw error;
       return data as unknown as ServiceRow[];
@@ -255,10 +277,22 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   // Search filter (applied after tab filter)
   const searchedServices = useMemo(() => {
-    if (!searchQuery.trim()) return filteredServices;
-    const q = searchQuery.toLowerCase();
-    return filteredServices.filter(s => s.name.toLowerCase().includes(q));
-  }, [filteredServices, searchQuery]);
+    let list = filteredServices;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(q));
+    }
+    // Sort by category display_order, then alphabetically by name
+    return [...list].sort((a, b) => {
+      const catA = a.category || '';
+      const catB = b.category || '';
+      const orderA = categoryOrderMap.get(catA) ?? 9999;
+      const orderB = categoryOrderMap.get(catB) ?? 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      if (catA !== catB) return catA.localeCompare(catB);
+      return a.name.localeCompare(b.name);
+    });
+  }, [filteredServices, searchQuery, categoryOrderMap]);
 
   // Expand toggle helper
   const toggleExpand = (id: string) => {
@@ -484,7 +518,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {searchedServices.map((service) => {
+                  {searchedServices.map((service, idx) => {
+                    const prevCategory = idx > 0 ? (searchedServices[idx - 1].category || 'Other') : null;
+                    const currentCategory = service.category || 'Other';
+                    const showCategoryHeader = currentCategory !== prevCategory;
                     const type = getServiceType(service);
                     const hasComponents = componentsByService.has(service.id);
                     const hasAllowance = allowanceByService.has(service.id);
@@ -498,6 +535,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
                     return (
                       <React.Fragment key={service.id}>
+                        {showCategoryHeader && (
+                          <TableRow className="bg-muted/30 pointer-events-none">
+                            <TableCell colSpan={4} className="py-1.5 px-4">
+                              <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
+                                {currentCategory}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        )}
                           <TableRow
                             className={cn(attention && 'bg-amber-500/[0.03]', 'cursor-pointer')}
                             onClick={() => toggleExpand(service.id)}
