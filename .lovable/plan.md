@@ -1,27 +1,46 @@
 
+## Fix Rachel’s missing service on the Formulations tab
 
-## Fix: Wire Demo Appointment Services to Demo Catalog
+### Root cause
+`Natural Root Retouch` is already present in the demo services catalog, so this is not a demo-data wiring issue.
 
-### Root Cause
-Two issues prevent the Edit Services sheet from pre-selecting services in demo mode:
+The actual problem is the chemical-service filter:
+- `DockServicesTab` builds the mixable service sections from `getChemicalServices(appointment.service_name)`
+- `getChemicalServices()` relies on `isColorOrChemicalService()`
+- In `src/utils/serviceCategorization.ts`, the regex matches `root touch` but not `retouch` / `root retouch`
 
-1. **Separator mismatch**: Demo appointment `service_name` fields use ` + ` as a separator (e.g., `"Full Balayage + Vivid Toner"`), but `DockAppointmentDetail.tsx` splits on `,` — so the whole string becomes one entry that doesn't match any single catalog item.
+So for Rachel’s appointment:
+- `Natural Root Retouch` gets filtered out
+- `Glaze Add On` passes
+- Result: only Glaze Add On appears on the Formulations page
 
-2. **Inconsistent separators**: One appointment (`demo-appt-11`) uses `, ` while all others use ` + `.
+### Implementation
 
-### Fix — 2 files
+**1. Update `src/utils/serviceCategorization.ts`**
+Expand the color/chemical matching patterns to include retouch variants:
+- `retouch`
+- `root retouch`
+- `touch up`
+- `touch-up`
 
-**1. `src/hooks/dock/dockDemoData.ts`**
-- Standardize the separator to `, ` (comma-space) for ALL demo appointments' `service_name` — this matches how the detail view parses them (`.split(',').map(s => s.trim())`):
-  - `'Full Balayage + Vivid Toner'` → `'Full Balayage, Vivid Toner'`
-  - `'Natural Root Retouch + Glaze Add On'` → `'Natural Root Retouch, Glaze Add On'`
-  - `'Full Highlight + Root Smudge (Add On) + Glaze Add On + Signature Haircut'` → `'Full Highlight, Root Smudge (Add On), Glaze Add On, Signature Haircut'`
-  - Single-service appointments stay unchanged
-- Update matching `service_name` references in `DEMO_FORMULA_HISTORY`, `DEMO_VISIT_HISTORY`, and `DEMO_FORMULA_MEMORY` for consistency
+Apply this to both:
+- the Color category pattern in `CATEGORY_PATTERNS`
+- the `COLOR_CHEMICAL_PATTERN` used by `isColorOrChemicalService()`
 
-**2. `src/components/dock/appointment/DockAppointmentDetail.tsx`**
-- No change needed — the existing `.split(',')` parsing already works once demo data uses comma separators
+### Why this is the right fix
+This preserves the existing demo service name (`Natural Root Retouch`), which already matches the demo service list exactly, and fixes the real issue at the shared classification layer.
 
-### Result
-Opening Edit Services on any demo appointment will correctly pre-select the matching services from the demo catalog, allowing add/remove to work properly.
+That means the fix will also improve any other areas that rely on the same helper, including:
+- Formulations tab service grouping
+- schedule filtering for chemical/color appointments
+- any future demo or real appointment using “retouch” naming
 
+### Files to change
+- `src/utils/serviceCategorization.ts`
+
+### Expected result
+Rachel Kim’s demo appointment will show both:
+- `Natural Root Retouch`
+- `Glaze Add On`
+
+on the Formulations page, so a bowl can be mixed for either service.
