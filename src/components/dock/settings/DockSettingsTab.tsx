@@ -10,6 +10,7 @@ import { useDockDispensingVisual, type DispensingVisual } from '@/hooks/dock/use
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import type { DockStaffSession } from '@/pages/Dock';
 import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
