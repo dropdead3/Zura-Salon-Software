@@ -9,7 +9,7 @@ const CATEGORY_PATTERNS: { pattern: RegExp; category: string }[] = [
   { pattern: /balayage|highlight|foil|lightener|blonde|bleach|ombre|root smudge|baby lights|teasy lights/i, category: 'Blonding' },
   
   // Color services
-  { pattern: /color|toner|glaze|gloss|demi|semi|permanent|root touch|grey.?blend|coverage|vivid|fashion color/i, category: 'Color' },
+  { pattern: /color|toner|glaze|gloss|demi|semi|permanent|root touch|retouch|touch.?up|grey.?blend|coverage|vivid|fashion color/i, category: 'Color' },
   
   // Haircut services
   { pattern: /haircut|cut|trim|bang|fringe|clipper|fade|taper|shape|layers/i, category: 'Haircut' },
@@ -66,7 +66,7 @@ export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
  * plus additional chemical-processing terms.
  */
 const COLOR_CHEMICAL_PATTERN =
-  /color|colour|toner|glaze|gloss|demi|semi|permanent|root touch|grey.?blend|coverage|vivid|fashion color|balayage|highlight|foil|lightener|blonde|bleach|ombre|root smudge|baby lights|teasy lights|chemical/i;
+  /color|colour|toner|glaze|gloss|demi|semi|permanent|root touch|retouch|touch.?up|grey.?blend|coverage|vivid|fashion color|balayage|highlight|foil|lightener|blonde|bleach|ombre|root smudge|baby lights|teasy lights|chemical/i;
 
 /**
  * Returns true if the given service name or category indicates a color/chemical service.
