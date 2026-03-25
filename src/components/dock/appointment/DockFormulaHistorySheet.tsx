@@ -47,6 +47,17 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
             animate={{ y: 0 }}
             exit={{ y: '-100%' }}
             transition={DOCK_SHEET.spring}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.6, bottom: 0 }}
+            onDragEnd={(_e, info) => {
+              if (info.offset.y < -DOCK_SHEET.dismissThreshold.offset || info.velocity.y < -DOCK_SHEET.dismissThreshold.velocity) {
+                try { navigator.vibrate?.(15); } catch {}
+                onClose();
+              }
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-7 pb-4">
