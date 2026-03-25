@@ -33,6 +33,7 @@ import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 interface DockServicesTabProps {
   appointment: DockAppointment;
   staff: DockStaffSession;
+  effectiveServiceName?: string | null;
 }
 
 type BowlStatusInfo = {
