@@ -243,7 +243,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         label: 'Classified',
         current: classified.length,
         total: allServices.length,
-        tooltip: 'Services with a category assigned or explicitly marked as chemical/non-chemical.',
+        tooltip: 'Services classified as requiring color/chemical or not.',
       },
       {
         label: 'Tracked',
