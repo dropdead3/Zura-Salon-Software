@@ -24,6 +24,7 @@ export function DockFormulaHistorySheet({ isOpen, onClose, clientId, clientName 
   const { data: formulas = [], isLoading } = useClientFormulaHistory(clientId ?? null);
   const { formatDate } = useFormatDate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const dragControls = useDragControls();
 
   return (
     <AnimatePresence>
