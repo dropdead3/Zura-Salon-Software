@@ -1,10 +1,10 @@
 /**
  * DockEditServicesSheet — Dock-native bottom sheet for editing appointment services.
- * Uses absolute positioning + framer-motion to stay within the device viewer frame.
+ * Category-first drill-down UI with iPad-sized touch targets.
  */
 
 import { useState, useMemo } from 'react';
-import { Search, Clock, X, Check, Loader2, FlaskConical } from 'lucide-react';
+import { Search, Clock, X, Check, Loader2, FlaskConical, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -35,6 +35,7 @@ export function DockEditServicesSheet({
 }: DockEditServicesSheetProps) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, PhorestService>>(new Map());
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const { isDemoMode } = useDockDemo();
   const { data: realGrouped, isLoading } = useServicesByCategory(locationId);
   const grouped = isDemoMode && !locationId ? DEMO_SERVICES_BY_CATEGORY as unknown as Record<string, PhorestService[]> : realGrouped;
@@ -58,6 +59,7 @@ export function DockEditServicesSheet({
   if (!open && initialized) {
     setInitialized(false);
     setSearch('');
+    setActiveCategory(null);
   }
 
   const filteredGroups = useMemo(() => {
@@ -71,6 +73,16 @@ export function DockEditServicesSheet({
     }
     return result;
   }, [grouped, search]);
+
+  // Count selected services per category
+  const selectedPerCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const svc of selected.values()) {
+      const cat = svc.category || 'Other';
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return counts;
+  }, [selected]);
 
   const toggleService = (svc: PhorestService) => {
     setSelected(prev => {
@@ -105,6 +117,9 @@ export function DockEditServicesSheet({
     }));
     onSave(services);
   };
+
+  const isSearching = search.trim().length > 0;
+  const showCategoryGrid = !isSearching && activeCategory === null;
 
   return (
     <AnimatePresence>
@@ -144,11 +159,11 @@ export function DockEditServicesSheet({
             <div className="flex-shrink-0 px-7 pt-6 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4 text-violet-400" />
+                  <FlaskConical className="w-5 h-5 text-violet-400" />
                   <h2 className={DOCK_TEXT.title}>Edit Services</h2>
                 </div>
                 <button onClick={onClose} className={DOCK_BUTTON.close}>
-                  <X className={cn('w-4 h-4', DOCK_BUTTON.iconColor)} />
+                  <X className={cn('w-5 h-5', DOCK_BUTTON.iconColor)} />
                 </button>
               </div>
               <p className={cn(DOCK_TEXT.subtitle, 'mt-1')}>
@@ -159,13 +174,13 @@ export function DockEditServicesSheet({
             {/* Search */}
             <div className="flex-shrink-0 px-7 pb-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--platform-foreground-muted))]" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[hsl(var(--platform-foreground-muted))]" />
                 <input
                   type="text"
                   placeholder="Search services..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className={DOCK_INPUT.search}
+                  className="w-full h-12 pl-11 pr-4 text-base rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-muted)/0.5)] focus:outline-none focus:ring-1 focus:ring-violet-500/50"
                 />
               </div>
             </div>
@@ -174,17 +189,17 @@ export function DockEditServicesSheet({
             {selected.size > 0 && (
               <div className="flex-shrink-0 px-7 pb-3">
                 <p className={cn(DOCK_TEXT.category, 'mb-2')}>On This Appointment</p>
-                <div className="flex flex-wrap gap-1.5">
-                {Array.from(selected.values()).map(svc => (
-                  <button
-                    key={svc.name}
-                    onClick={() => toggleService(svc)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-destructive/20 transition-colors"
-                  >
-                    {svc.name}
-                    <X className="h-3 w-3" />
-                  </button>
-                ))}
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(selected.values()).map(svc => (
+                    <button
+                      key={svc.name}
+                      onClick={() => toggleService(svc)}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-xl bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground))] border border-[hsl(var(--platform-border)/0.3)] hover:bg-destructive/20 transition-colors"
+                    >
+                      {svc.name}
+                      <X className="h-4 w-4" />
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -192,66 +207,125 @@ export function DockEditServicesSheet({
             {/* Separator */}
             <div className="h-px bg-[hsl(var(--platform-border)/0.3)]" />
 
-            {/* Service list */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-7 py-3 space-y-4">
+            {/* Content area */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-7 py-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
                 </div>
-              ) : Object.keys(filteredGroups).length === 0 ? (
-                <p className={cn(DOCK_TEXT.subtitle, 'text-center py-8')}>No services found</p>
+              ) : showCategoryGrid ? (
+                /* ── Category Grid ── */
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(filteredGroups).map(([category, services]) => {
+                    const count = services.length;
+                    const selectedCount = selectedPerCategory[category] || 0;
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => setActiveCategory(category)}
+                        className="relative flex flex-col items-start justify-between min-h-[88px] p-5 rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] text-left hover:bg-[hsl(var(--platform-bg-elevated))] transition-colors active:scale-[0.98]"
+                      >
+                        <span className="font-display text-base tracking-wider uppercase text-[hsl(var(--platform-foreground))]">
+                          {category}
+                        </span>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+                            {count} service{count !== 1 ? 's' : ''}
+                          </span>
+                          {selectedCount > 0 && (
+                            <span className="text-[11px] font-sans px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/25">
+                              {selectedCount} selected
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               ) : (
-                Object.entries(filteredGroups).map(([category, services]) => (
-                  <div key={category}>
-                    <p className={cn(DOCK_TEXT.category, 'mb-2')}>{category}</p>
-                    <div className="space-y-0.5">
-                      {services.map(svc => {
-                        const isSelected = selected.has(svc.name);
-                        return (
-                          <button
-                            key={svc.id}
-                            onClick={() => toggleService(svc)}
-                            className={cn(
-                              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
-                              isSelected ? 'bg-violet-500/10' : 'hover:bg-[hsl(var(--platform-bg-card))]'
-                            )}
-                          >
-                            <div className={cn(
-                              'w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors',
-                              isSelected
-                                ? 'bg-violet-500 border-violet-500 text-white'
-                                : 'border-[hsl(var(--platform-border)/0.5)]'
-                            )}>
-                              {isSelected && <Check className="h-3 w-3" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={cn(DOCK_TEXT.body, 'truncate')}>{svc.name}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {svc.duration_minutes > 0 && (
-                                  <span className={cn(DOCK_TEXT.muted, 'flex items-center gap-0.5')}>
-                                    <Clock className="h-3 w-3" />
-                                    {svc.duration_minutes}m
+                /* ── Service List (drill-down or search) ── */
+                <div className="space-y-1">
+                  {/* Back button when drilling into a category */}
+                  {activeCategory && !isSearching && (
+                    <button
+                      onClick={() => setActiveCategory(null)}
+                      className="flex items-center gap-2 mb-3 py-2 text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                      <span className="font-display text-base tracking-wider uppercase text-[hsl(var(--platform-foreground))]">
+                        {activeCategory}
+                      </span>
+                    </button>
+                  )}
+
+                  {(() => {
+                    // Determine which services to show
+                    const entries = isSearching
+                      ? Object.entries(filteredGroups)
+                      : activeCategory && filteredGroups[activeCategory]
+                        ? [[activeCategory, filteredGroups[activeCategory]] as [string, PhorestService[]]]
+                        : [];
+
+                    if (entries.length === 0) {
+                      return <p className={cn(DOCK_TEXT.subtitle, 'text-center py-8')}>No services found</p>;
+                    }
+
+                    return entries.map(([category, services]) => (
+                      <div key={category}>
+                        {/* Show category header only when searching across all */}
+                        {isSearching && (
+                          <p className={cn(DOCK_TEXT.category, 'mb-2 mt-3 first:mt-0')}>{category}</p>
+                        )}
+                        <div className="space-y-0.5">
+                          {services.map(svc => {
+                            const isSelected = selected.has(svc.name);
+                            return (
+                              <button
+                                key={svc.id}
+                                onClick={() => toggleService(svc)}
+                                className={cn(
+                                  'w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-colors',
+                                  isSelected ? 'bg-violet-500/10' : 'hover:bg-[hsl(var(--platform-bg-card))]'
+                                )}
+                              >
+                                <div className={cn(
+                                  'w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors',
+                                  isSelected
+                                    ? 'bg-violet-500 border-violet-500 text-white'
+                                    : 'border-[hsl(var(--platform-border)/0.5)]'
+                                )}>
+                                  {isSelected && <Check className="h-4 w-4" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-base text-[hsl(var(--platform-foreground))] truncate">{svc.name}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {svc.duration_minutes > 0 && (
+                                      <span className="text-sm text-[hsl(var(--platform-foreground-muted))] flex items-center gap-1">
+                                        <Clock className="h-3.5 w-3.5" />
+                                        {svc.duration_minutes}m
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {svc.price != null && svc.price > 0 && (
+                                  <span className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+                                    <BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount>
                                   </span>
                                 )}
-                              </div>
-                            </div>
-                            {svc.price != null && svc.price > 0 && (
-                              <span className={DOCK_TEXT.muted}>
-                                <BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount>
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
               )}
             </div>
 
             {/* Footer */}
             <div className="flex-shrink-0 px-7 py-4 border-t border-[hsl(var(--platform-border)/0.2)] flex items-center justify-between">
-              <div className={DOCK_TEXT.subtitle}>
+              <div className="text-base text-[hsl(var(--platform-foreground-muted))]">
                 {selected.size} service{selected.size !== 1 ? 's' : ''}
                 {totalDuration > 0 && <span> · {totalDuration}m</span>}
                 {totalPrice > 0 && (
@@ -263,7 +337,7 @@ export function DockEditServicesSheet({
                 disabled={selected.size === 0 || isSaving}
                 className={cn(
                   DOCK_BUTTON.primary,
-                  'h-9 px-7 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                  'h-12 px-8 text-base font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
                 )}
               >
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-1 inline" />}
