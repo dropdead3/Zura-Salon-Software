@@ -583,7 +583,7 @@ export const DEMO_VISIT_HISTORY: Record<string, ClientVisit[]> = {
       appointment_date: rachelVisitDate3w,
       start_time: '10:00:00',
       end_time: '11:45:00',
-      service_name: 'Natural Root Retouch + Glaze Add On',
+      service_name: 'Natural Root Retouch, Glaze Add On',
       service_category: 'Color',
       stylist_name: 'Jenna B.',
       status: 'completed',
