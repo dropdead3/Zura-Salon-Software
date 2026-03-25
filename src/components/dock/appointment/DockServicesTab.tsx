@@ -177,6 +177,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         totalCost,
         createdAt: new Date().toISOString(),
         serviceLabel: activeServiceLabel,
+        containerType: activeContainerType,
       };
       setDemoBowls((prev) => [...prev, newBowl]);
       setActiveBowl({
