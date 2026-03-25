@@ -67,6 +67,7 @@ export function useCreateMixBowl() {
       bowl_name?: string;
       purpose?: string;
       location_id?: string;
+      container_type?: 'bowl' | 'bottle';
     }) => {
       // Guard demo sessions — return mock data without DB writes
       if (params.mix_session_id.startsWith('demo-')) {
