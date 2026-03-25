@@ -275,6 +275,7 @@ export function DockServicesTab({ appointment, staff }: DockServicesTabProps) {
         bowlNumber={activeBowl.bowlNumber}
         organizationId={effectiveOrganization?.id || ''}
         bowlStatus={activeBowl.status}
+        demoLines={activeBowl.demoLines}
         onBack={() => setActiveBowl(null)}
       />
     );

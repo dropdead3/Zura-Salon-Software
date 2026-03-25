@@ -59,11 +59,11 @@ const DEMO_BOWL_LINES: BowlLine[] = [
   },
 ];
 
-function useBowlLines(bowlId: string | null) {
+function useBowlLines(bowlId: string | null, demoLinesOverride?: BowlLine[]) {
   return useQuery({
     queryKey: ['dock-bowl-lines', bowlId],
     queryFn: async (): Promise<BowlLine[]> => {
-      if (bowlId?.startsWith('demo-')) return DEMO_BOWL_LINES;
+      if (bowlId?.startsWith('demo-')) return demoLinesOverride ?? DEMO_BOWL_LINES;
 
       const { data, error } = await supabase
         .from('mix_bowl_lines')
