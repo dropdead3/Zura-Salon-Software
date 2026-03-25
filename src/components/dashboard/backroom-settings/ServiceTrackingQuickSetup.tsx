@@ -185,7 +185,7 @@ export function ServiceTrackingQuickSetup({
 
       case 'track':
         return (
-          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+           <div className="space-y-2">
             {untrackedChemical.length === 0 ? (
               <StepComplete message="All chemical services are being tracked." />
             ) : (
