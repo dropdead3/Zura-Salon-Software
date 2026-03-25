@@ -668,15 +668,44 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
                                             </div>
                                           </div>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-7 text-xs"
-                                            onClick={() => setSelectedServiceId(service.id)}
-                                          >
-                                            <Package className="w-3 h-3 mr-1" />
-                                            Components
-                                          </Button>
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-7 text-xs"
+                                              onClick={() => setSelectedServiceId(service.id)}
+                                            >
+                                              <Package className="w-3 h-3 mr-1" />
+                                              Components
+                                            </Button>
+                                            {service.backroom_config_dismissed ? (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs text-muted-foreground"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                                }}
+                                              >
+                                                <RotateCcw className="w-3 h-3 mr-1" />
+                                                Re-flag
+                                              </Button>
+                                            ) : (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs text-primary"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                }}
+                                              >
+                                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                Mark Configured
+                                              </Button>
+                                            )}
+                                          </div>
                                         </div>
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
