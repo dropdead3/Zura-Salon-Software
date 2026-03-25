@@ -202,6 +202,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       lines,
       baseWeight: _baseWeight,
       serviceLabel: activeServiceLabel || undefined,
+      containerType: activeContainerType,
     }, {
       onSuccess: (result: CreatedBowlResult) => {
         setActiveBowl({
