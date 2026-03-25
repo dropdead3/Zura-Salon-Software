@@ -196,9 +196,9 @@ export function DockIngredientDispensing({
                 key={l.id}
                 onClick={() => handleNavigate(l.id)}
                 className={cn(
-                  'w-2 h-2 rounded-full transition-all duration-200',
+                  'w-2.5 h-2.5 rounded-full transition-all duration-200',
                   l.id === line.id
-                    ? 'w-6 bg-violet-500'
+                    ? 'w-8 bg-violet-500'
                     : filled
                       ? 'bg-emerald-500/60'
                       : 'bg-[hsl(var(--platform-foreground-muted)/0.2)]'
