@@ -211,24 +211,24 @@ export function DockIngredientDispensing({
 
       {/* Action bar */}
       <div className="flex-shrink-0 px-7 py-3">
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-8">
           <ActionButton
-            icon={<Scale className="w-5 h-5" />}
+            icon={<Scale className="w-6 h-6" />}
             label="Balance"
             onClick={() => { navigator.vibrate?.(15); setShowNumpad(true); }}
           />
           <ActionButton
-            icon={<StickyNote className="w-5 h-5" />}
+            icon={<StickyNote className="w-6 h-6" />}
             label="Notes"
             onClick={() => { navigator.vibrate?.(15); toast.info('Notes coming soon'); }}
           />
           <ActionButton
-            icon={<MoreHorizontal className="w-5 h-5" />}
+            icon={<MoreHorizontal className="w-6 h-6" />}
             label="More"
             onClick={() => { navigator.vibrate?.(15); toast.info('More options coming soon'); }}
           />
           <ActionButton
-            icon={<Check className="w-5 h-5" />}
+            icon={<Check className="w-6 h-6" />}
             label="Done"
             onClick={handleDone}
             accent
