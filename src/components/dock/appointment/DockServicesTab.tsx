@@ -658,7 +658,9 @@ function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () =>
             </p>
           </div>
         </div>
-        <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0 mt-0.5" />
+        <button onClick={(e) => { e.stopPropagation(); onMenuTap(); }} className="p-1 -mr-1 rounded-full hover:bg-[hsl(var(--platform-foreground)/0.1)] transition-colors">
+          <MoreVertical className="w-4 h-4 text-[hsl(var(--platform-foreground-muted)/0.4)] flex-shrink-0" />
+        </button>
       </div>
 
       {/* Ingredient lines preview */}
