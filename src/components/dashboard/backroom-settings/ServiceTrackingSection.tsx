@@ -719,7 +719,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {/* Chemical toggle + vessel selector */}
                                         <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
                                           <div className="flex items-center gap-2">
-                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
                                             <Switch
                                               checked={service.is_chemical_service}
                                               onCheckedChange={(v) => {
