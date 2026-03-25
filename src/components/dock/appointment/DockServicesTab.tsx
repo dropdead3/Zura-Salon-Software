@@ -188,6 +188,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         demoLines: formulaLinesToBowlLines(lines),
       });
       setActiveServiceLabel(null);
+      setActiveContainerType('bowl');
       return;
     }
 
