@@ -76,8 +76,10 @@ export function DockHamburgerMenu({ activeTab, onTabChange, onLockStation, onAdd
             {/* Sheet panel — slides up from bottom */}
             <motion.div
               drag="y"
-              dragConstraints={{ bottom: 0 }}
-              dragElastic={0.1}
+              dragControls={dragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0.6, bottom: 0 }}
               onDragEnd={handleDragEnd}
               initial={{ y: '-100%' }}
               animate={{ y: 0 }}
