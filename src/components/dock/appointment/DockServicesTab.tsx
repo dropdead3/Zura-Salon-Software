@@ -629,7 +629,7 @@ function BowlCard({ session, index, onTap, onMenuTap }: { session: DockMixSessio
 }
 
 /** Demo-mode bowl card with ingredient summary */
-function DemoBowlCard({ bowl, onTap }: { bowl: DemoBowl; onTap: () => void }) {
+function DemoBowlCard({ bowl, onTap, onMenuTap }: { bowl: DemoBowl; onTap: () => void; onMenuTap: () => void }) {
   const previewLines = bowl.lines.slice(0, 3);
   const overflowCount = bowl.lines.length - 3;
 
