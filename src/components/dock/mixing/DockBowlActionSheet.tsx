@@ -30,7 +30,7 @@ function getActions(containerLabel: string): { key: BowlAction; label: string; i
 
 export function DockBowlActionSheet({ open, onClose, onAction, bowlLabel, containerLabel = 'Formula' }: DockBowlActionSheetProps) {
   const actions = getActions(containerLabel);
-    <AnimatePresence>
+    return (
       {open && (
         <>
           {/* Backdrop */}

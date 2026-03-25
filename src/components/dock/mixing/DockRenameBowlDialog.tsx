@@ -48,7 +48,7 @@ export function DockRenameBowlDialog({ open, currentName, containerLabel = 'Form
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.15 }}
           >
-            <h3 className={DOCK_DIALOG.title}>Rename Formula</h3>
+            <h3 className={DOCK_DIALOG.title}>Rename {containerLabel}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"

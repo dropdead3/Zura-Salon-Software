@@ -160,7 +160,7 @@ export function DockNewBowlSheet({ open, onClose, onCreateBowl, clientId, contai
                     disabled={lines.length === 0}
                     className="flex-1 h-14 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
                   >
-                    Create Bowl ({lines.length})
+                    {createLabel} ({lines.length})
                   </button>
                 </div>
               </div>
