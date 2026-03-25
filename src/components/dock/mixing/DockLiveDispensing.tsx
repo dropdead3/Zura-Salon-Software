@@ -25,7 +25,7 @@ interface DockLiveDispensingProps {
   onBack: () => void;
 }
 
-interface BowlLine {
+export interface BowlLine {
   id: string;
   product_id: string | null;
   product_name_snapshot: string;

@@ -50,12 +50,26 @@ function getStatusDisplay(status: string): BowlStatusInfo {
   return { icon: Circle, label: 'Draft', color: 'text-blue-400', iconBg: 'bg-blue-500/15 border-blue-500/20' };
 }
 
+/** Convert builder FormulaLine[] to dispensing BowlLine[] */
+function formulaLinesToBowlLines(lines: FormulaLine[]): BowlLine[] {
+  return lines.map((l, i) => ({
+    id: `demo-line-${i}`,
+    product_id: l.product.id,
+    product_name_snapshot: l.product.name,
+    brand_snapshot: l.product.brand ?? null,
+    dispensed_quantity: l.targetWeight * (l.ratio || 1),
+    dispensed_unit: 'g',
+    dispensed_cost_snapshot: l.product.cost_per_unit ?? 0,
+    swatch_color: l.product.swatch_color ?? null,
+  }));
+}
+
 interface ActiveBowl {
   sessionId: string;
   bowlId: string;
   bowlNumber: number;
   status: string;
-  demoLines?: FormulaLine[];
+  demoLines?: BowlLine[];
 }
 
 /** Local demo bowl with ingredient info */
