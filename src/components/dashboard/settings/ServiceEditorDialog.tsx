@@ -257,6 +257,36 @@ export function ServiceEditorDialog({
                     <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
                   </div>
 
+                  {/* Container Types */}
+                  <div className="pt-2 border-t border-border/60">
+                    <div className="mb-2">
+                      <p className={tokens.body.emphasis}>Container Types</p>
+                      <p className={tokens.body.muted}>What vessel types does this service use for formulations?</p>
+                    </div>
+                    <div className="flex gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={containerTypes.includes('bowl')}
+                          onCheckedChange={(checked) => {
+                            if (checked) setContainerTypes(prev => prev.includes('bowl') ? prev : [...prev, 'bowl']);
+                            else setContainerTypes(prev => prev.filter(t => t !== 'bowl').length > 0 ? prev.filter(t => t !== 'bowl') : prev);
+                          }}
+                        />
+                        <span className="text-sm">Bowl</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={containerTypes.includes('bottle')}
+                          onCheckedChange={(checked) => {
+                            if (checked) setContainerTypes(prev => prev.includes('bottle') ? prev : [...prev, 'bottle']);
+                            else setContainerTypes(prev => prev.filter(t => t !== 'bottle').length > 0 ? prev.filter(t => t !== 'bottle') : prev);
+                          }}
+                        />
+                        <span className="text-sm">Bottle</span>
+                      </label>
+                    </div>
+                  </div>
+
                   {/* Deposit Configuration */}
                   <div className="pt-2 border-t border-border/60">
                     <div className="flex items-center justify-between">
