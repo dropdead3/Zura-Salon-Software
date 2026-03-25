@@ -226,7 +226,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
     // Tracked but missing components or allowance
-    if (s.is_backroom_tracked && (!componentsByService.has(s.id) || !allowanceByService.has(s.id))) return true;
+    if (s.is_backroom_tracked && !allowanceByService.has(s.id)) return true;
     return false;
   };
 
@@ -235,7 +235,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
     const classified = allServices.filter(s => s.is_chemical_service !== null);
-    const withComponents = tracked.filter(s => componentsByService.has(s.id));
     const withAllowance = tracked.filter(s => allowanceByService.has(s.id));
 
     return [
@@ -250,12 +249,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         current: tracked.length,
         total: Math.max(chemicalOrSuggested.length, tracked.length),
         tooltip: 'Chemical services with backroom tracking enabled.',
-      },
-      {
-        label: 'Components',
-        current: withComponents.length,
-        total: tracked.length,
-        tooltip: 'Tracked services with at least one product component mapped.',
       },
       {
         label: 'Allowances',
@@ -624,7 +617,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                 )}
                                 {service.is_backroom_tracked && !service.backroom_config_dismissed && (
                                   <div className="flex items-center gap-1 shrink-0">
-                                    <Package className={cn('w-3 h-3', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
                                     <FileText className={cn('w-3 h-3', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
                                   </div>
                                 )}
@@ -668,10 +660,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {/* Config status + actions */}
                                         <div className="flex items-center justify-between">
                                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                            <div className="flex items-center gap-1">
-                                              <Package className={cn('w-3.5 h-3.5', hasComponents ? 'text-primary' : 'text-muted-foreground/30')} />
-                                              <span>{hasComponents ? `${componentsByService.get(service.id)} component${(componentsByService.get(service.id) || 0) > 1 ? 's' : ''}` : 'No components'}</span>
-                                            </div>
                                             <div className="flex items-center gap-1">
                                               <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
                                               <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
@@ -917,7 +905,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           orgId={orgId}
           services={allServices}
           milestones={milestones}
-          componentsByService={componentsByService}
           allowanceByService={allowanceByService}
           onNavigateAllowances={onNavigate ? () => onNavigate('allowances') : undefined}
         />

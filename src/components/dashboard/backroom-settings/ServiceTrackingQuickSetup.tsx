@@ -1,11 +1,10 @@
 /**
  * ServiceTrackingQuickSetup — Stepped wizard dialog for service tracking configuration.
- * Walks through: Classify → Track → Map Components → Set Allowances.
+ * Walks through: Classify → Track → Set Allowances.
  */
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUpsertTrackingComponent, useServiceTrackingComponents, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
 import { isSuggestedChemicalService, getServiceCategory, SERVICE_CATEGORIES } from '@/utils/serviceCategorization';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -13,9 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, ChevronRight, SkipForward, Beaker, Layers, Package, FileText, Loader2, X } from 'lucide-react';
+import { CheckCircle2, ChevronRight, SkipForward, Beaker, Layers, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProgressMilestone } from './ServiceTrackingProgressBar';
 
@@ -33,7 +31,6 @@ interface Props {
   orgId: string;
   services: ServiceRow[];
   milestones: ProgressMilestone[];
-  componentsByService: Map<string, number>;
   allowanceByService: Map<string, unknown>;
   onNavigateAllowances?: () => void;
 }
@@ -41,18 +38,16 @@ interface Props {
 const STEPS = [
   { key: 'classify', label: 'Classify Services', icon: Beaker, description: 'Mark services as requiring color/chemical or not.' },
   { key: 'track', label: 'Enable Tracking', icon: Layers, description: 'Turn on backroom tracking for chemical services.' },
-  { key: 'components', label: 'Map Components', icon: Package, description: 'Connect the products each service uses so Zura can track usage automatically.' },
   { key: 'allowances', label: 'Set Allowances', icon: FileText, description: 'Configure billing allowances for tracked services.' },
 ] as const;
 
 export function ServiceTrackingQuickSetup({
-  open, onOpenChange, orgId, services, milestones, componentsByService, allowanceByService, onNavigateAllowances,
+  open, onOpenChange, orgId, services, milestones, allowanceByService, onNavigateAllowances,
 }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [classifications, setClassifications] = useState<Record<string, boolean>>({});
   const [isSavingClassify, setIsSavingClassify] = useState(false);
   const queryClient = useQueryClient();
-  const upsertComponent = useUpsertTrackingComponent();
 
   // Pre-populate local classifications from DB state
   const classifyInitKey = services.map(s => `${s.id}:${s.is_chemical_service}`).join(',');
@@ -67,9 +62,6 @@ export function ServiceTrackingQuickSetup({
   const step = STEPS[currentStep];
   const milestone = milestones[currentStep];
   const stepPct = milestone && milestone.total > 0 ? Math.round((milestone.current / milestone.total) * 100) : 0;
-
-
-
 
   const trackMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -88,8 +80,6 @@ export function ServiceTrackingQuickSetup({
   const untrackedChemical = services.filter(s =>
     !s.is_backroom_tracked && (s.is_chemical_service || isSuggestedChemicalService(s.name, s.category))
   );
-  const trackedServices = services.filter(s => s.is_backroom_tracked);
-  const trackedNoComponents = trackedServices.filter(s => !componentsByService.has(s.id));
   const trackedNoAllowance = services.filter(s => s.is_backroom_tracked && !allowanceByService.has(s.id));
 
   const next = () => {
@@ -260,45 +250,6 @@ export function ServiceTrackingQuickSetup({
           </div>
         );
 
-      case 'components':
-        return (
-          <div className="space-y-2">
-            {/* Educational intro */}
-            <div className="bg-muted/30 border border-border/60 rounded-xl p-4 mb-4">
-              <div className="flex gap-3 items-start">
-                <Package className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-sans font-medium text-foreground">What are product components?</p>
-                  <p className="text-xs font-sans text-muted-foreground leading-relaxed">
-                    Each color or chemical service uses specific products — lightener, color, developer, toner.
-                    Linking them here tells Zura what to track and measure per service.
-                  </p>
-                  <p className="text-[10px] font-sans text-muted-foreground/70 italic">
-                    Example: "Full Balayage" might use Lightener + Developer
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {trackedNoComponents.length === 0 ? (
-              <StepComplete message="All tracked services have components mapped." />
-            ) : (
-              <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-                {trackedNoComponents.length} service{trackedNoComponents.length > 1 ? 's' : ''} still need{trackedNoComponents.length === 1 ? 's' : ''} at least one linked product.
-              </p>
-            )}
-            {trackedServices.map(s => (
-                <WizardComponentRow
-                  key={s.id}
-                  serviceId={s.id}
-                  serviceName={s.name}
-                  orgId={orgId}
-                  upsertComponent={upsertComponent}
-                />
-            ))}
-          </div>
-        );
-
       case 'allowances':
         return (
           <div className="space-y-2">
@@ -411,94 +362,6 @@ function StepComplete({ message }: { message: string }) {
     <div className="flex flex-col items-center gap-2 py-6 text-center">
       <CheckCircle2 className="w-8 h-8 text-primary/60" />
       <p className="text-sm font-sans text-muted-foreground">{message}</p>
-    </div>
-  );
-}
-
-function WizardComponentRow({ serviceId, serviceName, orgId, upsertComponent }: {
-  serviceId: string;
-  serviceName: string;
-  orgId: string;
-  upsertComponent: ReturnType<typeof useUpsertTrackingComponent>;
-}) {
-  const [adding, setAdding] = useState(false);
-  const { data: linked } = useServiceTrackingComponents(serviceId);
-  const deleteComponent = useDeleteTrackingComponent();
-
-  const { data: backroomProducts } = useQuery({
-    queryKey: ['backroom-products-for-mapping', orgId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name')
-        .eq('organization_id', orgId)
-        .eq('is_active', true)
-        .eq('is_backroom_tracked', true)
-        .order('name');
-      if (error) throw error;
-      return data as { id: string; name: string }[];
-    },
-    enabled: !!orgId,
-  });
-
-  const productMap = useMemo(() => {
-    const m = new Map<string, string>();
-    (backroomProducts || []).forEach(p => m.set(p.id, p.name));
-    return m;
-  }, [backroomProducts]);
-
-  const linkedCount = linked?.length || 0;
-
-  return (
-    <div className="rounded-lg border p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <span className="text-sm font-sans truncate block">{serviceName}</span>
-          {linkedCount === 0 && !adding && (
-            <span className="text-[10px] font-sans text-muted-foreground/60">Which products does this service use?</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {linkedCount > 0 && (
-            <Badge variant="secondary" className="text-[10px]">{linkedCount} linked</Badge>
-          )}
-          {!adding && (
-            <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setAdding(true)}>
-              Link Product
-            </Button>
-          )}
-        </div>
-      </div>
-      {linkedCount > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {linked!.map(item => (
-            <Badge key={item.id} variant="outline" className="text-[10px] gap-1 px-2 py-0.5 bg-muted/50">
-              {productMap.get(item.product_id) || 'Unknown'}
-              <X
-                className="h-2.5 w-2.5 cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
-                onClick={() => deleteComponent.mutate(item.id)}
-              />
-            </Badge>
-          ))}
-        </div>
-      )}
-      {adding && (
-        <Select
-          onValueChange={(productId) => {
-            upsertComponent.mutate({ organization_id: orgId, service_id: serviceId, product_id: productId });
-            setAdding(false);
-          }}
-        >
-          <SelectTrigger className="w-full text-xs h-8">
-            <SelectValue placeholder="Select a product to link..." />
-          </SelectTrigger>
-          <SelectContent>
-            {(backroomProducts || []).map(p => (
-              <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
     </div>
   );
 }
