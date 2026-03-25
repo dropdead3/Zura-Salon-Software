@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { Plus, Lock, Trash2 } from 'lucide-react';
+import { Plus, Lock, Trash2, FlaskConical, TestTube2 } from 'lucide-react';
 import { BowlLineRow } from './BowlLineRow';
 import { ManualWeightInput } from './ManualWeightInput';
 import { AddProductToBowl } from './AddProductToBowl';
@@ -77,8 +77,12 @@ export function BowlCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {bowl.container_type === 'bottle'
+              ? <TestTube2 className="w-4 h-4 text-sky-400" />
+              : <FlaskConical className="w-4 h-4 text-violet-400" />
+            }
             <CardTitle className="font-display text-base tracking-wide">
-              Bowl {bowl.bowl_number}
+              {bowl.container_type === 'bottle' ? 'Bottle' : 'Bowl'} {bowl.bowl_number}
             </CardTitle>
             {bowl.bowl_name && (
               <span className="font-sans text-xs text-muted-foreground">({bowl.bowl_name})</span>

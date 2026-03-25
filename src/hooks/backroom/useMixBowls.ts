@@ -31,6 +31,7 @@ export interface MixBowl {
   total_dispensed_cost: number;
   leftover_weight: number | null;
   net_usage_weight: number | null;
+  container_type: 'bowl' | 'bottle';
   created_at: string;
   updated_at: string;
 }

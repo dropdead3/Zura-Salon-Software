@@ -57,7 +57,7 @@ export function SessionSummary({ session, bowls }: SessionSummaryProps) {
       <CardContent>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="font-sans text-xs text-muted-foreground">Bowls</p>
+            <p className="font-sans text-xs text-muted-foreground">Formulations</p>
             <p className="font-display text-lg tabular-nums">{bowls.length}</p>
           </div>
           <div>

@@ -168,11 +168,11 @@ export function MixSessionManager({
       try {
         await Promise.all(sealPromises);
         const parts: string[] = [];
-        if (sealed.length) parts.push(`Sealed bowl${sealed.length > 1 ? 's' : ''} ${sealed.join(', ')}`);
-        if (discarded.length) parts.push(`Discarded empty bowl${discarded.length > 1 ? 's' : ''} ${discarded.join(', ')}`);
+        if (sealed.length) parts.push(`Finalized formulation${sealed.length > 1 ? 's' : ''} ${sealed.join(', ')}`);
+        if (discarded.length) parts.push(`Discarded empty formulation${discarded.length > 1 ? 's' : ''} ${discarded.join(', ')}`);
         if (parts.length) toast.info(parts.join('. '));
       } catch {
-        toast.error('Failed to auto-finalize bowls');
+        toast.error('Failed to auto-finalize formulations');
         return;
       }
     }
@@ -192,7 +192,7 @@ export function MixSessionManager({
     // Check for unreweighed bowls
     const sealedNotReweighed = bowls.filter((b) => b.status === 'sealed');
     const unresolvedReason = sealedNotReweighed.length > 0
-      ? `${sealedNotReweighed.length} bowl(s) not reweighed`
+      ? `${sealedNotReweighed.length} formulation(s) not reweighed`
       : undefined;
 
     // Calculate confidence score before completing
@@ -428,7 +428,7 @@ export function MixSessionManager({
         },
       });
     } catch {
-      toast.error('Reweigh failed — bowl remains sealed. Please retry.');
+      toast.error('Reweigh failed — formulation remains sealed. Please retry.');
     }
   }, [activeSession, bowls, organizationId, locationId, createReweigh, updateBowlStatus]);
 
@@ -483,7 +483,7 @@ export function MixSessionManager({
           <div>
             <h3 className="font-display text-base tracking-wide">Start Backroom Session</h3>
             <p className="font-sans text-sm text-muted-foreground mt-1">
-              Create bowls, add products, capture weights, and save formulas
+              Create formulations, add products, capture weights, and save formulas
             </p>
           </div>
 
@@ -569,7 +569,7 @@ export function MixSessionManager({
             newStatus: 'open',
             locationId,
           });
-          toast.info('Bowl opened for adjustments');
+          toast.info('Formulation opened for adjustments');
         }}
         onDiscardBowl={(bowlId) => handleDiscardBowl(bowlId)}
         onApproveAll={async () => {
@@ -594,7 +594,7 @@ export function MixSessionManager({
               locationId,
             });
           }
-          toast.success('All bowls approved');
+          toast.success('All formulations approved');
         }}
         onApprove={async () => {
           await emitSessionEvent({
@@ -733,7 +733,7 @@ export function MixSessionManager({
           className="w-full h-11 min-h-[44px] font-sans"
         >
           <Plus className="w-4 h-4 mr-1.5" />
-          Add Bowl
+          Add Formulation
         </Button>
       )}
 

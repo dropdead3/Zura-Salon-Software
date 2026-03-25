@@ -53,13 +53,13 @@ Both default to `bowl` so all existing data remains correct.
 `src/hooks/dock/dockDemoData.ts`
 - Add `container_type` to demo mix sessions and demo bowls
 
-### Phase 2 — Follow-ups (after core)
+### Phase 2 — Follow-ups ✅ Complete
 
-1. **Seed known toner services**: One-time data update to set `container_types = '{bottle}'` for services with names containing "Toner", "Gloss", etc.
-2. **Dashboard MixSessionManager**: Update admin-side bowl labels to respect container type
-3. **Formula History**: Show container type on `DockFormulaHistorySheet` cards
-4. **Icon differentiation**: Use `TestTube2` for bottles vs `FlaskConical` for bowls on cards
-5. **Reporting labels**: Check `useBackroomAnalytics` and related hooks for user-facing "bowl" text
+1. ✅ **Seed known toner services**: Migration sets `container_types = '{bottle}'` for services with names containing "Toner", "Gloss", "Glaze", "Rinse"
+2. ✅ **Dashboard MixSessionManager**: Updated all user-facing "bowl" labels to "formulation"; "Add Bowl" → "Add Formulation"; toast messages updated
+3. ✅ **Formula History**: Container type is session-level, not formula-level — no change needed; service name provides context
+4. ✅ **Icon differentiation**: `TestTube2` for bottles, `FlaskConical` for bowls on dashboard BowlCard (Dock already done in Phase 1)
+5. ✅ **Reporting labels**: SessionSummary "Bowls" → "Formulations"; internal analytics variable names unchanged (not user-facing)
 
 ### Files (Phase 1)
 - **Migration SQL** — new enum + two ALTER TABLE statements
