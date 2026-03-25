@@ -52,8 +52,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchRef = useRef<HTMLInputElement>(null);
+  const touchStartRef = useRef<{ y: number; id: string } | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const activeFilter = (searchParams.get('filter') as FilterTab) || 'all';
   const setActiveFilter = (tab: FilterTab) => {
@@ -68,6 +70,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Swipe gesture handlers for mobile
+  const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
+    touchStartRef.current = { y: e.touches[0].clientY, id: serviceId };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    const id = touchStartRef.current.id;
+    touchStartRef.current = null;
+    if (Math.abs(deltaY) < 40) return;
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (deltaY > 0 && !next.has(id)) next.add(id);       // swipe down = expand
+      else if (deltaY < 0 && next.has(id)) next.delete(id); // swipe up = collapse
+      return next;
+    });
+  }, []);
 
   // Keyboard shortcut: `/` to focus search
   useEffect(() => {
