@@ -226,7 +226,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
     // Tracked but missing components or allowance
-    if (s.is_backroom_tracked && (!componentsByService.has(s.id) || !allowanceByService.has(s.id))) return true;
+    if (s.is_backroom_tracked && !allowanceByService.has(s.id)) return true;
     return false;
   };
 
