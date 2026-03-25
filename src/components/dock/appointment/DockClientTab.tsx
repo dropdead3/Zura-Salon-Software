@@ -91,18 +91,23 @@ function hasDiff(diff: FormulaDiff): boolean {
   return diff.added.length > 0 || diff.removed.length > 0 || diff.changed.length > 0 || diff.ratioShift !== null;
 }
 
-// Mock client data for demo IDs
-const DEMO_CLIENT_MOCK = {
-  id: 'demo-client-mock',
-  name: 'Jessica Miller',
-  email: 'jessica.miller@example.com',
-  phone: '(480) 555-0142',
-  notes: 'Prefers low-ammonia formulas. Sensitive scalp — patch test recommended.',
-  medical_alerts: 'PPD sensitivity — always patch test 48h prior',
-  preferred_stylist_id: null,
-  created_at: '2024-01-15T00:00:00Z',
-  _source: 'phorest' as const,
-};
+// Mock client data for demo IDs — only Rachel Kim (demo-client-7) has allergy data
+const RACHEL_KIM_IDS = ['demo-client-7', 'demo-pc-7'];
+
+function getDemoClientMock(clientId: string | null | undefined, phorestClientId: string | null | undefined, clientName: string | null | undefined) {
+  const isRachel = RACHEL_KIM_IDS.includes(clientId ?? '') || RACHEL_KIM_IDS.includes(phorestClientId ?? '');
+  return {
+    id: 'demo-client-mock',
+    name: clientName || 'Client',
+    email: 'client@example.com',
+    phone: '(480) 555-0142',
+    notes: isRachel ? 'Prefers low-ammonia formulas. Sensitive scalp — patch test recommended.' : null,
+    medical_alerts: isRachel ? 'PPD sensitivity — always patch test 48h prior' : null,
+    preferred_stylist_id: null,
+    created_at: '2024-01-15T00:00:00Z',
+    _source: 'phorest' as const,
+  };
+}
 
 const isDemoClientId = (id: string | null | undefined) => id?.startsWith('demo-') ?? false;
 
