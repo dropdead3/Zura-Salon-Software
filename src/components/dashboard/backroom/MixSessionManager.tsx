@@ -483,7 +483,7 @@ export function MixSessionManager({
           <div>
             <h3 className="font-display text-base tracking-wide">Start Backroom Session</h3>
             <p className="font-sans text-sm text-muted-foreground mt-1">
-              Create bowls, add products, capture weights, and save formulas
+              Create formulations, add products, capture weights, and save formulas
             </p>
           </div>
 
