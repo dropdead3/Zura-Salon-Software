@@ -54,6 +54,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [wizardOpen, setWizardOpen] = useState(false);
   const { data: allowancePolicies } = useServiceAllowancePolicies();
   const { data: allComponents } = useServiceTrackingComponents();
 
