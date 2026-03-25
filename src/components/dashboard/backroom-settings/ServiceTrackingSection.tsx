@@ -51,12 +51,36 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const activeFilter = (searchParams.get('filter') as FilterTab) || 'all';
+  const setActiveFilter = (tab: FilterTab) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'all') next.delete('filter');
+      else next.set('filter', tab);
+      return next;
+    }, { replace: true });
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Keyboard shortcut: `/` to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const { data: allowancePolicies } = useServiceAllowancePolicies();
   const { data: allComponents } = useServiceTrackingComponents();
 
