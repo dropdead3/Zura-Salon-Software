@@ -190,6 +190,7 @@ const managerNavItems: NavItem[] = managerNavFromConfig;
 const adminOnlyNavItems: NavItem[] = adminOnlyNavFromConfig;
 const footerNavItems: NavItem[] = footerNavFromConfig;
 const websiteNavItems: NavItem[] = websiteNavFromConfig;
+const appsNavItems: NavItem[] = appsNavFromConfig;
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
