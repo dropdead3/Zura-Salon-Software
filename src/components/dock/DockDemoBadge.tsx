@@ -1,16 +1,14 @@
 import { useDockDemo } from '@/contexts/DockDemoContext';
-import { DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
-import { cn } from '@/lib/utils';
 
 export function DockDemoBadge() {
   const { isDemoMode } = useDockDemo();
   if (!isDemoMode) return null;
 
   return (
-    <div className="absolute top-5 right-52 z-50 flex items-center h-[42px]">
-      <span className={cn(DOCK_BADGE.base, DOCK_BADGE.demo, 'inline-flex items-center gap-1.5 backdrop-blur-md')}>
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-        Demo
+    <div className="w-full shrink-0 bg-amber-500/10 border-b border-amber-500/20 py-1.5 flex items-center justify-center gap-2">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+      <span className="text-[10px] font-medium text-amber-400 uppercase tracking-wider font-display">
+        Now viewing in Demo Mode
       </span>
     </div>
   );
