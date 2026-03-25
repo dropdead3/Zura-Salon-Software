@@ -1,0 +1,1 @@
+ALTER TABLE public.services ADD COLUMN backroom_config_dismissed boolean NOT NULL DEFAULT false;
