@@ -54,9 +54,9 @@ export function DockWeightInput({ onSubmit, onCancel, label = 'Enter Weight', un
       </p>
 
       {/* Display */}
-      <div className="flex items-baseline justify-center gap-1 mb-6">
+      <div className="flex items-baseline justify-center gap-1 mb-8">
         <span className={cn(
-          'font-display text-4xl tracking-tight transition-colors',
+          'font-display text-5xl tracking-tight transition-colors',
           value ? 'text-[hsl(var(--platform-foreground))]' : 'text-[hsl(var(--platform-foreground-muted)/0.3)]'
         )}>
           {value || '0'}
