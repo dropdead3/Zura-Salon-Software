@@ -1,29 +1,41 @@
 
 
-## Fix: Services Disappearing After Linking a Product
+## Show Linked Components in Wizard Service Rows
 
 ### Problem
-The "Map Components" step only shows services that have **zero** linked components (`!componentsByService.has(s.id)`). After linking a product, the query cache updates and the service vanishes — preventing users from adding additional products.
+After linking a product, the row only shows "2 linked" as a badge — the user can't see **which** products are linked.
 
-### Fix
+### Solution
+Enhance `WizardComponentRow` to fetch its linked components (with product names) and display them as removable chips below the service name.
 
-**Line 91** — Change `trackedNoComponents` to show **all tracked services**, not just those without components. Rename to `trackedServices` for clarity.
+### Changes — `ServiceTrackingQuickSetup.tsx`
 
+**1. Add `useServiceTrackingComponents` and `useDeleteTrackingComponent` imports**
+
+**2. Inside `WizardComponentRow`, fetch linked components for that service**
 ```tsx
-// Before
-const trackedNoComponents = services.filter(s => s.is_backroom_tracked && !componentsByService.has(s.id));
-
-// After
-const trackedServices = services.filter(s => s.is_backroom_tracked);
-const trackedNoComponents = trackedServices.filter(s => !componentsByService.has(s.id));
+const { data: linked } = useServiceTrackingComponents(serviceId);
 ```
 
-**Lines 282–301** — Render `trackedServices` in the list (so all tracked services always appear), but use `trackedNoComponents.length` only for the progress counter/message. Services with linked components show their "X linked" badge; services without show the helper text.
+**3. Fetch product names to resolve `product_id` → name**
+Already have the `backroomProducts` query — build a lookup map from it.
 
-- The "StepComplete" message triggers when `trackedNoComponents.length === 0` (unchanged)
-- The counter text: `"{trackedNoComponents.length} service(s) still need at least one linked product."`
-- The list iterates `trackedServices` instead of `trackedNoComponents`
+**4. Render linked products as small chips below the service name**
+```text
+┌─────────────────────────────────────────────────┐
+│  3+ Color Blocks / Calico Placement   [2 linked]│
+│  ┌──────────────┐ ┌─────────────────┐           │
+│  │ Lightener  ✕ │ │ Developer 20V ✕ │           │
+│  └──────────────┘ └─────────────────┘           │
+│                              [Link Product]     │
+└─────────────────────────────────────────────────┘
+```
+
+Each chip shows the product name with an `X` button to unlink (calls `useDeleteTrackingComponent`). Styled as `text-[10px] bg-muted/50 rounded-full px-2 py-0.5` with an inline `X` icon.
+
+**5. Replace the `linkedCount` prop with live data**
+Use `linked?.length` instead of the parent-provided count, so the badge updates reactively after mutations.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingQuickSetup.tsx` (`WizardComponentRow` component)
 
