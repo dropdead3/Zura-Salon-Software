@@ -638,13 +638,13 @@ DEMO_VISIT_HISTORY['demo-pc-7'] = DEMO_VISIT_HISTORY['demo-client-7'];
 const rachelMostRecentFormula = DEMO_FORMULA_HISTORY['demo-client-7'][0];
 
 export const DEMO_FORMULA_MEMORY: Record<string, ResolvedFormulaMemory> = {
-  'demo-client-7::Natural Root Retouch + Glaze Add On': {
+  'demo-client-7::Natural Root Retouch, Glaze Add On': {
     lines: rachelMostRecentFormula.formula_data,
     source: 'client_last_visit',
     sourceLabel: "Client's Last Visit",
     referenceId: rachelMostRecentFormula.id,
     ratio: '5 : 1 : 6 : 8',
-    serviceName: 'Natural Root Retouch + Glaze Add On',
+    serviceName: 'Natural Root Retouch, Glaze Add On',
     staffName: 'Jenna B.',
     notes: rachelMostRecentFormula.notes,
     createdAt: rachelMostRecentFormula.created_at,
