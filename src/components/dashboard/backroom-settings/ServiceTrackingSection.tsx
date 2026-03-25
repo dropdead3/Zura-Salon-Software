@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,12 +51,36 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const activeFilter = (searchParams.get('filter') as FilterTab) || 'all';
+  const setActiveFilter = (tab: FilterTab) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'all') next.delete('filter');
+      else next.set('filter', tab);
+      return next;
+    }, { replace: true });
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Keyboard shortcut: `/` to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const { data: allowancePolicies } = useServiceAllowancePolicies();
   const { data: allComponents } = useServiceTrackingComponents();
 
@@ -388,13 +412,17 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
               <div className="relative w-full sm:w-56">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
+                  ref={searchRef}
                   type="text"
                   autoCapitalize="off"
                   placeholder="Search services..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 h-8 text-xs rounded-full"
+                  className="pl-8 pr-8 h-8 text-xs rounded-full"
                 />
+                {!searchQuery && (
+                  <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] font-sans text-muted-foreground/60 border border-border/60 rounded px-1 py-0.5 leading-none">/</kbd>
+                )}
               </div>
             )}
           </div>
