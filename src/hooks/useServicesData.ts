@@ -32,6 +32,8 @@ export interface Service {
   deposit_amount: number | null;
   deposit_amount_flat: number | null;
   container_types: ('bowl' | 'bottle')[];
+  is_chemical_service: boolean;
+  is_backroom_tracked: boolean;
 }
 
 /**
@@ -176,6 +178,9 @@ export function useCreateService() {
           content_creation_time_minutes: service.content_creation_time_minutes ?? 0,
           processing_time_minutes: service.processing_time_minutes ?? 0,
           requires_new_client_consultation: service.requires_new_client_consultation ?? false,
+          is_chemical_service: service.is_chemical_service ?? false,
+          is_backroom_tracked: service.is_chemical_service ? true : (service.is_backroom_tracked ?? false),
+          container_types: service.is_chemical_service ? (service.container_types?.length ? service.container_types : ['bowl']) : [],
           location_id: service.location_id,
           organization_id: service.organization_id || effectiveOrganization?.id || null,
           import_source: 'manual',

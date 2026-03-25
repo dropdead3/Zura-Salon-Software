@@ -23,6 +23,7 @@ interface ServiceRow {
   name: string;
   category: string | null;
   is_backroom_tracked: boolean;
+  is_chemical_service: boolean;
   assistant_prep_allowed: boolean;
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
@@ -46,7 +47,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, is_backroom_tracked, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct')
+        .select('id, name, category, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct')
         .eq('organization_id', orgId!)
         .order('name');
       if (error) throw error;
@@ -116,7 +117,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   const tracked = (services || []).filter((s) => s.is_backroom_tracked);
   const untracked = (services || []).filter((s) => !s.is_backroom_tracked);
-  const suggestedServices = untracked.filter((s) => isColorOrChemicalService(s.name, s.category));
+  // Only show chemical services in Available list; use is_chemical_service flag first, regex fallback for unconfigured
+  const chemicalUntracked = untracked.filter((s) => s.is_chemical_service || isColorOrChemicalService(s.name, s.category));
+  const suggestedServices = chemicalUntracked.filter((s) => s.is_chemical_service || isColorOrChemicalService(s.name, s.category));
 
   return (
     <div className="space-y-6">
@@ -274,17 +277,17 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         </CardContent>
       </Card>
 
-      {/* Untracked services */}
-      {untracked.length > 0 && (
+      {/* Available chemical services (untracked) */}
+      {chemicalUntracked.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className={tokens.card.title}>Available Services</CardTitle>
             <CardDescription>
-              Enable backroom tracking for these services.
+              Color and chemical services not yet tracked. Enable tracking or mark services as chemical in the Service Editor.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
-            {untracked.map((service) => (
+            {chemicalUntracked.map((service) => (
               <div key={service.id} className="flex items-center gap-4 rounded-lg border p-3 bg-muted/20">
                 <Switch
                   checked={false}
@@ -294,8 +297,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   <p className="text-sm font-sans text-muted-foreground truncate">{service.name}</p>
                   {service.category && <span className="text-xs text-muted-foreground">{service.category}</span>}
                 </div>
-                {isColorOrChemicalService(service.name, service.category) && (
-                  <Badge variant="default" className="text-xs">Suggested</Badge>
+                {service.is_chemical_service ? (
+                  <Badge variant="default" className="text-xs">Chemical</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">Suggested</Badge>
                 )}
               </div>
             ))}
