@@ -137,7 +137,7 @@ export const DEMO_APPOINTMENTS: DockAppointment[] = (() => {
       source: 'phorest',
       client_name: 'Amanda Park',
       stylist_name: 'Jenna B.',
-      service_name: 'Color Correction',
+      service_name: 'Corrective Color - By The Hour',
       appointment_date: today,
       start_time: t5.startStr,
       end_time: t5.endStr,
