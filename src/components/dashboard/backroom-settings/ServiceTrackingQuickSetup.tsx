@@ -139,50 +139,99 @@ export function ServiceTrackingQuickSetup({
   // How many are still unclassified (no local selection either)
   const unclassifiedCount = services.filter(s => s.is_chemical_service === null && classifications[s.id] === undefined).length;
 
+  // Group services by category for the classify step
+  const groupedServices = useMemo(() => {
+    const map = new Map<string, ServiceRow[]>();
+    for (const s of services) {
+      const cat = s.category || getServiceCategory(s.name);
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(s);
+    }
+    return SERVICE_CATEGORIES
+      .filter(c => map.has(c))
+      .map(c => ({ category: c as string, items: map.get(c)! }));
+  }, [services]);
+
+  const bulkClassify = useCallback((items: ServiceRow[], value: boolean) => {
+    setClassifications(prev => {
+      const next = { ...prev };
+      for (const s of items) next[s.id] = value;
+      return next;
+    });
+  }, []);
+
   const renderStepContent = () => {
     switch (step.key) {
       case 'classify':
         return (
-          <div className="space-y-2">
-            <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-              Classify each service, then save.
+          <div className="space-y-4">
+            <p className={cn(tokens.body.muted, 'text-xs')}>
+              Classify each service by category, then save.
             </p>
-            {services.map(s => {
-              const localVal = classifications[s.id];
-              const isStandard = localVal === false;
-              const isChemical = localVal === true;
-              return (
-                <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-sans truncate">{s.name}</span>
-                    {isSuggestedChemicalService(s.name, s.category) && (
-                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400 shrink-0">Suggested</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
+            {groupedServices.map(({ category, items }) => (
+              <div key={category} className="space-y-1">
+                {/* Category header with bulk actions */}
+                <div className="flex items-center justify-between py-1.5 px-1">
+                  <span className="text-xs font-display uppercase tracking-wide text-muted-foreground">
+                    {category} ({items.length})
+                  </span>
+                  <div className="flex items-center gap-1">
                     <Button
-                      variant={isStandard ? 'secondary' : 'outline'}
+                      variant="ghost"
                       size="sm"
-                      className="h-7 px-3 text-xs font-sans"
-                      onClick={() => setClassifications(prev => ({ ...prev, [s.id]: false }))}
+                      className="h-6 px-2 text-[10px] font-sans text-muted-foreground"
+                      onClick={() => bulkClassify(items, false)}
                     >
-                      No Color/Chemical
+                      All No Color/Chemical
                     </Button>
                     <Button
-                      variant={isChemical ? 'default' : 'outline'}
+                      variant="ghost"
                       size="sm"
-                      className="h-7 px-3 text-xs font-sans"
-                      onClick={() => setClassifications(prev => ({ ...prev, [s.id]: true }))}
+                      className="h-6 px-2 text-[10px] font-sans text-muted-foreground"
+                      onClick={() => bulkClassify(items, true)}
                     >
-                      Requires Color/Chemical
+                      All Requires Color/Chemical
                     </Button>
                   </div>
                 </div>
-              );
-            })}
+                {/* Service rows */}
+                {items.map(s => {
+                  const localVal = classifications[s.id];
+                  const isStandard = localVal === false;
+                  const isChemical = localVal === true;
+                  return (
+                    <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm font-sans truncate">{s.name}</span>
+                        {isSuggestedChemicalService(s.name, s.category) && (
+                          <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400 shrink-0">Suggested</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant={isStandard ? 'secondary' : 'outline'}
+                          size="sm"
+                          className="h-7 px-3 text-xs font-sans"
+                          onClick={() => setClassifications(prev => ({ ...prev, [s.id]: false }))}
+                        >
+                          No Color/Chemical
+                        </Button>
+                        <Button
+                          variant={isChemical ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 px-3 text-xs font-sans"
+                          onClick={() => setClassifications(prev => ({ ...prev, [s.id]: true }))}
+                        >
+                          Requires Color/Chemical
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         );
-
       case 'track':
         return (
            <div className="space-y-2">
