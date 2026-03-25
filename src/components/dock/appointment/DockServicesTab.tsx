@@ -535,9 +535,12 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         onClose={() => {
           setShowNewBowl(false);
           setActiveServiceLabel(null);
+          setActiveContainerType('bowl');
         }}
         onCreateBowl={handleCreateBowl}
         clientId={appointment.client_id}
+        containerType={activeContainerType}
+      />
       />
 
       {/* Session complete sheet */}
