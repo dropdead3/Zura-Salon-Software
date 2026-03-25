@@ -2,7 +2,7 @@
  * ServiceTrackingQuickSetup — Stepped wizard dialog for service tracking configuration.
  * Walks through: Classify → Track → Map Components → Set Allowances.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUpsertTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
@@ -49,25 +49,27 @@ export function ServiceTrackingQuickSetup({
   open, onOpenChange, orgId, services, milestones, componentsByService, allowanceByService, onNavigateAllowances,
 }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [classifications, setClassifications] = useState<Record<string, boolean>>({});
+  const [isSavingClassify, setIsSavingClassify] = useState(false);
   const queryClient = useQueryClient();
   const upsertComponent = useUpsertTrackingComponent();
+
+  // Pre-populate local classifications from DB state
+  const classifyInitKey = services.map(s => `${s.id}:${s.is_chemical_service}`).join(',');
+  useEffect(() => {
+    const init: Record<string, boolean> = {};
+    for (const s of services) {
+      if (s.is_chemical_service !== null) init[s.id] = s.is_chemical_service;
+    }
+    setClassifications(init);
+  }, [classifyInitKey]);
 
   const step = STEPS[currentStep];
   const milestone = milestones[currentStep];
   const stepPct = milestone && milestone.total > 0 ? Math.round((milestone.current / milestone.total) * 100) : 0;
 
-  // Mutations
-  const classifyMutation = useMutation({
-    mutationFn: async ({ id, isChemical }: { id: string; isChemical: boolean }) => {
-      const { error } = await supabase.from('services').update({ is_chemical_service: isChemical }).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
-    },
-    onError: (e) => toast.error(e.message),
-  });
+
+
 
   const trackMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -83,8 +85,6 @@ export function ServiceTrackingQuickSetup({
   });
 
   // Step-specific items
-  const uncategorized = services.filter(s => s.is_chemical_service === null);
-  const suggestedUncategorized = uncategorized.filter(s => isSuggestedChemicalService(s.name, s.category));
   const untrackedChemical = services.filter(s =>
     !s.is_backroom_tracked && (s.is_chemical_service || isSuggestedChemicalService(s.name, s.category))
   );
@@ -96,50 +96,90 @@ export function ServiceTrackingQuickSetup({
     else onOpenChange(false);
   };
 
+  // Batch-save classify step: only update services whose local state differs from DB
+  const saveClassificationsAndNext = useCallback(async () => {
+    const updates: { id: string; isChemical: boolean }[] = [];
+    for (const s of services) {
+      const local = classifications[s.id];
+      if (local !== undefined && local !== s.is_chemical_service) {
+        updates.push({ id: s.id, isChemical: local });
+      }
+    }
+    if (updates.length === 0) {
+      next();
+      return;
+    }
+    setIsSavingClassify(true);
+    try {
+      for (const u of updates) {
+        const { error } = await supabase.from('services').update({ is_chemical_service: u.isChemical }).eq('id', u.id);
+        if (error) throw error;
+      }
+      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      toast.success(`${updates.length} service${updates.length > 1 ? 's' : ''} classified`);
+      next();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save');
+    } finally {
+      setIsSavingClassify(false);
+    }
+  }, [services, classifications, currentStep]);
+
+  // Count how many local classifications differ from DB (dirty count)
+  const classifyDirtyCount = useMemo(() => {
+    let count = 0;
+    for (const s of services) {
+      const local = classifications[s.id];
+      if (local !== undefined && local !== s.is_chemical_service) count++;
+    }
+    return count;
+  }, [services, classifications]);
+
+  // How many are still unclassified (no local selection either)
+  const unclassifiedCount = services.filter(s => s.is_chemical_service === null && classifications[s.id] === undefined).length;
+
   const renderStepContent = () => {
     switch (step.key) {
       case 'classify':
         return (
           <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-            {uncategorized.length === 0 ? (
-              <StepComplete message="All services have been classified." />
-            ) : (
-              <>
-                {suggestedUncategorized.length > 0 && (
-                  <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
-                    Classify each service as Standard or Chemical.
-                  </p>
-                )}
-                {uncategorized.map(s => (
-                  <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm font-sans truncate">{s.name}</span>
-                      {isSuggestedChemicalService(s.name, s.category) && (
-                        <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400 shrink-0">Suggested</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-3 text-xs font-sans"
-                        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: false })}
-                      >
-                        Standard
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="h-7 px-3 text-xs font-sans"
-                        onClick={() => classifyMutation.mutate({ id: s.id, isChemical: true })}
-                      >
-                        Chemical
-                      </Button>
-                    </div>
+            <p className={cn(tokens.body.muted, 'text-xs mb-2')}>
+              Classify each service as Standard or Chemical, then save.
+            </p>
+            {services.map(s => {
+              const localVal = classifications[s.id];
+              const isStandard = localVal === false;
+              const isChemical = localVal === true;
+              return (
+                <div key={s.id} className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-sans truncate">{s.name}</span>
+                    {isSuggestedChemicalService(s.name, s.category) && (
+                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400 shrink-0">Suggested</Badge>
+                    )}
                   </div>
-                ))}
-              </>
-            )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant={isStandard ? 'secondary' : 'outline'}
+                      size="sm"
+                      className="h-7 px-3 text-xs font-sans"
+                      onClick={() => setClassifications(prev => ({ ...prev, [s.id]: false }))}
+                    >
+                      Standard
+                    </Button>
+                    <Button
+                      variant={isChemical ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 px-3 text-xs font-sans"
+                      onClick={() => setClassifications(prev => ({ ...prev, [s.id]: true }))}
+                    >
+                      Chemical
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         );
 
@@ -217,6 +257,8 @@ export function ServiceTrackingQuickSetup({
     }
   };
 
+  const isClassifyStep = step.key === 'classify';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
@@ -272,10 +314,18 @@ export function ServiceTrackingQuickSetup({
             <SkipForward className="w-3 h-3 mr-1" />
             {currentStep < STEPS.length - 1 ? 'Skip' : 'Close'}
           </Button>
-          <Button size="sm" onClick={next}>
-            {currentStep < STEPS.length - 1 ? 'Next Step' : 'Done'}
-            <ChevronRight className="w-3 h-3 ml-1" />
-          </Button>
+          {isClassifyStep ? (
+            <Button size="sm" onClick={saveClassificationsAndNext} disabled={isSavingClassify}>
+              {isSavingClassify && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+              {classifyDirtyCount > 0 ? `Save & Next (${classifyDirtyCount})` : 'Next Step'}
+              <ChevronRight className="w-3 h-3 ml-1" />
+            </Button>
+          ) : (
+            <Button size="sm" onClick={next}>
+              {currentStep < STEPS.length - 1 ? 'Next Step' : 'Done'}
+              <ChevronRight className="w-3 h-3 ml-1" />
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
