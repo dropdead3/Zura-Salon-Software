@@ -37,6 +37,7 @@ export function DockIngredientDispensing({
   const carouselRef = useRef<HTMLDivElement>(null);
   const activeCardRef = useRef<HTMLButtonElement>(null);
   const scale = useDockScale();
+  const { visual } = useDockDispensingVisual();
 
   const currentWeight = currentWeights.get(line.id) ?? 0;
   const targetWeight = line.dispensed_quantity;
