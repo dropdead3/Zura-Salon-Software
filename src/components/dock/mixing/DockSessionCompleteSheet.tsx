@@ -192,11 +192,8 @@ export function DockSessionCompleteSheet({
             </div>
 
             {/* Drag handle — bottom position for top-anchored sheet */}
-            <div className={DOCK_SHEET.dragHandleWrapperBottom}>
-              <div
-                className={DOCK_SHEET.dragHandle}
-                onPointerDown={(e) => dragControls.start(e)}
-              />
+            <div className={DOCK_SHEET.dragHandleWrapperBottom} onPointerDown={(e) => dragControls.start(e)}>
+              <div className={DOCK_SHEET.dragHandle} />
             </div>
           </motion.div>
         </div>
