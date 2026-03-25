@@ -280,6 +280,8 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       unresolved_flag: false,
       unresolved_reason: null,
       service_label: 'Full Balayage',
+      mixed_by_staff_id: 'dev-bypass-000',
+      mixed_by_name: 'Demo Stylist',
     },
   ],
   'demo-appt-4': [
@@ -293,6 +295,8 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       unresolved_flag: false,
       unresolved_reason: null,
       service_label: 'Corrective Color - By The Hour',
+      mixed_by_staff_id: 'demo-assistant-001',
+      mixed_by_name: 'Mia Chen (Assistant)',
     },
   ],
   'demo-appt-6': [
@@ -306,6 +310,8 @@ export const DEMO_MIX_SESSIONS: Record<string, DockMixSession[]> = {
       unresolved_flag: true,
       unresolved_reason: 'Leftover product not weighed',
       service_label: 'Full Vivid',
+      mixed_by_staff_id: 'dev-bypass-000',
+      mixed_by_name: 'Demo Stylist',
     },
   ],
 };
