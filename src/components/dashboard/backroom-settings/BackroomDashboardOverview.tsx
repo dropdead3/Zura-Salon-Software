@@ -74,6 +74,14 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
     if (initialSubTab) setActiveSubTab(initialSubTab);
   }, [initialSubTab]);
 
+  // Handle wizard trigger from parent banner
+  useEffect(() => {
+    if (triggerWizard) {
+      setShowWizard(true);
+      onWizardTriggered?.();
+    }
+  }, [triggerWizard, onWizardTriggered]);
+
   if (dashboard.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
