@@ -1,5 +1,5 @@
 /**
- * AllowanceCalculatorDialog — Vish-style bowl-based product allowance calculator.
+ * AllowanceCalculatorDialog — Bowl-based product allowance calculator.
  * Builds recipes from real catalog products to derive a dollar-based allowance.
  * Product picker uses a 3-step Brand → Category → Product drill-down.
  */
@@ -1085,7 +1085,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         Use ${healthResult.suggestedServicePrice} suggested price
                       </Button>
                       <MetricInfoTooltip
-                        description="Calculated using the Vish 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
+                        description="Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
                         className="w-3.5 h-3.5 text-amber-500/60"
                       />
                     </div>
