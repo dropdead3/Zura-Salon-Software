@@ -27,6 +27,7 @@ import {
   CreditCard,
   Truck,
   CircleDollarSign,
+  Coins,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ import { BackroomComplianceSection } from '@/components/dashboard/backroom-setti
 import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
+import { BackroomSavingsSection } from '@/components/dashboard/backroom-settings/BackroomSavingsSection';
 
 
 type BackroomSection =
@@ -66,6 +68,7 @@ type BackroomSection =
   | 'formula'
   | 'multi-location'
   | 'compliance'
+  | 'savings'
   | 'price-intelligence';
 
 type SectionGroup = 'operations' | 'configuration' | 'settings';
@@ -95,6 +98,7 @@ const sections: SectionMeta[] = [
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
   { id: 'price-intelligence', label: 'Price Intelligence', icon: CircleDollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
   { id: 'compliance', label: 'Compliance Reports', icon: ShieldCheck, tooltip: 'Staff compliance tracking, accountability reports, and 1:1 coaching prep.', group: 'operations' },
+  { id: 'savings', label: 'Your Savings', icon: Coins, tooltip: 'See how Zura Backroom saves you money with transparent ROI calculations.', group: 'operations' },
   // Configuration
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
   { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
@@ -393,6 +397,7 @@ export default function BackroomSettings() {
             {activeSection === 'compliance' && <BackroomComplianceSection />}
             {activeSection === 'multi-location' && <MultiLocationSection />}
             {activeSection === 'price-intelligence' && <PriceRecommendationsContent />}
+            {activeSection === 'savings' && <BackroomSavingsSection />}
           </div>
         </div>
       </div>
