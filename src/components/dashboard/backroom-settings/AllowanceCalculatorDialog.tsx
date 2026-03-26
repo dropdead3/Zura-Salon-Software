@@ -1527,50 +1527,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               </div>
               <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5 flex items-center gap-2">
                 <span>{Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}</span>
-                {/* Inline editable service price */}
                 <span className="text-muted-foreground/40">·</span>
-                <span className="inline-flex items-center gap-1">
-                  Service $
-                  <Input
-                    type="number"
-                    min="0"
-                    step="5"
-                    value={effectiveServicePrice || ''}
-                    onChange={(e) => setModeledServicePrice(parseFloat(e.target.value) || null)}
-                    className="h-5 w-16 text-[11px] px-1 inline-block tabular-nums"
-                    placeholder={servicePrice?.toString() || '0'}
-                  />
-                  {modeledServicePrice !== null && modeledServicePrice !== servicePrice && (
-                    <>
-                      <button
-                        className="text-[10px] text-primary hover:underline"
-                        onClick={() => setModeledServicePrice(null)}
-                      >
-                        reset
-                      </button>
-                      <button
-                        className="text-[10px] text-primary hover:underline"
-                        onClick={() => {
-                          const oldPrice = servicePrice;
-                          updateServicePriceMutation.mutate(modeledServicePrice, {
-                            onSuccess: () => {
-                              setModeledServicePrice(null);
-                              toast(`Service price updated to $${modeledServicePrice}`, {
-                                action: oldPrice ? {
-                                  label: 'Undo',
-                                  onClick: () => updateServicePriceMutation.mutate(oldPrice),
-                                } : undefined,
-                                duration: 6000,
-                              });
-                            },
-                          });
-                        }}
-                      >
-                        apply
-                      </button>
-                    </>
-                  )}
-                </span>
+                <span>Service ${servicePrice?.toFixed(0) || '0'}</span>
               </div>
               {/* Allowance Health Indicator */}
               {healthResult ? (
