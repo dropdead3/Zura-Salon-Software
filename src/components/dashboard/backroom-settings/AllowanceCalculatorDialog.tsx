@@ -614,7 +614,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
     // Auto-remove empty bowls (except the first) before saving
     const activeBowls = bowls.filter((b, i) => i === 0 || b.lines.length > 0);
-    const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+    const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     // Update local state to reflect removed empty bowls
     if (bowlsToSave.length !== bowls.length) {
       setBowls(bowlsToSave);
