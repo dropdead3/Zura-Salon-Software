@@ -102,13 +102,19 @@ function computeLineCost(qty: number, costPerGram: number, isDeveloper: boolean,
   return Math.round(qty * costPerGram * 100) / 100;
 }
 
-function getCostPerGram(product: CatalogProduct): number {
+function getWholesaleCostPerGram(product: CatalogProduct): number {
   if (product.cost_per_gram && product.cost_per_gram > 0) return product.cost_per_gram;
   if (product.cost_price && product.container_size) {
     const size = parseFloat(product.container_size);
     if (size > 0) return Math.round((product.cost_price / size) * 10000) / 10000;
   }
   return 0;
+}
+
+function getRetailCostPerGram(product: CatalogProduct, defaultMarkupPct: number): number {
+  const wholesale = getWholesaleCostPerGram(product);
+  const markup = product.markup_pct ?? defaultMarkupPct;
+  return calculateRetailCostPerGram(wholesale, markup);
 }
 
 function getBowlWeight(bowl: BowlState): number {
