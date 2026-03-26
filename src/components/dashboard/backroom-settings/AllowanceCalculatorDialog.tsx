@@ -629,14 +629,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
-          <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
+            <MetricInfoTooltip
+              description="Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference."
+              className="w-3.5 h-3.5"
+            />
+          </div>
           <DialogDescription className="text-sm font-sans text-muted-foreground">
             {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
           </DialogDescription>
-          <p className="text-xs font-sans text-muted-foreground/70 mt-2 leading-relaxed">
-            Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference.
-          </p>
         </DialogHeader>
 
         <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
