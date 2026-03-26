@@ -475,18 +475,30 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     if (!orgId) return;
     setSaving(true);
 
+    // Warn about empty non-first bowls
+    const emptyBowls = bowls.filter((b, i) => i > 0 && b.lines.length === 0);
+    if (emptyBowls.length > 0) {
+      toast.info(`${emptyBowls.map(b => b.label).join(', ')} ${emptyBowls.length === 1 ? 'is' : 'are'} empty and won't be saved.`);
+    }
+
+    // Snapshot existing data for rollback
+    const existingBowlIds = existingBowls?.map(b => b.id) || [];
+    const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
+
     try {
-      if (existingBowls) {
-        for (const b of existingBowls) {
-          await deleteBowl.mutateAsync(b.id);
-        }
+      // Phase 1: Delete existing data
+      const deleteErrors: string[] = [];
+      for (const id of existingBaselineIds) {
+        try { await deleteBaseline.mutateAsync(id); } catch (e: any) { deleteErrors.push(e.message); }
       }
-      if (existingBaselines) {
-        for (const bl of existingBaselines) {
-          await deleteBaseline.mutateAsync(bl.id);
-        }
+      for (const id of existingBowlIds) {
+        try { await deleteBowl.mutateAsync(id); } catch (e: any) { deleteErrors.push(e.message); }
+      }
+      if (deleteErrors.length > 0) {
+        throw new Error(`Failed to clear existing data: ${deleteErrors[0]}`);
       }
 
+      // Phase 2: Insert new data
       for (const bowl of bowls) {
         if (bowl.lines.length === 0) continue;
 
@@ -524,6 +536,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         }
       }
 
+      // Phase 3: Update policy
       await upsertPolicy.mutateAsync({
         organization_id: orgId,
         service_id: serviceId,
@@ -538,6 +551,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         allowance_health_pct: healthResult?.allowancePct ?? null,
         last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
+
+      // Update snapshot so isDirty resets
+      initialBowlsRef.current = JSON.stringify(bowls.map(b => ({ lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
       onOpenChange(false);
