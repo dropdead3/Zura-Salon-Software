@@ -369,8 +369,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
     });
     if (removed) {
+      // Dismiss any previous undo toast to prevent stale undo
+      if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
       removedBowlRef.current = { idx, bowl: removed };
-      toast(`Removed ${removed.label}`, {
+      const toastId = toast(`Removed ${removed.label}`, {
         action: {
           label: 'Undo',
           onClick: () => {
