@@ -14064,6 +14064,8 @@ export type Database = {
           cost_per_gram: number | null
           cost_price: number | null
           created_at: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
           depletion_method: string
           description: string | null
           expires_at: string | null
@@ -14110,6 +14112,8 @@ export type Database = {
           cost_per_gram?: number | null
           cost_price?: number | null
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           depletion_method?: string
           description?: string | null
           expires_at?: string | null
@@ -14156,6 +14160,8 @@ export type Database = {
           cost_per_gram?: number | null
           cost_price?: number | null
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           depletion_method?: string
           description?: string | null
           expires_at?: string | null
