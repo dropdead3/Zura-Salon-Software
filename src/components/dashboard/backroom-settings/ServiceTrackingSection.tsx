@@ -780,9 +780,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs border-dashed"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setCalculatorServiceId(service.id);
-                                                        setCalculatorServiceName(service.name);
-                                                        setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                         setCalculatorServiceId(service.id);
+                                                         setCalculatorServiceName(service.name);
+                                                         setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                         setCalculatorServicePrice(service.price);
                                                       }}
                                                     >
                                                       Configure Allowance
