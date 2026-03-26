@@ -74,6 +74,13 @@ const WEIGHT_PRESETS = [15, 30, 45, 60, 90];
 const RATIO_PRESETS = [1, 1.5, 2];
 const DEVELOPER_KEYWORDS = ['developer', 'dev', 'peroxide', 'oxidant', 'activator', 'vol'];
 
+/** Transform category slugs (e.g. "color-remover") into title-case labels ("Color Remover") */
+function formatCategoryLabel(slug: string): string {
+  return slug
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function isDeveloperProduct(product: CatalogProduct): boolean {
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
