@@ -209,8 +209,8 @@ export function useCompleteStockTransfer() {
       // If receivedLines provided (Receive & Verify flow)
       if (receivedLines && receivedLines.length > 0) {
         for (const rl of receivedLines) {
-          // Update line with received data
-          await supabase
+          // Update line with received data (cast through unknown for new columns)
+          await (supabase
             .from('stock_transfer_lines')
             .update({
               received_quantity: rl.receivedQty,
@@ -218,8 +218,8 @@ export function useCompleteStockTransfer() {
               discrepancy_notes: rl.receivedQty !== rl.expectedQty
                 ? (rl.notes || `Expected ${rl.expectedQty}, received ${rl.receivedQty}`)
                 : null,
-            })
-            .eq('id', rl.lineId);
+            } as any)
+            .eq('id', rl.lineId));
 
           // Post ledger using RECEIVED quantities
           await postTransfer({
