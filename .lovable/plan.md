@@ -1,27 +1,27 @@
 
 
-## Reset Allowance Row to Initial State After Clearing
+## Remove Variance Threshold Setting from Service Tracking UI
 
-### Problem
-When "Clear Allowance" zeroes out and deactivates the policy (`is_active: false`, `included_allowance_qty: 0`), the service row still shows "0g included · $0.00/g overage" with an "Edit" button because the condition only checks `if (policy)` — it doesn't check whether the policy is actually active/meaningful.
+### Rationale
+The variance threshold slider is dead configuration — the analytics layer handles variance detection with its own logic, making this per-service setting redundant and potentially confusing for operators.
 
-### Fix
+### Changes
 
 **File:** `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
-**Line ~753** — Change the condition from:
-```tsx
-if (policy) {
-```
-to:
-```tsx
-if (policy && policy.is_active) {
-```
+1. **Remove the `liveThresholds` state** (line 78) — `useState<Record<string, number>>({})`
 
-This single change means a cleared/deactivated policy will fall through to the `else` branch and render the "Configure Allowance" button (initial state) instead of the zeroed-out "Edit" view.
+2. **Remove `variance_threshold_pct` from the interface** (line 44) and **from the select query** (line 161)
 
-**Alternative considered:** Also checking `included_allowance_qty > 0`, but `is_active` is the canonical flag already set by the clear handler and is the cleaner semantic check.
+3. **Remove the entire Variance Threshold block** (lines 848–872) — the label, MetricInfoTooltip, Slider, and percentage display
+
+4. **Remove `Slider` import** if unused elsewhere in the file
+
+### What stays
+- The `variance_threshold_pct` column remains in the database (no migration needed — it's harmless and avoids breaking anything)
+- The `useUsageVariance` hook continues using its hardcoded 10% tolerance at the analytics layer
 
 ### Scope
-- 1 file, 1 line changed
+- 1 file, ~30 lines removed
+- No logic or database changes
 
