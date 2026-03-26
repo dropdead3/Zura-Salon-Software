@@ -59,26 +59,6 @@ export function PricingAnalyticsContent({
     locationId,
   );
 
-  // Backroom not activated — show empty state
-  if (!appsLoading && !hasApp('backroom')) {
-    return (
-      <EmptyState
-        icon={Beaker}
-        title="Pricing intelligence requires Zura Backroom"
-        description="Activate Zura Backroom to unlock service pricing analytics, margin tracking, and AI-driven price recommendations."
-        action={
-          <Button
-            variant="outline"
-            onClick={() => navigate(dashPath('/admin/backroom-settings'))}
-            className="font-sans gap-1"
-          >
-            Explore Backroom <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        }
-      />
-    );
-  }
-
   // Compute KPIs
   const kpis = useMemo(() => {
     if (!recommendations?.length) return { belowTarget: 0, avgGap: 0, weightedImpact: 0, avgProductCost: 0 };
