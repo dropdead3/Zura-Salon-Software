@@ -1006,9 +1006,27 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             style={{ backgroundColor: line.swatchColor || 'hsl(var(--muted))' }}
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs font-sans text-foreground truncate">{line.productName}</div>
+                            <div className="text-xs font-sans text-foreground truncate">
+                              {line.productName}
+                              {/* Cross-bowl duplicate warning */}
+                              {(() => {
+                                const otherBowlIdx = bowls.findIndex((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === line.productId));
+                                return otherBowlIdx >= 0 ? (
+                                  <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-amber-500 border-amber-500/30">
+                                    Also in {bowls[otherBowlIdx].label}
+                                  </Badge>
+                                ) : null;
+                              })()}
+                            </div>
                             <div className="text-[11px] font-sans text-muted-foreground">
                               {line.brand} · ${line.costPerGram.toFixed(4)}/g
+                              {(() => {
+                                const prod = catalogProducts.find(p => p.id === line.productId);
+                                if (!prod) return null;
+                                const wholesale = getWholesaleCostPerGram(prod);
+                                if (wholesale <= 0) return null;
+                                return <span className="text-muted-foreground/50"> · ${wholesale.toFixed(4)}/g wholesale</span>;
+                              })()}
                             </div>
                           </div>
 
