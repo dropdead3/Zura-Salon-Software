@@ -1195,6 +1195,7 @@ function AddEditDialog({
         brand: brand.trim(),
         name: name.trim(),
         category,
+        color_type: category === 'color' && colorType ? colorType : null,
         default_depletion: depletion,
         default_unit: unit,
         size_options: sizeArr,
