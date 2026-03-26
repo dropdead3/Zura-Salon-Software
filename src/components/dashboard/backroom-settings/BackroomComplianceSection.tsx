@@ -226,8 +226,8 @@ export function BackroomComplianceSection() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={tokens.card.title}>Reweigh & Waste Trend</CardTitle>
-                  <MetricInfoTooltip description="Daily reweigh rate and waste percentage over the selected period." />
+                 <CardTitle className={tokens.card.title}>Compliance & Waste Trend</CardTitle>
+                  <MetricInfoTooltip description="Daily compliance rate and waste percentage over the selected period." />
                 </div>
               </CardHeader>
               <CardContent>
