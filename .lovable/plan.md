@@ -1,24 +1,31 @@
 
 
-## Make Product Rows Clickable with Checkbox
+## Add Slide-In Animation to Bowl Lines
 
 ### What Changes
 
-In the product picker list (lines 564-611 of `AllowanceCalculatorDialog.tsx`), replace the current `+ Add` / `✓ Added` button with a checkbox, and make the entire row clickable to toggle add/remove.
+Wrap each bowl line item (color lines and developer lines) in a `motion.div` from framer-motion with a subtle fade + slide-in animation when added. Uses `AnimatePresence` + `layout` for smooth entry/exit.
 
 ### Changes to `AllowanceCalculatorDialog.tsx`
 
-**Lines 568-608** — Rework each product row:
+1. **Import** `motion, AnimatePresence` from `framer-motion`
 
-1. Wrap the entire row `div` with an `onClick` handler that calls `addProductToBowl(bowlIdx, p)` (which already toggles if the product is added)
-2. Add `cursor-pointer` to the row and adjust hover styling
-3. Replace the `Button` (lines 588-608) with a `Checkbox` component:
-   - `checked={isAlreadyAdded}`
-   - Styled to match the existing design (`shrink-0`)
-   - Click handled by the parent row's `onClick` — no separate handler needed
-4. Add `import { Checkbox } from '@/components/ui/checkbox'` (if not already imported)
+2. **Color lines section (line ~712)** — Wrap `colorLines.map(...)` in `<AnimatePresence>` and replace each line's outer `<div>` with `<motion.div>`:
+   - `initial={{ opacity: 0, x: -12 }}`
+   - `animate={{ opacity: 1, x: 0 }}`
+   - `exit={{ opacity: 0, x: 12 }}`
+   - `transition={{ duration: 0.2, ease: 'easeOut' }}`
+   - Keep existing `key={line.localId}` and classes
 
-### Verify: Does `addProductToBowl` toggle?
+3. **Developer lines section (line ~775)** — Same treatment: wrap `devLines.map(...)` in `<AnimatePresence>`, convert inner `<div>` to `<motion.div>` with identical animation props
 
-Need to check if calling it on an already-added product is safe or if we need to add removal logic.
+### Motion Standards Compliance
+- Duration: 200ms (within 180–240ms guideline)
+- Ease: `easeOut` (no bouncing or elastic effects)
+- Subtle 12px horizontal slide (not jarring)
+
+### Single File Change
+| File | Action |
+|------|--------|
+| `AllowanceCalculatorDialog.tsx` | Add `AnimatePresence` + `motion.div` to color and developer line items |
 
