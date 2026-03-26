@@ -211,7 +211,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       queryClient.invalidateQueries({ queryKey: ['org-services'] });
       queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
       if (result?.didResetConfig) {
-        toast.info('Settings changed — click "Mark Configured" to re-confirm.');
+        toast.info('Settings changed — click "Finalize Configuration" to re-confirm.');
       }
     },
     onError: (e) => toast.error(e.message),
