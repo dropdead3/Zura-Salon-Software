@@ -546,7 +546,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     const currentCategory = service.category || 'Other';
                     const showCategoryHeader = currentCategory !== prevCategory;
                     const type = getServiceType(service);
-                    const hasComponents = componentsByService.has(service.id);
                     const hasAllowance = allowanceByService.has(service.id);
                     const attention = needsAttention(service);
                     const isExpanded = expandedIds.has(service.id);
