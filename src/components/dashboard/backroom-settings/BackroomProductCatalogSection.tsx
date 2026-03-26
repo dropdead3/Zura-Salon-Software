@@ -285,7 +285,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     mutationFn: async (brand: string) => {
       const { data: libraryData, error: libErr } = await supabase
         .from('supply_library_products')
-        .select('name, wholesale_price, default_markup_pct, swatch_color, size_options')
+        .select('name, wholesale_price, default_markup_pct, swatch_color, size_options, color_type')
         .eq('is_active', true)
         .ilike('brand', brand);
       if (libErr) throw libErr;
