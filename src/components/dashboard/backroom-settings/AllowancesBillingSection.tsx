@@ -73,6 +73,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
 
   const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null);
   const [showNewPolicySelect, setShowNewPolicySelect] = useState(false);
+  const [showEducation, setShowEducation] = useState(false);
 
   const { data: trackedServices } = useQuery({
     queryKey: ['tracked-services-for-allowances', orgId],
