@@ -807,7 +807,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 key={category}
                 role="option"
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none transition-colors text-left group"
-                onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category })}
               >
                 <span className="text-xs font-sans text-foreground">{formatCategoryLabel(category)}</span>
                 <div className="flex items-center gap-1.5">
