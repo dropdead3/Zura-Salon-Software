@@ -225,7 +225,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const removeBowl = useCallback((idx: number) => {
     setBowls((prev) => {
       const next = prev.filter((_, i) => i !== idx);
-      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: `Bowl ${i + 1}` }));
+      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     });
   }, []);
 
