@@ -127,9 +127,12 @@ function getBowlWeight(bowl: BowlState): number {
 
 const DEFAULT_PICKER: PickerState = { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' };
 
-export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'] }: Props) {
+export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'], servicePrice }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+
+  const { data: billingSettings } = useBackroomBillingSettings(orgId);
+  const defaultMarkupPct = billingSettings?.default_product_markup_pct ?? 0;
 
   const hasBowls = containerTypes.includes('bowl');
   const hasBottles = containerTypes.includes('bottle');
