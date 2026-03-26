@@ -710,9 +710,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       )}
 
                       {/* Color product lines */}
+                      <AnimatePresence mode="popLayout">
                       {colorLines.map((line) => (
-                        <div
+                        <motion.div
                           key={line.localId}
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 12 }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                          layout
                           className="flex items-center gap-2.5 py-2 border-b border-border/20 last:border-0"
                         >
                           <div
