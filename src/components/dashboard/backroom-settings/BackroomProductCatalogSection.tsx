@@ -171,6 +171,8 @@ interface Props {
 export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const orgId = useBackroomOrgId();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const logAction = useLogPlatformAction();
 
   // Location state — defaults to first location
   const { data: locations = [] } = useLocations();
