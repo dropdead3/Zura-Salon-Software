@@ -207,9 +207,12 @@ export default function PriceRecommendationsPage() {
                 <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  Below Target
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    Below Target
+                  </p>
+                  <MetricInfoTooltip description="Number of tracked chemical services whose current margin falls below their configured target margin percentage." className="w-3 h-3" />
+                </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>{kpis.belowTarget}</p>
               </div>
             </CardContent>
