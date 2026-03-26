@@ -18741,7 +18741,7 @@ export type Database = {
       }
       service_recipe_baselines: {
         Row: {
-          bowl_id: string | null
+          bowl_id: string
           cost_per_unit_snapshot: number | null
           created_at: string
           created_by: string | null
@@ -18757,7 +18757,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          bowl_id?: string | null
+          bowl_id: string
           cost_per_unit_snapshot?: number | null
           created_at?: string
           created_by?: string | null
@@ -18773,7 +18773,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          bowl_id?: string | null
+          bowl_id?: string
           cost_per_unit_snapshot?: number | null
           created_at?: string
           created_by?: string | null
