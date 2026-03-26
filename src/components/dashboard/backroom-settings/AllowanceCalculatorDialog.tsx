@@ -1597,23 +1597,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       <TooltipTrigger asChild>
                         <button
                           className="text-[11px] font-sans px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-500/20 transition-colors cursor-pointer"
-                          onClick={() => {
-                            const oldPrice = servicePrice;
-                            updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
-                              onSuccess: () => {
-                                const toastId = toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
-                                  action: oldPrice ? {
-                                    label: 'Undo',
-                                    onClick: () => {
-                                      toast.dismiss(toastId);
-                                      updateServicePriceMutation.mutate(oldPrice);
-                                    },
-                                  } : undefined,
-                                  duration: 6000,
-                                });
-                              },
-                            });
-                          }}
+                          onClick={() => setShowPriceConfirm(true)}
                         >
                           Adjust to ${healthResult.suggestedServicePrice}
                           <Info className="w-3 h-3 opacity-70" />
