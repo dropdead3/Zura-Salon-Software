@@ -168,6 +168,10 @@ export default {
           "0%, 100%": { opacity: "0.3" },
           "50%": { opacity: "0.6" },
         },
+        "nudge-right": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(3px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -185,6 +189,7 @@ export default {
         "shimmer": "shimmer 3s ease-in-out infinite",
         "swing": "swing 1s ease-in-out infinite",
         "skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite",
+        "nudge-right": "nudge-right 1s ease-in-out infinite",
       },
     },
   },
