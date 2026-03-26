@@ -762,23 +762,24 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                  );
                                                }
 
-                                               return (
-                                                 <div className="flex items-center gap-2 text-xs">
-                                                   <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                                                   <Button
-                                                     variant="outline"
-                                                     size="sm"
-                                                     className="h-7 text-xs border-dashed"
-                                                     onClick={(e) => {
-                                                       e.stopPropagation();
-                                                       setCalculatorServiceId(service.id);
-                                                       setCalculatorServiceName(service.name);
-                                                       setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                     }}
-                                                   >
-                                                     Configure Allowance
-                                                   </Button>
-                                                 </div>
+                                                return (
+                                                  <div className="flex items-center gap-2 text-xs">
+                                                    <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-7 text-xs border-dashed"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCalculatorServiceId(service.id);
+                                                        setCalculatorServiceName(service.name);
+                                                        setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                      }}
+                                                    >
+                                                      Configure Allowance
+                                                    </Button>
+                                                    <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
+                                                  </div>
                                                );
                                              })()}
                                              <div className="flex items-center gap-2 shrink-0">
