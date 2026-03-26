@@ -109,6 +109,19 @@ Semantic colors: `primary`, `secondary`, `accent`, `destructive`, `success`, `oa
 - Use shadcn/ui components from `@/components/ui/`
 - Dashboard content: `<div className="px-8 py-8 max-w-[1600px] mx-auto">`
 
+## Filter Positioning (HARD RULE)
+
+Toggle filters, location selects, date-range tabs, and any page/section-level filter controls MUST be right-aligned using `tokens.layout.filterRow`:
+
+```tsx
+<div className={tokens.layout.filterRow}>
+  <LocationSelect ... />
+  <Tabs ...><TabsList>...</TabsList></Tabs>
+</div>
+```
+
+Filters sitting in a `justify-between` header row (title left, filters right) satisfy this rule automatically. Standalone filter rows below headers MUST use `tokens.layout.filterRow`.
+
 ## Button Size Rules (HARD RULES)
 
 Always use `tokens.button.*` for size props — never hardcode sizes ad hoc.

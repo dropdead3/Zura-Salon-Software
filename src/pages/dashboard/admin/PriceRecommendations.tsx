@@ -191,7 +191,7 @@ export default function PriceRecommendationsPage() {
         />
 
         {/* Location Filter */}
-        <div className="flex items-center gap-3">
+        <div className={tokens.layout.filterRow}>
           <LocationSelect
             value={locationId}
             onValueChange={setLocationId}

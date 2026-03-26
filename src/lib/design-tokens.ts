@@ -128,6 +128,8 @@ export const tokens = {
     cardBase: 'rounded-xl',
     /** Standard card padding */
     cardPadding: 'p-6',
+    /** Filter strip row — right-aligns filter controls. Use below page headers or section headers. */
+    filterRow: 'flex items-center justify-end gap-3 flex-wrap',
   },
 
   // ========================================
