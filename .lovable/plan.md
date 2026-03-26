@@ -1,31 +1,40 @@
 
 
-## Consolidate "Classify" and "Enable Tracking" into One Step
+## Improve "Mark Configured" Visibility in Drill-Down
 
 ### Problem
-When a user marks a service as "Requires Color/Chemical", it automatically sets `is_backroom_tracked = true`. These are not independent steps — they happen in a single toggle. Showing them as two separate progress milestones is confusing and redundant.
+"Mark Configured" is buried as a small ghost button alongside "Components" — users don't understand it's the final action needed to complete service setup. It blends into the UI rather than standing out as the completion step.
 
 ### Solution
-Merge the two milestones into a single **"Classify & Track Services"** step, reducing the progress checklist from 3 steps to 2:
+Move "Mark Configured" out of the inline button row and place it as a **prominent footer bar** at the bottom of the drill-down panel. This creates a clear visual call-to-action that reads as "you're done configuring — confirm it."
 
 ```text
-  ✓ Classify & Track Services           66 of 74
-    Review each service and mark whether it requires color or chemical products.
-
-  2 Set Allowances                        0 of 48
-    Define supply allowances and overage billing rules for tracked services.
+┌─────────────────────────────────────────────────────────┐
+│  Requires Color/Chemical [on]    Vessels: [bowl] [bottle]│
+│─────────────────────────────────────────────────────────│
+│  Assistant Prep [off]   Smart Mix [off]   Formula [off] │
+│  Variance Threshold ────────────────── 10%              │
+│─────────────────────────────────────────────────────────│
+│  ✓  Review complete? Mark this service as configured    │
+│     to track your setup progress.                       │
+│                              [ ✓ Mark Configured ]      │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Technical Detail
+### Changes
 
-**File: `ServiceTrackingSection.tsx`** (milestones array, ~line 240)
+**File: `ServiceTrackingSection.tsx`**
 
-Replace the 3-item milestones array with 2 items:
-1. **"Classify & Track Services"** — uses the existing `classified` count (services where `is_chemical_service !== null`) out of `allServices.length`
-2. **"Set Allowances"** — unchanged (`withAllowance.length` / `tracked.length`)
+1. **Remove** "Mark Configured" / "Re-flag" from the top action row (lines ~672–698) — keep only the "Components" button there.
 
-**File: `ServiceTrackingProgressBar.tsx`** — No changes needed; it renders whatever milestones it receives.
+2. **Add a footer section** at the bottom of the tracked drill-down (after the toggles grid, ~line 798), with:
+   - A light background strip (`bg-primary/5 border-t border-primary/20 rounded-b-lg`)
+   - Helper text: "Review complete? Mark this service as configured to track your setup progress."
+   - A visible `Mark Configured` button using `variant="default"` (filled) instead of ghost
+   - If already dismissed, show a muted "Configured ✓" label with a small "Undo" link
+
+3. **Same treatment for the untracked drill-down** (lines ~813–841): move "Mark Configured" to a bottom bar with context text explaining "If this service doesn't need tracking, mark it as reviewed."
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (milestones array only)
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
