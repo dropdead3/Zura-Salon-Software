@@ -607,7 +607,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center gap-2 justify-end">
                                 {type === 'chemical' && (
-                                  <Badge variant="default" className="text-[10px] shrink-0">Requires Color/Chemical</Badge>
+                                  <Badge variant="default" className="text-[10px] shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" />Requires Color/Chemical</Badge>
                                 )}
                                 {type === 'suggested' && (
                                   <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
