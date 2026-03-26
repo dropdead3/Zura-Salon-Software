@@ -1,38 +1,27 @@
 
 
-## Auto-Collapse on Configure + Green Ghost Badge
+## Add Subtle Green Background to Configured Rows
 
-### Changes
+### Change
+Replace the `opacity-60` dim on configured rows with a subtle green background tint, so configured items stand out positively rather than fading out.
 
-**1. Auto-collapse after "Finalize Configuration" click**
+### Technical Detail
 
-In the `onClick` handler for the "Finalize Configuration" button (~line 829–832), after the mutation, collapse the row by removing its ID from `expandedIds` with a short delay (e.g., 400ms) so the user sees the "Configured" state briefly before it collapses smoothly via the existing `AnimatePresence` animation.
+**File: `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (line ~564–567)
 
+Change:
 ```tsx
-onClick={(e) => {
-  e.stopPropagation();
-  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-  setTimeout(() => {
-    setExpandedIds(prev => {
-      const next = new Set(prev);
-      next.delete(service.id);
-      return next;
-    });
-  }, 400);
-}}
+attention && 'bg-amber-500/[0.03]',
+service.backroom_config_dismissed && 'opacity-60',
 ```
 
-**2. Green ghost "Configured ✓" badge in main row**
-
-Update the badge on line 632 from `variant="outline"` with `text-primary` to a bright green ghost style:
-
+To:
 ```tsx
-<Badge variant="outline" className="text-[10px] shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
-  Configured ✓
-</Badge>
+attention && 'bg-amber-500/[0.03]',
+service.backroom_config_dismissed && 'bg-emerald-500/[0.04]',
 ```
 
-**3. Apply same auto-collapse to untracked footer** (if exists, around line 905–916)
+This removes the dimming effect and adds a very subtle emerald background fill to configured rows, complementing the green ghost badge.
 
 ### File Modified
 - `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
