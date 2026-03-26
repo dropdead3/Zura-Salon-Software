@@ -528,16 +528,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
 
     try {
-      // Phase 1: Delete existing data
-      const deleteErrors: string[] = [];
-      for (const id of existingBaselineIds) {
-        try { await deleteBaseline.mutateAsync(id); } catch (e: any) { deleteErrors.push(e.message); }
+      // Phase 1: Batch delete existing data
+      if (existingBaselineIds.length > 0) {
+        const { error: blErr } = await supabase
+          .from('service_recipe_baselines')
+          .delete()
+          .in('id', existingBaselineIds);
+        if (blErr) throw new Error('Failed to clear baselines: ' + blErr.message);
       }
-      for (const id of existingBowlIds) {
-        try { await deleteBowl.mutateAsync(id); } catch (e: any) { deleteErrors.push(e.message); }
-      }
-      if (deleteErrors.length > 0) {
-        throw new Error(`Failed to clear existing data: ${deleteErrors[0]}`);
+      if (existingBowlIds.length > 0) {
+        const { error: bowlErr } = await supabase
+          .from('service_allowance_bowls')
+          .delete()
+          .in('id', existingBowlIds);
+        if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
       // Phase 2: Insert new data
@@ -552,14 +556,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         });
 
         for (const line of bowl.lines) {
-          const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
-          const effectiveQty = line.isDeveloper ? colorQty * line.developerRatio : line.quantity;
-
+          // P0 fix: Save the RAW quantity for developer lines, not the effective qty.
+          // The effective qty is computed at runtime from colorQty * ratio.
+          // Saving raw qty prevents inflated values on reload.
           await upsertBaseline.mutateAsync({
             organization_id: orgId,
             service_id: serviceId,
             product_id: line.productId,
-            expected_quantity: effectiveQty,
+            expected_quantity: line.quantity,
             unit: 'g',
             notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
           });
