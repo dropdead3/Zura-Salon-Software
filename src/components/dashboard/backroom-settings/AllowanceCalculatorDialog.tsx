@@ -601,11 +601,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <span className="text-muted-foreground/40">/</span>
               <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
             </div>
-            {addedCount > 0 && (
-              <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-                {addedCount} added
-              </Badge>
-            )}
           </div>
 
           <div className="relative">
@@ -747,6 +742,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {bowl.lines.length > 0 && (
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
+                        </Badge>
+                      )}
+                      {bowl.lines.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                          {bowl.lines.length} added
                         </Badge>
                       )}
                     </div>
