@@ -30,9 +30,9 @@ export function DashboardPageHeader({
 }: DashboardPageHeaderProps) {
   return (
     <div className={cn('flex flex-col md:flex-row md:items-start md:justify-between gap-4', className)}>
-      <div className="flex items-start gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
         {backTo && (
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-0.5">
+          <Button variant="ghost" size="icon" asChild className="shrink-0">
             <Link to={backTo} aria-label={backLabel} title={backLabel}>
               <ArrowLeft className="w-5 h-5" />
             </Link>
