@@ -1586,33 +1586,50 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   </Tooltip>
                   {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
-                        disabled={updateServicePriceMutation.isPending}
-                        onClick={() => {
-                          const oldPrice = servicePrice;
-                          updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
-                            onSuccess: () => {
-                              toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
-                                action: oldPrice ? {
-                                  label: 'Undo',
-                                  onClick: () => updateServicePriceMutation.mutate(oldPrice),
-                                } : undefined,
-                                duration: 6000,
-                              });
-                            },
-                          });
-                        }}
-                      >
-                        {updateServicePriceMutation.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <ArrowRight className="w-3 h-3" />
-                        )}
-                        Use ${healthResult.suggestedServicePrice} suggested price
-                      </Button>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
+                            disabled={updateServicePriceMutation.isPending}
+                          >
+                            {updateServicePriceMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <ArrowRight className="w-3 h-3" />
+                            )}
+                            Use ${healthResult.suggestedServicePrice} suggested price
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-3" align="start">
+                          <p className="text-xs font-sans text-foreground mb-2">
+                            Change service price from <span className="font-medium">${effectiveServicePrice}</span> to <span className="font-medium">${healthResult.suggestedServicePrice}</span>?
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => {
+                                const oldPrice = servicePrice;
+                                updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
+                                  onSuccess: () => {
+                                    toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
+                                      action: oldPrice ? {
+                                        label: 'Undo',
+                                        onClick: () => updateServicePriceMutation.mutate(oldPrice),
+                                      } : undefined,
+                                      duration: 6000,
+                                    });
+                                  },
+                                });
+                              }}
+                            >
+                              Confirm
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       <MetricInfoTooltip
                         description="Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also reduce product quantities in the bowls above to bring costs down, or adjust service pricing from Price Intelligence in the Backroom Hub."
                         className="w-3.5 h-3.5 text-amber-500/60"
