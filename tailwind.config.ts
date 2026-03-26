@@ -168,6 +168,10 @@ export default {
           "0%, 100%": { opacity: "0.3" },
           "50%": { opacity: "0.6" },
         },
+        "nudge-right": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(3px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
