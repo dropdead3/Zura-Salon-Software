@@ -210,7 +210,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
-  const skipDirtyCheckRef = useRef(false);
+  const [forceClose, setForceClose] = useState(false);
   const hasInitRef = useRef(false);
   const [developerWarningBowls, setDeveloperWarningBowls] = useState<Set<number>>(new Set());
   const lastUndoToastRef = useRef<string | number | null>(null);
@@ -321,7 +321,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     setModeledServicePrice(null);
   }, [open, existingBowls, existingBaselines, catalogProducts]);
 
-  // Pre-computed maps for render performance (Items 4)
+  // Force-close effect: runs with current onOpenChange prop, avoiding stale closures
+  useEffect(() => {
+    if (forceClose) {
+      setForceClose(false);
+      onOpenChange(false);
+    }
+  }, [forceClose, onOpenChange]);
+
   const productBowlMap = useMemo(() => {
     const map = new Map<string, string[]>();
     bowls.forEach((b) => {
@@ -1068,17 +1075,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   return (
     <>
     <Dialog open={open} onOpenChange={(newOpen) => {
-      if (skipDirtyCheckRef.current) {
-        skipDirtyCheckRef.current = false;
-        onOpenChange(newOpen);
-        return;
-      }
       if (!newOpen && isDirty) {
         const toastId = toast.warning('You have unsaved changes', {
           action: { label: 'Discard & Close', onClick: () => {
             toast.dismiss(toastId);
-            skipDirtyCheckRef.current = true;
-            onOpenChange(false);
+            setForceClose(true);
           } },
           duration: 6000,
         });
