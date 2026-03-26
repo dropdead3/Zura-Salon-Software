@@ -847,7 +847,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <span className="text-muted-foreground/40">/</span>
               <button
                 className="hover:text-foreground transition-colors"
-                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null })}
               >
                 <span className="font-medium text-foreground">{picker.selectedBrand}</span>
               </button>
