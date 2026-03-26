@@ -426,14 +426,21 @@ export function SupplyLibraryTab() {
             </SelectContent>
           </Select>
         ) : (
-          <PlatformBadge
-            variant="default"
-            size="sm"
-            className="cursor-pointer"
-            onDoubleClick={() => setInlineEditing({ id: p.id, field: 'category', value: p.category })}
-          >
-            {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
-          </PlatformBadge>
+          <span className="inline-flex items-center gap-1.5">
+            <PlatformBadge
+              variant="default"
+              size="sm"
+              className="cursor-pointer"
+              onDoubleClick={() => setInlineEditing({ id: p.id, field: 'category', value: p.category })}
+            >
+              {SUPPLY_CATEGORY_LABELS[p.category] || p.category}
+            </PlatformBadge>
+            {p.color_type && (
+              <PlatformBadge variant={p.color_type === 'permanent' ? 'warning' : p.color_type === 'demi_permanent' ? 'info' : 'success'} size="sm">
+                {p.color_type === 'permanent' ? 'Perm' : p.color_type === 'demi_permanent' ? 'Demi' : 'Semi'}
+              </PlatformBadge>
+            )}
+          </span>
         )}
       </TableCell>
       <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">

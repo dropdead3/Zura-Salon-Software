@@ -576,8 +576,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     const lineIdx = bowl?.lines.findIndex((l) => l.localId === lineLocalId) ?? -1;
     const removedLine = bowl?.lines[lineIdx];
 
-    setBowls((prev) =>
-      prev.map((b, i) => {
+    setBowls((prev) => {
+      const next = prev.map((b, i) => {
         if (i !== bowlIdx) return b;
         const lines = b.lines.filter((l) => l.localId !== lineLocalId);
         const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
@@ -585,8 +585,22 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
         });
         return { ...b, lines };
-      })
-    );
+      });
+
+      // Re-evaluate developer warning for this bowl after removal
+      const updatedLines = next[bowlIdx]?.lines ?? [];
+      const hasDev = updatedLines.some((l) => l.isDeveloper);
+      const needsDev = updatedLines.some((l) => {
+        if (l.isDeveloper) return false;
+        const cat = catalogProducts?.find((cp) => cp.id === l.productId);
+        return cat ? requiresDeveloper(cat) : false;
+      });
+      if (hasDev || !needsDev) {
+        setDeveloperWarningBowls((p) => { const n = new Set(p); n.delete(bowlIdx); return n; });
+      }
+
+      return next;
+    });
 
     if (removedLine) {
       if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
