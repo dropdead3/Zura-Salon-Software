@@ -1159,5 +1159,6 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
         serviceName={calculatorServiceName}
       />
     )}
+    </>
   );
 }
