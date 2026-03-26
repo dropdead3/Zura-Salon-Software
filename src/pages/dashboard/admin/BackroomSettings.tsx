@@ -212,7 +212,32 @@ export default function BackroomSettings() {
     }
   }, []);
 
-  if (entitlementLoading) {
+  const bannerHealth = useMemo(() => {
+    if (!health) return undefined;
+    const stepSections: { label: string; section: BackroomSection }[] = [
+      { label: 'Products', section: 'products' },
+      { label: 'Services', section: 'services' },
+      { label: 'Formulas', section: 'formulas' },
+      { label: 'Allowances', section: 'allowances' },
+      { label: 'Stations', section: 'stations' },
+      { label: 'Alerts', section: 'alerts' },
+    ];
+    const steps = stepSections.map(s => ({
+      label: s.label,
+      done: getSectionStatus(s.section, health) === 'done',
+      section: s.section,
+    }));
+    const completed = steps.filter(s => s.done).length;
+    return {
+      isComplete: completed === steps.length,
+      completed,
+      total: steps.length,
+      steps,
+      warnings: health.warnings,
+    };
+  }, [health]);
+
+
     return (
       <DashboardLayout>
         <DashboardLoader size="md" className="h-[60vh]" />
