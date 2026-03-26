@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check, ArrowRight, Copy, ClipboardCopy, Eraser, Pencil, ArrowUpDown, Info, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check, ArrowRight, Copy, ClipboardCopy, Eraser, Pencil, ArrowUpDown, Info, DollarSign, AlertTriangle, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,6 +107,19 @@ function isDeveloperProduct(product: CatalogProduct): boolean {
   return DEVELOPER_KEYWORDS.some((kw) => name.includes(kw) || category.includes(kw));
 }
 
+const SEMI_PERMANENT_KEYWORDS = ['semi-permanent', 'semi permanent', 'semi'];
+const DEVELOPER_REQUIRING_KEYWORDS = ['permanent', 'demi'];
+
+function requiresDeveloper(product: CatalogProduct): boolean {
+  const name = (product.name || '').toLowerCase();
+  const category = (product.category || '').toLowerCase();
+  const combined = `${name} ${category}`;
+  // Exclude semi-permanent first
+  if (SEMI_PERMANENT_KEYWORDS.some(kw => combined.includes(kw))) return false;
+  // Check for permanent or demi
+  return DEVELOPER_REQUIRING_KEYWORDS.some(kw => combined.includes(kw));
+}
+
 function computeLineCost(qty: number, costPerGram: number, isDeveloper: boolean, developerRatio: number, colorQty: number): number {
   if (isDeveloper) {
     // When no color products exist, use the developer's direct quantity instead of ratio
@@ -192,6 +205,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
   const hasInitRef = useRef(false);
+  const [developerWarningBowls, setDeveloperWarningBowls] = useState<Set<number>>(new Set());
   const lastUndoToastRef = useRef<string | number | null>(null);
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
@@ -524,6 +538,23 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           return { ...b, lines };
         })
       );
+
+      // Developer warning logic
+      if (asDeveloper) {
+        // Adding a developer — clear warning for this bowl
+        setDeveloperWarningBowls((prev) => {
+          const next = new Set(prev);
+          next.delete(bowlIdx);
+          return next;
+        });
+      } else if (requiresDeveloper(product)) {
+        // Adding a permanent/demi color — check if bowl has developer
+        const updatedBowl = bowls[bowlIdx];
+        const hasDeveloper = updatedBowl?.lines.some((l) => l.isDeveloper) || false;
+        if (!hasDeveloper) {
+          setDeveloperWarningBowls((prev) => new Set(prev).add(bowlIdx));
+        }
+      }
     },
     [bowls, defaultMarkupPct]
   );
@@ -1230,6 +1261,22 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
                   {!bowl.collapsed && (
                     <div className="px-4 py-3 space-y-2">
+                      {/* Developer warning banner */}
+                      {developerWarningBowls.has(bowlIdx) && (
+                        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50/80 border border-amber-200/50 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800/30 dark:text-amber-300">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs font-sans flex-1">
+                            This {bowl.vesselType} contains permanent/demi color but no developer. Add a developer product for accurate cost calculation.
+                          </p>
+                          <button
+                            className="text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 p-0.5 -mt-0.5 -mr-0.5"
+                            onClick={() => setDeveloperWarningBowls((prev) => { const next = new Set(prev); next.delete(bowlIdx); return next; })}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
                       {/* Brand → Category → Product picker */}
                       {renderPickerPanel(bowlIdx)}
 
