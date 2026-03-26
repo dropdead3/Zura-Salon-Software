@@ -1,65 +1,29 @@
 
 
-## Fix X Button / "Discard & Close" Not Closing the Dialog
+## Add "Brands Carried In [Location]'s Backroom" Label
 
-### Root Cause
+### Change
 
-The "Discard & Close" toast action calls `onOpenChange(false)` directly — the prop. This should close the dialog by setting the parent's `calculatorServiceId` to `null`. However, the closure captures the `onOpenChange` prop reference from the render when the toast was created. Since the parent's `onOpenChange` is an inline function `(open) => { if (!open) setCalculatorServiceId(null); }` that gets recreated on each render, the stale reference may not propagate correctly in all cases.
+Add a heading label above the brand card grid in `BackroomProductCatalogSection.tsx` that reads **"Brands Carried In [Location Name]'s Backroom"**, using the currently selected location name.
 
-Additionally, the `skipDirtyCheckRef` mechanism is fragile — it only helps if Radix's `onOpenChange` wrapper fires again, but calling the prop directly bypasses Radix entirely.
+### Implementation
 
-### Fix
+**File:** `src/components/dashboard/backroom-settings/BackroomProductCatalogSection.tsx`
 
-**File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
+1. Derive the location name from existing state:
+   ```tsx
+   const effectiveLocationName = activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'Your Location';
+   ```
 
-Replace the toast-based close with a `forceClose` state + `useEffect` pattern. This avoids stale closure issues entirely:
-
-1. Add a `forceClose` state: `const [forceClose, setForceClose] = useState(false);`
-
-2. Add a `useEffect` that watches `forceClose`:
-```tsx
-useEffect(() => {
-  if (forceClose) {
-    setForceClose(false);
-    onOpenChange(false);
-  }
-}, [forceClose, onOpenChange]);
-```
-
-3. Update the toast "Discard & Close" action to simply set state:
-```tsx
-onClick: () => {
-  toast.dismiss(toastId);
-  setForceClose(true);
-}
-```
-
-4. Update the `onOpenChange` wrapper to also check `forceClose`:
-```tsx
-onOpenChange={(newOpen) => {
-  if (!newOpen && isDirty) {
-    const toastId = toast.warning('You have unsaved changes', {
-      action: { label: 'Discard & Close', onClick: () => {
-        toast.dismiss(toastId);
-        setForceClose(true);
-      }},
-      duration: 6000,
-    });
-    return;
-  }
-  onOpenChange(newOpen);
-}}
-```
-
-5. Remove `skipDirtyCheckRef` entirely — no longer needed.
-
-### Why This Works
-
-- `setForceClose(true)` triggers a re-render
-- The `useEffect` runs with the CURRENT `onOpenChange` prop (not a stale closure)
-- Clean separation between "user wants to close" (state) and "execute the close" (effect)
+2. Insert a label above the brand grid (before line ~1428, after the empty-state checks):
+   ```tsx
+   <p className="text-sm font-sans text-muted-foreground mb-3">
+     Brands Carried In {effectiveLocationName}'s Backroom
+   </p>
+   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+   ```
 
 ### Scope
-- Single file, ~10 lines changed
-- Removes `skipDirtyCheckRef`, adds `forceClose` state + effect
+- Single file, ~3 lines added
+- No database or component changes
 
