@@ -102,7 +102,7 @@ export function StaffComplianceReportDialog({
 
           <div className="space-y-2">
             <label className="font-sans text-sm text-muted-foreground">Period</label>
-            <p className="font-sans text-sm">{dateFrom} → {dateTo}</p>
+            <p className="font-sans text-sm">{formatDate(dateFrom, 'MMM d, yyyy')} → {formatDate(dateTo, 'MMM d, yyyy')}</p>
           </div>
 
           {selectedStaff && (

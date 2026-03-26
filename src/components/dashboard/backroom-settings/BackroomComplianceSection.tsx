@@ -339,6 +339,9 @@ export function BackroomComplianceSection() {
                           <Badge variant="destructive" className="text-xs">Missing</Badge>
                         </div>
                       ))}
+                      {missing.length > 20 && (
+                        <p className="font-sans text-xs text-muted-foreground text-center pt-1">and {missing.length - 20} more</p>
+                      )}
                     </div>
                   );
                 })()}

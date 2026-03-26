@@ -118,7 +118,7 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   ]);
 
   if (tableBody.length === 0) {
-    tableBody.push(['No appointments found for this period', '', '', '', '']);
+    tableBody.push(['No appointments found for this period', '', '', '']);
   }
 
   autoTable(doc, {
