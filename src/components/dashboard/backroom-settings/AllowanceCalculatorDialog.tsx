@@ -26,6 +26,8 @@ import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePol
 import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/backroom/allowance-health';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface Props {
   open: boolean;
