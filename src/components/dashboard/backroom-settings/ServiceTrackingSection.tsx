@@ -82,6 +82,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
   const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
+  const [calculatorServicePrice, setCalculatorServicePrice] = useState<number | null>(null);
 
   // Price recommendations
   const { data: priceRecommendations } = useComputedPriceRecommendations();
