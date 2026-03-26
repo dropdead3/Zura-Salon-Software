@@ -829,7 +829,16 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen && isDirty) {
+        toast.warning('You have unsaved changes', {
+          action: { label: 'Discard & Close', onClick: () => { initialBowlsRef.current = ''; onOpenChange(false); } },
+          duration: 6000,
+        });
+        return;
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">

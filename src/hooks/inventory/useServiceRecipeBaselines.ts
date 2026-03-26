@@ -19,6 +19,10 @@ export interface ServiceRecipeBaseline {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  bowl_id: string | null;
+  cost_per_unit_snapshot: number | null;
+  is_developer: boolean | null;
+  developer_ratio: number | null;
 }
 
 export function useServiceRecipeBaselines(serviceId?: string | null) {
