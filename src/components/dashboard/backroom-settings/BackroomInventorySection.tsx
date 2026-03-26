@@ -175,6 +175,11 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
           <TabsTrigger value="audit" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <History className="w-4 h-4" /> Audit Log
           </TabsTrigger>
+          {locations.length > 1 && (
+            <TabsTrigger value="transfers" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+              <ArrowLeftRight className="w-4 h-4" /> Transfers
+            </TabsTrigger>
+          )}
           <TabsTrigger value="analytics" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <BarChart3 className="w-4 h-4" /> Analytics
           </TabsTrigger>
