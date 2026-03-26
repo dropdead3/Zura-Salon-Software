@@ -286,7 +286,7 @@ export function BackroomComplianceSection() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data!.staffBreakdown.map((s) => {
+                      {[...data!.staffBreakdown].sort((a, b) => a.complianceRate - b.complianceRate).map((s) => {
                         const b = getComplianceBadge(s.complianceRate);
                         return (
                           <TableRow
