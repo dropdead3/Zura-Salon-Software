@@ -17879,6 +17879,8 @@ export type Database = {
       }
       service_allowance_policies: {
         Row: {
+          allowance_health_pct: number | null
+          allowance_health_status: string | null
           allowance_unit: string
           billing_mode: string
           created_at: string
@@ -17886,6 +17888,7 @@ export type Database = {
           id: string
           included_allowance_qty: number
           is_active: boolean
+          last_health_check_at: string | null
           notes: string | null
           organization_id: string
           overage_cap: number | null
@@ -17895,6 +17898,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowance_health_pct?: number | null
+          allowance_health_status?: string | null
           allowance_unit?: string
           billing_mode?: string
           created_at?: string
@@ -17902,6 +17907,7 @@ export type Database = {
           id?: string
           included_allowance_qty?: number
           is_active?: boolean
+          last_health_check_at?: string | null
           notes?: string | null
           organization_id: string
           overage_cap?: number | null
@@ -17911,6 +17917,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowance_health_pct?: number | null
+          allowance_health_status?: string | null
           allowance_unit?: string
           billing_mode?: string
           created_at?: string
@@ -17918,6 +17926,7 @@ export type Database = {
           id?: string
           included_allowance_qty?: number
           is_active?: boolean
+          last_health_check_at?: string | null
           notes?: string | null
           organization_id?: string
           overage_cap?: number | null
