@@ -1681,7 +1681,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {(() => {
                         const suggestedLowPrice = Math.floor((grandTotal / 0.08) / 5) * 5;
                         return suggestedLowPrice > 0 && suggestedLowPrice < effectiveServicePrice ? (
-                          <Popover>
+                          <Popover open={lowPricePopoverOpen} onOpenChange={setLowPricePopoverOpen}>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="ghost"
@@ -1709,6 +1709,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                     const oldPrice = servicePrice;
                                     updateServicePriceMutation.mutate(suggestedLowPrice, {
                                       onSuccess: () => {
+                                        setLowPricePopoverOpen(false);
                                         toast(`Service price reduced to $${suggestedLowPrice}`, {
                                           action: oldPrice ? {
                                             label: 'Undo',
