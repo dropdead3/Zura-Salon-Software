@@ -965,11 +965,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               </div>
               {/* Allowance Health Indicator */}
               {healthResult ? (
-                <div className="mt-2 space-y-1.5">
+                <div className="mt-2 flex items-center gap-3 flex-wrap">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className={cn(
-                        "text-[11px] font-sans px-2 py-1 rounded-md inline-flex items-center gap-1.5 cursor-help",
+                        "text-[11px] font-sans px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 cursor-help",
                         healthResult.status === 'healthy' && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
                         healthResult.status === 'high' && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
                         healthResult.status === 'low' && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
@@ -1010,7 +1010,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 px-2 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
                       disabled={updateServicePriceMutation.isPending}
                       onClick={() => updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!)}
                     >
