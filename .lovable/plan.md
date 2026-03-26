@@ -1,42 +1,24 @@
 
 
-## Add Animated Pointing Icon to "Finalize Configuration" Button
+## Pluralize Vessel Labels: "bowl" → "Bowls", "bottle" → "Bottles"
 
 ### Change
-Add a bouncing arrow icon (e.g., `ArrowRight` or `ChevronRight`) to the left of the "Finalize Configuration" button that animates horizontally to draw attention to it.
+On line 742 of `ServiceTrackingSection.tsx`, the button label renders `{vt}` which outputs lowercase singular "bowl" / "bottle". Change to display pluralized, capitalized labels: "Bowls" and "Bottles".
 
 ### Technical Detail
 
-**File: `ServiceTrackingSection.tsx`** (~lines 822–839)
+**File: `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (line 742)
 
-Add a `ChevronRight` icon before the button text with a CSS animation that nudges it right repeatedly:
-
+Replace:
 ```tsx
-<Button
-  variant="ghost"
-  size="sm"
-  className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-  onClick={...}
->
-  <ChevronRight className="w-3.5 h-3.5 animate-[nudge-right_1s_ease-in-out_infinite]" />
-  Finalize Configuration
-</Button>
+{vt}
 ```
 
-**File: `tailwind.config.ts`** — Add the `nudge-right` keyframe:
-
-```ts
-"nudge-right": {
-  "0%, 100%": { transform: "translateX(0)" },
-  "50%": { transform: "translateX(3px)" },
-}
+With:
+```tsx
+{vt === 'bowl' ? 'Bowls' : 'Bottles'}
 ```
 
-Animation: `"nudge-right": "nudge-right 1s ease-in-out infinite"`
-
-This creates a subtle, continuous horizontal pulse on the chevron that draws the eye to the button without being distracting.
-
-### Files Modified
+### File Modified
 - `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
-- `tailwind.config.ts`
 
