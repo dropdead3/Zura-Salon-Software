@@ -66,7 +66,59 @@ export function useAddTransferLine() {
   });
 }
 
+export function useBulkAddTransferLines() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      transfer_id: string;
+      lines: { product_id: string; quantity: number; unit?: string }[];
+    }) => {
+      const rows = params.lines.map(l => ({
+        transfer_id: params.transfer_id,
+        product_id: l.product_id,
+        quantity: l.quantity,
+        unit: l.unit || 'units',
+      }));
+
+      const { data, error } = await supabase
+        .from('stock_transfer_lines')
+        .insert(rows)
+        .select();
+
+      if (error) throw error;
+      return data as unknown as StockTransferLine[];
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['stock-transfer-lines', vars.transfer_id] });
+    },
+    onError: (error) => {
+      toast.error('Failed to add transfer lines: ' + error.message);
+    },
+  });
+}
+
 export function useDeleteTransferLine() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, transferId }: { id: string; transferId: string }) => {
+      const { error } = await supabase
+        .from('stock_transfer_lines')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return transferId;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['stock-transfer-lines', vars.transferId] });
+    },
+    onError: (error) => {
+      toast.error('Failed to remove transfer line: ' + error.message);
+    },
+  });
+}
   const queryClient = useQueryClient();
 
   return useMutation({
