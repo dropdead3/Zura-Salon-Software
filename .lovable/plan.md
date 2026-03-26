@@ -1,36 +1,27 @@
 
 
-## Fix "Edit" Allowance Button Contrast in Dark Mode
+## Reset Allowance Row to Initial State After Clearing
 
 ### Problem
-The "Edit" button on the allowance row uses `variant="ghost"` with `text-muted-foreground hover:text-foreground`. In dark mode, the ghost hover background is light, and `text-muted-foreground` is also light — producing a washed-out light-on-light appearance.
+When "Clear Allowance" zeroes out and deactivates the policy (`is_active: false`, `included_allowance_qty: 0`), the service row still shows "0g included · $0.00/g overage" with an "Edit" button because the condition only checks `if (policy)` — it doesn't check whether the policy is actually active/meaningful.
 
-### Solution
-1. **Add a new token** in `design-tokens.ts` for inline ghost action buttons that ensures proper contrast in both themes:
-   ```ts
-   button: {
-     // ... existing tokens
-     /** Inline ghost action — muted text, contrasts on hover */
-     inlineGhost: 'h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-primary-foreground hover:bg-primary/90',
-   }
-   ```
-   Using `hover:text-primary-foreground hover:bg-primary/90` ensures the hover state has a tinted background with guaranteed contrasting text, avoiding the light-on-light issue entirely.
+### Fix
 
-2. **Update the Edit button** in `ServiceTrackingSection.tsx` (line ~784–797) to use the new token:
-   ```tsx
-   <Button
-     variant="ghost"
-     size="sm"
-     className={tokens.button.inlineGhost}
-     onClick={...}
-   >
-     Edit
-   </Button>
-   ```
+**File:** `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
-3. **Audit for other ghost buttons** in the same file using the same `text-muted-foreground hover:text-foreground` pattern and apply the token consistently (e.g., the "Clear Allowance" button if it shares the same issue).
+**Line ~753** — Change the condition from:
+```tsx
+if (policy) {
+```
+to:
+```tsx
+if (policy && policy.is_active) {
+```
+
+This single change means a cleared/deactivated policy will fall through to the `else` branch and render the "Configure Allowance" button (initial state) instead of the zeroed-out "Edit" view.
+
+**Alternative considered:** Also checking `included_allowance_qty > 0`, but `is_active` is the canonical flag already set by the clear handler and is the cleaner semantic check.
 
 ### Scope
-- 2 files: `design-tokens.ts` (1 line), `ServiceTrackingSection.tsx` (~2 lines)
-- No logic changes — purely visual/token fix
+- 1 file, 1 line changed
 
