@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, Search, Sparkles, CheckCircle2, RotateCcw, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -185,12 +185,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .update(updates as Record<string, unknown>)
         .eq('id', id);
       if (error) throw error;
+
+      // Sync container_types to phorest_services so the Dock reads the correct vessels
+      if (updates.container_types && orgId) {
+        const svc = (services || []).find(s => s.id === id);
+        if (svc?.name) {
+          // Cast to avoid TS2589 deep type instantiation on phorest_services
+          await (supabase.from('phorest_services') as any)
+            .update({ container_types: updates.container_types })
+            .eq('name', svc.name)
+            .eq('organization_id', orgId);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['org-services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -693,27 +706,27 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               <span className="text-[10px] font-sans text-muted-foreground">Vessels:</span>
                                               {(['bowl', 'bottle'] as const).map((vt) => {
                                                 const active = (service.container_types || []).includes(vt);
-                                                const isOnly = (service.container_types || []).length === 1 && active;
                                                 return (
                                                   <button
                                                     key={vt}
-                                                    disabled={isOnly}
                                                     className={cn(
-                                                      'px-2.5 py-0.5 rounded-full text-[10px] font-sans capitalize transition-colors border',
+                                                      'px-2.5 py-0.5 rounded-full text-[10px] font-sans capitalize transition-colors border flex items-center gap-1',
                                                       active
-                                                        ? 'bg-primary/10 border-primary/30 text-primary'
-                                                        : 'bg-muted/50 border-border/40 text-muted-foreground hover:bg-muted',
-                                                      isOnly && 'opacity-60 cursor-not-allowed'
+                                                        ? 'bg-primary text-primary-foreground border-primary'
+                                                        : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
                                                     )}
                                                     onClick={(e) => {
                                                       e.stopPropagation();
                                                       const current = service.container_types || [];
-                                                      const next = active ? current.filter(t => t !== vt) : [...current, vt];
-                                                      if (next.length > 0) {
-                                                        updateService.mutate({ id: service.id, updates: { container_types: next } });
+                                                      if (active && current.length === 1) {
+                                                        toast.error('At least one vessel type is required');
+                                                        return;
                                                       }
+                                                      const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                                      updateService.mutate({ id: service.id, updates: { container_types: next } });
                                                     }}
                                                   >
+                                                    {active ? <Check className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
                                                     {vt}
                                                   </button>
                                                 );
