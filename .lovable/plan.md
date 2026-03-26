@@ -1,23 +1,38 @@
 
 
-## Remove All "Vish" References — Final Pass
+## Improve Health Status Messaging: Dual Guidance
 
-### Finding
-The only remaining file is `src/components/dashboard/backroom-settings/CompetitorComparison.tsx` with 41 occurrences. This is the competitor comparison table that uses "Vish" as a named column alongside "SalonScale".
+### Problem
+When allowance is "high" (above 10% of service price), the UI only suggests raising the service price. It should also prompt the user to consider **reducing product usage / allowance amounts** — giving them both levers.
 
-### Change
+Similarly, when allowance is "low" (below 6%), it only says "room to increase product quality." It should also suggest **increasing the service price** as an alternative.
 
-**`CompetitorComparison.tsx`** — Replace all `vish` references with a generic competitor label:
+### Changes (`AllowanceCalculatorDialog.tsx`)
 
-- Rename the `vish` property in the `Row` type to `competitorA`
-- Rename `'Vish'` column label to `'Competitor A'` (or remove the column entirely if you'd prefer)
-- Update all data rows: `vish:` → `competitorA:`
-- Update `pricingComparison` key from `vish` to `competitorA`
-- Update the `columns` array entry
+**1. "High" status inline text (line ~1043)** — Update from:
+> `— consider $340 service price`
 
-This is a straightforward find-and-replace across the single file. No other files in the codebase reference "Vish".
+To:
+> `— consider raising service price or reducing product usage`
+
+**2. "Low" status inline text (line ~1044)** — Update from:
+> `— room to increase product quality`
+
+To:
+> `— consider increasing product quality or adjusting service price`
+
+**3. Tooltip description (line ~1066–1068)** — Expand the target explanation to mention both levers:
+> `Target: 6–10% of service price (8% ideal). Adjust by changing service price or product amounts.`
+
+**4. "Use suggested price" button tooltip (line ~1088)** — Append guidance about the alternative lever:
+> `"...You can also reduce product quantities in the bowls above to bring costs down."`
+
+**5. `allowance-health.ts` messages (lines ~87–93)** — Update the `message` strings to mention both options:
+- High: `"Product cost is X% of service price. Consider raising service price to $Y or reducing product usage."`
+- Low: `"Allowance is only X% of service price. You may increase product quality or reduce service price."`
 
 | File | Change |
 |------|--------|
-| `CompetitorComparison.tsx` | Rename all `vish` → `competitorA`, label → `Competitor A` |
+| `AllowanceCalculatorDialog.tsx` | Update inline hints and tooltip copy for both high and low statuses |
+| `allowance-health.ts` | Update message strings to reference both levers |
 
