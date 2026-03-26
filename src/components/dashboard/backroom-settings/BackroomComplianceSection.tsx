@@ -347,6 +347,18 @@ export function BackroomComplianceSection() {
           </div>
         </>
       )}
+
+      {data && (
+        <StaffComplianceReportDialog
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+          staffBreakdown={data.staffBreakdown}
+          items={data.items}
+          summary={data.summary}
+          dateFrom={from}
+          dateTo={to}
+        />
+      )}
     </div>
   );
 }
