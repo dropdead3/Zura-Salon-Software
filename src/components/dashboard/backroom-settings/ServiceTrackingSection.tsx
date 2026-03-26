@@ -180,6 +180,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   const updateService = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ServiceRow> }) => {
+      const svc = (services || []).find(s => s.id === id);
+
+      // Auto-reset configured status when settings change
+      const didResetConfig = !!(svc?.backroom_config_dismissed && !('backroom_config_dismissed' in updates));
+      if (didResetConfig) {
+        updates.backroom_config_dismissed = false;
+      }
+
       const { error } = await supabase
         .from('services')
         .update(updates as Record<string, unknown>)
@@ -187,23 +195,24 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (error) throw error;
 
       // Sync container_types to phorest_services so the Dock reads the correct vessels
-      if (updates.container_types && orgId) {
-        const svc = (services || []).find(s => s.id === id);
-        if (svc?.name) {
-          // Cast to avoid TS2589 deep type instantiation on phorest_services
-          await (supabase.from('phorest_services') as any)
-            .update({ container_types: updates.container_types })
-            .eq('name', svc.name)
-            .eq('organization_id', orgId);
-        }
+      if (updates.container_types && orgId && svc?.name) {
+        await (supabase.from('phorest_services') as any)
+          .update({ container_types: updates.container_types })
+          .eq('name', svc.name)
+          .eq('organization_id', orgId);
       }
+
+      return { didResetConfig };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['org-services'] });
       queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
+      if (result?.didResetConfig) {
+        toast.info('Settings changed — click "Mark Configured" to re-confirm.');
+      }
     },
     onError: (e) => toast.error(e.message),
   });
