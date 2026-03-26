@@ -1327,12 +1327,36 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                   style={{ backgroundColor: line.swatchColor || 'hsl(var(--muted))' }}
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-sans text-foreground truncate">{line.productName}</div>
+                                  <div className="text-xs font-sans text-foreground truncate">
+                                    {line.productName}
+                                    {/* Cross-bowl indicator for developer lines */}
+                                    {(() => {
+                                      const bowlLabels = productBowlMap.get(line.productId) || [];
+                                      const otherLabels = bowlLabels.filter(l => l !== bowl.label);
+                                      return otherLabels.length > 0 ? (
+                                        <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-amber-500 border-amber-500/30">
+                                          Also in {otherLabels[0]}
+                                        </Badge>
+                                      ) : null;
+                                    })()}
+                                  </div>
                                   <div className="text-[11px] font-sans text-muted-foreground">
                                     {showGramPresets
                                       ? `${devWeight}g · $${line.costPerGram.toFixed(4)}/g`
                                       : `${devWeight}g at ${line.developerRatio}× · $${line.costPerGram.toFixed(4)}/g`
                                     }
+                                    {line.costPerGram === 0 && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-destructive border-destructive/30 cursor-help">
+                                            No cost data
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[200px] text-[11px]">
+                                          This product has no cost-per-gram or cost-price + container-size in the catalog. Update it in Inventory to get accurate allowance calculations.
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )}
                                   </div>
                                 </div>
 
