@@ -212,7 +212,9 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 4 && orgId) {
+    // Step 4 is Billing Strategy — educational, no save needed
+
+    if (step === 5 && orgId) {
       for (const svcId of Object.keys(allowances)) {
         const a = allowances[svcId];
         if (a.qty && a.rate) {
@@ -227,7 +229,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 5 && stationName && stationLocationId && orgId) {
+    if (step === 6 && stationName && stationLocationId && orgId) {
       await createStation.mutateAsync({
         organization_id: orgId,
         location_id: stationLocationId,
