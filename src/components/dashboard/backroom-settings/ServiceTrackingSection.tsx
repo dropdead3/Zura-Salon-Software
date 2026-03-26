@@ -987,15 +987,26 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   <CheckCircle2 className="w-3.5 h-3.5" />
                                                   Reviewed
                                                 </span>
-                                                <button
-                                                  className="text-xs font-sans text-muted-foreground hover:text-foreground underline underline-offset-2"
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
-                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                                    updateService.mutate({ id: service.id, updates: {
+                                                      is_backroom_tracked: false,
+                                                      is_chemical_service: false,
+                                                      container_types: [],
+                                                      assistant_prep_allowed: false,
+                                                      smart_mix_assist_enabled: false,
+                                                      formula_memory_enabled: false,
+                                                      backroom_config_dismissed: false,
+                                                    }});
                                                   }}
                                                 >
-                                                  Undo
-                                                </button>
+                                                  <RotateCcw className="w-3.5 h-3.5" />
+                                                  Reset Configuration
+                                                </Button>
                                               </div>
                                             ) : (
                                               <>
