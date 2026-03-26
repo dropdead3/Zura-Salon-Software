@@ -1445,6 +1445,46 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Remove Brand confirmation dialog */}
+      <AlertDialog open={removeBrandOpen} onOpenChange={setRemoveBrandOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={tokens.card.title}>Remove Brand from Catalog</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  You are about to remove{' '}
+                  <strong className="text-foreground font-medium">{selectedBrand}</strong>{' '}
+                  from your catalog entirely.
+                </p>
+                <div className="rounded-lg border bg-destructive/5 border-destructive/20 p-3 text-sm space-y-1.5">
+                  <p className="font-medium text-foreground">This will:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                    <li>Deactivate <strong className="text-foreground">{brandProductsAll.length}</strong> products</li>
+                    <li>Remove tracking from <strong className="text-foreground">{activeLocations.length}</strong> location{activeLocations.length !== 1 ? 's' : ''}</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Stock movement history will be preserved. Products can be re-added later from the Supply Library.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (selectedBrand) removeBrandMutation.mutate(selectedBrand);
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Remove {selectedBrand}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
