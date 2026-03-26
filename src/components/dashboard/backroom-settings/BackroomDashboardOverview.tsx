@@ -55,7 +55,7 @@ function getDateRange(preset: DatePreset): { start: string; end: string; label: 
   }
 }
 
-export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) {
+export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWizard, onWizardTriggered }: Props) {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [selectedLocationId, setSelectedLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
