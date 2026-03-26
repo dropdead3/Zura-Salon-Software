@@ -594,34 +594,43 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
-      // Phase 2: Insert new data
+      // Phase 2: Insert new data using raw supabase calls to avoid per-row cache invalidation
+      const userId = (await supabase.auth.getUser()).data.user?.id;
 
       for (const bowl of bowls) {
         if (bowl.lines.length === 0) continue;
 
-        const savedBowl = await upsertBowl.mutateAsync({
-          organization_id: orgId,
-          service_id: serviceId,
-          bowl_number: bowl.bowlNumber,
-          label: bowl.label,
-        });
-
-        for (const line of bowl.lines) {
-          // Insert baseline with all metadata in one call (no separate update needed)
-          await upsertBaseline.mutateAsync({
+        const { data: savedBowl, error: bowlInsertErr } = await supabase
+          .from('service_allowance_bowls')
+          .insert({
             organization_id: orgId,
             service_id: serviceId,
-            product_id: line.productId,
-            bowl_id: savedBowl.id,
-            expected_quantity: line.quantity,
-            unit: 'g',
-            notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
-            cost_per_unit_snapshot: line.costPerGram,
-            is_developer: line.isDeveloper,
-            developer_ratio: line.developerRatio,
-            silent: true,
-          });
-        }
+            bowl_number: bowl.bowlNumber,
+            label: bowl.label,
+          })
+          .select()
+          .single();
+        if (bowlInsertErr || !savedBowl) throw new Error('Failed to save bowl: ' + (bowlInsertErr?.message ?? 'unknown'));
+
+        // Batch insert all baselines for this bowl
+        const baselineRows = bowl.lines.map((line) => ({
+          organization_id: orgId,
+          service_id: serviceId,
+          product_id: line.productId,
+          bowl_id: savedBowl.id,
+          expected_quantity: line.quantity,
+          unit: 'g',
+          notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : null,
+          created_by: userId ?? null,
+          cost_per_unit_snapshot: line.costPerGram,
+          is_developer: line.isDeveloper,
+          developer_ratio: line.developerRatio,
+        }));
+
+        const { error: blInsertErr } = await supabase
+          .from('service_recipe_baselines')
+          .insert(baselineRows);
+        if (blInsertErr) throw new Error('Failed to save baselines: ' + blInsertErr.message);
       }
 
       // Phase 3: Update policy
