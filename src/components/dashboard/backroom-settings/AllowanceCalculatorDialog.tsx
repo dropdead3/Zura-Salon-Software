@@ -692,7 +692,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">
-            <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
+            <DialogTitle className={cn(tokens.card.title)}>Product Allowance Calculator</DialogTitle>
             <MetricInfoTooltip
               description="Use this tool to set a dollar allowance for this service. Pick sample products as benchmarks to calculate cost — stylists aren't limited to these products. During a service, they can mix whatever the client needs. If you carry a premium line, the higher cost per gram means less product before hitting the limit. Once the allowance amount is reached, any additional product cost is charged to the client as an overage fee."
               className="w-3.5 h-3.5"
