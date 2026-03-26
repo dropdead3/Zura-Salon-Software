@@ -336,7 +336,14 @@ export default function BackroomSettings() {
 
           {/* Content area */}
           <div className="flex-1 min-w-0">
-            {activeSection === 'overview' && <BackroomDashboardOverview onNavigate={handleNavigate} initialSubTab={subTab} />}
+            {activeSection === 'overview' && (
+              <BackroomDashboardOverview
+                onNavigate={handleNavigate}
+                initialSubTab={subTab}
+                triggerWizard={showWizardFromBanner}
+                onWizardTriggered={() => setShowWizardFromBanner(false)}
+              />
+            )}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
             {activeSection === 'formulas' && <RecipeBaselineSection onNavigate={handleNavigate} />}
