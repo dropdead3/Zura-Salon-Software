@@ -39,6 +39,11 @@ function r2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
+/** Round up to the nearest $5 increment */
+function roundUpTo5(v: number): number {
+  return Math.ceil(v / 5) * 5;
+}
+
 /**
  * Calculate retail (after-markup) cost per gram.
  * retailCpg = wholesaleCpg × (1 + markupPct / 100)
@@ -75,8 +80,8 @@ export function calculateAllowanceHealth(input: AllowanceHealthInput): Allowance
 
   if (allowancePct > UPPER_BOUND) {
     status = 'high';
-    suggestedServicePrice = r2(allowanceAmount / (TARGET_PCT / 100));
-    message = `Product cost is ${allowancePct}% of service price. Consider raising service price to $${suggestedServicePrice.toFixed(0)} or reducing product usage.`;
+    suggestedServicePrice = roundUpTo5(allowanceAmount / (TARGET_PCT / 100));
+    message = `Product cost is ${allowancePct}% of service price. Consider raising service price to $${suggestedServicePrice} or reducing product usage.`;
   } else if (allowancePct < LOWER_BOUND) {
     status = 'low';
     suggestedAllowance = r2(servicePrice * (TARGET_PCT / 100));
