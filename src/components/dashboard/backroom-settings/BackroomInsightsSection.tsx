@@ -209,8 +209,15 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
           <SubTabsTrigger value="brands">Brands</SubTabsTrigger>
         </SubTabsList>
 
-        <TabsContent value="products">
+        <TabsContent value="products" className="space-y-6">
           <BackroomProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          {showExtendedAnalytics && (
+            <>
+              <ProductUsageFrequencyTable locationId={effectiveLocationId} />
+              <WasteCategoryBreakdownCard wasteByCategory={wasteByCategory ?? {}} totalWasteQty={totalWasteQty ?? 0} />
+              <BackroomInventoryValuationCard locationId={effectiveLocationId} />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="staff">
