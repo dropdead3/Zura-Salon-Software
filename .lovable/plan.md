@@ -1,27 +1,24 @@
 
 
-## First-Visit Welcome Banner
+## Promote Backroom Analytics to Its Own Sidebar Section
 
-### Problem
-When a salon owner first opens the Backroom, the banner says "Uh-oh, you haven't finished setting up your backroom!" — but they haven't *started* yet. The tone is scolding when it should be welcoming.
-
-### Solution
-Detect first visit (0 completed steps) and swap the copy and button label to a warm welcome tone. The banner component already has all the data needed — just branch on `setupHealth.completed === 0`.
-
-### Content
-
-| State | Title | Subtitle | Button |
-|-------|-------|----------|--------|
-| First visit (0 done) | Welcome to your Backroom! Let's get you set up. | 0 of 6 areas to configure | Start Setup |
-| Returning (1+ done) | Uh-oh, you haven't finished setting up your backroom! | X of 6 areas configured | Resume Setup |
+### What's Changing
+The Analytics tab currently lives inside the Overview page's internal tab bar (Command Center / Analytics / AI Intelligence). It will be promoted to a top-level sidebar entry under the **Operations** group, giving it direct one-click access.
 
 ### Changes
 
-**File: `src/components/dashboard/backroom-settings/BackroomSetupBanner.tsx`**
-- Derive `isFirstVisit = setupHealth.completed === 0`
-- Swap `CardTitle` text based on `isFirstVisit`
-- Swap subtitle wording: "areas to configure" vs "areas configured"
-- Swap button label: "Start Setup" vs "Resume Setup"
+**1. `src/pages/dashboard/admin/BackroomSettings.tsx`**
+- Add `'analytics'` to the `BackroomSection` union type
+- Insert a new entry in the `sections` array under the **Operations** group, after Overview:
+  - `{ id: 'analytics', label: 'Analytics', icon: BarChart3, tooltip: 'Product usage, staff performance, and trend analytics.', group: 'operations' }`
+- Add a rendering case for `activeSection === 'analytics'` that renders `<BackroomInsightsSection>` with the same props currently used in the Overview page (location filter, date preset, extended analytics, waste data)
 
-One file, ~6 lines changed.
+**2. `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx`**
+- Remove the "Analytics" tab from the internal `<Tabs>` component (keep only Command Center and AI Intelligence)
+- Remove the `<TabsContent value="analytics">` block and the `BackroomInsightsSection` import (if no longer used here)
+
+### Result
+- Sidebar: Overview, **Analytics**, Inventory, Price Intelligence, Reweigh Reports (under Operations)
+- Overview page: Only shows Command Center and AI Intelligence tabs
+- Analytics page: Full `BackroomInsightsSection` with its own location/date filters at the top level
 
