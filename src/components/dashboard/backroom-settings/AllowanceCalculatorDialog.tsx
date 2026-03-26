@@ -1222,10 +1222,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                               {line.productName}
                               {/* Cross-bowl duplicate warning */}
                               {(() => {
-                                const otherBowlIdx = bowls.findIndex((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === line.productId));
-                                return otherBowlIdx >= 0 ? (
+                                const bowlLabels = productBowlMap.get(line.productId) || [];
+                                const otherLabels = bowlLabels.filter(l => l !== bowl.label);
+                                return otherLabels.length > 0 ? (
                                   <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-amber-500 border-amber-500/30">
-                                    Also in {bowls[otherBowlIdx].label}
+                                    Also in {otherLabels[0]}
                                   </Badge>
                                 ) : null;
                               })()}
@@ -1245,9 +1246,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 </Tooltip>
                               )}
                               {(() => {
-                                const prod = catalogProducts.find(p => p.id === line.productId);
-                                if (!prod) return null;
-                                const wholesale = getWholesaleCostPerGram(prod);
+                                const wholesale = wholesaleCostMap.get(line.productId) ?? 0;
                                 if (wholesale <= 0) return null;
                                 return <span className="text-muted-foreground/50"> · ${wholesale.toFixed(4)}/g wholesale</span>;
                               })()}
