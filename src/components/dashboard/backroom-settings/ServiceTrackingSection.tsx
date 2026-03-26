@@ -848,8 +848,47 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           />
                                           <span className="text-[10px] text-muted-foreground/60 font-sans">Enabling also turns on tracking</span>
                                         </div>
+                                        {/* Mark Configured footer for untracked */}
+                                        {(type === 'chemical' || type === 'suggested') && (
+                                          <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
+                                            {service.backroom_config_dismissed ? (
+                                              <div className="flex items-center gap-2 w-full justify-between">
+                                                <span className="text-xs font-sans text-muted-foreground flex items-center gap-1.5">
+                                                  <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                                  Reviewed
+                                                </span>
+                                                <button
+                                                  className="text-xs font-sans text-muted-foreground hover:text-foreground underline underline-offset-2"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                                  }}
+                                                >
+                                                  Undo
+                                                </button>
+                                              </div>
+                                            ) : (
+                                              <>
+                                                <p className="text-xs font-sans text-muted-foreground">
+                                                  Doesn't need tracking? Mark as reviewed.
+                                                </p>
+                                                <Button
+                                                  variant="default"
+                                                  size="sm"
+                                                  className="h-7 text-xs shrink-0"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                  }}
+                                                >
+                                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                  Mark Configured
+                                                </Button>
+                                              </>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
                                   </motion.div>
                                 </td>
                               </motion.tr>
