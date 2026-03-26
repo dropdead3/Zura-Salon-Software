@@ -698,7 +698,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
+        <ScrollArea className="flex-1 min-h-0 overflow-hidden">
           <div className="px-6 py-4 space-y-4">
             {bowls.map((bowl, bowlIdx) => {
               const bowlWeight = getBowlWeight(bowl);
