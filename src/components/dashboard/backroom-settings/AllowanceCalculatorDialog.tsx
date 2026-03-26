@@ -372,7 +372,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         overage_rate_type: 'per_unit',
         billing_mode: 'allowance',
         is_active: true,
-        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} bowl(s)`,
+        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} vessel(s)`,
       });
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
