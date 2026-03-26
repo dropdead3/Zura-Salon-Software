@@ -703,18 +703,30 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {selectedBrand && (
                 <Badge variant="outline">{brandProductsAll.length} products</Badge>
               )}
-              {selectedBrand && (
+               {selectedBrand && (
                  <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => { setSyncScope('brand'); setSyncConfirmOpen(true); }}
-                   disabled={syncFromLibraryMutation.isPending}
-                   className="font-sans gap-1.5"
-                 >
-                   <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
-                   Sync from Zura Library
-                 </Button>
-               )}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSyncScope('brand'); setSyncConfirmOpen(true); }}
+                    disabled={syncFromLibraryMutation.isPending}
+                    className="font-sans gap-1.5"
+                  >
+                    <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
+                    Sync from Zura Library
+                  </Button>
+                )}
+               {selectedBrand && (
+                 <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRemoveBrandOpen(true)}
+                    disabled={removeBrandMutation.isPending}
+                    className="font-sans gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove Brand
+                  </Button>
+                )}
               <Button
                 variant="outline"
                 size="sm"
