@@ -1,5 +1,5 @@
 /**
- * BackroomComplianceSection — Reweigh Reports dashboard for Backroom Settings.
+ * BackroomComplianceSection — Compliance Reports dashboard for Backroom Settings.
  * Enhanced with waste metrics and overage attachment rate.
  */
 
