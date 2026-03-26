@@ -329,6 +329,32 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     });
   }, []);
 
+  const duplicateBowl = useCallback((idx: number) => {
+    setBowls((prev) => {
+      const source = prev[idx];
+      if (!source) return prev;
+      const clonedLines = source.lines.map((l) => ({ ...l, localId: crypto.randomUUID() }));
+      const next = [...prev, { id: null, bowlNumber: prev.length + 1, label: vesselLabel(source.vesselType, prev.length + 1), vesselType: source.vesselType, lines: clonedLines, collapsed: false }];
+      return next;
+    });
+    toast.success('Bowl duplicated');
+  }, []);
+
+  const setBulkQuantity = useCallback((bowlIdx: number, qty: number) => {
+    setBowls((prev) =>
+      prev.map((b, i) => {
+        if (i !== bowlIdx) return b;
+        const lines = b.lines.map((l) => (l.isDeveloper ? l : { ...l, quantity: qty }));
+        const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+        lines.forEach((line) => {
+          line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
+        });
+        return { ...b, lines };
+      })
+    );
+    toast.success(`All color lines set to ${qty}g`);
+  }, []);
+
   const toggleBowlCollapse = useCallback((idx: number) => {
     setBowls((prev) => prev.map((b, i) => (i === idx ? { ...b, collapsed: !b.collapsed } : b)));
   }, []);
