@@ -104,6 +104,7 @@ export const manageNavItems: DashboardNavItem[] = [
 
 export const appsNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/backroom-settings', label: 'Zura Backroom', labelKey: 'zura_backroom', icon: Package, permission: 'manage_settings' },
+  { href: '/dashboard/admin/price-recommendations', label: 'Price Intelligence', labelKey: 'price_intelligence', icon: CircleDollarSign, permission: 'manage_settings' },
 ];
 
 // ─── SECTION: system (admin config) ──────────────────────────────────────────
