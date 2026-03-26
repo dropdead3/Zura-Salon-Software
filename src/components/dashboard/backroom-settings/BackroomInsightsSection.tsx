@@ -1,8 +1,9 @@
 /**
- * BackroomInsightsSection — Top-level KPI cards + Employee Performance table.
+ * BackroomInsightsSection — Top-level KPI cards + tabbed analytics content.
  */
 
 import { useState, useMemo } from 'react';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
   DollarSign, Beaker, ClipboardCheck, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronUp, ChevronDown, Loader2, MapPin, Eye, EyeOff,
