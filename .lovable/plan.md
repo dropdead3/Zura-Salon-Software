@@ -1,24 +1,27 @@
 
 
-## Fix: BackroomSetupBanner crash — undefined `steps`
+## First-Visit Welcome Banner
 
-### Root Cause
-`BackroomSetupBanner` expects a `SetupHealthData` shape with `steps`, `isComplete`, `completed`, and `total` fields. But it receives raw `SetupHealthMetrics` from `useBackroomSetupHealth` (cast via `as any`), which has none of those fields. `setupHealth.steps` is `undefined`, so `.map()` crashes.
+### Problem
+When a salon owner first opens the Backroom, the banner says "Uh-oh, you haven't finished setting up your backroom!" — but they haven't *started* yet. The tone is scolding when it should be welcoming.
 
 ### Solution
-Derive the banner-specific shape from `SetupHealthMetrics` inside `BackroomSettings.tsx` before passing it to the banner. This keeps the hook's return type unchanged and creates the `steps` array from the existing health data.
+Detect first visit (0 completed steps) and swap the copy and button label to a warm welcome tone. The banner component already has all the data needed — just branch on `setupHealth.completed === 0`.
+
+### Content
+
+| State | Title | Subtitle | Button |
+|-------|-------|----------|--------|
+| First visit (0 done) | Welcome to your Backroom! Let's get you set up. | 0 of 6 areas to configure | Start Setup |
+| Returning (1+ done) | Uh-oh, you haven't finished setting up your backroom! | X of 6 areas configured | Resume Setup |
 
 ### Changes
 
-**File: `src/pages/dashboard/admin/BackroomSettings.tsx`**
-- Add a `useMemo` that transforms `health` (SetupHealthMetrics) into the `SetupHealthData` shape:
-  - `steps`: derived from key configuration sections (Products, Services, Formulas, Allowances, Stations, Alerts) using the existing `getSectionStatus` helper
-  - `isComplete`: all steps done
-  - `completed` / `total`: counts from the steps array
-  - `warnings`: passed through directly from `health.warnings`
-- Pass the derived object to `<BackroomSetupBanner>` instead of `health as any`
+**File: `src/components/dashboard/backroom-settings/BackroomSetupBanner.tsx`**
+- Derive `isFirstVisit = setupHealth.completed === 0`
+- Swap `CardTitle` text based on `isFirstVisit`
+- Swap subtitle wording: "areas to configure" vs "areas configured"
+- Swap button label: "Start Setup" vs "Resume Setup"
 
-| File | Change |
-|------|--------|
-| `src/pages/dashboard/admin/BackroomSettings.tsx` | Add `useMemo` to derive `SetupHealthData` from `SetupHealthMetrics`; remove `as any` cast |
+One file, ~6 lines changed.
 
