@@ -26,6 +26,7 @@ import {
   Lock,
   CreditCard,
   Truck,
+  CircleDollarSign,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ import { MultiLocationSection } from '@/components/dashboard/backroom-settings/M
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
 
 
 type BackroomSection =
@@ -59,7 +61,8 @@ type BackroomSection =
   | 'alerts'
   | 'formula'
   | 'multi-location'
-  | 'compliance';
+  | 'compliance'
+  | 'price-intelligence';
 
 type SectionGroup = 'operations' | 'configuration' | 'settings';
 
@@ -85,6 +88,7 @@ const sections: SectionMeta[] = [
   // Operations
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard overview with analytics and AI intelligence.', group: 'operations' },
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
+  { id: 'price-intelligence', label: 'Price Intelligence', icon: CircleDollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
   { id: 'compliance', label: 'Reweigh Reports', icon: ShieldCheck, tooltip: 'Reweigh tracking and accountability reports.', group: 'operations' },
   // Configuration
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
@@ -126,12 +130,13 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 
 export default function BackroomSettings() {
   const { dashPath } = useOrgDashboardPath();
-  const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSection = (searchParams.get('section') as BackroomSection) || 'overview';
+  const [activeSection, setActiveSection] = useState<BackroomSection>(initialSection);
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const pollingRef = useRef(false);
   const orgId = useBackroomOrgId();
@@ -328,6 +333,7 @@ export default function BackroomSettings() {
             {activeSection === 'formula' && <FormulaAssistanceSection />}
             {activeSection === 'compliance' && <BackroomComplianceSection />}
             {activeSection === 'multi-location' && <MultiLocationSection />}
+            {activeSection === 'price-intelligence' && <PriceRecommendationsContent />}
           </div>
         </div>
       </div>

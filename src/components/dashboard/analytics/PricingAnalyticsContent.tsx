@@ -424,7 +424,7 @@ export function PricingAnalyticsContent({
           </div>
           <Button
             className="font-sans gap-1"
-            onClick={() => navigate(dashPath('/admin/price-recommendations'))}
+            onClick={() => navigate(dashPath('/admin/backroom-settings?section=price-intelligence'))}
           >
             Open Price Intelligence <ArrowRight className="w-4 h-4" />
           </Button>
