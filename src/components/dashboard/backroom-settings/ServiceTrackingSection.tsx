@@ -79,6 +79,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const upsertPolicy = useUpsertAllowancePolicy();
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
+  const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
@@ -673,123 +674,126 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                      exit={{ opacity: 0, y: -8 }}
                                      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
                                      className="px-6 py-4 bg-muted/30 border-t border-border/30"
-                                  >
+                                   >
                                     {service.is_backroom_tracked ? (
-                                      <div className="space-y-4">
-                                         {/* Allowance config + actions */}
-                                         <div className="flex items-start justify-between gap-4">
-                                            {(() => {
-                                              const policy = allowanceByService.get(service.id);
-
-                                              if (policy) {
-                                                // Saved state — compact summary with recipe note
-                                                const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
-                                                return (
-                                                  <div className="flex items-center gap-2 text-xs">
-                                                    <FileText className="w-3.5 h-3.5 text-primary" />
-                                                    <span className="font-sans text-muted-foreground">
-                                                      {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
-                                                    </span>
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="sm"
-                                                      className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setCalculatorServiceId(service.id);
-                                                        setCalculatorServiceName(service.name);
-                                                      }}
-                                                    >
-                                                      Edit
-                                                    </Button>
-                                                  </div>
-                                                );
-                                              }
-
-                                              // No policy — show Configure Allowance button
-                                              return (
-                                                <div className="flex items-center gap-2 text-xs">
-                                                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                                                  <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-7 text-xs border-dashed"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setCalculatorServiceId(service.id);
-                                                      setCalculatorServiceName(service.name);
-                                                    }}
-                                                  >
-                                                    Configure Allowance
-                                                  </Button>
-                                                </div>
-                                              );
-                                            })()}
-                                            <div className="flex items-center gap-2 shrink-0">
-                                              <Button
-                                               variant="outline"
-                                               size="sm"
-                                               className="h-7 text-xs"
-                                               onClick={() => setSelectedServiceId(service.id)}
-                                             >
-                                               <Package className="w-3 h-3 mr-1" />
-                                               Components
-                                             </Button>
+                                       <div className="space-y-4">
+                                         {/* Chemical toggle + vessel selector — FIRST */}
+                                         <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
+                                           <div className="flex items-center gap-2">
+                                             <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
+                                             <Switch
+                                               checked={service.is_chemical_service}
+                                               onCheckedChange={(v) => {
+                                                 if (v) {
+                                                   const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                   updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
+                                                 } else {
+                                                   updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
+                                                 }
+                                               }}
+                                             />
                                            </div>
+                                           {service.is_chemical_service && (
+                                             <div className="flex items-center gap-1.5">
+                                               <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
+                                               {(['bowl', 'bottle'] as const).map((vt, idx) => {
+                                                 const active = (service.container_types || []).includes(vt);
+                                                 return (
+                                                   <React.Fragment key={vt}>
+                                                     {idx === 1 && (
+                                                       <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
+                                                     )}
+                                                     <button
+                                                       className={cn(
+                                                         'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
+                                                         active
+                                                           ? 'bg-primary text-primary-foreground border-primary'
+                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                                       )}
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                         const current = service.container_types || [];
+                                                         if (active && current.length === 1) {
+                                                           toast.error('At least one vessel type is required');
+                                                           return;
+                                                         }
+                                                         const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                                         updateService.mutate({ id: service.id, updates: { container_types: next } });
+                                                       }}
+                                                     >
+                                                       {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                       {vt === 'bowl' ? 'Bowls' : 'Bottles'}
+                                                     </button>
+                                                   </React.Fragment>
+                                                 );
+                                               })}
+                                             </div>
+                                           )}
                                          </div>
-                                        {/* Chemical toggle + vessel selector */}
-                                        <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
-                                          <div className="flex items-center gap-2">
-                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
-                                            <Switch
-                                              checked={service.is_chemical_service}
-                                              onCheckedChange={(v) => {
-                                                if (v) {
-                                                  const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
-                                                  updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
-                                                } else {
-                                                  updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
-                                                }
-                                              }}
-                                            />
-                                          </div>
-                                          {service.is_chemical_service && (
-                                            <div className="flex items-center gap-1.5">
-                                              <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
-                                              {(['bowl', 'bottle'] as const).map((vt, idx) => {
-                                                const active = (service.container_types || []).includes(vt);
-                                                return (
-                                                  <React.Fragment key={vt}>
-                                                    {idx === 1 && (
-                                                      <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
-                                                    )}
-                                                    <button
-                                                      className={cn(
-                                                        'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
-                                                        active
-                                                          ? 'bg-primary text-primary-foreground border-primary'
-                                                          : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                      )}
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const current = service.container_types || [];
-                                                        if (active && current.length === 1) {
-                                                          toast.error('At least one vessel type is required');
-                                                          return;
-                                                        }
-                                                        const next = active ? current.filter(t => t !== vt) : [...current, vt];
-                                                        updateService.mutate({ id: service.id, updates: { container_types: next } });
-                                                      }}
-                                                    >
-                                                      {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                      {vt === 'bowl' ? 'Bowls' : 'Bottles'}
-                                                    </button>
-                                                  </React.Fragment>
-                                                );
-                                              })}
+
+                                          {/* Allowance config + actions — gated on vessel selection */}
+                                          {(service.container_types || []).length > 0 && (
+                                          <div className="flex items-start justify-between gap-4">
+                                             {(() => {
+                                               const policy = allowanceByService.get(service.id);
+
+                                               if (policy) {
+                                                 const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
+                                                 return (
+                                                   <div className="flex items-center gap-2 text-xs">
+                                                     <FileText className="w-3.5 h-3.5 text-primary" />
+                                                     <span className="font-sans text-muted-foreground">
+                                                       {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                                     </span>
+                                                     <Button
+                                                       variant="ghost"
+                                                       size="sm"
+                                                       className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                         setCalculatorServiceId(service.id);
+                                                         setCalculatorServiceName(service.name);
+                                                         setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                       }}
+                                                     >
+                                                       Edit
+                                                     </Button>
+                                                   </div>
+                                                 );
+                                               }
+
+                                               return (
+                                                 <div className="flex items-center gap-2 text-xs">
+                                                   <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                                   <Button
+                                                     variant="outline"
+                                                     size="sm"
+                                                     className="h-7 text-xs border-dashed"
+                                                     onClick={(e) => {
+                                                       e.stopPropagation();
+                                                       setCalculatorServiceId(service.id);
+                                                       setCalculatorServiceName(service.name);
+                                                       setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                     }}
+                                                   >
+                                                     Configure Allowance
+                                                   </Button>
+                                                 </div>
+                                               );
+                                             })()}
+                                             <div className="flex items-center gap-2 shrink-0">
+                                               <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 text-xs"
+                                                onClick={() => setSelectedServiceId(service.id)}
+                                              >
+                                                <Package className="w-3 h-3 mr-1" />
+                                                Components
+                                              </Button>
                                             </div>
+                                          </div>
                                           )}
-                                        </div>
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                           <div className="flex items-center gap-2">
@@ -1026,6 +1030,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           onOpenChange={(open) => { if (!open) setCalculatorServiceId(null); }}
           serviceId={calculatorServiceId}
           serviceName={calculatorServiceName}
+          containerTypes={calculatorContainerTypes}
         />
       )}
     </div>

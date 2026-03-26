@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, Palette, Search } from 'lucide-react';
+import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, Palette, Search, TestTube2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -25,6 +25,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   serviceId: string;
   serviceName: string;
+  containerTypes?: ('bowl' | 'bottle')[];
 }
 
 interface CatalogProduct {
@@ -56,6 +57,7 @@ interface BowlState {
   id: string | null;
   bowlNumber: number;
   label: string;
+  vesselType: 'bowl' | 'bottle';
   lines: BowlLine[];
   collapsed: boolean;
 }
@@ -95,9 +97,17 @@ function getBowlWeight(bowl: BowlState): number {
   }, 0);
 }
 
-export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName }: Props) {
+export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'] }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+
+  // Vessel label helpers
+  const hasBowls = containerTypes.includes('bowl');
+  const hasBottles = containerTypes.includes('bottle');
+  const hasBoth = hasBowls && hasBottles;
+  const defaultVesselType = containerTypes[0] || 'bowl';
+  const vesselLabel = (type: 'bowl' | 'bottle', num: number) => type === 'bottle' ? `Bottle ${num}` : `Bowl ${num}`;
+  const VesselIcon = (type: 'bowl' | 'bottle') => type === 'bottle' ? TestTube2 : Beaker;
 
   const { data: catalogProducts = [] } = useQuery({
     queryKey: ['catalog-products-for-allowance', orgId],
@@ -155,7 +165,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               lineCost: 0,
             };
           });
-        return { id: b.id, bowlNumber: b.bowl_number, label: b.label, lines: bowlLines, collapsed: false };
+        const vType = b.label.toLowerCase().includes('bottle') ? 'bottle' as const : 'bowl' as const;
+        return { id: b.id, bowlNumber: b.bowl_number, label: b.label, vesselType: vType, lines: bowlLines, collapsed: false };
       });
 
       loaded.forEach((bowl) => {
@@ -167,7 +178,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
       setBowls(loaded);
     } else {
-      setBowls([{ id: null, bowlNumber: 1, label: 'Bowl 1', lines: [], collapsed: false }]);
+      setBowls([{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [], collapsed: false }]);
     }
     setBowlSearches({});
     setDevFilterBowls({});
@@ -204,17 +215,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
   }, [bowls]);
 
-  const addBowl = useCallback(() => {
+  const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
     setBowls((prev) => [
       ...prev,
-      { id: null, bowlNumber: prev.length + 1, label: `Bowl ${prev.length + 1}`, lines: [], collapsed: false },
+      { id: null, bowlNumber: prev.length + 1, label: vesselLabel(type, prev.length + 1), vesselType: type, lines: [], collapsed: false },
     ]);
-  }, []);
+  }, [defaultVesselType]);
 
   const removeBowl = useCallback((idx: number) => {
     setBowls((prev) => {
       const next = prev.filter((_, i) => i !== idx);
-      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: `Bowl ${i + 1}` }));
+      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     });
   }, []);
 
@@ -361,7 +372,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         overage_rate_type: 'per_unit',
         billing_mode: 'allowance',
         is_active: true,
-        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} bowl(s)`,
+        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} vessel(s)`,
       });
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
@@ -394,7 +405,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
           <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
           <DialogDescription className="text-sm font-sans text-muted-foreground">
-            {serviceName} — Build sample bowls to calculate the included product cost.
+            {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
           </DialogDescription>
         </DialogHeader>
 
@@ -419,7 +430,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     onClick={() => toggleBowlCollapse(bowlIdx)}
                   >
                     <div className="flex items-center gap-2">
-                      <Beaker className="w-4 h-4 text-primary" />
+                      {(() => { const Icon = VesselIcon(bowl.vesselType); return <Icon className="w-4 h-4 text-primary" />; })()}
                       <span className="text-sm font-sans font-medium text-foreground">{bowl.label}</span>
                       {bowl.lines.length > 0 && (
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
@@ -704,7 +715,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {bowl.lines.length > 0 && (
                         <div className="flex justify-end pt-2 border-t border-border/30">
                           <span className="text-xs font-sans text-muted-foreground">
-                            Bowl Total:{' '}
+                            {bowl.vesselType === 'bottle' ? 'Bottle' : 'Bowl'} Total:{' '}
                             <span className="text-foreground font-medium">
                               {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
                             </span>
@@ -717,16 +728,31 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               );
             })}
 
-            {/* Add Bowl button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-9 text-xs border-dashed"
-              onClick={addBowl}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add Bowl
-            </Button>
+            {/* Add vessel buttons */}
+            <div className="flex gap-2">
+              {hasBowls && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-9 text-xs border-dashed"
+                  onClick={() => addVessel('bowl')}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Add Bowl
+                </Button>
+              )}
+              {hasBottles && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-9 text-xs border-dashed"
+                  onClick={() => addVessel('bottle')}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Add Bottle
+                </Button>
+              )}
+            </div>
           </div>
         </ScrollArea>
 
@@ -739,7 +765,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 ${grandTotal.toFixed(2)}
               </div>
               <div className="text-[11px] font-sans text-muted-foreground">
-                {Math.round(totalWeight)}g total across {bowls.filter((b) => b.lines.length > 0).length} bowl(s)
+                {Math.round(totalWeight)}g total across {bowls.filter((b) => b.lines.length > 0).length} vessel(s)
               </div>
             </div>
             <Button
