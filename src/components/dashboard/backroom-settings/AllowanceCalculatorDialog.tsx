@@ -649,12 +649,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
 
+      // Invalidate caches once after all inserts
+      queryClient.invalidateQueries({ queryKey: ['allowance-bowls'] });
+      queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
+
       // Update snapshot so isDirty resets
       initialBowlsRef.current = JSON.stringify(bowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       setModeledServicePrice(null);
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
-      // Use setTimeout to ensure isDirty memo re-evaluates before onOpenChange checks it
       setTimeout(() => onOpenChange(false), 0);
     } catch (err: unknown) {
       toast.error('Failed to save allowance: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -662,6 +665,19 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       setSaving(false);
     }
   };
+
+  // Cmd+S / Ctrl+S keyboard shortcut
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (grandTotal > 0 && !saving) handleSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, grandTotal, saving]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
