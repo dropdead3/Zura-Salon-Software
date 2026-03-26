@@ -137,9 +137,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
           <TabsTrigger value="command-center" className="gap-1.5">
             <ShieldAlert className="w-4 h-4" /> Command Center
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-1.5">
-            <BarChart3 className="w-4 h-4" /> Analytics
-          </TabsTrigger>
           <TabsTrigger value="ai" className="gap-1.5">
             <Brain className="w-4 h-4" /> AI Intelligence
           </TabsTrigger>
@@ -380,17 +377,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
 
         </TabsContent>
 
-        {/* ── Analytics ── */}
-        <TabsContent value="analytics" className="mt-6 space-y-6">
-          <BackroomInsightsSection
-            locationId={selectedLocationId}
-            datePreset={datePreset}
-            hideFilters
-            showExtendedAnalytics
-            wasteByCategory={dashboard.wasteByCategory ?? {}}
-            totalWasteQty={dashboard.totalWasteQty ?? 0}
-          />
-        </TabsContent>
 
         {/* ── AI Intelligence ── */}
         <TabsContent value="ai" className="mt-6">

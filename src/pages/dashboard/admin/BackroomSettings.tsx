@@ -32,6 +32,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
 import { BackroomDashboardOverview } from '@/components/dashboard/backroom-settings/BackroomDashboardOverview';
+import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
 import { BackroomSetupBanner } from '@/components/dashboard/backroom-settings/BackroomSetupBanner';
 import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
@@ -52,6 +53,7 @@ import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecomm
 
 type BackroomSection =
   | 'overview'
+  | 'analytics'
   | 'products'
   | 'services'
   | 'formulas'
@@ -89,6 +91,7 @@ interface SectionMeta {
 const sections: SectionMeta[] = [
   // Operations
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard overview with analytics and AI intelligence.', group: 'operations' },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3, tooltip: 'Product usage, staff performance, and trend analytics.', group: 'operations' },
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
   { id: 'price-intelligence', label: 'Price Intelligence', icon: CircleDollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
   { id: 'compliance', label: 'Reweigh Reports', icon: ShieldCheck, tooltip: 'Reweigh tracking and accountability reports.', group: 'operations' },
@@ -366,6 +369,15 @@ export default function BackroomSettings() {
                 initialSubTab={subTab}
                 triggerWizard={showWizardFromBanner}
                 onWizardTriggered={() => setShowWizardFromBanner(false)}
+              />
+            )}
+            {activeSection === 'analytics' && (
+              <BackroomInsightsSection
+                locationId="all"
+                datePreset="30d"
+                showExtendedAnalytics
+                wasteByCategory={{}}
+                totalWasteQty={0}
               />
             )}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
