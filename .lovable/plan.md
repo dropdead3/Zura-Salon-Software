@@ -1,60 +1,31 @@
 
 
-## Replace Editable Service Price with Auto-Adjust Button
+## Move "Adjust to $X" Button Inline with Health Badge
 
-### Problem
-The service price is currently an inline editable `<Input>` in the footer. The user wants it read-only, with a one-click button to adjust the price to the engine's suggested price (rounded up to nearest $5) when the allowance is too high.
-
-### Changes
+### Change
 
 **File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-**1. Replace the inline editable input (lines 1530–1573)** with a static read-only display:
+**1. Move the "Adjust to $X" button (lines 1600–1632) inside the health badge row (line 1535's flex container)**, placing it right after the status pill `</div>` at line 1551. This puts it visually inline with the "27.49% of $225 service — consider raising..." prompt.
+
+**2. Restyle the button to match the health badge pill** — same `bg-amber-500/10 text-amber-600` background, `text-[11px] font-sans px-2.5 py-1.5 rounded-md` sizing, no outline border. It should look like a sibling chip, not a separate CTA.
+
+**3. Update the tooltip** to explain where the price surfaces: "Adjusts the base service price to $X. This will update the price on Service Tracking, the Price Intelligence engine, and any location/level overrides that reference this base price. Rounded up to the nearest $5."
+
+**4. Remove the standalone block** (lines 1600–1632) since it's now inline.
+
+### Result
+
+The health row becomes:
 ```
-Service $225
-```
-Just text, no input field. Remove `modeledServicePrice` state usage in this section and the reset/apply buttons.
-
-**2. Add a "Adjust to $X" button when `healthResult.status === 'high'`**
-
-After the health badge (around line 1625), render a button styled as a subtle pill:
-
-```tsx
-{healthResult.status === 'high' && healthResult.suggestedServicePrice && (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-7 px-3 text-[11px] rounded-full border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
-        onClick={() => {
-          const oldPrice = servicePrice;
-          updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
-            onSuccess: () => {
-              toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
-                action: oldPrice ? { label: 'Undo', onClick: () => updateServicePriceMutation.mutate(oldPrice) } : undefined,
-                duration: 6000,
-              });
-            },
-          });
-        }}
-      >
-        Adjust to ${healthResult.suggestedServicePrice}
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent side="top" className="max-w-[280px] text-xs">
-      Based on your retail product cost of ${grandTotal.toFixed(2)}, raising the service price
-      to ${healthResult.suggestedServicePrice} would bring product cost to the 8% industry target.
-      Price is rounded up to the nearest $5.
-    </TooltipContent>
-  </Tooltip>
-)}
+[ 27.49% of $225 service — consider raising... ]  [ Adjust to $775 ⓘ ]
 ```
 
-**3. Update the `effectiveServicePrice` references** — since `modeledServicePrice` is no longer settable from this input, `effectiveServicePrice` will just be `servicePrice`. The `modeledServicePrice` state and its setter can be cleaned up if it's not used elsewhere. (Will verify during implementation.)
+Both chips share the same amber styling. The tooltip on the adjust button explains exactly where the new price will take effect.
 
-### Scope
-- Single file, ~50 lines changed
-- Replaces editable input with static text + action button
-- Reuses existing `updateServicePriceMutation` and `suggestedServicePrice` from the health engine
+### Technical detail
+
+- The button stays inside the `flex items-center gap-3 flex-wrap` container at line 1535
+- Class changes: remove `variant="outline"`, `h-7`, `border-amber-500/30`, `rounded-full`, `mt-1.5`; add `bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1.5 rounded-md text-[11px] font-sans font-medium hover:bg-amber-500/20`
+- Info icon (`Info` from lucide, `w-3 h-3 opacity-70`) appended inside the button as the tooltip trigger anchor
 
