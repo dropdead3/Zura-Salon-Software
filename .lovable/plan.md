@@ -1,84 +1,34 @@
 
 
-## Enhance Transfers — Quantity Validation, Receive & Verify, Batch Templates
+## Remove Brand from Catalog
 
-### 1. Quantity Validation Against Source Stock
+### What It Does
+Adds a **"Remove Brand"** button to the brand detail header (next to "Sync from Zura Library") that removes the selected brand's products from the salon's catalog and untracking them across all locations. This is for when a salon decides to stop carrying a product line entirely.
 
-**Problem**: Users can currently enter any quantity when creating a transfer, even if the source location doesn't have enough stock.
+### Safety
+- **Two-step confirmation dialog** with:
+  - Brand name displayed prominently
+  - Count of products to be removed and locations affected
+  - Explanation: "This will deactivate all {brand} products and remove tracking from all locations. Stock movement history will be preserved."
+  - Destructive button styling ("Remove {brand}")
 
-**Changes:**
+### What Happens on Confirm
+1. **Delete `location_product_settings`** rows for all products of this brand across all locations in the org
+2. **Set `is_active = false`** on all products in the `products` table matching the brand + org (soft delete — preserves history)
+3. **Navigate back** to the brand grid (clear `selectedBrand`)
+4. **Invalidate** `backroom-product-catalog`, `location-product-settings`, `backroom-inventory-table`, `backroom-setup-health`, `product-brands` queries
 
-- **`TransfersTab.tsx`** — When a "From Location" is selected, fetch that location's inventory via the existing `products` table (`quantity_on_hand`). For each line item in the dialog:
-  - Show available stock next to the quantity input (e.g. "Available: 12")
-  - Validate that entered quantity ≤ on-hand; highlight the input red and disable "Create Transfer" if exceeded
-  - Account for other pending outbound transfers from the same location for the same product (subtract already-pending quantities from available stock)
-
-- **`src/hooks/useStockTransfers.ts`** — Add a `usePendingOutboundQuantities(locationId)` query that sums quantities from pending transfers (and their lines) for each product at a given location. This prevents double-booking.
-
-### 2. Receive & Verify Step
-
-**Problem**: The current "Complete" action assumes the destination received exactly what was sent. In reality, quantities may differ (damage, miscounts).
-
-**Changes:**
-
-- **Database migration** — Add columns to `stock_transfer_lines`:
-  - `received_quantity` (integer, nullable, default null)
-  - `received_at` (timestamptz, nullable)
-  - `discrepancy_notes` (text, nullable)
-
-- **Transfer status flow** — Introduce `in_transit` status between `pending` and `completed`:
-  ```text
-  pending → in_transit (sender dispatches) → completed (receiver verifies)
-  ```
-  The existing `status` column already supports any string value.
-
-- **`TransfersTab.tsx`** — Replace the single "Complete" button behavior:
-  - Pending transfers show a "Dispatch" button → sets status to `in_transit`
-  - `in_transit` transfers show a "Receive & Verify" button → opens a dialog where the destination manager enters actual received quantities per line
-  - Pre-fills expected quantities; highlights discrepancies
-  - On confirm: updates `received_quantity` on each line, sets status to `completed`, and posts ledger entries using the *received* quantities (not the expected ones)
-  - Auto-logs discrepancy notes to the transfer's `notes` field
-
-- **`useStockTransfers.ts`** — Add `useDispatchTransfer` mutation (sets status to `in_transit`) and update `useCompleteStockTransfer` to accept per-line received quantities
-
-- **Status badges** — Add `in_transit` to the badge map with a distinct color (e.g. blue/info variant)
-
-### 3. Batch Transfer Templates
-
-**Problem**: Recurring transfers (e.g. weekly replenishment from warehouse to salon) require re-entering the same products each time.
-
-**Changes:**
-
-- **Database migration** — Create two tables:
-  - `transfer_templates`: `id`, `organization_id`, `name`, `from_location_id`, `to_location_id`, `notes`, `created_by`, `created_at`
-  - `transfer_template_lines`: `id`, `template_id` (FK), `product_id` (FK), `quantity`, `unit`
-
-- **`src/hooks/inventory/useTransferTemplates.ts`** (new) — CRUD hooks:
-  - `useTransferTemplates(orgId)` — list all templates
-  - `useCreateTransferTemplate()` — save current dialog state as a template
-  - `useDeleteTransferTemplate()`
-  - `useTransferTemplateLines(templateId)` — fetch lines for a template
-
-- **`TransfersTab.tsx`** — Two new UI elements:
-  - **"Save as Template"** button in the New Transfer dialog footer (after filling products) — saves the current from/to locations and line items as a named template
-  - **"From Template"** dropdown/button next to "New Transfer" — lists saved templates; selecting one pre-fills the dialog with the template's locations and products, ready for quantity adjustments and submission
-
-### Files Summary
+### Changes
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/backroom-settings/inventory/TransfersTab.tsx` | Validation UI, dispatch/receive flow, template save/load |
-| `src/hooks/useStockTransfers.ts` | `usePendingOutboundQuantities`, `useDispatchTransfer`, updated complete with received quantities |
-| `src/hooks/inventory/useTransferTemplates.ts` | **New** — template CRUD hooks |
-| `src/hooks/inventory/useStockTransferLines.ts` | No changes needed (received_quantity updates go through `useCompleteStockTransfer`) |
-| Database migration | Add `received_quantity`, `received_at`, `discrepancy_notes` to `stock_transfer_lines`; create `transfer_templates` + `transfer_template_lines` tables with RLS |
+| `src/components/dashboard/backroom-settings/BackroomProductCatalogSection.tsx` | Add a `useRemoveBrandFromCatalog` mutation + "Remove Brand" button (Trash2 icon) in the brand detail header + AlertDialog with destructive confirmation |
 
-### Status Flow After Changes
-
-```text
-pending ──→ in_transit ──→ completed
-   │                           ↑
-   │                    (receive & verify)
-   └──→ cancelled
-```
+### Implementation Detail
+- New inline mutation `removeBrandMutation` that:
+  1. Fetches product IDs for the brand: `SELECT id FROM products WHERE organization_id = ? AND brand ILIKE ? AND is_active = true AND product_type = 'Supplies'`
+  2. Deletes from `location_product_settings` using `.in('product_id', ids)`
+  3. Sets `is_active = false` on those products
+- Button placed after "Sync from Zura Library", using `variant="ghost"` with `text-destructive` styling
+- Confirmation dialog shows: product count, location count, and a warning that this is irreversible from the catalog view
 
