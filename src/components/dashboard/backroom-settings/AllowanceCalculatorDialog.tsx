@@ -684,7 +684,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
@@ -762,7 +762,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </div>
                       )}
 
-                      {/* Color product lines */}
+                      {/* Color product lines — capped height with independent scroll */}
+                      <div className="max-h-[240px] overflow-y-auto rounded-md border border-border/20 bg-background/50">
                       <AnimatePresence mode="popLayout">
                       {colorLines.map((line) => (
                         <motion.div
@@ -790,10 +791,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                               <button
                                 key={g}
                                 className={cn(
-                                  'px-2.5 py-1 rounded-full text-xs font-sans transition-colors border',
-                                  line.quantity === g
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                   'px-2 py-1 rounded-full text-xs font-sans transition-colors border',
+                                   line.quantity === g
+                                     ? 'bg-primary text-primary-foreground border-primary'
+                                     : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
                                 )}
                                 onClick={() => updateLineQuantity(bowlIdx, line.localId, g)}
                               >
@@ -862,10 +863,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                     <button
                                       key={r}
                                       className={cn(
-                                        'px-2.5 py-1 rounded-full text-xs font-sans transition-colors border',
-                                        line.developerRatio === r
-                                          ? 'bg-primary text-primary-foreground border-primary'
-                                          : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                       'px-2 py-1 rounded-full text-xs font-sans transition-colors border',
+                                       line.developerRatio === r
+                                         ? 'bg-primary text-primary-foreground border-primary'
+                                         : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
                                       )}
                                       onClick={() => updateDevRatio(bowlIdx, line.localId, r)}
                                     >
@@ -901,6 +902,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           </AnimatePresence>
                         </div>
                       )}
+                      </div>
 
                       {/* Brand → Category → Product picker */}
                       {renderPickerPanel(bowlIdx)}
