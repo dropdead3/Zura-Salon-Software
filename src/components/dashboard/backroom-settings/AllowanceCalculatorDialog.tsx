@@ -1623,6 +1623,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       </div>
                     </TooltipContent>
                   </Tooltip>
+                  {healthResult.status === 'high' && healthResult.suggestedAllowance && (
+                    <div className="flex items-center gap-2">
+                      <div className="text-[11px] font-sans text-amber-600 dark:text-amber-400 px-2.5 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/30">
+                        Max product budget: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
+                      </div>
+                      <MetricInfoTooltip
+                        description="At your current service price, the 8% industry target means your total product cost (at retail) should not exceed this amount."
+                        className="w-3.5 h-3.5 text-amber-500/60"
+                      />
+                    </div>
+                  )}
                   {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
                     <div className="flex items-center gap-2">
                       <Popover open={highPricePopoverOpen} onOpenChange={setHighPricePopoverOpen}>
@@ -1676,13 +1687,24 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       />
                     </div>
                   )}
+                  {healthResult.status === 'healthy' && healthResult.suggestedAllowance && (
+                    <div className="flex items-center gap-2">
+                      <div className="text-[11px] font-sans text-emerald-600 dark:text-emerald-400 px-2.5 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30">
+                        Product budget at 8%: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
+                      </div>
+                      <MetricInfoTooltip
+                        description="Based on your service price and the 8% target, you can spend up to this amount on product while maintaining ideal margins."
+                        className="w-3.5 h-3.5 text-emerald-500/60"
+                      />
+                    </div>
+                  )}
                   {healthResult.status === 'low' && healthResult.suggestedAllowance && (
                     <div className="flex items-center gap-2">
                       <div className="text-[11px] font-sans text-blue-600 dark:text-blue-400 px-2.5 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/30">
                         Upgrade budget: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
                       </div>
                       <MetricInfoTooltip
-                        description="You have room to invest in a more premium product line up to this amount while staying within the ideal 6–10% range, or maintain current margins as pricing flexibility."
+                        description="You have room to invest in a more premium product line up to this amount while staying within the ideal 6–10% range, or maintain current margins as pricing flexibility. You could spend up to this amount to go more luxury."
                         className="w-3.5 h-3.5 text-blue-500/60"
                       />
                     </div>
