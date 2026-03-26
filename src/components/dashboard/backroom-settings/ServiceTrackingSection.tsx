@@ -771,7 +771,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             />
                                           </div>
                                           <div className="space-y-1.5">
-                                            <label className="text-[10px] font-sans text-muted-foreground">
+                                             <label className="text-xs font-sans text-muted-foreground flex items-center gap-1">
                                               Variance Threshold
                                               <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
                                             </label>
