@@ -1047,24 +1047,26 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     </TooltipContent>
                   </Tooltip>
                   {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
-                      disabled={updateServicePriceMutation.isPending}
-                      onClick={() => updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!)}
-                    >
-                      {updateServicePriceMutation.isPending ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <ArrowRight className="w-3 h-3" />
-                      )}
-                      Use ${healthResult.suggestedServicePrice} suggested price
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
+                        disabled={updateServicePriceMutation.isPending}
+                        onClick={() => updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!)}
+                      >
+                        {updateServicePriceMutation.isPending ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <ArrowRight className="w-3 h-3" />
+                        )}
+                        Use ${healthResult.suggestedServicePrice} suggested price
+                      </Button>
                       <MetricInfoTooltip
                         description="Calculated using the Vish 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
-                        className="w-3 h-3 text-amber-500/60"
+                        className="w-3.5 h-3.5 text-amber-500/60"
                       />
-                    </Button>
+                    </div>
                   )}
                 </div>
               ) : servicePrice && servicePrice > 0 ? (
