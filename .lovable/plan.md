@@ -1,45 +1,54 @@
 
 
-## Fix Dialog Layout — Pin Footer, Scroll Bowl Content
+## Redesign Bowl Layout — Split Pane with Fixed Product Picker
 
 ### Problem
-When multiple products are added to a bowl, the content grows and pushes the Total Allowance and Save button below the viewport edge. The DialogContent uses CSS `grid` (from the base component) which doesn't properly constrain the middle scroll area between the pinned header and footer.
+From the screenshot: when 6+ products are added to a bowl, the product lines push the product picker (brand/category/product browser) out of view. The user has to scroll past all bowl lines to reach the picker. Additionally, the weight presets + cost info on the right side of each row are getting clipped at the dialog's `max-w-2xl` width.
 
-### Root Cause
-Line 687: `DialogContent` has `max-w-2xl max-h-[90vh] p-0 overflow-hidden` but inherits `grid` from the base dialog component. Line 701: `ScrollArea` uses a hardcoded `max-h-[calc(90vh-200px)]` which doesn't adapt to the actual header/footer heights. The combination allows content to overflow.
+### Solution: Two-Panel Layout Within Each Bowl
 
-### Fix (Single File)
+Split each bowl's expanded content into **two vertically stacked sections with independent scroll**, or better — a **side-by-side layout** that keeps the picker always visible alongside the bowl lines.
 
-**`AllowanceCalculatorDialog.tsx`**
+Given the dialog is `max-w-2xl` (672px), side-by-side would be too cramped. Instead:
 
-1. **Line 687** — Add `flex flex-col` to DialogContent className so header, scroll area, and footer stack properly:
-   ```
-   className="max-w-2xl max-h-[90vh] p-0 overflow-hidden flex flex-col"
-   ```
+**Stack layout with a capped bowl-lines section:**
+1. Bowl lines section: capped at `max-h-[240px]` with its own scroll — shows added products
+2. Product picker section: always visible below, never pushed out by bowl growth
+3. Widen dialog to `max-w-4xl` to give horizontal breathing room for weight presets + cost
 
-2. **Line 701** — Replace the hardcoded `max-h` on ScrollArea with flex-based sizing so it fills remaining space between header and footer:
-   ```
-   className="flex-1 min-h-0 overflow-hidden"
-   ```
-   `min-h-0` is critical — it allows the flex child to shrink below its content size, enabling the scroll area to actually scroll.
+### Changes to `AllowanceCalculatorDialog.tsx`
 
-3. **Footer (line 954)** — Add `shrink-0` to the footer div so it never collapses:
-   ```
-   className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0"
-   ```
+**1. Widen dialog (line 687):**
+```
+max-w-2xl → max-w-4xl
+```
+This gives ~896px, enough for swatch + name + 5 weight presets + custom input + cost + delete without clipping.
 
-4. **Header (line 688)** — Add `shrink-0` to prevent header compression:
-   ```
-   className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0"
-   ```
+**2. Cap bowl lines height (lines 766-827, the color lines area):**
+Wrap the color lines + developer lines in a container with `max-h-[240px] overflow-y-auto` so they scroll independently. This keeps the product picker always visible below them.
+
+```tsx
+<div className="max-h-[240px] overflow-y-auto">
+  {/* Color lines AnimatePresence */}
+  {/* Developer lines section */}
+</div>
+```
+
+**3. Product picker stays outside the capped scroll area** — it's already at line 906 (`renderPickerPanel`), positioned after the lines. With the lines capped, the picker is always reachable.
+
+**4. Compact product rows on smaller widths:**
+- Reduce weight preset pill padding from `px-2.5` to `px-2`
+- This is minor but helps at the wider width
 
 ### Result
-- Header stays pinned at top
-- Footer (total + save) stays pinned at bottom, always visible
-- Bowl content scrolls independently in the middle
-- Works regardless of how many products are added
+- Bowl lines scroll within a 240px cap — 4-5 products visible, rest scrollable
+- Product picker is always visible and accessible below the lines
+- Wider dialog prevents right-side clipping of weight presets and cost
+- Footer (total + save) remains pinned at bottom as before
+
+### Files
 
 | File | Action |
 |------|--------|
-| `AllowanceCalculatorDialog.tsx` | Fix 4 classNames for flex column layout |
+| `AllowanceCalculatorDialog.tsx` | Widen dialog, add scroll cap to bowl lines, keep picker below |
 
