@@ -1,28 +1,24 @@
 
 
-## Move Info Icon Inline with "Variance Threshold"
+## Add Tooltip to "No allowance" Label
 
 ### Change
-Move the `MetricInfoTooltip` from below the label text to inline, right next to "Variance Threshold" on the same line. Also bump the label text to `text-xs` for consistency with the vessel sizing changes.
+Add a `MetricInfoTooltip` next to the "No allowance" text in the service drill-down row, explaining that allowance policies are configured in the Allowances & Billing section.
 
 ### Technical Detail
 
-**File: `ServiceTrackingSection.tsx`** (lines 774–777)
+**File: `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (around line 681)
 
-Change the label from a block layout to an inline flex layout:
+When `hasAllowance` is false, add a tooltip after the "No allowance" span:
 
 ```tsx
-// Before
-<label className="text-[10px] font-sans text-muted-foreground">
-  Variance Threshold
-  <MetricInfoTooltip description="..." />
-</label>
-
-// After
-<label className="text-xs font-sans text-muted-foreground flex items-center gap-1">
-  Variance Threshold
-  <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
-</label>
+<div className="flex items-center gap-1">
+  <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
+  <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
+  {!hasAllowance && (
+    <MetricInfoTooltip description="No allowance policy has been set for this service. Allowance policies are configured in the Allowances & Billing section of the Backroom Hub." />
+  )}
+</div>
 ```
 
 ### File Modified
