@@ -4,7 +4,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useServiceTrackingComponents, useUpsertTrackingComponent, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
+
 import { useServiceAllowancePolicies, useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { isSuggestedChemicalService } from '@/utils/serviceCategorization';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -19,9 +19,9 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Trash2, Zap, ArrowRight, CircleDot, AlertTriangle, Package, FileText, ChevronDown, ChevronRight, Search, Sparkles, CheckCircle2, RotateCcw, Check } from 'lucide-react';
+import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, Sparkles, CheckCircle2, RotateCcw, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -59,7 +59,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchRef = useRef<HTMLInputElement>(null);
   const touchStartRef = useRef<{ y: number; id: string } | null>(null);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  
   const activeFilter = (searchParams.get('filter') as FilterTab) || 'all';
   const setActiveFilter = (tab: FilterTab) => {
     setSearchParams(prev => {
@@ -114,7 +114,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
   const { data: allowancePolicies } = useServiceAllowancePolicies();
-  const { data: allComponents } = useServiceTrackingComponents();
+  
 
   const { data: categoryOrder } = useQuery({
     queryKey: ['service-category-colors-order', orgId],
@@ -226,13 +226,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   // Derived data
   const allServices = services || [];
-  const componentsByService = useMemo(() => {
-    const map = new Map<string, number>();
-    (allComponents || []).forEach((c) => {
-      map.set(c.service_id, (map.get(c.service_id) || 0) + 1);
-    });
-    return map;
-  }, [allComponents]);
 
   const allowanceByService = useMemo(() => {
     const map = new Map<string, typeof allowancePolicies extends (infer T)[] | undefined ? T : never>();
@@ -280,7 +273,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         tooltip: 'Define supply allowances and overage billing rules for tracked services.',
       },
     ];
-  }, [allServices, componentsByService, allowanceByService]);
+  }, [allServices, allowanceByService]);
 
   // Filtered list
   const filteredServices = useMemo(() => {
@@ -296,7 +289,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       default:
         return allServices;
     }
-  }, [allServices, activeFilter, componentsByService, allowanceByService]);
+  }, [allServices, activeFilter, allowanceByService]);
 
   // Search filter (applied after tab filter)
   const searchedServices = useMemo(() => {
@@ -334,7 +327,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     untracked: allServices.filter(s => !s.is_backroom_tracked).length,
     attention: allServices.filter(s => needsAttention(s)).length,
     uncategorized: allServices.filter(s => !s.category).length,
-  }), [allServices, componentsByService, allowanceByService]);
+  }), [allServices, allowanceByService]);
 
   // Suggested untracked for auto-detect banner
   const suggestedUntracked = allServices.filter(
@@ -546,7 +539,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     const currentCategory = service.category || 'Other';
                     const showCategoryHeader = currentCategory !== prevCategory;
                     const type = getServiceType(service);
-                    const hasComponents = componentsByService.has(service.id);
                     const hasAllowance = allowanceByService.has(service.id);
                     const attention = needsAttention(service);
                     const isExpanded = expandedIds.has(service.id);
@@ -782,17 +774,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   </div>
                                                );
                                              })()}
-                                             <div className="flex items-center gap-2 shrink-0">
-                                               <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 text-xs"
-                                                onClick={() => setSelectedServiceId(service.id)}
-                                              >
-                                                <Package className="w-3 h-3 mr-1" />
-                                                Components
-                                              </Button>
-                                            </div>
                                           </div>
                                           )}
                                         {/* Toggles grid */}
@@ -1016,15 +997,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         />
       )}
 
-      {/* Component mapping dialog */}
-      {selectedServiceId && (
-        <ComponentMappingDialog
-          serviceId={selectedServiceId}
-          serviceName={services?.find((s) => s.id === selectedServiceId)?.name || ''}
-          orgId={orgId!}
-          onClose={() => setSelectedServiceId(null)}
-        />
-      )}
       {calculatorServiceId && (
         <AllowanceCalculatorDialog
           open={!!calculatorServiceId}
@@ -1038,132 +1010,3 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   );
 }
 
-function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
-  serviceId: string;
-  serviceName: string;
-  orgId: string;
-  onClose: () => void;
-}) {
-  const { data: components, isLoading } = useServiceTrackingComponents(serviceId);
-  const upsertComponent = useUpsertTrackingComponent();
-  const deleteComponent = useDeleteTrackingComponent();
-  const [addingProduct, setAddingProduct] = useState(false);
-
-  const { data: backroomProducts } = useQuery({
-    queryKey: ['backroom-products-for-mapping', orgId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, category')
-        .eq('organization_id', orgId)
-        .eq('is_active', true)
-        .eq('is_backroom_tracked', true)
-        .order('name');
-      if (error) throw error;
-      return data as { id: string; name: string; category: string | null }[];
-    },
-    enabled: !!orgId,
-  });
-
-  const mappedIds = new Set((components || []).map((c) => c.product_id));
-  const availableProducts = (backroomProducts || []).filter((p) => !mappedIds.has(p.id));
-
-  return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className={tokens.card.title}>{serviceName} — Components</DialogTitle>
-          <DialogDescription className={tokens.body.muted}>
-            Map tracked products that are consumed during this service.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-2 mt-4">
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-          ) : (
-            <>
-              {(components || []).map((comp) => (
-                <div key={comp.id} className="flex items-center gap-3 rounded-lg border p-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-sans font-medium text-foreground truncate">
-                      {backroomProducts?.find((p) => p.id === comp.product_id)?.name || comp.product_id}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <Badge variant="outline" className="text-xs">{comp.component_role}</Badge>
-                      {comp.estimated_quantity && (
-                        <span className="text-[10px] text-muted-foreground">{comp.estimated_quantity}{comp.unit}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <MetricInfoTooltip description="Required = always used. Optional = sometimes used. Conditional = depends on technique." />
-                    <Select
-                      value={comp.component_role}
-                      onValueChange={(v) => upsertComponent.mutate({
-                        organization_id: orgId,
-                        service_id: serviceId,
-                        product_id: comp.product_id,
-                        component_role: v,
-                      })}
-                    >
-                      <SelectTrigger className="w-[100px] h-7 text-[10px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['required', 'optional', 'conditional', 'estimated', 'manual'].map((r) => (
-                          <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteComponent.mutate(comp.id)}
-                    className="text-muted-foreground hover:text-destructive h-8 w-8"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              ))}
-
-              {addingProduct ? (
-                <Select
-                  onValueChange={(productId) => {
-                    upsertComponent.mutate({
-                      organization_id: orgId,
-                      service_id: serviceId,
-                      product_id: productId,
-                    });
-                    setAddingProduct(false);
-                  }}
-                >
-                  <SelectTrigger className="w-full font-sans text-sm">
-                    <SelectValue placeholder="Select a product..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableProducts.map((p) => (
-                      <SelectItem key={p.id} value={p.id} className="text-sm">{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAddingProduct(true)}
-                  className="w-full"
-                  disabled={availableProducts.length === 0}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  {availableProducts.length === 0 ? 'No available products' : 'Add Component'}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
