@@ -117,3 +117,66 @@ export function useBulkUpsertLocationProductSettings() {
     onError: (error) => toast.error('Bulk update failed: ' + error.message),
   });
 }
+
+/** Sync tracked products from one location to all other active locations */
+export function useSyncCatalogToAllLocations() {
+  const orgId = useBackroomOrgId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      sourceLocationId,
+      targetLocationIds,
+      includeLevels,
+    }: {
+      sourceLocationId: string;
+      targetLocationIds: string[];
+      includeLevels: boolean;
+    }) => {
+      if (!orgId || targetLocationIds.length === 0) return { synced: 0, targets: 0 };
+
+      // 1. Fetch source location's tracked products
+      const { data: sourceSettings, error: fetchErr } = await supabase
+        .from('location_product_settings')
+        .select('product_id, is_tracked, par_level, reorder_level')
+        .eq('organization_id', orgId)
+        .eq('location_id', sourceLocationId)
+        .eq('is_tracked', true);
+      if (fetchErr) throw fetchErr;
+      if (!sourceSettings?.length) throw new Error('No tracked products found at this location');
+
+      // 2. Build upsert rows for each target location
+      const rows = targetLocationIds.flatMap((targetId) =>
+        sourceSettings.map((s: any) => ({
+          organization_id: orgId,
+          location_id: targetId,
+          product_id: s.product_id,
+          is_tracked: true,
+          par_level: includeLevels ? s.par_level : null,
+          reorder_level: includeLevels ? s.reorder_level : null,
+        }))
+      );
+
+      // 3. Batch upsert (Supabase handles up to ~1000 rows per call)
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('location_product_settings')
+          .upsert(batch as any[], { onConflict: 'location_id,product_id' });
+        if (error) throw error;
+      }
+
+      return { synced: sourceSettings.length, targets: targetLocationIds.length };
+    },
+    onSuccess: ({ synced, targets }) => {
+      queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      if (synced > 0) {
+        toast.success(`Synced ${synced} tracked products to ${targets} location${targets > 1 ? 's' : ''}`);
+      }
+    },
+    onError: (error) => toast.error('Sync failed: ' + error.message),
+  });
+}
