@@ -577,7 +577,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <div className="px-3 py-6 text-xs text-center text-muted-foreground">No products found</div>
             )}
             {filtered.map((p) => {
-              const cpg = getCostPerGram(p);
+              const cpg = getRetailCostPerGram(p, defaultMarkupPct);
               const isDevProduct = isDeveloperProduct(p);
               const isAlreadyAdded = addedProductIds.has(p.id);
               return (
