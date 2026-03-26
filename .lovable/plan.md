@@ -1,89 +1,45 @@
 
 
-## Service Price Recommendations Engine
+## Implement All Price Recommendation Engine Improvements
 
-### Concept
+### 1. Fix Dismiss Not Suppressing Alerts
+**`useServicePriceRecommendations.ts`** — In `useComputedPriceRecommendations`, fetch dismissed recommendations from `service_price_recommendations` (status = 'dismissed') and exclude those service IDs from results. Only exclude if the dismissal was for the same `current_price` and `recommended_price` (so new cost changes re-trigger alerts).
 
-When product costs change or a salon switches product lines, their service prices may no longer hit margin targets. This feature calculates **recommended service prices** based on actual product costs from recipe baselines, then lets owners accept recommendations with one click — propagating the change to base price, all stylist level prices, location prices, website, and booking wizard.
+### 2. Add Confirmation Dialog Before Accept
+**New: `PriceAcceptConfirmDialog.tsx`** — AlertDialog showing:
+- Service name, old price → new price, delta %
+- Count of level tiers and location tiers that will be scaled
+- "Confirm" and "Cancel" buttons
 
-### Data Layer
+**`PriceRecommendationCard.tsx`** — Wrap Accept in the confirmation dialog.
+**`PriceRecommendationsTable.tsx`** — Same confirmation wrapper for table Accept buttons.
+**`PriceRecommendations.tsx`** — "Accept All" gets a confirmation dialog listing count of services and total impact.
 
-**New table: `service_price_targets`**
-- `id`, `organization_id`, `service_id` (unique per service), `target_margin_pct` (e.g. 60 = 60%), `created_at`, `updated_at`
-- RLS: org member read/write via `is_org_member`
+### 3. Deep-Link from Inline Alert to Price Intelligence Page
+**`PriceRecommendationCard.tsx`** — Add a "View all →" text link that navigates to the Price Intelligence page using the org dashboard path.
 
-**New table: `service_price_recommendations`** (log of generated recommendations)
-- `id`, `organization_id`, `service_id`, `current_price`, `recommended_price`, `product_cost`, `margin_pct_current`, `margin_pct_target`, `status` (pending/accepted/dismissed), `accepted_at`, `created_at`
-- RLS: org member read/write
+### 4. Accept All Error Isolation
+**`PriceRecommendations.tsx`** — Replace sequential `mutateAsync` with `Promise.allSettled`, then report "X of Y applied" with failures listed via toast.
 
-### Calculation Engine
+### 5. Target Margin Blur-Save
+**`PriceRecommendationsTable.tsx`** — Add `onBlur` handler to the target margin input that saves valid values, matching existing Enter key logic.
 
-**New file: `src/lib/backroom/price-recommendation.ts`**
+### 6. Allowance Cost Comparison
+**`PriceRecommendationCard.tsx`** and **`PriceRecommendationsTable.tsx`** — If a `service_allowance_policies` row exists, show the allowance amount alongside product cost for comparison context. Requires joining allowance data in the hook.
 
-For each tracked chemical service:
-1. Sum product cost from `service_recipe_baselines`: `Σ(expected_quantity × cost_per_gram)`
-2. Apply target margin: `recommended_price = product_cost / (1 - target_margin_pct / 100)`
-3. Compare to current `services.price` → compute delta and current margin
-4. Flag if current margin < target margin by more than 2% (configurable threshold)
+### 7. Revenue Impact Weighted by Volume (Best-effort)
+**`useServicePriceRecommendations.ts`** — Query recent appointment counts per service (last 30 days from `appointments` table if available). Multiply delta × monthly volume for projected impact. Fall back to simple sum if no appointment data.
 
-### Hook
+### 8. Recommendation History View
+**New: `PriceRecommendationHistory.tsx`** — Collapsible section on the Price Intelligence page showing recent accept/dismiss actions with timestamps and user info, fetched from `service_price_recommendations`.
 
-**New file: `src/hooks/backroom/useServicePriceRecommendations.ts`**
-
-- `useServicePriceTargets(orgId)` — fetch/upsert per-service target margins
-- `useComputedPriceRecommendations(orgId)` — client-side calculation joining baselines, products, current prices, and targets
-- `useAcceptPriceRecommendation()` — mutation that:
-  1. Updates `services.price` to the recommended price
-  2. Calculates the ratio (`new_price / old_price`) and scales all `service_level_prices` proportionally
-  3. Scales all `service_location_prices` proportionally
-  4. Logs acceptance in `service_price_recommendations`
-  5. Invalidates all pricing query keys (website, booking, level prices)
-
-### UI — Inline Alerts (Service Tracking)
-
-In `ServiceTrackingSection.tsx`, for each service row that has a pending recommendation:
-- Show an amber badge: "Price below target margin"
-- In the drill-down, add a compact recommendation card:
-  - Current price → Recommended price (with delta)
-  - Product cost | Current margin | Target margin
-  - "Accept" button (primary) and "Dismiss" (ghost)
-
-### UI — Dedicated Price Intelligence Page
-
-**New page: `src/pages/dashboard/admin/PriceRecommendations.tsx`**
-
-A table of all tracked services with columns:
-- Service name | Category | Product Cost | Current Price | Current Margin % | Target Margin % (editable inline) | Recommended Price | Delta | Action (Accept / Dismiss)
-
-Header KPIs:
-- Services below target | Average margin gap | Total revenue impact if all accepted
-
-Batch actions: "Accept All" for bulk application.
-
-### Route & Navigation
-
-- Route: `/dashboard/admin/price-recommendations`
-- Nav entry in `dashboardNav.ts` under admin section with appropriate permission
-- Deep-link from Service Tracking inline alerts to the full page
-
-### Downstream Propagation
-
-When a recommendation is accepted, the mutation updates:
-1. `services.price` — base price (used by website and booking wizard)
-2. `service_level_prices` — all level rows scaled by the same ratio
-3. `service_location_prices` — all location rows scaled by the same ratio
-
-Since the website (`useNativeServicesForWebsite`) and booking wizard already read from these tables, no additional wiring is needed — query invalidation ensures fresh data.
-
-### Files
-
-| Layer | Files |
-|-------|-------|
-| Migration | New tables: `service_price_targets`, `service_price_recommendations` with RLS |
-| Engine | `src/lib/backroom/price-recommendation.ts` |
-| Hooks | `src/hooks/backroom/useServicePriceRecommendations.ts` |
-| Inline UI | `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (add recommendation card in drill-down) |
-| Page | `src/pages/dashboard/admin/PriceRecommendations.tsx` |
-| Components | `src/components/dashboard/backroom-settings/PriceRecommendationCard.tsx`, `PriceRecommendationsTable.tsx` |
-| Route + Nav | `App.tsx`, `src/config/dashboardNav.ts` |
+### Files Modified/Created
+| File | Change |
+|------|--------|
+| `src/hooks/backroom/useServicePriceRecommendations.ts` | Dismiss filtering, allowance join, volume weighting, history query |
+| `src/components/dashboard/backroom-settings/PriceAcceptConfirmDialog.tsx` | New confirmation dialog |
+| `src/components/dashboard/backroom-settings/PriceRecommendationCard.tsx` | Confirmation wrapper, deep-link, allowance display |
+| `src/components/dashboard/backroom-settings/PriceRecommendationsTable.tsx` | Confirmation wrapper, blur-save, allowance column |
+| `src/components/dashboard/backroom-settings/PriceRecommendationHistory.tsx` | New history component |
+| `src/pages/dashboard/admin/PriceRecommendations.tsx` | Accept All error isolation, history section, confirmation dialog |
 
