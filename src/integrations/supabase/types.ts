@@ -17826,6 +17826,51 @@ export type Database = {
           },
         ]
       }
+      service_allowance_bowls: {
+        Row: {
+          bowl_number: number
+          created_at: string
+          id: string
+          label: string
+          organization_id: string
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          bowl_number?: number
+          created_at?: string
+          id?: string
+          label?: string
+          organization_id: string
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          bowl_number?: number
+          created_at?: string
+          id?: string
+          label?: string
+          organization_id?: string
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_allowance_bowls_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_allowance_bowls_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_allowance_policies: {
         Row: {
           allowance_unit: string
@@ -18579,10 +18624,14 @@ export type Database = {
       }
       service_recipe_baselines: {
         Row: {
+          bowl_id: string | null
+          cost_per_unit_snapshot: number | null
           created_at: string
           created_by: string | null
+          developer_ratio: number | null
           expected_quantity: number
           id: string
+          is_developer: boolean
           notes: string | null
           organization_id: string
           product_id: string
@@ -18591,10 +18640,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bowl_id?: string | null
+          cost_per_unit_snapshot?: number | null
           created_at?: string
           created_by?: string | null
+          developer_ratio?: number | null
           expected_quantity?: number
           id?: string
+          is_developer?: boolean
           notes?: string | null
           organization_id: string
           product_id: string
@@ -18603,10 +18656,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bowl_id?: string | null
+          cost_per_unit_snapshot?: number | null
           created_at?: string
           created_by?: string | null
+          developer_ratio?: number | null
           expected_quantity?: number
           id?: string
+          is_developer?: boolean
           notes?: string | null
           organization_id?: string
           product_id?: string
@@ -18615,6 +18672,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "service_recipe_baselines_bowl_id_fkey"
+            columns: ["bowl_id"]
+            isOneToOne: false
+            referencedRelation: "service_allowance_bowls"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_recipe_baselines_organization_id_fkey"
             columns: ["organization_id"]
