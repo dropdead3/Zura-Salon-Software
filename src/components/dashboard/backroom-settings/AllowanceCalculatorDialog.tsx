@@ -316,7 +316,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
       toast.success('Service price updated');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error('Failed to update price: ' + err.message);
     },
   });
