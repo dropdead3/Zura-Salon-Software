@@ -176,8 +176,24 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
     );
   }
 
+  const [showEducation, setShowEducation] = useState(false);
+
   return (
     <div className="space-y-6">
+      {/* Collapsible billing method education */}
+      <Collapsible open={showEducation} onOpenChange={setShowEducation}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+            <BookOpen className="w-4 h-4" />
+            <span className="font-medium">Learn about billing methods</span>
+            <ChevronDown className={cn('w-4 h-4 transition-transform', showEducation && 'rotate-180')} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <BillingMethodEducation />
+        </CollapsibleContent>
+      </Collapsible>
+
       <Infotainer
         id="backroom-allowances-guide"
         title="Allowances & Billing"

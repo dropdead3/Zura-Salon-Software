@@ -24,7 +24,7 @@ import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
-const STEP_COUNT = 6;
+const STEP_COUNT = 7;
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
