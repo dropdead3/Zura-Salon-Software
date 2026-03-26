@@ -1,28 +1,20 @@
 
 
-## Add "and/or" Separator Between Vessel Chips
+## Increase Text Size for Vessel Selection Area
 
 ### Change
-Insert a small "and/or" text between the bowl and bottle toggle chips to signal that both can be selected simultaneously.
+Bump all text in the vessel selection row from tiny sizes (`text-[9px]`, `text-[10px]`) to readable sizes, and increase icon sizes to match.
 
 ### Technical Detail
 
-**File: `ServiceTrackingSection.tsx`** (lines 707–733)
+**File: `ServiceTrackingSection.tsx`** (lines 706–733)
 
-Replace the `.map()` rendering with explicit bowl and bottle buttons separated by an "and/or" label:
-
-```tsx
-<div className="flex items-center gap-1.5">
-  <span className="text-[10px] font-sans text-muted-foreground">Vessels:</span>
-  {/* Bowl chip */}
-  {renderVesselChip('bowl', service)}
-  <span className="text-[9px] font-sans text-muted-foreground/60 italic">and/or</span>
-  {/* Bottle chip */}
-  {renderVesselChip('bottle', service)}
-</div>
-```
-
-Extract the chip rendering into a small inline helper or simply unroll the two chips with the separator between them. The "and/or" text uses `text-[9px]` italic muted styling so it reads as a hint without competing with the chips.
+| Element | Current | New |
+|---------|---------|-----|
+| "Vessels:" label | `text-[10px]` | `text-xs` (12px) |
+| "and/or" separator | `text-[9px]` | `text-xs` |
+| Chip button text | `text-[10px]`, `px-2.5 py-0.5` | `text-xs`, `px-3 py-1` |
+| Chip icons | `w-2.5 h-2.5` | `w-3 h-3` |
 
 ### File Modified
 - `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
