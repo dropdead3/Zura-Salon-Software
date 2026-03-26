@@ -267,6 +267,12 @@ export function SalesTabContent({
                 <SubtabFavoriteStar tab="sales" subtab="correlations" label="Correlations" />
               </div>
             </VisibilityGate>
+            <VisibilityGate elementKey="sales_pricing_subtab" elementName="Pricing" elementCategory="Page Tabs">
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="pricing">Pricing</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="pricing" label="Pricing" />
+              </div>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6 space-y-6">
