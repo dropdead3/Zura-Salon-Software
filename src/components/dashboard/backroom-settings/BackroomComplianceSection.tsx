@@ -52,6 +52,7 @@ function getComplianceBadge(rate: number) {
 export function BackroomComplianceSection() {
   const [range, setRange] = useState<RangeKey>('7d');
   const [staffFilter, setStaffFilter] = useState<string>('all');
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
   const { from, to } = useMemo(() => getDateRange(range), [range]);
