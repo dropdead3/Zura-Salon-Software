@@ -296,9 +296,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, [bowls]);
 
   const healthResult: AllowanceHealthResult | null = useMemo(() => {
-    if (!servicePrice || servicePrice <= 0 || grandTotal <= 0) return null;
-    return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice });
-  }, [grandTotal, servicePrice]);
+    if (effectiveServicePrice <= 0 || grandTotal <= 0) return null;
+    return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice: effectiveServicePrice });
+  }, [grandTotal, effectiveServicePrice]);
 
   const queryClient = useQueryClient();
 
