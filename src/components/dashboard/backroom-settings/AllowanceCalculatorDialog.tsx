@@ -1040,8 +1040,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         <span>of ${servicePrice?.toFixed(0)} service</span>
                         <span className="text-[10px] opacity-70">
                           {healthResult.status === 'healthy' && '— within target range'}
-                          {healthResult.status === 'high' && `— consider $${healthResult.suggestedServicePrice?.toFixed(0)} service price`}
-                          {healthResult.status === 'low' && '— room to increase product quality'}
+                          {healthResult.status === 'high' && '— consider raising service price or reducing product usage'}
+                          {healthResult.status === 'low' && '— consider increasing product quality or adjusting service price'}
                         </span>
                       </div>
                     </TooltipTrigger>
@@ -1064,7 +1064,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         <span className="tabular-nums">${servicePrice?.toFixed(2)}</span>
                       </div>
                       <div className="text-[10px] text-muted-foreground/70 pt-1">
-                        Target: 6–10% of service price (8% ideal)
+                        Target: 6–10% of service price (8% ideal). Adjust by changing service price or product amounts.
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -1085,7 +1085,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         Use ${healthResult.suggestedServicePrice} suggested price
                       </Button>
                       <MetricInfoTooltip
-                        description="Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
+                        description="Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also reduce product quantities in the bowls above to bring costs down, or adjust service pricing from Price Intelligence in the Backroom Hub."
                         className="w-3.5 h-3.5 text-amber-500/60"
                       />
                     </div>
