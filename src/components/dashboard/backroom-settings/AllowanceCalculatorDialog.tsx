@@ -430,7 +430,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     onClick={() => toggleBowlCollapse(bowlIdx)}
                   >
                     <div className="flex items-center gap-2">
-                      <Beaker className="w-4 h-4 text-primary" />
+                      {(() => { const Icon = VesselIcon(bowl.vesselType); return <Icon className="w-4 h-4 text-primary" />; })()}
                       <span className="text-sm font-sans font-medium text-foreground">{bowl.label}</span>
                       {bowl.lines.length > 0 && (
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
