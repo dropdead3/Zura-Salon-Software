@@ -711,7 +711,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, grandTotal, saving]);
+  }, [open, grandTotal, saving, handleSave]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
