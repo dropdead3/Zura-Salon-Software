@@ -161,6 +161,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       return data as CatalogProduct[];
     },
     enabled: !!orgId && open,
+    staleTime: 120_000,
   });
 
   const { data: existingBowls } = useAllowanceBowls(serviceId);
