@@ -918,7 +918,24 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   >
                     <div className="flex items-center gap-2">
                       {(() => { const Icon = VesselIcon(bowl.vesselType); return <Icon className="w-4 h-4 text-primary" />; })()}
-                      <span className="text-sm font-sans font-medium text-foreground">{bowl.label}</span>
+                      {editingLabelIdx === bowlIdx ? (
+                        <Input
+                          autoFocus
+                          value={bowl.label}
+                          className="h-6 w-32 text-sm font-sans px-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateBowlLabel(bowlIdx, e.target.value)}
+                          onBlur={() => setEditingLabelIdx(null)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') setEditingLabelIdx(null); }}
+                        />
+                      ) : (
+                        <span
+                          className="text-sm font-sans font-medium text-foreground cursor-text hover:underline decoration-dashed underline-offset-2"
+                          onClick={(e) => { e.stopPropagation(); setEditingLabelIdx(bowlIdx); }}
+                        >
+                          {bowl.label}
+                        </span>
+                      )}
                       {bowl.lines.length > 0 && (
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
