@@ -633,6 +633,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           <DialogDescription className="text-sm font-sans text-muted-foreground">
             {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
           </DialogDescription>
+          <p className="text-xs font-sans text-muted-foreground/70 mt-2 leading-relaxed">
+            Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference.
+          </p>
         </DialogHeader>
 
         <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
