@@ -516,10 +516,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, []);
 
   const updateDevRatio = useCallback((bowlIdx: number, lineLocalId: string, ratio: number) => {
+    // Clamp ratio to safe range [0.5, 4]
+    const clamped = Math.min(4, Math.max(0.5, ratio || 1));
     setBowls((prev) =>
       prev.map((b, i) => {
         if (i !== bowlIdx) return b;
-        const lines = b.lines.map((l) => (l.localId === lineLocalId ? { ...l, developerRatio: ratio } : l));
+        const lines = b.lines.map((l) => (l.localId === lineLocalId ? { ...l, developerRatio: clamped } : l));
         const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
         lines.forEach((line) => {
           line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
