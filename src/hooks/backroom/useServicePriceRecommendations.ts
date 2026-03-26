@@ -344,19 +344,14 @@ export function useDismissPriceRecommendation() {
     },
     onMutate: async (rec) => {
       await queryClient.cancelQueries({ queryKey: ['computed-price-recommendations'] });
-      const prev = queryClient.getQueryData<EnrichedPriceRecommendation[]>(['computed-price-recommendations', orgId]);
-      if (prev) {
-        queryClient.setQueryData(
-          ['computed-price-recommendations', orgId],
-          prev.filter(r => r.service_id !== rec.service_id)
-        );
-      }
-      return { prev };
+      queryClient.setQueriesData<EnrichedPriceRecommendation[]>(
+        { queryKey: ['computed-price-recommendations'] },
+        (old) => old?.filter(r => r.service_id !== rec.service_id)
+      );
+      return {};
     },
-    onError: (_err, _rec, context) => {
-      if (context?.prev) {
-        queryClient.setQueryData(['computed-price-recommendations', orgId], context.prev);
-      }
+    onError: (_err, _rec, _context) => {
+      queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
       toast.error('Failed to dismiss: ' + _err.message);
     },
     onSettled: () => {

@@ -173,7 +173,12 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
             {sorted.map((rec) => {
               const isIncrease = rec.price_delta > 0;
               return (
-                <TableRow key={rec.service_id}>
+                <TableRow key={rec.service_id} className={cn(
+                  'border-l-2',
+                  rec.is_below_target
+                    ? 'border-l-amber-400 dark:border-l-amber-600'
+                    : 'border-l-emerald-400 dark:border-l-emerald-600'
+                )}>
                   <TableCell className="font-sans text-sm font-medium">{rec.service_name}</TableCell>
                   <TableCell className="font-sans text-sm text-muted-foreground">{rec.category || '—'}</TableCell>
                   <TableCell className="text-right font-sans text-sm tabular-nums">${rec.product_cost.toFixed(2)}</TableCell>
