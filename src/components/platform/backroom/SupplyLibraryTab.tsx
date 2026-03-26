@@ -1171,6 +1171,7 @@ function AddEditDialog({
     setBrand(product?.brand || '');
     setName(product?.name || '');
     setCategory(product?.category || 'color');
+    setColorType(product?.color_type || '');
     setDepletion(product?.default_depletion || 'weighed');
     setUnit(product?.default_unit || 'g');
     setSizes(product?.size_options?.join(', ') || '');
