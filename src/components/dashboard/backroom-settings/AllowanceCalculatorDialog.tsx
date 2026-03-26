@@ -924,9 +924,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {p.name}
                       {/* Cross-bowl indicator */}
                       {(() => {
-                        const otherBowl = bowls.find((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === p.id));
-                        return otherBowl ? (
-                          <span className="ml-1 text-[9px] text-muted-foreground/60">in {otherBowl.label}</span>
+                        const bowlLabels = productBowlMap.get(p.id) || [];
+                        const currentBowlLabel = bowls[bowlIdx]?.label;
+                        const otherLabels = bowlLabels.filter(l => l !== currentBowlLabel);
+                        return otherLabels.length > 0 ? (
+                          <span className="ml-1 text-[9px] text-muted-foreground/60">in {otherLabels[0]}</span>
                         ) : null;
                       })()}
                     </div>
