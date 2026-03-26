@@ -79,6 +79,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const upsertPolicy = useUpsertAllowancePolicy();
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
+  const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
