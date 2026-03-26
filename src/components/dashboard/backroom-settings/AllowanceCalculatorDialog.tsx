@@ -495,7 +495,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left group"
                 onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category, search: '' })}
               >
-                <span className="text-xs font-sans text-foreground">{category}</span>
+                <span className="text-xs font-sans text-foreground">{formatCategoryLabel(category)}</span>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{count}</Badge>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
