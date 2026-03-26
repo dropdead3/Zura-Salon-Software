@@ -1,68 +1,70 @@
 
 
-## Configure Allowance & Product Allowance Calculator — Gap Analysis (Round 4)
+## Configure Allowance & Product Allowance Calculator — Gap Analysis (Round 5)
 
-Full review of the 1,606-line dialog, save logic, database constraints, hooks, and ServiceTrackingSection integration after three rounds of improvements.
-
----
-
-### Bugs / Data Integrity
-
-**1. Same product in multiple bowls is silently broken (P0)**
-The `service_recipe_baselines` table has a `UNIQUE(organization_id, service_id, product_id)` constraint. The `useUpsertRecipeBaseline` hook uses `onConflict: 'organization_id,service_id,product_id'`. This means if a user adds the same product to Bowl 1 and Bowl 2, the second upsert overwrites the first row — only one baseline survives, assigned to the last bowl processed. The UI allows this (and even shows a "Also in Bowl 1" badge), but the database physically cannot store it.
-
-**Fix:** Migration to drop the unique constraint and replace with `UNIQUE(organization_id, service_id, product_id, bowl_id)`. Update the upsert hook to use plain `.insert()` instead of `.upsert()` since `handleSave` already deletes all existing baselines first (delete-then-recreate pattern makes upsert unnecessary).
-
-**2. `useUpsertRecipeBaseline` suppresses individual toast on every line save (P1)**
-During `handleSave`, each baseline triggers `toast.success('Formula baseline saved')` via the mutation's `onSuccess`. With 8+ products across 2 bowls, this fires 16+ success toasts before the final "Product allowance saved" toast. The individual toasts should be suppressed during batch saves.
-
-**Fix:** Add a `silent` option to the mutation, or call `mutateAsync` and handle success/error at the batch level only (the `onSuccess` in the hook should check a flag or the caller should use a raw supabase call instead of the mutation for batch operations).
-
-**3. `useUpsertAllowanceBowl` also fires individual toasts (P1)**
-Same issue — each bowl insert triggers the mutation's `onError` handler with toast. The `onSuccess` doesn't toast, but errors would show per-bowl error toasts stacking up.
+After four rounds of improvements, the dialog is at 1,654 lines and the ServiceTrackingSection at 1,067 lines. Reviewing all logic, state management, save flow, picker, footer, and integration points.
 
 ---
 
-### UX Gaps
+### Bugs
 
-**4. No indication of which products have zero cost-per-gram (P1)**
-Products with `cost_per_gram = null` and no derivable cost (missing `cost_price` or `container_size`) silently add at $0.0000/g. The line shows "$0.00" cost but doesn't warn the user that the product has no pricing data. This leads to artificially low allowance calculations.
+**1. Query cache thrashing during save (P1)**
+Each `upsertBaseline.mutateAsync()` call triggers `queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] })` in the hook's `onSuccess`. For a recipe with 8 products across 2 bowls, this fires 16 invalidation + refetch cycles during the save loop. The `upsertBowl.mutateAsync()` hook similarly invalidates `['allowance-bowls']` per bowl. This causes unnecessary network traffic and potential UI flicker if the dialog re-renders mid-save.
 
-**Fix:** Show an inline warning badge on lines where `costPerGram === 0`, e.g., "No cost data" with a tooltip explaining the product needs cost-per-gram or cost-price + container-size in the catalog.
+**Fix:** Bypass the mutation hooks during `handleSave` and use raw supabase calls for the batch insert loop (already done for deletes). Call `queryClient.invalidateQueries` once at the end after all inserts complete.
 
-**5. Picker doesn't indicate already-added products across bowls (P2)**
-The product picker checkbox only checks against the current bowl's `addedProductIds`. A product added to Bowl 1 shows as unchecked when browsing in Bowl 2's picker, with no visual hint it's already used elsewhere. The "Also in Bowl 1" badge only appears after adding.
+**2. `useEffect` dependency causes bowls to reset on catalog load (P1)**
+Line 278: `useEffect` depends on `[open, existingBowls, existingBaselines, catalogProducts]`. When the dialog opens, `catalogProducts` may load after bowls/baselines, triggering the effect a second time. If the user has already started editing (added a product), the state resets to the loaded baselines.
 
-**Fix:** Show a subtle indicator (e.g., small dot or "in Bowl 1" text) on picker items that exist in other bowls.
+**Fix:** Add a `hasInitialized` ref that prevents re-running the initialization after the first successful load within an `open` session.
 
-**6. Developer ratio input allows values outside safe range (P2)**
-The ratio `<Input>` has `min="0.5"` and `max="4"` attributes, but HTML number inputs don't enforce min/max on typed values. A user can type `0` or `10`, which would calculate extreme quantities. The `updateDevRatio` callback doesn't clamp.
+**3. Undo refs are stale after state updates (P2)**
+`removedBowlRef` and `removedLineRef` capture closure state at removal time. If the user removes item A, then removes item B, then clicks "Undo" on A, the undo restores A using stale bowl state. Only the most recent removal can be undone reliably, but the UI shows undo toasts for all removals.
 
-**Fix:** Clamp the ratio value in `updateDevRatio` to `[0.5, 4]` range.
-
-**7. Custom quantity input allows 0 (P2)**
-The quantity `<Input>` has `min="1"` but the `onChange` uses `Math.max(1, ...)`. However, if the user clears the field and blurs, `parseInt('') || 1` catches it — but while the field is empty, intermediate renders show `NaN` or `0`. Add an `onBlur` handler to force-commit valid values.
-
-**8. Closing dialog after save still shows unsaved-changes warning (P1)**
-Line 628: `onOpenChange(false)` is called after save, but the `onOpenChange` handler on line 910–918 checks `isDirty`. Although `initialBowlsRef` is updated at line 624, React's state batching means the `isDirty` memo may not have re-evaluated by the time the `onOpenChange` callback fires. This can cause a false "unsaved changes" warning flash.
-
-**Fix:** Call `onOpenChange(false)` via `setTimeout(() => onOpenChange(false), 0)` or set a `justSaved` ref that bypasses the dirty check.
+**Fix:** Dismiss previous removal toasts when a new removal occurs (`toast.dismiss(previousToastId)`), or use an undo stack instead of single refs.
 
 ---
 
-### Enhancements
+### Performance
 
-**9. "Low" health status should offer actionable "reduce price" button (P2)**
-When allowance is below 6%, the UI shows a static pill with the suggested allowance amount but no action button (unlike "high" which has "Use $X suggested price"). Add a "Use $X price" button for the low case that sets the service price to bring allowance to 8%.
+**4. Expensive inline computations in render (P2)**
+Lines 1162–1169: The "Also in Bowl X" badge runs `bowls.findIndex(...)` for every color line on every render. Lines 1185–1191: Finding the catalog product for wholesale cost display also runs per-line per-render. With 20+ lines, this is O(n×m) per render.
 
-**10. Footer layout breaks on narrow viewports (P2)**
-The footer's flex layout (`justify-between`) doesn't wrap gracefully below ~700px. The health indicator, modeled price input, and save button overlap. Add responsive wrapping (`flex-wrap`) and stack on mobile.
+**Fix:** Pre-compute a `productToBowlMap` and a `productCostMap` in `useMemo` outside the render loop.
 
-**11. No visual progress during multi-step save (P3)**
-The saving overlay shows "Saving allowance..." but doesn't indicate progress (e.g., "Deleting old data... Saving Bowl 1... Saving Bowl 2... Updating policy..."). For services with 3+ bowls this takes several seconds with no feedback.
+**5. `catalogProducts` query fetches up to 2000 rows per dialog open (P2)**
+The products query runs every time the dialog opens (`enabled: !!orgId && open`). For salons with large catalogs, this is a heavy fetch on every calculator open.
 
-**12. Copy summary doesn't include developer ratio context (P3)**
-The copy summary includes developer gram amounts but doesn't explain the ratio logic for recipients unfamiliar with the format. Add a brief note like "(1:2 ratio with color)" next to developer lines.
+**Fix:** Add `staleTime: 120_000` (2 min) to the catalog query so repeated opens reuse cached data.
+
+---
+
+### UX Polish
+
+**6. No keyboard shortcut to save (P2)**
+The dialog supports `Escape` to close but has no `Cmd+S` / `Ctrl+S` to save. Users familiar with keyboard shortcuts expect this in an editor-style dialog.
+
+**Fix:** Add a `useEffect` with `keydown` listener for `Cmd+S` / `Ctrl+S` that calls `handleSave` when `grandTotal > 0 && !saving`.
+
+**7. Product picker search doesn't persist when navigating back (P2)**
+When a user searches in the brand step, navigates to a category, then clicks back, the search is reset to empty (line 689/715 clears search on step change). Users may want to refine their search after drilling down.
+
+**Fix:** Keep search value when navigating back to a parent step (only clear search on forward navigation).
+
+**8. No confirmation before applying suggested price (P2)**
+Both "Use $X suggested price" buttons (high/low health) directly mutate the database. While an undo toast is shown, accidental clicks on a destructive price change should have a brief confirmation or at minimum a more prominent undo mechanism.
+
+**Fix:** Show a brief confirmation popover ("Change service price from $X to $Y?") before executing the mutation.
+
+**9. Developer lines don't show "No cost data" warning (P1)**
+The zero-cost warning badge (lines 1173–1184) only appears in color lines. Developer products with `costPerGram === 0` silently contribute $0.00, which is equally problematic.
+
+**Fix:** Add the same "No cost data" badge to the developer line render block (~line 1269).
+
+**10. Cross-bowl indicator missing in developer lines (P2)**
+The "Also in Bowl X" badge only renders for color lines (1162–1169). Developer products used in multiple bowls don't show this indicator.
+
+**Fix:** Add the same cross-bowl check to the developer line render.
 
 ---
 
@@ -70,22 +72,21 @@ The copy summary includes developer gram amounts but doesn't explain the ratio l
 
 | Priority | # | Change | Scope |
 |----------|---|--------|-------|
-| P0 | 1 | Fix unique constraint + upsert for multi-bowl same product | Migration + useServiceRecipeBaselines.ts |
-| P1 | 2 | Suppress per-line toasts during batch save | AllowanceCalculatorDialog.tsx |
-| P1 | 3 | Suppress per-bowl error toast stacking | AllowanceCalculatorDialog.tsx |
-| P1 | 4 | Warn on zero-cost products | AllowanceCalculatorDialog.tsx |
-| P1 | 8 | Fix false dirty warning after save | AllowanceCalculatorDialog.tsx |
-| P2 | 5 | Cross-bowl indicator in picker | AllowanceCalculatorDialog.tsx |
-| P2 | 6 | Clamp developer ratio input | AllowanceCalculatorDialog.tsx |
-| P2 | 7 | Validate quantity on blur | AllowanceCalculatorDialog.tsx |
-| P2 | 9 | Add "reduce price" action for low health | AllowanceCalculatorDialog.tsx |
-| P2 | 10 | Responsive footer wrapping | AllowanceCalculatorDialog.tsx |
-| P3 | 11 | Save progress indicator | AllowanceCalculatorDialog.tsx |
-| P3 | 12 | Developer ratio in copy summary | AllowanceCalculatorDialog.tsx |
+| P1 | 1 | Batch invalidation — raw inserts in handleSave | AllowanceCalculatorDialog.tsx |
+| P1 | 2 | Guard against re-initialization on catalog load | AllowanceCalculatorDialog.tsx |
+| P1 | 9 | Zero-cost warning on developer lines | AllowanceCalculatorDialog.tsx |
+| P2 | 3 | Dismiss stale undo toasts | AllowanceCalculatorDialog.tsx |
+| P2 | 4 | Pre-compute product maps for render perf | AllowanceCalculatorDialog.tsx |
+| P2 | 5 | Add staleTime to catalog query | AllowanceCalculatorDialog.tsx |
+| P2 | 6 | Cmd+S keyboard shortcut to save | AllowanceCalculatorDialog.tsx |
+| P2 | 7 | Preserve search on picker back-navigation | AllowanceCalculatorDialog.tsx |
+| P2 | 8 | Confirmation before suggested price apply | AllowanceCalculatorDialog.tsx |
+| P2 | 10 | Cross-bowl indicator on developer lines | AllowanceCalculatorDialog.tsx |
 
 ### Technical Approach
 
-- **Item 1** requires a database migration to alter the unique constraint on `service_recipe_baselines` from `(org, service, product)` to `(org, service, product, bowl_id)`. The `bowl_id` column must become `NOT NULL` for the constraint to work properly. The upsert hook switches to plain insert since the delete-then-recreate pattern makes conflict resolution unnecessary.
-- **Items 2–3** are solved by using raw supabase calls in `handleSave` instead of the mutation hooks (which have built-in toast handlers), or by adding a `silent` parameter to the hooks.
-- **Items 4–12** are UI-only changes within AllowanceCalculatorDialog.tsx.
+- **Item 1**: Replace `upsertBaseline.mutateAsync()` / `upsertBowl.mutateAsync()` in handleSave with direct `supabase.from(...).insert(...)` calls. Single `queryClient.invalidateQueries` at end of save.
+- **Item 2**: Add `const hasInitRef = useRef(false)` — set to `true` after first initialization, reset to `false` when `open` becomes `false`.
+- **Items 4**: Create `const productBowlMap = useMemo(...)` mapping `productId → bowlLabel[]` and `const wholesaleCostMap = useMemo(...)` mapping `productId → wholesaleCpg`.
+- **Items 9–10**: Duplicate the "No cost data" badge and cross-bowl badge logic into the developer lines render block.
 
