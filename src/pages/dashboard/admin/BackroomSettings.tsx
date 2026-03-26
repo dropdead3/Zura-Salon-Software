@@ -233,7 +233,7 @@ export default function BackroomSettings() {
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
         {/* Setup Banner — persistent across all sections */}
         <BackroomSetupBanner
-          setupHealth={health as any}
+          setupHealth={bannerHealth}
           wizardCompleted={wizardCompleted}
           onNavigate={handleNavigate}
           onResumeSetup={() => {
