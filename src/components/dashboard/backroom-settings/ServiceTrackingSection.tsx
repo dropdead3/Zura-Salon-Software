@@ -629,7 +629,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
                                 )}
                                 {service.backroom_config_dismissed && (
-                                  <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">Configured ✓</Badge>
+                                  <Badge variant="outline" className="text-[10px] shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
                                 )}
                                 {service.is_backroom_tracked && !service.backroom_config_dismissed && (
                                   <div className="flex items-center gap-1 shrink-0">
@@ -829,6 +829,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                  setTimeout(() => {
+                                                    setExpandedIds(prev => {
+                                                      const next = new Set(prev);
+                                                      next.delete(service.id);
+                                                      return next;
+                                                    });
+                                                  }, 400);
                                                 }}
                                               >
                                                 Finalize Configuration
@@ -908,6 +915,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   onClick={(e) => {
                                                     e.stopPropagation();
                                                     updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                    setTimeout(() => {
+                                                      setExpandedIds(prev => {
+                                                        const next = new Set(prev);
+                                                        next.delete(service.id);
+                                                        return next;
+                                                      });
+                                                    }, 400);
                                                   }}
                                                 >
                                                   Finalize Configuration
