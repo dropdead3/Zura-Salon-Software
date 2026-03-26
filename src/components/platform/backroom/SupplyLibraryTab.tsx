@@ -1296,6 +1296,19 @@ function AddEditDialog({
               </Select>
             </div>
           </div>
+          {category === 'color' && (
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Color Type</Label>
+              <Select value={colorType} onValueChange={setColorType}>
+                <SelectTrigger className="font-sans text-xs"><SelectValue placeholder="Select type…" /></SelectTrigger>
+                <SelectContent>
+                  {COLOR_TYPES.map((ct) => (
+                    <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="font-sans text-xs">Size Options (comma-separated)</Label>
             <Input value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="e.g. 60ml, 120ml" className="font-sans" />
