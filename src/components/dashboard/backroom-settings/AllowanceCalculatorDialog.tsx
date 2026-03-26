@@ -263,6 +263,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
   }, [bowls]);
 
+  const healthResult: AllowanceHealthResult | null = useMemo(() => {
+    if (!servicePrice || servicePrice <= 0 || grandTotal <= 0) return null;
+    return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice });
+  }, [grandTotal, servicePrice]);
+
   const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
     setBowls((prev) => [
       ...prev,
