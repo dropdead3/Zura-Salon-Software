@@ -323,17 +323,21 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     (bowlIdx: number, product: CatalogProduct) => {
       const cpg = getRetailCostPerGram(product, defaultMarkupPct);
       const asDeveloper = isDeveloperProduct(product);
+      // Give developers a default 30g quantity when no color lines exist in the bowl
+      const currentBowl = bowls[bowlIdx];
+      const hasColorLines = currentBowl?.lines.some((l) => !l.isDeveloper) ?? false;
+      const devDefaultQty = asDeveloper && !hasColorLines ? 30 : (asDeveloper ? 0 : 30);
       const newLine: BowlLine = {
         localId: crypto.randomUUID(),
         productId: product.id,
         productName: product.name,
         brand: product.brand,
         swatchColor: product.swatch_color,
-        quantity: asDeveloper ? 0 : 30,
+        quantity: devDefaultQty,
         costPerGram: cpg,
         isDeveloper: asDeveloper,
         developerRatio: 1,
-        lineCost: asDeveloper ? 0 : Math.round(30 * cpg * 100) / 100,
+        lineCost: devDefaultQty > 0 ? Math.round(devDefaultQty * cpg * 100) / 100 : 0,
       };
 
       setBowls((prev) =>
