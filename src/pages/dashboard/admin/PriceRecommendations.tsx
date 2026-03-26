@@ -239,9 +239,12 @@ export default function PriceRecommendationsPage() {
                 <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  {kpis.hasVolume ? 'Monthly Revenue Impact' : 'Revenue Impact'}
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    {kpis.hasVolume ? 'Monthly Revenue Impact' : 'Revenue Impact'}
+                  </p>
+                  <MetricInfoTooltip description="Estimated additional monthly revenue if all below-target services are repriced to their target margin. Weighted by 30-day appointment volume when available." className="w-3 h-3" />
+                </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>
                   {kpis.weightedImpact >= 0 ? '+' : ''}${kpis.weightedImpact.toFixed(2)}
                 </p>
