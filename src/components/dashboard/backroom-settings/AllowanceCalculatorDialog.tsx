@@ -1042,7 +1042,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               const bowlHealthPct = effectiveServicePrice > 0 ? ((bowlCost / effectiveServicePrice) * 100) : null;
 
               return (
-                <div key={bowl.id || `new-${bowlIdx}`} className={cn(
+                <div key={bowl.id || `new-${bowlIdx}`} aria-label={`${bowl.label} — ${bowl.lines.length} products`} className={cn(
                   "rounded-xl border overflow-hidden",
                   bowl.vesselType === 'bottle'
                     ? "border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/5"
