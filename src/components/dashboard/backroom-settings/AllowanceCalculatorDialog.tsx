@@ -765,7 +765,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 ${grandTotal.toFixed(2)}
               </div>
               <div className="text-[11px] font-sans text-muted-foreground">
-                {Math.round(totalWeight)}g total across {bowls.filter((b) => b.lines.length > 0).length} bowl(s)
+                {Math.round(totalWeight)}g total across {bowls.filter((b) => b.lines.length > 0).length} vessel(s)
               </div>
             </div>
             <Button
