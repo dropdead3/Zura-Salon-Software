@@ -1624,39 +1624,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       )}
                     </div>
                   )}
-                  {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-3 text-[11px] font-sans rounded-full border-amber-500/30 text-amber-600 hover:bg-amber-500/10 mt-1.5"
-                          onClick={() => {
-                            const oldPrice = servicePrice;
-                            updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
-                              onSuccess: () => {
-                                const toastId = toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
-                                  action: oldPrice ? {
-                                    label: 'Undo',
-                                    onClick: () => {
-                                      toast.dismiss(toastId);
-                                      updateServicePriceMutation.mutate(oldPrice);
-                                    },
-                                  } : undefined,
-                                  duration: 6000,
-                                });
-                              },
-                            });
-                          }}
-                        >
-                          Adjust to ${healthResult.suggestedServicePrice}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[280px] text-xs">
-                        Based on your retail product cost of ${grandTotal.toFixed(2)}, raising the service price to ${healthResult.suggestedServicePrice} would bring product cost to the 8% industry target. Price is rounded up to the nearest $5.
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
                 </div>
               ) : effectiveServicePrice > 0 ? (
                 <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
