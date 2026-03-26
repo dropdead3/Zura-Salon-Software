@@ -189,6 +189,7 @@ export default {
         "shimmer": "shimmer 3s ease-in-out infinite",
         "swing": "swing 1s ease-in-out infinite",
         "skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite",
+        "nudge-right": "nudge-right 1s ease-in-out infinite",
       },
     },
   },
