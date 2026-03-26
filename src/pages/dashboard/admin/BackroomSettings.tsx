@@ -45,6 +45,7 @@ import { MultiLocationSection } from '@/components/dashboard/backroom-settings/M
 import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
 import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
 
 
 type BackroomSection =
