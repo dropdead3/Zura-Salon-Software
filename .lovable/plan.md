@@ -1,19 +1,32 @@
 
 
-## Make "Add Bowl" / "Add Bottle" Buttons More Noticeable
+## Fix Bowl/Bottle Renumbering After Deletion
+
+### Problem
+When a bowl is deleted, `bowlNumber` is correctly renumbered (`i + 1`), but the `label` property (e.g. "Bowl 2") is not updated to match. So "Bowl 2" stays as "Bowl 2" even when it becomes the only bowl.
 
 ### Change
 
 **File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-Replace the current `border-dashed` outline buttons (lines 1507–1527) with a slightly more prominent style:
+Update the `.map()` in three places to also regenerate the label using the existing `vesselLabel` helper:
 
-- Remove `border-dashed` — use a solid border instead
-- Add `border-border/80` for a more visible border
-- Add `bg-muted/40 hover:bg-muted/70` for a subtle fill that makes them stand out from the dark background
-- Keep `text-xs`, `h-9`, `flex-1`, `variant="outline"`, and `size="sm"` unchanged
+1. **`removeBowl` handler (line 380):**
+   ```tsx
+   return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
+   ```
+
+2. **Undo handler (line 395):**
+   ```tsx
+   return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
+   ```
+
+3. **Save auto-remove empty bowls (line 617):**
+   ```tsx
+   const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
+   ```
 
 ### Scope
-- Single file, 2 className strings updated (one per button)
-- No logic changes
+- Single file, 3 lines changed
+- No logic or UI changes beyond label consistency
 
