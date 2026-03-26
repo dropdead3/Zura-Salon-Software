@@ -215,12 +215,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
   }, [bowls]);
 
-  const addBowl = useCallback(() => {
+  const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
     setBowls((prev) => [
       ...prev,
-      { id: null, bowlNumber: prev.length + 1, label: `Bowl ${prev.length + 1}`, lines: [], collapsed: false },
+      { id: null, bowlNumber: prev.length + 1, label: vesselLabel(type, prev.length + 1), vesselType: type, lines: [], collapsed: false },
     ]);
-  }, []);
+  }, [defaultVesselType]);
 
   const removeBowl = useCallback((idx: number) => {
     setBowls((prev) => {
