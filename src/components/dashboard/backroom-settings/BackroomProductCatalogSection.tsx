@@ -1320,6 +1320,65 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sync catalog to all locations confirmation dialog */}
+      <AlertDialog open={syncToAllOpen} onOpenChange={setSyncToAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={tokens.card.title}>Sync Catalog to All Locations</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  This will replicate the tracked product catalog from{' '}
+                  <strong className="text-foreground font-medium">
+                    {activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'this location'}
+                  </strong>{' '}
+                  to {activeLocations.length - 1} other location{activeLocations.length - 1 > 1 ? 's' : ''}.
+                </p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">What will be synced:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li><strong className="text-foreground">{trackedCount}</strong> tracked products</li>
+                    <li>Tracking status (enabled)</li>
+                    {syncIncludeLevels && <li>Par levels & reorder levels</li>}
+                  </ul>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Checkbox
+                    id="sync-include-levels"
+                    checked={syncIncludeLevels}
+                    onCheckedChange={(checked) => setSyncIncludeLevels(!!checked)}
+                  />
+                  <label htmlFor="sync-include-levels" className="text-sm font-sans text-foreground cursor-pointer">
+                    Include par levels & reorder levels
+                  </label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Existing tracking settings at other locations will be overwritten. Untracked products at those locations will not be affected.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!effectiveLocationId) return;
+                const targetIds = activeLocations
+                  .filter(l => l.id !== effectiveLocationId)
+                  .map(l => l.id);
+                syncCatalogMutation.mutate({
+                  sourceLocationId: effectiveLocationId,
+                  targetLocationIds: targetIds,
+                  includeLevels: syncIncludeLevels,
+                });
+              }}
+            >
+              Yes, sync to all locations
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
