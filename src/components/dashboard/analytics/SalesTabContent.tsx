@@ -73,6 +73,7 @@ import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareT
 import { CorrelationsContent } from '@/components/dashboard/analytics/CorrelationsContent';
 import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailAnalyticsContent';
 import { ServicesContent } from '@/components/dashboard/analytics/ServicesContent';
+import { PricingAnalyticsContent } from '@/components/dashboard/analytics/PricingAnalyticsContent';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
