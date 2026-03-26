@@ -1581,6 +1581,38 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       </div>
                     </TooltipContent>
                   </Tooltip>
+                  {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="text-[11px] font-sans px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-500/20 transition-colors cursor-pointer"
+                          onClick={() => {
+                            const oldPrice = servicePrice;
+                            updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
+                              onSuccess: () => {
+                                const toastId = toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
+                                  action: oldPrice ? {
+                                    label: 'Undo',
+                                    onClick: () => {
+                                      toast.dismiss(toastId);
+                                      updateServicePriceMutation.mutate(oldPrice);
+                                    },
+                                  } : undefined,
+                                  duration: 6000,
+                                });
+                              },
+                            });
+                          }}
+                        >
+                          Adjust to ${healthResult.suggestedServicePrice}
+                          <Info className="w-3 h-3 opacity-70" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[280px] text-xs">
+                        Adjusts the base service price to ${healthResult.suggestedServicePrice}. This will update the price on Service Tracking, the Price Intelligence engine, and any location/level overrides that reference this base price. Rounded up to the nearest $5.
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   {healthResult.suggestedAllowance && (
                     <div className="text-[11px] font-sans text-muted-foreground mt-1.5">
                       Based on your <span className="font-medium text-foreground">${effectiveServicePrice.toFixed(0)}</span> service price and an 8% target,{' '}
