@@ -759,9 +759,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                        className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
                                                        onClick={(e) => {
                                                          e.stopPropagation();
-                                                         setCalculatorServiceId(service.id);
-                                                         setCalculatorServiceName(service.name);
-                                                         setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                          setCalculatorServiceId(service.id);
+                                                          setCalculatorServiceName(service.name);
+                                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                          setCalculatorServicePrice(service.price);
                                                        }}
                                                      >
                                                        Edit
