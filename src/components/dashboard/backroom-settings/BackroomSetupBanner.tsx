@@ -75,7 +75,7 @@ export function BackroomSetupBanner({
                     }}
                     className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 dark:border-amber-500/50 hover:border-amber-500/60"
                   >
-                    Resume Setup
+                    {isFirstVisit ? 'Start Setup' : 'Resume Setup'}
                   </Button>
                 )}
                 {setupOpen ? (
