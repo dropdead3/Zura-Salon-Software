@@ -451,6 +451,15 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
             />
           )}
           {step === 4 && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className={tokens.body.emphasis}>Before setting allowances, understand how salons recover product costs.</p>
+                <p className="text-sm text-muted-foreground">This is educational context — you will configure billing mode per service in the next step.</p>
+              </div>
+              <BillingMethodEducation />
+            </div>
+          )}
+          {step === 5 && (
             <AllowancesStep
               services={services.filter((s) => trackedServiceIds.has(s.id))}
               allowances={allowances}
@@ -462,7 +471,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               }
             />
           )}
-          {step === 5 && (
+          {step === 6 && (
             <StationStep
               stationName={stationName}
               onNameChange={setStationName}
