@@ -108,6 +108,10 @@ export function BackroomComplianceSection() {
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>{RANGE_OPTIONS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={() => setReportDialogOpen(true)} disabled={!data || !data.staffBreakdown.length}>
+            <FileDown className="w-4 h-4 mr-1" />
+            Staff Report
+          </Button>
           <Button variant="outline" size="sm" onClick={() => evaluate.mutate({ date: today })} disabled={evaluate.isPending}>
             {evaluate.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
             Evaluate Today
