@@ -1,49 +1,35 @@
 
 
-## Build "Your Savings" Dashboard — Backroom Value & ROI Center
+## Your Savings — Gaps & Enhancements
 
-### Problem
-The existing `BackroomROICard` is a small card buried in the subscription page. Salon owners can't easily see how the backroom is saving them money, making it easy to question the subscription value. We need a prominent, transparent savings dashboard that builds retention by showing real data-driven value.
+### Issues Found
 
-### Approach
-Create a dedicated **"Your Savings"** section in the Backroom Hub sidebar (under Operations) that consolidates and expands on the existing ROI logic. Unlike the current card, this will break down *each savings category* with plain-English explanations of how every number is calculated.
+**1. No subscription cost comparison on the Savings page**
+The `BackroomROICard` on the subscription page shows savings *vs* subscription cost with a net benefit bar. The new Savings page shows total savings but never mentions what the subscription costs — so owners can't see the ROI ratio. The whole point is "you pay $X, you save $Y."
 
-### Data Sources (already available — no new tables needed)
-- **`backroom_analytics_snapshots`**: waste_pct, total_product_cost, ghost_loss_cost, total_waste_qty, avg_chemical_cost_per_service
-- **`checkout_usage_charges`**: supply cost recovery (recouped overage charges)
-- **`useBackroomROI`**: existing waste reduction vs baseline calculation
-- **`useSupplyCostRecovery`**: existing overage charge aggregation
+**2. All three category cards show $0 when data is zero — no differentiation**
+If waste savings is $0 (owner already below 12% baseline) the card just shows "$0.00" with no context. Should show a positive message like "Your waste is already below industry average — great job!" instead of looking broken.
 
-### Savings Categories (with transparent formulas)
+**3. No period selector**
+Hardcoded to 30 days with no way to toggle. Adding a simple 7d / 30d / 90d toggle would let owners see momentum and longer-term value.
 
-| Category | Calculation | Plain English |
-|----------|------------|---------------|
-| **Waste Reduction** | (12% baseline - your actual waste%) × avg daily product cost × 30 | "Industry average waste is 12%. Your backroom tracks at X%. That difference saves you $Y/month." |
-| **Ghost Product Recovery** | Sum of ghost_loss_cost from snapshots | "Product that went missing without being logged. Zura caught $X worth." |
-| **Supply Cost Recovery** | Sum of approved checkout_usage_charges | "Overage charges collected from clients when they exceed their service allowance." |
-| **Cost-per-Service Visibility** | Qualitative — show avg cost/service trend | "Knowing your true cost per service helps you price correctly. Your avg is $X." |
+**4. Duplicate logic with `useBackroomROI`**
+`useBackroomROI` and `useBackroomSavings` calculate the same waste reduction math independently. The ROI card on the subscription page uses one, the savings page uses the other. If the formula changes, they'll drift.
 
-### UI Design
+**5. Categories with $0 still render — clutters the view**
+If supply cost recovery is $0 (no overage charges yet), the card still renders and looks like a failure. Should either hide or show an "activate this" prompt.
 
-**Hero Section**: Large "Total Estimated Savings" number with a subtitle like "Based on X days of your real usage data" and a progress ring or bar showing savings vs subscription cost.
+**6. No cumulative / all-time view**
+Owners who've been subscribed for months want to see "You've saved $X total since joining" — not just the last 30 days.
 
-**Breakdown Cards**: Each savings category gets its own card with:
-- Icon + label + dollar amount
-- A small "How is this calculated?" expandable section (Collapsible) with the formula in plain language
-- Trend indicator (up/down vs prior period when enough data exists)
+### Proposed Changes
 
-**"How We Calculate" Footer**: A single collapsible panel explaining the industry baseline assumption (12% waste rate) and data sources, so owners trust the numbers.
-
-**Not Enough Data State**: Warm message with a progress indicator (X of 7 days) — reuses the existing pattern from `BackroomROICard`.
-
-### Changes
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/pages/dashboard/admin/BackroomSettings.tsx` | Add `'savings'` to `BackroomSection` union; add sidebar entry with `Coins` icon under Operations |
-| `src/hooks/backroom/useBackroomSavings.ts` | **New** — unified hook combining `useBackroomROI` logic + `useSupplyCostRecovery` into a single categorized breakdown |
-| `src/components/dashboard/backroom-settings/BackroomSavingsSection.tsx` | **New** — full savings dashboard with hero total, category cards, formula explanations, and subscription comparison |
+| `useBackroomSavings.ts` | Accept a `days` param (7/30/90); add `subscriptionCost` and `netBenefit` to the return; add `allTimeSavings` query (no date filter) |
+| `BackroomSavingsSection.tsx` | Add period toggle (7d/30d/90d); add subscription cost comparison bar (reuse the pattern from `BackroomROICard`); show contextual empty states per category ($0 waste = congratulatory, $0 supply = "enable overage charges"); add cumulative savings banner |
+| `BackroomROICard.tsx` | Refactor to consume `useBackroomSavings` instead of `useBackroomROI`, eliminating duplicate logic |
 
 ### Result
-Salon owners get a dedicated "Your Savings" page showing exactly how much money the backroom is saving them, with transparent formulas they can verify. This directly supports retention by making the cost-benefit undeniable.
+The Savings page becomes the single source of truth for backroom value — with period flexibility, subscription cost comparison, smart empty states, and cumulative totals that make the ROI undeniable over time.
 
