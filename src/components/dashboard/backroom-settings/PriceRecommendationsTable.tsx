@@ -179,7 +179,7 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
                     ? 'border-l-amber-400 dark:border-l-amber-600'
                     : 'border-l-emerald-400 dark:border-l-emerald-600'
                 )}>
-                  <TableCell className="font-sans text-sm font-medium">{rec.service_name}</TableCell>
+                  <TableCell className={tokens.body.emphasis}>{rec.service_name}</TableCell>
                   <TableCell className="font-sans text-sm text-muted-foreground">{rec.category || '—'}</TableCell>
                   <TableCell className="text-right font-sans text-sm tabular-nums">${rec.product_cost.toFixed(2)}</TableCell>
                   <TableCell className="text-right font-sans text-sm tabular-nums text-muted-foreground">
@@ -225,7 +225,7 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
                       </button>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-sans text-sm tabular-nums font-medium text-primary">
+                  <TableCell className={cn(tokens.body.emphasis, 'text-right tabular-nums text-primary')}>
                     ${rec.recommended_price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
