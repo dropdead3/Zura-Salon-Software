@@ -1,16 +1,18 @@
 
 
-## Add Allowance Explainer Text
+## Enhance Allowance Calculator Dialog UI
 
 ### Changes — `AllowanceCalculatorDialog.tsx`
 
-1. **Dialog description**: Below the current subtitle, add a concise explainer in `text-xs text-muted-foreground/70`:
+1. **Move description to tooltip** — Replace the full paragraph explainer (lines 636–638) with an `Info` icon tooltip next to "Product Allowance" in the `DialogTitle`. Use the existing `MetricInfoTooltip` component or inline `Tooltip`/`TooltipTrigger`/`TooltipContent`. The tooltip text stays the same.
 
-   > "Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference."
+2. **Import additions** — Add `Info` from lucide-react and `Tooltip, TooltipTrigger, TooltipContent` from `@/components/ui/tooltip`.
 
-2. **Empty state text**: Replace generic "Select a brand below…" with:
-   - Primary: "Add products to build a sample formula"
-   - Secondary: "Select a brand below, then choose products. Developers are auto-detected."
+3. **Header cleanup** — With the paragraph gone, the header becomes tighter: just the title (with info icon) and the service name subtitle.
+
+4. **Footer polish** — Style the footer summary with slightly more visual weight: larger dollar amount, subtle background differentiation.
+
+5. **Vessel card refinements** — Tighten spacing, ensure consistent border radius and padding per design tokens.
 
 ### Files Modified
 - `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
