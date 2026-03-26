@@ -611,8 +611,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error('Failed to save allowance: ' + err.message);
+    } catch (err: unknown) {
+      toast.error('Failed to save allowance: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setSaving(false);
     }
