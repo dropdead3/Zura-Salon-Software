@@ -62,7 +62,7 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   const badgeColor = getComplianceColor(staff.complianceRate);
   const badgeX = 14 + doc.getTextWidth(staffName) + 6;
   doc.setFillColor(...badgeColor);
-  const badgeW = doc.getTextWidth(badgeLabel) * 0.5 + 10;
+  const badgeW = doc.getTextWidth(badgeLabel) + 8;
   doc.roundedRect(badgeX, y - 5, badgeW, 7, 2, 2, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
