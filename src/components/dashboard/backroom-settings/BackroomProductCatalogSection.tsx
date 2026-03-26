@@ -1267,15 +1267,31 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search brands..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="font-sans pl-10"
-                />
+              {/* Search + Archived toggle */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={showArchived ? "Search archived brands..." : "Search brands..."}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="font-sans pl-10"
+                  />
+                </div>
+                {archivedBrands.length > 0 && (
+                  <Button
+                    variant={showArchived ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => { setShowArchived(!showArchived); setSearch(''); setActiveLetter(null); }}
+                    className="font-sans gap-1.5 shrink-0"
+                  >
+                    <Archive className="w-3.5 h-3.5" />
+                    Archived
+                    <Badge variant={showArchived ? 'secondary' : 'outline'} className="ml-0.5 text-[10px]">
+                      {archivedBrands.length}
+                    </Badge>
+                  </Button>
+                )}
               </div>
 
               {/* A-Z alphabet bar */}
