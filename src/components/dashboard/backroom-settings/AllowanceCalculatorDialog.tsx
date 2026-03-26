@@ -267,7 +267,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       return sum + bowl.lines.reduce((ls, line) => {
         const product = catalogProducts.find((p) => p.id === line.productId);
         const wholesaleCpg = product ? getWholesaleCostPerGram(product) : 0;
-        const effectiveQty = line.isDeveloper ? colorQty * line.developerRatio : line.quantity;
+        const effectiveQty = line.isDeveloper ? (colorQty > 0 ? colorQty * line.developerRatio : line.quantity) : line.quantity;
         return ls + Math.round(effectiveQty * wholesaleCpg * 100) / 100;
       }, 0);
     }, 0);
