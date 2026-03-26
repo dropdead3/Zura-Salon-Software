@@ -1,51 +1,49 @@
 
 
-## Rename "Reweigh Reports" → "Compliance Reports" + Add Staff Report Generator
+## Compliance Reports — Clean-Up & Enhancements
 
-### Changes
+### 1. Fix all remaining "Reweigh" → "Compliance" naming
 
-**1. Rename all "Reweigh Reports" references to "Compliance Reports"**
+**File: `BackroomComplianceSection.tsx`**
 
-| File | What changes |
-|------|-------------|
-| `BackroomSettings.tsx` | Sidebar label: `'Compliance Reports'`, tooltip updated |
-| `BackroomComplianceSection.tsx` | Infotainer title, h2 heading, subtitle, empty state text — all renamed from "Reweigh" to "Compliance" |
+| Line | Current | New |
+|------|---------|-----|
+| 1 | JSDoc: "Reweigh Reports" | "Compliance Reports" |
+| 138 | KPI label: "Reweigh Rate" | "Compliance Rate" |
+| 163 | KPI label: "Reweigh Rate" | "Reweigh Rate" (keep — this one is actually the reweigh-specific metric, but clarify) |
+| 229 | Chart title: "Reweigh & Waste Trend" | "Compliance & Waste Trend" |
+| 251/254 | Tooltip/legend: "Reweigh Rate" | "Compliance Rate" |
+| 269 | Leaderboard title: "Staff Reweigh Rates" | "Staff Compliance" |
 
-**2. Add "Prepare Staff Report" button + dialog to `BackroomComplianceSection.tsx`**
+Also clarify the two rate cards: Card 1 = "Compliance Rate" (has mix session + reweigh), Card 3 = "Reweigh Rate" (of those with sessions, how many reweighed). Different metrics, currently same label.
 
-- New `<Button>` in the header controls row (next to "Evaluate Today"): **"Staff Report"** with a `FileDown` icon
-- Clicking it opens a new `<StaffComplianceReportDialog>` component
+### 2. Sort staff leaderboard explicitly
 
-**3. Create `StaffComplianceReportDialog.tsx`** (new file)
+Add `.sort((a, b) => a.complianceRate - b.complianceRate)` before rendering the staff breakdown table so worst performers appear first (matches the tooltip promise).
 
-A dialog that lets admins quickly generate a 1:1 coaching report for a specific staff member:
+### 3. Show overflow count on Missing Sessions
 
-- **Step 1 — Pick Staff**: Dropdown populated from `data.staffBreakdown` (staff who have compliance data)
-- **Step 2 — Date Range**: Inherits the current range filter by default, with option to adjust
-- **Step 3 — Action**: "Download PDF" and "Print" buttons
+When more than 20 missing sessions exist, show a small "and X more" indicator below the list.
 
-**4. Create `staffComplianceReportPdf.ts`** (new utility)
+### 4. PDF improvements
 
-Generates the PDF using `jsPDF` + `jspdf-autotable` (already in the project). Report contents:
+**File: `staffComplianceReportPdf.ts`**
 
-- **Header**: Org name/logo, "Staff Compliance Report", staff name, date range, generated date
-- **Summary Card**: Compliance rate, reweigh rate, waste %, waste cost, total appointments, missed sessions
-- **Compliance Badge**: Strong / Watch / Needs Attention (matching the UI badges)
-- **Appointment Detail Table**: Date, service, compliance status, reweigh status, waste amount — from the filtered `items` array
-- **Coaching Notes Section**: Empty lined area for the admin to write notes during the 1:1 meeting
-- **Footer**: Page numbers, org name
+- Replace the non-functional "Waste %" column with "Overage" or remove it entirely
+- Add Reweigh Rate to the summary card (6 metrics instead of 5)
+- Fix badge width calculation — use full `getTextWidth` instead of `* 0.5` to prevent clipping "NEEDS ATTENTION"
 
-The PDF pulls data from the existing `useBackroomComplianceTracker` hook filtered to the selected staff member — no new database queries needed.
+### 5. Staff Report dialog — show date range context
 
-### Files
+**File: `StaffComplianceReportDialog.tsx`**
 
-| File | Action |
-|------|--------|
-| `src/pages/dashboard/admin/BackroomSettings.tsx` | Rename sidebar label |
-| `src/components/dashboard/backroom-settings/BackroomComplianceSection.tsx` | Rename headings; add "Staff Report" button; integrate dialog |
-| `src/components/dashboard/backroom-settings/compliance/StaffComplianceReportDialog.tsx` | **New** — staff picker + date range + download/print actions |
-| `src/utils/staffComplianceReportPdf.ts` | **New** — PDF generation with jsPDF |
+- Format the date range display more clearly (e.g., "Mar 19, 2026 → Mar 26, 2026" instead of raw yyyy-MM-dd)
 
-### Result
-Admins click "Staff Report" → pick a stylist → download or print a branded compliance report ready for their 1:1 coaching session.
+### Files changed
+
+| File | Changes |
+|------|---------|
+| `BackroomComplianceSection.tsx` | Rename labels, sort leaderboard, add overflow count |
+| `staffComplianceReportPdf.ts` | Fix badge width, swap dead column, add reweigh rate metric |
+| `StaffComplianceReportDialog.tsx` | Format date display |
 
