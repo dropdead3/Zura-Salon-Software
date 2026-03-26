@@ -207,7 +207,7 @@ export function PricingAnalyticsContent({
                   <MetricInfoTooltip description="Average product cost per service calculated from recipe baselines. Used as the cost basis for margin recommendations." className="w-3 h-3" />
                 </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>
-                  <BlurredAmount value={kpis.avgProductCost} prefix="$" />
+                  <BlurredAmount>${kpis.avgProductCost.toFixed(2)}</BlurredAmount>
                 </p>
               </div>
             </CardContent>
