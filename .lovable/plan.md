@@ -1,35 +1,42 @@
 
 
-## Your Savings — Gaps & Enhancements
+## Equalize Product Catalog Across All Locations
 
-### Issues Found
+### What It Does
+Adds a button to the Product Catalog page that takes the currently selected location's tracked products (from `location_product_settings`) and replicates that exact setup — including par levels and reorder levels — to all other active locations. This ensures every location tracks the same products with the same thresholds in one click.
 
-**1. No subscription cost comparison on the Savings page**
-The `BackroomROICard` on the subscription page shows savings *vs* subscription cost with a net benefit bar. The new Savings page shows total savings but never mentions what the subscription costs — so owners can't see the ROI ratio. The whole point is "you pay $X, you save $Y."
+### Where It Lives
+On the **Backroom Product Catalog** page header area, next to the location selector. A button labeled **"Sync to All Locations"** (with a `Building2` or `Copy` icon) appears only when there are 2+ active locations.
 
-**2. All three category cards show $0 when data is zero — no differentiation**
-If waste savings is $0 (owner already below 12% baseline) the card just shows "$0.00" with no context. Should show a positive message like "Your waste is already below industry average — great job!" instead of looking broken.
+### Flow
+1. Admin clicks "Sync to All Locations"
+2. A confirmation dialog shows:
+   - Source location name
+   - Number of tracked products being synced
+   - Number of target locations
+   - Warning that existing tracking settings at other locations will be overwritten
+   - Checkbox: "Include par levels & reorder levels" (default: checked)
+3. On confirm: upserts all tracked products from the source location into every other active location's `location_product_settings`, preserving `is_tracked`, `par_level`, and `reorder_level` values
+4. Success toast: "Synced 191 tracked products to 3 locations"
 
-**3. No period selector**
-Hardcoded to 30 days with no way to toggle. Adding a simple 7d / 30d / 90d toggle would let owners see momentum and longer-term value.
-
-**4. Duplicate logic with `useBackroomROI`**
-`useBackroomROI` and `useBackroomSavings` calculate the same waste reduction math independently. The ROI card on the subscription page uses one, the savings page uses the other. If the formula changes, they'll drift.
-
-**5. Categories with $0 still render — clutters the view**
-If supply cost recovery is $0 (no overage charges yet), the card still renders and looks like a failure. Should either hide or show an "activate this" prompt.
-
-**6. No cumulative / all-time view**
-Owners who've been subscribed for months want to see "You've saved $X total since joining" — not just the last 30 days.
-
-### Proposed Changes
+### Changes
 
 | File | Change |
 |------|--------|
-| `useBackroomSavings.ts` | Accept a `days` param (7/30/90); add `subscriptionCost` and `netBenefit` to the return; add `allTimeSavings` query (no date filter) |
-| `BackroomSavingsSection.tsx` | Add period toggle (7d/30d/90d); add subscription cost comparison bar (reuse the pattern from `BackroomROICard`); show contextual empty states per category ($0 waste = congratulatory, $0 supply = "enable overage charges"); add cumulative savings banner |
-| `BackroomROICard.tsx` | Refactor to consume `useBackroomSavings` instead of `useBackroomROI`, eliminating duplicate logic |
+| `src/hooks/backroom/useLocationProductSettings.ts` | Add `useSyncCatalogToAllLocations` mutation — reads source location's settings, bulk upserts to all other active locations |
+| `src/components/dashboard/backroom-settings/BackroomProductCatalogSection.tsx` | Add "Sync to All Locations" button (visible when 2+ locations) + confirmation `AlertDialog` with pre-flight summary |
 
-### Result
-The Savings page becomes the single source of truth for backroom value — with period flexibility, subscription cost comparison, smart empty states, and cumulative totals that make the ROI undeniable over time.
+### Logic Detail
+
+The new mutation:
+1. Fetches all `location_product_settings` rows where `location_id = sourceLocationId` and `is_tracked = true`
+2. For each target location, generates upsert rows copying `product_id`, `is_tracked`, `par_level`, `reorder_level`
+3. Batch upserts with `onConflict: 'location_id,product_id'`
+4. Optionally zeroes out par/reorder levels if the admin unchecks "Include par levels"
+5. Invalidates `location-product-settings`, `backroom-inventory-table`, `backroom-setup-health` queries
+
+### Safety
+- Confirmation dialog with explicit count of affected locations and products
+- Only syncs tracked products (untracked products at target locations are untouched)
+- Uses upsert (not delete+insert) so existing target settings are updated, not wiped
 
