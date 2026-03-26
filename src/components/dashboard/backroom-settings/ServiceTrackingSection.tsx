@@ -77,6 +77,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
   const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
   const upsertPolicy = useUpsertAllowancePolicy();
+  const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
+  const [calculatorServiceName, setCalculatorServiceName] = useState('');
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
