@@ -671,15 +671,24 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               );
             })}
           </div>
-          {/* Done button to return to brand selection */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full h-8 text-xs"
-            onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
-          >
-            Done Adding
-          </Button>
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-8 text-xs"
+              onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+            >
+              + Add Another Product
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 h-8 text-xs"
+              onClick={() => setPickerState(bowlIdx, { step: 'closed' })}
+            >
+              Done Adding
+            </Button>
+          </div>
         </div>
       );
     }
