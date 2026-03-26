@@ -715,7 +715,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {bowl.lines.length > 0 && (
                         <div className="flex justify-end pt-2 border-t border-border/30">
                           <span className="text-xs font-sans text-muted-foreground">
-                            Bowl Total:{' '}
+                            {bowl.vesselType === 'bottle' ? 'Bottle' : 'Bowl'} Total:{' '}
                             <span className="text-foreground font-medium">
                               {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
                             </span>
