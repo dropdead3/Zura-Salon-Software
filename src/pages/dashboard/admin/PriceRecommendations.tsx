@@ -29,6 +29,7 @@ import {
   useDefaultTargetMargin,
   useUpdateDefaultTargetMargin,
 } from '@/hooks/backroom/useServicePriceRecommendations';
+import { useServiceProfitabilitySnapshots } from '@/hooks/backroom/useServiceProfitability';
 import { toast } from 'sonner';
 
 export default function PriceRecommendationsPage() {
