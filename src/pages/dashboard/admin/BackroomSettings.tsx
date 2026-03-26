@@ -32,6 +32,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
 import { BackroomDashboardOverview } from '@/components/dashboard/backroom-settings/BackroomDashboardOverview';
+import { BackroomSetupBanner } from '@/components/dashboard/backroom-settings/BackroomSetupBanner';
+import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings/ServiceTrackingSection';
 import { RecipeBaselineSection } from '@/components/dashboard/backroom-settings/RecipeBaselineSection';
@@ -136,6 +138,9 @@ export default function BackroomSettings() {
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
+  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
+  const [showWizardFromBanner, setShowWizardFromBanner] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pollingRef = useRef(false);
@@ -226,6 +231,17 @@ export default function BackroomSettings() {
   return (
     <DashboardLayout>
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+        {/* Setup Banner — persistent across all sections */}
+        <BackroomSetupBanner
+          setupHealth={health as any}
+          wizardCompleted={wizardCompleted}
+          onNavigate={handleNavigate}
+          onResumeSetup={() => {
+            setActiveSection('overview');
+            setShowWizardFromBanner(true);
+          }}
+        />
+
         {/* Page Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
@@ -320,7 +336,14 @@ export default function BackroomSettings() {
 
           {/* Content area */}
           <div className="flex-1 min-w-0">
-            {activeSection === 'overview' && <BackroomDashboardOverview onNavigate={handleNavigate} initialSubTab={subTab} />}
+            {activeSection === 'overview' && (
+              <BackroomDashboardOverview
+                onNavigate={handleNavigate}
+                initialSubTab={subTab}
+                triggerWizard={showWizardFromBanner}
+                onWizardTriggered={() => setShowWizardFromBanner(false)}
+              />
+            )}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
             {activeSection === 'formulas' && <RecipeBaselineSection onNavigate={handleNavigate} />}
