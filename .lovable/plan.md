@@ -1,65 +1,65 @@
 
 
-## Right-Align Filters — Rule + Tokenization
+## Move Price Intelligence into Zura Backroom Hub
 
 ### Problem
-The "All Locations" filter on Price Intelligence (and similar toggle/select filters across pages) is left-aligned. The design standard calls for filters to be anchored to the right side of their container row, consistent with the existing memory rule: *"all filters (Location and Time Range) are anchored to the right-hand side of section headers."*
+Price Intelligence is a standalone page (`/admin/price-recommendations`) with its own sidebar nav entry showing as raw `nav.price_intelligence`. It should live inside the Backroom Hub as a section, consistent with the hub's sidebar architecture.
 
 ### Changes
 
-#### 1. Add `tokens.layout.filterRow` token
+#### 1. Add "Price Intelligence" section to BackroomSettings sidebar
 
-**File: `src/lib/design-tokens.ts`** — Add to the `layout` section:
+**File: `src/pages/dashboard/admin/BackroomSettings.tsx`**
 
-```ts
-/** Filter strip row — right-aligns filter controls. Use below page headers or section headers. */
-filterRow: 'flex items-center justify-end gap-3 flex-wrap',
-```
+- Add `'price-intelligence'` to the `BackroomSection` union type
+- Add a new entry in `sections` array under the `operations` group:
+  ```ts
+  { id: 'price-intelligence', label: 'Price Intelligence', icon: DollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
+  ```
+- Import `PriceRecommendationsContent` (a new wrapper) and render it in the content area:
+  ```tsx
+  {activeSection === 'price-intelligence' && <PriceRecommendationsContent />}
+  ```
 
-#### 2. Add design system rule
+#### 2. Extract page content into an embeddable component
 
-**File: `.cursor/rules/design-system.mdc`** — Add a new section under "Component Styling":
+**File: `src/pages/dashboard/admin/PriceRecommendations.tsx`**
 
-```
-## Filter Positioning (HARD RULE)
+- Extract the inner content (everything inside `<DashboardLayout>`) into a new exported component `PriceRecommendationsContent` that renders without `DashboardLayout` or `DashboardPageHeader` (the hub provides its own shell).
+- Keep the default export as-is for backward compatibility / redirect.
 
-Toggle filters, location selects, date-range tabs, and any page/section-level filter controls MUST be right-aligned using `tokens.layout.filterRow`:
+#### 3. Remove from sidebar nav
 
-\```tsx
-<div className={tokens.layout.filterRow}>
-  <LocationSelect ... />
-  <Tabs ...><TabsList>...</TabsList></Tabs>
-</div>
-\```
+**File: `src/config/dashboardNav.ts`**
 
-Filters sitting in a `justify-between` header row (title left, filters right) satisfy this rule automatically. Standalone filter rows below headers MUST use `tokens.layout.filterRow`.
-```
+- Remove the `price_intelligence` entry from `appsNavItems` so it no longer appears as a separate sidebar item.
 
-#### 3. Apply to Price Intelligence page
+#### 4. Add route redirect for bookmarks
 
-**File: `src/pages/dashboard/admin/PriceRecommendations.tsx` (~line 194)**
+**File: `src/App.tsx`**
 
-Replace:
-```tsx
-<div className="flex items-center gap-3">
-```
-With:
-```tsx
-<div className={tokens.layout.filterRow}>
-```
+- Keep the existing route but redirect `/admin/price-recommendations` → `/admin/backroom-settings?section=price-intelligence` so existing bookmarks and deep links still work.
 
-This right-aligns the LocationSelect on the page.
+#### 5. Update internal links
 
-#### 4. Audit other standalone filter rows
+- **`PriceRecommendationCard.tsx`**: Update link from `/admin/price-recommendations` → `/admin/backroom-settings?section=price-intelligence`
+- **`PricingAnalyticsContent.tsx`**: Update navigate target similarly
+- **`PriceRecommendations.tsx` empty state**: Update the `dashPath('/admin/backroom?section=formulas')` link to use `backroom-settings` if that's the correct hub path
 
-Scan for similar left-aligned filter containers on `LeadManagement.tsx` and other admin pages, applying `tokens.layout.filterRow` where filters sit outside a `justify-between` header.
+#### 6. Handle deep-link from URL params
+
+**File: `src/pages/dashboard/admin/BackroomSettings.tsx`**
+
+- The existing `useSearchParams` logic already reads `section` from the URL and sets `activeSection`. Just ensure `'price-intelligence'` is recognized — it will be, since it's added to the `BackroomSection` type and the section map.
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/lib/design-tokens.ts` | Add `layout.filterRow` token |
-| `.cursor/rules/design-system.mdc` | Add "Filter Positioning" hard rule |
-| `src/pages/dashboard/admin/PriceRecommendations.tsx` | Use `tokens.layout.filterRow` on location filter container |
-| `src/pages/dashboard/admin/LeadManagement.tsx` | Audit and apply if applicable |
+| `src/pages/dashboard/admin/BackroomSettings.tsx` | Add section type, nav entry, content render |
+| `src/pages/dashboard/admin/PriceRecommendations.tsx` | Extract content component, convert page to redirect |
+| `src/config/dashboardNav.ts` | Remove `price_intelligence` from `appsNavItems` |
+| `src/App.tsx` | Redirect old route to hub |
+| `src/components/dashboard/backroom-settings/PriceRecommendationCard.tsx` | Update link target |
+| `src/components/dashboard/analytics/PricingAnalyticsContent.tsx` | Update navigate target |
 
