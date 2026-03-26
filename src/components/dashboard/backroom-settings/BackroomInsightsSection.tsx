@@ -69,6 +69,9 @@ interface BackroomInsightsSectionProps {
   locationId?: string;
   datePreset?: DatePreset;
   hideFilters?: boolean;
+  showExtendedAnalytics?: boolean;
+  wasteByCategory?: Record<string, number>;
+  totalWasteQty?: number;
 }
 
 export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters }: BackroomInsightsSectionProps = {}) {
