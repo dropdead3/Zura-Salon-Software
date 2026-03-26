@@ -32,6 +32,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
 import { BackroomDashboardOverview } from '@/components/dashboard/backroom-settings/BackroomDashboardOverview';
+import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
 import { BackroomSetupBanner } from '@/components/dashboard/backroom-settings/BackroomSetupBanner';
 import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
 import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
