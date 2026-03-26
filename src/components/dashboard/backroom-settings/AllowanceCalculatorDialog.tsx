@@ -698,7 +698,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     } finally {
       setSaving(false);
     }
-  };
+  }, [bowls, orgId, serviceId, existingBowls, existingBaselines, grandTotal, totalWeight, healthResult, effectiveServicePrice, upsertPolicy, queryClient]);
 
   // Cmd+S / Ctrl+S keyboard shortcut
   useEffect(() => {
