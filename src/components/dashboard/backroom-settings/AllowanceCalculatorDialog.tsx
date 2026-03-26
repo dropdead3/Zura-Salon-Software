@@ -1623,90 +1623,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       </div>
                     </TooltipContent>
                   </Tooltip>
-                  {healthResult.status === 'high' && healthResult.suggestedAllowance && (
-                    <div className="flex items-center gap-2">
-                      <div className="text-[11px] font-sans text-amber-600 dark:text-amber-400 px-2.5 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/30">
-                        Max product budget: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
-                      </div>
-                      <MetricInfoTooltip
-                        description="At your current service price, the 8% industry target means your total product cost (at retail) should not exceed this amount."
-                        className="w-3.5 h-3.5 text-amber-500/60"
-                      />
-                    </div>
-                  )}
-                  {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
-                    <div className="flex items-center gap-2">
-                      <Popover open={highPricePopoverOpen} onOpenChange={setHighPricePopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
-                            disabled={updateServicePriceMutation.isPending}
-                          >
-                            {updateServicePriceMutation.isPending ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <ArrowRight className="w-3 h-3" />
-                            )}
-                            Use ${healthResult.suggestedServicePrice} suggested price
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-3" align="start">
-                          <p className="text-xs font-sans text-foreground mb-2">
-                            Change service price from <span className="font-medium">${effectiveServicePrice}</span> to <span className="font-medium">${healthResult.suggestedServicePrice}</span>?
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => {
-                                const oldPrice = servicePrice;
-                                updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
-                                  onSuccess: () => {
-                                    setHighPricePopoverOpen(false);
-                                    toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
-                                      action: oldPrice ? {
-                                        label: 'Undo',
-                                        onClick: () => updateServicePriceMutation.mutate(oldPrice),
-                                      } : undefined,
-                                      duration: 6000,
-                                    });
-                                  },
-                                });
-                              }}
-                            >
-                              Confirm
-                            </Button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      <MetricInfoTooltip
-                        description="Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also reduce product quantities in the bowls above to bring costs down, or adjust service pricing from Price Intelligence in the Backroom Hub."
-                        className="w-3.5 h-3.5 text-amber-500/60"
-                      />
-                    </div>
-                  )}
-                  {healthResult.status === 'healthy' && healthResult.suggestedAllowance && (
-                    <div className="flex items-center gap-2">
-                      <div className="text-[11px] font-sans text-emerald-600 dark:text-emerald-400 px-2.5 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30">
-                        Product budget at 8%: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
-                      </div>
-                      <MetricInfoTooltip
-                        description="Based on your service price and the 8% target, you can spend up to this amount on product while maintaining ideal margins."
-                        className="w-3.5 h-3.5 text-emerald-500/60"
-                      />
-                    </div>
-                  )}
-                  {healthResult.status === 'low' && healthResult.suggestedAllowance && (
-                    <div className="flex items-center gap-2">
-                      <div className="text-[11px] font-sans text-blue-600 dark:text-blue-400 px-2.5 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/30">
-                        Upgrade budget: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
-                      </div>
-                      <MetricInfoTooltip
-                        description="You have room to invest in a more premium product line up to this amount while staying within the ideal 6–10% range, or maintain current margins as pricing flexibility. You could spend up to this amount to go more luxury."
-                        className="w-3.5 h-3.5 text-blue-500/60"
-                      />
+                  {healthResult.suggestedAllowance && (
+                    <div className="text-[11px] font-sans text-muted-foreground mt-1.5">
+                      Based on your <span className="font-medium text-foreground">${effectiveServicePrice.toFixed(0)}</span> service price and an 8% target,{' '}
+                      {healthResult.status === 'low' ? (
+                        <>you could spend up to <span className="font-medium text-blue-600 dark:text-blue-400">${healthResult.suggestedAllowance.toFixed(2)}</span> on product to go more luxury.</>
+                      ) : (
+                        <>your product budget ceiling is <span className={cn(
+                          "font-medium",
+                          healthResult.status === 'high' ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                        )}>${healthResult.suggestedAllowance.toFixed(2)}</span>.
+                        {healthResult.status === 'high' && (
+                          <> You are currently <span className="font-medium text-amber-600 dark:text-amber-400">${(grandTotal - healthResult.suggestedAllowance).toFixed(2)}</span> over budget.</>
+                        )}</>
+                      )}
                     </div>
                   )}
                 </div>
