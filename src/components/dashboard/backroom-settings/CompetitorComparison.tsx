@@ -17,7 +17,7 @@ function StatusIcon({ status }: { status: Support }) {
 type FeatureRow = {
   feature: string;
   zura: Support;
-  vish: Support;
+  competitorA: Support;
   salonScale: Support;
 };
 
@@ -42,42 +42,42 @@ const comparisonData: FeatureCategory[] = [
   {
     category: 'Core Tracking',
     rows: [
-      { feature: 'Per-gram formula tracking', zura: 'full', vish: 'full', salonScale: 'full' },
-      { feature: 'Formula storage and recall', zura: 'full', vish: 'full', salonScale: 'full' },
-      { feature: 'Waste tracking', zura: 'full', vish: 'full', salonScale: 'full' },
-      { feature: 'Ghost loss detection', zura: 'full', vish: 'none', salonScale: 'none' },
+      { feature: 'Per-gram formula tracking', zura: 'full', competitorA: 'full', salonScale: 'full' },
+      { feature: 'Formula storage and recall', zura: 'full', competitorA: 'full', salonScale: 'full' },
+      { feature: 'Waste tracking', zura: 'full', competitorA: 'full', salonScale: 'full' },
+      { feature: 'Ghost loss detection', zura: 'full', competitorA: 'none', salonScale: 'none' },
     ],
   },
   {
     category: 'Workflow and Operations',
     rows: [
-      { feature: 'Assistant prep workflows', zura: 'full', vish: 'none', salonScale: 'none' },
-      { feature: 'Service blueprints', zura: 'full', vish: 'none', salonScale: 'none' },
-      { feature: 'Predictive reorder alerts', zura: 'full', vish: 'none', salonScale: 'none' },
-      { feature: 'Demand forecasting', zura: 'full', vish: 'none', salonScale: 'none' },
+      { feature: 'Assistant prep workflows', zura: 'full', competitorA: 'none', salonScale: 'none' },
+      { feature: 'Service blueprints', zura: 'full', competitorA: 'none', salonScale: 'none' },
+      { feature: 'Predictive reorder alerts', zura: 'full', competitorA: 'none', salonScale: 'none' },
+      { feature: 'Demand forecasting', zura: 'full', competitorA: 'none', salonScale: 'none' },
     ],
   },
   {
     category: 'Business Intelligence',
     rows: [
-      { feature: 'Cost-per-service profitability', zura: 'full', vish: 'none', salonScale: 'partial' },
-      { feature: 'Supply fee recovery', zura: 'full', vish: 'none', salonScale: 'none' },
-      { feature: 'Multi-location intelligence', zura: 'full', vish: 'partial', salonScale: 'none' },
-      { feature: 'Full platform integration', zura: 'full', vish: 'none', salonScale: 'none' },
+      { feature: 'Cost-per-service profitability', zura: 'full', competitorA: 'none', salonScale: 'partial' },
+      { feature: 'Supply fee recovery', zura: 'full', competitorA: 'none', salonScale: 'none' },
+      { feature: 'Multi-location intelligence', zura: 'full', competitorA: 'partial', salonScale: 'none' },
+      { feature: 'Full platform integration', zura: 'full', competitorA: 'none', salonScale: 'none' },
     ],
   },
 ];
 
-const pricingComparison: Record<'zura' | 'vish' | 'salonScale', { pricing: string; note: string }> = {
+const pricingComparison: Record<'zura' | 'competitorA' | 'salonScale', { pricing: string; note: string }> = {
   zura: { pricing: '$20/location + $0.50/appt', note: 'Per appointment with color service' },
-  vish: { pricing: '$40–320/mo', note: 'Per stylist + $220/scale' },
+  competitorA: { pricing: '$40–320/mo', note: 'Per stylist + $220/scale' },
   salonScale: { pricing: '$49–199/mo', note: 'Per stylist, scale extra' },
 };
 
 /* ─── Column headers ─── */
 const columns = [
   { key: 'zura' as const, label: 'Zura Backroom' },
-  { key: 'vish' as const, label: 'Vish' },
+  { key: 'competitorA' as const, label: 'Competitor A' },
   { key: 'salonScale' as const, label: 'SalonScale' },
 ];
 
