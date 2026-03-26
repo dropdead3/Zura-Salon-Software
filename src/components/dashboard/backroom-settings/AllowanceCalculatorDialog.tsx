@@ -1,5 +1,5 @@
 /**
- * AllowanceCalculatorDialog — Vish-style bowl-based product allowance calculator.
+ * AllowanceCalculatorDialog — Bowl-based product allowance calculator.
  * Builds recipes from real catalog products to derive a dollar-based allowance.
  * Product picker uses a 3-step Brand → Category → Product drill-down.
  */
