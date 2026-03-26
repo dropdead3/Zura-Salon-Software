@@ -676,10 +676,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {/* Config status + actions */}
                                         <div className="flex items-center justify-between">
                                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                            <div className="flex items-center gap-1">
-                                              <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
-                                              <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
-                                            </div>
+                                             <div className="flex items-center gap-1">
+                                               <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
+                                               <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
+                                               {!hasAllowance && (
+                                                 <MetricInfoTooltip description="No allowance policy has been set for this service. Allowance policies are configured in the Allowances & Billing section of the Backroom Hub." />
+                                               )}
+                                             </div>
                                           </div>
                                           <div className="flex items-center gap-2">
                                             <Button
