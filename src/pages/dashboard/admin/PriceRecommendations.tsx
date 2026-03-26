@@ -2,13 +2,14 @@
  * PriceRecommendations — Dedicated Price Intelligence page.
  * Shows all tracked chemical services with margin analysis and one-click price updates.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -20,6 +21,8 @@ import {
   useAcceptPriceRecommendation,
   useDismissPriceRecommendation,
   useUpsertPriceTarget,
+  useDefaultTargetMargin,
+  useUpdateDefaultTargetMargin,
 } from '@/hooks/backroom/useServicePriceRecommendations';
 import { toast } from 'sonner';
 
@@ -29,6 +32,11 @@ export default function PriceRecommendationsPage() {
   const acceptMutation = useAcceptPriceRecommendation();
   const dismissMutation = useDismissPriceRecommendation();
   const upsertTarget = useUpsertPriceTarget();
+  const { margin: defaultMargin } = useDefaultTargetMargin();
+  const updateDefaultMargin = useUpdateDefaultTargetMargin();
+  const [isBulkAccepting, setIsBulkAccepting] = useState(false);
+  const [editingDefault, setEditingDefault] = useState(false);
+  const [defaultValue, setDefaultValue] = useState('');
 
   const kpis = useMemo(() => {
     if (!recommendations?.length) return { belowTarget: 0, avgGap: 0, totalImpact: 0, weightedImpact: 0, hasVolume: false };
@@ -50,18 +58,33 @@ export default function PriceRecommendationsPage() {
 
   const handleAcceptAll = async () => {
     const below = recommendations?.filter(r => r.is_below_target) || [];
-    const results = await Promise.allSettled(
-      below.map(rec => acceptMutation.mutateAsync(rec))
-    );
-    const succeeded = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
+    setIsBulkAccepting(true);
+    try {
+      const results = await Promise.allSettled(
+        below.map(rec => acceptMutation.mutateAsync(rec))
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
 
-    if (failed === 0) {
-      toast.success(`All ${succeeded} prices updated successfully`);
-    } else {
-      toast.warning(`${succeeded} of ${below.length} updated. ${failed} failed — review and retry.`);
+      if (failed === 0) {
+        toast.success(`All ${succeeded} prices updated successfully`);
+      } else {
+        toast.warning(`${succeeded} of ${below.length} updated. ${failed} failed — review and retry.`);
+      }
+    } finally {
+      setIsBulkAccepting(false);
     }
   };
+
+  const saveDefaultMargin = () => {
+    const val = parseFloat(defaultValue);
+    if (val > 0 && val < 100) {
+      updateDefaultMargin.mutate(val);
+    }
+    setEditingDefault(false);
+  };
+
+  const isAccepting = acceptMutation.isPending || isBulkAccepting;
 
   return (
     <DashboardLayout>
@@ -78,10 +101,17 @@ export default function PriceRecommendationsPage() {
                 onConfirm={handleAcceptAll}
               >
                 <Button
-                  disabled={acceptMutation.isPending}
+                  disabled={isAccepting}
                   className={tokens.button?.page || 'h-10 px-6'}
                 >
-                  Accept All ({kpis.belowTarget})
+                  {isBulkAccepting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Applying…
+                    </>
+                  ) : (
+                    `Accept All (${kpis.belowTarget})`
+                  )}
                 </Button>
               </BulkPriceAcceptConfirmDialog>
             ) : undefined
@@ -89,7 +119,7 @@ export default function PriceRecommendationsPage() {
         />
 
         {/* KPI Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -130,6 +160,45 @@ export default function PriceRecommendationsPage() {
                 </p>
                 {kpis.hasVolume && (
                   <p className="text-[10px] text-muted-foreground font-sans">Weighted by 30-day volume</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          {/* Default Margin Setting */}
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                <Settings2 className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                  Default Target
+                </p>
+                {editingDefault ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      value={defaultValue}
+                      onChange={(e) => setDefaultValue(e.target.value)}
+                      className="w-16 h-8 text-sm text-right"
+                      min={1}
+                      max={99}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveDefaultMargin();
+                        if (e.key === 'Escape') setEditingDefault(false);
+                      }}
+                      onBlur={saveDefaultMargin}
+                      autoFocus
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setEditingDefault(true); setDefaultValue(String(defaultMargin)); }}
+                    className={cn(tokens.stat?.large || 'font-display text-2xl font-medium', 'hover:text-primary transition-colors cursor-pointer')}
+                  >
+                    {defaultMargin}%
+                  </button>
                 )}
               </div>
             </CardContent>
@@ -177,7 +246,7 @@ export default function PriceRecommendationsPage() {
                 onAccept={(rec) => acceptMutation.mutate(rec)}
                 onDismiss={(rec) => dismissMutation.mutate(rec)}
                 onUpdateTarget={(serviceId, margin) => upsertTarget.mutate({ service_id: serviceId, target_margin_pct: margin })}
-                isAccepting={acceptMutation.isPending}
+                isAccepting={isAccepting}
               />
             )}
           </CardContent>

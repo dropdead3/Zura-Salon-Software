@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from './useBackroomOrgId';
 import { buildRecommendation, calculateScalingRatio, type PriceRecommendation, type ProductCostInput } from '@/lib/backroom/price-recommendation';
 import { toast } from 'sonner';
+import { useBackroomSetting, useUpsertBackroomSetting } from './useBackroomSettings';
 
 // ─── Types ───────────────────────────────────────────────────
 export interface ServicePriceTarget {
@@ -21,6 +22,7 @@ export interface PriceRecommendationLog {
   id: string;
   organization_id: string;
   service_id: string;
+  service_name?: string;
   current_price: number;
   recommended_price: number;
   product_cost: number;
@@ -38,6 +40,33 @@ export interface EnrichedPriceRecommendation extends PriceRecommendation {
   weighted_impact?: number;
   level_count?: number;
   location_count?: number;
+}
+
+// ─── Default Margin Setting ──────────────────────────────────
+const DEFAULT_MARGIN_KEY = 'price_default_target_margin';
+const FALLBACK_MARGIN = 60;
+
+export function useDefaultTargetMargin() {
+  const setting = useBackroomSetting(DEFAULT_MARGIN_KEY);
+  const margin = (setting.data?.value as { margin_pct?: number })?.margin_pct ?? FALLBACK_MARGIN;
+  return { ...setting, margin };
+}
+
+export function useUpdateDefaultTargetMargin() {
+  const orgId = useBackroomOrgId();
+  const upsert = useUpsertBackroomSetting();
+  
+  return {
+    ...upsert,
+    mutate: (marginPct: number) => {
+      if (!orgId) return;
+      upsert.mutate({
+        organization_id: orgId,
+        setting_key: DEFAULT_MARGIN_KEY,
+        setting_value: { margin_pct: marginPct },
+      });
+    },
+  };
 }
 
 // ─── Price Targets CRUD ──────────────────────────────────────
@@ -90,9 +119,10 @@ export function useUpsertPriceTarget() {
 // ─── Computed Recommendations ────────────────────────────────
 export function useComputedPriceRecommendations() {
   const orgId = useBackroomOrgId();
+  const { margin: defaultMargin } = useDefaultTargetMargin();
 
   return useQuery({
-    queryKey: ['computed-price-recommendations', orgId],
+    queryKey: ['computed-price-recommendations', orgId, defaultMargin],
     queryFn: async (): Promise<EnrichedPriceRecommendation[]> => {
       // Fetch all tracked chemical services
       const { data: services, error: sErr } = await supabase
@@ -194,7 +224,7 @@ export function useComputedPriceRecommendations() {
       for (const svc of services) {
         const svcBaselines = baselineMap.get(svc.id);
         if (!svcBaselines?.length) continue;
-        const targetMargin = targetMap.get(svc.id) ?? 60;
+        const targetMargin = targetMap.get(svc.id) ?? defaultMargin;
         const rec = buildRecommendation({
           service_id: svc.id,
           service_name: svc.name,
@@ -233,7 +263,7 @@ export function useComputedPriceRecommendations() {
   });
 }
 
-// ─── Accept Price Recommendation ─────────────────────────────
+// ─── Accept Price Recommendation (Transactional via DB function) ─────
 export function useAcceptPriceRecommendation() {
   const queryClient = useQueryClient();
   const orgId = useBackroomOrgId();
@@ -242,69 +272,48 @@ export function useAcceptPriceRecommendation() {
     mutationFn: async (rec: PriceRecommendation) => {
       if (!orgId) throw new Error('No organization');
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const ratio = calculateScalingRatio(rec.recommended_price, rec.current_price);
 
-      // 1. Update base service price
-      const { error: sErr } = await supabase
-        .from('services')
-        .update({ price: rec.recommended_price })
-        .eq('id', rec.service_id);
-      if (sErr) throw sErr;
-
-      // 2. Scale level prices proportionally
-      const { data: levelPrices } = await supabase
-        .from('service_level_prices')
-        .select('id, price')
-        .eq('service_id', rec.service_id);
-
-      if (levelPrices?.length) {
-        for (const lp of levelPrices) {
-          const newPrice = Math.round(Number(lp.price) * ratio * 100) / 100;
-          await supabase.from('service_level_prices').update({ price: newPrice }).eq('id', lp.id);
-        }
-      }
-
-      // 3. Scale location prices proportionally
-      const { data: locPrices } = await supabase
-        .from('service_location_prices')
-        .select('id, price')
-        .eq('service_id', rec.service_id);
-
-      if (locPrices?.length) {
-        for (const lp of locPrices) {
-          const newPrice = Math.round(Number(lp.price) * ratio * 100) / 100;
-          await supabase.from('service_location_prices').update({ price: newPrice }).eq('id', lp.id);
-        }
-      }
-
-      // 4. Log recommendation acceptance
-      const { error: rErr } = await supabase
-        .from('service_price_recommendations')
-        .insert({
-          organization_id: orgId,
-          service_id: rec.service_id,
-          current_price: rec.current_price,
-          recommended_price: rec.recommended_price,
-          product_cost: rec.product_cost,
-          margin_pct_current: rec.current_margin_pct,
-          margin_pct_target: rec.target_margin_pct,
-          status: 'accepted' as const,
-          accepted_at: new Date().toISOString(),
-          accepted_by: userId,
-        });
-      if (rErr) throw rErr;
+      const { error } = await supabase.rpc('accept_price_recommendation', {
+        _org_id: orgId,
+        _service_id: rec.service_id,
+        _current_price: rec.current_price,
+        _recommended_price: rec.recommended_price,
+        _product_cost: rec.product_cost,
+        _margin_pct_current: rec.current_margin_pct,
+        _margin_pct_target: rec.target_margin_pct,
+        _user_id: userId ?? null,
+      });
+      if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (rec) => {
+      // Optimistic: remove from cache immediately
+      await queryClient.cancelQueries({ queryKey: ['computed-price-recommendations'] });
+      const prev = queryClient.getQueryData<EnrichedPriceRecommendation[]>(['computed-price-recommendations', orgId]);
+      if (prev) {
+        queryClient.setQueryData(
+          ['computed-price-recommendations', orgId],
+          prev.filter(r => r.service_id !== rec.service_id)
+        );
+      }
+      return { prev };
+    },
+    onError: (_err, _rec, context) => {
+      // Rollback on error
+      if (context?.prev) {
+        queryClient.setQueryData(['computed-price-recommendations', orgId], context.prev);
+      }
+      toast.error('Failed to apply recommendation: ' + _err.message);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['service-level-prices'] });
       queryClient.invalidateQueries({ queryKey: ['service-location-prices'] });
       queryClient.invalidateQueries({ queryKey: ['native-services'] });
       queryClient.invalidateQueries({ queryKey: ['price-recommendation-history'] });
-      toast.success('Price updated across all tiers');
     },
-    onError: (error) => {
-      toast.error('Failed to apply recommendation: ' + error.message);
+    onSuccess: () => {
+      toast.success('Price updated across all tiers');
     },
   });
 }
@@ -334,18 +343,34 @@ export function useDismissPriceRecommendation() {
         });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (rec) => {
+      await queryClient.cancelQueries({ queryKey: ['computed-price-recommendations'] });
+      const prev = queryClient.getQueryData<EnrichedPriceRecommendation[]>(['computed-price-recommendations', orgId]);
+      if (prev) {
+        queryClient.setQueryData(
+          ['computed-price-recommendations', orgId],
+          prev.filter(r => r.service_id !== rec.service_id)
+        );
+      }
+      return { prev };
+    },
+    onError: (_err, _rec, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['computed-price-recommendations', orgId], context.prev);
+      }
+      toast.error('Failed to dismiss: ' + _err.message);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
       queryClient.invalidateQueries({ queryKey: ['price-recommendation-history'] });
-      toast.success('Recommendation dismissed');
     },
-    onError: (error) => {
-      toast.error('Failed to dismiss: ' + error.message);
+    onSuccess: () => {
+      toast.success('Recommendation dismissed');
     },
   });
 }
 
-// ─── Recommendation History ──────────────────────────────────
+// ─── Recommendation History (with service name join) ─────────
 export function usePriceRecommendationHistory(limit: number = 20) {
   const orgId = useBackroomOrgId();
 
@@ -354,12 +379,15 @@ export function usePriceRecommendationHistory(limit: number = 20) {
     queryFn: async (): Promise<PriceRecommendationLog[]> => {
       const { data, error } = await supabase
         .from('service_price_recommendations')
-        .select('*')
+        .select('*, services:service_id(name)')
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data || []) as unknown as PriceRecommendationLog[];
+      return (data || []).map((row: any) => ({
+        ...row,
+        service_name: row.services?.name ?? 'Unknown Service',
+      })) as PriceRecommendationLog[];
     },
     enabled: !!orgId,
     staleTime: 30_000,

@@ -49,6 +49,8 @@ export function PriceRecommendationHistory() {
                 </Badge>
                 <div className="min-w-0">
                   <div className="text-sm font-sans text-foreground truncate">
+                    <span className="font-medium">{entry.service_name || 'Unknown Service'}</span>
+                    <span className="text-muted-foreground mx-1">·</span>
                     ${Number(entry.current_price).toFixed(2)} → ${Number(entry.recommended_price).toFixed(2)}
                   </div>
                   <div className="text-[10px] text-muted-foreground font-sans">
