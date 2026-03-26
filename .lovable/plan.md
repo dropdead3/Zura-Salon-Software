@@ -1,24 +1,31 @@
 
 
-## Add Checkmark Icon to "Requires Color/Chemical" Badge
+## Consolidate "Classify" and "Enable Tracking" into One Step
 
-### Change
-Add a `CheckCircle2` icon (from lucide-react) to the left of the "Requires Color/Chemical" badge label in the service tracking table rows.
+### Problem
+When a user marks a service as "Requires Color/Chemical", it automatically sets `is_backroom_tracked = true`. These are not independent steps — they happen in a single toggle. Showing them as two separate progress milestones is confusing and redundant.
+
+### Solution
+Merge the two milestones into a single **"Classify & Track Services"** step, reducing the progress checklist from 3 steps to 2:
+
+```text
+  ✓ Classify & Track Services           66 of 74
+    Review each service and mark whether it requires color or chemical products.
+
+  2 Set Allowances                        0 of 48
+    Define supply allowances and overage billing rules for tracked services.
+```
 
 ### Technical Detail
 
-**File: `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`**
+**File: `ServiceTrackingSection.tsx`** (milestones array, ~line 240)
 
-Line 610 — update the Badge to include an icon:
-```tsx
-<Badge variant="default" className="text-[10px] shrink-0 gap-1">
-  <CheckCircle2 className="w-3 h-3" />
-  Requires Color/Chemical
-</Badge>
-```
+Replace the 3-item milestones array with 2 items:
+1. **"Classify & Track Services"** — uses the existing `classified` count (services where `is_chemical_service !== null`) out of `allServices.length`
+2. **"Set Allowances"** — unchanged (`withAllowance.length` / `tracked.length`)
 
-Add `CheckCircle2` to the existing lucide-react import statement.
+**File: `ServiceTrackingProgressBar.tsx`** — No changes needed; it renders whatever milestones it receives.
 
 ### File Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (1 line change + import update)
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (milestones array only)
 
