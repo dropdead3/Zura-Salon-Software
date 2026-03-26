@@ -936,7 +936,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               const bowlHealthPct = effectiveServicePrice > 0 ? ((bowlCost / effectiveServicePrice) * 100) : null;
 
               return (
-                <div key={bowl.id || `new-${bowlIdx}`} className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
+                <div key={bowl.id || `new-${bowlIdx}`} className={cn(
+                  "rounded-xl border overflow-hidden",
+                  bowl.vesselType === 'bottle'
+                    ? "border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/5"
+                    : "border-border/60 bg-card/50"
+                )}>
                   {/* Vessel header */}
                   <div
                     className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
