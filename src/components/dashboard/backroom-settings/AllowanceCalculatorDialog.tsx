@@ -780,11 +780,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-[11px] font-sans font-medium text-muted-foreground tracking-wide">Developer</span>
                           </div>
+                          <AnimatePresence mode="popLayout">
                           {devLines.map((line) => {
                             const devWeight = Math.round(colorQty * line.developerRatio);
                             return (
-                              <div
+                              <motion.div
                                 key={line.localId}
+                                initial={{ opacity: 0, x: -12 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 12 }}
+                                transition={{ duration: 0.2, ease: 'easeOut' }}
+                                layout
                                 className="flex items-center gap-2.5 py-1.5"
                               >
                                 <div
