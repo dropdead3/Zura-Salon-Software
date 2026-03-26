@@ -890,7 +890,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           </div>
                                         )}
                                       </div>
-                                  </motion.div>
+                                    )}
+                                   </motion.div>
                                 </td>
                               </motion.tr>
                             )}
