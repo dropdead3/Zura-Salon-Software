@@ -777,7 +777,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const hasExistingData = (existingBowls?.length ?? 0) > 0 || (existingBaselines?.length ?? 0) > 0;
 
   const handleClearAllowance = useCallback(async () => {
-    if (!orgId || !window.confirm('Are you sure you want to clear this allowance? All bowls and products will be removed.')) return;
+    if (!orgId) return;
     setSaving(true);
     try {
       const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
