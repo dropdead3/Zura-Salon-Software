@@ -1,42 +1,31 @@
 
 
-## Add Product Budget Ceiling to Allowance Health Footer
+## Make Product Budget Ceiling a Clear Sentence — Not Just a Pill
 
-The user wants a clear indicator showing: "Based on your $X service price and an 8% target, your product budget ceiling is $Y." This gives operators immediate clarity on how much they can spend on product before margins erode — and frames the delta as room to go more premium.
+### What's happening now
 
-### Logic
+The budget ceiling exists as a small colored pill (e.g., "Upgrade budget: $12.00") next to the health percentage badge. The user is seeing it but wants a **full contextual sentence** that explicitly connects service price → 8% target → dollar ceiling. The current pill format doesn't communicate the "why" at a glance.
 
-The 8% target budget is already calculated as `suggestedAllowance` in the `allowance-health.ts` engine (`servicePrice * 0.08`). Currently it only shows for `status: 'low'`. The enhancement is to **always show this budget ceiling** when a service price is set, regardless of health status — reframed per status:
+### Change
 
-- **Healthy**: "Product budget at 8% target: $X" — confirms they're within range
-- **High**: "Max product budget at 8% target: $X" — shows the ceiling they've exceeded
-- **Low**: Already shows "Upgrade budget: $X" — no change needed
+Replace the small budget pills with a clear, full-sentence indicator below the health badge row. One line, always visible when health data exists.
 
-### Changes
+**File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-**1. `src/lib/backroom/allowance-health.ts`**
-- Always compute `suggestedAllowance` (the 8% target amount), not just when status is `low`. Move it out of the conditional so it's returned for all three statuses.
+**Replace** the three separate budget pill blocks (lines 1626-1711) with a single unified sentence that renders for all statuses:
 
-**2. `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`**
+```
+Based on your $150 service price and an 8% target, your product budget ceiling is $12.00.
+```
 
-- **For `high` status** (~line 1626): Add a budget ceiling pill **above** the existing suggested price button:
-  ```
-  Max product budget: $X.XX
-  ```
-  Styled amber to match, with a tooltip: "At your current service price, the 8% industry target means your total product cost (at retail) should not exceed this amount."
+Status-specific framing:
+- **High**: "Based on your $X service price and an 8% target, your product budget ceiling is $Y. You are currently $Z over budget."
+- **Healthy**: "Based on your $X service price and an 8% target, your product budget ceiling is $Y."
+- **Low**: "Based on your $X service price and an 8% target, you could spend up to $Y on product to go more luxury."
 
-- **For `healthy` status** (~line 1625): Add a subtle pill:
-  ```
-  Product budget at 8%: $X.XX
-  ```
-  Styled emerald to match, with tooltip: "Based on your service price and the 8% target, you can spend up to this amount on product while maintaining ideal margins."
+Styling: `text-[11px] font-sans text-muted-foreground mt-1.5` — subtle but readable, using the status color only for the dollar amounts. This replaces the pills, not the health percentage badge above it (that stays).
 
-- **For `low` status** (line 1679): Already shows "Upgrade budget" — keep as-is but update tooltip to also mention "you could spend up to this amount to go more luxury."
-
-### Net effect
-- Every status now shows the concrete dollar ceiling
-- High status: "you're over budget — here's the max"
-- Healthy: "you're within range — here's your ceiling"
-- Low: "you have room — here's your upgrade budget"
-- All three reinforce the 8% target as a concrete dollar figure operators can act on
+### Scope
+- Single file, ~30 lines replaced
+- No logic changes — same `suggestedAllowance` value, just different presentation
 
