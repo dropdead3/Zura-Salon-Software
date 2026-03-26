@@ -1,72 +1,70 @@
 
 
-## Second-Pass Gap Analysis — Service Price Recommendations Engine
+## Third-Pass Gap Analysis — Service Price Recommendations Engine
 
-After reviewing all implementation files, here are the remaining gaps and enhancements:
-
----
-
-### 1. History Log Missing Service Name (UX Gap)
-
-**Problem:** `PriceRecommendationHistory` displays price changes but doesn't show *which service* was affected. The `service_price_recommendations` table has no `service_name` column, and the history query doesn't join to `services`.
-
-**Fix:** Join `services.name` in the history query (`usePriceRecommendationHistory`) and display the service name in each history row.
+The engine is now solid across core logic, UX safety, and audit trail. Here are the remaining refinements:
 
 ---
 
-### 2. Accept Mutation Is Not Transactional (Data Integrity Risk)
+### 1. DB Function Missing Org Authorization Check (Security)
 
-**Problem:** `useAcceptPriceRecommendation` performs 4+ sequential Supabase calls (update base price, loop through level prices, loop through location prices, insert log). If any middle step fails, the service is left in a partially updated state — some tiers at the old price, some at the new price.
+**Problem:** `accept_price_recommendation` is `SECURITY DEFINER` — it bypasses all RLS. But it trusts the caller-provided `_org_id` without verifying that the calling user is actually a member/admin of that org. A malicious caller could pass any `_org_id` and `_service_id` to modify another org's prices.
 
-**Fix:** Move the accept logic into a database function (`accept_price_recommendation`) that performs all updates in a single transaction and call it via `.rpc()`. This ensures atomicity — either all prices update or none do.
-
----
-
-### 3. No Sorting or Filtering on the Price Intelligence Table
-
-**Problem:** The recommendations table has no way to sort by margin gap, delta, volume, or category. With many services this becomes hard to prioritize.
-
-**Fix:** Add sortable column headers (click to toggle asc/desc) and a category filter dropdown above the table.
+**Fix:** Add an authorization guard at the top of the function: `IF NOT public.is_org_admin(auth.uid(), _org_id) THEN RAISE EXCEPTION 'unauthorized'; END IF;`. This ensures the function can only be called by org admins.
 
 ---
 
-### 4. Appointments Query May Return Wrong Data
+### 2. Optimistic Cache Key Mismatch (Bug)
 
-**Problem:** The appointment volume query filters by `service_id` on the `appointments` table, but appointments can have multiple services (via `appointment_services`). The `service_id` on `appointments` may be the primary service only, undercounting volume for secondary services.
+**Problem:** In `useAcceptPriceRecommendation.onMutate`, the optimistic update reads/writes `['computed-price-recommendations', orgId]`, but the query itself uses `['computed-price-recommendations', orgId, defaultMargin]` (3-segment key). The `setQueryData` call targets the wrong key, so the optimistic removal silently does nothing.
 
-**Fix:** Check if `appointment_services` is the correct join table for accurate per-service volume. If so, query that instead.
-
----
-
-### 5. No Default Target Margin for New Services
-
-**Problem:** When a new tracked service has no row in `service_price_targets`, the engine defaults to 60% in code. There's no UI to configure this organization-wide default, so the owner must manually set targets for every service.
-
-**Fix:** Add an "Organization Default Margin" setting (stored in org settings or a dedicated config row) that the engine uses as fallback. Surface it as an editable field at the top of the Price Intelligence page.
+**Fix:** Either store the full query key consistently or use `queryClient.setQueriesData` with a partial key match: `{ queryKey: ['computed-price-recommendations'] }`. Same issue exists in `useDismissPriceRecommendation`.
 
 ---
 
-### 6. Stale Recommendation After Price Accept
+### 3. DB Function Loops Can Be Single UPDATE Statements (Performance)
 
-**Problem:** After accepting a recommendation, the inline `PriceRecommendationCard` may briefly re-render the old recommendation before query invalidation completes, causing a flash of outdated data.
+**Problem:** The `accept_price_recommendation` function loops over `service_level_prices` and `service_location_prices` row-by-row with `FOR ... LOOP`. For services with many tiers, this is slower than necessary.
 
-**Fix:** Use optimistic updates — immediately remove the recommendation from the local cache on accept, then let the background refetch confirm.
-
----
-
-### 7. Bulk Accept Shows Stale Button State
-
-**Problem:** `handleAcceptAll` uses `Promise.allSettled` with individual `mutateAsync` calls, but the "Accept All" button only checks `acceptMutation.isPending`. Since `allSettled` doesn't throw, the button may not show a loading state for the full duration.
-
-**Fix:** Add a local `isBulkAccepting` state that wraps the entire `handleAcceptAll` flow, disabling the button from start to finish.
+**Fix:** Replace the loops with single `UPDATE` statements:
+```sql
+UPDATE service_level_prices
+  SET price = ROUND((price * _ratio)::numeric, 2)
+  WHERE service_id = _service_id;
+```
+Same for `service_location_prices`. Eliminates the loop overhead entirely.
 
 ---
 
-### 8. Missing Mobile Responsiveness on Table
+### 4. No "Undo" or Revert Capability After Accept
 
-**Problem:** The 11-column `PriceRecommendationsTable` will overflow or be unusable on mobile/tablet viewports. No responsive handling is present.
+**Problem:** Once a price is accepted, there's no way to revert to the previous price other than manually editing each tier. The history log stores the old price but there's no "undo" action.
 
-**Fix:** On mobile, switch to a card-based layout (reuse `PriceRecommendationCard` per row) instead of the table. Use `useIsMobile()` to toggle.
+**Fix:** Add a "Revert" button in the history view for recently accepted recommendations (e.g., within 24 hours). It would call a similar DB function that reverses the scaling ratio.
+
+---
+
+### 5. `service_price_recommendations` Table Grows Unbounded
+
+**Problem:** Every accept and dismiss inserts a new row. There's no retention policy or cleanup. Over time this table will accumulate thousands of rows that slow down the dismissed-check query.
+
+**Fix:** Add an index on `(organization_id, service_id, status)` if not already present, and optionally add a scheduled cleanup that archives rows older than 90 days.
+
+---
+
+### 6. No Export / Reporting Capability
+
+**Problem:** Owners cannot export the recommendations table or share it with partners/accountants. There's no CSV/PDF export.
+
+**Fix:** Add an "Export CSV" button to the page header that generates a download of the current table view (service, current price, recommended, delta, margin).
+
+---
+
+### 7. Missing Visual Indicator for Services Meeting Target
+
+**Problem:** Services that are on-target show "On target" text in the Action column but have no visual differentiation in the row itself. The table feels like only problem services exist.
+
+**Fix:** Add a subtle left-border color indicator: amber for below-target rows, emerald for on-target rows. This provides instant visual scanning.
 
 ---
 
@@ -74,12 +72,21 @@ After reviewing all implementation files, here are the remaining gaps and enhanc
 
 | Priority | Item | Effort |
 |----------|------|--------|
-| **High** | Transactional accept via DB function | Medium |
-| **High** | History missing service name | Small |
-| **Medium** | Table sorting & filtering | Medium |
-| **Medium** | Appointment volume from correct table | Small |
-| **Medium** | Org-wide default margin setting | Small |
-| **Low** | Optimistic update on accept | Small |
-| **Low** | Bulk accept loading state | Trivial |
-| **Low** | Mobile responsive table | Medium |
+| **High** | DB function authorization guard | Trivial |
+| **High** | Optimistic cache key mismatch fix | Trivial |
+| **Medium** | DB function loop → single UPDATE | Small |
+| **Medium** | Index on recommendations table | Trivial |
+| **Low** | Undo/revert capability | Medium |
+| **Low** | CSV export | Small |
+| **Low** | Row visual indicators | Trivial |
+
+### Files Affected
+
+| File | Changes |
+|------|---------|
+| New migration SQL | Auth guard, loop→UPDATE optimization, add index |
+| `src/hooks/backroom/useServicePriceRecommendations.ts` | Fix optimistic cache key in both accept and dismiss mutations |
+| `src/components/dashboard/backroom-settings/PriceRecommendationsTable.tsx` | Row border indicators |
+| `src/pages/dashboard/admin/PriceRecommendations.tsx` | CSV export button |
+| `src/components/dashboard/backroom-settings/PriceRecommendationHistory.tsx` | Revert button (if implementing undo) |
 
