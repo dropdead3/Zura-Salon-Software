@@ -669,33 +669,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               <Package className="w-3 h-3 mr-1" />
                                               Components
                                             </Button>
-                                            {service.backroom_config_dismissed ? (
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-xs text-muted-foreground"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
-                                                }}
-                                              >
-                                                <RotateCcw className="w-3 h-3 mr-1" />
-                                                Re-flag
-                                              </Button>
-                                            ) : (
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-xs text-primary"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                }}
-                                              >
-                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                Mark Configured
-                                              </Button>
-                                            )}
+                                            
                                           </div>
                                         </div>
                                         {/* Chemical toggle + vessel selector */}
