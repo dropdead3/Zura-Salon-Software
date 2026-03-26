@@ -967,8 +967,3 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     </Dialog>
   );
 }
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
