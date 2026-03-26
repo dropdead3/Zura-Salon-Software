@@ -1,88 +1,91 @@
 
 
-## Configure Allowance & Product Allowance Calculator — Gap Analysis (Round 3)
+## Configure Allowance & Product Allowance Calculator — Gap Analysis (Round 4)
 
-Full review of AllowanceCalculatorDialog.tsx (1,483 lines), ServiceTrackingSection integration, allowance-health.ts, and supporting hooks.
+Full review of the 1,606-line dialog, save logic, database constraints, hooks, and ServiceTrackingSection integration after three rounds of improvements.
 
 ---
 
-### Bugs / Technical Debt
+### Bugs / Data Integrity
 
-**1. `(policy as any)` casts in ServiceTrackingSection (lines 750–751)**
-`allowance_health_status` and `allowance_health_pct` are accessed via `(policy as any)` even though these columns exist in the generated types for `service_allowance_policies`. The policy type in the hook should include these fields natively, removing the need for unsafe casts.
+**1. Same product in multiple bowls is silently broken (P0)**
+The `service_recipe_baselines` table has a `UNIQUE(organization_id, service_id, product_id)` constraint. The `useUpsertRecipeBaseline` hook uses `onConflict: 'organization_id,service_id,product_id'`. This means if a user adds the same product to Bowl 1 and Bowl 2, the second upsert overwrites the first row — only one baseline survives, assigned to the last bowl processed. The UI allows this (and even shows a "Also in Bowl 1" badge), but the database physically cannot store it.
 
-**2. `(err: any)` in handleSave catch block (line 608)**
-The `catch (err: any)` in `handleSave` should use `catch (err: unknown)` with a type guard (`err instanceof Error ? err.message : 'Unknown error'`) for proper TypeScript safety.
+**Fix:** Migration to drop the unique constraint and replace with `UNIQUE(organization_id, service_id, product_id, bowl_id)`. Update the upsert hook to use plain `.insert()` instead of `.upsert()` since `handleSave` already deletes all existing baselines first (delete-then-recreate pattern makes upsert unnecessary).
 
-**3. Save Phase 2 race condition: upsert then update by composite key**
-Lines 564–583: For each line, a baseline is first inserted via `upsertBaseline.mutateAsync()`, then immediately updated by matching `(org_id, service_id, product_id)`. If the same product exists in multiple bowls (which is valid — same color in Bowl 1 and Bowl 2), the update at line 573 will match the wrong row because it filters by `product_id` without `bowl_id`. This means the second bowl's baseline overwrites the first bowl's `bowl_id`.
+**2. `useUpsertRecipeBaseline` suppresses individual toast on every line save (P1)**
+During `handleSave`, each baseline triggers `toast.success('Formula baseline saved')` via the mutation's `onSuccess`. With 8+ products across 2 bowls, this fires 16+ success toasts before the final "Product allowance saved" toast. The individual toasts should be suppressed during batch saves.
 
-**4. Missing error handling on the Phase 2 update call (line 573)**
-The `supabase.from('service_recipe_baselines').update(...)` at line 573 doesn't check for errors. A failed update silently continues, leaving baselines with null `bowl_id`.
+**Fix:** Add a `silent` option to the mutation, or call `mutateAsync` and handle success/error at the batch level only (the `onSuccess` in the hook should check a flag or the caller should use a raw supabase call instead of the mutation for batch operations).
 
-**5. `retailCostPerGram` rounds to 2 decimal places (line 52 in allowance-health.ts)**
-`calculateRetailCostPerGram` uses `r2()` which rounds to 2 decimal places. For per-gram costs that are fractions of a cent (e.g., $0.0347/g), this rounds to $0.03 — a 14% error. Should use 4 decimal places for per-gram costs.
+**3. `useUpsertAllowanceBowl` also fires individual toasts (P1)**
+Same issue — each bowl insert triggers the mutation's `onError` handler with toast. The `onSuccess` doesn't toast, but errors would show per-bowl error toasts stacking up.
 
 ---
 
 ### UX Gaps
 
-**6. No loading state while save is in progress**
-The save button shows a spinner, but the entire dialog body remains interactive. Users can modify bowls mid-save, creating inconsistency between what was saved and what's on screen. The dialog body should be disabled or overlaid during save.
+**4. No indication of which products have zero cost-per-gram (P1)**
+Products with `cost_per_gram = null` and no derivable cost (missing `cost_price` or `container_size`) silently add at $0.0000/g. The line shows "$0.00" cost but doesn't warn the user that the product has no pricing data. This leads to artificially low allowance calculations.
 
-**7. Dirty-state detection ignores label edits and modeled price**
-The `isDirty` check (line 182) only tracks product/quantity/ratio/vesselType changes. Editing a bowl label or changing the modeled service price doesn't flag the dialog as dirty, so closing silently discards those changes.
+**Fix:** Show an inline warning badge on lines where `costPerGram === 0`, e.g., "No cost data" with a tooltip explaining the product needs cost-per-gram or cost-price + container-size in the catalog.
 
-**8. Modeled service price is not persisted**
-When a user types a custom price in the footer input (line 1326), it's only held in state and discarded on close. There's no "Apply this price" action — the "Use suggested price" button (line 1402) only appears for the health-recommended price. Users who model a different scenario price have no way to save it.
+**5. Picker doesn't indicate already-added products across bowls (P2)**
+The product picker checkbox only checks against the current bowl's `addedProductIds`. A product added to Bowl 1 shows as unchecked when browsing in Bowl 2's picker, with no visual hint it's already used elsewhere. The "Also in Bowl 1" badge only appears after adding.
 
-**9. Product picker empty state shows skeleton even when catalog is genuinely empty**
-Line 624: `catalogProducts.length === 0` triggers skeleton loading. But if the catalog genuinely has zero Supplies products, the user sees infinite skeleton instead of an empty state message like "No supply products found."
+**Fix:** Show a subtle indicator (e.g., small dot or "in Bowl 1" text) on picker items that exist in other bowls.
 
-**10. Bowl label input doesn't auto-select text on edit**
-When clicking a bowl label to edit (line 923), the input appears but the text isn't selected. The user has to manually select-all before typing a new name.
+**6. Developer ratio input allows values outside safe range (P2)**
+The ratio `<Input>` has `min="0.5"` and `max="4"` attributes, but HTML number inputs don't enforce min/max on typed values. A user can type `0` or `10`, which would calculate extreme quantities. The `updateDevRatio` callback doesn't clamp.
 
-**11. No visual distinction between bowl and bottle vessel types**
-Bowls and bottles use different icons, but the card styling is identical. For multi-vessel services, a subtle color or border difference would help operators quickly distinguish container types.
+**Fix:** Clamp the ratio value in `updateDevRatio` to `[0.5, 4]` range.
+
+**7. Custom quantity input allows 0 (P2)**
+The quantity `<Input>` has `min="1"` but the `onChange` uses `Math.max(1, ...)`. However, if the user clears the field and blurs, `parseInt('') || 1` catches it — but while the field is empty, intermediate renders show `NaN` or `0`. Add an `onBlur` handler to force-commit valid values.
+
+**8. Closing dialog after save still shows unsaved-changes warning (P1)**
+Line 628: `onOpenChange(false)` is called after save, but the `onOpenChange` handler on line 910–918 checks `isDirty`. Although `initialBowlsRef` is updated at line 624, React's state batching means the `isDirty` memo may not have re-evaluated by the time the `onOpenChange` callback fires. This can cause a false "unsaved changes" warning flash.
+
+**Fix:** Call `onOpenChange(false)` via `setTimeout(() => onOpenChange(false), 0)` or set a `justSaved` ref that bypasses the dirty check.
 
 ---
 
 ### Enhancements
 
-**12. Suggested allowance amount not surfaced for "low" health status**
-`calculateAllowanceHealth` computes `suggestedAllowance` when status is "low" (line 87), but the UI only surfaces `suggestedServicePrice` for "high" status (line 1395). When allowance is below 6%, the user gets advisory text but no actionable number or button to auto-adjust.
+**9. "Low" health status should offer actionable "reduce price" button (P2)**
+When allowance is below 6%, the UI shows a static pill with the suggested allowance amount but no action button (unlike "high" which has "Use $X suggested price"). Add a "Use $X price" button for the low case that sets the service price to bring allowance to 8%.
 
-**13. Health badge in service table row should link to calculator**
-The health badge in ServiceTrackingSection (line 758–771) shows the percentage but isn't clickable. Clicking it should open the calculator for that service, same as the "Edit" button next to it.
+**10. Footer layout breaks on narrow viewports (P2)**
+The footer's flex layout (`justify-between`) doesn't wrap gracefully below ~700px. The health indicator, modeled price input, and save button overlap. Add responsive wrapping (`flex-wrap`) and stack on mobile.
 
-**14. No confirmation when "Use suggested price" is clicked**
-Line 1402: Clicking "Use $X suggested price" immediately mutates the service price in the database. This is a destructive action that should have a brief confirmation or at minimum an undo toast, since it changes a price visible to other parts of the system.
+**11. No visual progress during multi-step save (P3)**
+The saving overlay shows "Saving allowance..." but doesn't indicate progress (e.g., "Deleting old data... Saving Bowl 1... Saving Bowl 2... Updating policy..."). For services with 3+ bowls this takes several seconds with no feedback.
 
-**15. Copy summary doesn't include wholesale costs**
-The clipboard summary (line 1436) includes product names, quantities, and line costs, but doesn't include the wholesale vs. retail breakdown or the margin. Operators sharing recipes with finance teams need this context.
-
-**16. No way to reorder products within a bowl**
-Products appear in the order they were added. For operators managing 8+ products per bowl, drag-to-reorder or at minimum a sort-by-cost/name option would improve usability.
+**12. Copy summary doesn't include developer ratio context (P3)**
+The copy summary includes developer gram amounts but doesn't explain the ratio logic for recipients unfamiliar with the format. Add a brief note like "(1:2 ratio with color)" next to developer lines.
 
 ---
 
 ### Summary
 
-| Priority | # | Change | File(s) |
-|----------|---|--------|---------|
-| P0 | 3 | Fix multi-bowl same-product save bug | AllowanceCalculatorDialog.tsx |
-| P0 | 4 | Add error handling to baseline update | AllowanceCalculatorDialog.tsx |
-| P1 | 1 | Remove `as any` casts in ServiceTrackingSection | ServiceTrackingSection.tsx, useServiceAllowancePolicies.ts |
-| P1 | 2 | Fix `catch (err: any)` to use unknown | AllowanceCalculatorDialog.tsx |
-| P1 | 5 | Fix retail cost per gram rounding | allowance-health.ts |
-| P1 | 6 | Disable dialog body during save | AllowanceCalculatorDialog.tsx |
-| P1 | 9 | Fix skeleton vs empty catalog state | AllowanceCalculatorDialog.tsx |
-| P2 | 7 | Include label/price in dirty detection | AllowanceCalculatorDialog.tsx |
-| P2 | 8 | Add "Apply modeled price" action | AllowanceCalculatorDialog.tsx |
-| P2 | 10 | Auto-select label text on edit | AllowanceCalculatorDialog.tsx |
-| P2 | 12 | Surface suggested allowance for "low" | AllowanceCalculatorDialog.tsx |
-| P2 | 14 | Add undo toast for suggested price | AllowanceCalculatorDialog.tsx |
-| P3 | 11 | Visual distinction for vessel types | AllowanceCalculatorDialog.tsx |
-| P3 | 13 | Make health badge clickable | ServiceTrackingSection.tsx |
-| P3 | 15 | Include wholesale in copy summary | AllowanceCalculatorDialog.tsx |
-| P3 | 16 | Product reorder within bowl | AllowanceCalculatorDialog.tsx |
+| Priority | # | Change | Scope |
+|----------|---|--------|-------|
+| P0 | 1 | Fix unique constraint + upsert for multi-bowl same product | Migration + useServiceRecipeBaselines.ts |
+| P1 | 2 | Suppress per-line toasts during batch save | AllowanceCalculatorDialog.tsx |
+| P1 | 3 | Suppress per-bowl error toast stacking | AllowanceCalculatorDialog.tsx |
+| P1 | 4 | Warn on zero-cost products | AllowanceCalculatorDialog.tsx |
+| P1 | 8 | Fix false dirty warning after save | AllowanceCalculatorDialog.tsx |
+| P2 | 5 | Cross-bowl indicator in picker | AllowanceCalculatorDialog.tsx |
+| P2 | 6 | Clamp developer ratio input | AllowanceCalculatorDialog.tsx |
+| P2 | 7 | Validate quantity on blur | AllowanceCalculatorDialog.tsx |
+| P2 | 9 | Add "reduce price" action for low health | AllowanceCalculatorDialog.tsx |
+| P2 | 10 | Responsive footer wrapping | AllowanceCalculatorDialog.tsx |
+| P3 | 11 | Save progress indicator | AllowanceCalculatorDialog.tsx |
+| P3 | 12 | Developer ratio in copy summary | AllowanceCalculatorDialog.tsx |
+
+### Technical Approach
+
+- **Item 1** requires a database migration to alter the unique constraint on `service_recipe_baselines` from `(org, service, product)` to `(org, service, product, bowl_id)`. The `bowl_id` column must become `NOT NULL` for the constraint to work properly. The upsert hook switches to plain insert since the delete-then-recreate pattern makes conflict resolution unnecessary.
+- **Items 2–3** are solved by using raw supabase calls in `handleSave` instead of the mutation hooks (which have built-in toast handlers), or by adding a `silent` parameter to the hooks.
+- **Items 4–12** are UI-only changes within AllowanceCalculatorDialog.tsx.
+
