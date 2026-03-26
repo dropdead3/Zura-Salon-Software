@@ -727,9 +727,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
 
-        {/* Location dropdown selector */}
+        {/* Location dropdown selector + Sync to All */}
         {activeLocations.length > 1 && (
-          <div className="px-6 pb-2">
+          <div className="px-6 pb-2 flex items-center gap-2">
             <Select value={effectiveLocationId} onValueChange={setSelectedLocationId}>
               <SelectTrigger className="w-fit rounded-full gap-2">
                 <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -743,6 +743,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 ))}
               </SelectContent>
             </Select>
+            {trackedCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setSyncIncludeLevels(true); setSyncToAllOpen(true); }}
+                disabled={syncCatalogMutation.isPending}
+                className="font-sans gap-1.5 rounded-full"
+              >
+                <Building2 className={cn('w-3.5 h-3.5', syncCatalogMutation.isPending && 'animate-spin')} />
+                Sync to All Locations
+              </Button>
+            )}
           </div>
         )}
 
