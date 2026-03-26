@@ -1,36 +1,38 @@
 
 
-## Restyle "Mark Configured" → "Finalize Configuration" Button
+## Auto-Collapse on Configure + Green Ghost Badge
 
 ### Changes
 
-**Both footer instances** (tracked ~line 820–837, untracked ~line 900–917) and the toast message (~line 214):
+**1. Auto-collapse after "Finalize Configuration" click**
 
-| State | Current | New |
-|-------|---------|-----|
-| **Not configured** (button) | `variant="default"`, CheckCircle2 icon, "Mark Configured" | `variant="ghost"` with amber text (`text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20`), no icon, label **"Finalize Configuration"** |
-| **Configured** (status) | `text-primary` CheckCircle2 + "Configured" | `text-green-600 dark:text-green-400` CheckCircle2 + "Configured" (green ghost style) |
-| **Toast message** | "click 'Mark Configured'" | "click 'Finalize Configuration'" |
+In the `onClick` handler for the "Finalize Configuration" button (~line 829–832), after the mutation, collapse the row by removing its ID from `expandedIds` with a short delay (e.g., 400ms) so the user sees the "Configured" state briefly before it collapses smoothly via the existing `AnimatePresence` animation.
 
-### Technical Detail
+```tsx
+onClick={(e) => {
+  e.stopPropagation();
+  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+  setTimeout(() => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      next.delete(service.id);
+      return next;
+    });
+  }, 400);
+}}
+```
 
-**File: `ServiceTrackingSection.tsx`**
+**2. Green ghost "Configured ✓" badge in main row**
 
-1. **Lines 825–836** — Replace default button with amber ghost:
-   - Remove `<CheckCircle2>` icon
-   - Change `variant="default"` → `variant="ghost"`
-   - Add className: `text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20`
-   - Label: "Finalize Configuration"
+Update the badge on line 632 from `variant="outline"` with `text-primary` to a bright green ghost style:
 
-2. **Lines 806–808** — Update configured state styling:
-   - Change CheckCircle2 from `text-primary` → `text-green-600 dark:text-green-400`
-   - Keep "Configured" label and check icon
+```tsx
+<Badge variant="outline" className="text-[10px] shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
+  Configured ✓
+</Badge>
+```
 
-3. **Lines 905–916** — Same changes as #1 for the untracked footer
-
-4. **Lines 886–888** — Same green styling as #2 for the untracked "Reviewed" state
-
-5. **Line 214** — Update toast text to reference "Finalize Configuration"
+**3. Apply same auto-collapse to untracked footer** (if exists, around line 905–916)
 
 ### File Modified
 - `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
