@@ -1124,6 +1124,7 @@ function AddEditDialog({
   const [brand, setBrand] = useState(product?.brand || '');
   const [name, setName] = useState(product?.name || '');
   const [category, setCategory] = useState(product?.category || 'color');
+  const [colorType, setColorType] = useState<string>(product?.color_type || '');
   const [depletion, setDepletion] = useState(product?.default_depletion || 'weighed');
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
