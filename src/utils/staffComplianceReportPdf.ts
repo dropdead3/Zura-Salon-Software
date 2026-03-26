@@ -109,13 +109,12 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   doc.text('Appointment Details', 14, y);
   y += 4;
 
-  const tableHead = ['Date', 'Service', 'Status', 'Reweigh', 'Waste %'];
+  const tableHead = ['Date', 'Service', 'Status', 'Reweigh'];
   const tableBody = items.map((item) => [
     item.appointmentDate,
     item.serviceName ?? 'Color Service',
     item.complianceStatus === 'compliant' ? 'Tracked' : item.complianceStatus === 'partial' ? 'Partial' : 'Missing',
     item.hasReweigh ? 'Yes' : 'No',
-    '—', // waste per-item isn't available at item level
   ]);
 
   if (tableBody.length === 0) {
