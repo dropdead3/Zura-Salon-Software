@@ -595,14 +595,16 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     );
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!orgId) return;
     setSaving(true);
 
-    // Warn about empty non-first bowls
-    const emptyBowls = bowls.filter((b, i) => i > 0 && b.lines.length === 0);
-    if (emptyBowls.length > 0) {
-      toast.info(`${emptyBowls.map(b => b.label).join(', ')} ${emptyBowls.length === 1 ? 'is' : 'are'} empty and won't be saved.`);
+    // Auto-remove empty bowls (except the first) before saving
+    const activeBowls = bowls.filter((b, i) => i === 0 || b.lines.length > 0);
+    const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+    // Update local state to reflect removed empty bowls
+    if (bowlsToSave.length !== bowls.length) {
+      setBowls(bowlsToSave);
     }
 
     // Snapshot existing data for rollback
