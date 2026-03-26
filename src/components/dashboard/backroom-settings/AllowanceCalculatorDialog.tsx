@@ -1064,7 +1064,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         <span className="tabular-nums">${servicePrice?.toFixed(2)}</span>
                       </div>
                       <div className="text-[10px] text-muted-foreground/70 pt-1">
-                        Target: 6–10% of service price (8% ideal)
+                        Target: 6–10% of service price (8% ideal). Adjust by changing service price or product amounts.
                       </div>
                     </TooltipContent>
                   </Tooltip>
