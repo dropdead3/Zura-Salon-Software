@@ -137,10 +137,26 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
   const [bowls, setBowls] = useState<BowlState[]>([]);
   const [saving, setSaving] = useState(false);
-  // Per-bowl search state (improvement #2)
-  const [bowlSearches, setBowlSearches] = useState<Record<number, string>>({});
-  // Per-bowl developer filter mode (improvement #8)
-  const [devFilterBowls, setDevFilterBowls] = useState<Record<number, boolean>>({});
+
+  // Per-bowl drill-down picker state
+  interface PickerState {
+    step: 'brand' | 'category' | 'product';
+    selectedBrand: string | null;
+    selectedCategory: string | null;
+    search: string;
+  }
+  const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
+
+  const getPickerState = useCallback((bowlIdx: number): PickerState => {
+    return bowlPickers[bowlIdx] || { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' };
+  }, [bowlPickers]);
+
+  const setPickerState = useCallback((bowlIdx: number, update: Partial<PickerState>) => {
+    setBowlPickers((prev) => ({
+      ...prev,
+      [bowlIdx]: { ...(prev[bowlIdx] || { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' }), ...update },
+    }));
+  }, []);
 
   useEffect(() => {
     if (!open) return;
