@@ -835,6 +835,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   }, 400);
                                                 }}
                                               >
+                                                <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
                                                 Finalize Configuration
                                               </Button>
                                             </>
