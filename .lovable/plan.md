@@ -1,28 +1,28 @@
 
 
-## Remove All "Vish" References from Codebase
+## Flip Layout: Picker Above, Bowl Lines Below
 
-### Problem
-"Vish" is a competitor brand name that appears in 6 files — tooltips, code comments, and a comparison table. It must be replaced with neutral, brand-appropriate language throughout.
+### Change
 
-### Changes
+In `AllowanceCalculatorDialog.tsx`, inside the `!bowl.collapsed` block (line ~776), swap the order so the picker panel renders **before** the product lines.
 
-| File | Location | Change |
-|------|----------|--------|
-| `AllowanceCalculatorDialog.tsx` | Line 2, comment | "Vish-style bowl-based" → "Bowl-based" |
-| `AllowanceCalculatorDialog.tsx` | Line 1088, tooltip | Rewrite to: "Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings." |
-| `allowance-health.ts` | Lines 1–6, comment block | "Vish methodology" / "Vish standard" → "Industry-standard methodology" |
-| `BackroomHistoryChart.tsx` | Line 4, comment | "Vish-style" → "Multi-metric" or remove reference |
-| `DockLiveDispensing.tsx` | Line 5, comment | "Vish-inspired teardrop" → "Teardrop" |
-| `DockIngredientDispensing.tsx` | Line 3, comment | "Vish-inspired" → remove modifier |
-| `CompetitorComparison.tsx` | Throughout | Keep "Vish" here — this is an internal competitor comparison table that intentionally names competitors. **Unless you want this removed too.** |
+**Current order (line ~776–970):**
+1. Empty state
+2. Color product lines
+3. Developer lines
+4. `renderPickerPanel(bowlIdx)` ← picker at bottom
+5. Vessel subtotal
 
-### Tooltip Rewrite (user-facing, line 1088)
+**New order:**
+1. `renderPickerPanel(bowlIdx)` ← picker moves to top
+2. Empty state (only when no lines)
+3. Color product lines
+4. Developer lines
+5. Vessel subtotal
 
-**Before:** "Calculated using the Vish 8% target: your after-markup product cost ÷ 0.08..."
+This way the user selects products at the top, and watches the bowl build below — a more natural top-down flow.
 
-**After:** "Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
-
-### Note
-The `CompetitorComparison.tsx` file is an intentional feature comparison table — "Vish" is used there as a named competitor column. This is appropriate for that context and can remain unless you'd prefer it changed too.
+| File | Change |
+|------|--------|
+| `AllowanceCalculatorDialog.tsx` | Move `renderPickerPanel(bowlIdx)` call from line 970 to before the empty state block (line ~778) |
 
