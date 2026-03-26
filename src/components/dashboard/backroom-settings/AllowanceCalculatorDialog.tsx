@@ -275,6 +275,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     setBowlPickers({});
     setEditingLabelIdx(null);
     setModeledServicePrice(null);
+  }, [open, existingBowls, existingBaselines, catalogProducts]);
 
   const grandTotal = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + bowl.lines.reduce((ls, line) => ls + line.lineCost, 0), 0);
