@@ -1609,7 +1609,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-[280px] text-xs">
-                        Adjusts the base service price to ${healthResult.suggestedServicePrice}. This will update the price on Service Tracking, the Price Intelligence engine, and any location/level overrides that reference this base price. Rounded up to the nearest $5.
+                        Adjusts the base service price to ${healthResult.suggestedServicePrice}. This will update the price on Service Tracking, the Price Intelligence engine, your public website services page, and any location/level overrides that reference this base price. Rounded up to the nearest $5.
                       </TooltipContent>
                     </Tooltip>
                   )}
