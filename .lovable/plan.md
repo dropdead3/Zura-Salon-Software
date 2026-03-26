@@ -1,29 +1,33 @@
 
 
-## Reframe "Low" Health Status — Positive Margin Framing
+## Fix: Bowls scrolling out of view in Allowance Calculator
 
-The user makes an excellent point: salons should never be nudged to lower prices. Low allowance-to-service ratio means strong margins — that's a win, not a problem to fix.
+The dialog uses `flex flex-col` with `max-h-[90vh]`, but the Radix `ScrollArea` viewport doesn't reliably inherit flex height. When multiple bowls are added, content overflows past the dialog boundary instead of scrolling within the middle section.
 
-### Changes
+### Root Cause
 
-**1. `src/lib/backroom/allowance-health.ts`** — Update messaging
-- Change `status: 'low'` message from "You may increase product quality or reduce service price" to a positive framing: "Strong margin. Room to elevate product quality or absorb price flexibility if needed."
-- Keep `suggestedAllowance` calculation (useful context) but reframe it as "upgrade budget" rather than a corrective target.
+Radix `ScrollArea.Viewport` has `h-full w-full` but in a flex column context, the root `ScrollArea` with `flex-1 min-h-0` doesn't always propagate a concrete height to its children. The viewport ends up growing with content rather than constraining it.
 
-**2. `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`**
+### Fix
 
-- **Line 1587** — Health badge inline text: Change from "consider increasing product quality or adjusting service price" → "strong margin — room to upgrade product line"
-- **Lines 1675–1735** — Remove the entire "reduce price" button/popover block (`lowPricePopoverOpen`, `suggestedLowPrice`, the Popover with "Reduce service price from $X to $Y?"). This action should not exist.
-- **Line 1677–1679** — Reframe the target allowance pill from "Target allowance at 8%: $X" to "Upgrade budget: $X" with a tooltip explaining they could spend up to this amount on a more premium product line while staying within the ideal range.
-- **Line 1731–1733** — Update tooltip from "reduce the service price" to "You have room to invest in a more premium product line, or maintain current margins as pricing flexibility."
-- Remove `lowPricePopoverOpen` state variable (no longer needed).
+Replace `ScrollArea` with a plain `div` using `overflow-y-auto` and the same flex layout classes. The Radix ScrollArea component adds complexity (custom scrollbar styling) that isn't needed here and causes the height calculation issue.
 
-**3. `src/lib/backroom/allowance-health.ts`** — Update comment block
-- Line 8: Change "If below 6%: room to increase product quality or reduce service price" → "If below 6%: strong margin — room to upgrade product line or maintain pricing flexibility."
+**File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-### Net effect
-- "Low" becomes a positive signal, not a warning
-- No price-reduction CTA exists anywhere
-- The blue styling stays (informational, not alarming) but copy shifts to empowerment
-- The "high" (amber) path remains unchanged — that's a genuine cost concern
+**Line 1028:** Change:
+```tsx
+<ScrollArea className="flex-1 min-h-0 overflow-hidden relative">
+```
+to:
+```tsx
+<div className="flex-1 min-h-0 overflow-y-auto relative">
+```
+
+**Line 1514:** Change closing `</ScrollArea>` to `</div>`.
+
+This ensures the scrollable area respects the flex container height and scrolls properly when bowls exceed the available space. The footer remains pinned at the bottom.
+
+### Scope
+- Single file change, 2 lines
+- No logic changes, purely layout fix
 
