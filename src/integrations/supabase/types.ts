@@ -23788,6 +23788,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      revert_price_recommendation: {
+        Args: { _recommendation_id: string; _user_id?: string }
+        Returns: undefined
+      }
       update_booking_status: {
         Args: {
           p_appointment_id: string

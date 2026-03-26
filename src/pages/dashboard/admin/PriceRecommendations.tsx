@@ -9,7 +9,7 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2 } from 'lucide-react';
+import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2, Download } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -86,6 +86,24 @@ export default function PriceRecommendationsPage() {
 
   const isAccepting = acceptMutation.isPending || isBulkAccepting;
 
+  const exportCSV = () => {
+    if (!recommendations?.length) return;
+    const headers = ['Service', 'Category', 'Product Cost', 'Current Price', 'Current Margin %', 'Target Margin %', 'Recommended Price', 'Delta', 'Delta %', 'Volume/mo'];
+    const rows = recommendations.map(r => [
+      r.service_name, r.category || '', r.product_cost.toFixed(2), r.current_price.toFixed(2),
+      r.current_margin_pct.toFixed(1), r.target_margin_pct.toFixed(0), r.recommended_price.toFixed(2),
+      r.price_delta.toFixed(2), r.price_delta_pct.toFixed(1), r.monthly_volume || 0,
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `price-recommendations-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div className="container max-w-[1600px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
@@ -94,27 +112,40 @@ export default function PriceRecommendationsPage() {
           backTo={dashPath('/admin/backroom-settings')}
           backLabel="Back to Backroom"
           actions={
-            kpis.belowTarget > 0 ? (
-              <BulkPriceAcceptConfirmDialog
-                count={kpis.belowTarget}
-                totalImpact={kpis.totalImpact}
-                onConfirm={handleAcceptAll}
-              >
+            <div className="flex items-center gap-2">
+              {recommendations?.length ? (
                 <Button
-                  disabled={isAccepting}
-                  className={tokens.button?.page || 'h-10 px-6'}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 font-sans"
+                  onClick={exportCSV}
                 >
-                  {isBulkAccepting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Applying…
-                    </>
-                  ) : (
-                    `Accept All (${kpis.belowTarget})`
-                  )}
+                  <Download className="w-4 h-4" />
+                  Export CSV
                 </Button>
-              </BulkPriceAcceptConfirmDialog>
-            ) : undefined
+              ) : null}
+              {kpis.belowTarget > 0 ? (
+                <BulkPriceAcceptConfirmDialog
+                  count={kpis.belowTarget}
+                  totalImpact={kpis.totalImpact}
+                  onConfirm={handleAcceptAll}
+                >
+                  <Button
+                    disabled={isAccepting}
+                    className={tokens.button?.page || 'h-10 px-6'}
+                  >
+                    {isBulkAccepting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Applying…
+                      </>
+                    ) : (
+                      `Accept All (${kpis.belowTarget})`
+                    )}
+                  </Button>
+                </BulkPriceAcceptConfirmDialog>
+              ) : null}
+            </div>
           }
         />
 

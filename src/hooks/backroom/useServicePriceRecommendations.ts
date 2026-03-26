@@ -288,20 +288,19 @@ export function useAcceptPriceRecommendation() {
     onMutate: async (rec) => {
       // Optimistic: remove from cache immediately
       await queryClient.cancelQueries({ queryKey: ['computed-price-recommendations'] });
-      const prev = queryClient.getQueryData<EnrichedPriceRecommendation[]>(['computed-price-recommendations', orgId]);
-      if (prev) {
-        queryClient.setQueryData(
-          ['computed-price-recommendations', orgId],
-          prev.filter(r => r.service_id !== rec.service_id)
-        );
-      }
-      return { prev };
+      const snapshot: EnrichedPriceRecommendation[] | undefined = queryClient.getQueryData(
+        queryClient.getQueryCache().findAll({ queryKey: ['computed-price-recommendations'] })[0]?.queryKey ?? ['computed-price-recommendations']
+      );
+      // Use partial key match to update all matching queries
+      queryClient.setQueriesData<EnrichedPriceRecommendation[]>(
+        { queryKey: ['computed-price-recommendations'] },
+        (old) => old?.filter(r => r.service_id !== rec.service_id)
+      );
+      return { snapshot };
     },
     onError: (_err, _rec, context) => {
-      // Rollback on error
-      if (context?.prev) {
-        queryClient.setQueryData(['computed-price-recommendations', orgId], context.prev);
-      }
+      // Rollback: invalidate to refetch
+      queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
       toast.error('Failed to apply recommendation: ' + _err.message);
     },
     onSettled: () => {
@@ -345,19 +344,14 @@ export function useDismissPriceRecommendation() {
     },
     onMutate: async (rec) => {
       await queryClient.cancelQueries({ queryKey: ['computed-price-recommendations'] });
-      const prev = queryClient.getQueryData<EnrichedPriceRecommendation[]>(['computed-price-recommendations', orgId]);
-      if (prev) {
-        queryClient.setQueryData(
-          ['computed-price-recommendations', orgId],
-          prev.filter(r => r.service_id !== rec.service_id)
-        );
-      }
-      return { prev };
+      queryClient.setQueriesData<EnrichedPriceRecommendation[]>(
+        { queryKey: ['computed-price-recommendations'] },
+        (old) => old?.filter(r => r.service_id !== rec.service_id)
+      );
+      return {};
     },
-    onError: (_err, _rec, context) => {
-      if (context?.prev) {
-        queryClient.setQueryData(['computed-price-recommendations', orgId], context.prev);
-      }
+    onError: (_err, _rec, _context) => {
+      queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
       toast.error('Failed to dismiss: ' + _err.message);
     },
     onSettled: () => {
@@ -391,6 +385,34 @@ export function usePriceRecommendationHistory(limit: number = 20) {
     },
     enabled: !!orgId,
     staleTime: 30_000,
+  });
+}
+
+// ─── Revert Accepted Recommendation ──────────────────────────
+export function useRevertPriceRecommendation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recommendationId: string) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { error } = await supabase.rpc('revert_price_recommendation', {
+        _recommendation_id: recommendationId,
+        _user_id: userId ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-level-prices'] });
+      queryClient.invalidateQueries({ queryKey: ['service-location-prices'] });
+      queryClient.invalidateQueries({ queryKey: ['native-services'] });
+      queryClient.invalidateQueries({ queryKey: ['price-recommendation-history'] });
+      toast.success('Price reverted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to revert: ' + error.message);
+    },
   });
 }
 
