@@ -1,61 +1,24 @@
 
 
-## Enhance Remove Brand — Restore, Grace Period, Audit Trail
+## Make Product Rows Clickable with Checkbox
 
-### Overview
-Three enhancements to the brand removal feature: an "Archived Brands" view for restoration, a 24-hour grace period with undo, and an audit log entry for compliance.
+### What Changes
 
-### 1. Database Migration
+In the product picker list (lines 564-611 of `AllowanceCalculatorDialog.tsx`), replace the current `+ Add` / `✓ Added` button with a checkbox, and make the entire row clickable to toggle add/remove.
 
-Add columns to `products` table to support grace period tracking:
-- `deactivated_at` (timestamptz, nullable) — set when brand is removed, used for grace period countdown
-- `deactivated_by` (uuid, nullable) — who performed the removal
+### Changes to `AllowanceCalculatorDialog.tsx`
 
-No new tables needed — archived brands are derived by querying `products` where `is_active = false AND product_type = 'Supplies'`.
+**Lines 568-608** — Rework each product row:
 
-### 2. Audit Log Entry on Removal
+1. Wrap the entire row `div` with an `onClick` handler that calls `addProductToBowl(bowlIdx, p)` (which already toggles if the product is added)
+2. Add `cursor-pointer` to the row and adjust hover styling
+3. Replace the `Button` (lines 588-608) with a `Checkbox` component:
+   - `checked={isAlreadyAdded}`
+   - Styled to match the existing design (`shrink-0`)
+   - Click handled by the parent row's `onClick` — no separate handler needed
+4. Add `import { Checkbox } from '@/components/ui/checkbox'` (if not already imported)
 
-In `removeBrandMutation.onSuccess`, call `useLogAuditEvent` (from `useAppointmentAuditLog`) — actually, brand removal is an org-level action, so use `useLogPlatformAction` from `usePlatformAuditLog`:
-- `action: 'brand_removed'`
-- `entityType: 'brand'`
-- `entityId: brand name`
-- `details: { product_count, location_count, deactivated_at }`
+### Verify: Does `addProductToBowl` toggle?
 
-Add `brand_removed` and `brand_restored` to `AUDIT_ACTION_CONFIG` in `usePlatformAuditLog.ts`.
-
-### 3. Grace Period (24h Soft-Delete Window)
-
-Update `removeBrandMutation` to also set `deactivated_at = now()` and `deactivated_by = user.id` on the products when deactivating.
-
-After removal, show a persistent toast: "Brand removed. You can restore it within 24 hours from the Archived view."
-
-The `location_product_settings` deletion happens immediately (as now), but since the products are soft-deleted and `deactivated_at` is tracked, restoration within 24h is straightforward.
-
-### 4. Archived Brands View & Restore
-
-Add an "Archived" toggle/tab in the brand grid header (next to search):
-- Small ghost button with `Archive` icon + count badge
-- When active, queries `products` where `is_active = false AND product_type = 'Supplies'` grouped by brand
-- Each archived brand card shows: brand name, product count, time since removal, and grace period remaining (if < 24h)
-- **"Restore" button** on each card opens a confirmation dialog:
-  - Sets `is_active = true`, clears `deactivated_at` and `deactivated_by`
-  - Does NOT re-create `location_product_settings` — admin must re-track from the catalog
-  - Shows info: "Products will be restored to the catalog but will need to be re-tracked at each location"
-- After 24h, archived brands still show but labeled "Archived" (no grace period badge) — restore is still possible, just without the "within grace period" urgency
-
-### 5. Audit Config Updates
-
-In `usePlatformAuditLog.ts`, add to `AUDIT_ACTION_CONFIG`:
-```typescript
-brand_removed: { label: 'Brand Removed', color: 'rose', verb: 'removed brand' },
-brand_restored: { label: 'Brand Restored', color: 'emerald', verb: 'restored brand' },
-```
-
-### Files Summary
-
-| File | Action |
-|------|--------|
-| Database migration | Add `deactivated_at`, `deactivated_by` to `products` |
-| `BackroomProductCatalogSection.tsx` | Archived brands view, restore mutation, grace period display, audit logging on remove/restore |
-| `src/hooks/usePlatformAuditLog.ts` | Add `brand_removed` + `brand_restored` to action config |
+Need to check if calling it on an already-added product is safe or if we need to add removal logic.
 
