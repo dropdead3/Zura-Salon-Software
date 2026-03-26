@@ -116,6 +116,8 @@ function requiresDeveloper(product: CatalogProduct): boolean {
   if (product.color_type) {
     return product.color_type === 'permanent' || product.color_type === 'demi_permanent';
   }
+  // Explicit category check: semi-permanent category never needs developer
+  if ((product.category || '').toLowerCase() === 'semi-permanent') return false;
   // Fallback: keyword detection for legacy/unclassified products
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
@@ -544,24 +546,26 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         })
       );
 
-      // Developer warning logic
-      if (asDeveloper) {
-        // Adding a developer — clear warning for this bowl
-        setDeveloperWarningBowls((prev) => {
-          const next = new Set(prev);
-          next.delete(bowlIdx);
-          return next;
+      // Developer warning logic — use the lines we just built, not stale state
+      setBowls((prev) => {
+        const updatedLines = prev[bowlIdx]?.lines ?? [];
+        const hasDev = updatedLines.some((l) => l.isDeveloper);
+        const needsDev = updatedLines.some((l) => {
+          if (l.isDeveloper) return false;
+          // Build a minimal CatalogProduct-like object from the line + the product we just added
+          const cat = l.localId === newLine.localId ? product : catalogProducts?.find((cp) => cp.id === l.productId);
+          return cat ? requiresDeveloper(cat) : false;
         });
-      } else if (requiresDeveloper(product)) {
-        // Adding a permanent/demi color — check if bowl has developer
-        const updatedBowl = bowls[bowlIdx];
-        const hasDeveloper = updatedBowl?.lines.some((l) => l.isDeveloper) || false;
-        if (!hasDeveloper) {
-          setDeveloperWarningBowls((prev) => new Set(prev).add(bowlIdx));
+
+        if (hasDev || !needsDev) {
+          setDeveloperWarningBowls((p) => { const n = new Set(p); n.delete(bowlIdx); return n; });
+        } else {
+          setDeveloperWarningBowls((p) => new Set(p).add(bowlIdx));
         }
-      }
+        return prev; // no mutation — just piggybacking on the latest state
+      });
     },
-    [bowls, defaultMarkupPct]
+    [bowls, defaultMarkupPct, catalogProducts]
   );
 
   const removedLineRef = useRef<{ bowlIdx: number; line: BowlLine; position: number } | null>(null);
@@ -572,8 +576,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     const lineIdx = bowl?.lines.findIndex((l) => l.localId === lineLocalId) ?? -1;
     const removedLine = bowl?.lines[lineIdx];
 
-    setBowls((prev) =>
-      prev.map((b, i) => {
+    setBowls((prev) => {
+      const next = prev.map((b, i) => {
         if (i !== bowlIdx) return b;
         const lines = b.lines.filter((l) => l.localId !== lineLocalId);
         const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
@@ -581,8 +585,22 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
         });
         return { ...b, lines };
-      })
-    );
+      });
+
+      // Re-evaluate developer warning for this bowl after removal
+      const updatedLines = next[bowlIdx]?.lines ?? [];
+      const hasDev = updatedLines.some((l) => l.isDeveloper);
+      const needsDev = updatedLines.some((l) => {
+        if (l.isDeveloper) return false;
+        const cat = catalogProducts?.find((cp) => cp.id === l.productId);
+        return cat ? requiresDeveloper(cat) : false;
+      });
+      if (hasDev || !needsDev) {
+        setDeveloperWarningBowls((p) => { const n = new Set(p); n.delete(bowlIdx); return n; });
+      }
+
+      return next;
+    });
 
     if (removedLine) {
       if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
@@ -612,7 +630,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       });
       lastUndoToastRef.current = toastId;
     }
-  }, [bowls]);
+  }, [bowls, catalogProducts]);
 
   const updateLineQuantity = useCallback((bowlIdx: number, lineLocalId: string, qty: number) => {
     setBowls((prev) =>
