@@ -750,7 +750,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                              {(() => {
                                                const policy = allowanceByService.get(service.id);
 
-                                                if (policy) {
+                                                if (policy && policy.is_active) {
                                                   const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
                                                    const healthStatus = policy.allowance_health_status;
                                                    const healthPct = policy.allowance_health_pct;
