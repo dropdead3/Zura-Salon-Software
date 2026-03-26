@@ -231,8 +231,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     );
   }, [catalogProducts]);
 
+  // Reset hasInitRef when dialog closes
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hasInitRef.current = false;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || hasInitRef.current) return;
 
     if (existingBowls && existingBowls.length > 0 && existingBaselines) {
       const loaded: BowlState[] = existingBowls.map((b) => {
@@ -266,14 +273,16 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       });
 
       setBowls(loaded);
-      // Capture initial snapshot for dirty-state detection
       const snapshot = JSON.stringify(loaded.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       initialBowlsRef.current = snapshot;
-    } else {
+      hasInitRef.current = true;
+    } else if (existingBowls && existingBaselines) {
+      // No existing bowls — create default
       const defaultBowls = [{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [] as BowlLine[], collapsed: false }];
       setBowls(defaultBowls);
       const snapshot = JSON.stringify(defaultBowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       initialBowlsRef.current = snapshot;
+      hasInitRef.current = true;
     }
     setBowlPickers({});
     setEditingLabelIdx(null);
