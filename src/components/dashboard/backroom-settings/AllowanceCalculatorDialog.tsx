@@ -881,15 +881,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 bg-muted/20">
+        <div className="px-6 py-4 border-t border-border/40 bg-muted/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs font-sans text-muted-foreground">Product Allowance</div>
-              <div className="text-xl font-sans font-medium text-foreground tabular-nums">
+              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance</div>
+              <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
                 ${grandTotal.toFixed(2)}
               </div>
-              <div className="text-[11px] font-sans text-muted-foreground">
-                {Math.round(totalWeight)}g total across {bowls.filter((b) => b.lines.length > 0).length} vessel(s)
+              <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
+                {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
               </div>
             </div>
             <Button
