@@ -288,20 +288,19 @@ export function useAcceptPriceRecommendation() {
     onMutate: async (rec) => {
       // Optimistic: remove from cache immediately
       await queryClient.cancelQueries({ queryKey: ['computed-price-recommendations'] });
-      const prev = queryClient.getQueryData<EnrichedPriceRecommendation[]>(['computed-price-recommendations', orgId]);
-      if (prev) {
-        queryClient.setQueryData(
-          ['computed-price-recommendations', orgId],
-          prev.filter(r => r.service_id !== rec.service_id)
-        );
-      }
-      return { prev };
+      const snapshot: EnrichedPriceRecommendation[] | undefined = queryClient.getQueryData(
+        queryClient.getQueryCache().findAll({ queryKey: ['computed-price-recommendations'] })[0]?.queryKey ?? ['computed-price-recommendations']
+      );
+      // Use partial key match to update all matching queries
+      queryClient.setQueriesData<EnrichedPriceRecommendation[]>(
+        { queryKey: ['computed-price-recommendations'] },
+        (old) => old?.filter(r => r.service_id !== rec.service_id)
+      );
+      return { snapshot };
     },
     onError: (_err, _rec, context) => {
-      // Rollback on error
-      if (context?.prev) {
-        queryClient.setQueryData(['computed-price-recommendations', orgId], context.prev);
-      }
+      // Rollback: invalidate to refetch
+      queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
       toast.error('Failed to apply recommendation: ' + _err.message);
     },
     onSettled: () => {
