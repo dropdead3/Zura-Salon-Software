@@ -52,7 +52,8 @@ export default function PriceRecommendationsPage() {
       <div className="container max-w-[1600px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <DashboardPageHeader
           title="Price Intelligence"
-          backTo={{ label: 'Backroom', path: `${dashboardPath}/admin/backroom-settings` }}
+          backTo={`${dashboardPath}/admin/backroom-settings`}
+          backLabel="Back to Backroom"
           actions={
             kpis.belowTarget > 0 ? (
               <Button
