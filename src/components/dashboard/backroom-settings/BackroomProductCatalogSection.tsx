@@ -432,7 +432,19 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['product-brands'] });
-      toast.success(`Removed ${brand} — ${count} products deactivated and untracked from all locations`);
+      queryClient.invalidateQueries({ queryKey: ['archived-brands'] });
+      // Audit log
+      logAction.mutate({
+        organizationId: orgId ?? undefined,
+        action: 'brand_removed',
+        entityType: 'brand',
+        entityId: brand,
+        details: { product_count: count, location_count: activeLocations.length },
+      });
+      toast.success(`Removed ${brand} — ${count} products deactivated`, {
+        description: 'You can restore this brand within 24 hours from the Archived view.',
+        duration: 8000,
+      });
     },
     onError: (error) => toast.error('Failed to remove brand: ' + error.message),
   });
