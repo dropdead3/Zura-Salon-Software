@@ -802,7 +802,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           <div className="space-y-1.5">
                                              <label className="text-xs font-sans text-muted-foreground flex items-center gap-1">
                                               Variance Threshold
-                                              <MetricInfoTooltip description="Maximum acceptable deviation from baseline usage before flagging." />
+                                              <MetricInfoTooltip description="Sets the maximum acceptable deviation from a service's baseline product usage. When a stylist's actual product usage exceeds this threshold (e.g., using 15% more product than the baseline on a 10% threshold), Zura automatically flags it as a variance exception. These flags surface in the Backroom Command Center alerts, the staff compliance leaderboard, and individual staff reports — giving managers visibility into usage patterns without interrupting the stylist's workflow." />
                                             </label>
                                             <div className="flex items-center gap-2 py-1" onPointerDown={(e) => e.stopPropagation()}>
                                               <Slider
