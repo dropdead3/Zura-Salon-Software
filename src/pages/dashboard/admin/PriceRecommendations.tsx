@@ -86,6 +86,24 @@ export default function PriceRecommendationsPage() {
 
   const isAccepting = acceptMutation.isPending || isBulkAccepting;
 
+  const exportCSV = () => {
+    if (!recommendations?.length) return;
+    const headers = ['Service', 'Category', 'Product Cost', 'Current Price', 'Current Margin %', 'Target Margin %', 'Recommended Price', 'Delta', 'Delta %', 'Volume/mo'];
+    const rows = recommendations.map(r => [
+      r.service_name, r.category || '', r.product_cost.toFixed(2), r.current_price.toFixed(2),
+      r.current_margin_pct.toFixed(1), r.target_margin_pct.toFixed(0), r.recommended_price.toFixed(2),
+      r.price_delta.toFixed(2), r.price_delta_pct.toFixed(1), r.monthly_volume || 0,
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `price-recommendations-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div className="container max-w-[1600px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
