@@ -1,24 +1,27 @@
 
 
-## Fix KPI Icon Styling — Monochrome Token Compliance
+## Add Hyperlink to Empty State CTA
 
 ### Problem
-2 of 4 KPI tiles on the Price Intelligence page use hardcoded colored icon boxes instead of the standard monochrome `tokens.card.iconBox` + `tokens.card.icon` tokens:
-
-- **Below Target**: `bg-amber-100 dark:bg-amber-900/30` + `text-amber-600` — should be `tokens.card.iconBox` + `tokens.card.icon`
-- **Revenue Impact**: `bg-emerald-100 dark:bg-emerald-900/30` + `text-emerald-600` — should be `tokens.card.iconBox` + `tokens.card.icon`
-
-The other 2 tiles (Avg Margin Gap, Default Target) already correctly use `tokens.card.iconBox` and `tokens.card.icon`.
+The empty state text "Set up recipe baselines on tracked services to generate price recommendations." is plain text with no navigation. Users seeing this have no way to get to the recipe baselines section.
 
 ### Fix
 
-**File: `src/pages/dashboard/admin/PriceRecommendations.tsx`**
+**File: `src/pages/dashboard/admin/PriceRecommendations.tsx` (lines 350-352)**
 
-Replace the two hardcoded icon containers:
+Replace the plain `<p>` with a message containing a `<Link>` to the Backroom Hub's formulas section (`/admin/backroom?section=formulas`):
 
-1. **Below Target (line ~217-219):** Replace `<div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 ...">` with `<div className={tokens.card.iconBox}>` and `<AlertTriangle className={tokens.card.icon} />`
+```tsx
+<p className={tokens.empty.description}>
+  <Link
+    to={dashPath('/admin/backroom?section=formulas')}
+    className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+  >
+    Set up recipe baselines
+  </Link>
+  {' '}on tracked services to generate price recommendations.
+</p>
+```
 
-2. **Revenue Impact (line ~251-253):** Replace `<div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 ...">` with `<div className={tokens.card.iconBox}>` and `<DollarSign className={tokens.card.icon} />`
-
-All 4 tiles will then render with the same monochrome `bg-muted` box and `text-primary` icon, matching every other KPI strip on the platform.
+Uses the existing `dashPath` helper and `Link` import already present in the file. One line change, no new dependencies.
 
