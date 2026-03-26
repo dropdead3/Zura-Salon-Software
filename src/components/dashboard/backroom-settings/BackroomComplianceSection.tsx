@@ -1,5 +1,5 @@
 /**
- * BackroomComplianceSection — Reweigh Reports dashboard for Backroom Settings.
+ * BackroomComplianceSection — Compliance Reports dashboard for Backroom Settings.
  * Enhanced with waste metrics and overage attachment rate.
  */
 
@@ -135,7 +135,7 @@ export function BackroomComplianceSection() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-1.5 mb-2 min-h-[32px]">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-muted-foreground" />
-                  <p className={tokens.kpi.label}>Reweigh Rate</p>
+                  <p className={tokens.kpi.label}>Compliance Rate</p>
                   <MetricInfoTooltip description="Percentage of color appointments with a mix session AND reweigh." />
                 </div>
                 <div className="flex items-end gap-2">
@@ -226,8 +226,8 @@ export function BackroomComplianceSection() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={tokens.card.title}>Reweigh & Waste Trend</CardTitle>
-                  <MetricInfoTooltip description="Daily reweigh rate and waste percentage over the selected period." />
+                 <CardTitle className={tokens.card.title}>Compliance & Waste Trend</CardTitle>
+                  <MetricInfoTooltip description="Daily compliance rate and waste percentage over the selected period." />
                 </div>
               </CardHeader>
               <CardContent>
@@ -248,10 +248,10 @@ export function BackroomComplianceSection() {
                       <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <Tooltip
-                        formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Reweigh Rate' : 'Waste %']}
+                        formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Compliance Rate' : 'Waste %']}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                       />
-                      <Legend formatter={(value) => value === 'complianceRate' ? 'Reweigh Rate' : 'Waste %'} />
+                      <Legend formatter={(value) => value === 'complianceRate' ? 'Compliance Rate' : 'Waste %'} />
                       <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#reweighGrad)" strokeWidth={2} />
                       <Area type="monotone" dataKey="wastePct" stroke="hsl(var(--chart-5))" fill="url(#wasteGrad)" strokeWidth={2} />
                     </AreaChart>
@@ -266,8 +266,8 @@ export function BackroomComplianceSection() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={tokens.card.title}>Staff Reweigh Rates</CardTitle>
-                  <MetricInfoTooltip description="Per-stylist reweigh rates with waste metrics, sorted worst to best." />
+                  <CardTitle className={tokens.card.title}>Staff Compliance</CardTitle>
+                  <MetricInfoTooltip description="Per-stylist compliance rates with waste metrics, sorted worst to best." />
                 </div>
               </CardHeader>
               <CardContent>
@@ -286,7 +286,7 @@ export function BackroomComplianceSection() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data!.staffBreakdown.map((s) => {
+                      {[...data!.staffBreakdown].sort((a, b) => a.complianceRate - b.complianceRate).map((s) => {
                         const b = getComplianceBadge(s.complianceRate);
                         return (
                           <TableRow
@@ -339,6 +339,9 @@ export function BackroomComplianceSection() {
                           <Badge variant="destructive" className="text-xs">Missing</Badge>
                         </div>
                       ))}
+                      {missing.length > 20 && (
+                        <p className="font-sans text-xs text-muted-foreground text-center pt-1">and {missing.length - 20} more</p>
+                      )}
                     </div>
                   );
                 })()}

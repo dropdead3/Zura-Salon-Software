@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileDown, Printer, Loader2, User } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/formatDate';
 import type { StaffComplianceBreakdown, ComplianceLogItem, ComplianceSummary } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateStaffComplianceReportPdf } from '@/utils/staffComplianceReportPdf';
@@ -101,7 +102,7 @@ export function StaffComplianceReportDialog({
 
           <div className="space-y-2">
             <label className="font-sans text-sm text-muted-foreground">Period</label>
-            <p className="font-sans text-sm">{dateFrom} → {dateTo}</p>
+            <p className="font-sans text-sm">{formatDate(dateFrom, 'MMM d, yyyy')} → {formatDate(dateTo, 'MMM d, yyyy')}</p>
           </div>
 
           {selectedStaff && (

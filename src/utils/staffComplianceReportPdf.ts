@@ -62,7 +62,7 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   const badgeColor = getComplianceColor(staff.complianceRate);
   const badgeX = 14 + doc.getTextWidth(staffName) + 6;
   doc.setFillColor(...badgeColor);
-  const badgeW = doc.getTextWidth(badgeLabel) * 0.5 + 10;
+  const badgeW = doc.getTextWidth(badgeLabel) + 8;
   doc.roundedRect(badgeX, y - 5, badgeW, 7, 2, 2, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
@@ -73,12 +73,17 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   y = 50;
   doc.setDrawColor(200, 200, 200);
   doc.setFillColor(248, 248, 250);
-  doc.roundedRect(14, y, pageWidth - 28, 30, 3, 3, 'FD');
+  doc.roundedRect(14, y, pageWidth - 28, 32, 3, 3, 'FD');
+
+  const reweighRate = staff.total > 0 && staff.total - staff.missing > 0
+    ? Math.round(((staff as any).reweighed ?? 0) / (staff.total - staff.missing) * 100)
+    : 0;
 
   const summaryItems = [
     { label: 'Compliance Rate', value: `${staff.complianceRate}%` },
     { label: 'Total Appointments', value: `${staff.total}` },
     { label: 'Missing Sessions', value: `${staff.missing}` },
+    { label: 'Reweigh Rate', value: `${reweighRate}%` },
     { label: 'Waste Rate', value: `${staff.wastePct}%` },
     { label: 'Est. Waste Cost', value: `$${staff.wasteCost.toFixed(2)}` },
   ];
@@ -104,17 +109,16 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   doc.text('Appointment Details', 14, y);
   y += 4;
 
-  const tableHead = ['Date', 'Service', 'Status', 'Reweigh', 'Waste %'];
+  const tableHead = ['Date', 'Service', 'Status', 'Reweigh'];
   const tableBody = items.map((item) => [
     item.appointmentDate,
     item.serviceName ?? 'Color Service',
     item.complianceStatus === 'compliant' ? 'Tracked' : item.complianceStatus === 'partial' ? 'Partial' : 'Missing',
     item.hasReweigh ? 'Yes' : 'No',
-    '—', // waste per-item isn't available at item level
   ]);
 
   if (tableBody.length === 0) {
-    tableBody.push(['No appointments found for this period', '', '', '', '']);
+    tableBody.push(['No appointments found for this period', '', '', '']);
   }
 
   autoTable(doc, {
