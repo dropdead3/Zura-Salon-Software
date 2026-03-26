@@ -39,6 +39,11 @@ function r2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
+/** Round up to the nearest $5 increment */
+function roundUpTo5(v: number): number {
+  return Math.ceil(v / 5) * 5;
+}
+
 /**
  * Calculate retail (after-markup) cost per gram.
  * retailCpg = wholesaleCpg × (1 + markupPct / 100)
