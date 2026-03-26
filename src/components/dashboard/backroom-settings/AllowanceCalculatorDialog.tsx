@@ -1605,13 +1605,13 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         const bColorQty = b.lines.filter(l => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
                         return `\n${b.label}:\n` + b.lines.map(l => {
                           const qty = l.isDeveloper
-                            ? (bColorQty > 0 ? `${l.developerRatio}× ratio (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g`)
+                            ? (bColorQty > 0 ? `${l.developerRatio}× ratio with color (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g (standalone)`)
                             : `${l.quantity}g`;
                           const prod = catalogProducts.find(p => p.id === l.productId);
                           const wholesaleCpg = prod ? getWholesaleCostPerGram(prod) : 0;
                           const effectiveQty = l.isDeveloper ? (bColorQty > 0 ? bColorQty * l.developerRatio : l.quantity) : l.quantity;
                           const wholesaleCost = Math.round(effectiveQty * wholesaleCpg * 100) / 100;
-                          return `  • ${l.productName} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
+                          return `  • ${l.productName}${l.isDeveloper ? ' [Developer]' : ''} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
                         }).join('\n');
                       }),
                       effectiveServicePrice > 0 ? `\nHealth: ${healthResult?.allowancePct ?? '—'}% of $${effectiveServicePrice.toFixed(0)} service (${healthResult?.status ?? 'N/A'})` : '',
