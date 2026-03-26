@@ -828,10 +828,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     className="w-5 h-5 rounded-full border border-border/60 shrink-0"
                     style={{ backgroundColor: p.swatch_color || 'hsl(var(--muted))' }}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-sans text-foreground truncate">{p.name}</div>
+                   <div className="flex-1 min-w-0">
+                    <div className="text-xs font-sans text-foreground truncate">
+                      {p.name}
+                      {/* Cross-bowl indicator */}
+                      {(() => {
+                        const otherBowl = bowls.find((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === p.id));
+                        return otherBowl ? (
+                          <span className="ml-1 text-[9px] text-muted-foreground/60">in {otherBowl.label}</span>
+                        ) : null;
+                      })()}
+                    </div>
                     <div className="text-[11px] font-sans text-muted-foreground">
                       ${cpg.toFixed(4)}/g
+                      {cpg === 0 && <span className="ml-1 text-destructive text-[9px]">no cost</span>}
                       {isDevProduct && (
                         <span className="ml-1.5">
                           <FlaskConical className="w-3 h-3 inline text-muted-foreground/60" />
