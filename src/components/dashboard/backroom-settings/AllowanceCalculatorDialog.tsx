@@ -307,8 +307,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const updateServicePriceMutation = useMutation({
     mutationFn: async (newPrice: number) => {
       const { error } = await supabase
-        .from('services' as any)
-        .update({ price: newPrice } as any)
+        .from('services')
+        .update({ price: newPrice })
         .eq('id', serviceId);
       if (error) throw error;
     },
@@ -316,7 +316,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
       toast.success('Service price updated');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error('Failed to update price: ' + err.message);
     },
   });
@@ -577,7 +577,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               cost_per_unit_snapshot: line.costPerGram,
               is_developer: line.isDeveloper,
               developer_ratio: line.developerRatio,
-            } as any)
+            })
             .eq('organization_id', orgId)
             .eq('service_id', serviceId)
             .eq('product_id', line.productId);
