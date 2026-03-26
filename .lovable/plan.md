@@ -1,36 +1,19 @@
 
 
-## Add Confirmation Dialog Before Price Adjustment
+## Make "Add Bowl" / "Add Bottle" Buttons More Noticeable
 
-### What changes
+### Change
 
 **File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-**1. Add state for confirmation dialog**
-```tsx
-const [showPriceConfirm, setShowPriceConfirm] = useState(false);
-```
+Replace the current `border-dashed` outline buttons (lines 1507–1527) with a slightly more prominent style:
 
-**2. Replace both `onClick` handlers (lines 1589 and 1639)** to open the dialog instead of mutating directly:
-```tsx
-onClick={() => setShowPriceConfirm(true)}
-```
-
-**3. Add an `AlertDialog` at the bottom of the component** (before the closing fragment), using the existing `AlertDialog` UI components and matching the project's dialog styling:
-
-- **Icon**: `DollarSign` in a branded circle (same pattern as `UsePassConfirmDialog`)
-- **Title**: "Confirm Service Price Adjustment"
-- **Body explainer** (3 items):
-  - Current price → New price with arrow visual (same pattern as `PriceAcceptConfirmDialog`)
-  - Bullet list of where the new price will surface: Service Tracking, Price Intelligence, public website services page, location/level overrides
-  - Note: "Price is rounded up to the nearest $5 based on your retail product cost of $X and the 8% industry target."
-- **Footer**: Cancel + "Confirm Adjustment" button
-- **On confirm**: runs the existing `updateServicePriceMutation.mutate()` logic with the undo toast
-
-**4. Remove the duplicate standalone button block (lines 1632–1664)** — the inline button at line 1587 is the only trigger needed.
+- Remove `border-dashed` — use a solid border instead
+- Add `border-border/80` for a more visible border
+- Add `bg-muted/40 hover:bg-muted/70` for a subtle fill that makes them stand out from the dark background
+- Keep `text-xs`, `h-9`, `flex-1`, `variant="outline"`, and `size="sm"` unchanged
 
 ### Scope
-- Single file, ~40 lines added (dialog), ~35 lines removed (duplicate button block)
-- Reuses existing `AlertDialog` components and `PriceAcceptConfirmDialog` visual patterns
-- No new files needed
+- Single file, 2 className strings updated (one per button)
+- No logic changes
 
