@@ -845,31 +845,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
                                             />
                                           </div>
-                                          <div className="space-y-1.5">
-                                             <label className="text-xs font-sans text-muted-foreground flex items-center gap-1">
-                                              Variance Threshold
-                                              <MetricInfoTooltip description="Sets the maximum acceptable deviation from a service's baseline product usage. When a stylist's actual product usage exceeds this threshold (e.g., using 15% more product than the baseline on a 10% threshold), Zura automatically flags it as a variance exception. These flags surface in the Backroom Command Center alerts, the staff compliance leaderboard, and individual staff reports — giving managers visibility into usage patterns without interrupting the stylist's workflow." />
-                                            </label>
-                                            <div className="flex items-center gap-2 py-1" onPointerDown={(e) => e.stopPropagation()}>
-                                              <Slider
-                                                key={`${service.id}-${service.variance_threshold_pct}`}
-                                                defaultValue={[service.variance_threshold_pct || 10]}
-                                                onValueChange={([v]) => {
-                                                  setLiveThresholds(prev => ({ ...prev, [service.id]: v }));
-                                                }}
-                                                onValueCommit={([v]) => {
-                                                  if (v !== service.variance_threshold_pct) {
-                                                    updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } });
-                                                  }
-                                                }}
-                                                min={5}
-                                                max={50}
-                                                step={5}
-                                                className="flex-1"
-                                              />
-                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{(liveThresholds[service.id] ?? (service.variance_threshold_pct || 10))}%</span>
-                                            </div>
-                                          </div>
                                         </div>
                                         {/* Price Recommendation inline alert */}
                                         {(() => {
