@@ -59,7 +59,8 @@ type BackroomSection =
   | 'alerts'
   | 'formula'
   | 'multi-location'
-  | 'compliance';
+  | 'compliance'
+  | 'price-intelligence';
 
 type SectionGroup = 'operations' | 'configuration' | 'settings';
 
