@@ -74,7 +74,7 @@ interface BackroomInsightsSectionProps {
   totalWasteQty?: number;
 }
 
-export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters }: BackroomInsightsSectionProps = {}) {
+export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters, showExtendedAnalytics, wasteByCategory, totalWasteQty }: BackroomInsightsSectionProps = {}) {
   const [internalDatePreset, setInternalDatePreset] = useState<DatePreset>('30d');
   const [sortKey, setSortKey] = useState<SortKey>('totalServices');
   const [sortAsc, setSortAsc] = useState(false);
