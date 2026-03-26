@@ -45,7 +45,7 @@ import {
   Armchair,
   Package,
   Beaker,
-  CircleDollarSign,
+  
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
