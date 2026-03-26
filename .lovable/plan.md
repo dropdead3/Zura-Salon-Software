@@ -1,30 +1,42 @@
 
 
-## Add "Unconfigured" Amber Ghost Badge + Equal Width
+## Add Animated Pointing Icon to "Finalize Configuration" Button
 
 ### Change
-Add an amber ghost "Unconfigured" badge for tracked services that haven't been finalized. Make both badges equal width using a fixed `min-w` so they align visually.
+Add a bouncing arrow icon (e.g., `ArrowRight` or `ChevronRight`) to the left of the "Finalize Configuration" button that animates horizontally to draw attention to it.
 
 ### Technical Detail
 
-**File: `ServiceTrackingSection.tsx`** (~lines 631–638)
+**File: `ServiceTrackingSection.tsx`** (~lines 822–839)
 
-Replace the current conditional block with:
+Add a `ChevronRight` icon before the button text with a CSS animation that nudges it right repeatedly:
 
 ```tsx
-{service.backroom_config_dismissed ? (
-  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
-    Configured ✓
-  </Badge>
-) : service.is_backroom_tracked ? (
-  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-    Unconfigured
-  </Badge>
-) : null}
+<Button
+  variant="ghost"
+  size="sm"
+  className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+  onClick={...}
+>
+  <ChevronRight className="w-3.5 h-3.5 animate-[nudge-right_1s_ease-in-out_infinite]" />
+  Finalize Configuration
+</Button>
 ```
 
-This removes the old `FileText` icon block for non-configured tracked services and replaces it with a matching amber ghost badge. Both badges share `min-w-[6.5rem] justify-center` for equal width.
+**File: `tailwind.config.ts`** — Add the `nudge-right` keyframe:
 
-### File Modified
+```ts
+"nudge-right": {
+  "0%, 100%": { transform: "translateX(0)" },
+  "50%": { transform: "translateX(3px)" },
+}
+```
+
+Animation: `"nudge-right": "nudge-right 1s ease-in-out infinite"`
+
+This creates a subtle, continuous horizontal pulse on the chevron that draws the eye to the button without being distracting.
+
+### Files Modified
 - `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+- `tailwind.config.ts`
 
