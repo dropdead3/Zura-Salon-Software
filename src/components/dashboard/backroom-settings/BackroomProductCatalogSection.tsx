@@ -1406,7 +1406,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           </div>
                         );
                       })}
-                  </div>
+                </div>
                 )
               ) : !hasProducts ? (
                 <div className={cn(tokens.empty.container, 'py-14')}>
@@ -1425,6 +1425,10 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   <p className={tokens.empty.description}>Try a different letter or search term.</p>
                 </div>
               ) : (
+                <>
+                <p className="text-sm font-sans text-muted-foreground mb-3">
+                  Brands Carried In {activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'Your Location'}'s Backroom
+                </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {filteredBrands.map((brandName) => {
                     const brandProds = brandGroups.get(brandName) || [];
@@ -1471,6 +1475,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     );
                   })}
                 </div>
+                </>
               )}
 
               {/* Next step hint */}
