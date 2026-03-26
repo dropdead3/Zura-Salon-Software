@@ -774,7 +774,62 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     }
   }, [bowls, orgId, serviceId, existingBowls, existingBaselines, grandTotal, totalWeight, healthResult, effectiveServicePrice, upsertPolicy, queryClient]);
 
-  // Cmd+S / Ctrl+S keyboard shortcut
+  const hasExistingData = (existingBowls?.length ?? 0) > 0 || (existingBaselines?.length ?? 0) > 0;
+
+  const handleClearAllowance = useCallback(async () => {
+    if (!orgId || !window.confirm('Are you sure you want to clear this allowance? All bowls and products will be removed.')) return;
+    setSaving(true);
+    try {
+      const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
+      const existingBowlIds = existingBowls?.map(b => b.id) || [];
+
+      if (existingBaselineIds.length > 0) {
+        const { error: blErr } = await supabase
+          .from('service_recipe_baselines')
+          .delete()
+          .in('id', existingBaselineIds);
+        if (blErr) throw new Error('Failed to clear baselines: ' + blErr.message);
+      }
+      if (existingBowlIds.length > 0) {
+        const { error: bowlErr } = await supabase
+          .from('service_allowance_bowls')
+          .delete()
+          .in('id', existingBowlIds);
+        if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
+      }
+
+      await upsertPolicy.mutateAsync({
+        organization_id: orgId,
+        service_id: serviceId,
+        included_allowance_qty: 0,
+        allowance_unit: 'g',
+        overage_rate: 0,
+        overage_rate_type: 'per_unit',
+        billing_mode: 'allowance',
+        is_active: false,
+        notes: null,
+        allowance_health_status: null,
+        allowance_health_pct: null,
+        last_health_check_at: null,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['allowance-bowls'] });
+      queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
+
+      setBowls([{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [], collapsed: false }]);
+      initialBowlsRef.current = '';
+      setModeledServicePrice(null);
+
+      toast.success('Allowance cleared');
+      setTimeout(() => onOpenChange(false), 0);
+    } catch (err: unknown) {
+      toast.error('Failed to clear allowance: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
+  }, [orgId, serviceId, existingBowls, existingBaselines, upsertPolicy, queryClient, onOpenChange, defaultVesselType]);
+
+   // Cmd+S / Ctrl+S keyboard shortcut
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -1714,6 +1769,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {/* Copy summary */}
+              {hasExistingData && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
+                  disabled={saving}
+                  onClick={handleClearAllowance}
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Clear Allowance
+                </Button>
+              )}
               {grandTotal > 0 && (
                 <Button
                   variant="ghost"
