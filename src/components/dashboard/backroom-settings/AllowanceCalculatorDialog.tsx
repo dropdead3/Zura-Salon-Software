@@ -20,8 +20,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useAllowanceBowls, useUpsertAllowanceBowl, useDeleteAllowanceBowl } from '@/hooks/backroom/useAllowanceBowls';
-import { useServiceRecipeBaselines, useUpsertRecipeBaseline, useDeleteRecipeBaseline } from '@/hooks/inventory/useServiceRecipeBaselines';
+import { useAllowanceBowls } from '@/hooks/backroom/useAllowanceBowls';
+import { useServiceRecipeBaselines } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/backroom/allowance-health';
