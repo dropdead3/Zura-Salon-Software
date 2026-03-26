@@ -1,37 +1,44 @@
 
 
-## Improve Allowance Calculator UX
+## Reorder Drill-Down: Vessels Before Allowance + Vessel-Aware Calculator
 
-### Current Issues
-1. **Product search is per-bowl** — each bowl has its own search input, but there's a shared `productSearch` state so typing in one bowl affects all
-2. **No visual distinction between color products and developers** — lines all look the same
-3. **Search requires typing** — no browse-by-brand option; users must know product names
-4. **No empty state guidance** — Bowl 1 just shows a search input with no hint of what to do
-5. **Tiny touch targets** — weight pills and ratio buttons are 10px text with minimal padding
-6. **No bottle support** — dialog only says "bowls" but services can use bottles too (container_types from phorest_services)
-7. **Product search dropdown clips** — max-h-40 is tight; hard to browse catalog
-8. **No "Add Developer" shortcut** — Vish shows a dedicated "Add Developer" button per bowl rather than requiring search
+### Problem
+Currently the drill-down layout is: Allowance config → Vessel selector → Toggles. The natural flow should be: Vessel selector → Allowance config → Toggles, since vessels must be chosen before configuring allowances. Additionally, the calculator dialog is hardcoded to "bowls" only — it should support "bottles" when selected.
 
-### Plan
+### Changes
+
+**File: `ServiceTrackingSection.tsx`**
+
+1. **Move the vessel selector block** (lines 740–792: "Requires Color/Chemical" toggle + Bowls/Bottles pills) **above** the allowance config block (lines 679–727).
+
+2. **Pass `containerTypes`** to the `AllowanceCalculatorDialog` so it knows which vessel types are active.
+
+3. **Gate the "Configure Allowance" button**: only show it when `container_types` has at least one entry (i.e., vessels have been selected).
 
 **File: `AllowanceCalculatorDialog.tsx`**
 
-1. **Add empty state with instructions** — When a bowl has no lines, show a friendly prompt: "Search and add color products, then pair with a developer" with an icon
+4. **Accept a new `containerTypes` prop**: `containerTypes: ('bowl' | 'bottle')[]`.
 
-2. **Scope search state per-bowl** — Change `productSearch` from a single string to `Record<number, string>` so each bowl's picker is independent
+5. **Rename "Bowl" to vessel-generic labels**: When only bottles are selected, show "Bottle 1", "Add Bottle"; when both, allow choosing type per vessel. The `addBowl` function becomes `addVessel` and labels adapt based on the container types.
 
-3. **Visual developer distinction** — Add a `FlaskConical` icon and lighter background row for developer lines to differentiate them from color products
+6. **Use appropriate icons**: `Beaker` for bowls, `TestTube2` for bottles (matching the Dock convention from memory).
 
-4. **Larger touch targets** — Increase pill button padding from `px-2 py-0.5 text-[10px]` to `px-2.5 py-1 text-xs` for better tap accuracy
+7. **Default initial vessel**: First vessel defaults to the first selected container type instead of always "Bowl 1".
 
-5. **"Quick Add Developer" button** — After color products in a bowl, show a prominent "+ Add Developer" dashed button that opens a filtered search showing only developer-category products
-
-6. **Bowl subtotal shows weight too** — Add weight subtotal next to cost subtotal in bowl footer (e.g., "45g · $19.69")
-
-7. **Always-visible product picker** — Show the search input always (not gated behind typing); show popular/recent products by default before user types
-
-8. **Per-line weight display for developers** — Show the computed developer weight (e.g., "60g at 2×") so users understand what the ratio produces
+### Layout After Change
+```text
+┌─────────────────────────────────────────────────────┐
+│  Requires Color/Chemical  [toggle]                  │
+│  Vessels:  [✓ Bowls]  and/or  [+ Bottles]           │
+├─────────────────────────────────────────────────────┤
+│  📄 Configure Allowance        [Components]         │
+│  (or saved summary: "$36.51 · 2 bowls"  [Edit])     │
+├─────────────────────────────────────────────────────┤
+│  Toggles: Assistant Prep, Smart Mix, etc.           │
+└─────────────────────────────────────────────────────┘
+```
 
 ### Files Modified
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 - `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
