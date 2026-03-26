@@ -66,6 +66,7 @@ type BackroomSection =
   | 'formula'
   | 'multi-location'
   | 'compliance'
+  | 'savings'
   | 'price-intelligence';
 
 type SectionGroup = 'operations' | 'configuration' | 'settings';
