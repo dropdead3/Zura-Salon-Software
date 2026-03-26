@@ -140,6 +140,8 @@ export const AUDIT_ACTION_CONFIG: Record<string, {
   settings_updated: { label: 'Settings Updated', color: 'violet', verb: 'updated settings' },
   permission_changed: { label: 'Permission Changed', color: 'amber', verb: 'changed permissions for' },
   coaching_email_sent: { label: 'Coaching Email', color: 'violet', verb: 'sent coaching email to' },
+  brand_removed: { label: 'Brand Removed', color: 'rose', verb: 'removed brand' },
+  brand_restored: { label: 'Brand Restored', color: 'emerald', verb: 'restored brand' },
 };
 
 export function getAuditActionConfig(action: string) {

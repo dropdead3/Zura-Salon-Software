@@ -52,6 +52,10 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
 import { BackroomBulkReorderDialog } from './BackroomBulkReorderDialog';
+import { useLogPlatformAction } from '@/hooks/usePlatformAuditLog';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatDistanceToNow, differenceInHours } from 'date-fns';
+import { ArchiveRestore, Clock } from 'lucide-react';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
