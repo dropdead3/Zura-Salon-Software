@@ -30,6 +30,8 @@ import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 interface Props {
   onNavigate: (section: string) => void;
   initialSubTab?: string;
+  triggerWizard?: boolean;
+  onWizardTriggered?: () => void;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
