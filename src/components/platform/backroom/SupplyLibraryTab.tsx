@@ -51,6 +51,11 @@ import { suggestSwatchColor } from '@/lib/swatchSuggest';
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'semi-permanent', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
 const UNITS = ['g', 'ml', 'oz'];
+const COLOR_TYPES = [
+  { value: 'permanent', label: 'Permanent' },
+  { value: 'demi_permanent', label: 'Demi-Permanent' },
+  { value: 'semi_permanent', label: 'Semi-Permanent' },
+] as const;
 
 interface BrandCardData {
   brand: string;
