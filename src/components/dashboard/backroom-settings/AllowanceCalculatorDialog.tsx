@@ -399,6 +399,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     toast.success(`All color lines set to ${qty}g`);
   }, []);
 
+  const sortBowlLines = useCallback((bowlIdx: number, by: 'cost' | 'name') => {
+    setBowls((prev) =>
+      prev.map((b, i) => {
+        if (i !== bowlIdx) return b;
+        const colorLines = b.lines.filter(l => !l.isDeveloper);
+        const devLines = b.lines.filter(l => l.isDeveloper);
+        const sorted = [...colorLines].sort((a, c) =>
+          by === 'cost' ? c.lineCost - a.lineCost : a.productName.localeCompare(c.productName)
+        );
+        return { ...b, lines: [...sorted, ...devLines] };
+      })
+    );
+  }, []);
+
   const toggleBowlCollapse = useCallback((idx: number) => {
     setBowls((prev) => prev.map((b, i) => (i === idx ? { ...b, collapsed: !b.collapsed } : b)));
   }, []);
