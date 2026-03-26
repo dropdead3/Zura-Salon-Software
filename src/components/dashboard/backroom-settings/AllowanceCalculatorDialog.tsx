@@ -25,6 +25,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   serviceId: string;
   serviceName: string;
+  containerTypes?: ('bowl' | 'bottle')[];
 }
 
 interface CatalogProduct {
