@@ -289,6 +289,27 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     setModeledServicePrice(null);
   }, [open, existingBowls, existingBaselines, catalogProducts]);
 
+  // Pre-computed maps for render performance (Items 4)
+  const productBowlMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    bowls.forEach((b) => {
+      b.lines.forEach((l) => {
+        const existing = map.get(l.productId) || [];
+        if (!existing.includes(b.label)) existing.push(b.label);
+        map.set(l.productId, existing);
+      });
+    });
+    return map;
+  }, [bowls]);
+
+  const wholesaleCostMap = useMemo(() => {
+    const map = new Map<string, number>();
+    catalogProducts.forEach((p) => {
+      map.set(p.id, getWholesaleCostPerGram(p));
+    });
+    return map;
+  }, [catalogProducts]);
+
   const grandTotal = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + bowl.lines.reduce((ls, line) => ls + line.lineCost, 0), 0);
   }, [bowls]);
@@ -297,13 +318,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => {
       const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
       return sum + bowl.lines.reduce((ls, line) => {
-        const product = catalogProducts.find((p) => p.id === line.productId);
-        const wholesaleCpg = product ? getWholesaleCostPerGram(product) : 0;
+        const wholesaleCpg = wholesaleCostMap.get(line.productId) ?? 0;
         const effectiveQty = line.isDeveloper ? (colorQty > 0 ? colorQty * line.developerRatio : line.quantity) : line.quantity;
         return ls + Math.round(effectiveQty * wholesaleCpg * 100) / 100;
       }, 0);
     }, 0);
-  }, [bowls, catalogProducts]);
+  }, [bowls, wholesaleCostMap]);
 
   const totalWeight = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
