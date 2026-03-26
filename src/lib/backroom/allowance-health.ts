@@ -83,13 +83,15 @@ export function calculateAllowanceHealth(input: AllowanceHealthInput): Allowance
   let suggestedServicePrice: number | null = null;
   let suggestedAllowance: number | null = null;
 
+  // Always compute the 8% target budget ceiling
+  suggestedAllowance = r2(servicePrice * (TARGET_PCT / 100));
+
   if (allowancePct > UPPER_BOUND) {
     status = 'high';
     suggestedServicePrice = roundUpTo5(allowanceAmount / (TARGET_PCT / 100));
     message = `Product cost is ${allowancePct}% of service price. Consider raising service price to $${suggestedServicePrice} or reducing product usage.`;
   } else if (allowancePct < LOWER_BOUND) {
     status = 'low';
-    suggestedAllowance = r2(servicePrice * (TARGET_PCT / 100));
     message = `Allowance is ${allowancePct}% of service price — strong margin. Room to elevate product quality or absorb price flexibility if needed.`;
   } else {
     status = 'healthy';
