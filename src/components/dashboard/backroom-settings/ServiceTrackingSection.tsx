@@ -334,7 +334,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     untracked: allServices.filter(s => !s.is_backroom_tracked).length,
     attention: allServices.filter(s => needsAttention(s)).length,
     uncategorized: allServices.filter(s => !s.category).length,
-  }), [allServices, componentsByService, allowanceByService]);
+  }), [allServices, allowanceByService]);
 
   // Suggested untracked for auto-detect banner
   const suggestedUntracked = allServices.filter(
