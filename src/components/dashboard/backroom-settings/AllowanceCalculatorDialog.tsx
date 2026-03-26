@@ -630,7 +630,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       });
       lastUndoToastRef.current = toastId;
     }
-  }, [bowls]);
+  }, [bowls, catalogProducts]);
 
   const updateLineQuantity = useCallback((bowlIdx: number, lineLocalId: string, qty: number) => {
     setBowls((prev) =>
