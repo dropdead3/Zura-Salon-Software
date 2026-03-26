@@ -273,7 +273,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         tooltip: 'Define supply allowances and overage billing rules for tracked services.',
       },
     ];
-  }, [allServices, componentsByService, allowanceByService]);
+  }, [allServices, allowanceByService]);
 
   // Filtered list
   const filteredServices = useMemo(() => {
