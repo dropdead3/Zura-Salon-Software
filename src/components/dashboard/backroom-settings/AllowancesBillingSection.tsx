@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight, ArrowRight, X } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { BillingMethodEducation } from './BillingMethodEducation';
+import { BookOpen } from 'lucide-react';
 
 const WEIGHT_PRESETS = [15, 30, 45, 60, 90];
 const DEVELOPER_RATIOS = [
@@ -70,6 +73,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
 
   const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null);
   const [showNewPolicySelect, setShowNewPolicySelect] = useState(false);
+  const [showEducation, setShowEducation] = useState(false);
 
   const { data: trackedServices } = useQuery({
     queryKey: ['tracked-services-for-allowances', orgId],
@@ -173,8 +177,24 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
     );
   }
 
+
+
   return (
     <div className="space-y-6">
+      {/* Collapsible billing method education */}
+      <Collapsible open={showEducation} onOpenChange={setShowEducation}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+            <BookOpen className="w-4 h-4" />
+            <span className="font-medium">Learn about billing methods</span>
+            <ChevronDown className={cn('w-4 h-4 transition-transform', showEducation && 'rotate-180')} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <BillingMethodEducation />
+        </CollapsibleContent>
+      </Collapsible>
+
       <Infotainer
         id="backroom-allowances-guide"
         title="Allowances & Billing"

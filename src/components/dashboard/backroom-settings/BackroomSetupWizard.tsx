@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, ArrowLeft, ArrowRight, Package, Truck, Wrench, DollarSign, Monitor, Sparkles, CheckCircle2, Search, Layers, Plus, X, Lock } from 'lucide-react';
+import { BillingMethodEducation } from './BillingMethodEducation';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +25,7 @@ import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
-const STEP_COUNT = 6;
+const STEP_COUNT = 7;
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -92,10 +93,12 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [serviceProductMap, setServiceProductMap] = useState<Record<string, string>>({});
 
-  // ─── Step 4: Allowances state ───────────────────────────────────────────────
+  // ─── Step 4: Billing Strategy (educational, no state) ─────────────────────
+
+  // ─── Step 5: Allowances state ───────────────────────────────────────────────
   const [allowances, setAllowances] = useState<Record<string, { qty: string; unit: string; rate: string }>>({});
 
-  // ─── Step 5: Station state ──────────────────────────────────────────────────
+  // ─── Step 6: Station state ──────────────────────────────────────────────────
   const [stationName, setStationName] = useState('');
   const [stationLocationId, setStationLocationId] = useState('');
 
@@ -211,7 +214,9 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 4 && orgId) {
+    // Step 4 is Billing Strategy — educational, no save needed
+
+    if (step === 5 && orgId) {
       for (const svcId of Object.keys(allowances)) {
         const a = allowances[svcId];
         if (a.qty && a.rate) {
@@ -226,7 +231,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
       }
     }
 
-    if (step === 5 && stationName && stationLocationId && orgId) {
+    if (step === 6 && stationName && stationLocationId && orgId) {
       await createStation.mutateAsync({
         organization_id: orgId,
         location_id: stationLocationId,
@@ -323,7 +328,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 
   const progressPct = Math.round(((step + 1) / STEP_COUNT) * 100);
 
-  const stepLabels = ['Welcome', 'Products', 'Suppliers', 'Services', 'Allowances', 'Station'];
+  const stepLabels = ['Welcome', 'Products', 'Suppliers', 'Services', 'Billing Strategy', 'Allowances', 'Station'];
 
   return (
     <div className="space-y-6">
@@ -448,6 +453,15 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
             />
           )}
           {step === 4 && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className={tokens.body.emphasis}>Before setting allowances, understand how salons recover product costs.</p>
+                <p className="text-sm text-muted-foreground">This is educational context — you will configure billing mode per service in the next step.</p>
+              </div>
+              <BillingMethodEducation />
+            </div>
+          )}
+          {step === 5 && (
             <AllowancesStep
               services={services.filter((s) => trackedServiceIds.has(s.id))}
               allowances={allowances}
@@ -459,7 +473,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
               }
             />
           )}
-          {step === 5 && (
+          {step === 6 && (
             <StationStep
               stationName={stationName}
               onNameChange={setStationName}
