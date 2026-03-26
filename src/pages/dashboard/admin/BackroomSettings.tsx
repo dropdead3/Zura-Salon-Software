@@ -97,6 +97,7 @@ const sections: SectionMeta[] = [
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
   { id: 'price-intelligence', label: 'Price Intelligence', icon: CircleDollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
   { id: 'compliance', label: 'Compliance Reports', icon: ShieldCheck, tooltip: 'Staff compliance tracking, accountability reports, and 1:1 coaching prep.', group: 'operations' },
+  { id: 'savings', label: 'Your Savings', icon: Coins, tooltip: 'See how Zura Backroom saves you money with transparent ROI calculations.', group: 'operations' },
   // Configuration
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
   { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
