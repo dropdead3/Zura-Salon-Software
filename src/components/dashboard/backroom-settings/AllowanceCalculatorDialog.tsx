@@ -631,7 +631,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       // Phase 2: Insert new data using raw supabase calls to avoid per-row cache invalidation
       const userId = (await supabase.auth.getUser()).data.user?.id;
 
-      for (const bowl of bowls) {
+      for (const bowl of bowlsToSave) {
         if (bowl.lines.length === 0) continue;
 
         const { data: savedBowl, error: bowlInsertErr } = await supabase
