@@ -171,6 +171,7 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
       organization_id: orgId,
       service_id: serviceId,
       product_id: newProductId,
+      bowl_id: crypto.randomUUID(),
       expected_quantity: parseFloat(newQty),
       unit: newUnit,
     });

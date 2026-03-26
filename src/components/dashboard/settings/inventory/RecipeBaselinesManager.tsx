@@ -85,6 +85,7 @@ export function RecipeBaselinesManager() {
       organization_id: orgId,
       service_id: selectedServiceId,
       product_id: newProductId,
+      bowl_id: crypto.randomUUID(),
       expected_quantity: parseFloat(newQuantity),
       unit: newUnit,
     }, {

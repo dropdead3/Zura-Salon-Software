@@ -516,10 +516,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, []);
 
   const updateDevRatio = useCallback((bowlIdx: number, lineLocalId: string, ratio: number) => {
+    // Clamp ratio to safe range [0.5, 4]
+    const clamped = Math.min(4, Math.max(0.5, ratio || 1));
     setBowls((prev) =>
       prev.map((b, i) => {
         if (i !== bowlIdx) return b;
-        const lines = b.lines.map((l) => (l.localId === lineLocalId ? { ...l, developerRatio: ratio } : l));
+        const lines = b.lines.map((l) => (l.localId === lineLocalId ? { ...l, developerRatio: clamped } : l));
         const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
         lines.forEach((line) => {
           line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
@@ -560,8 +562,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
-      // Phase 2: Insert new data — collect all baselines for batch update
-      const baselineUpdates: Array<{ baselineId: string; bowlId: string; line: BowlLine }> = [];
+      // Phase 2: Insert new data
 
       for (const bowl of bowls) {
         if (bowl.lines.length === 0) continue;
@@ -574,34 +575,21 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         });
 
         for (const line of bowl.lines) {
-          // Save the RAW quantity for developer lines, not the effective qty.
-          // The effective qty is computed at runtime from colorQty * ratio.
-          const savedBaseline = await upsertBaseline.mutateAsync({
+          // Insert baseline with all metadata in one call (no separate update needed)
+          await upsertBaseline.mutateAsync({
             organization_id: orgId,
             service_id: serviceId,
             product_id: line.productId,
+            bowl_id: savedBowl.id,
             expected_quantity: line.quantity,
             unit: 'g',
             notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
-          });
-
-          // Track for update by ID (not composite key) to handle same product in multiple bowls
-          baselineUpdates.push({ baselineId: savedBaseline.id, bowlId: savedBowl.id, line });
-        }
-      }
-
-      // Phase 2b: Update bowl_id and metadata on each baseline by its unique ID
-      for (const { baselineId, bowlId, line } of baselineUpdates) {
-        const { error: updateErr } = await supabase
-          .from('service_recipe_baselines')
-          .update({
-            bowl_id: bowlId,
             cost_per_unit_snapshot: line.costPerGram,
             is_developer: line.isDeveloper,
             developer_ratio: line.developerRatio,
-          })
-          .eq('id', baselineId);
-        if (updateErr) throw new Error('Failed to update baseline metadata: ' + updateErr.message);
+            silent: true,
+          });
+        }
       }
 
       // Phase 3: Update policy
@@ -625,7 +613,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       setModeledServicePrice(null);
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
-      onOpenChange(false);
+      // Use setTimeout to ensure isDirty memo re-evaluates before onOpenChange checks it
+      setTimeout(() => onOpenChange(false), 0);
     } catch (err: unknown) {
       toast.error('Failed to save allowance: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
@@ -839,10 +828,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     className="w-5 h-5 rounded-full border border-border/60 shrink-0"
                     style={{ backgroundColor: p.swatch_color || 'hsl(var(--muted))' }}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-sans text-foreground truncate">{p.name}</div>
+                   <div className="flex-1 min-w-0">
+                    <div className="text-xs font-sans text-foreground truncate">
+                      {p.name}
+                      {/* Cross-bowl indicator */}
+                      {(() => {
+                        const otherBowl = bowls.find((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === p.id));
+                        return otherBowl ? (
+                          <span className="ml-1 text-[9px] text-muted-foreground/60">in {otherBowl.label}</span>
+                        ) : null;
+                      })()}
+                    </div>
                     <div className="text-[11px] font-sans text-muted-foreground">
                       ${cpg.toFixed(4)}/g
+                      {cpg === 0 && <span className="ml-1 text-destructive text-[9px]">no cost</span>}
                       {isDevProduct && (
                         <span className="ml-1.5">
                           <FlaskConical className="w-3 h-3 inline text-muted-foreground/60" />
@@ -1171,6 +1170,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             </div>
                             <div className="text-[11px] font-sans text-muted-foreground">
                               {line.brand} · ${line.costPerGram.toFixed(4)}/g
+                              {line.costPerGram === 0 && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-destructive border-destructive/30 cursor-help">
+                                      No cost data
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[200px] text-[11px]">
+                                    This product has no cost-per-gram or cost-price + container-size in the catalog. Update it in Inventory to get accurate allowance calculations.
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               {(() => {
                                 const prod = catalogProducts.find(p => p.id === line.productId);
                                 if (!prod) return null;
@@ -1202,6 +1213,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                               min="1"
                               value={line.quantity}
                               onChange={(e) => updateLineQuantity(bowlIdx, line.localId, Math.max(1, parseInt(e.target.value) || 1))}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!val || val < 1) updateLineQuantity(bowlIdx, line.localId, 1);
+                              }}
                               className="h-6 w-14 text-xs rounded px-1.5"
                             />
                           </div>
@@ -1380,7 +1395,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
               <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
@@ -1524,8 +1539,41 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       <div className="text-[11px] font-sans text-blue-600 dark:text-blue-400 px-2.5 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/30">
                         Target allowance at 8%: <span className="font-medium">${healthResult.suggestedAllowance.toFixed(2)}</span>
                       </div>
+                      {/* Actionable reduce-price button for low health */}
+                      {(() => {
+                        const suggestedLowPrice = Math.floor((grandTotal / 0.08) / 5) * 5;
+                        return suggestedLowPrice > 0 && suggestedLowPrice < effectiveServicePrice ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-3 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10 gap-1.5 rounded-md border border-blue-500/30"
+                            disabled={updateServicePriceMutation.isPending}
+                            onClick={() => {
+                              const oldPrice = servicePrice;
+                              updateServicePriceMutation.mutate(suggestedLowPrice, {
+                                onSuccess: () => {
+                                  toast(`Service price reduced to $${suggestedLowPrice}`, {
+                                    action: oldPrice ? {
+                                      label: 'Undo',
+                                      onClick: () => updateServicePriceMutation.mutate(oldPrice),
+                                    } : undefined,
+                                    duration: 6000,
+                                  });
+                                },
+                              });
+                            }}
+                          >
+                            {updateServicePriceMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <ArrowRight className="w-3 h-3" />
+                            )}
+                            Use ${suggestedLowPrice} price
+                          </Button>
+                        ) : null;
+                      })()}
                       <MetricInfoTooltip
-                        description="To reach the ideal 8% ratio, increase product quality/quantity to this amount, or reduce the service price."
+                        description="To reach the ideal 8% ratio, increase product quality/quantity to the target amount, or reduce the service price."
                         className="w-3.5 h-3.5 text-blue-500/60"
                       />
                     </div>
@@ -1557,13 +1605,13 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         const bColorQty = b.lines.filter(l => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
                         return `\n${b.label}:\n` + b.lines.map(l => {
                           const qty = l.isDeveloper
-                            ? (bColorQty > 0 ? `${l.developerRatio}× ratio (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g`)
+                            ? (bColorQty > 0 ? `${l.developerRatio}× ratio with color (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g (standalone)`)
                             : `${l.quantity}g`;
                           const prod = catalogProducts.find(p => p.id === l.productId);
                           const wholesaleCpg = prod ? getWholesaleCostPerGram(prod) : 0;
                           const effectiveQty = l.isDeveloper ? (bColorQty > 0 ? bColorQty * l.developerRatio : l.quantity) : l.quantity;
                           const wholesaleCost = Math.round(effectiveQty * wholesaleCpg * 100) / 100;
-                          return `  • ${l.productName} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
+                          return `  • ${l.productName}${l.isDeveloper ? ' [Developer]' : ''} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
                         }).join('\n');
                       }),
                       effectiveServicePrice > 0 ? `\nHealth: ${healthResult?.allowancePct ?? '—'}% of $${effectiveServicePrice.toFixed(0)} service (${healthResult?.status ?? 'N/A'})` : '',
