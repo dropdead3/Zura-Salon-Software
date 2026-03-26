@@ -176,6 +176,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
   const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
   const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
+  const [highPricePopoverOpen, setHighPricePopoverOpen] = useState(false);
+  const [lowPricePopoverOpen, setLowPricePopoverOpen] = useState(false);
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
   const hasInitRef = useRef(false);
@@ -391,14 +393,38 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, [bowls]);
 
   const clearBowl = useCallback((idx: number) => {
+    const bowl = bowls[idx];
+    const previousLines = bowl?.lines ?? [];
     setBowls((prev) =>
       prev.map((b, i) => {
         if (i !== idx) return b;
         return { ...b, lines: [] };
       })
     );
-    toast.success('Bowl cleared');
-  }, []);
+    if (previousLines.length > 0) {
+      if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
+      const toastId = toast('Bowl cleared', {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            setBowls((prev) =>
+              prev.map((b, i) => {
+                if (i !== idx) return b;
+                const lines = [...previousLines];
+                const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+                lines.forEach((line) => {
+                  line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
+                });
+                return { ...b, lines };
+              })
+            );
+          },
+        },
+        duration: 5000,
+      });
+      lastUndoToastRef.current = toastId;
+    }
+  }, [bowls]);
 
   const updateBowlLabel = useCallback((idx: number, label: string) => {
     setBowls((prev) =>
@@ -411,6 +437,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       const source = prev[idx];
       if (!source) return prev;
       const clonedLines = source.lines.map((l) => ({ ...l, localId: crypto.randomUUID() }));
+      // Recalculate costs for cloned lines in the new bowl context
+      const colorQty = clonedLines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+      clonedLines.forEach((line) => {
+        line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
+      });
       const next = [...prev, { id: null, bowlNumber: prev.length + 1, label: vesselLabel(source.vesselType, prev.length + 1), vesselType: source.vesselType, lines: clonedLines, collapsed: false }];
       return next;
     });
@@ -566,14 +597,16 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     );
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!orgId) return;
     setSaving(true);
 
-    // Warn about empty non-first bowls
-    const emptyBowls = bowls.filter((b, i) => i > 0 && b.lines.length === 0);
-    if (emptyBowls.length > 0) {
-      toast.info(`${emptyBowls.map(b => b.label).join(', ')} ${emptyBowls.length === 1 ? 'is' : 'are'} empty and won't be saved.`);
+    // Auto-remove empty bowls (except the first) before saving
+    const activeBowls = bowls.filter((b, i) => i === 0 || b.lines.length > 0);
+    const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+    // Update local state to reflect removed empty bowls
+    if (bowlsToSave.length !== bowls.length) {
+      setBowls(bowlsToSave);
     }
 
     // Snapshot existing data for rollback
@@ -600,7 +633,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       // Phase 2: Insert new data using raw supabase calls to avoid per-row cache invalidation
       const userId = (await supabase.auth.getUser()).data.user?.id;
 
-      for (const bowl of bowls) {
+      for (const bowl of bowlsToSave) {
         if (bowl.lines.length === 0) continue;
 
         const { data: savedBowl, error: bowlInsertErr } = await supabase
@@ -646,8 +679,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         overage_rate_type: 'per_unit',
         billing_mode: 'allowance',
         is_active: true,
-        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} vessel(s)`,
-        allowance_health_status: healthResult?.status ?? null,
+      notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowlsToSave.filter((b) => b.lines.length > 0).length} vessel(s)`,
+      allowance_health_status: healthResult?.status ?? null,
         allowance_health_pct: healthResult?.allowancePct ?? null,
         last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
@@ -657,7 +690,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
 
       // Update snapshot so isDirty resets
-      initialBowlsRef.current = JSON.stringify(bowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
+      initialBowlsRef.current = JSON.stringify(bowlsToSave.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       setModeledServicePrice(null);
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
@@ -667,7 +700,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     } finally {
       setSaving(false);
     }
-  };
+  }, [bowls, orgId, serviceId, existingBowls, existingBaselines, grandTotal, totalWeight, healthResult, effectiveServicePrice, upsertPolicy, queryClient]);
 
   // Cmd+S / Ctrl+S keyboard shortcut
   useEffect(() => {
@@ -680,7 +713,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, grandTotal, saving]);
+  }, [open, grandTotal, saving, handleSave]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -893,9 +926,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {p.name}
                       {/* Cross-bowl indicator */}
                       {(() => {
-                        const otherBowl = bowls.find((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === p.id));
-                        return otherBowl ? (
-                          <span className="ml-1 text-[9px] text-muted-foreground/60">in {otherBowl.label}</span>
+                        const bowlLabels = productBowlMap.get(p.id) || [];
+                        const currentBowlLabel = bowls[bowlIdx]?.label;
+                        const otherLabels = bowlLabels.filter(l => l !== currentBowlLabel);
+                        return otherLabels.length > 0 ? (
+                          <span className="ml-1 text-[9px] text-muted-foreground/60">in {otherLabels[0]}</span>
                         ) : null;
                       })()}
                     </div>
@@ -1009,7 +1044,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               const bowlHealthPct = effectiveServicePrice > 0 ? ((bowlCost / effectiveServicePrice) * 100) : null;
 
               return (
-                <div key={bowl.id || `new-${bowlIdx}`} className={cn(
+                <div key={bowl.id || `new-${bowlIdx}`} aria-label={`${bowl.label} — ${bowl.lines.length} products`} className={cn(
                   "rounded-xl border overflow-hidden",
                   bowl.vesselType === 'bottle'
                     ? "border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/5"
@@ -1255,6 +1290,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             {WEIGHT_PRESETS.map((g) => (
                               <button
                                 key={g}
+                                aria-label={`Set quantity to ${g} grams`}
                                 className={cn(
                                    'px-2 py-1 rounded-full text-xs font-sans transition-colors border',
                                    line.quantity === g
@@ -1363,6 +1399,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                       {WEIGHT_PRESETS.map((g) => (
                                         <button
                                           key={g}
+                                          aria-label={`Set quantity to ${g} grams`}
                                           className={cn(
                                             'px-2 py-1 rounded-full text-xs font-sans transition-colors border',
                                             line.quantity === g
@@ -1584,7 +1621,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   </Tooltip>
                   {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
                     <div className="flex items-center gap-2">
-                      <Popover>
+                      <Popover open={highPricePopoverOpen} onOpenChange={setHighPricePopoverOpen}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="ghost"
@@ -1612,6 +1649,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 const oldPrice = servicePrice;
                                 updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
                                   onSuccess: () => {
+                                    setHighPricePopoverOpen(false);
                                     toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
                                       action: oldPrice ? {
                                         label: 'Undo',
@@ -1643,7 +1681,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {(() => {
                         const suggestedLowPrice = Math.floor((grandTotal / 0.08) / 5) * 5;
                         return suggestedLowPrice > 0 && suggestedLowPrice < effectiveServicePrice ? (
-                          <Popover>
+                          <Popover open={lowPricePopoverOpen} onOpenChange={setLowPricePopoverOpen}>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="ghost"
@@ -1671,6 +1709,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                     const oldPrice = servicePrice;
                                     updateServicePriceMutation.mutate(suggestedLowPrice, {
                                       onSuccess: () => {
+                                        setLowPricePopoverOpen(false);
                                         toast(`Service price reduced to $${suggestedLowPrice}`, {
                                           action: oldPrice ? {
                                             label: 'Undo',
@@ -1724,8 +1763,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           const qty = l.isDeveloper
                             ? (bColorQty > 0 ? `${l.developerRatio}× ratio with color (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g (standalone)`)
                             : `${l.quantity}g`;
-                          const prod = catalogProducts.find(p => p.id === l.productId);
-                          const wholesaleCpg = prod ? getWholesaleCostPerGram(prod) : 0;
+                          const wholesaleCpg = wholesaleCostMap.get(l.productId) ?? 0;
                           const effectiveQty = l.isDeveloper ? (bColorQty > 0 ? bColorQty * l.developerRatio : l.quantity) : l.quantity;
                           const wholesaleCost = Math.round(effectiveQty * wholesaleCpg * 100) / 100;
                           return `  • ${l.productName}${l.isDeveloper ? ' [Developer]' : ''} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
