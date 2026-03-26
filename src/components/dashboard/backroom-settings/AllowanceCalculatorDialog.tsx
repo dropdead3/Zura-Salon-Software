@@ -45,6 +45,7 @@ interface CatalogProduct {
   container_size: string | null;
   swatch_color: string | null;
   product_type: string;
+  markup_pct: number | null;
 }
 
 interface BowlLine {
