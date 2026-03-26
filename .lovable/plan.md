@@ -1,52 +1,45 @@
 
 
-## Enhance Allowance Health — Suggested Price, Cost Breakdown Tooltip, Persist Status
+## Fix Dialog Layout — Pin Footer, Scroll Bowl Content
 
-### Overview
-Three enhancements to the health indicator in the Allowance Calculator footer: a one-click "Suggested Price" action when status is `high`, a tooltip showing wholesale vs. retail cost breakdown on the health badge, and persisting the health status to the `service_allowance_policies` table for dashboard reporting.
+### Problem
+When multiple products are added to a bowl, the content grows and pushes the Total Allowance and Save button below the viewport edge. The DialogContent uses CSS `grid` (from the base component) which doesn't properly constrain the middle scroll area between the pinned header and footer.
 
-### 1. Database Migration
+### Root Cause
+Line 687: `DialogContent` has `max-w-2xl max-h-[90vh] p-0 overflow-hidden` but inherits `grid` from the base dialog component. Line 701: `ScrollArea` uses a hardcoded `max-h-[calc(90vh-200px)]` which doesn't adapt to the actual header/footer heights. The combination allows content to overflow.
 
-Add columns to `service_allowance_policies`:
-- `allowance_health_status` (text, nullable) — stores `'healthy'`, `'high'`, or `'low'`
-- `allowance_health_pct` (numeric, nullable) — the computed percentage
-- `last_health_check_at` (timestamptz, nullable) — when the health was last evaluated
+### Fix (Single File)
 
-### 2. Update `AllowanceCalculatorDialog.tsx`
+**`AllowanceCalculatorDialog.tsx`**
 
-**Suggested Price button (when status is `high`):**
-- Below the health message, render a small ghost button: "Use $X suggested price"
-- On click, call a mutation to update the service's `price` (base price) to `healthResult.suggestedServicePrice`
-- After update, invalidate service queries so the new price reflects immediately
-- The health indicator will recalculate on re-render with the new price
+1. **Line 687** — Add `flex flex-col` to DialogContent className so header, scroll area, and footer stack properly:
+   ```
+   className="max-w-2xl max-h-[90vh] p-0 overflow-hidden flex flex-col"
+   ```
 
-**Cost breakdown tooltip on health badge:**
-- Wrap the health percentage badge in a `Tooltip`
-- Tooltip content shows:
-  - Wholesale cost: sum of all line costs at wholesale rates
-  - Markup applied: the delta between wholesale and retail totals
-  - Retail (after-markup) cost: the current `grandTotal`
-  - Service price and target range
-- Requires tracking `wholesaleGrandTotal` alongside `grandTotal` in the existing computation
+2. **Line 701** — Replace the hardcoded `max-h` on ScrollArea with flex-based sizing so it fills remaining space between header and footer:
+   ```
+   className="flex-1 min-h-0 overflow-hidden"
+   ```
+   `min-h-0` is critical — it allows the flex child to shrink below its content size, enabling the scroll area to actually scroll.
 
-**Persist health status on save:**
-- In `handleSave`, after upserting the allowance policy, also update the policy record with `allowance_health_status`, `allowance_health_pct`, and `last_health_check_at`
-- Uses the existing `useUpsertAllowancePolicy` mutation (extend the payload)
+3. **Footer (line 954)** — Add `shrink-0` to the footer div so it never collapses:
+   ```
+   className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0"
+   ```
 
-### 3. Update `useServiceAllowancePolicies.ts`
+4. **Header (line 688)** — Add `shrink-0` to prevent header compression:
+   ```
+   className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0"
+   ```
 
-- Add the three new fields to the `ServiceAllowancePolicy` interface
-- Include them in the upsert mutation payload type
-
-### 4. Compute Wholesale Total
-
-In the existing bowl computation logic, add a parallel `wholesaleGrandTotal` that sums line costs using the original `getWholesaleCostPerGram` (already available) instead of the retail rate. This is only used for the tooltip breakdown display.
-
-### Files Summary
+### Result
+- Header stays pinned at top
+- Footer (total + save) stays pinned at bottom, always visible
+- Bowl content scrolls independently in the middle
+- Works regardless of how many products are added
 
 | File | Action |
 |------|--------|
-| Database migration | Add `allowance_health_status`, `allowance_health_pct`, `last_health_check_at` to `service_allowance_policies` |
-| `AllowanceCalculatorDialog.tsx` | Add suggested price button, cost breakdown tooltip, persist health on save, track wholesale total |
-| `useServiceAllowancePolicies.ts` | Extend interface and mutation with health fields |
+| `AllowanceCalculatorDialog.tsx` | Fix 4 classNames for flex column layout |
 
