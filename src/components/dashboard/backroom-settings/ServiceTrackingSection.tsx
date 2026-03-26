@@ -867,40 +867,73 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                                 Configured
                                               </span>
-                                              <button
-                                                className="text-xs font-sans text-muted-foreground hover:text-foreground underline underline-offset-2"
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                                  updateService.mutate({ id: service.id, updates: {
+                                                    is_backroom_tracked: false,
+                                                    is_chemical_service: false,
+                                                    container_types: [],
+                                                    assistant_prep_allowed: false,
+                                                    smart_mix_assist_enabled: false,
+                                                    formula_memory_enabled: false,
+                                                    backroom_config_dismissed: false,
+                                                  }});
                                                 }}
                                               >
-                                                Undo
-                                              </button>
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                Reset Configuration
+                                              </Button>
                                             </div>
                                           ) : (
                                             <>
                                               <p className="text-xs font-sans text-muted-foreground">
                                                 Review complete? Mark as configured to track setup progress.
                                               </p>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                  setTimeout(() => {
-                                                    setExpandedIds(prev => {
-                                                      const next = new Set(prev);
-                                                      next.delete(service.id);
-                                                      return next;
-                                                    });
-                                                  }, 400);
-                                                }}
-                                              >
-                                                <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                Finalize Configuration
-                                              </Button>
+                                              <div className="flex items-center gap-2">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateService.mutate({ id: service.id, updates: {
+                                                      is_backroom_tracked: false,
+                                                      is_chemical_service: false,
+                                                      container_types: [],
+                                                      assistant_prep_allowed: false,
+                                                      smart_mix_assist_enabled: false,
+                                                      formula_memory_enabled: false,
+                                                      backroom_config_dismissed: false,
+                                                    }});
+                                                  }}
+                                                >
+                                                  <RotateCcw className="w-3.5 h-3.5" />
+                                                  Reset
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                    setTimeout(() => {
+                                                      setExpandedIds(prev => {
+                                                        const next = new Set(prev);
+                                                        next.delete(service.id);
+                                                        return next;
+                                                      });
+                                                    }, 400);
+                                                  }}
+                                                >
+                                                  <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                                                  Finalize Configuration
+                                                </Button>
+                                              </div>
                                             </>
                                           )}
                                         </div>
@@ -954,40 +987,73 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   <CheckCircle2 className="w-3.5 h-3.5" />
                                                   Reviewed
                                                 </span>
-                                                <button
-                                                  className="text-xs font-sans text-muted-foreground hover:text-foreground underline underline-offset-2"
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
-                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
+                                                    updateService.mutate({ id: service.id, updates: {
+                                                      is_backroom_tracked: false,
+                                                      is_chemical_service: false,
+                                                      container_types: [],
+                                                      assistant_prep_allowed: false,
+                                                      smart_mix_assist_enabled: false,
+                                                      formula_memory_enabled: false,
+                                                      backroom_config_dismissed: false,
+                                                    }});
                                                   }}
                                                 >
-                                                  Undo
-                                                </button>
+                                                  <RotateCcw className="w-3.5 h-3.5" />
+                                                  Reset Configuration
+                                                </Button>
                                               </div>
                                             ) : (
                                               <>
                                                 <p className="text-xs font-sans text-muted-foreground">
                                                   Doesn't need tracking? Mark as reviewed.
                                                 </p>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                    setTimeout(() => {
-                                                      setExpandedIds(prev => {
-                                                        const next = new Set(prev);
-                                                        next.delete(service.id);
-                                                        return next;
-                                                      });
-                                                    }, 400);
-                                                  }}
-                                                >
-                                                  <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                  Finalize Configuration
-                                                </Button>
+                                                <div className="flex items-center gap-2">
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      updateService.mutate({ id: service.id, updates: {
+                                                        is_backroom_tracked: false,
+                                                        is_chemical_service: false,
+                                                        container_types: [],
+                                                        assistant_prep_allowed: false,
+                                                        smart_mix_assist_enabled: false,
+                                                        formula_memory_enabled: false,
+                                                        backroom_config_dismissed: false,
+                                                      }});
+                                                    }}
+                                                  >
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    Reset
+                                                  </Button>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                      setTimeout(() => {
+                                                        setExpandedIds(prev => {
+                                                          const next = new Set(prev);
+                                                          next.delete(service.id);
+                                                          return next;
+                                                        });
+                                                      }, 400);
+                                                    }}
+                                                  >
+                                                    <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                                                    Finalize Configuration
+                                                  </Button>
+                                                </div>
                                               </>
                                             )}
                                           </div>
