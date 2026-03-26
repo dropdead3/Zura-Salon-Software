@@ -35,6 +35,7 @@ interface ServiceRow {
   id: string;
   name: string;
   category: string | null;
+  price: number | null;
   is_backroom_tracked: boolean;
   is_chemical_service: boolean | null;
   assistant_prep_allowed: boolean;
@@ -82,6 +83,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
   const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
+  const [calculatorServicePrice, setCalculatorServicePrice] = useState<number | null>(null);
 
   // Price recommendations
   const { data: priceRecommendations } = useComputedPriceRecommendations();
@@ -156,7 +158,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct, backroom_config_dismissed, container_types')
+        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct, backroom_config_dismissed, container_types')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('category')
@@ -757,9 +759,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                        className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
                                                        onClick={(e) => {
                                                          e.stopPropagation();
-                                                         setCalculatorServiceId(service.id);
-                                                         setCalculatorServiceName(service.name);
-                                                         setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                          setCalculatorServiceId(service.id);
+                                                          setCalculatorServiceName(service.name);
+                                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                          setCalculatorServicePrice(service.price);
                                                        }}
                                                      >
                                                        Edit
@@ -777,9 +780,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs border-dashed"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setCalculatorServiceId(service.id);
-                                                        setCalculatorServiceName(service.name);
-                                                        setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                         setCalculatorServiceId(service.id);
+                                                         setCalculatorServiceName(service.name);
+                                                         setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                         setCalculatorServicePrice(service.price);
                                                       }}
                                                     >
                                                       Configure Allowance
@@ -1031,6 +1035,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           serviceId={calculatorServiceId}
           serviceName={calculatorServiceName}
           containerTypes={calculatorContainerTypes}
+          servicePrice={calculatorServicePrice}
         />
       )}
     </div>

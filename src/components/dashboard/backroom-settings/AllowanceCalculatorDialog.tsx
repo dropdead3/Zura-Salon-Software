@@ -22,6 +22,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAllowanceBowls, useUpsertAllowanceBowl, useDeleteAllowanceBowl } from '@/hooks/backroom/useAllowanceBowls';
 import { useServiceRecipeBaselines, useUpsertRecipeBaseline, useDeleteRecipeBaseline } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
+import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
+import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/backroom/allowance-health';
 import { toast } from 'sonner';
 
 interface Props {
@@ -30,6 +32,7 @@ interface Props {
   serviceId: string;
   serviceName: string;
   containerTypes?: ('bowl' | 'bottle')[];
+  servicePrice?: number | null;
 }
 
 interface CatalogProduct {
@@ -42,6 +45,7 @@ interface CatalogProduct {
   container_size: string | null;
   swatch_color: string | null;
   product_type: string;
+  markup_pct: number | null;
 }
 
 interface BowlLine {
@@ -98,13 +102,19 @@ function computeLineCost(qty: number, costPerGram: number, isDeveloper: boolean,
   return Math.round(qty * costPerGram * 100) / 100;
 }
 
-function getCostPerGram(product: CatalogProduct): number {
+function getWholesaleCostPerGram(product: CatalogProduct): number {
   if (product.cost_per_gram && product.cost_per_gram > 0) return product.cost_per_gram;
   if (product.cost_price && product.container_size) {
     const size = parseFloat(product.container_size);
     if (size > 0) return Math.round((product.cost_price / size) * 10000) / 10000;
   }
   return 0;
+}
+
+function getRetailCostPerGram(product: CatalogProduct, defaultMarkupPct: number): number {
+  const wholesale = getWholesaleCostPerGram(product);
+  const markup = product.markup_pct ?? defaultMarkupPct;
+  return calculateRetailCostPerGram(wholesale, markup);
 }
 
 function getBowlWeight(bowl: BowlState): number {
@@ -117,9 +127,12 @@ function getBowlWeight(bowl: BowlState): number {
 
 const DEFAULT_PICKER: PickerState = { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' };
 
-export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'] }: Props) {
+export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'], servicePrice }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+
+  const { data: billingSettings } = useBackroomBillingSettings(orgId);
+  const defaultMarkupPct = billingSettings?.default_product_markup_pct ?? 0;
 
   const hasBowls = containerTypes.includes('bowl');
   const hasBottles = containerTypes.includes('bottle');
@@ -133,7 +146,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, brand, category, cost_per_gram, cost_price, container_size, swatch_color, product_type')
+        .select('id, name, brand, category, cost_per_gram, cost_price, container_size, swatch_color, product_type, markup_pct')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
@@ -210,7 +223,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           .filter((bl) => (bl as any).bowl_id === b.id)
           .map((bl) => {
             const prod = catalogProducts.find((p) => p.id === bl.product_id);
-            const cpg = (bl as any).cost_per_unit_snapshot || (prod ? getCostPerGram(prod) : 0);
+            const cpg = (bl as any).cost_per_unit_snapshot || (prod ? getRetailCostPerGram(prod, defaultMarkupPct) : 0);
             return {
               localId: bl.id,
               productId: bl.product_id,
@@ -250,6 +263,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
   }, [bowls]);
 
+  const healthResult: AllowanceHealthResult | null = useMemo(() => {
+    if (!servicePrice || servicePrice <= 0 || grandTotal <= 0) return null;
+    return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice });
+  }, [grandTotal, servicePrice]);
+
   const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
     setBowls((prev) => [
       ...prev,
@@ -270,7 +288,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
   const addProductToBowl = useCallback(
     (bowlIdx: number, product: CatalogProduct) => {
-      const cpg = getCostPerGram(product);
+      const cpg = getRetailCostPerGram(product, defaultMarkupPct);
       const asDeveloper = isDeveloperProduct(product);
       const newLine: BowlLine = {
         localId: crypto.randomUUID(),
@@ -564,7 +582,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <div className="px-3 py-6 text-xs text-center text-muted-foreground">No products found</div>
             )}
             {filtered.map((p) => {
-              const cpg = getCostPerGram(p);
+              const cpg = getRetailCostPerGram(p, defaultMarkupPct);
               const isDevProduct = isDeveloperProduct(p);
               const isAlreadyAdded = addedProductIds.has(p.id);
               return (
@@ -901,16 +919,38 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         <div className="px-6 py-4 border-t border-border/40 bg-muted/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance</div>
+              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
               <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
                 ${grandTotal.toFixed(2)}
               </div>
               <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
                 {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
               </div>
-              <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
-                This dollar amount will be the included allowance for this service.
-              </div>
+              {/* Allowance Health Indicator */}
+              {healthResult ? (
+                <div className={cn(
+                  "text-[11px] font-sans mt-2 px-2 py-1 rounded-md inline-flex items-center gap-1.5",
+                  healthResult.status === 'healthy' && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                  healthResult.status === 'high' && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                  healthResult.status === 'low' && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                )}>
+                  <span className="font-medium">{healthResult.allowancePct}%</span>
+                  <span>of ${servicePrice?.toFixed(0)} service</span>
+                  <span className="text-[10px] opacity-70">
+                    {healthResult.status === 'healthy' && '— within target range'}
+                    {healthResult.status === 'high' && `— consider $${healthResult.suggestedServicePrice?.toFixed(0)} service price`}
+                    {healthResult.status === 'low' && '— room to increase product quality'}
+                  </span>
+                </div>
+              ) : servicePrice && servicePrice > 0 ? (
+                <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
+                  Add products to see allowance health vs. service price
+                </div>
+              ) : (
+                <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
+                  Set a service price to see allowance health (target: 6–10% of service)
+                </div>
+              )}
             </div>
             <Button
               size="sm"
