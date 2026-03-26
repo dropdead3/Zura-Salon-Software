@@ -84,6 +84,30 @@ export function useCreateStockTransfer() {
 /**
  * Thin wrapper — delegates inventory posting to InventoryLedgerService.
  */
+export function useCancelStockTransfer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transferId: string) => {
+      const { error } = await supabase
+        .from('stock_transfers')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', transferId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stock-transfers'] });
+      toast.success('Transfer cancelled');
+    },
+    onError: (error) => {
+      toast.error('Failed to cancel transfer: ' + error.message);
+    },
+  });
+}
+
+/**
+ * Thin wrapper — delegates inventory posting to InventoryLedgerService.
+ */
 export function useCompleteStockTransfer() {
   const queryClient = useQueryClient();
 
