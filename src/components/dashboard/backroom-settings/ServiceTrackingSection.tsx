@@ -781,17 +781,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   </div>
                                                );
                                              })()}
-                                             <div className="flex items-center gap-2 shrink-0">
-                                               <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 text-xs"
-                                                onClick={() => setSelectedServiceId(service.id)}
-                                              >
-                                                <Package className="w-3 h-3 mr-1" />
-                                                Components
-                                              </Button>
-                                            </div>
                                           </div>
                                           )}
                                         {/* Toggles grid */}
