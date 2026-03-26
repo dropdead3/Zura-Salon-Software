@@ -83,6 +83,18 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
   const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
 
+  // Price recommendations
+  const { data: priceRecommendations } = useComputedPriceRecommendations();
+  const acceptPriceRec = useAcceptPriceRecommendation();
+  const dismissPriceRec = useDismissPriceRecommendation();
+  const priceRecMap = useMemo(() => {
+    const map = new Map<string, import('@/lib/backroom/price-recommendation').PriceRecommendation>();
+    for (const r of (priceRecommendations || [])) {
+      if (r.is_below_target) map.set(r.service_id, r);
+    }
+    return map;
+  }, [priceRecommendations]);
+
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
     touchStartRef.current = { y: e.touches[0].clientY, id: serviceId };
