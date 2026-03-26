@@ -1,34 +1,28 @@
 
 
-## Move "X added" Badge to Bowl Header
+## Remove All "Vish" References from Codebase
 
-### Change
+### Problem
+"Vish" is a competitor brand name that appears in 6 files — tooltips, code comments, and a comparison table. It must be replaced with neutral, brand-appropriate language throughout.
 
-Move the product count badge (e.g., "5 added") from the picker panel breadcrumb area (line ~604) up into the bowl header row (line ~751), placing it after the weight/cost badge and before the delete/collapse controls.
+### Changes
 
-### File: `AllowanceCalculatorDialog.tsx`
+| File | Location | Change |
+|------|----------|--------|
+| `AllowanceCalculatorDialog.tsx` | Line 2, comment | "Vish-style bowl-based" → "Bowl-based" |
+| `AllowanceCalculatorDialog.tsx` | Line 1088, tooltip | Rewrite to: "Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings." |
+| `allowance-health.ts` | Lines 1–6, comment block | "Vish methodology" / "Vish standard" → "Industry-standard methodology" |
+| `BackroomHistoryChart.tsx` | Line 4, comment | "Vish-style" → "Multi-metric" or remove reference |
+| `DockLiveDispensing.tsx` | Line 5, comment | "Vish-inspired teardrop" → "Teardrop" |
+| `DockIngredientDispensing.tsx` | Line 3, comment | "Vish-inspired" → remove modifier |
+| `CompetitorComparison.tsx` | Throughout | Keep "Vish" here — this is an internal competitor comparison table that intentionally names competitors. **Unless you want this removed too.** |
 
-**1. Bowl header (line ~747–751)** — Add the added-count badge after the weight/cost badge:
+### Tooltip Rewrite (user-facing, line 1088)
 
-```tsx
-<div className="flex items-center gap-2">
-  {/* Icon + label */}
-  {bowl.lines.length > 0 && (
-    <Badge variant="secondary" className="text-xs px-2 py-0.5">
-      {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
-    </Badge>
-  )}
-  {bowl.lines.length > 0 && (
-    <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-      {bowl.lines.length} added
-    </Badge>
-  )}
-</div>
-```
+**Before:** "Calculated using the Vish 8% target: your after-markup product cost ÷ 0.08..."
 
-**2. Picker panel (line ~604–608)** — Remove the `addedCount` badge from the breadcrumb row so it doesn't appear in two places.
+**After:** "Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
 
-| File | Change |
-|------|--------|
-| `AllowanceCalculatorDialog.tsx` | Add count badge to bowl header, remove from picker breadcrumb |
+### Note
+The `CompetitorComparison.tsx` file is an intentional feature comparison table — "Vish" is used there as a named competitor column. This is appropriate for that context and can remain unless you'd prefer it changed too.
 
