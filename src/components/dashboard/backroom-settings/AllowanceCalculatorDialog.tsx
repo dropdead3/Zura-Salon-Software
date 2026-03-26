@@ -1040,8 +1040,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         <span>of ${servicePrice?.toFixed(0)} service</span>
                         <span className="text-[10px] opacity-70">
                           {healthResult.status === 'healthy' && '— within target range'}
-                          {healthResult.status === 'high' && `— consider $${healthResult.suggestedServicePrice?.toFixed(0)} service price`}
-                          {healthResult.status === 'low' && '— room to increase product quality'}
+                          {healthResult.status === 'high' && '— consider raising service price or reducing product usage'}
+                          {healthResult.status === 'low' && '— consider increasing product quality or adjusting service price'}
                         </span>
                       </div>
                     </TooltipTrigger>
