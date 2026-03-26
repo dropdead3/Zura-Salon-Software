@@ -75,10 +75,15 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   doc.setFillColor(248, 248, 250);
   doc.roundedRect(14, y, pageWidth - 28, 30, 3, 3, 'FD');
 
+  const reweighRate = staff.total > 0 && staff.total - staff.missing > 0
+    ? Math.round(((staff as any).reweighed ?? 0) / (staff.total - staff.missing) * 100)
+    : 0;
+
   const summaryItems = [
     { label: 'Compliance Rate', value: `${staff.complianceRate}%` },
     { label: 'Total Appointments', value: `${staff.total}` },
     { label: 'Missing Sessions', value: `${staff.missing}` },
+    { label: 'Reweigh Rate', value: `${reweighRate}%` },
     { label: 'Waste Rate', value: `${staff.wastePct}%` },
     { label: 'Est. Waste Cost', value: `$${staff.wasteCost.toFixed(2)}` },
   ];
