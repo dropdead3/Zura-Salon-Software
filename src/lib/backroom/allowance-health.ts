@@ -90,7 +90,7 @@ export function calculateAllowanceHealth(input: AllowanceHealthInput): Allowance
   } else if (allowancePct < LOWER_BOUND) {
     status = 'low';
     suggestedAllowance = r2(servicePrice * (TARGET_PCT / 100));
-    message = `Allowance is only ${allowancePct}% of service price. You may increase product quality or reduce service price.`;
+    message = `Allowance is ${allowancePct}% of service price — strong margin. Room to elevate product quality or absorb price flexibility if needed.`;
   } else {
     status = 'healthy';
     message = `Allowance is ${allowancePct}% of service price — within the ideal 6–10% range.`;
