@@ -693,6 +693,19 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       );
     }
 
+    if (picker.step === 'closed') {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs mt-2"
+          onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+        >
+          + Add Products
+        </Button>
+      );
+    }
+
     return null;
   };
 
