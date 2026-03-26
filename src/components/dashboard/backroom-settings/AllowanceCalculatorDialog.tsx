@@ -223,7 +223,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           .filter((bl) => (bl as any).bowl_id === b.id)
           .map((bl) => {
             const prod = catalogProducts.find((p) => p.id === bl.product_id);
-            const cpg = (bl as any).cost_per_unit_snapshot || (prod ? getCostPerGram(prod) : 0);
+            const cpg = (bl as any).cost_per_unit_snapshot || (prod ? getRetailCostPerGram(prod, defaultMarkupPct) : 0);
             return {
               localId: bl.id,
               productId: bl.product_id,
