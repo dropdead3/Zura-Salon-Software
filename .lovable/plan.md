@@ -1,22 +1,46 @@
 
 
-## Move Location Toggle & Sync Button to Right Side of Card Header
+## Add "Reset Configuration" Button Next to Finalize Configuration
 
-### Current State
-The location `Select` dropdown and "Sync to All Locations" button sit in their own row below `CardHeader` (lines 900–928), left-aligned with `px-6 pb-2`.
+### Understanding
+The footer bar that shows "Review complete? Mark as configured..." with the "Finalize Configuration" button needs a companion "Reset Configuration" button. This button resets the service back to its fully unconfigured state — clearing tracking, chemical flag, containers, allowance, and assistant features — and restores the "Needs Attention" amber styling.
 
-### Change
+### Changes
 
-**File:** `src/components/dashboard/backroom-settings/BackroomProductCatalogSection.tsx`
+**File:** `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
 
-**Lines 900–928** — Move the location select and sync button into the right-side actions area of the `CardHeader` (inside the `div` that already contains view toggles, tracked badge, and Supply Library button around lines 840–896), positioned at the far right using `ml-auto`.
+**Both footer blocks** (tracked ~line 881, untracked ~line 968):
 
-Specifically:
-1. Remove the standalone `div` block (lines 900–928) that wraps the location select + sync button
-2. Insert both controls into the CardHeader's right-side `div`, before the existing badges/buttons, using a wrapper like `<div className="flex items-center gap-2 ml-auto">` to push them right
-3. The order within that right group: `[...existing left items] → [Sync to All Locations button] → [Location Select dropdown]` (sync left of location, per request)
+1. Add a "Reset Configuration" button to the left of "Finalize Configuration" in the non-dismissed (`else`) branch
+2. The button uses `variant="ghost"` with muted/destructive-subtle styling (e.g., `text-muted-foreground hover:text-red-500 hover:bg-red-500/10`)
+3. On click, it mutates the service back to unconfigured defaults:
+   ```ts
+   updateService.mutate({
+     id: service.id,
+     updates: {
+       is_backroom_tracked: false,
+       is_chemical_service: false,
+       container_types: [],
+       assistant_prep_allowed: false,
+       smart_mix_assist_enabled: false,
+       formula_memory_enabled: false,
+       backroom_config_dismissed: false,
+     }
+   });
+   ```
+4. Import `RotateCcw` from lucide-react for the reset icon
+5. Wrap both buttons in a `flex items-center gap-2` container on the right side
+
+**Also update the "Reviewed" state** (dismissed branch): Replace the plain "Undo" text link with the same "Reset Configuration" button for consistency.
+
+### Layout
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ Review complete? Mark as configured...   [Reset]  [> Finalize] │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ### Scope
-- 1 file, ~30 lines moved/restructured
-- No logic changes
+- 1 file, ~20 lines added/modified
+- No database changes
 
