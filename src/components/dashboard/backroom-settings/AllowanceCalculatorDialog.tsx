@@ -728,16 +728,31 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               );
             })}
 
-            {/* Add Bowl button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-9 text-xs border-dashed"
-              onClick={addBowl}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add Bowl
-            </Button>
+            {/* Add vessel buttons */}
+            <div className="flex gap-2">
+              {hasBowls && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-9 text-xs border-dashed"
+                  onClick={() => addVessel('bowl')}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Add Bowl
+                </Button>
+              )}
+              {hasBottles && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-9 text-xs border-dashed"
+                  onClick={() => addVessel('bottle')}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Add Bottle
+                </Button>
+              )}
+            </div>
           </div>
         </ScrollArea>
 
