@@ -205,6 +205,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
   const hasInitRef = useRef(false);
+  const [developerWarningBowls, setDeveloperWarningBowls] = useState<Set<number>>(new Set());
   const lastUndoToastRef = useRef<string | number | null>(null);
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
