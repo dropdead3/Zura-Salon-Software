@@ -674,7 +674,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                      exit={{ opacity: 0, y: -8 }}
                                      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
                                      className="px-6 py-4 bg-muted/30 border-t border-border/30"
-                                  >
+                                   >
+                                    {service.is_backroom_tracked ? (
                                        <div className="space-y-4">
                                          {/* Chemical toggle + vessel selector — FIRST */}
                                          <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
