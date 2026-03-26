@@ -377,7 +377,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     const removed = bowls[idx];
     setBowls((prev) => {
       const next = prev.filter((_, i) => i !== idx);
-      return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     });
     if (removed) {
       // Dismiss any previous undo toast to prevent stale undo
