@@ -1,50 +1,57 @@
 
 
-## Billing Method Education & Selection UX
+## Analysis: Billing Method Education — Gaps, Improvements & Enhancements
 
-### What We're Building
-A consultative comparison experience that helps salon owners understand the two product cost recovery methods before configuring per-service policies. This appears in two places: the Setup Wizard (as a new step) and at the top of the Allowances & Billing section.
+### What's Working Well
+- Clean three-card layout with consistent structure (icon, description, pros/cons, pro tip)
+- Hybrid correctly highlighted as recommended
+- Appears in both Setup Wizard (step 4) and Allowances section (collapsible)
+- Wizard step indexes and save logic correctly shifted
+- Educational-only — no premature selection forced
 
-### The Three Approaches (content)
+---
 
-| | Allowance | Parts & Labor | Hybrid |
-|---|---|---|---|
-| **How it works** | Product cost baked into service price. Overage charged if stylist uses more than budgeted. | Product cost itemized separately on receipt. Client pays labor + supplies as line items. | Core services use Allowance; add-ons/treatments use Parts & Labor. |
-| **Client experience** | Clean, predictable pricing. No surprises unless overage. | Transparent but can feel itemized. Prices vary per visit. | Best of both — predictability for standard services, transparency for extras. |
-| **Best for** | Salons with consistent product usage per service | Salons with highly variable product usage or specialty treatments | Most salons — the real-world default |
-| **Risk** | Under-pricing if allowances aren't calibrated | Clients may push back on itemized charges | Slightly more setup work |
-| **Pro tip** | Use Price Intelligence to set margins that account for your allowance budget | Set markup % in billing settings to ensure margin on every product used | Start with Allowance for your top 5 services, Parts & Labor for everything else |
+### Gap 1: No Connection Between Education and Action
+The education cards explain methods but there's no bridge to "what to do next." After reading, the owner lands on the Allowances step where policies default to `billing_mode: 'allowance'` with no prompt to consider Parts & Labor for specific services.
 
-### Component: `BillingMethodEducation`
-A reusable card with:
-- Three-column visual comparison (cards, not a raw table) with icons
-- "Most salons use Hybrid" consultative callout
-- Each card shows: icon, title, 2-line description, 3 bullet pros, 2 bullet cons, "Best for" tag
-- No selection action — this is educational context. Per-service selection happens in the policy drill-down (already exists as the Parts & Labor toggle)
+**Fix:** Add a contextual hint at the bottom of BillingMethodEducation when rendered inside the wizard: "In the next step, you'll set allowances for each service. You can switch any service to Parts & Labor later in Allowances & Billing."
 
-### Changes
+### Gap 2: Collapsible Defaults to Closed
+In `AllowancesBillingSection`, `showEducation` starts `false`. A first-time user who skipped the wizard never sees this content unless they notice and click "Learn about billing methods."
 
-**New file: `src/components/dashboard/backroom-settings/BillingMethodEducation.tsx`**
-- Standalone presentational component rendering the three-method comparison
-- Responsive: 3-col on desktop, stacked on mobile
-- Uses existing Card, Badge components
-- Consultative tone with "Most salons recommend" highlight on Hybrid
+**Fix:** Default `showEducation` to `true` if the org has zero allowance policies configured (first visit). Once policies exist, default to collapsed.
 
-**File: `src/components/dashboard/backroom-settings/AllowancesBillingSection.tsx`**
-- Import and render `<BillingMethodEducation />` above the existing Infotainer
-- Collapsible via a "Learn about billing methods" disclosure so it doesn't permanently consume space after first read
+### Gap 3: Missing "How Overages Work" Detail
+The Allowance card says "overage charged if stylist uses more than budgeted" but doesn't clarify the two overage pricing options (at cost vs. retail markup). This is a key decision point the owner asked about.
 
-**File: `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx`**
-- Add a new step between Services (step 3) and Allowances (step 4): "Billing Strategy"
-- Renders `<BillingMethodEducation />` with a brief intro: "Before setting allowances, here's how salons recover product costs"
-- Update `STEP_COUNT` from 6 to 7 and shift step indexes
-- Update `stepLabels` array
+**Fix:** Add a bullet or sub-line: "Overages can be charged at cost or at a set markup — configured per service."
 
-### Files
+### Gap 4: Missing "How Markup Works" Detail for Parts & Labor
+The Parts & Labor card mentions "set a markup %" in the pro tip but doesn't explain that charges can be at-cost OR at-margin in the card body itself.
+
+**Fix:** Add to description or pros: "Charge at wholesale cost or apply a markup for retail pricing — your choice per service."
+
+### Gap 5: No Visual Distinction in the Wizard Step
+Step 4 (Billing Strategy) is purely text + cards — same visual weight as data-entry steps. Since it's the only read-only step, it should feel different so owners know they can absorb the info without pressure.
+
+**Fix:** Add a subtle info banner or different background treatment to signal "this is a learning moment, not a configuration step." A simple "No action needed — just review" pill badge at the top.
+
+### Enhancement: Receipt Preview Mockups
+Owners may not fully grasp how each method looks to their clients. A small receipt-style mockup per card (2-3 line items) would make the difference visceral:
+- **Allowance:** "Balayage — $185" (one clean line)
+- **Parts & Labor:** "Balayage Labor — $145 / Color supplies — $38.50"
+- **Hybrid:** Mix of both for a multi-service visit
+
+---
+
+### Proposed Changes
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/backroom-settings/BillingMethodEducation.tsx` | New — comparison cards component |
-| `src/components/dashboard/backroom-settings/AllowancesBillingSection.tsx` | Add collapsible education section at top |
-| `src/components/dashboard/backroom-settings/BackroomSetupWizard.tsx` | Add "Billing Strategy" step (step 4), bump count to 7 |
+| `BillingMethodEducation.tsx` | Add optional `showWizardHint` prop for contextual CTA text; add overage/markup clarifications to card content; add receipt preview mockups per card |
+| `AllowancesBillingSection.tsx` | Default `showEducation` to `true` when no policies exist |
+| `BackroomSetupWizard.tsx` | Pass `showWizardHint` to the education component; add "No action needed" badge above the cards |
+
+### Scope
+Small content and UX refinements — no new data model or API changes. Roughly 3 files touched, ~40 lines changed.
 
