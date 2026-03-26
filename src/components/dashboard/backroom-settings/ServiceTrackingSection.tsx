@@ -239,16 +239,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
     return [
       {
-        label: 'Classify Services',
+        label: 'Classify & Track Services',
         current: classified.length,
         total: allServices.length,
-        tooltip: 'Review each service and mark whether it uses color or chemical products.',
-      },
-      {
-        label: 'Enable Tracking',
-        current: tracked.length,
-        total: Math.max(chemicalOrSuggested.length, tracked.length),
-        tooltip: 'Turn on backroom tracking for color and chemical services.',
+        tooltip: 'Review each service and mark whether it requires color or chemical products.',
       },
       {
         label: 'Set Allowances',
