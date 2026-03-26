@@ -1645,33 +1645,50 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {(() => {
                         const suggestedLowPrice = Math.floor((grandTotal / 0.08) / 5) * 5;
                         return suggestedLowPrice > 0 && suggestedLowPrice < effectiveServicePrice ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-3 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10 gap-1.5 rounded-md border border-blue-500/30"
-                            disabled={updateServicePriceMutation.isPending}
-                            onClick={() => {
-                              const oldPrice = servicePrice;
-                              updateServicePriceMutation.mutate(suggestedLowPrice, {
-                                onSuccess: () => {
-                                  toast(`Service price reduced to $${suggestedLowPrice}`, {
-                                    action: oldPrice ? {
-                                      label: 'Undo',
-                                      onClick: () => updateServicePriceMutation.mutate(oldPrice),
-                                    } : undefined,
-                                    duration: 6000,
-                                  });
-                                },
-                              });
-                            }}
-                          >
-                            {updateServicePriceMutation.isPending ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <ArrowRight className="w-3 h-3" />
-                            )}
-                            Use ${suggestedLowPrice} price
-                          </Button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-3 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10 gap-1.5 rounded-md border border-blue-500/30"
+                                disabled={updateServicePriceMutation.isPending}
+                              >
+                                {updateServicePriceMutation.isPending ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <ArrowRight className="w-3 h-3" />
+                                )}
+                                Use ${suggestedLowPrice} price
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-3" align="start">
+                              <p className="text-xs font-sans text-foreground mb-2">
+                                Reduce service price from <span className="font-medium">${effectiveServicePrice}</span> to <span className="font-medium">${suggestedLowPrice}</span>?
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => {
+                                    const oldPrice = servicePrice;
+                                    updateServicePriceMutation.mutate(suggestedLowPrice, {
+                                      onSuccess: () => {
+                                        toast(`Service price reduced to $${suggestedLowPrice}`, {
+                                          action: oldPrice ? {
+                                            label: 'Undo',
+                                            onClick: () => updateServicePriceMutation.mutate(oldPrice),
+                                          } : undefined,
+                                          duration: 6000,
+                                        });
+                                      },
+                                    });
+                                  }}
+                                >
+                                  Confirm
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         ) : null;
                       })()}
                       <MetricInfoTooltip
