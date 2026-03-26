@@ -823,16 +823,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 Review complete? Mark as configured to track setup progress.
                                               </p>
                                               <Button
-                                                variant="default"
+                                                variant="ghost"
                                                 size="sm"
-                                                className="h-7 text-xs shrink-0"
+                                                className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
                                                 }}
                                               >
-                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                Mark Configured
+                                                Finalize Configuration
                                               </Button>
                                             </>
                                           )}
