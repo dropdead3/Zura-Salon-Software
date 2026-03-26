@@ -93,10 +93,12 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [serviceProductMap, setServiceProductMap] = useState<Record<string, string>>({});
 
-  // ─── Step 4: Allowances state ───────────────────────────────────────────────
+  // ─── Step 4: Billing Strategy (educational, no state) ─────────────────────
+
+  // ─── Step 5: Allowances state ───────────────────────────────────────────────
   const [allowances, setAllowances] = useState<Record<string, { qty: string; unit: string; rate: string }>>({});
 
-  // ─── Step 5: Station state ──────────────────────────────────────────────────
+  // ─── Step 6: Station state ──────────────────────────────────────────────────
   const [stationName, setStationName] = useState('');
   const [stationLocationId, setStationLocationId] = useState('');
 
