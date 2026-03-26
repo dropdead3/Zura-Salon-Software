@@ -1025,7 +1025,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 overflow-hidden relative">
+        <div className="flex-1 min-h-0 overflow-y-auto relative">
           {saving && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
               <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
@@ -1511,7 +1511,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               )}
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0">
