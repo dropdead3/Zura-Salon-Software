@@ -13,10 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check } from 'lucide-react';
+import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check, ArrowRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { useQuery } from '@tanstack/react-query';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAllowanceBowls, useUpsertAllowanceBowl, useDeleteAllowanceBowl } from '@/hooks/backroom/useAllowanceBowls';
@@ -259,6 +260,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => sum + bowl.lines.reduce((ls, line) => ls + line.lineCost, 0), 0);
   }, [bowls]);
 
+  const wholesaleGrandTotal = useMemo(() => {
+    return bowls.reduce((sum, bowl) => {
+      const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+      return sum + bowl.lines.reduce((ls, line) => {
+        const product = catalogProducts.find((p) => p.id === line.productId);
+        const wholesaleCpg = product ? getWholesaleCostPerGram(product) : 0;
+        const effectiveQty = line.isDeveloper ? colorQty * line.developerRatio : line.quantity;
+        return ls + Math.round(effectiveQty * wholesaleCpg * 100) / 100;
+      }, 0);
+    }, 0);
+  }, [bowls, catalogProducts]);
+
   const totalWeight = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
   }, [bowls]);
@@ -267,6 +280,25 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     if (!servicePrice || servicePrice <= 0 || grandTotal <= 0) return null;
     return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice });
   }, [grandTotal, servicePrice]);
+
+  const queryClient = useQueryClient();
+
+  const updateServicePriceMutation = useMutation({
+    mutationFn: async (newPrice: number) => {
+      const { error } = await supabase
+        .from('services' as any)
+        .update({ price: newPrice } as any)
+        .eq('id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
+      toast.success('Service price updated');
+    },
+    onError: (err: any) => {
+      toast.error('Failed to update price: ' + err.message);
+    },
+  });
 
   const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
     setBowls((prev) => [
@@ -423,6 +455,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         billing_mode: 'allowance',
         is_active: true,
         notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} vessel(s)`,
+        allowance_health_status: healthResult?.status ?? null,
+        allowance_health_pct: healthResult?.allowancePct ?? null,
+        last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
@@ -928,19 +963,63 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               </div>
               {/* Allowance Health Indicator */}
               {healthResult ? (
-                <div className={cn(
-                  "text-[11px] font-sans mt-2 px-2 py-1 rounded-md inline-flex items-center gap-1.5",
-                  healthResult.status === 'healthy' && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                  healthResult.status === 'high' && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                  healthResult.status === 'low' && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-                )}>
-                  <span className="font-medium">{healthResult.allowancePct}%</span>
-                  <span>of ${servicePrice?.toFixed(0)} service</span>
-                  <span className="text-[10px] opacity-70">
-                    {healthResult.status === 'healthy' && '— within target range'}
-                    {healthResult.status === 'high' && `— consider $${healthResult.suggestedServicePrice?.toFixed(0)} service price`}
-                    {healthResult.status === 'low' && '— room to increase product quality'}
-                  </span>
+                <div className="mt-2 space-y-1.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={cn(
+                        "text-[11px] font-sans px-2 py-1 rounded-md inline-flex items-center gap-1.5 cursor-help",
+                        healthResult.status === 'healthy' && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                        healthResult.status === 'high' && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                        healthResult.status === 'low' && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                      )}>
+                        <span className="font-medium">{healthResult.allowancePct}%</span>
+                        <span>of ${servicePrice?.toFixed(0)} service</span>
+                        <span className="text-[10px] opacity-70">
+                          {healthResult.status === 'healthy' && '— within target range'}
+                          {healthResult.status === 'high' && `— consider $${healthResult.suggestedServicePrice?.toFixed(0)} service price`}
+                          {healthResult.status === 'low' && '— room to increase product quality'}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[260px] text-[11px] font-sans space-y-1 p-3">
+                      <p className="font-medium mb-1.5">Cost Breakdown</p>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Wholesale cost</span>
+                        <span className="tabular-nums">${wholesaleGrandTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Markup applied</span>
+                        <span className="tabular-nums">+${(grandTotal - wholesaleGrandTotal).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-border/40 pt-1">
+                        <span className="font-medium">Retail (after markup)</span>
+                        <span className="font-medium tabular-nums">${grandTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between pt-1 text-muted-foreground">
+                        <span>Service price</span>
+                        <span className="tabular-nums">${servicePrice?.toFixed(2)}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground/70 pt-1">
+                        Target: 6–10% of service price (8% ideal)
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                  {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      disabled={updateServicePriceMutation.isPending}
+                      onClick={() => updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!)}
+                    >
+                      {updateServicePriceMutation.isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-3 h-3" />
+                      )}
+                      Use ${healthResult.suggestedServicePrice.toFixed(0)} suggested price
+                    </Button>
+                  )}
                 </div>
               ) : servicePrice && servicePrice > 0 ? (
                 <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
