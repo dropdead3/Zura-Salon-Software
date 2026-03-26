@@ -777,7 +777,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const hasExistingData = (existingBowls?.length ?? 0) > 0 || (existingBaselines?.length ?? 0) > 0;
 
   const handleClearAllowance = useCallback(async () => {
-    if (!orgId || !window.confirm('Are you sure you want to clear this allowance? All bowls and products will be removed.')) return;
+    if (!orgId) return;
     setSaving(true);
     try {
       const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
@@ -1775,7 +1775,16 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   size="sm"
                   className="h-7 px-2 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
                   disabled={saving}
-                  onClick={handleClearAllowance}
+                  onClick={() => {
+                    toast.warning('Clear this allowance?', {
+                      description: 'All bowls and products will be removed.',
+                      action: {
+                        label: 'Clear Allowance',
+                        onClick: () => handleClearAllowance(),
+                      },
+                      duration: 6000,
+                    });
+                  }}
                 >
                   <Trash2 className="w-3 h-3" />
                   Clear Allowance
