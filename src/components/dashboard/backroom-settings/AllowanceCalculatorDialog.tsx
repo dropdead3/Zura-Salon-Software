@@ -181,9 +181,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const initialBowlsRef = useRef<string>('');
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
-    const currentSnapshot = JSON.stringify(bowls.map(b => ({ lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
-    return currentSnapshot !== initialBowlsRef.current;
-  }, [bowls]);
+    const currentSnapshot = JSON.stringify(bowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
+    return currentSnapshot !== initialBowlsRef.current || modeledServicePrice !== null;
+  }, [bowls, modeledServicePrice]);
 
   const getPickerState = useCallback((bowlIdx: number): PickerState => {
     return bowlPickers[bowlIdx] || DEFAULT_PICKER;
