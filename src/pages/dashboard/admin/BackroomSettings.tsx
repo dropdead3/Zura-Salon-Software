@@ -236,8 +236,7 @@ export default function BackroomSettings() {
       warnings: health.warnings,
     };
   }, [health]);
-
-
+  if (entitlementLoading) {
     return (
       <DashboardLayout>
         <DashboardLoader size="md" className="h-[60vh]" />
