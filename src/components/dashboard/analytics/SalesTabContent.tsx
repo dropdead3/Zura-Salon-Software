@@ -603,6 +603,16 @@ export function SalesTabContent({
             filterContext={filterContext}
           />
         </TabsContent>
+
+        <TabsContent value="pricing" className="mt-6">
+          <PricingAnalyticsContent
+            locationId={locationFilter}
+            filterContext={filterContext}
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationName={selectedLocationName}
+          />
+        </TabsContent>
         </Tabs>
       </div>
     </div>
