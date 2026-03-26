@@ -1,62 +1,84 @@
 
 
-## Enhance Transfers Tab — Multi-Product Lines, PDF Export, Notifications
+## Enhance Transfers — Quantity Validation, Receive & Verify, Batch Templates
 
-### 1. Multi-Product Transfer Lines
+### 1. Quantity Validation Against Source Stock
 
-Currently the "New Transfer" dialog allows only one product per transfer. The `useStockTransferLines` hook and `stock_transfer_lines` table already exist but aren't wired up.
-
-**Changes:**
-
-- **`TransfersTab.tsx`** — Rework the "New Transfer" dialog to support adding multiple product rows before submitting:
-  - Replace the single product/quantity picker with a "line items" list
-  - Each line: product selector + quantity input + remove button
-  - "Add Product" button appends a new empty row
-  - On submit: create the `stock_transfers` parent row first, then bulk-insert all lines via `useAddTransferLine`
-  - The table view shows product count per transfer (e.g. "3 products") with an expandable row or tooltip listing the line items
-
-- **`useStockTransfers.ts`** — Update `useCompleteStockTransfer` to:
-  - Fetch all `stock_transfer_lines` for the transfer
-  - Call `postTransfer()` for each line (not just the parent row's single `product_id`/`quantity`)
-  - This makes the legacy single-product field a fallback — if lines exist, use lines; otherwise fall back to parent row fields
-
-- **`useStockTransferLines.ts`** — Add a `useBulkAddTransferLines` mutation that inserts all lines in one call for the new multi-product flow
-
-### 2. Transfer History PDF Export
-
-Add a "Download PDF" button to the Transfers tab header that generates a formatted transfer history report.
+**Problem**: Users can currently enter any quantity when creating a transfer, even if the source location doesn't have enough stock.
 
 **Changes:**
 
-- **`src/lib/exportTransfersPdf.ts`** (new) — Utility that:
-  - Accepts filtered transfers array + location/product maps
-  - Uses browser-side PDF generation (same pattern as existing `PdfExportDialog` / inventory PDF exports)
-  - Renders: header with org name + date range, table with Date / From→To / Products / Qty / Status / Notes columns
-  - Triggers browser download
+- **`TransfersTab.tsx`** — When a "From Location" is selected, fetch that location's inventory via the existing `products` table (`quantity_on_hand`). For each line item in the dialog:
+  - Show available stock next to the quantity input (e.g. "Available: 12")
+  - Validate that entered quantity ≤ on-hand; highlight the input red and disable "Create Transfer" if exceeded
+  - Account for other pending outbound transfers from the same location for the same product (subtract already-pending quantities from available stock)
 
-- **`TransfersTab.tsx`** — Add a `FileDown` icon button next to "New Transfer" that calls the PDF export utility with the current filtered transfer list
+- **`src/hooks/useStockTransfers.ts`** — Add a `usePendingOutboundQuantities(locationId)` query that sums quantities from pending transfers (and their lines) for each product at a given location. This prevents double-booking.
 
-### 3. Transfer Request Notifications
+### 2. Receive & Verify Step
 
-When a new transfer is created, notify managers at the destination location so they know inventory is incoming and can approve/complete it.
+**Problem**: The current "Complete" action assumes the destination received exactly what was sent. In reality, quantities may differ (damage, miscounts).
 
 **Changes:**
 
-- **`useStockTransfers.ts`** — In `useCreateStockTransfer`'s `onSuccess`, invoke a backend function to create a `platform_notification` for destination location managers
+- **Database migration** — Add columns to `stock_transfer_lines`:
+  - `received_quantity` (integer, nullable, default null)
+  - `received_at` (timestamptz, nullable)
+  - `discrepancy_notes` (text, nullable)
 
-- **`supabase/functions/notify-transfer-request/index.ts`** (new edge function) — Receives `{ transferId, organizationId, toLocationId }`, looks up staff assigned to the destination location, and calls `createNotification()` from `_shared/notify.ts` with:
-  - `type: 'transfer_request'`
-  - `severity: 'info'`
-  - `recipient_id` set to each destination location manager
-  - Throttling via the existing `createNotification` dedup (60 min cooldown per org+type+title)
+- **Transfer status flow** — Introduce `in_transit` status between `pending` and `completed`:
+  ```text
+  pending → in_transit (sender dispatches) → completed (receiver verifies)
+  ```
+  The existing `status` column already supports any string value.
+
+- **`TransfersTab.tsx`** — Replace the single "Complete" button behavior:
+  - Pending transfers show a "Dispatch" button → sets status to `in_transit`
+  - `in_transit` transfers show a "Receive & Verify" button → opens a dialog where the destination manager enters actual received quantities per line
+  - Pre-fills expected quantities; highlights discrepancies
+  - On confirm: updates `received_quantity` on each line, sets status to `completed`, and posts ledger entries using the *received* quantities (not the expected ones)
+  - Auto-logs discrepancy notes to the transfer's `notes` field
+
+- **`useStockTransfers.ts`** — Add `useDispatchTransfer` mutation (sets status to `in_transit`) and update `useCompleteStockTransfer` to accept per-line received quantities
+
+- **Status badges** — Add `in_transit` to the badge map with a distinct color (e.g. blue/info variant)
+
+### 3. Batch Transfer Templates
+
+**Problem**: Recurring transfers (e.g. weekly replenishment from warehouse to salon) require re-entering the same products each time.
+
+**Changes:**
+
+- **Database migration** — Create two tables:
+  - `transfer_templates`: `id`, `organization_id`, `name`, `from_location_id`, `to_location_id`, `notes`, `created_by`, `created_at`
+  - `transfer_template_lines`: `id`, `template_id` (FK), `product_id` (FK), `quantity`, `unit`
+
+- **`src/hooks/inventory/useTransferTemplates.ts`** (new) — CRUD hooks:
+  - `useTransferTemplates(orgId)` — list all templates
+  - `useCreateTransferTemplate()` — save current dialog state as a template
+  - `useDeleteTransferTemplate()`
+  - `useTransferTemplateLines(templateId)` — fetch lines for a template
+
+- **`TransfersTab.tsx`** — Two new UI elements:
+  - **"Save as Template"** button in the New Transfer dialog footer (after filling products) — saves the current from/to locations and line items as a named template
+  - **"From Template"** dropdown/button next to "New Transfer" — lists saved templates; selecting one pre-fills the dialog with the template's locations and products, ready for quantity adjustments and submission
 
 ### Files Summary
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/backroom-settings/inventory/TransfersTab.tsx` | Multi-line product picker in dialog; expandable rows in table; PDF download button |
-| `src/hooks/useStockTransfers.ts` | Complete transfer reads lines; invoke notification on create |
-| `src/hooks/inventory/useStockTransferLines.ts` | Add `useBulkAddTransferLines` mutation |
-| `src/lib/exportTransfersPdf.ts` | New — PDF generation utility for transfer history |
-| `supabase/functions/notify-transfer-request/index.ts` | New — edge function to notify destination location managers |
+| `src/components/dashboard/backroom-settings/inventory/TransfersTab.tsx` | Validation UI, dispatch/receive flow, template save/load |
+| `src/hooks/useStockTransfers.ts` | `usePendingOutboundQuantities`, `useDispatchTransfer`, updated complete with received quantities |
+| `src/hooks/inventory/useTransferTemplates.ts` | **New** — template CRUD hooks |
+| `src/hooks/inventory/useStockTransferLines.ts` | No changes needed (received_quantity updates go through `useCompleteStockTransfer`) |
+| Database migration | Add `received_quantity`, `received_at`, `discrepancy_notes` to `stock_transfer_lines`; create `transfer_templates` + `transfer_template_lines` tables with RLS |
+
+### Status Flow After Changes
+
+```text
+pending ──→ in_transit ──→ completed
+   │                           ↑
+   │                    (receive & verify)
+   └──→ cancelled
+```
 
