@@ -43,7 +43,7 @@ import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/compon
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
-import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw, MapPin, Building2 } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw, MapPin, Building2, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
@@ -191,6 +191,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [syncScope, setSyncScope] = useState<'brand' | 'all'>('brand');
   const [syncToAllOpen, setSyncToAllOpen] = useState(false);
   const [syncIncludeLevels, setSyncIncludeLevels] = useState(true);
+  const [removeBrandOpen, setRemoveBrandOpen] = useState(false);
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -372,6 +373,59 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       }
     },
     onError: (error) => toast.error('Sync failed: ' + error.message),
+  });
+
+  /* Remove Brand — deactivates all products + removes tracking */
+  const removeBrandMutation = useMutation({
+    mutationFn: async (brand: string) => {
+      // 1. Get all product IDs for this brand
+      const { data: brandProducts, error: fetchErr } = await supabase
+        .from('products')
+        .select('id')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .eq('product_type', 'Supplies')
+        .ilike('brand', brand);
+      if (fetchErr) throw fetchErr;
+      const ids = (brandProducts || []).map((p: any) => p.id);
+      if (ids.length === 0) throw new Error('No active products found for this brand');
+
+      // 2. Remove location tracking for these products
+      const BATCH = 500;
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const { error: delErr } = await supabase
+          .from('location_product_settings')
+          .delete()
+          .eq('organization_id', orgId!)
+          .in('product_id', batch);
+        if (delErr) throw delErr;
+      }
+
+      // 3. Soft-delete the products
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const { error: upErr } = await supabase
+          .from('products')
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .in('id', batch);
+        if (upErr) throw upErr;
+      }
+
+      return { count: ids.length, brand };
+    },
+    onSuccess: ({ count, brand }) => {
+      setSelectedBrand(null);
+      setSelectedCategory(null);
+      setSelectedLine(null);
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['product-brands'] });
+      toast.success(`Removed ${brand} — ${count} products deactivated and untracked from all locations`);
+    },
+    onError: (error) => toast.error('Failed to remove brand: ' + error.message),
   });
 
   /* ====== Derived data ====== */
@@ -702,18 +756,30 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               {selectedBrand && (
                 <Badge variant="outline">{brandProductsAll.length} products</Badge>
               )}
-              {selectedBrand && (
+               {selectedBrand && (
                  <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => { setSyncScope('brand'); setSyncConfirmOpen(true); }}
-                   disabled={syncFromLibraryMutation.isPending}
-                   className="font-sans gap-1.5"
-                 >
-                   <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
-                   Sync from Zura Library
-                 </Button>
-               )}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSyncScope('brand'); setSyncConfirmOpen(true); }}
+                    disabled={syncFromLibraryMutation.isPending}
+                    className="font-sans gap-1.5"
+                  >
+                    <RefreshCw className={cn('w-3.5 h-3.5', syncFromLibraryMutation.isPending && 'animate-spin')} />
+                    Sync from Zura Library
+                  </Button>
+                )}
+               {selectedBrand && (
+                 <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRemoveBrandOpen(true)}
+                    disabled={removeBrandMutation.isPending}
+                    className="font-sans gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove Brand
+                  </Button>
+                )}
               <Button
                 variant="outline"
                 size="sm"
@@ -1375,6 +1441,46 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               }}
             >
               Yes, sync to all locations
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Brand confirmation dialog */}
+      <AlertDialog open={removeBrandOpen} onOpenChange={setRemoveBrandOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={tokens.card.title}>Remove Brand from Catalog</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  You are about to remove{' '}
+                  <strong className="text-foreground font-medium">{selectedBrand}</strong>{' '}
+                  from your catalog entirely.
+                </p>
+                <div className="rounded-lg border bg-destructive/5 border-destructive/20 p-3 text-sm space-y-1.5">
+                  <p className="font-medium text-foreground">This will:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                    <li>Deactivate <strong className="text-foreground">{brandProductsAll.length}</strong> products</li>
+                    <li>Remove tracking from <strong className="text-foreground">{activeLocations.length}</strong> location{activeLocations.length !== 1 ? 's' : ''}</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Stock movement history will be preserved. Products can be re-added later from the Supply Library.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (selectedBrand) removeBrandMutation.mutate(selectedBrand);
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Remove {selectedBrand}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
