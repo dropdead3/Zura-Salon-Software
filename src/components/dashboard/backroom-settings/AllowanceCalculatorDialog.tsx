@@ -175,6 +175,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [bowls, setBowls] = useState<BowlState[]>([]);
   const [saving, setSaving] = useState(false);
   const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
+  const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
+  const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
+  const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
