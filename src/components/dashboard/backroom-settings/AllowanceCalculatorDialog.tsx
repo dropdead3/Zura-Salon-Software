@@ -32,6 +32,7 @@ interface Props {
   serviceId: string;
   serviceName: string;
   containerTypes?: ('bowl' | 'bottle')[];
+  servicePrice?: number | null;
 }
 
 interface CatalogProduct {
