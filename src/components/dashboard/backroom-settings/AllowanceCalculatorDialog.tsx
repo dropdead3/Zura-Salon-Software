@@ -1584,7 +1584,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         <span className="text-[10px] opacity-70">
                           {healthResult.status === 'healthy' && '— within target range'}
                           {healthResult.status === 'high' && '— consider raising service price or reducing product usage'}
-                          {healthResult.status === 'low' && '— consider increasing product quality or adjusting service price'}
+                          {healthResult.status === 'low' && '— strong margin, room to upgrade product line'}
                         </span>
                       </div>
                     </TooltipTrigger>
