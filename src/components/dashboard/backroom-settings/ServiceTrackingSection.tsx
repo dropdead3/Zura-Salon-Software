@@ -1004,15 +1004,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         />
       )}
 
-      {/* Component mapping dialog */}
-      {selectedServiceId && (
-        <ComponentMappingDialog
-          serviceId={selectedServiceId}
-          serviceName={services?.find((s) => s.id === selectedServiceId)?.name || ''}
-          orgId={orgId!}
-          onClose={() => setSelectedServiceId(null)}
-        />
-      )}
       {calculatorServiceId && (
         <AllowanceCalculatorDialog
           open={!!calculatorServiceId}
