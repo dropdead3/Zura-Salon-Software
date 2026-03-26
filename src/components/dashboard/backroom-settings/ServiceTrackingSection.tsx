@@ -563,7 +563,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           <TableRow
                             className={cn(
                               attention && 'bg-amber-500/[0.03]',
-                              service.backroom_config_dismissed && 'opacity-60',
+                              service.backroom_config_dismissed && 'bg-emerald-500/[0.04]',
                               'cursor-pointer'
                             )}
                             onClick={() => toggleExpand(service.id)}
