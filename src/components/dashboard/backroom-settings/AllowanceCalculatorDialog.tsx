@@ -1511,17 +1511,24 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   onClick={() => {
                     const summary = [
                       `${serviceName} — Product Allowance`,
-                      `Total: $${grandTotal.toFixed(2)} (${Math.round(totalWeight)}g)`,
-                      ...bowls.filter(b => b.lines.length > 0).map(b =>
-                        `\n${b.label}:\n` + b.lines.map(l => {
+                      `Retail Total: $${grandTotal.toFixed(2)} | Wholesale: $${wholesaleGrandTotal.toFixed(2)} | Markup: $${(grandTotal - wholesaleGrandTotal).toFixed(2)}`,
+                      `Weight: ${Math.round(totalWeight)}g across ${bowls.filter(b => b.lines.length > 0).length} vessel(s)`,
+                      ...bowls.filter(b => b.lines.length > 0).map(b => {
+                        const bColorQty = b.lines.filter(l => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+                        return `\n${b.label}:\n` + b.lines.map(l => {
                           const qty = l.isDeveloper
-                            ? `${l.developerRatio}× ratio`
+                            ? (bColorQty > 0 ? `${l.developerRatio}× ratio (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g`)
                             : `${l.quantity}g`;
-                          return `  • ${l.productName} — ${qty} — $${l.lineCost.toFixed(2)}`;
-                        }).join('\n')
-                      ),
+                          const prod = catalogProducts.find(p => p.id === l.productId);
+                          const wholesaleCpg = prod ? getWholesaleCostPerGram(prod) : 0;
+                          const effectiveQty = l.isDeveloper ? (bColorQty > 0 ? bColorQty * l.developerRatio : l.quantity) : l.quantity;
+                          const wholesaleCost = Math.round(effectiveQty * wholesaleCpg * 100) / 100;
+                          return `  • ${l.productName} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
+                        }).join('\n');
+                      }),
                       effectiveServicePrice > 0 ? `\nHealth: ${healthResult?.allowancePct ?? '—'}% of $${effectiveServicePrice.toFixed(0)} service (${healthResult?.status ?? 'N/A'})` : '',
-                    ].join('\n');
+                      effectiveServicePrice > 0 ? `Margin: $${(effectiveServicePrice - grandTotal).toFixed(2)} (${((1 - grandTotal / effectiveServicePrice) * 100).toFixed(1)}%)` : '',
+                    ].filter(Boolean).join('\n');
                     navigator.clipboard.writeText(summary);
                     toast.success('Recipe summary copied to clipboard');
                   }}
