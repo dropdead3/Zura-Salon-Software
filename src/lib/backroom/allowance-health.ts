@@ -54,7 +54,7 @@ function roundUpTo5(v: number): number {
  * retailCpg = wholesaleCpg × (1 + markupPct / 100)
  */
 export function calculateRetailCostPerGram(wholesaleCpg: number, markupPct: number): number {
-  return r2(wholesaleCpg * (1 + markupPct / 100));
+  return r4(wholesaleCpg * (1 + markupPct / 100));
 }
 
 /**

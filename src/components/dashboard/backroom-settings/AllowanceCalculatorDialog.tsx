@@ -269,7 +269,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     } else {
       const defaultBowls = [{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [] as BowlLine[], collapsed: false }];
       setBowls(defaultBowls);
-      const snapshot = JSON.stringify(defaultBowls.map(b => ({ lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
+      const snapshot = JSON.stringify(defaultBowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       initialBowlsRef.current = snapshot;
     }
     setBowlPickers({});
