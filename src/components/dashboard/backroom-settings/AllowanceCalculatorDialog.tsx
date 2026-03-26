@@ -694,10 +694,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             <Palette className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <p className="text-sm font-sans text-muted-foreground">
-                            Select a brand below to start adding products
+                            Add products to build a sample formula
                           </p>
                           <p className="text-xs font-sans text-muted-foreground/60 mt-1">
-                            Developers are auto-detected from the catalog
+                            Select a brand below, then choose products. Developers are auto-detected.
                           </p>
                         </div>
                       )}
