@@ -50,6 +50,7 @@ import { BackroomComplianceSection } from '@/components/dashboard/backroom-setti
 import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
+import { BackroomSavingsSection } from '@/components/dashboard/backroom-settings/BackroomSavingsSection';
 
 
 type BackroomSection =
