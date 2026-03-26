@@ -405,7 +405,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
           <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
           <DialogDescription className="text-sm font-sans text-muted-foreground">
-            {serviceName} — Build sample bowls to calculate the included product cost.
+            {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
           </DialogDescription>
         </DialogHeader>
 
