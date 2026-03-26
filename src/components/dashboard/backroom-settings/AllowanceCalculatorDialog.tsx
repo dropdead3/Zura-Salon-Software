@@ -1397,6 +1397,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                       {WEIGHT_PRESETS.map((g) => (
                                         <button
                                           key={g}
+                                          aria-label={`Set quantity to ${g} grams`}
                                           className={cn(
                                             'px-2 py-1 rounded-full text-xs font-sans transition-colors border',
                                             line.quantity === g
