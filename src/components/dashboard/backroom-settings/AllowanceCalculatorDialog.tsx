@@ -20,8 +20,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useAllowanceBowls, useUpsertAllowanceBowl, useDeleteAllowanceBowl } from '@/hooks/backroom/useAllowanceBowls';
-import { useServiceRecipeBaselines, useUpsertRecipeBaseline, useDeleteRecipeBaseline } from '@/hooks/inventory/useServiceRecipeBaselines';
+import { useAllowanceBowls } from '@/hooks/backroom/useAllowanceBowls';
+import { useServiceRecipeBaselines } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/backroom/allowance-health';
@@ -161,15 +161,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       return data as CatalogProduct[];
     },
     enabled: !!orgId && open,
+    staleTime: 120_000,
   });
 
   const { data: existingBowls } = useAllowanceBowls(serviceId);
   const { data: existingBaselines } = useServiceRecipeBaselines(serviceId);
 
-  const upsertBowl = useUpsertAllowanceBowl();
-  const deleteBowl = useDeleteAllowanceBowl();
-  const upsertBaseline = useUpsertRecipeBaseline();
-  const deleteBaseline = useDeleteRecipeBaseline();
+
+
   const upsertPolicy = useUpsertAllowancePolicy();
 
   const [bowls, setBowls] = useState<BowlState[]>([]);
@@ -179,6 +178,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
+  const hasInitRef = useRef(false);
+  const lastUndoToastRef = useRef<string | number | null>(null);
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
     const currentSnapshot = JSON.stringify(bowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
@@ -228,8 +229,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     );
   }, [catalogProducts]);
 
+  // Reset hasInitRef when dialog closes
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hasInitRef.current = false;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || hasInitRef.current) return;
 
     if (existingBowls && existingBowls.length > 0 && existingBaselines) {
       const loaded: BowlState[] = existingBowls.map((b) => {
@@ -263,19 +271,42 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       });
 
       setBowls(loaded);
-      // Capture initial snapshot for dirty-state detection
       const snapshot = JSON.stringify(loaded.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       initialBowlsRef.current = snapshot;
-    } else {
+      hasInitRef.current = true;
+    } else if (existingBowls && existingBaselines) {
+      // No existing bowls — create default
       const defaultBowls = [{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [] as BowlLine[], collapsed: false }];
       setBowls(defaultBowls);
       const snapshot = JSON.stringify(defaultBowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       initialBowlsRef.current = snapshot;
+      hasInitRef.current = true;
     }
     setBowlPickers({});
     setEditingLabelIdx(null);
     setModeledServicePrice(null);
   }, [open, existingBowls, existingBaselines, catalogProducts]);
+
+  // Pre-computed maps for render performance (Items 4)
+  const productBowlMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    bowls.forEach((b) => {
+      b.lines.forEach((l) => {
+        const existing = map.get(l.productId) || [];
+        if (!existing.includes(b.label)) existing.push(b.label);
+        map.set(l.productId, existing);
+      });
+    });
+    return map;
+  }, [bowls]);
+
+  const wholesaleCostMap = useMemo(() => {
+    const map = new Map<string, number>();
+    catalogProducts.forEach((p) => {
+      map.set(p.id, getWholesaleCostPerGram(p));
+    });
+    return map;
+  }, [catalogProducts]);
 
   const grandTotal = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + bowl.lines.reduce((ls, line) => ls + line.lineCost, 0), 0);
@@ -285,13 +316,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => {
       const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
       return sum + bowl.lines.reduce((ls, line) => {
-        const product = catalogProducts.find((p) => p.id === line.productId);
-        const wholesaleCpg = product ? getWholesaleCostPerGram(product) : 0;
+        const wholesaleCpg = wholesaleCostMap.get(line.productId) ?? 0;
         const effectiveQty = line.isDeveloper ? (colorQty > 0 ? colorQty * line.developerRatio : line.quantity) : line.quantity;
         return ls + Math.round(effectiveQty * wholesaleCpg * 100) / 100;
       }, 0);
     }, 0);
-  }, [bowls, catalogProducts]);
+  }, [bowls, wholesaleCostMap]);
 
   const totalWeight = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
@@ -337,8 +367,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
     });
     if (removed) {
+      // Dismiss any previous undo toast to prevent stale undo
+      if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
       removedBowlRef.current = { idx, bowl: removed };
-      toast(`Removed ${removed.label}`, {
+      const toastId = toast(`Removed ${removed.label}`, {
         action: {
           label: 'Undo',
           onClick: () => {
@@ -354,6 +386,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         },
         duration: 5000,
       });
+      lastUndoToastRef.current = toastId;
     }
   }, [bowls]);
 
@@ -474,8 +507,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     );
 
     if (removedLine) {
+      if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
       removedLineRef.current = { bowlIdx, line: removedLine, position: lineIdx };
-      toast(`Removed ${removedLine.productName}`, {
+      const toastId = toast(`Removed ${removedLine.productName}`, {
         action: {
           label: 'Undo',
           onClick: () => {
@@ -498,6 +532,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         },
         duration: 5000,
       });
+      lastUndoToastRef.current = toastId;
     }
   }, [bowls]);
 
@@ -562,34 +597,43 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
-      // Phase 2: Insert new data
+      // Phase 2: Insert new data using raw supabase calls to avoid per-row cache invalidation
+      const userId = (await supabase.auth.getUser()).data.user?.id;
 
       for (const bowl of bowls) {
         if (bowl.lines.length === 0) continue;
 
-        const savedBowl = await upsertBowl.mutateAsync({
-          organization_id: orgId,
-          service_id: serviceId,
-          bowl_number: bowl.bowlNumber,
-          label: bowl.label,
-        });
-
-        for (const line of bowl.lines) {
-          // Insert baseline with all metadata in one call (no separate update needed)
-          await upsertBaseline.mutateAsync({
+        const { data: savedBowl, error: bowlInsertErr } = await supabase
+          .from('service_allowance_bowls')
+          .insert({
             organization_id: orgId,
             service_id: serviceId,
-            product_id: line.productId,
-            bowl_id: savedBowl.id,
-            expected_quantity: line.quantity,
-            unit: 'g',
-            notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
-            cost_per_unit_snapshot: line.costPerGram,
-            is_developer: line.isDeveloper,
-            developer_ratio: line.developerRatio,
-            silent: true,
-          });
-        }
+            bowl_number: bowl.bowlNumber,
+            label: bowl.label,
+          })
+          .select()
+          .single();
+        if (bowlInsertErr || !savedBowl) throw new Error('Failed to save bowl: ' + (bowlInsertErr?.message ?? 'unknown'));
+
+        // Batch insert all baselines for this bowl
+        const baselineRows = bowl.lines.map((line) => ({
+          organization_id: orgId,
+          service_id: serviceId,
+          product_id: line.productId,
+          bowl_id: savedBowl.id,
+          expected_quantity: line.quantity,
+          unit: 'g',
+          notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : null,
+          created_by: userId ?? null,
+          cost_per_unit_snapshot: line.costPerGram,
+          is_developer: line.isDeveloper,
+          developer_ratio: line.developerRatio,
+        }));
+
+        const { error: blInsertErr } = await supabase
+          .from('service_recipe_baselines')
+          .insert(baselineRows);
+        if (blInsertErr) throw new Error('Failed to save baselines: ' + blInsertErr.message);
       }
 
       // Phase 3: Update policy
@@ -608,12 +652,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
 
+      // Invalidate caches once after all inserts
+      queryClient.invalidateQueries({ queryKey: ['allowance-bowls'] });
+      queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
+
       // Update snapshot so isDirty resets
       initialBowlsRef.current = JSON.stringify(bowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       setModeledServicePrice(null);
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
-      // Use setTimeout to ensure isDirty memo re-evaluates before onOpenChange checks it
       setTimeout(() => onOpenChange(false), 0);
     } catch (err: unknown) {
       toast.error('Failed to save allowance: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -621,6 +668,19 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       setSaving(false);
     }
   };
+
+  // Cmd+S / Ctrl+S keyboard shortcut
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (grandTotal > 0 && !saving) handleSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, grandTotal, saving]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -686,7 +746,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 key={brand}
                 role="option"
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none transition-colors text-left group"
-                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedBrand: brand, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedBrand: brand })}
               >
                 <span className="text-xs font-sans text-foreground">{brand}</span>
                 <div className="flex items-center gap-1.5">
@@ -712,7 +772,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           {/* Breadcrumb back */}
           <button
             className="flex items-center gap-1 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+            onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null })}
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             <span className="font-medium text-foreground">{picker.selectedBrand}</span>
@@ -745,7 +805,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 key={category}
                 role="option"
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none transition-colors text-left group"
-                onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category })}
               >
                 <span className="text-xs font-sans text-foreground">{formatCategoryLabel(category)}</span>
                 <div className="flex items-center gap-1.5">
@@ -777,7 +837,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
               <button
                 className="hover:text-foreground transition-colors flex items-center gap-0.5"
-                onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null })}
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 Brands
@@ -785,7 +845,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <span className="text-muted-foreground/40">/</span>
               <button
                 className="hover:text-foreground transition-colors"
-                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null })}
               >
                 <span className="font-medium text-foreground">{picker.selectedBrand}</span>
               </button>
@@ -1160,10 +1220,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                               {line.productName}
                               {/* Cross-bowl duplicate warning */}
                               {(() => {
-                                const otherBowlIdx = bowls.findIndex((ob, oi) => oi !== bowlIdx && ob.lines.some(ol => ol.productId === line.productId));
-                                return otherBowlIdx >= 0 ? (
+                                const bowlLabels = productBowlMap.get(line.productId) || [];
+                                const otherLabels = bowlLabels.filter(l => l !== bowl.label);
+                                return otherLabels.length > 0 ? (
                                   <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-amber-500 border-amber-500/30">
-                                    Also in {bowls[otherBowlIdx].label}
+                                    Also in {otherLabels[0]}
                                   </Badge>
                                 ) : null;
                               })()}
@@ -1183,9 +1244,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 </Tooltip>
                               )}
                               {(() => {
-                                const prod = catalogProducts.find(p => p.id === line.productId);
-                                if (!prod) return null;
-                                const wholesale = getWholesaleCostPerGram(prod);
+                                const wholesale = wholesaleCostMap.get(line.productId) ?? 0;
                                 if (wholesale <= 0) return null;
                                 return <span className="text-muted-foreground/50"> · ${wholesale.toFixed(4)}/g wholesale</span>;
                               })()}
@@ -1265,12 +1324,36 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                   style={{ backgroundColor: line.swatchColor || 'hsl(var(--muted))' }}
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-sans text-foreground truncate">{line.productName}</div>
+                                  <div className="text-xs font-sans text-foreground truncate">
+                                    {line.productName}
+                                    {/* Cross-bowl indicator for developer lines */}
+                                    {(() => {
+                                      const bowlLabels = productBowlMap.get(line.productId) || [];
+                                      const otherLabels = bowlLabels.filter(l => l !== bowl.label);
+                                      return otherLabels.length > 0 ? (
+                                        <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-amber-500 border-amber-500/30">
+                                          Also in {otherLabels[0]}
+                                        </Badge>
+                                      ) : null;
+                                    })()}
+                                  </div>
                                   <div className="text-[11px] font-sans text-muted-foreground">
                                     {showGramPresets
                                       ? `${devWeight}g · $${line.costPerGram.toFixed(4)}/g`
                                       : `${devWeight}g at ${line.developerRatio}× · $${line.costPerGram.toFixed(4)}/g`
                                     }
+                                    {line.costPerGram === 0 && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-destructive border-destructive/30 cursor-help">
+                                            No cost data
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[200px] text-[11px]">
+                                          This product has no cost-per-gram or cost-price + container-size in the catalog. Update it in Inventory to get accurate allowance calculations.
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )}
                                   </div>
                                 </div>
 
@@ -1501,33 +1584,50 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   </Tooltip>
                   {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
-                        disabled={updateServicePriceMutation.isPending}
-                        onClick={() => {
-                          const oldPrice = servicePrice;
-                          updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
-                            onSuccess: () => {
-                              toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
-                                action: oldPrice ? {
-                                  label: 'Undo',
-                                  onClick: () => updateServicePriceMutation.mutate(oldPrice),
-                                } : undefined,
-                                duration: 6000,
-                              });
-                            },
-                          });
-                        }}
-                      >
-                        {updateServicePriceMutation.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <ArrowRight className="w-3 h-3" />
-                        )}
-                        Use ${healthResult.suggestedServicePrice} suggested price
-                      </Button>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-3 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 gap-1.5 rounded-md border border-amber-500/30"
+                            disabled={updateServicePriceMutation.isPending}
+                          >
+                            {updateServicePriceMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <ArrowRight className="w-3 h-3" />
+                            )}
+                            Use ${healthResult.suggestedServicePrice} suggested price
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-3" align="start">
+                          <p className="text-xs font-sans text-foreground mb-2">
+                            Change service price from <span className="font-medium">${effectiveServicePrice}</span> to <span className="font-medium">${healthResult.suggestedServicePrice}</span>?
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => {
+                                const oldPrice = servicePrice;
+                                updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
+                                  onSuccess: () => {
+                                    toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
+                                      action: oldPrice ? {
+                                        label: 'Undo',
+                                        onClick: () => updateServicePriceMutation.mutate(oldPrice),
+                                      } : undefined,
+                                      duration: 6000,
+                                    });
+                                  },
+                                });
+                              }}
+                            >
+                              Confirm
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       <MetricInfoTooltip
                         description="Calculated using the industry-standard 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also reduce product quantities in the bowls above to bring costs down, or adjust service pricing from Price Intelligence in the Backroom Hub."
                         className="w-3.5 h-3.5 text-amber-500/60"
@@ -1543,33 +1643,50 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       {(() => {
                         const suggestedLowPrice = Math.floor((grandTotal / 0.08) / 5) * 5;
                         return suggestedLowPrice > 0 && suggestedLowPrice < effectiveServicePrice ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-3 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10 gap-1.5 rounded-md border border-blue-500/30"
-                            disabled={updateServicePriceMutation.isPending}
-                            onClick={() => {
-                              const oldPrice = servicePrice;
-                              updateServicePriceMutation.mutate(suggestedLowPrice, {
-                                onSuccess: () => {
-                                  toast(`Service price reduced to $${suggestedLowPrice}`, {
-                                    action: oldPrice ? {
-                                      label: 'Undo',
-                                      onClick: () => updateServicePriceMutation.mutate(oldPrice),
-                                    } : undefined,
-                                    duration: 6000,
-                                  });
-                                },
-                              });
-                            }}
-                          >
-                            {updateServicePriceMutation.isPending ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <ArrowRight className="w-3 h-3" />
-                            )}
-                            Use ${suggestedLowPrice} price
-                          </Button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-3 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10 gap-1.5 rounded-md border border-blue-500/30"
+                                disabled={updateServicePriceMutation.isPending}
+                              >
+                                {updateServicePriceMutation.isPending ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <ArrowRight className="w-3 h-3" />
+                                )}
+                                Use ${suggestedLowPrice} price
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-3" align="start">
+                              <p className="text-xs font-sans text-foreground mb-2">
+                                Reduce service price from <span className="font-medium">${effectiveServicePrice}</span> to <span className="font-medium">${suggestedLowPrice}</span>?
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => {
+                                    const oldPrice = servicePrice;
+                                    updateServicePriceMutation.mutate(suggestedLowPrice, {
+                                      onSuccess: () => {
+                                        toast(`Service price reduced to $${suggestedLowPrice}`, {
+                                          action: oldPrice ? {
+                                            label: 'Undo',
+                                            onClick: () => updateServicePriceMutation.mutate(oldPrice),
+                                          } : undefined,
+                                          duration: 6000,
+                                        });
+                                      },
+                                    });
+                                  }}
+                                >
+                                  Confirm
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         ) : null;
                       })()}
                       <MetricInfoTooltip
