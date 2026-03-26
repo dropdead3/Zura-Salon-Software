@@ -251,7 +251,7 @@ export function BackroomComplianceSection() {
                         formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Compliance Rate' : 'Waste %']}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                       />
-                      <Legend formatter={(value) => value === 'complianceRate' ? 'Reweigh Rate' : 'Waste %'} />
+                      <Legend formatter={(value) => value === 'complianceRate' ? 'Compliance Rate' : 'Waste %'} />
                       <Area type="monotone" dataKey="complianceRate" stroke="hsl(var(--chart-2))" fill="url(#reweighGrad)" strokeWidth={2} />
                       <Area type="monotone" dataKey="wastePct" stroke="hsl(var(--chart-5))" fill="url(#wasteGrad)" strokeWidth={2} />
                     </AreaChart>
