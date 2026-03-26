@@ -839,6 +839,19 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             </div>
                                           </div>
                                         </div>
+                                        {/* Price Recommendation inline alert */}
+                                        {(() => {
+                                          const rec = priceRecMap.get(service.id);
+                                          if (!rec) return null;
+                                          return (
+                                            <PriceRecommendationCard
+                                              recommendation={rec}
+                                              onAccept={() => acceptPriceRec.mutate(rec)}
+                                              onDismiss={() => dismissPriceRec.mutate(rec)}
+                                              isAccepting={acceptPriceRec.isPending}
+                                            />
+                                          );
+                                        })()}
                                         {/* Mark Configured footer */}
                                         <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
                                           {service.backroom_config_dismissed ? (
