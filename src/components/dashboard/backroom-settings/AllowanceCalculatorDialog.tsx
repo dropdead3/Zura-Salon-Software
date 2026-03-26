@@ -533,7 +533,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <span className="font-medium text-foreground">{picker.selectedBrand}</span>
             </button>
             <span className="text-muted-foreground/40">/</span>
-            <span className="font-medium text-foreground">{picker.selectedCategory}</span>
+            <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
           </div>
 
           <div className="relative">
