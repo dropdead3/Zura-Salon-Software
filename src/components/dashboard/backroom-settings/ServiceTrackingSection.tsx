@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,7 +41,7 @@ interface ServiceRow {
   assistant_prep_allowed: boolean;
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
-  variance_threshold_pct: number;
+  
   backroom_config_dismissed: boolean;
   container_types: ('bowl' | 'bottle')[];
 }
@@ -75,7 +75,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
+  
   const [wizardOpen, setWizardOpen] = useState(false);
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
   const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
@@ -158,7 +158,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct, backroom_config_dismissed, container_types')
+        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, backroom_config_dismissed, container_types')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('category')
@@ -844,31 +844,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               checked={service.formula_memory_enabled}
                                               onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
                                             />
-                                          </div>
-                                          <div className="space-y-1.5">
-                                             <label className="text-xs font-sans text-muted-foreground flex items-center gap-1">
-                                              Variance Threshold
-                                              <MetricInfoTooltip description="Sets the maximum acceptable deviation from a service's baseline product usage. When a stylist's actual product usage exceeds this threshold (e.g., using 15% more product than the baseline on a 10% threshold), Zura automatically flags it as a variance exception. These flags surface in the Backroom Command Center alerts, the staff compliance leaderboard, and individual staff reports — giving managers visibility into usage patterns without interrupting the stylist's workflow." />
-                                            </label>
-                                            <div className="flex items-center gap-2 py-1" onPointerDown={(e) => e.stopPropagation()}>
-                                              <Slider
-                                                key={`${service.id}-${service.variance_threshold_pct}`}
-                                                defaultValue={[service.variance_threshold_pct || 10]}
-                                                onValueChange={([v]) => {
-                                                  setLiveThresholds(prev => ({ ...prev, [service.id]: v }));
-                                                }}
-                                                onValueCommit={([v]) => {
-                                                  if (v !== service.variance_threshold_pct) {
-                                                    updateService.mutate({ id: service.id, updates: { variance_threshold_pct: v } });
-                                                  }
-                                                }}
-                                                min={5}
-                                                max={50}
-                                                step={5}
-                                                className="flex-1"
-                                              />
-                                              <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{(liveThresholds[service.id] ?? (service.variance_threshold_pct || 10))}%</span>
-                                            </div>
                                           </div>
                                         </div>
                                         {/* Price Recommendation inline alert */}
