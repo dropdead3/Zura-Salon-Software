@@ -633,12 +633,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
             <MetricInfoTooltip
-              description="Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference."
+              description="Use this tool to set a dollar allowance for this service. Pick sample products as benchmarks to calculate cost — stylists aren't limited to these products. During a service, they can mix whatever the client needs. If you carry a premium line, the higher cost per gram means less product before hitting the limit. Once the allowance amount is reached, any additional product cost is charged to the client as an overage fee."
               className="w-3.5 h-3.5"
             />
           </div>
           <DialogDescription className="text-sm font-sans text-muted-foreground">
-            {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
+            {serviceName} — Use sample products as benchmarks to set the included dollar allowance.
           </DialogDescription>
         </DialogHeader>
 
@@ -698,10 +698,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             <Palette className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <p className="text-sm font-sans text-muted-foreground">
-                            Add products to build a sample formula
+                            Add benchmark products to calculate allowance
                           </p>
                           <p className="text-xs font-sans text-muted-foreground/60 mt-1">
-                            Select a brand below, then choose products. Developers are auto-detected.
+                            These products set the dollar amount — stylists can mix any product during the service.
                           </p>
                         </div>
                       )}
@@ -890,6 +890,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               </div>
               <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
                 {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
+              </div>
+              <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
+                This dollar amount will be the included allowance for this service.
               </div>
             </div>
             <Button
