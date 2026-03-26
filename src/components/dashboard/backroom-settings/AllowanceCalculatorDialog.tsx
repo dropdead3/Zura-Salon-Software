@@ -907,7 +907,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               const colorLines = bowl.lines.filter((l) => !l.isDeveloper);
               const devLines = bowl.lines.filter((l) => l.isDeveloper);
               const colorQty = colorLines.reduce((s, l) => s + l.quantity, 0);
-              const bowlHealthPct = servicePrice && servicePrice > 0 ? ((bowlCost / servicePrice) * 100) : null;
+              const bowlHealthPct = effectiveServicePrice > 0 ? ((bowlCost / effectiveServicePrice) * 100) : null;
 
               return (
                 <div key={bowl.id || `new-${bowlIdx}`} className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
