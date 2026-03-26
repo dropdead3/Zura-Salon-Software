@@ -809,6 +809,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           )}
                                         </div>
                                       </div>
+                                    ) : (
                                       /* Untracked service drill-down */
                                       <div className="space-y-3">
                                         <div className="flex items-center justify-between">
