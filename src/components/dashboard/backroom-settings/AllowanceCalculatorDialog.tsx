@@ -96,9 +96,17 @@ function getBowlWeight(bowl: BowlState): number {
   }, 0);
 }
 
-export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName }: Props) {
+export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'] }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+
+  // Vessel label helpers
+  const hasBowls = containerTypes.includes('bowl');
+  const hasBottles = containerTypes.includes('bottle');
+  const hasBoth = hasBowls && hasBottles;
+  const defaultVesselType = containerTypes[0] || 'bowl';
+  const vesselLabel = (type: 'bowl' | 'bottle', num: number) => type === 'bottle' ? `Bottle ${num}` : `Bowl ${num}`;
+  const VesselIcon = (type: 'bowl' | 'bottle') => type === 'bottle' ? TestTube2 : Beaker;
 
   const { data: catalogProducts = [] } = useQuery({
     queryKey: ['catalog-products-for-allowance', orgId],
