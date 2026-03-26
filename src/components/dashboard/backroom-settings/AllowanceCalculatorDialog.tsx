@@ -377,7 +377,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     const removed = bowls[idx];
     setBowls((prev) => {
       const next = prev.filter((_, i) => i !== idx);
-      return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     });
     if (removed) {
       // Dismiss any previous undo toast to prevent stale undo
@@ -392,7 +392,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             setBowls((prev) => {
               const next = [...prev];
               next.splice(Math.min(ref.idx, next.length), 0, ref.bowl);
-              return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+              return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
             });
             removedBowlRef.current = null;
           },
@@ -614,7 +614,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
     // Auto-remove empty bowls (except the first) before saving
     const activeBowls = bowls.filter((b, i) => i === 0 || b.lines.length > 0);
-    const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+    const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     // Update local state to reflect removed empty bowls
     if (bowlsToSave.length !== bowls.length) {
       setBowls(bowlsToSave);
