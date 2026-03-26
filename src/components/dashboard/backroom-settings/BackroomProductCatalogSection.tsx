@@ -1641,7 +1641,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </ul>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Stock movement history will be preserved. Products can be re-added later from the Supply Library.
+                  Stock movement history will be preserved. You can restore this brand within <strong className="text-foreground">24 hours</strong> from the Archived view, or re-add later from the Supply Library.
                 </p>
               </div>
             </AlertDialogDescription>
