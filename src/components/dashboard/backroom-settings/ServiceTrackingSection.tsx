@@ -27,6 +27,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
 import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
+import { AllowanceCalculatorDialog } from './AllowanceCalculatorDialog';
 
 interface ServiceRow {
   id: string;
@@ -76,6 +77,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
   const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
   const upsertPolicy = useUpsertAllowancePolicy();
+  const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
+  const [calculatorServiceName, setCalculatorServiceName] = useState('');
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
@@ -675,140 +678,55 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       <div className="space-y-4">
                                          {/* Allowance config + actions */}
                                          <div className="flex items-start justify-between gap-4">
-                                           {(() => {
-                                             const policy = allowanceByService.get(service.id);
-                                             const isEditingAllowance = allowanceEditing.has(service.id);
-                                             const draft = allowanceDraft[service.id] || { qty: 30, rate: '0.50' };
+                                            {(() => {
+                                              const policy = allowanceByService.get(service.id);
 
-                                             // Saved state — compact summary
-                                             if (policy && !isEditingAllowance) {
-                                               return (
-                                                 <div className="flex items-center gap-2 text-xs">
-                                                   <FileText className="w-3.5 h-3.5 text-primary" />
-                                                   <span className="font-sans text-muted-foreground">
-                                                     {policy.included_allowance_qty}{policy.allowance_unit} included · ${Number(policy.overage_rate).toFixed(2)}/{policy.allowance_unit} overage
-                                                   </span>
-                                                   <Button
-                                                     variant="ghost"
-                                                     size="sm"
-                                                     className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                                                     onClick={(e) => {
-                                                       e.stopPropagation();
-                                                       setAllowanceEditing(prev => new Set(prev).add(service.id));
-                                                       setAllowanceDraft(prev => ({
-                                                         ...prev,
-                                                         [service.id]: {
-                                                           qty: policy.included_allowance_qty,
-                                                           rate: String(policy.overage_rate),
-                                                         },
-                                                       }));
-                                                     }}
-                                                   >
-                                                     Edit
-                                                   </Button>
-                                                 </div>
-                                               );
-                                             }
+                                              if (policy) {
+                                                // Saved state — compact summary with recipe note
+                                                const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
+                                                return (
+                                                  <div className="flex items-center gap-2 text-xs">
+                                                    <FileText className="w-3.5 h-3.5 text-primary" />
+                                                    <span className="font-sans text-muted-foreground">
+                                                      {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                                    </span>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCalculatorServiceId(service.id);
+                                                        setCalculatorServiceName(service.name);
+                                                      }}
+                                                    >
+                                                      Edit
+                                                    </Button>
+                                                  </div>
+                                                );
+                                              }
 
-                                             // Editor state — quick-set form
-                                             return (
-                                               <div className="flex-1 space-y-2.5">
-                                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                   <FileText className="w-3.5 h-3.5" />
-                                                   <span className="font-sans">{policy ? 'Edit Allowance' : 'Set Allowance'}</span>
-                                                 </div>
-                                                 <div className="flex flex-wrap items-center gap-1.5">
-                                                   <span className="text-[10px] font-sans text-muted-foreground mr-1">Included:</span>
-                                                   {[15, 30, 45, 60, 90].map((g) => (
-                                                     <button
-                                                       key={g}
-                                                       className={cn(
-                                                         'px-2.5 py-0.5 rounded-full text-[10px] font-sans transition-colors border',
-                                                         draft.qty === g
-                                                           ? 'bg-primary text-primary-foreground border-primary'
-                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                       )}
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         setAllowanceDraft(prev => ({ ...prev, [service.id]: { ...draft, qty: g } }));
-                                                       }}
-                                                     >
-                                                       {g}g
-                                                     </button>
-                                                   ))}
-                                                 </div>
-                                                 <div className="flex items-center gap-2">
-                                                   <span className="text-[10px] font-sans text-muted-foreground">Overage:</span>
-                                                   <div className="flex items-center gap-1">
-                                                     <span className="text-[10px] text-muted-foreground">$</span>
-                                                     <Input
-                                                       type="number"
-                                                       step="0.01"
-                                                       min="0"
-                                                       value={draft.rate}
-                                                       onChange={(e) => {
-                                                         e.stopPropagation();
-                                                         setAllowanceDraft(prev => ({ ...prev, [service.id]: { ...draft, rate: e.target.value } }));
-                                                       }}
-                                                       onClick={(e) => e.stopPropagation()}
-                                                       className="h-6 w-16 text-[10px] rounded-md px-2"
-                                                     />
-                                                     <span className="text-[10px] text-muted-foreground">/g</span>
-                                                   </div>
-                                                 </div>
-                                                 <div className="flex items-center gap-2 pt-1">
-                                                   <Button
-                                                     size="sm"
-                                                     className="h-6 px-3 text-[10px]"
-                                                     disabled={upsertPolicy.isPending}
-                                                     onClick={(e) => {
-                                                       e.stopPropagation();
-                                                       if (!orgId) return;
-                                                       upsertPolicy.mutate({
-                                                         organization_id: orgId,
-                                                         service_id: service.id,
-                                                         included_allowance_qty: draft.qty,
-                                                         allowance_unit: 'g',
-                                                         overage_rate: parseFloat(draft.rate) || 0,
-                                                         overage_rate_type: 'per_unit',
-                                                         billing_mode: 'allowance',
-                                                         is_active: true,
-                                                       }, {
-                                                         onSuccess: () => {
-                                                           setAllowanceEditing(prev => {
-                                                             const next = new Set(prev);
-                                                             next.delete(service.id);
-                                                             return next;
-                                                           });
-                                                         },
-                                                       });
-                                                     }}
-                                                   >
-                                                     {upsertPolicy.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save Allowance'}
-                                                   </Button>
-                                                   {(policy || isEditingAllowance) && (
-                                                     <Button
-                                                       variant="ghost"
-                                                       size="sm"
-                                                       className="h-6 px-2 text-[10px] text-muted-foreground"
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         setAllowanceEditing(prev => {
-                                                           const next = new Set(prev);
-                                                           next.delete(service.id);
-                                                           return next;
-                                                         });
-                                                       }}
-                                                     >
-                                                       Cancel
-                                                     </Button>
-                                                   )}
-                                                 </div>
-                                               </div>
-                                             );
-                                           })()}
-                                           <div className="flex items-center gap-2 shrink-0">
-                                             <Button
+                                              // No policy — show Configure Allowance button
+                                              return (
+                                                <div className="flex items-center gap-2 text-xs">
+                                                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs border-dashed"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setCalculatorServiceId(service.id);
+                                                      setCalculatorServiceName(service.name);
+                                                    }}
+                                                  >
+                                                    Configure Allowance
+                                                  </Button>
+                                                </div>
+                                              );
+                                            })()}
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <Button
                                                variant="outline"
                                                size="sm"
                                                className="h-7 text-xs"
@@ -1100,6 +1018,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           serviceName={services?.find((s) => s.id === selectedServiceId)?.name || ''}
           orgId={orgId!}
           onClose={() => setSelectedServiceId(null)}
+        />
+      )}
+      {calculatorServiceId && (
+        <AllowanceCalculatorDialog
+          open={!!calculatorServiceId}
+          onOpenChange={(open) => { if (!open) setCalculatorServiceId(null); }}
+          serviceId={calculatorServiceId}
+          serviceName={calculatorServiceName}
         />
       )}
     </div>

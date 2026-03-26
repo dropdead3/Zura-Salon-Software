@@ -4,6 +4,7 @@
  */
 
 export type OverageRateType = 'per_unit' | 'flat' | 'tiered';
+export type AllowanceUnit = 'g' | 'ml' | 'oz' | '$';
 
 export interface AllowanceBillingInput {
   includedAllowanceQty: number;
@@ -11,6 +12,8 @@ export interface AllowanceBillingInput {
   overageRate: number;
   overageRateType: OverageRateType;
   overageCap: number | null;
+  /** When '$', quantities represent dollar amounts, not weight */
+  allowanceUnit?: AllowanceUnit;
 }
 
 export interface AllowanceBillingResult {
