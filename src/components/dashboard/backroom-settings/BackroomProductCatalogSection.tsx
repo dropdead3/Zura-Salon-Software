@@ -410,12 +410,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         if (delErr) throw delErr;
       }
 
-      // 3. Soft-delete the products
+      // 3. Soft-delete the products with deactivation metadata
+      const now = new Date().toISOString();
       for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
         const { error: upErr } = await supabase
           .from('products')
-          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .update({ is_active: false, updated_at: now, deactivated_at: now, deactivated_by: user?.id ?? null } as any)
           .in('id', batch);
         if (upErr) throw upErr;
       }
