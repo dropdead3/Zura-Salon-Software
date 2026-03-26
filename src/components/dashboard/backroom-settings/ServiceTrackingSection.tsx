@@ -73,6 +73,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
+  const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
+  const upsertPolicy = useUpsertAllowancePolicy();
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
