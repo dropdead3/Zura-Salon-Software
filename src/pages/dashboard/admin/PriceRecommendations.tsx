@@ -3,47 +3,63 @@
  * Shows all tracked chemical services with margin analysis and one-click price updates.
  */
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, DollarSign, AlertTriangle, TrendingUp, ArrowRight } from 'lucide-react';
+import { Loader2, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PriceRecommendationsTable } from '@/components/dashboard/backroom-settings/PriceRecommendationsTable';
+import { PriceRecommendationHistory } from '@/components/dashboard/backroom-settings/PriceRecommendationHistory';
+import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/backroom-settings/PriceAcceptConfirmDialog';
 import {
   useComputedPriceRecommendations,
   useAcceptPriceRecommendation,
   useDismissPriceRecommendation,
   useUpsertPriceTarget,
 } from '@/hooks/backroom/useServicePriceRecommendations';
-import type { PriceRecommendation } from '@/lib/backroom/price-recommendation';
+import { toast } from 'sonner';
 
 export default function PriceRecommendationsPage() {
-  const navigate = useNavigate();
-  const dashboardPath = useOrgDashboardPath();
+  const { dashPath } = useOrgDashboardPath();
   const { data: recommendations, isLoading } = useComputedPriceRecommendations();
   const acceptMutation = useAcceptPriceRecommendation();
   const dismissMutation = useDismissPriceRecommendation();
   const upsertTarget = useUpsertPriceTarget();
 
   const kpis = useMemo(() => {
-    if (!recommendations?.length) return { belowTarget: 0, avgGap: 0, totalImpact: 0 };
+    if (!recommendations?.length) return { belowTarget: 0, avgGap: 0, totalImpact: 0, weightedImpact: 0, hasVolume: false };
     const below = recommendations.filter(r => r.is_below_target);
     const avgGap = below.length > 0
       ? below.reduce((sum, r) => sum + (r.target_margin_pct - r.current_margin_pct), 0) / below.length
       : 0;
     const totalImpact = below.reduce((sum, r) => sum + r.price_delta, 0);
-    return { belowTarget: below.length, avgGap: Math.round(avgGap * 10) / 10, totalImpact: Math.round(totalImpact * 100) / 100 };
+    const weightedImpact = below.reduce((sum, r) => sum + (r.weighted_impact ?? r.price_delta), 0);
+    const hasVolume = below.some(r => r.monthly_volume && r.monthly_volume > 0);
+    return {
+      belowTarget: below.length,
+      avgGap: Math.round(avgGap * 10) / 10,
+      totalImpact: Math.round(totalImpact * 100) / 100,
+      weightedImpact: Math.round(weightedImpact * 100) / 100,
+      hasVolume,
+    };
   }, [recommendations]);
 
   const handleAcceptAll = async () => {
     const below = recommendations?.filter(r => r.is_below_target) || [];
-    for (const rec of below) {
-      await acceptMutation.mutateAsync(rec);
+    const results = await Promise.allSettled(
+      below.map(rec => acceptMutation.mutateAsync(rec))
+    );
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    if (failed === 0) {
+      toast.success(`All ${succeeded} prices updated successfully`);
+    } else {
+      toast.warning(`${succeeded} of ${below.length} updated. ${failed} failed — review and retry.`);
     }
   };
 
@@ -52,17 +68,22 @@ export default function PriceRecommendationsPage() {
       <div className="container max-w-[1600px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
         <DashboardPageHeader
           title="Price Intelligence"
-          backTo={`${dashboardPath}/admin/backroom-settings`}
+          backTo={dashPath('/admin/backroom-settings')}
           backLabel="Back to Backroom"
           actions={
             kpis.belowTarget > 0 ? (
-              <Button
-                onClick={handleAcceptAll}
-                disabled={acceptMutation.isPending}
-                className={tokens.button?.page || 'h-10 px-6'}
+              <BulkPriceAcceptConfirmDialog
+                count={kpis.belowTarget}
+                totalImpact={kpis.totalImpact}
+                onConfirm={handleAcceptAll}
               >
-                Accept All ({kpis.belowTarget})
-              </Button>
+                <Button
+                  disabled={acceptMutation.isPending}
+                  className={tokens.button?.page || 'h-10 px-6'}
+                >
+                  Accept All ({kpis.belowTarget})
+                </Button>
+              </BulkPriceAcceptConfirmDialog>
             ) : undefined
           }
         />
@@ -102,11 +123,14 @@ export default function PriceRecommendationsPage() {
               </div>
               <div>
                 <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  Revenue Impact
+                  {kpis.hasVolume ? 'Monthly Revenue Impact' : 'Revenue Impact'}
                 </p>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>
-                  {kpis.totalImpact >= 0 ? '+' : ''}${kpis.totalImpact.toFixed(2)}
+                  {kpis.weightedImpact >= 0 ? '+' : ''}${kpis.weightedImpact.toFixed(2)}
                 </p>
+                {kpis.hasVolume && (
+                  <p className="text-[10px] text-muted-foreground font-sans">Weighted by 30-day volume</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -156,6 +180,13 @@ export default function PriceRecommendationsPage() {
                 isAccepting={acceptMutation.isPending}
               />
             )}
+          </CardContent>
+        </Card>
+
+        {/* History Section */}
+        <Card>
+          <CardContent className="p-2">
+            <PriceRecommendationHistory />
           </CardContent>
         </Card>
       </div>

@@ -9,12 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Check, X, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import type { PriceRecommendation } from '@/lib/backroom/price-recommendation';
+import { PriceAcceptConfirmDialog } from './PriceAcceptConfirmDialog';
+import type { EnrichedPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
 
 interface Props {
-  recommendations: PriceRecommendation[];
-  onAccept: (rec: PriceRecommendation) => void;
-  onDismiss: (rec: PriceRecommendation) => void;
+  recommendations: EnrichedPriceRecommendation[];
+  onAccept: (rec: EnrichedPriceRecommendation) => void;
+  onDismiss: (rec: EnrichedPriceRecommendation) => void;
   onUpdateTarget: (serviceId: string, marginPct: number) => void;
   isAccepting?: boolean;
 }
@@ -22,6 +23,14 @@ interface Props {
 export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss, onUpdateTarget, isAccepting }: Props) {
   const [editingTarget, setEditingTarget] = useState<string | null>(null);
   const [targetValue, setTargetValue] = useState('');
+
+  const saveTarget = (serviceId: string) => {
+    const val = parseFloat(targetValue);
+    if (val > 0 && val < 100) {
+      onUpdateTarget(serviceId, val);
+      setEditingTarget(null);
+    }
+  };
 
   return (
     <div className="relative w-full overflow-auto">
@@ -31,11 +40,13 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
             <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm'}>Service</TableHead>
             <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm'}>Category</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Product Cost</TableHead>
+            <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Allowance</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Current Price</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Current Margin</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Target Margin</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Recommended</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Delta</TableHead>
+            <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Volume</TableHead>
             <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm', 'text-right')}>Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -47,6 +58,9 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
                 <TableCell className="font-sans text-sm font-medium">{rec.service_name}</TableCell>
                 <TableCell className="font-sans text-sm text-muted-foreground">{rec.category || '—'}</TableCell>
                 <TableCell className="text-right font-sans text-sm tabular-nums">${rec.product_cost.toFixed(2)}</TableCell>
+                <TableCell className="text-right font-sans text-sm tabular-nums text-muted-foreground">
+                  {rec.allowance_amount != null ? `${rec.allowance_amount}g` : '—'}
+                </TableCell>
                 <TableCell className="text-right font-sans text-sm tabular-nums">${rec.current_price.toFixed(2)}</TableCell>
                 <TableCell className="text-right">
                   <span className={cn(
@@ -67,15 +81,10 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
                         min={1}
                         max={99}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const val = parseFloat(targetValue);
-                            if (val > 0 && val < 100) {
-                              onUpdateTarget(rec.service_id, val);
-                              setEditingTarget(null);
-                            }
-                          }
+                          if (e.key === 'Enter') saveTarget(rec.service_id);
                           if (e.key === 'Escape') setEditingTarget(null);
                         }}
+                        onBlur={() => saveTarget(rec.service_id)}
                         autoFocus
                       />
                       <span className="text-xs text-muted-foreground">%</span>
@@ -104,18 +113,22 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
                     {isIncrease ? '+' : ''}{rec.price_delta_pct.toFixed(1)}%
                   </Badge>
                 </TableCell>
+                <TableCell className="text-right font-sans text-sm tabular-nums text-muted-foreground">
+                  {rec.monthly_volume ? `${rec.monthly_volume}/mo` : '—'}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center gap-1 justify-end">
                     {rec.is_below_target && (
                       <>
-                        <Button
-                          size="sm"
-                          className="h-7 text-xs gap-1"
-                          onClick={() => onAccept(rec)}
-                          disabled={isAccepting}
-                        >
-                          <Check className="w-3 h-3" /> Accept
-                        </Button>
+                        <PriceAcceptConfirmDialog recommendation={rec} onConfirm={() => onAccept(rec)}>
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            disabled={isAccepting}
+                          >
+                            <Check className="w-3 h-3" /> Accept
+                          </Button>
+                        </PriceAcceptConfirmDialog>
                         <Button
                           variant="ghost"
                           size="sm"
