@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -709,9 +710,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       )}
 
                       {/* Color product lines */}
+                      <AnimatePresence mode="popLayout">
                       {colorLines.map((line) => (
-                        <div
+                        <motion.div
                           key={line.localId}
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 12 }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                          layout
                           className="flex items-center gap-2.5 py-2 border-b border-border/20 last:border-0"
                         >
                           <div
@@ -762,8 +769,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
-                        </div>
+                        </motion.div>
                       ))}
+                      </AnimatePresence>
 
                       {/* Developer lines */}
                       {devLines.length > 0 && (
@@ -772,11 +780,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-[11px] font-sans font-medium text-muted-foreground tracking-wide">Developer</span>
                           </div>
+                          <AnimatePresence mode="popLayout">
                           {devLines.map((line) => {
                             const devWeight = Math.round(colorQty * line.developerRatio);
                             return (
-                              <div
+                              <motion.div
                                 key={line.localId}
+                                initial={{ opacity: 0, x: -12 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 12 }}
+                                transition={{ duration: 0.2, ease: 'easeOut' }}
+                                layout
                                 className="flex items-center gap-2.5 py-1.5"
                               >
                                 <div
@@ -828,9 +842,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
-                              </div>
+                              </motion.div>
                             );
                           })}
+                          </AnimatePresence>
                         </div>
                       )}
 
