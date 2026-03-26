@@ -774,8 +774,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
                   {!bowl.collapsed && (
                     <div className="px-4 py-3 space-y-2">
+                      {/* Brand → Category → Product picker */}
+                      {renderPickerPanel(bowlIdx)}
+
                       {/* Empty state */}
-                      {bowl.lines.length === 0 && (
+                      {bowl.lines.length === 0 && !pickerState[bowlIdx] && (
                         <div className="flex flex-col items-center py-4 text-center">
                           <div className="w-10 h-10 rounded-full bg-muted/40 border border-border/60 flex items-center justify-center mb-3">
                             <Palette className="w-5 h-5 text-muted-foreground" />
@@ -965,9 +968,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           </AnimatePresence>
                         </div>
                       )}
-
-                      {/* Brand → Category → Product picker */}
-                      {renderPickerPanel(bowlIdx)}
 
                       {/* Vessel subtotal */}
                       {bowl.lines.length > 0 && (
