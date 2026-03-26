@@ -179,6 +179,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const { settingsMap: locationSettings } = useLocationProductSettingsMap(effectiveLocationId);
   const upsertSetting = useUpsertLocationProductSetting();
   const bulkUpsertSettings = useBulkUpsertLocationProductSettings();
+  const syncCatalogMutation = useSyncCatalogToAllLocations();
 
   // UI state
   const [search, setSearch] = useState('');
@@ -188,6 +189,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [bulkReorderOpen, setBulkReorderOpen] = useState(false);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
   const [syncScope, setSyncScope] = useState<'brand' | 'all'>('brand');
+  const [syncToAllOpen, setSyncToAllOpen] = useState(false);
+  const [syncIncludeLevels, setSyncIncludeLevels] = useState(true);
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
