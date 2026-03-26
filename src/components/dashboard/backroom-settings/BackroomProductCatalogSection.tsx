@@ -1660,6 +1660,45 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Restore Brand confirmation dialog */}
+      <AlertDialog open={!!restoreBrandOpen} onOpenChange={(open) => { if (!open) setRestoreBrandOpen(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={tokens.card.title}>Restore Brand to Catalog</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Restore{' '}
+                  <strong className="text-foreground font-medium">{restoreBrandOpen}</strong>{' '}
+                  back to your active catalog.
+                </p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm space-y-1.5">
+                  <p className="font-medium text-foreground">What will happen:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                    <li>Products will be reactivated in your catalog</li>
+                    <li>You'll need to <strong className="text-foreground">re-track products at each location</strong> manually</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Location tracking settings were removed during deactivation and will not be automatically restored.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (restoreBrandOpen) restoreBrandMutation.mutate(restoreBrandOpen);
+              }}
+            >
+              <ArchiveRestore className="w-4 h-4 mr-1.5" />
+              Restore {restoreBrandOpen}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
