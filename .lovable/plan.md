@@ -1,44 +1,47 @@
 
 
-## Fix: Tooltip Not Appearing on Suggested Price Info Icon
+## Add "Add Another Product" Button Alongside "Done Adding"
 
-### Root Cause
-The `MetricInfoTooltip` is placed **inside** the `<Button>` element (line 1063). The button captures all pointer events, preventing the tooltip's hover trigger from firing on the `Info` icon.
+Great call — this is a much more intuitive flow. Right now "Done Adding" loops back to brand selection, which is confusing. Splitting into two actions makes the intent clear.
 
-### Fix (`AllowanceCalculatorDialog.tsx`)
+### Changes (`AllowanceCalculatorDialog.tsx`)
 
-Move the `MetricInfoTooltip` **outside** the `<Button>`, placing it as a sibling. Wrap both the button and the tooltip in a `flex items-center gap-2` container so the info icon sits beside the button rather than inside it.
+**1. Add `closed` step to PickerState** — Update the `step` type from `'brand' | 'category' | 'product'` to `'brand' | 'category' | 'product' | 'closed'`. This lets the picker be hidden after the user clicks "Done Adding".
 
-**Before (lines ~1048–1067):**
+**2. Add an "Add Products" button when picker is closed** — When `step === 'closed'`, render a small outline button (e.g., `+ Add Products`) so the user can reopen the picker to brand selection.
+
+**3. Replace the single "Done Adding" button with two buttons** — At the product step (line 674–682), replace the single button with a row of two:
+
+| Button | Style | Action |
+|--------|-------|--------|
+| Add Another Product | `variant="outline"` | Navigates back to brand selection (`step: 'brand'`) |
+| Done Adding | `variant="default"` | Closes the picker (`step: 'closed'`) |
+
 ```tsx
-<Button ... onClick={...}>
-  <ArrowRight className="w-3 h-3" />
-  Use $540 suggested price
-  <MetricInfoTooltip description="..." />  {/* ← trapped inside button */}
-</Button>
-```
-
-**After:**
-```tsx
-<div className="flex items-center gap-2">
-  <Button ... onClick={...}>
-    <ArrowRight className="w-3 h-3" />
-    Use $540 suggested price
+<div className="flex gap-2">
+  <Button
+    variant="outline"
+    size="sm"
+    className="flex-1 h-8 text-xs"
+    onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+  >
+    + Add Another Product
   </Button>
-  <MetricInfoTooltip
-    description="Calculated using the Vish 8% target: ..."
-    className="w-3.5 h-3.5 text-amber-500/60"
-  />
+  <Button
+    size="sm"
+    className="flex-1 h-8 text-xs"
+    onClick={() => setPickerState(bowlIdx, { step: 'closed' })}
+  >
+    Done Adding
+  </Button>
 </div>
 ```
 
-### Result
-- Info icon receives its own hover events → tooltip appears on hover
-- Button click behavior unchanged
-- Visual layout stays the same (icon sits right next to the button)
+**4. Handle `closed` in `renderPickerPanel`** — Return a compact "Add Products" button when step is `closed`, so the user can always get back to the picker.
 
 ### Files
+
 | File | Change |
 |------|--------|
-| `AllowanceCalculatorDialog.tsx` | Move `MetricInfoTooltip` outside `Button`, wrap both in flex container |
+| `AllowanceCalculatorDialog.tsx` | Add `closed` step, split buttons, add reopen button |
 
