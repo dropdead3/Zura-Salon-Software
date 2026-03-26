@@ -188,6 +188,17 @@ export default function PriceRecommendationsPage() {
           }
         />
 
+        {/* Location Filter */}
+        <div className="flex items-center gap-3">
+          <LocationSelect
+            value={locationId}
+            onValueChange={setLocationId}
+            includeAll
+            allLabel="All Locations"
+            triggerClassName="w-[220px]"
+          />
+        </div>
+
         {/* KPI Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card>
