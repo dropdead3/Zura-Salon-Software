@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, DollarSign, Plus, Trash2, ChevronDown, ChevronRight, ArrowRight, X } from 'lucide-react';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { BillingMethodEducation } from './BillingMethodEducation';
+import { BookOpen } from 'lucide-react';
 
 const WEIGHT_PRESETS = [15, 30, 45, 60, 90];
 const DEVELOPER_RATIOS = [
