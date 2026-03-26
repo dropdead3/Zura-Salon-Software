@@ -1,91 +1,65 @@
 
 
-## Product Allowance Calculator — All Improvements
+## Configure Allowance & Product Allowance Calculator — Gap Analysis (Round 2)
 
-Implementing all 13 items from the gap analysis across priority tiers.
-
----
-
-### P0 — Critical
-
-**1. Transactional save (prevent data loss)**
-Refactor `handleSave` to collect all delete + insert operations, then execute them in sequence with a try/catch that rolls back on failure. Wrap the delete-all-then-recreate pattern so if any insert fails, the user sees a clear error and existing data is preserved. Use a Supabase RPC or at minimum batch the deletes and inserts so partial failure is detectable.
-
-*File: `AllowanceCalculatorDialog.tsx` (lines 400–475)*
-
-**2. Unsaved changes guard**
-- Track `initialBowlsSnapshot` (JSON stringified) on dialog open
-- Derive `isDirty` by comparing current bowls to snapshot
-- Intercept `onOpenChange(false)` — if dirty, show a sonner warning toast with "Discard & Close" action (matching existing pattern from Business Configuration settings)
-
-*File: `AllowanceCalculatorDialog.tsx`*
+After reviewing the full 1,331-line dialog, the ServiceTrackingSection integration, and all supporting hooks, here are the remaining gaps, bugs, and enhancements.
 
 ---
 
-### P1 — Important
+### Bugs / Technical Debt
 
-**3. Clamp quantity to minimum 1g**
-Change `parseInt(e.target.value) || 0` to `Math.max(1, parseInt(e.target.value) || 1)` on line 840.
+**1. Remaining `as any` casts in AllowanceCalculatorDialog**
+Three `as any` casts remain:
+- Line 304: `.from('services' as any)` — the `services` table likely isn't in the generated types. Needs a proper typed query or an RPC.
+- Line 305: `.update({ price: newPrice } as any)` — same root cause.
+- Line 532: `.update({ ... } as any)` on `service_recipe_baselines` — the update payload for `bowl_id`, `cost_per_unit_snapshot`, `is_developer`, `developer_ratio` is still cast. The types file may not reflect these columns yet; regenerating types or using an RPC would fix this.
 
-*File: `AllowanceCalculatorDialog.tsx` (line 840)*
+**2. Save logic still uses sequential per-row mutations (not batched)**
+The "transactional save" in Phase 1 deletes baselines one-by-one in a loop (line 491–493), then bowls one-by-one (494–496), then re-inserts one-by-one. This is N+M network round-trips. A single RPC or at minimum batched `.in('id', [...])` deletes would be faster and more atomic.
 
-**4. Fix `as any` type casts**
-Update `ServiceRecipeBaseline` interface in `useServiceRecipeBaselines.ts` to include the 4 missing fields: `bowl_id`, `cost_per_unit_snapshot`, `is_developer`, `developer_ratio`. Then remove all `(bl as any)` casts in the dialog's load logic (lines 225–238) and the save update call (line 446).
+**3. Developer quantity saved incorrectly when color lines exist**
+Line 514: `const effectiveQty = line.isDeveloper ? colorQty * line.developerRatio : line.quantity;` — this saves the *computed* effective quantity as `expected_quantity`, but on reload (line 243) it reads `bl.expected_quantity` back as the raw quantity. This means after save-and-reopen, developer lines show inflated gram values (e.g., 60g instead of the ratio-based "1x").
 
-*Files: `useServiceRecipeBaselines.ts`, `AllowanceCalculatorDialog.tsx`*
-
-**5. Loading skeleton for picker**
-Show a skeleton placeholder (3 rows) in `renderPickerPanel` while `catalogProducts` query is loading.
-
-*File: `AllowanceCalculatorDialog.tsx`*
-
----
-
-### P2 — UX Polish
-
-**6. Cross-bowl duplicate warning**
-When adding a product that already exists in another bowl, show an amber badge on the line: "Also in Bowl 1". Non-blocking — just informational.
-
-*File: `AllowanceCalculatorDialog.tsx` (in `addProductToBowl` + render)*
-
-**7. Empty bowl warning on save**
-Before saving, if any non-first bowl has 0 lines, show a sonner info toast: "Bowl X is empty and won't be saved."
-
-*File: `AllowanceCalculatorDialog.tsx` (in `handleSave`)*
-
-**8. Undo toast for line removal**
-Replace immediate deletion with a sonner toast that includes an "Undo" action. Hold the removed line in a ref for 5 seconds; if undo is clicked, re-insert it.
-
-*File: `AllowanceCalculatorDialog.tsx` (in `removeLineFromBowl`)*
-
-**9. Wholesale cost per line**
-Add wholesale cost display inline on each product line: `$X.XX retail · $Y.YY wholesale` (already have the data via `getWholesaleCostPerGram`).
-
-*File: `AllowanceCalculatorDialog.tsx` (line ~816)*
+**4. Product catalog query has no upper limit**
+Line 148–163: fetches all active Supplies products with no `.limit()`. For salons with large catalogs (1000+ products), this could hit the Supabase default 1000-row limit silently, causing missing products in the picker.
 
 ---
 
-### P3 — Enhancements
+### UX Gaps
 
-**10. Duplicate bowl action**
-Add a "Copy" icon button next to the delete button on each vessel header. Deep-clones the bowl's lines with new `localId`s.
+**5. No confirmation before deleting a bowl**
+`removeBowl` (line 325) immediately removes the bowl and all its lines with no confirmation. A bowl with 10+ configured products can be lost with one click. Should mirror the undo-toast pattern used for line removal, or show a confirm dialog.
 
-*File: `AllowanceCalculatorDialog.tsx` (vessel header area, line ~753)*
+**6. Bowl label is not editable**
+Labels auto-generate as "Bowl 1", "Bowl 2" etc. Operators can't rename bowls to meaningful labels like "Root Bowl" or "Gloss Bowl", which would help in multi-bowl services.
 
-**11. Bulk quantity adjustment**
-Add a small dropdown/popover on each bowl header: "Set all color lines to Xg" with preset options (15, 30, 45, 60, 90g).
+**7. No visual indicator that a service already has an allowance configured (in the table)**
+In ServiceTrackingSection, services with existing allowances show a small text line, but there's no color-coded badge or icon in the collapsed table row to quickly scan which services are configured vs. not.
 
-*File: `AllowanceCalculatorDialog.tsx`*
+**8. Picker resets when switching between bowls**
+Each bowl has its own picker state (good), but there's no way to keep the picker open on the same brand/category when switching between bowls — useful when adding the same product line to multiple vessels.
 
-**12. Per-bowl health indicator**
-Show a small cost-percentage badge on each vessel header (e.g., "4.2% of service") so operators can see which bowl drives cost.
+**9. No "Clear All" action for a bowl**
+If an operator wants to start over with a bowl, they must remove products one-by-one. A "Clear Bowl" action on the header would speed this up.
 
-*File: `AllowanceCalculatorDialog.tsx` (vessel header)*
+**10. Footer save button disabled when `grandTotal === 0` but no explanation**
+Line 1320: `disabled={saving || grandTotal === 0}` — if the user has bowls with only developer products (which compute to $0 when no color lines exist), the save button is disabled with no tooltip explaining why.
 
-**13. Keyboard navigation in picker**
-Add arrow key + Enter support in the brand/category/product lists for power users.
+---
 
-*File: `AllowanceCalculatorDialog.tsx` (renderPickerPanel)*
+### Enhancements
+
+**11. Show margin (profit) alongside retail and wholesale in the footer tooltip**
+The tooltip (line 1261–1281) shows wholesale, markup, and retail, but doesn't show the actual margin percentage or dollar profit. Adding "Margin: $X.XX (Y%)" would complete the financial picture.
+
+**12. Export/print allowance recipe**
+Operators often need to share configured recipes with team leads or post them at stations. A "Copy Summary" or "Export" button that generates a text/clipboard summary of the bowl configuration would be useful.
+
+**13. Service price shown in footer but not editable inline**
+The footer shows "of $X service" but the only way to change the price is via the "Use suggested price" button. An inline editable service price field would let operators model scenarios (e.g., "what if I charge $300 instead of $275?").
+
+**14. Allowance policy summary in ServiceTrackingSection lacks health badge**
+The service row (line 748–771) shows the allowance text but doesn't surface the health status (healthy/high/low) badge inline. Operators should see at-a-glance which services have unhealthy allowance ratios without opening the calculator.
 
 ---
 
@@ -93,17 +67,18 @@ Add arrow key + Enter support in the brand/category/product lists for power user
 
 | Priority | # | Change | File(s) |
 |----------|---|--------|---------|
-| P0 | 1 | Transactional save | AllowanceCalculatorDialog.tsx |
-| P0 | 2 | Unsaved changes guard | AllowanceCalculatorDialog.tsx |
-| P1 | 3 | Clamp qty to min 1g | AllowanceCalculatorDialog.tsx |
-| P1 | 4 | Fix `as any` casts | useServiceRecipeBaselines.ts, AllowanceCalculatorDialog.tsx |
-| P1 | 5 | Loading skeleton for picker | AllowanceCalculatorDialog.tsx |
-| P2 | 6 | Cross-bowl duplicate warning | AllowanceCalculatorDialog.tsx |
-| P2 | 7 | Empty bowl warning on save | AllowanceCalculatorDialog.tsx |
-| P2 | 8 | Undo toast for line removal | AllowanceCalculatorDialog.tsx |
-| P2 | 9 | Wholesale cost per line | AllowanceCalculatorDialog.tsx |
-| P3 | 10 | Duplicate bowl action | AllowanceCalculatorDialog.tsx |
-| P3 | 11 | Bulk quantity adjustment | AllowanceCalculatorDialog.tsx |
-| P3 | 12 | Per-bowl health indicator | AllowanceCalculatorDialog.tsx |
-| P3 | 13 | Keyboard navigation | AllowanceCalculatorDialog.tsx |
+| P0 | 3 | Fix developer qty save/reload mismatch | AllowanceCalculatorDialog.tsx |
+| P1 | 1 | Remove remaining `as any` casts | AllowanceCalculatorDialog.tsx |
+| P1 | 2 | Batch delete operations | AllowanceCalculatorDialog.tsx |
+| P1 | 4 | Add `.limit()` to catalog query | AllowanceCalculatorDialog.tsx |
+| P1 | 5 | Bowl delete confirmation (undo toast) | AllowanceCalculatorDialog.tsx |
+| P1 | 10 | Disabled save tooltip explanation | AllowanceCalculatorDialog.tsx |
+| P2 | 6 | Editable bowl labels | AllowanceCalculatorDialog.tsx |
+| P2 | 7 | Health badge on service rows | ServiceTrackingSection.tsx |
+| P2 | 9 | "Clear Bowl" action | AllowanceCalculatorDialog.tsx |
+| P2 | 11 | Margin in footer tooltip | AllowanceCalculatorDialog.tsx |
+| P2 | 14 | Health badge in service table | ServiceTrackingSection.tsx |
+| P3 | 8 | Persist picker brand context | AllowanceCalculatorDialog.tsx |
+| P3 | 12 | Copy/export recipe summary | AllowanceCalculatorDialog.tsx |
+| P3 | 13 | Inline editable service price | AllowanceCalculatorDialog.tsx |
 
