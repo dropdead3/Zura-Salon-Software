@@ -1,27 +1,15 @@
 
 
-## Clarify Allowance Calculator as a Benchmarking Tool
+## Add Info Tooltip Next to "Configure Allowance" Button
 
-### Problem
-The current copy implies the allowance calculator determines which products a stylist can use. In reality, it's a **benchmarking tool** — you pick sample products to calculate a dollar budget. The stylist can use whatever products they want for the client; once the dollar amount is exceeded, overages are charged to the client.
+### Change — `ServiceTrackingSection.tsx`
 
-### Changes — `AllowanceCalculatorDialog.tsx`
+Add a `MetricInfoTooltip` next to the "Configure Allowance" button (around line 766) with the same benchmarking explanation used in the calculator dialog. The tooltip will sit between the `FileText` icon and the button.
 
-1. **Tooltip text** (line 636): Rewrite to emphasize this is a calculator for setting a dollar budget, not a product restriction:
-   > "Use this tool to set a dollar allowance for this service. Pick sample products as benchmarks to calculate cost — stylists aren't limited to these products. During a service, they can mix whatever the client needs. Once the allowance amount is reached, any additional product cost is charged to the client as an overage fee."
+**Tooltip text:** "Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout."
 
-2. **Dialog subtitle** (line 641): Change from "Build sample bowls to calculate the included product cost" to something like:
-   > "{serviceName} — Use sample products as benchmarks to set the included dollar allowance."
-
-3. **Empty state primary text** (line 701): Change from "Add products to build a sample formula" to:
-   > "Add benchmark products to calculate allowance"
-
-4. **Empty state secondary text** (line 704): Change to:
-   > "These products set the dollar amount — stylists can mix any product during the service."
-
-5. **Footer label** (line 887): Keep "Total Allowance" but add a small helper beneath the weight line:
-   > "This dollar amount will be the included allowance for this service."
+**Layout:** The existing `flex items-center gap-2` wrapper already supports this. Insert the `MetricInfoTooltip` after the button, keeping the row compact.
 
 ### Files Modified
-- `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
+- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` (~line 780)
 
