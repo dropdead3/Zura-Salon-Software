@@ -514,26 +514,37 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         ? products.filter((p) => p.name.toLowerCase().includes(searchLower))
         : products;
 
+      const bowl = bowls[bowlIdx];
+      const addedCount = bowl?.lines.length ?? 0;
+      const addedProductIds = new Set(bowl?.lines.map((l) => l.productId) ?? []);
+
       return (
         <div className="pt-2 space-y-1.5">
-          {/* Breadcrumb back */}
-          <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
-            <button
-              className="hover:text-foreground transition-colors flex items-center gap-0.5"
-              onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Brands
-            </button>
-            <span className="text-muted-foreground/40">/</span>
-            <button
-              className="hover:text-foreground transition-colors"
-              onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null, search: '' })}
-            >
-              <span className="font-medium text-foreground">{picker.selectedBrand}</span>
-            </button>
-            <span className="text-muted-foreground/40">/</span>
-            <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
+          {/* Breadcrumb back + ingredient counter */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
+              <button
+                className="hover:text-foreground transition-colors flex items-center gap-0.5"
+                onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                Brands
+              </button>
+              <span className="text-muted-foreground/40">/</span>
+              <button
+                className="hover:text-foreground transition-colors"
+                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null, search: '' })}
+              >
+                <span className="font-medium text-foreground">{picker.selectedBrand}</span>
+              </button>
+              <span className="text-muted-foreground/40">/</span>
+              <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
+            </div>
+            {addedCount > 0 && (
+              <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                {addedCount} added
+              </Badge>
+            )}
           </div>
 
           <div className="relative">
@@ -552,10 +563,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             {filtered.map((p) => {
               const cpg = getCostPerGram(p);
               const isDevProduct = isDeveloperProduct(p);
+              const isAlreadyAdded = addedProductIds.has(p.id);
               return (
                 <div
                   key={p.id}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted/20 transition-colors group"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted/20 transition-colors"
                 >
                   <div
                     className="w-5 h-5 rounded-full border border-border/60 shrink-0"
@@ -573,18 +585,39 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     </div>
                   </div>
                   <Button
-                    variant="outline"
+                    variant={isAlreadyAdded ? 'ghost' : 'outline'}
                     size="sm"
-                    className="h-6 px-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    className={cn(
+                      'h-6 px-2.5 text-xs transition-colors shrink-0',
+                      isAlreadyAdded && 'text-primary hover:text-primary'
+                    )}
                     onClick={() => addProductToBowl(bowlIdx, p)}
                   >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add
+                    {isAlreadyAdded ? (
+                      <>
+                        <Check className="w-3 h-3 mr-1" />
+                        Added
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add
+                      </>
+                    )}
                   </Button>
                 </div>
               );
             })}
           </div>
+          {/* Done button to return to brand selection */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs"
+            onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+          >
+            Done Adding
+          </Button>
         </div>
       );
     }
