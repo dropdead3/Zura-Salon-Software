@@ -577,7 +577,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               cost_per_unit_snapshot: line.costPerGram,
               is_developer: line.isDeveloper,
               developer_ratio: line.developerRatio,
-            } as any)
+            })
             .eq('organization_id', orgId)
             .eq('service_id', serviceId)
             .eq('product_id', line.productId);
