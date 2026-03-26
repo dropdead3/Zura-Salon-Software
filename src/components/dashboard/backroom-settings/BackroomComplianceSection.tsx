@@ -85,8 +85,8 @@ export function BackroomComplianceSection() {
             <ShieldCheck className={tokens.card.icon} />
           </div>
           <div>
-            <h2 className={tokens.card.title}>Reweigh Reports</h2>
-            <p className="font-sans text-sm text-muted-foreground">Reweigh accountability, waste tracking, and overage attachment</p>
+            <h2 className={tokens.card.title}>Compliance Reports</h2>
+            <p className="font-sans text-sm text-muted-foreground">Staff accountability, waste tracking, and overage attachment</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
