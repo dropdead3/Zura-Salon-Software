@@ -395,7 +395,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     [bowls, defaultMarkupPct]
   );
 
+  const removedLineRef = useRef<{ bowlIdx: number; line: BowlLine; position: number } | null>(null);
+
   const removeLineFromBowl = useCallback((bowlIdx: number, lineLocalId: string) => {
+    // Capture the line for undo
+    const bowl = bowls[bowlIdx];
+    const lineIdx = bowl?.lines.findIndex((l) => l.localId === lineLocalId) ?? -1;
+    const removedLine = bowl?.lines[lineIdx];
+
     setBowls((prev) =>
       prev.map((b, i) => {
         if (i !== bowlIdx) return b;
@@ -407,7 +414,34 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         return { ...b, lines };
       })
     );
-  }, []);
+
+    if (removedLine) {
+      removedLineRef.current = { bowlIdx, line: removedLine, position: lineIdx };
+      toast(`Removed ${removedLine.productName}`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            const ref = removedLineRef.current;
+            if (!ref) return;
+            setBowls((prev) =>
+              prev.map((b, i) => {
+                if (i !== ref.bowlIdx) return b;
+                const lines = [...b.lines];
+                lines.splice(Math.min(ref.position, lines.length), 0, ref.line);
+                const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+                lines.forEach((line) => {
+                  line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
+                });
+                return { ...b, lines };
+              })
+            );
+            removedLineRef.current = null;
+          },
+        },
+        duration: 5000,
+      });
+    }
+  }, [bowls]);
 
   const updateLineQuantity = useCallback((bowlIdx: number, lineLocalId: string, qty: number) => {
     setBowls((prev) =>
