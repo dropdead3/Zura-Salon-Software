@@ -158,7 +158,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, variance_threshold_pct, backroom_config_dismissed, container_types')
+        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, backroom_config_dismissed, container_types')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('category')
