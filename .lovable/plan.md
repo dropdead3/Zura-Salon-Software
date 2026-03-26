@@ -1,27 +1,21 @@
 
 
-## Remove Components Button and Configurator
+## Expand Variance Threshold Tooltip with Full Context
 
-The Components button and `ComponentMappingDialog` are no longer needed — inventory mapping happens automatically during scale/formula workflows, not through manual configuration.
+### Problem
+The current tooltip just says "Maximum acceptable deviation from baseline usage before flagging." — it doesn't explain what flagging means, how it triggers, where it surfaces, or what happens when a deviation is detected.
 
-### Changes — `ServiceTrackingSection.tsx`
+### Changes
 
-1. **Remove the Components button** (lines 785–795) — the entire `div` containing the "Components" button with the Package icon.
+**1. `ServiceTrackingSection.tsx` (~line 805)** — Replace the tooltip description with a comprehensive explanation:
 
-2. **Remove the `ComponentMappingDialog` render** (lines 1019–1027) — the conditional block that opens the dialog.
+> "Sets the maximum acceptable deviation from a service's baseline product usage. When a stylist's actual product usage exceeds this threshold (e.g., using 15% more product than the baseline on a 10% threshold), Zura automatically flags it as a variance exception. These flags surface in the Backroom Command Center alerts, the staff compliance leaderboard, and individual staff reports — giving managers visibility into usage patterns without interrupting the stylist's workflow."
 
-3. **Remove the `ComponentMappingDialog` function** (lines 1041–1169) — the entire component definition at the bottom of the file.
+**2. `RecipeBaselineSection.tsx` (~line 74)** — Update the related tooltip to be consistent:
 
-4. **Remove `selectedServiceId` state** (line 62) — no longer needed.
-
-5. **Remove `componentsByService` memo** (lines 229–235) and `allComponents` query (line 117) — derived data and hook call only used for the components feature.
-
-6. **Remove `hasComponents` variable** (line 549) — used in the drill-down row.
-
-7. **Clean up imports** — remove `useServiceTrackingComponents`, `useUpsertTrackingComponent`, `useDeleteTrackingComponent` from hooks import; remove `Package`, `Trash2`, `Plus` from lucide if no longer used elsewhere; remove unused UI imports (`Table`, `TableHeader`, etc.) if only used by the dialog.
-
-8. **Clean up `needsAttention` and progress references** — remove any logic that flags a service as needing attention due to missing components (the allowance-only check remains).
+> "The expected amount of each product for a standard application. When actual usage deviates beyond the variance threshold set per service, Zura flags it as an exception in the Command Center and staff compliance reports."
 
 ### Files Modified
 - `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+- `src/components/dashboard/backroom-settings/RecipeBaselineSection.tsx`
 
