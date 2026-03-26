@@ -13,6 +13,11 @@ import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2, Download } f
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { LocationSelect } from '@/components/ui/location-select';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, ReferenceLine,
+} from 'recharts';
 import { PriceRecommendationsTable } from '@/components/dashboard/backroom-settings/PriceRecommendationsTable';
 import { PriceRecommendationHistory } from '@/components/dashboard/backroom-settings/PriceRecommendationHistory';
 import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/backroom-settings/PriceAcceptConfirmDialog';
