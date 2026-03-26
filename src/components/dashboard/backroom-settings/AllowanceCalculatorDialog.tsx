@@ -1621,7 +1621,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   </Tooltip>
                   {healthResult.status === 'high' && healthResult.suggestedServicePrice && (
                     <div className="flex items-center gap-2">
-                      <Popover>
+                      <Popover open={highPricePopoverOpen} onOpenChange={setHighPricePopoverOpen}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="ghost"
@@ -1649,6 +1649,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 const oldPrice = servicePrice;
                                 updateServicePriceMutation.mutate(healthResult.suggestedServicePrice!, {
                                   onSuccess: () => {
+                                    setHighPricePopoverOpen(false);
                                     toast(`Service price updated to $${healthResult.suggestedServicePrice}`, {
                                       action: oldPrice ? {
                                         label: 'Undo',
