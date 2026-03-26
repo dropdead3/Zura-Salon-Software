@@ -23448,6 +23448,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_price_recommendation: {
+        Args: {
+          _current_price: number
+          _margin_pct_current: number
+          _margin_pct_target: number
+          _org_id: string
+          _product_cost: number
+          _recommended_price: number
+          _service_id: string
+          _user_id?: string
+        }
+        Returns: undefined
+      }
       add_to_client_balance: {
         Args: {
           p_amount: number
