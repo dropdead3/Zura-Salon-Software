@@ -1130,7 +1130,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                         step="1"
                                         min="1"
                                         value={line.quantity}
-                                        onChange={(e) => updateLineQuantity(bowlIdx, line.localId, parseInt(e.target.value) || 0)}
+                                        onChange={(e) => updateLineQuantity(bowlIdx, line.localId, Math.max(1, parseInt(e.target.value) || 1))}
                                         className="h-6 w-14 text-xs rounded px-1.5"
                                       />
                                     </>
