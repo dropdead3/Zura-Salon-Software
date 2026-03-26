@@ -129,6 +129,7 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 }
 
 export default function BackroomSettings() {
+  const { dashPath } = useOrgDashboardPath();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSection = (searchParams.get('section') as BackroomSection) || 'overview';
   const [activeSection, setActiveSection] = useState<BackroomSection>(initialSection);
@@ -136,7 +137,6 @@ export default function BackroomSettings() {
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
   const pollingRef = useRef(false);
   const orgId = useBackroomOrgId();
