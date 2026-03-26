@@ -1,35 +1,43 @@
 
 
-## Add "Clear Allowance" Action to the Allowance Calculator
+## Replace `window.confirm` with Sonner Confirmation Toast
 
 ### Problem
-When editing an existing allowance, the "Save Allowance" button is disabled when `grandTotal === 0`. This means there's no way to remove/clear a previously saved allowance — the user is stuck with it.
+`window.confirm()` triggers a native browser dialog — ugly, inconsistent with the app's design system, and breaks the immersive UX.
 
-### Solution
-Add a "Clear Allowance" button that appears only when an existing allowance is loaded (i.e., there are existing bowls/baselines in the database). This button will:
-1. Delete all existing bowls and baselines for this service
-2. Deactivate the billing policy (`is_active: false`)
-3. Close the dialog with a success toast
-
-### Implementation
+### Fix
+Replace with a two-step pattern using Sonner, matching the existing "Discard & Close" toast pattern already used in the same dialog.
 
 **File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-1. **Add a `handleClearAllowance` function** that:
-   - Deletes existing baselines and bowls (reuses the Phase 1 cleanup logic already in `handleSave`)
-   - Sets the policy to `is_active: false` via `upsertPolicy`
-   - Invalidates query caches
-   - Resets local bowl state to a single empty bowl
-   - Shows a toast: "Allowance cleared"
-   - Closes the dialog
+1. Remove the `window.confirm` call from `handleClearAllowance`
+2. Create a new `confirmClearAllowance` function that shows a Sonner warning toast with a destructive "Clear Allowance" action button
+3. When the user clicks the toast action, it calls the actual clear logic
 
-2. **Add a "Clear Allowance" button** in the footer (left side, next to "Copy Summary"), styled as a destructive outline button. Only visible when existing saved data exists (`existingBowls?.length > 0` or `existingBaselines?.length > 0`).
+```tsx
+// Button click handler — shows confirmation toast
+const confirmClearAllowance = useCallback(() => {
+  toast.warning('Clear this allowance?', {
+    description: 'All bowls and products will be removed.',
+    action: {
+      label: 'Clear Allowance',
+      onClick: () => handleClearAllowance(),
+    },
+    duration: 6000,
+  });
+}, [handleClearAllowance]);
 
-3. **Confirmation**: Use a confirmation toast or a simple `window.confirm` to prevent accidental clears — this is a destructive action.
+// Actual clear logic — remove the window.confirm guard
+const handleClearAllowance = useCallback(async () => {
+  if (!orgId) return;
+  setSaving(true);
+  // ... rest of existing logic unchanged
+}, [/* deps */]);
+```
 
-4. **Also allow saving with zero products**: As an alternative approach, change the Save button's disabled condition from `grandTotal === 0` to only disable when saving is in progress. If all bowls are empty when saving, the save handler would clear existing data and deactivate the policy. However, a dedicated "Clear Allowance" button is clearer UX.
+4. Update the "Clear Allowance" button's `onClick` to call `confirmClearAllowance` instead of `handleClearAllowance`
 
 ### Scope
-- Single file, ~30 lines added
-- No database changes
+- Single file, ~10 lines changed
+- Consistent with existing toast-based confirmation pattern in the dialog
 
