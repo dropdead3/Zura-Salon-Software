@@ -192,7 +192,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         if (service?.name) {
           await supabase
             .from('phorest_services')
-            .update({ container_types: updates.container_types })
+            .update({ container_types: updates.container_types } as Record<string, unknown>)
             .eq('name', service.name)
             .eq('organization_id', effectiveOrganization);
         }
