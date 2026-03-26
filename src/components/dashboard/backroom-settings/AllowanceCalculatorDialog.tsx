@@ -902,6 +902,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           </AnimatePresence>
                         </div>
                       )}
+                      </div>
 
                       {/* Brand → Category → Product picker */}
                       {renderPickerPanel(bowlIdx)}
