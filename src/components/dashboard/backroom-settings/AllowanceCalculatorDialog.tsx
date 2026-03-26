@@ -283,7 +283,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
   const addProductToBowl = useCallback(
     (bowlIdx: number, product: CatalogProduct) => {
-      const cpg = getCostPerGram(product);
+      const cpg = getRetailCostPerGram(product, defaultMarkupPct);
       const asDeveloper = isDeveloperProduct(product);
       const newLine: BowlLine = {
         localId: crypto.randomUUID(),
