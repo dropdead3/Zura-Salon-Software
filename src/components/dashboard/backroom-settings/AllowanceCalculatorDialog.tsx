@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -628,14 +629,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
-          <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
+            <MetricInfoTooltip
+              description="Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference."
+              className="w-3.5 h-3.5"
+            />
+          </div>
           <DialogDescription className="text-sm font-sans text-muted-foreground">
             {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
           </DialogDescription>
-          <p className="text-xs font-sans text-muted-foreground/70 mt-2 leading-relaxed">
-            Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference.
-          </p>
         </DialogHeader>
 
         <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
@@ -877,15 +881,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 bg-muted/20">
+        <div className="px-6 py-4 border-t border-border/40 bg-muted/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs font-sans text-muted-foreground">Product Allowance</div>
-              <div className="text-xl font-sans font-medium text-foreground tabular-nums">
+              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance</div>
+              <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
                 ${grandTotal.toFixed(2)}
               </div>
-              <div className="text-[11px] font-sans text-muted-foreground">
-                {Math.round(totalWeight)}g total across {bowls.filter((b) => b.lines.length > 0).length} vessel(s)
+              <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
+                {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
               </div>
             </div>
             <Button
