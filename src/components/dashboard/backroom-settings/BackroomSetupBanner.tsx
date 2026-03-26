@@ -41,6 +41,8 @@ export function BackroomSetupBanner({
 
   if (!setupHealth || setupHealth.isComplete) return null;
 
+  const isFirstVisit = setupHealth.completed === 0;
+
   return (
     <Collapsible open={setupOpen} onOpenChange={setSetupOpen}>
       <Card className="border-amber-500/30 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/[0.08]">
@@ -52,13 +54,15 @@ export function BackroomSetupBanner({
               </div>
               <div className="flex-1 min-w-0">
                 <CardTitle className="font-display text-sm tracking-wide text-foreground">
-                  Uh-oh, you haven't finished setting up your backroom!
+                  {isFirstVisit
+                    ? "Welcome to your Backroom! Let's get you set up."
+                    : "Uh-oh, you haven't finished setting up your backroom!"}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
                   <span className="font-display text-amber-600 dark:text-amber-400/80 tracking-wide">
                     {setupHealth.completed} of {setupHealth.total}
                   </span>{' '}
-                  areas configured
+                  {isFirstVisit ? 'areas to configure' : 'areas configured'}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 shrink-0">
