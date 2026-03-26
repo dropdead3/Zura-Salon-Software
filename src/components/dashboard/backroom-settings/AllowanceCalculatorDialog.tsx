@@ -180,6 +180,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
+  const hasInitRef = useRef(false);
+  const lastUndoToastRef = useRef<string | number | null>(null);
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
     const currentSnapshot = JSON.stringify(bowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
