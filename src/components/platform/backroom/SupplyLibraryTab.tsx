@@ -51,6 +51,11 @@ import { suggestSwatchColor } from '@/lib/swatchSuggest';
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'semi-permanent', 'bond builder', 'treatment', 'additive'];
 const DEPLETION_METHODS = ['weighed', 'per_service', 'manual', 'per_pump'];
 const UNITS = ['g', 'ml', 'oz'];
+const COLOR_TYPES = [
+  { value: 'permanent', label: 'Permanent' },
+  { value: 'demi_permanent', label: 'Demi-Permanent' },
+  { value: 'semi_permanent', label: 'Semi-Permanent' },
+] as const;
 
 interface BrandCardData {
   brand: string;
@@ -1119,6 +1124,7 @@ function AddEditDialog({
   const [brand, setBrand] = useState(product?.brand || '');
   const [name, setName] = useState(product?.name || '');
   const [category, setCategory] = useState(product?.category || 'color');
+  const [colorType, setColorType] = useState<string>(product?.color_type || '');
   const [depletion, setDepletion] = useState(product?.default_depletion || 'weighed');
   const [unit, setUnit] = useState(product?.default_unit || 'g');
   const [sizes, setSizes] = useState(product?.size_options?.join(', ') || '');
@@ -1165,6 +1171,7 @@ function AddEditDialog({
     setBrand(product?.brand || '');
     setName(product?.name || '');
     setCategory(product?.category || 'color');
+    setColorType(product?.color_type || '');
     setDepletion(product?.default_depletion || 'weighed');
     setUnit(product?.default_unit || 'g');
     setSizes(product?.size_options?.join(', ') || '');
@@ -1188,6 +1195,7 @@ function AddEditDialog({
         brand: brand.trim(),
         name: name.trim(),
         category,
+        color_type: category === 'color' && colorType ? colorType : null,
         default_depletion: depletion,
         default_unit: unit,
         size_options: sizeArr,
@@ -1288,6 +1296,19 @@ function AddEditDialog({
               </Select>
             </div>
           </div>
+          {category === 'color' && (
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs">Color Type</Label>
+              <Select value={colorType} onValueChange={setColorType}>
+                <SelectTrigger className="font-sans text-xs"><SelectValue placeholder="Select type…" /></SelectTrigger>
+                <SelectContent>
+                  {COLOR_TYPES.map((ct) => (
+                    <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="font-sans text-xs">Size Options (comma-separated)</Label>
             <Input value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="e.g. 60ml, 120ml" className="font-sans" />

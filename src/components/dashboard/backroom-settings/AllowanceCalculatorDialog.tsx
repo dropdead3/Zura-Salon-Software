@@ -59,6 +59,7 @@ interface CatalogProduct {
   swatch_color: string | null;
   product_type: string;
   markup_pct: number | null;
+  color_type: string | null;
 }
 
 interface BowlLine {
@@ -111,12 +112,15 @@ const SEMI_PERMANENT_KEYWORDS = ['semi-permanent', 'semi permanent', 'semi'];
 const DEVELOPER_REQUIRING_KEYWORDS = ['permanent', 'demi'];
 
 function requiresDeveloper(product: CatalogProduct): boolean {
+  // Data-first: use structured color_type if set
+  if (product.color_type) {
+    return product.color_type === 'permanent' || product.color_type === 'demi_permanent';
+  }
+  // Fallback: keyword detection for legacy/unclassified products
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
   const combined = `${name} ${category}`;
-  // Exclude semi-permanent first
   if (SEMI_PERMANENT_KEYWORDS.some(kw => combined.includes(kw))) return false;
-  // Check for permanent or demi
   return DEVELOPER_REQUIRING_KEYWORDS.some(kw => combined.includes(kw));
 }
 
@@ -173,7 +177,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, brand, category, cost_per_gram, cost_price, container_size, swatch_color, product_type, markup_pct')
+        .select('id, name, brand, category, cost_per_gram, cost_price, container_size, swatch_color, product_type, markup_pct, color_type')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')

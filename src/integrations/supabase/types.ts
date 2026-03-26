@@ -14060,6 +14060,7 @@ export type Database = {
           clearance_discount_pct: number | null
           clearance_marked_at: string | null
           clearance_status: string | null
+          color_type: Database["public"]["Enums"]["color_type"] | null
           container_size: string | null
           cost_per_gram: number | null
           cost_price: number | null
@@ -14108,6 +14109,7 @@ export type Database = {
           clearance_discount_pct?: number | null
           clearance_marked_at?: string | null
           clearance_status?: string | null
+          color_type?: Database["public"]["Enums"]["color_type"] | null
           container_size?: string | null
           cost_per_gram?: number | null
           cost_price?: number | null
@@ -14156,6 +14158,7 @@ export type Database = {
           clearance_discount_pct?: number | null
           clearance_marked_at?: string | null
           clearance_status?: string | null
+          color_type?: Database["public"]["Enums"]["color_type"] | null
           container_size?: string | null
           cost_per_gram?: number | null
           cost_price?: number | null
@@ -20537,6 +20540,7 @@ export type Database = {
           brand: string
           brand_id: string | null
           category: string
+          color_type: Database["public"]["Enums"]["color_type"] | null
           created_at: string
           currency: string
           default_depletion: string
@@ -20559,6 +20563,7 @@ export type Database = {
           brand: string
           brand_id?: string | null
           category?: string
+          color_type?: Database["public"]["Enums"]["color_type"] | null
           created_at?: string
           currency?: string
           default_depletion?: string
@@ -20581,6 +20586,7 @@ export type Database = {
           brand?: string
           brand_id?: string | null
           category?: string
+          color_type?: Database["public"]["Enums"]["color_type"] | null
           created_at?: string
           currency?: string
           default_depletion?: string
@@ -23968,6 +23974,7 @@ export type Database = {
       chat_channel_type: "public" | "private" | "dm" | "group_dm" | "location"
       chat_member_role: "owner" | "admin" | "member"
       chat_user_status_type: "available" | "busy" | "dnd" | "away"
+      color_type: "permanent" | "demi_permanent" | "semi_permanent"
       container_type: "bowl" | "bottle"
       day_rate_booking_status:
         | "pending"
@@ -24235,6 +24242,7 @@ export const Constants = {
       chat_channel_type: ["public", "private", "dm", "group_dm", "location"],
       chat_member_role: ["owner", "admin", "member"],
       chat_user_status_type: ["available", "busy", "dnd", "away"],
+      color_type: ["permanent", "demi_permanent", "semi_permanent"],
       container_type: ["bowl", "bottle"],
       day_rate_booking_status: [
         "pending",

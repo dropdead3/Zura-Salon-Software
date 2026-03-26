@@ -285,7 +285,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     mutationFn: async (brand: string) => {
       const { data: libraryData, error: libErr } = await supabase
         .from('supply_library_products')
-        .select('name, wholesale_price, default_markup_pct, swatch_color, size_options')
+        .select('name, wholesale_price, default_markup_pct, swatch_color, size_options, color_type')
         .eq('is_active', true)
         .ilike('brand', brand);
       if (libErr) throw libErr;
@@ -294,7 +294,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       // Get org products for this brand that need filling
       const { data: orgProducts, error: orgErr } = await supabase
         .from('products')
-        .select('id, name, cost_price, markup_pct, swatch_color, container_size')
+        .select('id, name, cost_price, markup_pct, swatch_color, container_size, color_type')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
@@ -314,6 +314,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
         if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
         if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
+        if (op.color_type == null && match.color_type != null) updates.color_type = match.color_type;
         if (Object.keys(updates).length === 0) { skipped++; continue; }
         updates.updated_at = new Date().toISOString();
         await supabase.from('products').update(updates).eq('id', op.id);
@@ -338,13 +339,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     mutationFn: async () => {
       const { data: libraryData, error: libErr } = await supabase
         .from('supply_library_products')
-        .select('name, brand, wholesale_price, default_markup_pct, swatch_color, size_options')
+        .select('name, brand, wholesale_price, default_markup_pct, swatch_color, size_options, color_type')
         .eq('is_active', true);
       if (libErr) throw libErr;
 
       const { data: orgProducts, error: orgErr } = await supabase
         .from('products')
-        .select('id, name, brand, cost_price, markup_pct, swatch_color, container_size')
+        .select('id, name, brand, cost_price, markup_pct, swatch_color, container_size, color_type')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies');
@@ -364,6 +365,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         if (op.markup_pct == null && match.default_markup_pct != null) updates.markup_pct = match.default_markup_pct;
         if (op.swatch_color == null && match.swatch_color != null) updates.swatch_color = match.swatch_color;
         if (op.container_size == null && (match as any).size_options?.[0] != null) updates.container_size = (match as any).size_options[0];
+        if (op.color_type == null && match.color_type != null) updates.color_type = match.color_type;
         if (Object.keys(updates).length === 0) { skipped++; continue; }
         updates.updated_at = new Date().toISOString();
         await supabase.from('products').update(updates).eq('id', op.id);
