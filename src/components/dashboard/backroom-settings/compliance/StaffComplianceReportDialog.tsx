@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileDown, Printer, Loader2, User } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/formatDate';
 import type { StaffComplianceBreakdown, ComplianceLogItem, ComplianceSummary } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateStaffComplianceReportPdf } from '@/utils/staffComplianceReportPdf';
