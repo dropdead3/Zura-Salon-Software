@@ -1,27 +1,22 @@
 
 
-## Remove Variance Threshold Setting from Service Tracking UI
+## Move Location Toggle & Sync Button to Right Side of Card Header
 
-### Rationale
-The variance threshold slider is dead configuration — the analytics layer handles variance detection with its own logic, making this per-service setting redundant and potentially confusing for operators.
+### Current State
+The location `Select` dropdown and "Sync to All Locations" button sit in their own row below `CardHeader` (lines 900–928), left-aligned with `px-6 pb-2`.
 
-### Changes
+### Change
 
-**File:** `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+**File:** `src/components/dashboard/backroom-settings/BackroomProductCatalogSection.tsx`
 
-1. **Remove the `liveThresholds` state** (line 78) — `useState<Record<string, number>>({})`
+**Lines 900–928** — Move the location select and sync button into the right-side actions area of the `CardHeader` (inside the `div` that already contains view toggles, tracked badge, and Supply Library button around lines 840–896), positioned at the far right using `ml-auto`.
 
-2. **Remove `variance_threshold_pct` from the interface** (line 44) and **from the select query** (line 161)
-
-3. **Remove the entire Variance Threshold block** (lines 848–872) — the label, MetricInfoTooltip, Slider, and percentage display
-
-4. **Remove `Slider` import** if unused elsewhere in the file
-
-### What stays
-- The `variance_threshold_pct` column remains in the database (no migration needed — it's harmless and avoids breaking anything)
-- The `useUsageVariance` hook continues using its hardcoded 10% tolerance at the analytics layer
+Specifically:
+1. Remove the standalone `div` block (lines 900–928) that wraps the location select + sync button
+2. Insert both controls into the CardHeader's right-side `div`, before the existing badges/buttons, using a wrapper like `<div className="flex items-center gap-2 ml-auto">` to push them right
+3. The order within that right group: `[...existing left items] → [Sync to All Locations button] → [Location Select dropdown]` (sync left of location, per request)
 
 ### Scope
-- 1 file, ~30 lines removed
-- No logic or database changes
+- 1 file, ~30 lines moved/restructured
+- No logic changes
 
