@@ -1068,17 +1068,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   return (
     <>
     <Dialog open={open} onOpenChange={(newOpen) => {
-      if (skipDirtyCheckRef.current) {
-        skipDirtyCheckRef.current = false;
-        onOpenChange(newOpen);
-        return;
-      }
       if (!newOpen && isDirty) {
         const toastId = toast.warning('You have unsaved changes', {
           action: { label: 'Discard & Close', onClick: () => {
             toast.dismiss(toastId);
-            skipDirtyCheckRef.current = true;
-            onOpenChange(false);
+            setForceClose(true);
           } },
           duration: 6000,
         });
