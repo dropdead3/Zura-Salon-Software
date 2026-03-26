@@ -1004,7 +1004,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (!newOpen && isDirty) {
         toast.warning('You have unsaved changes', {
-          action: { label: 'Discard & Close', onClick: () => { initialBowlsRef.current = ''; onOpenChange(false); } },
+          action: { label: 'Discard & Close', onClick: () => {
+            toast.dismiss();
+            initialBowlsRef.current = '';
+            setTimeout(() => onOpenChange(false), 0);
+          } },
           duration: 6000,
         });
         return;
