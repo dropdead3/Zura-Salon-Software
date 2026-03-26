@@ -52,6 +52,7 @@ import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecomm
 
 type BackroomSection =
   | 'overview'
+  | 'analytics'
   | 'products'
   | 'services'
   | 'formulas'
