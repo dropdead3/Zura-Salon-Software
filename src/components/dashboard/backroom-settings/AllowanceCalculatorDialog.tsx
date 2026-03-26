@@ -388,6 +388,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         },
         duration: 5000,
       });
+      lastUndoToastRef.current = toastId;
     }
   }, [bowls]);
 
