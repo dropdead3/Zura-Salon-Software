@@ -1,8 +1,9 @@
 /**
- * BackroomInsightsSection — Top-level KPI cards + Employee Performance table.
+ * BackroomInsightsSection — Top-level KPI cards + tabbed analytics content.
  */
 
 import { useState, useMemo } from 'react';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
   DollarSign, Beaker, ClipboardCheck, Trash2, AlertTriangle, Download, ArrowUpDown, ChevronUp, ChevronDown, Loader2, MapPin, Eye, EyeOff,
@@ -191,129 +192,146 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
         </KPICard>
       </div>
 
-      {/* Product Analytics */}
-      <BackroomProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+      {/* Sub-tabs for analytics content */}
+      <Tabs defaultValue="products" className="space-y-6">
+        <SubTabsList>
+          <SubTabsTrigger value="products">Products</SubTabsTrigger>
+          <SubTabsTrigger value="staff">Staff</SubTabsTrigger>
+          <SubTabsTrigger value="trends">Trends</SubTabsTrigger>
+          <SubTabsTrigger value="brands">Brands</SubTabsTrigger>
+        </SubTabsList>
 
-      {/* Employee Performance Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <Beaker className={tokens.card.icon} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>Employee Performance</CardTitle>
-                <MetricInfoTooltip description="Per-stylist backroom efficiency metrics including product usage, cost per service, reweigh compliance, and waste analysis." />
+        <TabsContent value="products">
+          <BackroomProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+        </TabsContent>
+
+        <TabsContent value="staff">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={tokens.card.iconBox}>
+                  <Beaker className={tokens.card.icon} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className={tokens.card.title}>Employee Performance</CardTitle>
+                    <MetricInfoTooltip description="Per-stylist backroom efficiency metrics including product usage, cost per service, reweigh compliance, and waste analysis." />
+                  </div>
+                  <CardDescription className="text-xs">{rangeLabel}</CardDescription>
+                </div>
               </div>
-              <CardDescription className="text-xs">{rangeLabel}</CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHiddenFields(!showHiddenFields)}
-              className="text-xs text-muted-foreground"
-            >
-              {showHiddenFields ? <EyeOff className="w-3.5 h-3.5 mr-1.5" /> : <Eye className="w-3.5 h-3.5 mr-1.5" />}
-              {hiddenFieldCount} Hidden Fields
-              {showHiddenFields ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!sortedStaff.length}>
-              <Download className="w-4 h-4 mr-1.5" /> Export
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {staffLoading ? (
-            <div className="space-y-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>
-          ) : !sortedStaff.length ? (
-            <div className={tokens.empty.container}>
-              <Beaker className={tokens.empty.icon} />
-              <h3 className={tokens.empty.heading}>No mixing data</h3>
-              <p className={tokens.empty.description}>No completed mixing sessions found for this period.</p>
-            </div>
-          ) : (
-            <div className="relative w-full overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead><SortButton label="Name" field="name" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Services" field="totalServices" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Product Dispensed" field="totalProductCost" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Product / Service" field="productPerServiceCost" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="% Reweighed" field="reweigh" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Waste / Service" field="wastePerServiceCost" /></TableHead>
-                    <TableHead className="text-right"><SortButton label="Product Charges" field="productCharges" /></TableHead>
-                    {showHiddenFields && (
-                      <>
-                        <TableHead className="text-right"><SortButton label="Sessions/Day" field="sessionsPerDay" /></TableHead>
-                        <TableHead className="text-right"><SortButton label="Avg Duration" field="duration" /></TableHead>
-                        <TableHead className="text-right"><SortButton label="Waste %" field="waste" /></TableHead>
-                        <TableHead className="text-right"><SortButton label="Variance %" field="variance" /></TableHead>
-                      </>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedStaff.map((s, idx) => (
-                    <TableRow key={s.staffUserId}>
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0', getAvatarColor(idx))}>
-                            {s.staffName.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="font-sans text-sm font-medium">{s.staffName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{s.totalServices}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex flex-col items-end">
-                          <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.totalProductCost)}</BlurredAmount>
-                          <span className="text-xs text-muted-foreground tabular-nums">{formatNumber(s.totalDispensedQty, { maximumFractionDigits: 1 })}g</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex flex-col items-end">
-                          <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.productPerServiceCost)}</BlurredAmount>
-                          <span className="text-xs text-muted-foreground tabular-nums">{formatNumber(s.productPerServiceQty, { maximumFractionDigits: 1 })}g</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-primary')}>
-                          {formatPercent(s.reweighCompliancePct, false)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.wastePerServiceCost)}</BlurredAmount>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.productCharges)}</BlurredAmount>
-                      </TableCell>
-                      {showHiddenFields && (
-                        <>
-                          <TableCell className="text-right tabular-nums">{s.sessionsPerDay}</TableCell>
-                          <TableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</TableCell>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHiddenFields(!showHiddenFields)}
+                  className="text-xs text-muted-foreground"
+                >
+                  {showHiddenFields ? <EyeOff className="w-3.5 h-3.5 mr-1.5" /> : <Eye className="w-3.5 h-3.5 mr-1.5" />}
+                  {hiddenFieldCount} Hidden Fields
+                  {showHiddenFields ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!sortedStaff.length}>
+                  <Download className="w-4 h-4 mr-1.5" /> Export
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {staffLoading ? (
+                <div className="space-y-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>
+              ) : !sortedStaff.length ? (
+                <div className={tokens.empty.container}>
+                  <Beaker className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No mixing data</h3>
+                  <p className={tokens.empty.description}>No completed mixing sessions found for this period.</p>
+                </div>
+              ) : (
+                <div className="relative w-full overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead><SortButton label="Name" field="name" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Services" field="totalServices" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Product Dispensed" field="totalProductCost" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Product / Service" field="productPerServiceCost" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="% Reweighed" field="reweigh" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Waste / Service" field="wastePerServiceCost" /></TableHead>
+                        <TableHead className="text-right"><SortButton label="Product Charges" field="productCharges" /></TableHead>
+                        {showHiddenFields && (
+                          <>
+                            <TableHead className="text-right"><SortButton label="Sessions/Day" field="sessionsPerDay" /></TableHead>
+                            <TableHead className="text-right"><SortButton label="Avg Duration" field="duration" /></TableHead>
+                            <TableHead className="text-right"><SortButton label="Waste %" field="waste" /></TableHead>
+                            <TableHead className="text-right"><SortButton label="Variance %" field="variance" /></TableHead>
+                          </>
+                        )}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedStaff.map((s, idx) => (
+                        <TableRow key={s.staffUserId}>
+                          <TableCell>
+                            <div className="flex items-center gap-2.5">
+                              <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0', getAvatarColor(idx))}>
+                                {s.staffName.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="font-sans text-sm font-medium">{s.staffName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">{s.totalServices}</TableCell>
                           <TableCell className="text-right">
-                            <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary')}>
-                              {formatPercent(s.wastePct, false)}
+                            <div className="flex flex-col items-end">
+                              <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.totalProductCost)}</BlurredAmount>
+                              <span className="text-xs text-muted-foreground tabular-nums">{formatNumber(s.totalDispensedQty, { maximumFractionDigits: 1 })}g</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex flex-col items-end">
+                              <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.productPerServiceCost)}</BlurredAmount>
+                              <span className="text-xs text-muted-foreground tabular-nums">{formatNumber(s.productPerServiceQty, { maximumFractionDigits: 1 })}g</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className={cn('tabular-nums', s.reweighCompliancePct < 50 && 'text-destructive', s.reweighCompliancePct >= 80 && 'text-primary')}>
+                              {formatPercent(s.reweighCompliancePct, false)}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right tabular-nums">{formatPercent(s.variancePct, false)}</TableCell>
-                        </>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          <TableCell className="text-right">
+                            <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.wastePerServiceCost)}</BlurredAmount>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <BlurredAmount className="tabular-nums text-sm">{formatCurrency(s.productCharges)}</BlurredAmount>
+                          </TableCell>
+                          {showHiddenFields && (
+                            <>
+                              <TableCell className="text-right tabular-nums">{s.sessionsPerDay}</TableCell>
+                              <TableCell className="text-right tabular-nums">{s.avgSessionDurationMinutes} min</TableCell>
+                              <TableCell className="text-right">
+                                <span className={cn('tabular-nums', s.wastePct > 20 && 'text-destructive', s.wastePct <= 10 && 'text-primary')}>
+                                  {formatPercent(s.wastePct, false)}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums">{formatPercent(s.variancePct, false)}</TableCell>
+                            </>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
-      <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+        <TabsContent value="trends">
+          <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+        </TabsContent>
+
+        <TabsContent value="brands">
+          <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
