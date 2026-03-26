@@ -698,10 +698,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             <Palette className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <p className="text-sm font-sans text-muted-foreground">
-                            Add products to build a sample formula
+                            Add benchmark products to calculate allowance
                           </p>
                           <p className="text-xs font-sans text-muted-foreground/60 mt-1">
-                            Select a brand below, then choose products. Developers are auto-detected.
+                            These products set the dollar amount — stylists can mix any product during the service.
                           </p>
                         </div>
                       )}
