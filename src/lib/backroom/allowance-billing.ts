@@ -12,6 +12,8 @@ export interface AllowanceBillingInput {
   overageRate: number;
   overageRateType: OverageRateType;
   overageCap: number | null;
+  /** When '$', quantities represent dollar amounts, not weight */
+  allowanceUnit?: AllowanceUnit;
 }
 
 export interface AllowanceBillingResult {
