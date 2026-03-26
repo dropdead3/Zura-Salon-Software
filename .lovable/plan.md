@@ -1,65 +1,34 @@
 
 
-## Move Price Intelligence into Zura Backroom Hub
+## Add Sub-Tabs to Backroom Analytics Section
 
 ### Problem
-Price Intelligence is a standalone page (`/admin/price-recommendations`) with its own sidebar nav entry showing as raw `nav.price_intelligence`. It should live inside the Backroom Hub as a section, consistent with the hub's sidebar architecture.
+The Analytics tab in the Backroom Hub renders all content vertically in one long scroll: KPI strip, Product Analytics, Employee Performance table, History Chart, and Brand Usage — making it hard to digest.
+
+### Solution
+Add `SubTabs` navigation below the KPI strip to break the remaining content into focused sections. The KPI strip stays pinned above the tabs as a persistent summary.
+
+### Tab Structure
+
+| Tab | Content |
+|-----|---------|
+| **Products** (default) | `BackroomProductAnalyticsCard` |
+| **Staff** | Employee Performance table (sortable, exportable) |
+| **Trends** | `BackroomHistoryChart` |
+| **Brands** | `BackroomBrandUsageCard` |
 
 ### Changes
 
-#### 1. Add "Price Intelligence" section to BackroomSettings sidebar
+**File: `src/components/dashboard/backroom-settings/BackroomInsightsSection.tsx`**
 
-**File: `src/pages/dashboard/admin/BackroomSettings.tsx`**
+1. Import `Tabs, TabsContent, SubTabsList, SubTabsTrigger` from `@/components/ui/tabs`
+2. Keep the header (title + filters) and KPI cards grid outside the tabs — always visible
+3. Wrap the four content blocks in a `<Tabs defaultValue="products">` with `SubTabsList` / `SubTabsTrigger` for the underline-style nav
+4. Each block goes into its own `<TabsContent>`:
+   - `products` → `<BackroomProductAnalyticsCard />`
+   - `staff` → The existing Employee Performance `<Card>` block (lines 198-313)
+   - `trends` → `<BackroomHistoryChart />`
+   - `brands` → `<BackroomBrandUsageCard />`
 
-- Add `'price-intelligence'` to the `BackroomSection` union type
-- Add a new entry in `sections` array under the `operations` group:
-  ```ts
-  { id: 'price-intelligence', label: 'Price Intelligence', icon: DollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
-  ```
-- Import `PriceRecommendationsContent` (a new wrapper) and render it in the content area:
-  ```tsx
-  {activeSection === 'price-intelligence' && <PriceRecommendationsContent />}
-  ```
-
-#### 2. Extract page content into an embeddable component
-
-**File: `src/pages/dashboard/admin/PriceRecommendations.tsx`**
-
-- Extract the inner content (everything inside `<DashboardLayout>`) into a new exported component `PriceRecommendationsContent` that renders without `DashboardLayout` or `DashboardPageHeader` (the hub provides its own shell).
-- Keep the default export as-is for backward compatibility / redirect.
-
-#### 3. Remove from sidebar nav
-
-**File: `src/config/dashboardNav.ts`**
-
-- Remove the `price_intelligence` entry from `appsNavItems` so it no longer appears as a separate sidebar item.
-
-#### 4. Add route redirect for bookmarks
-
-**File: `src/App.tsx`**
-
-- Keep the existing route but redirect `/admin/price-recommendations` → `/admin/backroom-settings?section=price-intelligence` so existing bookmarks and deep links still work.
-
-#### 5. Update internal links
-
-- **`PriceRecommendationCard.tsx`**: Update link from `/admin/price-recommendations` → `/admin/backroom-settings?section=price-intelligence`
-- **`PricingAnalyticsContent.tsx`**: Update navigate target similarly
-- **`PriceRecommendations.tsx` empty state**: Update the `dashPath('/admin/backroom?section=formulas')` link to use `backroom-settings` if that's the correct hub path
-
-#### 6. Handle deep-link from URL params
-
-**File: `src/pages/dashboard/admin/BackroomSettings.tsx`**
-
-- The existing `useSearchParams` logic already reads `section` from the URL and sets `activeSection`. Just ensure `'price-intelligence'` is recognized — it will be, since it's added to the `BackroomSection` type and the section map.
-
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/pages/dashboard/admin/BackroomSettings.tsx` | Add section type, nav entry, content render |
-| `src/pages/dashboard/admin/PriceRecommendations.tsx` | Extract content component, convert page to redirect |
-| `src/config/dashboardNav.ts` | Remove `price_intelligence` from `appsNavItems` |
-| `src/App.tsx` | Redirect old route to hub |
-| `src/components/dashboard/backroom-settings/PriceRecommendationCard.tsx` | Update link target |
-| `src/components/dashboard/analytics/PricingAnalyticsContent.tsx` | Update navigate target |
+No new files needed. The data hooks already only run when their parent renders, so no wasted queries — each tab's content mounts on activation.
 
