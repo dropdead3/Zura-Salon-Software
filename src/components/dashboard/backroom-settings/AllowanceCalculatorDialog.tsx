@@ -919,16 +919,38 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         <div className="px-6 py-4 border-t border-border/40 bg-muted/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance</div>
+              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
               <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
                 ${grandTotal.toFixed(2)}
               </div>
               <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
                 {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
               </div>
-              <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
-                This dollar amount will be the included allowance for this service.
-              </div>
+              {/* Allowance Health Indicator */}
+              {healthResult ? (
+                <div className={cn(
+                  "text-[11px] font-sans mt-2 px-2 py-1 rounded-md inline-flex items-center gap-1.5",
+                  healthResult.status === 'healthy' && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                  healthResult.status === 'high' && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                  healthResult.status === 'low' && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                )}>
+                  <span className="font-medium">{healthResult.allowancePct}%</span>
+                  <span>of ${servicePrice?.toFixed(0)} service</span>
+                  <span className="text-[10px] opacity-70">
+                    {healthResult.status === 'healthy' && '— within target range'}
+                    {healthResult.status === 'high' && `— consider $${healthResult.suggestedServicePrice?.toFixed(0)} service price`}
+                    {healthResult.status === 'low' && '— room to increase product quality'}
+                  </span>
+                </div>
+              ) : servicePrice && servicePrice > 0 ? (
+                <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
+                  Add products to see allowance health vs. service price
+                </div>
+              ) : (
+                <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
+                  Set a service price to see allowance health (target: 6–10% of service)
+                </div>
+              )}
             </div>
             <Button
               size="sm"
@@ -940,6 +962,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               Save Allowance
             </Button>
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
         </div>
       </DialogContent>
     </Dialog>
