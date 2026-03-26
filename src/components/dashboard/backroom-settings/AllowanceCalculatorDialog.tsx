@@ -97,7 +97,8 @@ function isDeveloperProduct(product: CatalogProduct): boolean {
 
 function computeLineCost(qty: number, costPerGram: number, isDeveloper: boolean, developerRatio: number, colorQty: number): number {
   if (isDeveloper) {
-    const devQty = colorQty * developerRatio;
+    // When no color products exist, use the developer's direct quantity instead of ratio
+    const devQty = colorQty > 0 ? colorQty * developerRatio : qty;
     return Math.round(devQty * costPerGram * 100) / 100;
   }
   return Math.round(qty * costPerGram * 100) / 100;
