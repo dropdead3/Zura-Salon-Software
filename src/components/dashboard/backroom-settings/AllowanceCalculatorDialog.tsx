@@ -187,6 +187,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
   const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
   const [highPricePopoverOpen, setHighPricePopoverOpen] = useState(false);
+  const [showPriceConfirm, setShowPriceConfirm] = useState(false);
   
   const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
