@@ -785,34 +785,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             )}
                                           </div>
                                           <div className="flex items-center gap-2 shrink-0">
-                                          {(type === 'chemical' || type === 'suggested') && !service.backroom_config_dismissed && (
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              className="h-7 text-xs text-primary"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                              }}
-                                            >
-                                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                                              Mark Configured
-                                            </Button>
-                                          )}
-                                          {service.backroom_config_dismissed && (
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              className="h-7 text-xs text-muted-foreground"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: false } });
-                                              }}
-                                            >
-                                              <RotateCcw className="w-3 h-3 mr-1" />
-                                              Re-flag
-                                            </Button>
-                                          )}
                                           <Button
                                             size="sm"
                                             variant="outline"
