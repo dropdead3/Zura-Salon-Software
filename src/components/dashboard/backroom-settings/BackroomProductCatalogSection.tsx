@@ -375,6 +375,59 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     onError: (error) => toast.error('Sync failed: ' + error.message),
   });
 
+  /* Remove Brand — deactivates all products + removes tracking */
+  const removeBrandMutation = useMutation({
+    mutationFn: async (brand: string) => {
+      // 1. Get all product IDs for this brand
+      const { data: brandProducts, error: fetchErr } = await supabase
+        .from('products')
+        .select('id')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .eq('product_type', 'Supplies')
+        .ilike('brand', brand);
+      if (fetchErr) throw fetchErr;
+      const ids = (brandProducts || []).map((p: any) => p.id);
+      if (ids.length === 0) throw new Error('No active products found for this brand');
+
+      // 2. Remove location tracking for these products
+      const BATCH = 500;
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const { error: delErr } = await supabase
+          .from('location_product_settings')
+          .delete()
+          .eq('organization_id', orgId!)
+          .in('product_id', batch);
+        if (delErr) throw delErr;
+      }
+
+      // 3. Soft-delete the products
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const { error: upErr } = await supabase
+          .from('products')
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .in('id', batch);
+        if (upErr) throw upErr;
+      }
+
+      return { count: ids.length, brand };
+    },
+    onSuccess: ({ count, brand }) => {
+      setSelectedBrand(null);
+      setSelectedCategory(null);
+      setSelectedLine(null);
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['product-brands'] });
+      toast.success(`Removed ${brand} — ${count} products deactivated and untracked from all locations`);
+    },
+    onError: (error) => toast.error('Failed to remove brand: ' + error.message),
+  });
+
   /* ====== Derived data ====== */
   const allProducts = products || [];
   // Helper: is a product tracked at the current location?
