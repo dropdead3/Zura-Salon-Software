@@ -1407,8 +1407,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                         );
                       })}
                 </div>
-                </>
-              )
+                )
               ) : !hasProducts ? (
                 <div className={cn(tokens.empty.container, 'py-14')}>
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted/40">
