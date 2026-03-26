@@ -769,8 +769,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
-                        </div>
+                        </motion.div>
                       ))}
+                      </AnimatePresence>
 
                       {/* Developer lines */}
                       {devLines.length > 0 && (
