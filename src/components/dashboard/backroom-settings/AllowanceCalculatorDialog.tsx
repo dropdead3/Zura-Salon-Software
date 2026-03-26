@@ -167,10 +167,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const { data: existingBowls } = useAllowanceBowls(serviceId);
   const { data: existingBaselines } = useServiceRecipeBaselines(serviceId);
 
-  const upsertBowl = useUpsertAllowanceBowl();
-  const deleteBowl = useDeleteAllowanceBowl();
-  const upsertBaseline = useUpsertRecipeBaseline();
-  const deleteBaseline = useDeleteRecipeBaseline();
+
+
   const upsertPolicy = useUpsertAllowancePolicy();
 
   const [bowls, setBowls] = useState<BowlState[]>([]);
