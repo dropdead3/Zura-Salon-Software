@@ -1,6 +1,7 @@
 /**
  * AllowanceCalculatorDialog — Vish-style bowl-based product allowance calculator.
  * Builds recipes from real catalog products to derive a dollar-based allowance.
+ * Product picker uses a 3-step Brand → Category → Product drill-down.
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, Palette, Search, TestTube2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -62,6 +63,13 @@ interface BowlState {
   collapsed: boolean;
 }
 
+interface PickerState {
+  step: 'brand' | 'category' | 'product';
+  selectedBrand: string | null;
+  selectedCategory: string | null;
+  search: string;
+}
+
 const WEIGHT_PRESETS = [15, 30, 45, 60, 90];
 const RATIO_PRESETS = [1, 1.5, 2];
 const DEVELOPER_KEYWORDS = ['developer', 'dev', 'peroxide', 'oxidant', 'activator', 'vol'];
@@ -97,11 +105,12 @@ function getBowlWeight(bowl: BowlState): number {
   }, 0);
 }
 
+const DEFAULT_PICKER: PickerState = { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' };
+
 export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, serviceName, containerTypes = ['bowl'] }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
-  // Vessel label helpers
   const hasBowls = containerTypes.includes('bowl');
   const hasBottles = containerTypes.includes('bottle');
   const hasBoth = hasBowls && hasBottles;
@@ -137,10 +146,50 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
   const [bowls, setBowls] = useState<BowlState[]>([]);
   const [saving, setSaving] = useState(false);
-  // Per-bowl search state (improvement #2)
-  const [bowlSearches, setBowlSearches] = useState<Record<number, string>>({});
-  // Per-bowl developer filter mode (improvement #8)
-  const [devFilterBowls, setDevFilterBowls] = useState<Record<number, boolean>>({});
+  const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
+
+  const getPickerState = useCallback((bowlIdx: number): PickerState => {
+    return bowlPickers[bowlIdx] || DEFAULT_PICKER;
+  }, [bowlPickers]);
+
+  const setPickerState = useCallback((bowlIdx: number, update: Partial<PickerState>) => {
+    setBowlPickers((prev) => ({
+      ...prev,
+      [bowlIdx]: { ...(prev[bowlIdx] || DEFAULT_PICKER), ...update },
+    }));
+  }, []);
+
+  // Derived brand list from catalog
+  const brandList = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of catalogProducts) {
+      const brand = p.brand || 'Other';
+      counts.set(brand, (counts.get(brand) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([brand, count]) => ({ brand, count }))
+      .sort((a, b) => a.brand.localeCompare(b.brand));
+  }, [catalogProducts]);
+
+  // Categories for a selected brand
+  const getCategoriesForBrand = useCallback((brand: string) => {
+    const products = catalogProducts.filter((p) => (p.brand || 'Other') === brand);
+    const counts = new Map<string, number>();
+    for (const p of products) {
+      const cat = p.category || 'Other';
+      counts.set(cat, (counts.get(cat) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => a.category.localeCompare(b.category));
+  }, [catalogProducts]);
+
+  // Products for a selected brand + category
+  const getProductsForBrandCategory = useCallback((brand: string, category: string) => {
+    return catalogProducts.filter(
+      (p) => (p.brand || 'Other') === brand && (p.category || 'Other') === category
+    );
+  }, [catalogProducts]);
 
   useEffect(() => {
     if (!open) return;
@@ -180,32 +229,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     } else {
       setBowls([{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [], collapsed: false }]);
     }
-    setBowlSearches({});
-    setDevFilterBowls({});
+    setBowlPickers({});
   }, [open, existingBowls, existingBaselines, catalogProducts]);
-
-  // Per-bowl filtered products (improvement #2 + #7 + #8)
-  const getFilteredProducts = useCallback(
-    (bowlIdx: number) => {
-      const search = (bowlSearches[bowlIdx] || '').toLowerCase().trim();
-      const devOnly = devFilterBowls[bowlIdx] || false;
-
-      let results = catalogProducts;
-
-      if (devOnly) {
-        results = results.filter((p) => isDeveloperProduct(p));
-      }
-
-      if (search) {
-        results = results.filter(
-          (p) => p.name.toLowerCase().includes(search) || (p.brand && p.brand.toLowerCase().includes(search))
-        );
-      }
-
-      return results.slice(0, 50);
-    },
-    [catalogProducts, bowlSearches, devFilterBowls]
-  );
 
   const grandTotal = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + bowl.lines.reduce((ls, line) => ls + line.lineCost, 0), 0);
@@ -234,8 +259,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, []);
 
   const addProductToBowl = useCallback(
-    (bowlIdx: number, product: CatalogProduct, asDeveloper: boolean) => {
+    (bowlIdx: number, product: CatalogProduct) => {
       const cpg = getCostPerGram(product);
+      const asDeveloper = isDeveloperProduct(product);
       const newLine: BowlLine = {
         localId: crypto.randomUUID(),
         productId: product.id,
@@ -260,10 +286,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           return { ...b, lines };
         })
       );
-
-      // Clear search & dev filter for this bowl after adding
-      setBowlSearches((prev) => ({ ...prev, [bowlIdx]: '' }));
-      setDevFilterBowls((prev) => ({ ...prev, [bowlIdx]: false }));
     },
     []
   );
@@ -384,20 +406,184 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     }
   };
 
-  // Grouped products by brand for picker
-  const getProductsByBrand = useCallback(
-    (bowlIdx: number) => {
-      const products = getFilteredProducts(bowlIdx);
-      const map = new Map<string, CatalogProduct[]>();
-      for (const p of products) {
-        const brand = p.brand || 'Other';
-        if (!map.has(brand)) map.set(brand, []);
-        map.get(brand)!.push(p);
-      }
-      return map;
-    },
-    [getFilteredProducts]
-  );
+  // ─── Render ────────────────────────────────────────────────────────────────
+
+  const renderPickerPanel = (bowlIdx: number) => {
+    const picker = getPickerState(bowlIdx);
+    const searchLower = picker.search.toLowerCase().trim();
+
+    // Step 1: Brand list
+    if (picker.step === 'brand') {
+      const filtered = searchLower
+        ? brandList.filter((b) => b.brand.toLowerCase().includes(searchLower))
+        : brandList;
+
+      return (
+        <div className="pt-2 space-y-1.5">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search brands..."
+              value={picker.search}
+              onChange={(e) => setPickerState(bowlIdx, { search: e.target.value })}
+              className="h-8 text-xs pl-8"
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background">
+            {filtered.length === 0 && (
+              <div className="px-3 py-6 text-xs text-center text-muted-foreground">No brands found</div>
+            )}
+            {filtered.map(({ brand, count }) => (
+              <button
+                key={brand}
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left group"
+                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedBrand: brand, search: '' })}
+              >
+                <span className="text-xs font-sans text-foreground">{brand}</span>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{count}</Badge>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Step 2: Category list for selected brand
+    if (picker.step === 'category' && picker.selectedBrand) {
+      const categories = getCategoriesForBrand(picker.selectedBrand);
+      const filtered = searchLower
+        ? categories.filter((c) => c.category.toLowerCase().includes(searchLower))
+        : categories;
+
+      return (
+        <div className="pt-2 space-y-1.5">
+          {/* Breadcrumb back */}
+          <button
+            className="flex items-center gap-1 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span className="font-medium text-foreground">{picker.selectedBrand}</span>
+          </button>
+
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search categories..."
+              value={picker.search}
+              onChange={(e) => setPickerState(bowlIdx, { search: e.target.value })}
+              className="h-8 text-xs pl-8"
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background">
+            {filtered.length === 0 && (
+              <div className="px-3 py-6 text-xs text-center text-muted-foreground">No categories found</div>
+            )}
+            {filtered.map(({ category, count }) => (
+              <button
+                key={category}
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left group"
+                onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category, search: '' })}
+              >
+                <span className="text-xs font-sans text-foreground">{category}</span>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{count}</Badge>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Step 3: Product list for selected brand + category
+    if (picker.step === 'product' && picker.selectedBrand && picker.selectedCategory) {
+      const products = getProductsForBrandCategory(picker.selectedBrand, picker.selectedCategory);
+      const filtered = searchLower
+        ? products.filter((p) => p.name.toLowerCase().includes(searchLower))
+        : products;
+
+      return (
+        <div className="pt-2 space-y-1.5">
+          {/* Breadcrumb back */}
+          <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
+            <button
+              className="hover:text-foreground transition-colors flex items-center gap-0.5"
+              onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Brands
+            </button>
+            <span className="text-muted-foreground/40">/</span>
+            <button
+              className="hover:text-foreground transition-colors"
+              onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null, search: '' })}
+            >
+              <span className="font-medium text-foreground">{picker.selectedBrand}</span>
+            </button>
+            <span className="text-muted-foreground/40">/</span>
+            <span className="font-medium text-foreground">{picker.selectedCategory}</span>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search products..."
+              value={picker.search}
+              onChange={(e) => setPickerState(bowlIdx, { search: e.target.value })}
+              className="h-8 text-xs pl-8"
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background">
+            {filtered.length === 0 && (
+              <div className="px-3 py-6 text-xs text-center text-muted-foreground">No products found</div>
+            )}
+            {filtered.map((p) => {
+              const cpg = getCostPerGram(p);
+              const isDevProduct = isDeveloperProduct(p);
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted/20 transition-colors group"
+                >
+                  <div
+                    className="w-5 h-5 rounded-full border border-border/60 shrink-0"
+                    style={{ backgroundColor: p.swatch_color || 'hsl(var(--muted))' }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-sans text-foreground truncate">{p.name}</div>
+                    <div className="text-[11px] font-sans text-muted-foreground">
+                      ${cpg.toFixed(4)}/g
+                      {isDevProduct && (
+                        <span className="ml-1.5">
+                          <FlaskConical className="w-3 h-3 inline text-muted-foreground/60" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => addProductToBowl(bowlIdx, p)}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -417,14 +603,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               const colorLines = bowl.lines.filter((l) => !l.isDeveloper);
               const devLines = bowl.lines.filter((l) => l.isDeveloper);
               const colorQty = colorLines.reduce((s, l) => s + l.quantity, 0);
-              const searchValue = bowlSearches[bowlIdx] || '';
-              const isDevFilter = devFilterBowls[bowlIdx] || false;
-              const filteredProducts = getFilteredProducts(bowlIdx);
-              const productsByBrand = getProductsByBrand(bowlIdx);
 
               return (
                 <div key={bowl.id || `new-${bowlIdx}`} className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
-                  {/* Bowl header */}
+                  {/* Vessel header */}
                   <div
                     className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
                     onClick={() => toggleBowlCollapse(bowlIdx)}
@@ -462,17 +644,17 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
                   {!bowl.collapsed && (
                     <div className="px-4 py-3 space-y-2">
-                      {/* Empty state (improvement #1) */}
+                      {/* Empty state */}
                       {bowl.lines.length === 0 && (
-                        <div className="flex flex-col items-center py-6 text-center">
+                        <div className="flex flex-col items-center py-4 text-center">
                           <div className="w-10 h-10 rounded-full bg-muted/40 border border-border/60 flex items-center justify-center mb-3">
                             <Palette className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <p className="text-sm font-sans text-muted-foreground">
-                            Search and add color products, then pair with a developer
+                            Select a brand below to start adding products
                           </p>
                           <p className="text-xs font-sans text-muted-foreground/60 mt-1">
-                            Costs are calculated from your product catalog
+                            Developers are auto-detected from the catalog
                           </p>
                         </div>
                       )}
@@ -494,7 +676,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             </div>
                           </div>
 
-                          {/* Weight pills (improvement #4 — larger targets) */}
                           <div className="flex items-center gap-1 shrink-0">
                             {WEIGHT_PRESETS.map((g) => (
                               <button
@@ -535,7 +716,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </div>
                       ))}
 
-                      {/* Developer lines (improvement #3 — visual distinction) */}
+                      {/* Developer lines */}
                       {devLines.length > 0 && (
                         <div className="rounded-lg bg-muted/20 border border-border/30 px-3 py-2 space-y-2 mt-1">
                           <div className="flex items-center gap-1.5">
@@ -555,13 +736,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-sans text-foreground truncate">{line.productName}</div>
-                                  {/* Improvement #8 — show computed developer weight */}
                                   <div className="text-[11px] font-sans text-muted-foreground">
                                     {devWeight}g at {line.developerRatio}× · ${line.costPerGram.toFixed(4)}/g
                                   </div>
                                 </div>
 
-                                {/* Ratio pills (improvement #4 — larger targets) */}
                                 <div className="flex items-center gap-1 shrink-0">
                                   {RATIO_PRESETS.map((r) => (
                                     <button
@@ -606,112 +785,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </div>
                       )}
 
-                      {/* Quick Add Developer button (improvement #5) */}
-                      {colorLines.length > 0 && devLines.length === 0 && (
-                        <button
-                          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-muted-foreground/25 text-xs font-sans text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors"
-                          onClick={() => setDevFilterBowls((prev) => ({ ...prev, [bowlIdx]: true }))}
-                        >
-                          <FlaskConical className="w-3.5 h-3.5" />
-                          Add Developer
-                        </button>
-                      )}
+                      {/* Brand → Category → Product picker */}
+                      {renderPickerPanel(bowlIdx)}
 
-                      {/* Product search — always visible (improvement #7) */}
-                      <div className="pt-2 space-y-2">
-                        <div className="relative">
-                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                          <Input
-                            placeholder={isDevFilter ? 'Search developers...' : 'Search products to add...'}
-                            value={searchValue}
-                            onChange={(e) => setBowlSearches((prev) => ({ ...prev, [bowlIdx]: e.target.value }))}
-                            className="h-8 text-xs pl-8"
-                          />
-                          {isDevFilter && (
-                            <Badge
-                              variant="secondary"
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] px-1.5 py-0 cursor-pointer hover:bg-muted"
-                              onClick={() => setDevFilterBowls((prev) => ({ ...prev, [bowlIdx]: false }))}
-                            >
-                              Developers only ×
-                            </Badge>
-                          )}
-                        </div>
-
-                        {/* Product dropdown — always visible, larger (improvement #7) */}
-                        <div className="max-h-52 overflow-y-auto rounded-lg border border-border/40 bg-background">
-                          {Array.from(productsByBrand.entries()).map(([brand, products]) => (
-                            <div key={brand}>
-                              <div className="px-3 py-1.5 text-[11px] font-sans text-muted-foreground bg-muted/30 sticky top-0 z-10">
-                                {brand}
-                              </div>
-                              {products.map((p) => {
-                                const cpg = getCostPerGram(p);
-                                const isAutoDevProduct = isDeveloperProduct(p);
-                                return (
-                                  <div
-                                    key={p.id}
-                                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted/20 cursor-pointer group"
-                                  >
-                                    <div
-                                      className="w-5 h-5 rounded-full border border-border/60 shrink-0"
-                                      style={{ backgroundColor: p.swatch_color || 'hsl(var(--muted))' }}
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-xs font-sans text-foreground truncate">{p.name}</div>
-                                      <div className="text-[11px] font-sans text-muted-foreground">
-                                        ${cpg.toFixed(4)}/g
-                                        {p.category && <span className="ml-1.5 text-muted-foreground/60">· {p.category}</span>}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      {isDevFilter ? (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="h-6 px-2.5 text-xs"
-                                          onClick={() => addProductToBowl(bowlIdx, p, true)}
-                                        >
-                                          <FlaskConical className="w-3 h-3 mr-1" />
-                                          Add
-                                        </Button>
-                                      ) : (
-                                        <>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-6 px-2.5 text-xs"
-                                            onClick={() => addProductToBowl(bowlIdx, p, false)}
-                                          >
-                                            <Beaker className="w-3 h-3 mr-1" />
-                                            Color
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-6 px-2.5 text-xs"
-                                            onClick={() => addProductToBowl(bowlIdx, p, true)}
-                                          >
-                                            <FlaskConical className="w-3 h-3 mr-1" />
-                                            Dev
-                                          </Button>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ))}
-                          {filteredProducts.length === 0 && (
-                            <div className="px-3 py-6 text-xs text-center text-muted-foreground">
-                              No {isDevFilter ? 'developer ' : ''}products found
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Bowl subtotal (improvement #6 — weight + cost) */}
+                      {/* Vessel subtotal */}
                       {bowl.lines.length > 0 && (
                         <div className="flex justify-end pt-2 border-t border-border/30">
                           <span className="text-xs font-sans text-muted-foreground">
