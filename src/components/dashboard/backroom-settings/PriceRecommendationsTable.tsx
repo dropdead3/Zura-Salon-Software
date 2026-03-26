@@ -225,7 +225,7 @@ export function PriceRecommendationsTable({ recommendations, onAccept, onDismiss
                       </button>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-sans text-sm tabular-nums font-medium text-primary">
+                  <TableCell className={cn(tokens.body.emphasis, 'text-right tabular-nums text-primary')}>
                     ${rec.recommended_price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
