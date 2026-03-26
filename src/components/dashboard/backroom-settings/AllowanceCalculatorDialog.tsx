@@ -1160,6 +1160,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                             </div>
                             <div className="text-[11px] font-sans text-muted-foreground">
                               {line.brand} · ${line.costPerGram.toFixed(4)}/g
+                              {line.costPerGram === 0 && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 text-destructive border-destructive/30 cursor-help">
+                                      No cost data
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[200px] text-[11px]">
+                                    This product has no cost-per-gram or cost-price + container-size in the catalog. Update it in Inventory to get accurate allowance calculations.
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               {(() => {
                                 const prod = catalogProducts.find(p => p.id === line.productId);
                                 if (!prod) return null;
