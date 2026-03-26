@@ -345,7 +345,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
 
       const { data: orgProducts, error: orgErr } = await supabase
         .from('products')
-        .select('id, name, brand, cost_price, markup_pct, swatch_color, container_size')
+        .select('id, name, brand, cost_price, markup_pct, swatch_color, container_size, color_type')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies');
