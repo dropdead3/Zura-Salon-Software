@@ -560,8 +560,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
-      // Phase 2: Insert new data — collect all baselines for batch update
-      const baselineUpdates: Array<{ baselineId: string; bowlId: string; line: BowlLine }> = [];
+      // Phase 2: Insert new data
 
       for (const bowl of bowls) {
         if (bowl.lines.length === 0) continue;
