@@ -397,6 +397,7 @@ export default function BackroomSettings() {
             {activeSection === 'compliance' && <BackroomComplianceSection />}
             {activeSection === 'multi-location' && <MultiLocationSection />}
             {activeSection === 'price-intelligence' && <PriceRecommendationsContent />}
+            {activeSection === 'savings' && <BackroomSavingsSection />}
           </div>
         </div>
       </div>
