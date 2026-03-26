@@ -1261,6 +1261,22 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
                   {!bowl.collapsed && (
                     <div className="px-4 py-3 space-y-2">
+                      {/* Developer warning banner */}
+                      {developerWarningBowls.has(bowlIdx) && (
+                        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50/80 border border-amber-200/50 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800/30 dark:text-amber-300">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs font-sans flex-1">
+                            This {bowl.vesselType} contains permanent/demi color but no developer. Add a developer product for accurate cost calculation.
+                          </p>
+                          <button
+                            className="text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 p-0.5 -mt-0.5 -mr-0.5"
+                            onClick={() => setDeveloperWarningBowls((prev) => { const next = new Set(prev); next.delete(bowlIdx); return next; })}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
                       {/* Brand → Category → Product picker */}
                       {renderPickerPanel(bowlIdx)}
 
