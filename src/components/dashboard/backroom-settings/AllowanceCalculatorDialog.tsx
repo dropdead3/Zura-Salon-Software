@@ -684,8 +684,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40">
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
             <MetricInfoTooltip
@@ -698,7 +698,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[calc(90vh-200px)]">
+        <ScrollArea className="flex-1 min-h-0 overflow-hidden">
           <div className="px-6 py-4 space-y-4">
             {bowls.map((bowl, bowlIdx) => {
               const bowlWeight = getBowlWeight(bowl);
@@ -951,7 +951,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 bg-muted/30">
+        <div className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
