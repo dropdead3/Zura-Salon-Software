@@ -1020,6 +1020,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           onClose={() => setSelectedServiceId(null)}
         />
       )}
+      {calculatorServiceId && (
+        <AllowanceCalculatorDialog
+          open={!!calculatorServiceId}
+          onOpenChange={(open) => { if (!open) setCalculatorServiceId(null); }}
+          serviceId={calculatorServiceId}
+          serviceName={calculatorServiceName}
+        />
+      )}
     </div>
   );
 }
