@@ -17,8 +17,7 @@ import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, Ch
 import { Checkbox } from '@/components/ui/checkbox';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAllowanceBowls, useUpsertAllowanceBowl, useDeleteAllowanceBowl } from '@/hooks/backroom/useAllowanceBowls';
