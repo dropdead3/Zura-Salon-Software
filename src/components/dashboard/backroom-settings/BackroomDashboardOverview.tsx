@@ -11,16 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Loader2, AlertTriangle, ChevronDown, ChevronRight, Check,
+  Loader2, AlertTriangle, ChevronDown, ChevronRight,
   FlaskConical, Trash2, ClipboardCheck, AlertCircle, Wallet, DollarSign,
   PackageOpen, TrendingUp, TrendingDown,
   Users2, Package, ShieldAlert, BarChart3, Brain, MapPin,
 } from 'lucide-react';
-import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { BackroomInsightsSection } from './BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
