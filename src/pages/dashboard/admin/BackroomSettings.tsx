@@ -87,6 +87,7 @@ const sections: SectionMeta[] = [
   // Operations
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, tooltip: 'Dashboard overview with analytics and AI intelligence.', group: 'operations' },
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
+  { id: 'price-intelligence', label: 'Price Intelligence', icon: CircleDollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
   { id: 'compliance', label: 'Reweigh Reports', icon: ShieldCheck, tooltip: 'Reweigh tracking and accountability reports.', group: 'operations' },
   // Configuration
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
