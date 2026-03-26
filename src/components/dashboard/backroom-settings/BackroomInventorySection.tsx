@@ -8,7 +8,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { MapPin, Package, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3, FileDown } from 'lucide-react';
+import { MapPin, Package, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3, FileDown, ArrowLeftRight } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
@@ -22,6 +22,7 @@ import { ReceiveTab } from './inventory/ReceiveTab';
 import { CountsTab } from './inventory/CountsTab';
 import { AuditLogTab } from './inventory/AuditLogTab';
 import { ReorderAnalyticsTab } from './inventory/ReorderAnalyticsTab';
+import { TransfersTab } from './inventory/TransfersTab';
 import { PdfExportDialog, type ExportScope, type ExportFormat } from './inventory/PdfExportDialog';
 
 /* ── Health Banner Chip ── */
@@ -174,6 +175,11 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
           <TabsTrigger value="audit" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <History className="w-4 h-4" /> Audit Log
           </TabsTrigger>
+          {locations.length > 1 && (
+            <TabsTrigger value="transfers" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
+              <ArrowLeftRight className="w-4 h-4" /> Transfers
+            </TabsTrigger>
+          )}
           <TabsTrigger value="analytics" className="gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm">
             <BarChart3 className="w-4 h-4" /> Analytics
           </TabsTrigger>
@@ -194,6 +200,11 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
         <TabsContent value="audit" className="mt-4">
           <AuditLogTab locationId={effectiveLocationId} pdfExportRef={pdfExportRef} />
         </TabsContent>
+        {locations.length > 1 && (
+          <TabsContent value="transfers" className="mt-4">
+            <TransfersTab locationId={effectiveLocationId} locations={locations} />
+          </TabsContent>
+        )}
         <TabsContent value="analytics" className="mt-4">
           <ReorderAnalyticsTab />
         </TabsContent>
