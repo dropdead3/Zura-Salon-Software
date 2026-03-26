@@ -829,6 +829,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                  setTimeout(() => {
+                                                    setExpandedIds(prev => {
+                                                      const next = new Set(prev);
+                                                      next.delete(service.id);
+                                                      return next;
+                                                    });
+                                                  }, 400);
                                                 }}
                                               >
                                                 Finalize Configuration
