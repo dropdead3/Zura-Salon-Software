@@ -1007,6 +1007,32 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       )}
                     </div>
                     <div className="flex items-center gap-1">
+                      {/* Sort products */}
+                      {colorLines.length > 1 && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ArrowUpDown className="w-3.5 h-3.5" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
+                            <p className="text-[11px] font-sans text-muted-foreground mb-1.5">Sort color lines by:</p>
+                            <div className="flex gap-1">
+                              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => sortBowlLines(bowlIdx, 'cost')}>
+                                Cost ↓
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => sortBowlLines(bowlIdx, 'name')}>
+                                Name A→Z
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                       {/* Bulk quantity presets */}
                       {colorLines.length > 0 && (
                         <Popover>
