@@ -13,6 +13,11 @@ import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2, Download } f
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { LocationSelect } from '@/components/ui/location-select';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, ReferenceLine,
+} from 'recharts';
 import { PriceRecommendationsTable } from '@/components/dashboard/backroom-settings/PriceRecommendationsTable';
 import { PriceRecommendationHistory } from '@/components/dashboard/backroom-settings/PriceRecommendationHistory';
 import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/backroom-settings/PriceAcceptConfirmDialog';
@@ -24,6 +29,7 @@ import {
   useDefaultTargetMargin,
   useUpdateDefaultTargetMargin,
 } from '@/hooks/backroom/useServicePriceRecommendations';
+import { useServiceProfitabilitySnapshots } from '@/hooks/backroom/useServiceProfitability';
 import { toast } from 'sonner';
 
 export default function PriceRecommendationsPage() {
@@ -37,6 +43,39 @@ export default function PriceRecommendationsPage() {
   const [isBulkAccepting, setIsBulkAccepting] = useState(false);
   const [editingDefault, setEditingDefault] = useState(false);
   const [defaultValue, setDefaultValue] = useState('');
+  const [locationId, setLocationId] = useState('all');
+
+  // Historical margin trend
+  const ninetyDaysAgo = useMemo(() => {
+    const d = new Date(); d.setDate(d.getDate() - 90);
+    return d.toISOString().split('T')[0];
+  }, []);
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const { data: snapshots } = useServiceProfitabilitySnapshots(
+    ninetyDaysAgo, today,
+    locationId !== 'all' ? locationId : undefined,
+  );
+
+  const marginTrendData = useMemo(() => {
+    if (!snapshots?.length) return [];
+    const weekMap = new Map<string, { revenues: number; costs: number }>();
+    for (const s of snapshots) {
+      const d = new Date(s.created_at);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      const existing = weekMap.get(key) || { revenues: 0, costs: 0 };
+      existing.revenues += s.service_revenue;
+      existing.costs += s.product_cost;
+      weekMap.set(key, existing);
+    }
+    return Array.from(weekMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, data]) => ({
+        week: new Date(week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        margin: data.revenues > 0 ? Math.round(((data.revenues - data.costs) / data.revenues) * 1000) / 10 : 0,
+      }));
+  }, [snapshots]);
 
   const kpis = useMemo(() => {
     if (!recommendations?.length) return { belowTarget: 0, avgGap: 0, totalImpact: 0, weightedImpact: 0, hasVolume: false };
@@ -149,6 +188,17 @@ export default function PriceRecommendationsPage() {
           }
         />
 
+        {/* Location Filter */}
+        <div className="flex items-center gap-3">
+          <LocationSelect
+            value={locationId}
+            onValueChange={setLocationId}
+            includeAll
+            allLabel="All Locations"
+            triggerClassName="w-[220px]"
+          />
+        </div>
+
         {/* KPI Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card>
@@ -157,9 +207,12 @@ export default function PriceRecommendationsPage() {
                 <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  Below Target
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    Below Target
+                  </p>
+                  <MetricInfoTooltip description="Number of tracked chemical services whose current margin falls below their configured target margin percentage." className="w-3 h-3" />
+                </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>{kpis.belowTarget}</p>
               </div>
             </CardContent>
@@ -170,9 +223,12 @@ export default function PriceRecommendationsPage() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  Avg Margin Gap
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    Avg Margin Gap
+                  </p>
+                  <MetricInfoTooltip description="Average percentage-point difference between target margin and actual margin for services currently below target." className="w-3 h-3" />
+                </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>{kpis.avgGap}%</p>
               </div>
             </CardContent>
@@ -183,9 +239,12 @@ export default function PriceRecommendationsPage() {
                 <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  {kpis.hasVolume ? 'Monthly Revenue Impact' : 'Revenue Impact'}
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    {kpis.hasVolume ? 'Monthly Revenue Impact' : 'Revenue Impact'}
+                  </p>
+                  <MetricInfoTooltip description="Estimated additional monthly revenue if all below-target services are repriced to their target margin. Weighted by 30-day appointment volume when available." className="w-3 h-3" />
+                </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>
                   {kpis.weightedImpact >= 0 ? '+' : ''}${kpis.weightedImpact.toFixed(2)}
                 </p>
@@ -202,9 +261,12 @@ export default function PriceRecommendationsPage() {
                 <Settings2 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  Default Target
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    Default Target
+                  </p>
+                  <MetricInfoTooltip description="Organization-wide default target margin. Used for services that don't have a per-service override. Click the value to edit." className="w-3 h-3" />
+                </div>
                 {editingDefault ? (
                   <div className="flex items-center gap-1">
                     <Input
@@ -282,6 +344,57 @@ export default function PriceRecommendationsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Margin Health Over Time */}
+        {marginTrendData.length >= 2 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className={tokens.card?.iconBox || 'w-10 h-10 bg-muted rounded-lg flex items-center justify-center'}>
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className={tokens.card?.title || 'font-display text-base tracking-wide'}>
+                    Margin Health Over Time
+                  </CardTitle>
+                  <MetricInfoTooltip description="Weekly average contribution margin across tracked chemical services from profitability snapshots. Shows the impact of accepted price changes over time." />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={marginTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="week" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <RechartsTooltip
+                      formatter={(value: number) => [`${value}%`, 'Avg Margin']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <ReferenceLine
+                      y={defaultMargin}
+                      stroke="hsl(var(--primary))"
+                      strokeDasharray="6 4"
+                      label={{ value: `Target ${defaultMargin}%`, position: 'right', fontSize: 11, fill: 'hsl(var(--primary))' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="margin"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: 'hsl(var(--primary))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* History Section */}
         <Card>

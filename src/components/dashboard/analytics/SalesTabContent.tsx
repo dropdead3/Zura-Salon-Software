@@ -73,6 +73,7 @@ import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareT
 import { CorrelationsContent } from '@/components/dashboard/analytics/CorrelationsContent';
 import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailAnalyticsContent';
 import { ServicesContent } from '@/components/dashboard/analytics/ServicesContent';
+import { PricingAnalyticsContent } from '@/components/dashboard/analytics/PricingAnalyticsContent';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -264,6 +265,12 @@ export function SalesTabContent({
               <div className="group/subtab relative inline-flex items-center">
                 <SubTabsTrigger value="correlations">Correlations</SubTabsTrigger>
                 <SubtabFavoriteStar tab="sales" subtab="correlations" label="Correlations" />
+              </div>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_pricing_subtab" elementName="Pricing" elementCategory="Page Tabs">
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="pricing">Pricing</SubTabsTrigger>
+                <SubtabFavoriteStar tab="sales" subtab="pricing" label="Pricing" />
               </div>
             </VisibilityGate>
           </SubTabsList>
@@ -594,6 +601,16 @@ export function SalesTabContent({
           <CorrelationsContent 
             locationId={locationFilter}
             filterContext={filterContext}
+          />
+        </TabsContent>
+
+        <TabsContent value="pricing" className="mt-6">
+          <PricingAnalyticsContent
+            locationId={locationFilter}
+            filterContext={filterContext}
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationName={selectedLocationName}
           />
         </TabsContent>
         </Tabs>
