@@ -41,7 +41,7 @@ interface ServiceRow {
   assistant_prep_allowed: boolean;
   smart_mix_assist_enabled: boolean;
   formula_memory_enabled: boolean;
-  variance_threshold_pct: number;
+  
   backroom_config_dismissed: boolean;
   container_types: ('bowl' | 'bottle')[];
 }
