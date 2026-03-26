@@ -1213,6 +1213,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                               min="1"
                               value={line.quantity}
                               onChange={(e) => updateLineQuantity(bowlIdx, line.localId, Math.max(1, parseInt(e.target.value) || 1))}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!val || val < 1) updateLineQuantity(bowlIdx, line.localId, 1);
+                              }}
                               className="h-6 w-14 text-xs rounded px-1.5"
                             />
                           </div>
