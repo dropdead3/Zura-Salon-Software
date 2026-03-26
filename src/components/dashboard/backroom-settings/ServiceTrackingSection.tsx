@@ -187,14 +187,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (error) throw error;
 
       // Sync container_types to phorest_services so the Dock reads the correct vessels
-      if (updates.container_types && effectiveOrganization) {
+      if (updates.container_types && orgId) {
         const svc = (services || []).find(s => s.id === id);
         if (svc?.name) {
           // Cast to avoid TS2589 deep type instantiation on phorest_services
           await (supabase.from('phorest_services') as any)
             .update({ container_types: updates.container_types })
             .eq('name', svc.name)
-            .eq('organization_id', effectiveOrganization);
+            .eq('organization_id', orgId);
         }
       }
     },
