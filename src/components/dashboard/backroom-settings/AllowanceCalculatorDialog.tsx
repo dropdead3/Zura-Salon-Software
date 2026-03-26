@@ -1769,6 +1769,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {/* Copy summary */}
+              {hasExistingData && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
+                  disabled={saving}
+                  onClick={handleClearAllowance}
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Clear Allowance
+                </Button>
+              )}
               {grandTotal > 0 && (
                 <Button
                   variant="ghost"
