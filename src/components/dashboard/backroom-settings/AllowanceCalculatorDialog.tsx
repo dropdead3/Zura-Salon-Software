@@ -230,10 +230,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     if (existingBowls && existingBowls.length > 0 && existingBaselines) {
       const loaded: BowlState[] = existingBowls.map((b) => {
         const bowlLines = existingBaselines
-          .filter((bl) => (bl as any).bowl_id === b.id)
+          .filter((bl) => bl.bowl_id === b.id)
           .map((bl) => {
             const prod = catalogProducts.find((p) => p.id === bl.product_id);
-            const cpg = (bl as any).cost_per_unit_snapshot || (prod ? getRetailCostPerGram(prod, defaultMarkupPct) : 0);
+            const cpg = bl.cost_per_unit_snapshot || (prod ? getRetailCostPerGram(prod, defaultMarkupPct) : 0);
             return {
               localId: bl.id,
               productId: bl.product_id,
@@ -242,8 +242,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               swatchColor: prod?.swatch_color || null,
               quantity: bl.expected_quantity,
               costPerGram: cpg,
-              isDeveloper: (bl as any).is_developer || false,
-              developerRatio: (bl as any).developer_ratio || 1,
+              isDeveloper: bl.is_developer || false,
+              developerRatio: bl.developer_ratio || 1,
               lineCost: 0,
             };
           });
@@ -259,8 +259,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       });
 
       setBowls(loaded);
+      // Capture initial snapshot for dirty-state detection
+      const snapshot = JSON.stringify(loaded.map(b => ({ lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
+      initialBowlsRef.current = snapshot;
     } else {
-      setBowls([{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [], collapsed: false }]);
+      const defaultBowls = [{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [] as BowlLine[], collapsed: false }];
+      setBowls(defaultBowls);
+      const snapshot = JSON.stringify(defaultBowls.map(b => ({ lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
+      initialBowlsRef.current = snapshot;
     }
     setBowlPickers({});
   }, [open, existingBowls, existingBaselines, catalogProducts]);
