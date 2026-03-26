@@ -248,8 +248,8 @@ export default function PriceRecommendationsPage() {
                 className={cn('w-3 h-3', tokens.kpi.infoIcon)}
               />
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                  <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <div className={tokens.card.iconBox}>
+                  <DollarSign className={tokens.card.icon} />
                 </div>
                 <div>
                   <p className={tokens.kpi.label}>
