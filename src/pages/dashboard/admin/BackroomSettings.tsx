@@ -370,6 +370,15 @@ export default function BackroomSettings() {
                 onWizardTriggered={() => setShowWizardFromBanner(false)}
               />
             )}
+            {activeSection === 'analytics' && (
+              <BackroomInsightsSection
+                locationId="all"
+                datePreset="30d"
+                showExtendedAnalytics
+                wasteByCategory={{}}
+                totalWasteQty={0}
+              />
+            )}
             {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
             {activeSection === 'formulas' && <RecipeBaselineSection onNavigate={handleNavigate} />}

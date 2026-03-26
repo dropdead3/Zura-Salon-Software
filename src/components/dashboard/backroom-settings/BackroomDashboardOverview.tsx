@@ -377,17 +377,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
 
         </TabsContent>
 
-        {/* ── Analytics ── */}
-        <TabsContent value="analytics" className="mt-6 space-y-6">
-          <BackroomInsightsSection
-            locationId={selectedLocationId}
-            datePreset={datePreset}
-            hideFilters
-            showExtendedAnalytics
-            wasteByCategory={dashboard.wasteByCategory ?? {}}
-            totalWasteQty={dashboard.totalWasteQty ?? 0}
-          />
-        </TabsContent>
 
         {/* ── AI Intelligence ── */}
         <TabsContent value="ai" className="mt-6">
