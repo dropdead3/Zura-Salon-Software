@@ -392,7 +392,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             setBowls((prev) => {
               const next = [...prev];
               next.splice(Math.min(ref.idx, next.length), 0, ref.bowl);
-              return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+              return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
             });
             removedBowlRef.current = null;
           },
