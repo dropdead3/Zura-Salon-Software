@@ -1695,5 +1695,87 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Price adjustment confirmation dialog */}
+    <AlertDialog open={showPriceConfirm} onOpenChange={setShowPriceConfirm}>
+      <AlertDialogContent className="border-none bg-gradient-to-b from-card via-card to-muted/20 shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-muted/10 pointer-events-none" />
+
+        <AlertDialogHeader className="relative">
+          <div className="mx-auto mb-4 relative">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-muted/20 flex items-center justify-center ring-1 ring-amber-500/20">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-card to-muted/30 flex items-center justify-center shadow-inner">
+                <DollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+            <div className="absolute inset-0 rounded-full bg-amber-500/10 blur-xl -z-10" />
+          </div>
+
+          <AlertDialogTitle className="text-center font-display uppercase tracking-wide text-lg">
+            Confirm Service Price Adjustment
+          </AlertDialogTitle>
+
+          <AlertDialogDescription asChild>
+            <div className="space-y-4 pt-2 font-sans text-sm text-muted-foreground">
+              {/* Price comparison */}
+              <div className="flex items-center justify-center gap-4 p-4 rounded-xl bg-muted/50">
+                <div className="text-center">
+                  <div className="text-[10px] text-muted-foreground">Current</div>
+                  <div className="text-lg font-medium text-foreground tabular-nums">${effectiveServicePrice.toFixed(2)}</div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                <div className="text-center">
+                  <div className="text-[10px] text-muted-foreground">New Price</div>
+                  <div className="text-lg font-medium text-amber-600 dark:text-amber-400 tabular-nums">${healthResult?.suggestedServicePrice?.toFixed(2)}</div>
+                </div>
+              </div>
+
+              {/* Where it surfaces */}
+              <div>
+                <p className="font-medium text-foreground text-xs mb-2">This change will be reflected on:</p>
+                <ul className="space-y-1.5 text-xs">
+                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Service Tracking & allowance calculations</li>
+                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Price Intelligence engine recommendations</li>
+                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Your public website services page</li>
+                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Location & level overrides referencing this base price</li>
+                </ul>
+              </div>
+
+              {/* Rounding note */}
+              <p className="text-[11px] text-muted-foreground/80">
+                Price is rounded up to the nearest $5 based on your retail product cost of ${grandTotal.toFixed(2)} and the 8% industry target.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter className="sm:justify-center gap-3 relative">
+          <AlertDialogCancel className="flex-1 sm:flex-none">Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white shadow-lg"
+            onClick={() => {
+              const oldPrice = servicePrice;
+              updateServicePriceMutation.mutate(healthResult?.suggestedServicePrice!, {
+                onSuccess: () => {
+                  const toastId = toast(`Service price updated to $${healthResult?.suggestedServicePrice}`, {
+                    action: oldPrice ? {
+                      label: 'Undo',
+                      onClick: () => {
+                        toast.dismiss(toastId);
+                        updateServicePriceMutation.mutate(oldPrice);
+                      },
+                    } : undefined,
+                    duration: 6000,
+                  });
+                },
+              });
+            }}
+          >
+            Confirm Adjustment
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
