@@ -151,6 +151,7 @@ import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
 import BackroomSettings from "./pages/dashboard/admin/BackroomSettings";
 import BackroomSubscription from "./pages/dashboard/admin/BackroomSubscription";
+import PriceRecommendations from "./pages/dashboard/admin/PriceRecommendations";
 
 // V1 Zura Intelligence
 import KpiBuilderPage from "./pages/dashboard/admin/KpiBuilderPage";
