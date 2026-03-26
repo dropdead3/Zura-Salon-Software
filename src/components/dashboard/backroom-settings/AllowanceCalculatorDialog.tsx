@@ -57,6 +57,7 @@ interface BowlState {
   id: string | null;
   bowlNumber: number;
   label: string;
+  vesselType: 'bowl' | 'bottle';
   lines: BowlLine[];
   collapsed: boolean;
 }
