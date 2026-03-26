@@ -226,13 +226,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   // Derived data
   const allServices = services || [];
-  const componentsByService = useMemo(() => {
-    const map = new Map<string, number>();
-    (allComponents || []).forEach((c) => {
-      map.set(c.service_id, (map.get(c.service_id) || 0) + 1);
-    });
-    return map;
-  }, [allComponents]);
 
   const allowanceByService = useMemo(() => {
     const map = new Map<string, typeof allowancePolicies extends (infer T)[] | undefined ? T : never>();
