@@ -739,7 +739,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       }}
                                                     >
                                                       {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                      {vt}
+                                                      {vt === 'bowl' ? 'Bowls' : 'Bottles'}
                                                     </button>
                                                   </React.Fragment>
                                                 );
