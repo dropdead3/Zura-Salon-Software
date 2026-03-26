@@ -321,7 +321,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     setModeledServicePrice(null);
   }, [open, existingBowls, existingBaselines, catalogProducts]);
 
-  // Pre-computed maps for render performance (Items 4)
+  // Force-close effect: runs with current onOpenChange prop, avoiding stale closures
+  useEffect(() => {
+    if (forceClose) {
+      setForceClose(false);
+      onOpenChange(false);
+    }
+  }, [forceClose, onOpenChange]);
+
   const productBowlMap = useMemo(() => {
     const map = new Map<string, string[]>();
     bowls.forEach((b) => {
