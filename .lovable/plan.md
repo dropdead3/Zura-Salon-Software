@@ -1,49 +1,49 @@
 
 
-## Compliance Reports — Clean-Up & Enhancements
+## Build "Your Savings" Dashboard — Backroom Value & ROI Center
 
-### 1. Fix all remaining "Reweigh" → "Compliance" naming
+### Problem
+The existing `BackroomROICard` is a small card buried in the subscription page. Salon owners can't easily see how the backroom is saving them money, making it easy to question the subscription value. We need a prominent, transparent savings dashboard that builds retention by showing real data-driven value.
 
-**File: `BackroomComplianceSection.tsx`**
+### Approach
+Create a dedicated **"Your Savings"** section in the Backroom Hub sidebar (under Operations) that consolidates and expands on the existing ROI logic. Unlike the current card, this will break down *each savings category* with plain-English explanations of how every number is calculated.
 
-| Line | Current | New |
-|------|---------|-----|
-| 1 | JSDoc: "Reweigh Reports" | "Compliance Reports" |
-| 138 | KPI label: "Reweigh Rate" | "Compliance Rate" |
-| 163 | KPI label: "Reweigh Rate" | "Reweigh Rate" (keep — this one is actually the reweigh-specific metric, but clarify) |
-| 229 | Chart title: "Reweigh & Waste Trend" | "Compliance & Waste Trend" |
-| 251/254 | Tooltip/legend: "Reweigh Rate" | "Compliance Rate" |
-| 269 | Leaderboard title: "Staff Reweigh Rates" | "Staff Compliance" |
+### Data Sources (already available — no new tables needed)
+- **`backroom_analytics_snapshots`**: waste_pct, total_product_cost, ghost_loss_cost, total_waste_qty, avg_chemical_cost_per_service
+- **`checkout_usage_charges`**: supply cost recovery (recouped overage charges)
+- **`useBackroomROI`**: existing waste reduction vs baseline calculation
+- **`useSupplyCostRecovery`**: existing overage charge aggregation
 
-Also clarify the two rate cards: Card 1 = "Compliance Rate" (has mix session + reweigh), Card 3 = "Reweigh Rate" (of those with sessions, how many reweighed). Different metrics, currently same label.
+### Savings Categories (with transparent formulas)
 
-### 2. Sort staff leaderboard explicitly
+| Category | Calculation | Plain English |
+|----------|------------|---------------|
+| **Waste Reduction** | (12% baseline - your actual waste%) × avg daily product cost × 30 | "Industry average waste is 12%. Your backroom tracks at X%. That difference saves you $Y/month." |
+| **Ghost Product Recovery** | Sum of ghost_loss_cost from snapshots | "Product that went missing without being logged. Zura caught $X worth." |
+| **Supply Cost Recovery** | Sum of approved checkout_usage_charges | "Overage charges collected from clients when they exceed their service allowance." |
+| **Cost-per-Service Visibility** | Qualitative — show avg cost/service trend | "Knowing your true cost per service helps you price correctly. Your avg is $X." |
 
-Add `.sort((a, b) => a.complianceRate - b.complianceRate)` before rendering the staff breakdown table so worst performers appear first (matches the tooltip promise).
+### UI Design
 
-### 3. Show overflow count on Missing Sessions
+**Hero Section**: Large "Total Estimated Savings" number with a subtitle like "Based on X days of your real usage data" and a progress ring or bar showing savings vs subscription cost.
 
-When more than 20 missing sessions exist, show a small "and X more" indicator below the list.
+**Breakdown Cards**: Each savings category gets its own card with:
+- Icon + label + dollar amount
+- A small "How is this calculated?" expandable section (Collapsible) with the formula in plain language
+- Trend indicator (up/down vs prior period when enough data exists)
 
-### 4. PDF improvements
+**"How We Calculate" Footer**: A single collapsible panel explaining the industry baseline assumption (12% waste rate) and data sources, so owners trust the numbers.
 
-**File: `staffComplianceReportPdf.ts`**
+**Not Enough Data State**: Warm message with a progress indicator (X of 7 days) — reuses the existing pattern from `BackroomROICard`.
 
-- Replace the non-functional "Waste %" column with "Overage" or remove it entirely
-- Add Reweigh Rate to the summary card (6 metrics instead of 5)
-- Fix badge width calculation — use full `getTextWidth` instead of `* 0.5` to prevent clipping "NEEDS ATTENTION"
+### Changes
 
-### 5. Staff Report dialog — show date range context
+| File | Action |
+|------|--------|
+| `src/pages/dashboard/admin/BackroomSettings.tsx` | Add `'savings'` to `BackroomSection` union; add sidebar entry with `Coins` icon under Operations |
+| `src/hooks/backroom/useBackroomSavings.ts` | **New** — unified hook combining `useBackroomROI` logic + `useSupplyCostRecovery` into a single categorized breakdown |
+| `src/components/dashboard/backroom-settings/BackroomSavingsSection.tsx` | **New** — full savings dashboard with hero total, category cards, formula explanations, and subscription comparison |
 
-**File: `StaffComplianceReportDialog.tsx`**
-
-- Format the date range display more clearly (e.g., "Mar 19, 2026 → Mar 26, 2026" instead of raw yyyy-MM-dd)
-
-### Files changed
-
-| File | Changes |
-|------|---------|
-| `BackroomComplianceSection.tsx` | Rename labels, sort leaderboard, add overflow count |
-| `staffComplianceReportPdf.ts` | Fix badge width, swap dead column, add reweigh rate metric |
-| `StaffComplianceReportDialog.tsx` | Format date display |
+### Result
+Salon owners get a dedicated "Your Savings" page showing exactly how much money the backroom is saving them, with transparent formulas they can verify. This directly supports retention by making the cost-benefit undeniable.
 
