@@ -1,34 +1,33 @@
 
 
-## Add Sub-Tabs to Backroom Analytics Section
+## Move Usage Frequency Into Products Sub-Tab
 
 ### Problem
-The Analytics tab in the Backroom Hub renders all content vertically in one long scroll: KPI strip, Product Analytics, Employee Performance table, History Chart, and Brand Usage — making it hard to digest.
+`ProductUsageFrequencyTable` is rendered as a sibling **after** `BackroomInsightsSection` inside the Analytics tab of `BackroomDashboardOverview.tsx` (line 462). Since the sub-tabs (Products / Staff / Trends / Brands) live *inside* `BackroomInsightsSection`, the Usage Frequency table sits below them and appears regardless of which sub-tab is active.
+
+The same issue applies to the other cards after `BackroomInsightsSection`: `WasteCategoryBreakdownCard`, `ServicePLReport`, `BackroomInventoryValuationCard`, and `SeasonalDemandOverlay`.
 
 ### Solution
-Add `SubTabs` navigation below the KPI strip to break the remaining content into focused sections. The KPI strip stays pinned above the tabs as a persistent summary.
+Move the extra analytics cards from `BackroomDashboardOverview` into the appropriate sub-tabs inside `BackroomInsightsSection`:
 
-### Tab Structure
-
-| Tab | Content |
-|-----|---------|
-| **Products** (default) | `BackroomProductAnalyticsCard` |
-| **Staff** | Employee Performance table (sortable, exportable) |
-| **Trends** | `BackroomHistoryChart` |
-| **Brands** | `BackroomBrandUsageCard` |
+| Card | Move to sub-tab |
+|------|-----------------|
+| `ProductUsageFrequencyTable` | **Products** |
+| `WasteCategoryBreakdownCard` | **Products** |
+| `ServicePLReport` | **Trends** |
+| `BackroomInventoryValuationCard` | **Products** |
+| `SeasonalDemandOverlay` | **Trends** |
 
 ### Changes
 
 **File: `src/components/dashboard/backroom-settings/BackroomInsightsSection.tsx`**
+- Accept new optional props: `showExtendedAnalytics`, `wasteByCategory`, `totalWasteQty`
+- Import the five card components
+- Render them inside their respective `<TabsContent>` blocks
 
-1. Import `Tabs, TabsContent, SubTabsList, SubTabsTrigger` from `@/components/ui/tabs`
-2. Keep the header (title + filters) and KPI cards grid outside the tabs — always visible
-3. Wrap the four content blocks in a `<Tabs defaultValue="products">` with `SubTabsList` / `SubTabsTrigger` for the underline-style nav
-4. Each block goes into its own `<TabsContent>`:
-   - `products` → `<BackroomProductAnalyticsCard />`
-   - `staff` → The existing Employee Performance `<Card>` block (lines 198-313)
-   - `trends` → `<BackroomHistoryChart />`
-   - `brands` → `<BackroomBrandUsageCard />`
+**File: `src/components/dashboard/backroom-settings/BackroomDashboardOverview.tsx`**
+- Remove the five card renders from the Analytics `TabsContent` (lines 455-462)
+- Pass `showExtendedAnalytics`, `wasteByCategory`, and `totalWasteQty` props to `BackroomInsightsSection`
 
-No new files needed. The data hooks already only run when their parent renders, so no wasted queries — each tab's content mounts on activation.
+This ensures each card only appears under its relevant sub-tab.
 
