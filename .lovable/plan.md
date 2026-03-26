@@ -1,59 +1,65 @@
 
 
-## Gap Analysis: Color Type Classification Implementation
+## Fix X Button / "Discard & Close" Not Closing the Dialog
 
-### What's Working Well
-- Database schema: `color_type` enum exists on both `supply_library_products` and `products`
-- Supply Library UI: Color Type dropdown appears conditionally when `category === 'color'`
-- Allowance Calculator: `requiresDeveloper()` uses data-first approach with keyword fallback
-- Sync logic: `color_type` propagates from library → org products via backfill
+### Root Cause
 
-### Gaps Found
+The "Discard & Close" toast action calls `onOpenChange(false)` directly — the prop. This should close the dialog by setting the parent's `calculatorServiceId` to `null`. However, the closure captures the `onOpenChange` prop reference from the render when the toast was created. Since the parent's `onOpenChange` is an inline function `(open) => { if (!open) setCalculatorServiceId(null); }` that gets recreated on each render, the stale reference may not propagate correctly in all cases.
 
-**1. Category overlap: `semi-permanent` exists as both a category AND a color_type**
+Additionally, the `skipDirtyCheckRef` mechanism is fragile — it only helps if Radix's `onOpenChange` wrapper fires again, but calling the prop directly bypasses Radix entirely.
 
-The `CATEGORIES` array includes `'semi-permanent'` as a standalone category (line 51 of SupplyLibraryTab). But the Color Type dropdown only shows when `category === 'color'`. This means:
-- A product filed under category `semi-permanent` will never show the Color Type dropdown
-- The `requiresDeveloper()` fallback keyword detection checks for "semi" in the combined name+category string — a product with `category: 'semi-permanent'` would correctly be excluded, but it would never have `color_type` set structurally
+### Fix
 
-**Fix:** In `requiresDeveloper()`, also check if `product.category === 'semi-permanent'` as an explicit non-developer signal before keyword fallback. This is partially covered by the keyword check but should be explicit for clarity.
+**File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-**2. Warning not cleared when the last permanent/demi product is removed from a bowl**
+Replace the toast-based close with a `forceClose` state + `useEffect` pattern. This avoids stale closure issues entirely:
 
-When a user removes the only permanent/demi color line from a bowl, the developer warning banner persists because `removeLineFromBowl` doesn't re-evaluate whether the warning should be cleared.
+1. Add a `forceClose` state: `const [forceClose, setForceClose] = useState(false);`
 
-**Fix:** In `removeLineFromBowl`, after filtering lines, check if the bowl still contains any `requiresDeveloper` products. If not, remove the bowl index from `developerWarningBowls`.
+2. Add a `useEffect` that watches `forceClose`:
+```tsx
+useEffect(() => {
+  if (forceClose) {
+    setForceClose(false);
+    onOpenChange(false);
+  }
+}, [forceClose, onOpenChange]);
+```
 
-**3. Warning uses stale bowl state after `addProductToBowl`**
+3. Update the toast "Discard & Close" action to simply set state:
+```tsx
+onClick: () => {
+  toast.dismiss(toastId);
+  setForceClose(true);
+}
+```
 
-At line 557, the code reads `bowls[bowlIdx]` to check for existing developers, but this reads the state *before* the `setBowls` call above it has taken effect (React state is async). The check should use the lines that were just constructed inside the `setBowls` updater, not the outer `bowls` reference.
+4. Update the `onOpenChange` wrapper to also check `forceClose`:
+```tsx
+onOpenChange={(newOpen) => {
+  if (!newOpen && isDirty) {
+    const toastId = toast.warning('You have unsaved changes', {
+      action: { label: 'Discard & Close', onClick: () => {
+        toast.dismiss(toastId);
+        setForceClose(true);
+      }},
+      duration: 6000,
+    });
+    return;
+  }
+  onOpenChange(newOpen);
+}}
+```
 
-**Fix:** Move the developer-check logic inside the `setBowls` updater function, or capture the updated lines in a ref to check after the state update.
+5. Remove `skipDirtyCheckRef` entirely — no longer needed.
 
-**4. No color_type displayed in the Supply Library product table**
+### Why This Works
 
-After setting the Color Type on a product, there's no visible indicator in the product table rows showing what type was assigned. Users can't verify classifications without opening each product's edit dialog.
-
-**Fix:** Add a subtle badge or label in the product table row (e.g., a small "Perm" / "Demi" / "Semi" badge) for products with `color_type` set.
-
-**5. Bulk Import doesn't set color_type**
-
-The Bulk Catalog Import (Gemini/Firecrawl) likely doesn't extract or set `color_type` on imported products. New bulk-imported color products would have `null` color_type, relying entirely on keyword fallback.
-
-**Fix:** This is acceptable short-term (keyword fallback handles it), but worth noting as a future enhancement — the AI import could attempt to classify color types during ingestion.
-
-### Recommended Priority
-
-| # | Gap | Severity | Effort |
-|---|-----|----------|--------|
-| 3 | Stale state in developer check | Bug — warning may not trigger | ~5 lines |
-| 2 | Warning persists after removing color product | Bug — stale UI | ~8 lines |
-| 1 | Semi-permanent category edge case | Low risk (keyword fallback works) | ~2 lines |
-| 4 | No color_type visibility in table | UX gap | ~10 lines |
-| 5 | Bulk import doesn't classify | Enhancement | Future scope |
+- `setForceClose(true)` triggers a re-render
+- The `useEffect` runs with the CURRENT `onOpenChange` prop (not a stale closure)
+- Clean separation between "user wants to close" (state) and "execute the close" (effect)
 
 ### Scope
-- All fixes in `AllowanceCalculatorDialog.tsx` (gaps 1–3)
-- Table badge in `SupplyLibraryTab.tsx` (gap 4)
-- No database changes needed
+- Single file, ~10 lines changed
+- Removes `skipDirtyCheckRef`, adds `forceClose` state + effect
 
