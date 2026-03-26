@@ -22,6 +22,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAllowanceBowls, useUpsertAllowanceBowl, useDeleteAllowanceBowl } from '@/hooks/backroom/useAllowanceBowls';
 import { useServiceRecipeBaselines, useUpsertRecipeBaseline, useDeleteRecipeBaseline } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
+import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
+import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/backroom/allowance-health';
 import { toast } from 'sonner';
 
 interface Props {
