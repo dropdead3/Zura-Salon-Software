@@ -73,7 +73,7 @@ export function generateStaffComplianceReportPdf(options: StaffComplianceReportO
   y = 50;
   doc.setDrawColor(200, 200, 200);
   doc.setFillColor(248, 248, 250);
-  doc.roundedRect(14, y, pageWidth - 28, 30, 3, 3, 'FD');
+  doc.roundedRect(14, y, pageWidth - 28, 32, 3, 3, 'FD');
 
   const reweighRate = staff.total > 0 && staff.total - staff.missing > 0
     ? Math.round(((staff as any).reweighed ?? 0) / (staff.total - staff.missing) * 100)
