@@ -28,6 +28,8 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
 import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
 import { AllowanceCalculatorDialog } from './AllowanceCalculatorDialog';
+import { PriceRecommendationCard } from './PriceRecommendationCard';
+import { useComputedPriceRecommendations, useAcceptPriceRecommendation, useDismissPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
 
 interface ServiceRow {
   id: string;
@@ -80,6 +82,18 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
   const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
+
+  // Price recommendations
+  const { data: priceRecommendations } = useComputedPriceRecommendations();
+  const acceptPriceRec = useAcceptPriceRecommendation();
+  const dismissPriceRec = useDismissPriceRecommendation();
+  const priceRecMap = useMemo(() => {
+    const map = new Map<string, import('@/lib/backroom/price-recommendation').PriceRecommendation>();
+    for (const r of (priceRecommendations || [])) {
+      if (r.is_below_target) map.set(r.service_id, r);
+    }
+    return map;
+  }, [priceRecommendations]);
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
@@ -825,6 +839,19 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             </div>
                                           </div>
                                         </div>
+                                        {/* Price Recommendation inline alert */}
+                                        {(() => {
+                                          const rec = priceRecMap.get(service.id);
+                                          if (!rec) return null;
+                                          return (
+                                            <PriceRecommendationCard
+                                              recommendation={rec}
+                                              onAccept={() => acceptPriceRec.mutate(rec)}
+                                              onDismiss={() => dismissPriceRec.mutate(rec)}
+                                              isAccepting={acceptPriceRec.isPending}
+                                            />
+                                          );
+                                        })()}
                                         {/* Mark Configured footer */}
                                         <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
                                           {service.backroom_config_dismissed ? (

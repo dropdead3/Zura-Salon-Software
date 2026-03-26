@@ -151,6 +151,7 @@ import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
 import BackroomSettings from "./pages/dashboard/admin/BackroomSettings";
 import BackroomSubscription from "./pages/dashboard/admin/BackroomSubscription";
+import PriceRecommendations from "./pages/dashboard/admin/PriceRecommendations";
 
 // V1 Zura Intelligence
 import KpiBuilderPage from "./pages/dashboard/admin/KpiBuilderPage";
@@ -307,6 +308,7 @@ function DashboardRoutes() {
       <Route path="admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
       <Route path="admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSettings /></ProtectedRoute>} />
       <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSubscription /></ProtectedRoute>} />
+      <Route path="admin/price-recommendations" element={<ProtectedRoute requiredPermission="manage_settings"><PriceRecommendations /></ProtectedRoute>} />
       <Route path="admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
       <Route path="admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />
       <Route path="admin/decision-history" element={<ProtectedRoute requiredPermission="manage_settings"><DecisionHistoryPage /></ProtectedRoute>} />

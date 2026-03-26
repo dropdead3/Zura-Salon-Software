@@ -18566,6 +18566,108 @@ export type Database = {
           },
         ]
       }
+      service_price_recommendations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          current_price: number
+          id: string
+          margin_pct_current: number
+          margin_pct_target: number
+          organization_id: string
+          product_cost: number
+          recommended_price: number
+          service_id: string
+          status: Database["public"]["Enums"]["price_recommendation_status"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          current_price: number
+          id?: string
+          margin_pct_current: number
+          margin_pct_target: number
+          organization_id: string
+          product_cost: number
+          recommended_price: number
+          service_id: string
+          status?: Database["public"]["Enums"]["price_recommendation_status"]
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          current_price?: number
+          id?: string
+          margin_pct_current?: number
+          margin_pct_target?: number
+          organization_id?: string
+          product_cost?: number
+          recommended_price?: number
+          service_id?: string
+          status?: Database["public"]["Enums"]["price_recommendation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_price_recommendations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_price_recommendations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_price_targets: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          service_id: string
+          target_margin_pct: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          service_id: string
+          target_margin_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          service_id?: string
+          target_margin_pct?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_price_targets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_price_targets_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_profitability_snapshots: {
         Row: {
           appointment_id: string | null
@@ -23803,6 +23905,7 @@ export type Database = {
         | "rippling"
         | "wave"
       price_queue_status: "pending" | "approved" | "rejected" | "auto_applied"
+      price_recommendation_status: "pending" | "accepted" | "dismissed"
       program_status: "active" | "paused" | "completed" | "restarted"
       rsvp_status: "pending" | "accepted" | "declined"
       shift_role_context:
@@ -24077,6 +24180,7 @@ export const Constants = {
         "wave",
       ],
       price_queue_status: ["pending", "approved", "rejected", "auto_applied"],
+      price_recommendation_status: ["pending", "accepted", "dismissed"],
       program_status: ["active", "paused", "completed", "restarted"],
       rsvp_status: ["pending", "accepted", "declined"],
       shift_role_context: [
