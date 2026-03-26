@@ -891,6 +891,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
                 {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
               </div>
+              <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
+                This dollar amount will be the included allowance for this service.
+              </div>
             </div>
             <Button
               size="sm"
