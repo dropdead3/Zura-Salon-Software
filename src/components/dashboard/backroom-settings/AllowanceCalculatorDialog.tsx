@@ -633,7 +633,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance</DialogTitle>
             <MetricInfoTooltip
-              description="Product allowance is the dollar value of product included in a service, based on your standard product line. If you also carry a premium line and use it for the same service, you'll reach the allowance faster — the higher cost per gram means less product before hitting the limit. Once the allowance is exceeded, overage costs are automatically passed to the client at checkout so your salon recoups the difference."
+              description="Use this tool to set a dollar allowance for this service. Pick sample products as benchmarks to calculate cost — stylists aren't limited to these products. During a service, they can mix whatever the client needs. If you carry a premium line, the higher cost per gram means less product before hitting the limit. Once the allowance amount is reached, any additional product cost is charged to the client as an overage fee."
               className="w-3.5 h-3.5"
             />
           </div>
