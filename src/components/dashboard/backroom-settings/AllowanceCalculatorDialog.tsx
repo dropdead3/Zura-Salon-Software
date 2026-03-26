@@ -1357,12 +1357,34 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     placeholder={servicePrice?.toString() || '0'}
                   />
                   {modeledServicePrice !== null && modeledServicePrice !== servicePrice && (
-                    <button
-                      className="text-[10px] text-primary hover:underline"
-                      onClick={() => setModeledServicePrice(null)}
-                    >
-                      reset
-                    </button>
+                    <>
+                      <button
+                        className="text-[10px] text-primary hover:underline"
+                        onClick={() => setModeledServicePrice(null)}
+                      >
+                        reset
+                      </button>
+                      <button
+                        className="text-[10px] text-primary hover:underline"
+                        onClick={() => {
+                          const oldPrice = servicePrice;
+                          updateServicePriceMutation.mutate(modeledServicePrice, {
+                            onSuccess: () => {
+                              setModeledServicePrice(null);
+                              toast(`Service price updated to $${modeledServicePrice}`, {
+                                action: oldPrice ? {
+                                  label: 'Undo',
+                                  onClick: () => updateServicePriceMutation.mutate(oldPrice),
+                                } : undefined,
+                                duration: 6000,
+                              });
+                            },
+                          });
+                        }}
+                      >
+                        apply
+                      </button>
+                    </>
                   )}
                 </span>
               </div>
