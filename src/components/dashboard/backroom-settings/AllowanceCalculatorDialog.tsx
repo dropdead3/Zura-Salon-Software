@@ -112,12 +112,15 @@ const SEMI_PERMANENT_KEYWORDS = ['semi-permanent', 'semi permanent', 'semi'];
 const DEVELOPER_REQUIRING_KEYWORDS = ['permanent', 'demi'];
 
 function requiresDeveloper(product: CatalogProduct): boolean {
+  // Data-first: use structured color_type if set
+  if (product.color_type) {
+    return product.color_type === 'permanent' || product.color_type === 'demi_permanent';
+  }
+  // Fallback: keyword detection for legacy/unclassified products
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
   const combined = `${name} ${category}`;
-  // Exclude semi-permanent first
   if (SEMI_PERMANENT_KEYWORDS.some(kw => combined.includes(kw))) return false;
-  // Check for permanent or demi
   return DEVELOPER_REQUIRING_KEYWORDS.some(kw => combined.includes(kw));
 }
 
