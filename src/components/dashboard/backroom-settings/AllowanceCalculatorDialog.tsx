@@ -638,7 +638,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             />
           </div>
           <DialogDescription className="text-sm font-sans text-muted-foreground">
-            {serviceName} — Build sample {hasBoth ? 'bowls & bottles' : hasBottles ? 'bottles' : 'bowls'} to calculate the included product cost.
+            {serviceName} — Use sample products as benchmarks to set the included dollar allowance.
           </DialogDescription>
         </DialogHeader>
 
