@@ -1009,6 +1009,22 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </TooltipTrigger>
                         <TooltipContent>Duplicate this {bowl.vesselType}</TooltipContent>
                       </Tooltip>
+                      {/* Clear bowl */}
+                      {bowl.lines.length > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => { e.stopPropagation(); clearBowl(bowlIdx); }}
+                            >
+                              <Eraser className="w-3.5 h-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Clear all products</TooltipContent>
+                        </Tooltip>
+                      )}
                       {bowls.length > 1 && (
                         <Button
                           variant="ghost"
