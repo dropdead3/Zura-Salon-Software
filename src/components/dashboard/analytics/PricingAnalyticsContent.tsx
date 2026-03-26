@@ -186,7 +186,7 @@ export function PricingAnalyticsContent({
                   <MetricInfoTooltip description="Estimated monthly revenue increase if all below-target services are repriced. Weighted by each service's 30-day appointment volume." className="w-3 h-3" />
                 </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>
-                  <BlurredAmount value={kpis.weightedImpact} prefix={kpis.weightedImpact >= 0 ? '+$' : '-$'} />
+                  <BlurredAmount>{kpis.weightedImpact >= 0 ? '+' : '-'}${Math.abs(kpis.weightedImpact).toFixed(2)}</BlurredAmount>
                 </p>
               </div>
             </CardContent>
