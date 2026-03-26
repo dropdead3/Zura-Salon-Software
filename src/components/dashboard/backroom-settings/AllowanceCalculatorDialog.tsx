@@ -546,7 +546,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
-      // Phase 2: Insert new data
+      // Phase 2: Insert new data — collect all baselines for batch update
+      const baselineUpdates: Array<{ baselineId: string; bowlId: string; line: BowlLine }> = [];
+
       for (const bowl of bowls) {
         if (bowl.lines.length === 0) continue;
 
@@ -558,10 +560,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         });
 
         for (const line of bowl.lines) {
-          // P0 fix: Save the RAW quantity for developer lines, not the effective qty.
+          // Save the RAW quantity for developer lines, not the effective qty.
           // The effective qty is computed at runtime from colorQty * ratio.
-          // Saving raw qty prevents inflated values on reload.
-          await upsertBaseline.mutateAsync({
+          const savedBaseline = await upsertBaseline.mutateAsync({
             organization_id: orgId,
             service_id: serviceId,
             product_id: line.productId,
@@ -570,18 +571,23 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
           });
 
-          await supabase
-            .from('service_recipe_baselines')
-            .update({
-              bowl_id: savedBowl.id,
-              cost_per_unit_snapshot: line.costPerGram,
-              is_developer: line.isDeveloper,
-              developer_ratio: line.developerRatio,
-            })
-            .eq('organization_id', orgId)
-            .eq('service_id', serviceId)
-            .eq('product_id', line.productId);
+          // Track for update by ID (not composite key) to handle same product in multiple bowls
+          baselineUpdates.push({ baselineId: savedBaseline.id, bowlId: savedBowl.id, line });
         }
+      }
+
+      // Phase 2b: Update bowl_id and metadata on each baseline by its unique ID
+      for (const { baselineId, bowlId, line } of baselineUpdates) {
+        const { error: updateErr } = await supabase
+          .from('service_recipe_baselines')
+          .update({
+            bowl_id: bowlId,
+            cost_per_unit_snapshot: line.costPerGram,
+            is_developer: line.isDeveloper,
+            developer_ratio: line.developerRatio,
+          })
+          .eq('id', baselineId);
+        if (updateErr) throw new Error('Failed to update baseline metadata: ' + updateErr.message);
       }
 
       // Phase 3: Update policy
