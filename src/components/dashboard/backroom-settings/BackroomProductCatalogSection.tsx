@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
 import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/backroom/useBackroomInventoryTable';
-import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings } from '@/hooks/backroom/useLocationProductSettings';
+import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings, useSyncCatalogToAllLocations } from '@/hooks/backroom/useLocationProductSettings';
 import { useLocations } from '@/hooks/useLocations';
 import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
 import { tokens } from '@/lib/design-tokens';
@@ -43,7 +43,8 @@ import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/compon
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
-import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw, MapPin } from 'lucide-react';
+import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, ChevronLeft, PackagePlus, LayoutGrid, TableIcon, DollarSign, AlertTriangle, Archive, ShoppingCart, RefreshCw, MapPin, Building2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
@@ -178,6 +179,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const { settingsMap: locationSettings } = useLocationProductSettingsMap(effectiveLocationId);
   const upsertSetting = useUpsertLocationProductSetting();
   const bulkUpsertSettings = useBulkUpsertLocationProductSettings();
+  const syncCatalogMutation = useSyncCatalogToAllLocations();
 
   // UI state
   const [search, setSearch] = useState('');
@@ -187,6 +189,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [bulkReorderOpen, setBulkReorderOpen] = useState(false);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
   const [syncScope, setSyncScope] = useState<'brand' | 'all'>('brand');
+  const [syncToAllOpen, setSyncToAllOpen] = useState(false);
+  const [syncIncludeLevels, setSyncIncludeLevels] = useState(true);
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -723,9 +727,9 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
 
-        {/* Location dropdown selector */}
+        {/* Location dropdown selector + Sync to All */}
         {activeLocations.length > 1 && (
-          <div className="px-6 pb-2">
+          <div className="px-6 pb-2 flex items-center gap-2">
             <Select value={effectiveLocationId} onValueChange={setSelectedLocationId}>
               <SelectTrigger className="w-fit rounded-full gap-2">
                 <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -739,6 +743,18 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 ))}
               </SelectContent>
             </Select>
+            {trackedCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setSyncIncludeLevels(true); setSyncToAllOpen(true); }}
+                disabled={syncCatalogMutation.isPending}
+                className="font-sans gap-1.5 rounded-full"
+              >
+                <Building2 className={cn('w-3.5 h-3.5', syncCatalogMutation.isPending && 'animate-spin')} />
+                Sync to All Locations
+              </Button>
+            )}
           </div>
         )}
 
@@ -1300,6 +1316,65 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               }}
             >
               Yes, sync now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Sync catalog to all locations confirmation dialog */}
+      <AlertDialog open={syncToAllOpen} onOpenChange={setSyncToAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={tokens.card.title}>Sync Catalog to All Locations</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  This will replicate the tracked product catalog from{' '}
+                  <strong className="text-foreground font-medium">
+                    {activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'this location'}
+                  </strong>{' '}
+                  to {activeLocations.length - 1} other location{activeLocations.length - 1 > 1 ? 's' : ''}.
+                </p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">What will be synced:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li><strong className="text-foreground">{trackedCount}</strong> tracked products</li>
+                    <li>Tracking status (enabled)</li>
+                    {syncIncludeLevels && <li>Par levels & reorder levels</li>}
+                  </ul>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Checkbox
+                    id="sync-include-levels"
+                    checked={syncIncludeLevels}
+                    onCheckedChange={(checked) => setSyncIncludeLevels(!!checked)}
+                  />
+                  <label htmlFor="sync-include-levels" className="text-sm font-sans text-foreground cursor-pointer">
+                    Include par levels & reorder levels
+                  </label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Existing tracking settings at other locations will be overwritten. Untracked products at those locations will not be affected.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!effectiveLocationId) return;
+                const targetIds = activeLocations
+                  .filter(l => l.id !== effectiveLocationId)
+                  .map(l => l.id);
+                syncCatalogMutation.mutate({
+                  sourceLocationId: effectiveLocationId,
+                  targetLocationIds: targetIds,
+                  includeLevels: syncIncludeLevels,
+                });
+              }}
+            >
+              Yes, sync to all locations
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
