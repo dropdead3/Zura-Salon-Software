@@ -289,7 +289,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       default:
         return allServices;
     }
-  }, [allServices, activeFilter, componentsByService, allowanceByService]);
+  }, [allServices, activeFilter, allowanceByService]);
 
   // Search filter (applied after tab filter)
   const searchedServices = useMemo(() => {
