@@ -190,12 +190,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (updates.container_types && effectiveOrganization) {
         const svc = (services || []).find(s => s.id === id);
         if (svc?.name) {
-          const { error: syncErr } = await supabase.rpc('exec_sql' as any, {}) // fallback: direct update
-            .then(() => ({ error: null }))
-            .catch(() => ({ error: null }));
-          // Use raw update to avoid deep type instantiation
-          await (supabase as any)
-            .from('phorest_services')
+          // Cast to avoid TS2589 deep type instantiation on phorest_services
+          await (supabase.from('phorest_services') as any)
             .update({ container_types: updates.container_types })
             .eq('name', svc.name)
             .eq('organization_id', effectiveOrganization);
