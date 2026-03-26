@@ -248,7 +248,7 @@ export function BackroomComplianceSection() {
                       <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <Tooltip
-                        formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Reweigh Rate' : 'Waste %']}
+                        formatter={(v: number, name: string) => [`${v}%`, name === 'complianceRate' ? 'Compliance Rate' : 'Waste %']}
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                       />
                       <Legend formatter={(value) => value === 'complianceRate' ? 'Reweigh Rate' : 'Waste %'} />
