@@ -114,3 +114,6 @@ export function calculateProductCostCharge(input: ProductCostInput): ProductCost
     profitMargin,
   };
 }
+
+// Re-export retail cost utility for billing engine consumers
+export { calculateRetailCostPerGram } from './allowance-health';
