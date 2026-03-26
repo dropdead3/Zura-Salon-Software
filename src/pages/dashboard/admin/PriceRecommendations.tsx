@@ -3,6 +3,7 @@
  * Shows all tracked chemical services with margin analysis and one-click price updates.
  */
 import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
