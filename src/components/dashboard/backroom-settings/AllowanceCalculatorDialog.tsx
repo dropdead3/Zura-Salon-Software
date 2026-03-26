@@ -883,8 +883,69 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           {bowl.lines.length} added
                         </Badge>
                       )}
+                      {bowlHealthPct !== null && bowl.lines.length > 0 && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'text-[10px] px-2 py-0.5',
+                            bowlHealthPct > 10 ? 'text-destructive border-destructive/30' :
+                            bowlHealthPct < 6 ? 'text-amber-500 border-amber-500/30' :
+                            'text-emerald-500 border-emerald-500/30'
+                          )}
+                        >
+                          {bowlHealthPct.toFixed(1)}% of service
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
+                      {/* Bulk quantity presets */}
+                      {colorLines.length > 0 && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Set All
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
+                            <p className="text-[11px] font-sans text-muted-foreground mb-1.5">Set all color lines to:</p>
+                            <div className="flex gap-1">
+                              {WEIGHT_PRESETS.map((g) => (
+                                <Button
+                                  key={g}
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2.5 text-xs"
+                                  onClick={() => { setBulkQuantity(bowlIdx, g); }}
+                                >
+                                  {g}g
+                                </Button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                      {/* Duplicate bowl */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              duplicateBowl(bowlIdx);
+                            }}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Duplicate this {bowl.vesselType}</TooltipContent>
+                      </Tooltip>
                       {bowls.length > 1 && (
                         <Button
                           variant="ghost"
