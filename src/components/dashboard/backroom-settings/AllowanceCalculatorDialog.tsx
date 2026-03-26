@@ -569,7 +569,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               return (
                 <div
                   key={p.id}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted/20 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors cursor-pointer rounded-md"
+                  onClick={() => {
+                    if (isAlreadyAdded) {
+                      const line = bowls[bowlIdx]?.lines.find((l) => l.productId === p.id);
+                      if (line) removeLineFromBowl(bowlIdx, line.localId);
+                    } else {
+                      addProductToBowl(bowlIdx, p);
+                    }
+                  }}
                 >
                   <div
                     className="w-5 h-5 rounded-full border border-border/60 shrink-0"
@@ -586,27 +594,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant={isAlreadyAdded ? 'ghost' : 'outline'}
-                    size="sm"
-                    className={cn(
-                      'h-6 px-2.5 text-xs transition-colors shrink-0',
-                      isAlreadyAdded && 'text-primary hover:text-primary'
-                    )}
-                    onClick={() => addProductToBowl(bowlIdx, p)}
-                  >
-                    {isAlreadyAdded ? (
-                      <>
-                        <Check className="w-3 h-3 mr-1" />
-                        Added
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add
-                      </>
-                    )}
-                  </Button>
+                  <Checkbox
+                    checked={isAlreadyAdded}
+                    className="shrink-0"
+                    tabIndex={-1}
+                    onClick={(e) => e.stopPropagation()}
+                    onCheckedChange={() => {
+                      if (isAlreadyAdded) {
+                        const line = bowls[bowlIdx]?.lines.find((l) => l.productId === p.id);
+                        if (line) removeLineFromBowl(bowlIdx, line.localId);
+                      } else {
+                        addProductToBowl(bowlIdx, p);
+                      }
+                    }}
+                  />
                 </div>
               );
             })}
