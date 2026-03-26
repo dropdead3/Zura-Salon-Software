@@ -174,6 +174,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [bowls, setBowls] = useState<BowlState[]>([]);
   const [saving, setSaving] = useState(false);
   const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
+  const initialBowlsRef = useRef<string>('');
+  const isDirty = useMemo(() => {
+    if (!initialBowlsRef.current) return false;
+    const currentSnapshot = JSON.stringify(bowls.map(b => ({ lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
+    return currentSnapshot !== initialBowlsRef.current;
+  }, [bowls]);
 
   const getPickerState = useCallback((bowlIdx: number): PickerState => {
     return bowlPickers[bowlIdx] || DEFAULT_PICKER;
