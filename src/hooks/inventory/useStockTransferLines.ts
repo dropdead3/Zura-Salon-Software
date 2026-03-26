@@ -119,23 +119,3 @@ export function useDeleteTransferLine() {
     },
   });
 }
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, transferId }: { id: string; transferId: string }) => {
-      const { error } = await supabase
-        .from('stock_transfer_lines')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      return transferId;
-    },
-    onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['stock-transfer-lines', vars.transferId] });
-    },
-    onError: (error) => {
-      toast.error('Failed to remove transfer line: ' + error.message);
-    },
-  });
-}
