@@ -1,6 +1,6 @@
 /**
  * BackroomHistoryChart — Multi-metric time-series with toggleable legend.
- * Inspired by Vish-style product usage history chart.
+ * Multi-metric product usage history chart.
  */
 
 import { useState, useCallback } from 'react';

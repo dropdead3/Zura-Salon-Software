@@ -2,7 +2,7 @@
  * DockLiveDispensing — Full-screen bowl mixing view.
  * Shows ingredient list with target vs actual weights,
  * progress visualization, seal/reweigh actions, and post-reweigh summary.
- * Tapping an ingredient opens the Vish-inspired teardrop dispensing view.
+ * Tapping an ingredient opens the teardrop dispensing view.
  */
 
 import { useState, useCallback } from 'react';

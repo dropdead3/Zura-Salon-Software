@@ -1,6 +1,6 @@
 /**
  * DockIngredientDispensing — Full-screen single-ingredient view with teardrop fill.
- * Vish-inspired: large visual cue fills proportionally as weight is entered or streamed from scale.
+ * Large visual cue fills proportionally as weight is entered or streamed from scale.
  * When scale is connected, teardrop fills in real-time from live weight readings.
  */
 
