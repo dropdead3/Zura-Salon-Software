@@ -2,7 +2,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Layers, Sparkles, Check, AlertTriangle, Lightbulb } from 'lucide-react';
+import { DollarSign, Layers, Sparkles, Check, AlertTriangle, Lightbulb, Receipt } from 'lucide-react';
 
 interface MethodCard {
   icon: React.ReactNode;
@@ -13,6 +13,7 @@ interface MethodCard {
   cons: string[];
   proTip: string;
   recommended?: boolean;
+  receiptLines: { label: string; amount: string }[];
 }
 
 const METHODS: MethodCard[] = [
@@ -33,12 +34,15 @@ const METHODS: MethodCard[] = [
     ],
     proTip:
       'Use Price Intelligence to set service prices that account for your allowance budget and target margins.',
+    receiptLines: [
+      { label: 'Balayage', amount: '$185.00' },
+    ],
   },
   {
     icon: <Layers className="w-5 h-5 text-primary" />,
     title: 'Parts & Labor',
     description:
-      'Product cost is itemized separately on the receipt. Clients pay for labor plus supplies as individual line items — like an auto shop model.',
+      'Product cost is itemized separately on the receipt. Clients pay for labor plus supplies as individual line items. Charge at wholesale cost or apply a markup for retail pricing — configured per service.',
     bestFor: 'Salons with highly variable product usage or specialty treatments',
     pros: [
       'Owner never absorbs product cost',
@@ -51,6 +55,10 @@ const METHODS: MethodCard[] = [
     ],
     proTip:
       'Set a default markup percentage in billing settings to ensure margin on every product used.',
+    receiptLines: [
+      { label: 'Balayage — Labor', amount: '$145.00' },
+      { label: 'Color supplies', amount: '$38.50' },
+    ],
   },
   {
     icon: <Sparkles className="w-5 h-5 text-primary" />,
@@ -70,10 +78,19 @@ const METHODS: MethodCard[] = [
     proTip:
       'Start with Allowance for your top 5 services, then use Parts & Labor for everything else. Refine over time.',
     recommended: true,
+    receiptLines: [
+      { label: 'Balayage', amount: '$185.00' },
+      { label: 'Gloss treatment — supplies', amount: '$12.00' },
+    ],
   },
 ];
 
-export function BillingMethodEducation() {
+interface BillingMethodEducationProps {
+  /** Show a contextual hint for the wizard flow */
+  showWizardHint?: boolean;
+}
+
+export function BillingMethodEducation({ showWizardHint }: BillingMethodEducationProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
@@ -114,6 +131,28 @@ export function BillingMethodEducation() {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {method.description}
               </p>
+
+              {/* Receipt mockup */}
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-1.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Receipt className="w-3 h-3 text-muted-foreground" />
+                  <p className="text-[10px] text-muted-foreground tracking-wide uppercase font-display">
+                    Client receipt
+                  </p>
+                </div>
+                {method.receiptLines.map((line) => (
+                  <div key={line.label} className="flex items-center justify-between">
+                    <span className="text-xs text-foreground">{line.label}</span>
+                    <span className="text-xs text-foreground font-medium">{line.amount}</span>
+                  </div>
+                ))}
+                <div className="border-t border-border/40 pt-1.5 mt-1.5 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="text-xs text-foreground font-medium">
+                    ${method.receiptLines.reduce((sum, l) => sum + parseFloat(l.amount.replace('$', '')), 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
               {/* Best for */}
               <div className="rounded-lg bg-muted/30 px-3 py-2">
@@ -168,6 +207,16 @@ export function BillingMethodEducation() {
           </p>
         </div>
       </div>
+
+      {/* Wizard contextual hint */}
+      {showWizardHint && (
+        <div className="rounded-lg bg-muted/30 border border-border/40 px-4 py-3">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            In the next step, you will set allowances for each service. You can switch any service
+            to Parts & Labor later in Allowances & Billing.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

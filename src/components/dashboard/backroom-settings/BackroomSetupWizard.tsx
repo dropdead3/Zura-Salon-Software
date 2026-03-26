@@ -454,11 +454,14 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
           )}
           {step === 4 && (
             <div className="space-y-4">
-              <div className="space-y-1">
-                <p className={tokens.body.emphasis}>Before setting allowances, understand how salons recover product costs.</p>
-                <p className="text-sm text-muted-foreground">This is educational context — you will configure billing mode per service in the next step.</p>
+              <div className="flex items-center gap-3">
+                <div className="space-y-1 flex-1">
+                  <p className={tokens.body.emphasis}>Before setting allowances, understand how salons recover product costs.</p>
+                  <p className="text-sm text-muted-foreground">This is educational context — you will configure billing mode per service in the next step.</p>
+                </div>
+                <Badge variant="outline" className="text-xs shrink-0">No action needed</Badge>
               </div>
-              <BillingMethodEducation />
+              <BillingMethodEducation showWizardHint />
             </div>
           )}
           {step === 5 && (
