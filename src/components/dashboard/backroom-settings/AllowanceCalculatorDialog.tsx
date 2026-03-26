@@ -574,34 +574,21 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         });
 
         for (const line of bowl.lines) {
-          // Save the RAW quantity for developer lines, not the effective qty.
-          // The effective qty is computed at runtime from colorQty * ratio.
-          const savedBaseline = await upsertBaseline.mutateAsync({
+          // Insert baseline with all metadata in one call (no separate update needed)
+          await upsertBaseline.mutateAsync({
             organization_id: orgId,
             service_id: serviceId,
             product_id: line.productId,
+            bowl_id: savedBowl.id,
             expected_quantity: line.quantity,
             unit: 'g',
             notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
-          });
-
-          // Track for update by ID (not composite key) to handle same product in multiple bowls
-          baselineUpdates.push({ baselineId: savedBaseline.id, bowlId: savedBowl.id, line });
-        }
-      }
-
-      // Phase 2b: Update bowl_id and metadata on each baseline by its unique ID
-      for (const { baselineId, bowlId, line } of baselineUpdates) {
-        const { error: updateErr } = await supabase
-          .from('service_recipe_baselines')
-          .update({
-            bowl_id: bowlId,
             cost_per_unit_snapshot: line.costPerGram,
             is_developer: line.isDeveloper,
             developer_ratio: line.developerRatio,
-          })
-          .eq('id', baselineId);
-        if (updateErr) throw new Error('Failed to update baseline metadata: ' + updateErr.message);
+            silent: true,
+          });
+        }
       }
 
       // Phase 3: Update policy
