@@ -1330,7 +1330,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     </button>
                   );
                 })}
-              </div>
+              </div>}
 
               {/* Brand cards or Archived view */}
               {showArchived ? (
