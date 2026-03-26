@@ -76,7 +76,7 @@ export function BackroomComplianceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-compliance-guide" title="Reweigh Reports" description="Track reweigh accountability, product waste, and overage charges across color/chemical appointments." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-compliance-guide" title="Compliance Reports" description="Track staff compliance, product waste, and accountability across color/chemical appointments." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
 
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
