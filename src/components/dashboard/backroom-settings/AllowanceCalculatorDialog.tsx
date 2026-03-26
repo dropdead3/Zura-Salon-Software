@@ -509,8 +509,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     );
 
     if (removedLine) {
+      if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
       removedLineRef.current = { bowlIdx, line: removedLine, position: lineIdx };
-      toast(`Removed ${removedLine.productName}`, {
+      const toastId = toast(`Removed ${removedLine.productName}`, {
         action: {
           label: 'Undo',
           onClick: () => {
@@ -533,6 +534,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         },
         duration: 5000,
       });
+      lastUndoToastRef.current = toastId;
     }
   }, [bowls]);
 
