@@ -130,7 +130,8 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroom
 
 export default function BackroomSettings() {
   const { dashPath } = useOrgDashboardPath();
-  const [activeSection, setActiveSection] = useState<BackroomSection>('overview');
+  const initialSection = (searchParams.get('section') as BackroomSection) || 'overview';
+  const [activeSection, setActiveSection] = useState<BackroomSection>(initialSection);
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
