@@ -347,9 +347,15 @@ export default function PriceRecommendationsPage() {
                   <h3 className={tokens.empty.heading}>
                     No recommendations available
                   </h3>
-                  <p className={tokens.empty.description}>
-                    Set up recipe baselines on tracked services to generate price recommendations.
-                  </p>
+                   <p className={tokens.empty.description}>
+                     <Link
+                       to={dashPath('/admin/backroom?section=formulas')}
+                       className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+                     >
+                       Set up recipe baselines
+                     </Link>
+                     {' '}on tracked services to generate price recommendations.
+                   </p>
                 </div>
               ) : (
                 <PriceRecommendationsTable
