@@ -951,7 +951,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 bg-muted/30">
+        <div className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
