@@ -231,6 +231,17 @@ export default function BackroomSettings() {
   return (
     <DashboardLayout>
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+        {/* Setup Banner — persistent across all sections */}
+        <BackroomSetupBanner
+          setupHealth={health as any}
+          wizardCompleted={wizardCompleted}
+          onNavigate={handleNavigate}
+          onResumeSetup={() => {
+            setActiveSection('overview');
+            setShowWizardFromBanner(true);
+          }}
+        />
+
         {/* Page Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
