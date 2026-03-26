@@ -114,7 +114,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
   const { data: allowancePolicies } = useServiceAllowancePolicies();
-  const { data: allComponents } = useServiceTrackingComponents();
+  
 
   const { data: categoryOrder } = useQuery({
     queryKey: ['service-category-colors-order', orgId],
