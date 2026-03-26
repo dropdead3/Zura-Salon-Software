@@ -627,8 +627,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
     // Step 1: Brand list
     if (picker.step === 'brand') {
-      // Loading skeleton while catalog is fetching
-      if (catalogProducts.length === 0) {
+      // Show skeleton only while actively loading; show empty state if catalog is genuinely empty
+      if (catalogLoading) {
         return (
           <div className="pt-2 space-y-1.5">
             <Skeleton className="h-8 w-full rounded-full" />
@@ -637,6 +637,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 <Skeleton key={i} className="h-10 w-full rounded-md mb-1 last:mb-0" />
               ))}
             </div>
+          </div>
+        );
+      }
+
+      if (catalogProducts.length === 0) {
+        return (
+          <div className="pt-2 px-3 py-6 text-center">
+            <p className="text-xs font-sans text-muted-foreground">No supply products found in your catalog.</p>
+            <p className="text-[11px] font-sans text-muted-foreground/60 mt-1">Add products in Inventory to use the allowance calculator.</p>
           </div>
         );
       }
