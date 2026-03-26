@@ -122,7 +122,7 @@ function getRetailCostPerGram(product: CatalogProduct, defaultMarkupPct: number)
 function getBowlWeight(bowl: BowlState): number {
   const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
   return bowl.lines.reduce((s, line) => {
-    if (line.isDeveloper) return s + colorQty * line.developerRatio;
+    if (line.isDeveloper) return s + (colorQty > 0 ? colorQty * line.developerRatio : line.quantity);
     return s + line.quantity;
   }, 0);
 }
