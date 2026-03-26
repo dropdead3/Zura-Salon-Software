@@ -450,16 +450,14 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
         {/* ── Analytics ── */}
         <TabsContent value="analytics" className="mt-6 space-y-6">
-          <BackroomInsightsSection locationId={selectedLocationId} datePreset={datePreset} hideFilters />
-          {/* Additional analytics cards */}
-          <WasteCategoryBreakdownCard
+          <BackroomInsightsSection
+            locationId={selectedLocationId}
+            datePreset={datePreset}
+            hideFilters
+            showExtendedAnalytics
             wasteByCategory={dashboard.wasteByCategory ?? {}}
             totalWasteQty={dashboard.totalWasteQty ?? 0}
           />
-          <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
-          <BackroomInventoryValuationCard locationId={effectiveLocationId} />
-          <SeasonalDemandOverlay locationId={effectiveLocationId} />
-          <ProductUsageFrequencyTable locationId={effectiveLocationId} />
         </TabsContent>
 
         {/* ── AI Intelligence ── */}

@@ -339,8 +339,14 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
           </Card>
         </TabsContent>
 
-        <TabsContent value="trends">
+        <TabsContent value="trends" className="space-y-6">
           <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          {showExtendedAnalytics && (
+            <>
+              <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
+              <SeasonalDemandOverlay locationId={effectiveLocationId} />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="brands">
