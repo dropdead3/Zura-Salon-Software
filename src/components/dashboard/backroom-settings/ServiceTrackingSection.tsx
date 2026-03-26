@@ -628,14 +628,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                 {type === 'suggested' && (
                                   <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
                                 )}
-                                {service.backroom_config_dismissed && (
-                                  <Badge variant="outline" className="text-[10px] shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
-                                )}
-                                {service.is_backroom_tracked && !service.backroom_config_dismissed && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <FileText className={cn('w-3 h-3', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
-                                  </div>
-                                )}
+                                {service.backroom_config_dismissed ? (
+                                  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
+                                ) : service.is_backroom_tracked ? (
+                                  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Unconfigured</Badge>
+                                ) : null}
                                 <Switch
                                   checked={service.is_backroom_tracked}
                                   onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
