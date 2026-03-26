@@ -1295,7 +1295,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
               </div>
 
               {/* A-Z alphabet bar */}
-              <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
+              {!showArchived && <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
                 <button
                   type="button"
                   onClick={() => { setActiveLetter(null); setSearch(''); }}
