@@ -261,6 +261,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return bowls.reduce((sum, bowl) => sum + bowl.lines.reduce((ls, line) => ls + line.lineCost, 0), 0);
   }, [bowls]);
 
+  const wholesaleGrandTotal = useMemo(() => {
+    return bowls.reduce((sum, bowl) => {
+      const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+      return sum + bowl.lines.reduce((ls, line) => {
+        const product = catalogProducts.find((p) => p.id === line.productId);
+        const wholesaleCpg = product ? getWholesaleCostPerGram(product) : 0;
+        const effectiveQty = line.isDeveloper ? colorQty * line.developerRatio : line.quantity;
+        return ls + Math.round(effectiveQty * wholesaleCpg * 100) / 100;
+      }, 0);
+    }, 0);
+  }, [bowls, catalogProducts]);
+
   const totalWeight = useMemo(() => {
     return bowls.reduce((sum, bowl) => sum + getBowlWeight(bowl), 0);
   }, [bowls]);
@@ -269,6 +281,25 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     if (!servicePrice || servicePrice <= 0 || grandTotal <= 0) return null;
     return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice });
   }, [grandTotal, servicePrice]);
+
+  const queryClient = useQueryClient();
+
+  const updateServicePriceMutation = useMutation({
+    mutationFn: async (newPrice: number) => {
+      const { error } = await supabase
+        .from('services' as any)
+        .update({ price: newPrice } as any)
+        .eq('id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
+      toast.success('Service price updated');
+    },
+    onError: (err: any) => {
+      toast.error('Failed to update price: ' + err.message);
+    },
+  });
 
   const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
     setBowls((prev) => [
