@@ -75,7 +75,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
+  
   const [wizardOpen, setWizardOpen] = useState(false);
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
   const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
