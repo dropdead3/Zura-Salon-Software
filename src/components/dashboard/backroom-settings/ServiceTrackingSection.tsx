@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceTrackingComponents, useUpsertTrackingComponent, useDeleteTrackingComponent } from '@/hooks/backroom/useServiceTrackingComponents';
-import { useServiceAllowancePolicies } from '@/hooks/billing/useServiceAllowancePolicies';
+import { useServiceAllowancePolicies, useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { isSuggestedChemicalService } from '@/utils/serviceCategorization';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { tokens } from '@/lib/design-tokens';
@@ -73,6 +73,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [liveThresholds, setLiveThresholds] = useState<Record<string, number>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
+  const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
+  const upsertPolicy = useUpsertAllowancePolicy();
 
   // Swipe gesture handlers for mobile
   const handleTouchStart = useCallback((serviceId: string, e: React.TouchEvent) => {
@@ -670,30 +673,152 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   >
                                     {service.is_backroom_tracked ? (
                                       <div className="space-y-4">
-                                        {/* Config status + actions */}
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                             <div className="flex items-center gap-1">
-                                               <FileText className={cn('w-3.5 h-3.5', hasAllowance ? 'text-primary' : 'text-muted-foreground/30')} />
-                                               <span>{hasAllowance ? 'Allowance set' : 'No allowance'}</span>
-                                               {!hasAllowance && (
-                                                 <MetricInfoTooltip description="No allowance policy has been set for this service. Allowance policies are configured in the Allowances & Billing section of the Backroom Hub." />
-                                               )}
-                                             </div>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="h-7 text-xs"
-                                              onClick={() => setSelectedServiceId(service.id)}
-                                            >
-                                              <Package className="w-3 h-3 mr-1" />
-                                              Components
-                                            </Button>
-                                            
-                                          </div>
-                                        </div>
+                                         {/* Allowance config + actions */}
+                                         <div className="flex items-start justify-between gap-4">
+                                           {(() => {
+                                             const policy = allowanceByService.get(service.id);
+                                             const isEditingAllowance = allowanceEditing.has(service.id);
+                                             const draft = allowanceDraft[service.id] || { qty: 30, rate: '0.50' };
+
+                                             // Saved state — compact summary
+                                             if (policy && !isEditingAllowance) {
+                                               return (
+                                                 <div className="flex items-center gap-2 text-xs">
+                                                   <FileText className="w-3.5 h-3.5 text-primary" />
+                                                   <span className="font-sans text-muted-foreground">
+                                                     {policy.included_allowance_qty}{policy.allowance_unit} included · ${Number(policy.overage_rate).toFixed(2)}/{policy.allowance_unit} overage
+                                                   </span>
+                                                   <Button
+                                                     variant="ghost"
+                                                     size="sm"
+                                                     className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                                     onClick={(e) => {
+                                                       e.stopPropagation();
+                                                       setAllowanceEditing(prev => new Set(prev).add(service.id));
+                                                       setAllowanceDraft(prev => ({
+                                                         ...prev,
+                                                         [service.id]: {
+                                                           qty: policy.included_allowance_qty,
+                                                           rate: String(policy.overage_rate),
+                                                         },
+                                                       }));
+                                                     }}
+                                                   >
+                                                     Edit
+                                                   </Button>
+                                                 </div>
+                                               );
+                                             }
+
+                                             // Editor state — quick-set form
+                                             return (
+                                               <div className="flex-1 space-y-2.5">
+                                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                   <FileText className="w-3.5 h-3.5" />
+                                                   <span className="font-sans">{policy ? 'Edit Allowance' : 'Set Allowance'}</span>
+                                                 </div>
+                                                 <div className="flex flex-wrap items-center gap-1.5">
+                                                   <span className="text-[10px] font-sans text-muted-foreground mr-1">Included:</span>
+                                                   {[15, 30, 45, 60, 90].map((g) => (
+                                                     <button
+                                                       key={g}
+                                                       className={cn(
+                                                         'px-2.5 py-0.5 rounded-full text-[10px] font-sans transition-colors border',
+                                                         draft.qty === g
+                                                           ? 'bg-primary text-primary-foreground border-primary'
+                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                                       )}
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                         setAllowanceDraft(prev => ({ ...prev, [service.id]: { ...draft, qty: g } }));
+                                                       }}
+                                                     >
+                                                       {g}g
+                                                     </button>
+                                                   ))}
+                                                 </div>
+                                                 <div className="flex items-center gap-2">
+                                                   <span className="text-[10px] font-sans text-muted-foreground">Overage:</span>
+                                                   <div className="flex items-center gap-1">
+                                                     <span className="text-[10px] text-muted-foreground">$</span>
+                                                     <Input
+                                                       type="number"
+                                                       step="0.01"
+                                                       min="0"
+                                                       value={draft.rate}
+                                                       onChange={(e) => {
+                                                         e.stopPropagation();
+                                                         setAllowanceDraft(prev => ({ ...prev, [service.id]: { ...draft, rate: e.target.value } }));
+                                                       }}
+                                                       onClick={(e) => e.stopPropagation()}
+                                                       className="h-6 w-16 text-[10px] rounded-md px-2"
+                                                     />
+                                                     <span className="text-[10px] text-muted-foreground">/g</span>
+                                                   </div>
+                                                 </div>
+                                                 <div className="flex items-center gap-2 pt-1">
+                                                   <Button
+                                                     size="sm"
+                                                     className="h-6 px-3 text-[10px]"
+                                                     disabled={upsertPolicy.isPending}
+                                                     onClick={(e) => {
+                                                       e.stopPropagation();
+                                                       if (!orgId) return;
+                                                       upsertPolicy.mutate({
+                                                         organization_id: orgId,
+                                                         service_id: service.id,
+                                                         included_allowance_qty: draft.qty,
+                                                         allowance_unit: 'g',
+                                                         overage_rate: parseFloat(draft.rate) || 0,
+                                                         overage_rate_type: 'per_unit',
+                                                         billing_mode: 'allowance',
+                                                         is_active: true,
+                                                       }, {
+                                                         onSuccess: () => {
+                                                           setAllowanceEditing(prev => {
+                                                             const next = new Set(prev);
+                                                             next.delete(service.id);
+                                                             return next;
+                                                           });
+                                                         },
+                                                       });
+                                                     }}
+                                                   >
+                                                     {upsertPolicy.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save Allowance'}
+                                                   </Button>
+                                                   {(policy || isEditingAllowance) && (
+                                                     <Button
+                                                       variant="ghost"
+                                                       size="sm"
+                                                       className="h-6 px-2 text-[10px] text-muted-foreground"
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                         setAllowanceEditing(prev => {
+                                                           const next = new Set(prev);
+                                                           next.delete(service.id);
+                                                           return next;
+                                                         });
+                                                       }}
+                                                     >
+                                                       Cancel
+                                                     </Button>
+                                                   )}
+                                                 </div>
+                                               </div>
+                                             );
+                                           })()}
+                                           <div className="flex items-center gap-2 shrink-0">
+                                             <Button
+                                               variant="outline"
+                                               size="sm"
+                                               className="h-7 text-xs"
+                                               onClick={() => setSelectedServiceId(service.id)}
+                                             >
+                                               <Package className="w-3 h-3 mr-1" />
+                                               Components
+                                             </Button>
+                                           </div>
+                                         </div>
                                         {/* Chemical toggle + vessel selector */}
                                         <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
                                           <div className="flex items-center gap-2">
