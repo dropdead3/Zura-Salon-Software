@@ -200,6 +200,11 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
         <TabsContent value="audit" className="mt-4">
           <AuditLogTab locationId={effectiveLocationId} pdfExportRef={pdfExportRef} />
         </TabsContent>
+        {locations.length > 1 && (
+          <TabsContent value="transfers" className="mt-4">
+            <TransfersTab locationId={effectiveLocationId} locations={locations} />
+          </TabsContent>
+        )}
         <TabsContent value="analytics" className="mt-4">
           <ReorderAnalyticsTab />
         </TabsContent>
