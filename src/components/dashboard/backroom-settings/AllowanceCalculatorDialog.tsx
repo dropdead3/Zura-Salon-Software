@@ -59,6 +59,7 @@ interface CatalogProduct {
   swatch_color: string | null;
   product_type: string;
   markup_pct: number | null;
+  color_type: string | null;
 }
 
 interface BowlLine {
