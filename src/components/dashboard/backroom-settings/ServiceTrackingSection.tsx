@@ -1151,5 +1151,13 @@ function ComponentMappingDialog({ serviceId, serviceName, orgId, onClose }: {
         </div>
       </DialogContent>
     </Dialog>
+    {calculatorServiceId && (
+      <AllowanceCalculatorDialog
+        open={!!calculatorServiceId}
+        onOpenChange={(open) => { if (!open) setCalculatorServiceId(null); }}
+        serviceId={calculatorServiceId}
+        serviceName={calculatorServiceName}
+      />
+    )}
   );
 }
