@@ -211,7 +211,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       queryClient.invalidateQueries({ queryKey: ['org-services'] });
       queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
       if (result?.didResetConfig) {
-        toast.info('Settings changed — click "Mark Configured" to re-confirm.');
+        toast.info('Settings changed — click "Finalize Configuration" to re-confirm.');
       }
     },
     onError: (e) => toast.error(e.message),
@@ -803,8 +803,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
                                           {service.backroom_config_dismissed ? (
                                             <div className="flex items-center gap-2 w-full justify-between">
-                                              <span className="text-xs font-sans text-muted-foreground flex items-center gap-1.5">
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                              <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                                                <CheckCircle2 className="w-3.5 h-3.5" />
                                                 Configured
                                               </span>
                                               <button
@@ -823,16 +823,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 Review complete? Mark as configured to track setup progress.
                                               </p>
                                               <Button
-                                                variant="default"
+                                                variant="ghost"
                                                 size="sm"
-                                                className="h-7 text-xs shrink-0"
+                                                className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
                                                 }}
                                               >
-                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                Mark Configured
+                                                Finalize Configuration
                                               </Button>
                                             </>
                                           )}
@@ -883,8 +882,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
                                             {service.backroom_config_dismissed ? (
                                               <div className="flex items-center gap-2 w-full justify-between">
-                                                <span className="text-xs font-sans text-muted-foreground flex items-center gap-1.5">
-                                                  <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                                <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                                                  <CheckCircle2 className="w-3.5 h-3.5" />
                                                   Reviewed
                                                 </span>
                                                 <button
@@ -903,16 +902,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   Doesn't need tracking? Mark as reviewed.
                                                 </p>
                                                 <Button
-                                                  variant="default"
+                                                  variant="ghost"
                                                   size="sm"
-                                                  className="h-7 text-xs shrink-0"
+                                                  className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
                                                     updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
                                                   }}
                                                 >
-                                                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                  Mark Configured
+                                                  Finalize Configuration
                                                 </Button>
                                               </>
                                             )}
