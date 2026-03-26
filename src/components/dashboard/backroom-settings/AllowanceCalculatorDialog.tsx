@@ -352,7 +352,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         })
       );
     },
-    []
+    [bowls, defaultMarkupPct]
   );
 
   const removeLineFromBowl = useCallback((bowlIdx: number, lineLocalId: string) => {
