@@ -26,6 +26,7 @@ import {
   Lock,
   CreditCard,
   Truck,
+  CircleDollarSign,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
