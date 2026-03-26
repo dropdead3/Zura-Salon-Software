@@ -1,31 +1,35 @@
 
 
-## Make Product Budget Ceiling a Clear Sentence — Not Just a Pill
+## Fix: "Discard & Close" Toast Button Still Not Working
 
-### What's happening now
+### Root Cause
 
-The budget ceiling exists as a small colored pill (e.g., "Upgrade budget: $12.00") next to the health percentage badge. The user is seeing it but wants a **full contextual sentence** that explicitly connects service price → 8% target → dollar ceiling. The current pill format doesn't communicate the "why" at a glance.
+`toast.dismiss()` (no arguments) is called inside the `onClick` of the toast's own action button. In sonner, calling `toast.dismiss()` without a toast ID inside an action handler can be unreliable — the action click event and the dismiss race each other. The toast ID needs to be captured and dismissed explicitly.
 
 ### Change
 
-Replace the small budget pills with a clear, full-sentence indicator below the health badge row. One line, always visible when health data exists.
-
 **File:** `src/components/dashboard/backroom-settings/AllowanceCalculatorDialog.tsx`
 
-**Replace** the three separate budget pill blocks (lines 1626-1711) with a single unified sentence that renders for all statuses:
+**Lines 1004–1016** — Capture the toast ID from `toast.warning()` and pass it to `toast.dismiss()`:
 
+```tsx
+<Dialog open={open} onOpenChange={(newOpen) => {
+  if (!newOpen && isDirty) {
+    const toastId = toast.warning('You have unsaved changes', {
+      action: { label: 'Discard & Close', onClick: () => {
+        toast.dismiss(toastId);
+        initialBowlsRef.current = '';
+        setTimeout(() => onOpenChange(false), 0);
+      } },
+      duration: 6000,
+    });
+    return;
+  }
+  onOpenChange(newOpen);
+}}>
 ```
-Based on your $150 service price and an 8% target, your product budget ceiling is $12.00.
-```
-
-Status-specific framing:
-- **High**: "Based on your $X service price and an 8% target, your product budget ceiling is $Y. You are currently $Z over budget."
-- **Healthy**: "Based on your $X service price and an 8% target, your product budget ceiling is $Y."
-- **Low**: "Based on your $X service price and an 8% target, you could spend up to $Y on product to go more luxury."
-
-Styling: `text-[11px] font-sans text-muted-foreground mt-1.5` — subtle but readable, using the status color only for the dollar amounts. This replaces the pills, not the health percentage badge above it (that stays).
 
 ### Scope
-- Single file, ~30 lines replaced
-- No logic changes — same `suggestedAllowance` value, just different presentation
+- Single file, 1 line changed (`toast.dismiss()` → `toast.dismiss(toastId)`)
+- Same pattern already used elsewhere in this file (lines 373, 405, 541) for undo toasts
 
