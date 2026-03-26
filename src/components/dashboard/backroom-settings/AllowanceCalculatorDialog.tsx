@@ -178,7 +178,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
       setBowls(loaded);
     } else {
-      setBowls([{ id: null, bowlNumber: 1, label: 'Bowl 1', lines: [], collapsed: false }]);
+      setBowls([{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [], collapsed: false }]);
     }
     setBowlSearches({});
     setDevFilterBowls({});
