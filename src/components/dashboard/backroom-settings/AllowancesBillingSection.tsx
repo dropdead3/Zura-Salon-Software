@@ -177,7 +177,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
     );
   }
 
-  const [showEducation, setShowEducation] = useState(false);
+
 
   return (
     <div className="space-y-6">

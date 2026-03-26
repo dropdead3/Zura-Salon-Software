@@ -323,7 +323,7 @@ export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
 
   const progressPct = Math.round(((step + 1) / STEP_COUNT) * 100);
 
-  const stepLabels = ['Welcome', 'Products', 'Suppliers', 'Services', 'Allowances', 'Station'];
+  const stepLabels = ['Welcome', 'Products', 'Suppliers', 'Services', 'Billing Strategy', 'Allowances', 'Station'];
 
   return (
     <div className="space-y-6">
