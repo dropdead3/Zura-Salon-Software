@@ -28,6 +28,8 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
 import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
 import { AllowanceCalculatorDialog } from './AllowanceCalculatorDialog';
+import { PriceRecommendationCard } from './PriceRecommendationCard';
+import { useComputedPriceRecommendations, useAcceptPriceRecommendation, useDismissPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
 
 interface ServiceRow {
   id: string;
