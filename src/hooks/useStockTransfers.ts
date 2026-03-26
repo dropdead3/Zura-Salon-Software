@@ -130,15 +130,35 @@ export function useCompleteStockTransfer() {
         .eq('id', transferId);
       if (tErr) throw tErr;
 
-      // Delegate ledger entries to InventoryLedgerService
-      await postTransfer({
-        organizationId,
-        productId,
-        quantity,
-        fromLocationId,
-        toLocationId,
-        transferId,
-      });
+      // Check for multi-product lines first
+      const { data: lines } = await supabase
+        .from('stock_transfer_lines')
+        .select('product_id, quantity')
+        .eq('transfer_id', transferId);
+
+      if (lines && lines.length > 0) {
+        // Post ledger entries for each line
+        for (const line of lines) {
+          await postTransfer({
+            organizationId,
+            productId: line.product_id,
+            quantity: line.quantity,
+            fromLocationId,
+            toLocationId,
+            transferId,
+          });
+        }
+      } else {
+        // Fallback: use parent row's single product
+        await postTransfer({
+          organizationId,
+          productId,
+          quantity,
+          fromLocationId,
+          toLocationId,
+          transferId,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-transfers'] });
