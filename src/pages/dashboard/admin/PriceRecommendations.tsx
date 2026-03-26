@@ -345,6 +345,57 @@ export default function PriceRecommendationsPage() {
           </CardContent>
         </Card>
 
+        {/* Margin Health Over Time */}
+        {marginTrendData.length >= 2 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className={tokens.card?.iconBox || 'w-10 h-10 bg-muted rounded-lg flex items-center justify-center'}>
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className={tokens.card?.title || 'font-display text-base tracking-wide'}>
+                    Margin Health Over Time
+                  </CardTitle>
+                  <MetricInfoTooltip description="Weekly average contribution margin across tracked chemical services from profitability snapshots. Shows the impact of accepted price changes over time." />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={marginTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="week" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <RechartsTooltip
+                      formatter={(value: number) => [`${value}%`, 'Avg Margin']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <ReferenceLine
+                      y={defaultMargin}
+                      stroke="hsl(var(--primary))"
+                      strokeDasharray="6 4"
+                      label={{ value: `Target ${defaultMargin}%`, position: 'right', fontSize: 11, fill: 'hsl(var(--primary))' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="margin"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: 'hsl(var(--primary))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* History Section */}
         <Card>
           <CardContent className="p-2">
