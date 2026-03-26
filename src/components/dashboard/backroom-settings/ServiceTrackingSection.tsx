@@ -1035,6 +1035,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           serviceId={calculatorServiceId}
           serviceName={calculatorServiceName}
           containerTypes={calculatorContainerTypes}
+          servicePrice={calculatorServicePrice}
         />
       )}
     </div>
