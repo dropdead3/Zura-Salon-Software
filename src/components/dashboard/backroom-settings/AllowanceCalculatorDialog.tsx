@@ -538,6 +538,23 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           return { ...b, lines };
         })
       );
+
+      // Developer warning logic
+      if (asDeveloper) {
+        // Adding a developer — clear warning for this bowl
+        setDeveloperWarningBowls((prev) => {
+          const next = new Set(prev);
+          next.delete(bowlIdx);
+          return next;
+        });
+      } else if (requiresDeveloper(product)) {
+        // Adding a permanent/demi color — check if bowl has developer
+        const updatedBowl = bowls[bowlIdx];
+        const hasDeveloper = updatedBowl?.lines.some((l) => l.isDeveloper) || false;
+        if (!hasDeveloper) {
+          setDeveloperWarningBowls((prev) => new Set(prev).add(bowlIdx));
+        }
+      }
     },
     [bowls, defaultMarkupPct]
   );
