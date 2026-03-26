@@ -755,20 +755,27 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       <span className="font-sans text-muted-foreground">
                                                         {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
                                                       </span>
-                                                      {healthStatus && healthPct !== null && (
-                                                        <Badge
-                                                          variant="outline"
-                                                          className={cn(
-                                                            'text-[10px] px-1.5 py-0',
-                                                            healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
-                                                            healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
-                                                            healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
-                                                          )}
-                                                        >
-                                                          {healthPct.toFixed(1)}%
-                                                          {healthStatus === 'high' && ' ⚠'}
-                                                        </Badge>
-                                                      )}
+                                                       {healthStatus && healthPct !== null && (
+                                                         <Badge
+                                                           variant="outline"
+                                                           className={cn(
+                                                             'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
+                                                             healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
+                                                             healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
+                                                             healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
+                                                           )}
+                                                           onClick={(e) => {
+                                                             e.stopPropagation();
+                                                             setCalculatorServiceId(service.id);
+                                                             setCalculatorServiceName(service.name);
+                                                             setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                             setCalculatorServicePrice(service.price);
+                                                           }}
+                                                         >
+                                                           {healthPct.toFixed(1)}%
+                                                           {healthStatus === 'high' && ' ⚠'}
+                                                         </Badge>
+                                                       )}
                                                       <Button
                                                         variant="ghost"
                                                         size="sm"
