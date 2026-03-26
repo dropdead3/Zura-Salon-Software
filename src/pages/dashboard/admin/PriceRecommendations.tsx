@@ -9,7 +9,7 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2 } from 'lucide-react';
+import { Loader2, DollarSign, AlertTriangle, TrendingUp, Settings2, Download } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
