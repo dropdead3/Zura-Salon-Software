@@ -1475,6 +1475,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     );
                   })}
                 </div>
+                </>
               )}
 
               {/* Next step hint */}
