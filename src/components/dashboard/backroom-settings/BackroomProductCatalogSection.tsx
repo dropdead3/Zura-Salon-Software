@@ -52,6 +52,10 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
 import { BackroomBulkReorderDialog } from './BackroomBulkReorderDialog';
+import { useLogPlatformAction } from '@/hooks/usePlatformAuditLog';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatDistanceToNow, differenceInHours } from 'date-fns';
+import { ArchiveRestore, Clock } from 'lucide-react';
 import {
   SUPPLY_CATEGORY_LABELS,
   type SupplyLibraryItem,
@@ -167,6 +171,8 @@ interface Props {
 export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const orgId = useBackroomOrgId();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const logAction = useLogPlatformAction();
 
   // Location state — defaults to first location
   const { data: locations = [] } = useLocations();
@@ -192,6 +198,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [syncToAllOpen, setSyncToAllOpen] = useState(false);
   const [syncIncludeLevels, setSyncIncludeLevels] = useState(true);
   const [removeBrandOpen, setRemoveBrandOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [restoreBrandOpen, setRestoreBrandOpen] = useState<string | null>(null);
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -402,12 +410,13 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         if (delErr) throw delErr;
       }
 
-      // 3. Soft-delete the products
+      // 3. Soft-delete the products with deactivation metadata
+      const now = new Date().toISOString();
       for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
         const { error: upErr } = await supabase
           .from('products')
-          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .update({ is_active: false, updated_at: now, deactivated_at: now, deactivated_by: user?.id ?? null } as any)
           .in('id', batch);
         if (upErr) throw upErr;
       }
@@ -423,12 +432,105 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
       queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['product-brands'] });
-      toast.success(`Removed ${brand} — ${count} products deactivated and untracked from all locations`);
+      queryClient.invalidateQueries({ queryKey: ['archived-brands'] });
+      // Audit log
+      logAction.mutate({
+        organizationId: orgId ?? undefined,
+        action: 'brand_removed',
+        entityType: 'brand',
+        entityId: brand,
+        details: { product_count: count, location_count: activeLocations.length },
+      });
+      toast.success(`Removed ${brand} — ${count} products deactivated`, {
+        description: 'You can restore this brand within 24 hours from the Archived view.',
+        duration: 8000,
+      });
     },
     onError: (error) => toast.error('Failed to remove brand: ' + error.message),
   });
 
-  /* ====== Derived data ====== */
+  /* Archived brands query */
+  const { data: archivedBrands = [] } = useQuery({
+    queryKey: ['archived-brands', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('brand, deactivated_at')
+        .eq('organization_id', orgId!)
+        .eq('is_active', false)
+        .eq('product_type', 'Supplies')
+        .not('brand', 'is', null);
+      if (error) throw error;
+      const map = new Map<string, { count: number; deactivatedAt: string | null }>();
+      (data || []).forEach((p: any) => {
+        const b = p.brand as string;
+        const existing = map.get(b);
+        if (!existing) {
+          map.set(b, { count: 1, deactivatedAt: p.deactivated_at });
+        } else {
+          existing.count++;
+          // Use earliest deactivated_at
+          if (p.deactivated_at && (!existing.deactivatedAt || p.deactivated_at < existing.deactivatedAt)) {
+            existing.deactivatedAt = p.deactivated_at;
+          }
+        }
+      });
+      return [...map.entries()].map(([brand, info]) => ({
+        brand,
+        count: info.count,
+        deactivatedAt: info.deactivatedAt,
+        withinGracePeriod: info.deactivatedAt ? differenceInHours(new Date(), new Date(info.deactivatedAt)) < 24 : false,
+      }));
+    },
+    enabled: !!orgId,
+  });
+
+  /* Restore Brand mutation */
+  const restoreBrandMutation = useMutation({
+    mutationFn: async (brand: string) => {
+      const { data: archivedProducts, error: fetchErr } = await supabase
+        .from('products')
+        .select('id')
+        .eq('organization_id', orgId!)
+        .eq('is_active', false)
+        .eq('product_type', 'Supplies')
+        .ilike('brand', brand);
+      if (fetchErr) throw fetchErr;
+      const ids = (archivedProducts || []).map((p: any) => p.id);
+      if (ids.length === 0) throw new Error('No archived products found for this brand');
+
+      const BATCH = 500;
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const { error } = await supabase
+          .from('products')
+          .update({ is_active: true, deactivated_at: null, deactivated_by: null, updated_at: new Date().toISOString() } as any)
+          .in('id', batch);
+        if (error) throw error;
+      }
+      return { count: ids.length, brand };
+    },
+    onSuccess: ({ count, brand }) => {
+      setRestoreBrandOpen(null);
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['archived-brands'] });
+      queryClient.invalidateQueries({ queryKey: ['product-brands'] });
+      logAction.mutate({
+        organizationId: orgId ?? undefined,
+        action: 'brand_restored',
+        entityType: 'brand',
+        entityId: brand,
+        details: { product_count: count },
+      });
+      toast.success(`Restored ${brand} — ${count} products reactivated`, {
+        description: 'Products are back in your catalog. Re-track them at each location.',
+        duration: 6000,
+      });
+    },
+    onError: (error) => toast.error('Failed to restore brand: ' + error.message),
+  });
+
+
   const allProducts = products || [];
   // Helper: is a product tracked at the current location?
   const isTrackedAtLocation = useCallback((productId: string) => {
@@ -1165,19 +1267,35 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search brands..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="font-sans pl-10"
-                />
+              {/* Search + Archived toggle */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={showArchived ? "Search archived brands..." : "Search brands..."}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="font-sans pl-10"
+                  />
+                </div>
+                {archivedBrands.length > 0 && (
+                  <Button
+                    variant={showArchived ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => { setShowArchived(!showArchived); setSearch(''); setActiveLetter(null); }}
+                    className="font-sans gap-1.5 shrink-0"
+                  >
+                    <Archive className="w-3.5 h-3.5" />
+                    Archived
+                    <Badge variant={showArchived ? 'secondary' : 'outline'} className="ml-0.5 text-[10px]">
+                      {archivedBrands.length}
+                    </Badge>
+                  </Button>
+                )}
               </div>
 
               {/* A-Z alphabet bar */}
-              <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
+              {!showArchived && <div className="flex flex-wrap items-center gap-0.5 sm:gap-1">
                 <button
                   type="button"
                   onClick={() => { setActiveLetter(null); setSearch(''); }}
@@ -1212,10 +1330,83 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     </button>
                   );
                 })}
-              </div>
+              </div>}
 
-              {/* Brand cards */}
-              {!hasProducts ? (
+              {/* Brand cards or Archived view */}
+              {showArchived ? (
+                /* ====== ARCHIVED BRANDS VIEW ====== */
+                archivedBrands.length === 0 ? (
+                  <div className={tokens.empty.container}>
+                    <Archive className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No archived brands</h3>
+                    <p className={tokens.empty.description}>Brands you remove will appear here for restoration.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {archivedBrands
+                      .filter((ab) => !search.trim() || ab.brand.toLowerCase().includes(search.toLowerCase()))
+                      .map((ab) => {
+                        const meta = brandMetaMap.get(ab.brand.toLowerCase());
+                        return (
+                          <div
+                            key={ab.brand}
+                            className={cn(
+                              'group relative flex flex-col items-center justify-center gap-2 rounded-xl border pt-9 pb-8 px-4 text-center min-h-[160px]',
+                              'border-border/30 bg-muted/20 opacity-75',
+                            )}
+                          >
+                            {/* Grace period badge */}
+                            {ab.withinGracePeriod && ab.deactivatedAt && (
+                              <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] gap-1 bg-amber-500/15 text-amber-400 border-amber-500/20">
+                                <Clock className="w-3 h-3" />
+                                {formatDistanceToNow(new Date(ab.deactivatedAt), { addSuffix: false })} left
+                              </Badge>
+                            )}
+                            {!ab.withinGracePeriod && (
+                              <Badge variant="outline" className="absolute top-2 left-2 text-[10px] text-muted-foreground">
+                                Archived
+                              </Badge>
+                            )}
+
+                            {/* Product count */}
+                            <Badge variant="outline" className="absolute top-2 right-2 text-[10px]">
+                              {ab.count} products
+                            </Badge>
+
+                            {/* Logo + Name */}
+                            {meta?.logo_url && (
+                              <img
+                                src={meta.logo_url}
+                                alt={ab.brand}
+                                className="w-12 h-12 rounded-lg object-contain bg-white/10 p-0.5 grayscale"
+                              />
+                            )}
+                            <span className="text-sm font-display tracking-wide text-muted-foreground text-center">{ab.brand}</span>
+
+                            {/* Restore button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setRestoreBrandOpen(ab.brand)}
+                              disabled={restoreBrandMutation.isPending}
+                              className="font-sans gap-1.5 mt-1"
+                            >
+                              <ArchiveRestore className="w-3.5 h-3.5" />
+                              Restore
+                            </Button>
+
+                            {/* Time since removal */}
+                            {ab.deactivatedAt && (
+                              <span className="text-[10px] font-sans text-muted-foreground/60">
+                                Removed {formatDistanceToNow(new Date(ab.deactivatedAt), { addSuffix: true })}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )
+              ) : !hasProducts ? (
                 <div className={cn(tokens.empty.container, 'py-14')}>
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted/40">
                     <Library className="h-7 w-7 text-muted-foreground" />
@@ -1239,17 +1430,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     const meta = brandMetaMap.get(brandName.toLowerCase());
                     const missingPrice = brandProds.filter((p) => p.cost_price == null).length;
                     const isComplete = missingPrice === 0;
-                    const cats = [...new Set(brandProds.map((p) => p.category).filter(Boolean))] as string[];
-
-                    // Category summary
-                    const catCounts = new Map<string, number>();
-                    brandProds.forEach((p) => {
-                      const cat = p.category || 'uncategorized';
-                      catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
-                    });
-                    const categorySummary = [...catCounts.entries()]
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([cat, count]) => ({ cat, count }));
 
                     return (
                       <button
@@ -1269,19 +1449,14 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           'hover:border-border/60 hover:bg-card-inner hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
-                        {/* Top-left: missing data */}
                         {!isComplete && (
                           <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
                             Missing Data
                           </Badge>
                         )}
-
-                        {/* Top-right: product count */}
                         <Badge variant="outline" className="absolute top-2 right-2 text-[10px]">
                           {tracked} of {brandProds.length} products
                         </Badge>
-
-                        {/* Center: Logo + Name */}
                         {meta?.logo_url && (
                           <img
                             src={meta.logo_url}
@@ -1466,7 +1641,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                   </ul>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Stock movement history will be preserved. Products can be re-added later from the Supply Library.
+                  Stock movement history will be preserved. You can restore this brand within <strong className="text-foreground">24 hours</strong> from the Archived view, or re-add later from the Supply Library.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -1481,6 +1656,45 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
             >
               <Trash2 className="w-4 h-4 mr-1.5" />
               Remove {selectedBrand}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Restore Brand confirmation dialog */}
+      <AlertDialog open={!!restoreBrandOpen} onOpenChange={(open) => { if (!open) setRestoreBrandOpen(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={tokens.card.title}>Restore Brand to Catalog</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Restore{' '}
+                  <strong className="text-foreground font-medium">{restoreBrandOpen}</strong>{' '}
+                  back to your active catalog.
+                </p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm space-y-1.5">
+                  <p className="font-medium text-foreground">What will happen:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                    <li>Products will be reactivated in your catalog</li>
+                    <li>You'll need to <strong className="text-foreground">re-track products at each location</strong> manually</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Location tracking settings were removed during deactivation and will not be automatically restored.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (restoreBrandOpen) restoreBrandMutation.mutate(restoreBrandOpen);
+              }}
+            >
+              <ArchiveRestore className="w-4 h-4 mr-1.5" />
+              Restore {restoreBrandOpen}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
