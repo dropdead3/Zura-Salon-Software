@@ -185,12 +185,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .update(updates as Record<string, unknown>)
         .eq('id', id);
       if (error) throw error;
+
+      // Sync container_types to phorest_services so the Dock reads the correct vessels
+      if (updates.container_types && effectiveOrganization) {
+        const service = allServices.find(s => s.id === id);
+        if (service?.name) {
+          await supabase
+            .from('phorest_services')
+            .update({ container_types: updates.container_types })
+            .eq('name', service.name)
+            .eq('organization_id', effectiveOrganization);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
       queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['org-services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
     },
     onError: (e) => toast.error(e.message),
   });
