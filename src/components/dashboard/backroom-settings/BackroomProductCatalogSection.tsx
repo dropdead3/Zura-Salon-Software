@@ -1332,8 +1332,81 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 })}
               </div>
 
-              {/* Brand cards */}
-              {!hasProducts ? (
+              {/* Brand cards or Archived view */}
+              {showArchived ? (
+                /* ====== ARCHIVED BRANDS VIEW ====== */
+                archivedBrands.length === 0 ? (
+                  <div className={tokens.empty.container}>
+                    <Archive className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No archived brands</h3>
+                    <p className={tokens.empty.description}>Brands you remove will appear here for restoration.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {archivedBrands
+                      .filter((ab) => !search.trim() || ab.brand.toLowerCase().includes(search.toLowerCase()))
+                      .map((ab) => {
+                        const meta = brandMetaMap.get(ab.brand.toLowerCase());
+                        return (
+                          <div
+                            key={ab.brand}
+                            className={cn(
+                              'group relative flex flex-col items-center justify-center gap-2 rounded-xl border pt-9 pb-8 px-4 text-center min-h-[160px]',
+                              'border-border/30 bg-muted/20 opacity-75',
+                            )}
+                          >
+                            {/* Grace period badge */}
+                            {ab.withinGracePeriod && ab.deactivatedAt && (
+                              <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] gap-1 bg-amber-500/15 text-amber-400 border-amber-500/20">
+                                <Clock className="w-3 h-3" />
+                                {formatDistanceToNow(new Date(ab.deactivatedAt), { addSuffix: false })} left
+                              </Badge>
+                            )}
+                            {!ab.withinGracePeriod && (
+                              <Badge variant="outline" className="absolute top-2 left-2 text-[10px] text-muted-foreground">
+                                Archived
+                              </Badge>
+                            )}
+
+                            {/* Product count */}
+                            <Badge variant="outline" className="absolute top-2 right-2 text-[10px]">
+                              {ab.count} products
+                            </Badge>
+
+                            {/* Logo + Name */}
+                            {meta?.logo_url && (
+                              <img
+                                src={meta.logo_url}
+                                alt={ab.brand}
+                                className="w-12 h-12 rounded-lg object-contain bg-white/10 p-0.5 grayscale"
+                              />
+                            )}
+                            <span className="text-sm font-display tracking-wide text-muted-foreground text-center">{ab.brand}</span>
+
+                            {/* Restore button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setRestoreBrandOpen(ab.brand)}
+                              disabled={restoreBrandMutation.isPending}
+                              className="font-sans gap-1.5 mt-1"
+                            >
+                              <ArchiveRestore className="w-3.5 h-3.5" />
+                              Restore
+                            </Button>
+
+                            {/* Time since removal */}
+                            {ab.deactivatedAt && (
+                              <span className="text-[10px] font-sans text-muted-foreground/60">
+                                Removed {formatDistanceToNow(new Date(ab.deactivatedAt), { addSuffix: true })}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )
+              ) : !hasProducts ? (
                 <div className={cn(tokens.empty.container, 'py-14')}>
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border bg-muted/40">
                     <Library className="h-7 w-7 text-muted-foreground" />
@@ -1357,17 +1430,6 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                     const meta = brandMetaMap.get(brandName.toLowerCase());
                     const missingPrice = brandProds.filter((p) => p.cost_price == null).length;
                     const isComplete = missingPrice === 0;
-                    const cats = [...new Set(brandProds.map((p) => p.category).filter(Boolean))] as string[];
-
-                    // Category summary
-                    const catCounts = new Map<string, number>();
-                    brandProds.forEach((p) => {
-                      const cat = p.category || 'uncategorized';
-                      catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
-                    });
-                    const categorySummary = [...catCounts.entries()]
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([cat, count]) => ({ cat, count }));
 
                     return (
                       <button
@@ -1387,19 +1449,14 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                           'hover:border-border/60 hover:bg-card-inner hover:scale-[1.02] hover:shadow-sm',
                         )}
                       >
-                        {/* Top-left: missing data */}
                         {!isComplete && (
                           <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
                             Missing Data
                           </Badge>
                         )}
-
-                        {/* Top-right: product count */}
                         <Badge variant="outline" className="absolute top-2 right-2 text-[10px]">
                           {tracked} of {brandProds.length} products
                         </Badge>
-
-                        {/* Center: Logo + Name */}
                         {meta?.logo_url && (
                           <img
                             src={meta.logo_url}
