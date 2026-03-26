@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle, TrendingUp, DollarSign, Target, ArrowRight, Beaker } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  ReferenceLine, LineChart, Line,
+  ReferenceLine, LineChart, Line, Cell,
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
