@@ -67,7 +67,6 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
   const { formatCurrency } = useFormatCurrency();
   const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab || 'command-center');
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
 
