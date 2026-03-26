@@ -1768,7 +1768,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               )}
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
-              {/* Copy summary */}
               {hasExistingData && (
                 <Button
                   variant="ghost"
@@ -1790,59 +1789,28 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   Clear Allowance
                 </Button>
               )}
-              {grandTotal > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground gap-1"
-                  onClick={() => {
-                    const summary = [
-                      `${serviceName} — Product Allowance`,
-                      `Retail Total: $${grandTotal.toFixed(2)} | Wholesale: $${wholesaleGrandTotal.toFixed(2)} | Markup: $${(grandTotal - wholesaleGrandTotal).toFixed(2)}`,
-                      `Weight: ${Math.round(totalWeight)}g across ${bowls.filter(b => b.lines.length > 0).length} vessel(s)`,
-                      ...bowls.filter(b => b.lines.length > 0).map(b => {
-                        const bColorQty = b.lines.filter(l => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
-                        return `\n${b.label}:\n` + b.lines.map(l => {
-                          const qty = l.isDeveloper
-                            ? (bColorQty > 0 ? `${l.developerRatio}× ratio with color (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g (standalone)`)
-                            : `${l.quantity}g`;
-                          const wholesaleCpg = wholesaleCostMap.get(l.productId) ?? 0;
-                          const effectiveQty = l.isDeveloper ? (bColorQty > 0 ? bColorQty * l.developerRatio : l.quantity) : l.quantity;
-                          const wholesaleCost = Math.round(effectiveQty * wholesaleCpg * 100) / 100;
-                          return `  • ${l.productName}${l.isDeveloper ? ' [Developer]' : ''} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
-                        }).join('\n');
-                      }),
-                      effectiveServicePrice > 0 ? `\nHealth: ${healthResult?.allowancePct ?? '—'}% of $${effectiveServicePrice.toFixed(0)} service (${healthResult?.status ?? 'N/A'})` : '',
-                      effectiveServicePrice > 0 ? `Margin: $${(effectiveServicePrice - grandTotal).toFixed(2)} (${((1 - grandTotal / effectiveServicePrice) * 100).toFixed(1)}%)` : '',
-                    ].filter(Boolean).join('\n');
-                    navigator.clipboard.writeText(summary);
-                    toast.success('Recipe summary copied to clipboard');
-                  }}
-                >
-                  <ClipboardCopy className="w-3 h-3" />
-                  Copy Summary
-                </Button>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      size="sm"
-                      className="h-9 px-6"
-                      disabled={saving || grandTotal === 0}
-                      onClick={handleSave}
-                    >
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-                      Save Allowance
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {grandTotal === 0 && !saving && (
-                  <TooltipContent side="top" className="text-xs">
-                    Add at least one product to save the allowance
-                  </TooltipContent>
-                )}
-              </Tooltip>
+              <div className="mt-3 flex justify-end">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        size="sm"
+                        className="h-9 px-6"
+                        disabled={saving || grandTotal === 0}
+                        onClick={handleSave}
+                      >
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                        Save Allowance
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {grandTotal === 0 && !saving && (
+                    <TooltipContent side="top" className="text-xs">
+                      Add at least one product to save the allowance
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </div>
             </div>
           </div>
         </div>
