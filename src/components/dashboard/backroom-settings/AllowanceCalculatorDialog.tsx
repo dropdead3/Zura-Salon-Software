@@ -677,8 +677,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         overage_rate_type: 'per_unit',
         billing_mode: 'allowance',
         is_active: true,
-        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowls.filter((b) => b.lines.length > 0).length} vessel(s)`,
-        allowance_health_status: healthResult?.status ?? null,
+      notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowlsToSave.filter((b) => b.lines.length > 0).length} vessel(s)`,
+      allowance_health_status: healthResult?.status ?? null,
         allowance_health_pct: healthResult?.allowancePct ?? null,
         last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
