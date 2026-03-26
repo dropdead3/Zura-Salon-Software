@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -212,6 +212,30 @@ export default function BackroomSettings() {
     }
   }, []);
 
+  const bannerHealth = useMemo(() => {
+    if (!health) return undefined;
+    const stepSections: { label: string; section: BackroomSection }[] = [
+      { label: 'Products', section: 'products' },
+      { label: 'Services', section: 'services' },
+      { label: 'Formulas', section: 'formulas' },
+      { label: 'Allowances', section: 'allowances' },
+      { label: 'Stations', section: 'stations' },
+      { label: 'Alerts', section: 'alerts' },
+    ];
+    const steps = stepSections.map(s => ({
+      label: s.label,
+      done: getSectionStatus(s.section, health) === 'done',
+      section: s.section,
+    }));
+    const completed = steps.filter(s => s.done).length;
+    return {
+      isComplete: completed === steps.length,
+      completed,
+      total: steps.length,
+      steps,
+      warnings: health.warnings,
+    };
+  }, [health]);
   if (entitlementLoading) {
     return (
       <DashboardLayout>
@@ -233,7 +257,7 @@ export default function BackroomSettings() {
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
         {/* Setup Banner — persistent across all sections */}
         <BackroomSetupBanner
-          setupHealth={health as any}
+          setupHealth={bannerHealth}
           wizardCompleted={wizardCompleted}
           onNavigate={handleNavigate}
           onResumeSetup={() => {
