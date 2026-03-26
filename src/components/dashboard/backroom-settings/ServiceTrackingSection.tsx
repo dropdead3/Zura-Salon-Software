@@ -1027,6 +1027,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           onOpenChange={(open) => { if (!open) setCalculatorServiceId(null); }}
           serviceId={calculatorServiceId}
           serviceName={calculatorServiceName}
+          containerTypes={calculatorContainerTypes}
         />
       )}
     </div>
