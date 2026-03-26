@@ -611,7 +611,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       setModeledServicePrice(null);
 
       toast.success(`Product allowance saved: $${grandTotal.toFixed(2)}`);
-      onOpenChange(false);
+      // Use setTimeout to ensure isDirty memo re-evaluates before onOpenChange checks it
+      setTimeout(() => onOpenChange(false), 0);
     } catch (err: unknown) {
       toast.error('Failed to save allowance: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
