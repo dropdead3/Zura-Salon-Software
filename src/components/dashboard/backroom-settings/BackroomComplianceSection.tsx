@@ -22,9 +22,11 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { format, subDays } from 'date-fns';
+import { FileDown } from 'lucide-react';
 import { useBackroomComplianceTracker } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/backroom/useEvaluateComplianceLog';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { StaffComplianceReportDialog } from './compliance/StaffComplianceReportDialog';
 
 type RangeKey = 'today' | '7d' | '14d' | '30d';
 
@@ -50,6 +52,7 @@ function getComplianceBadge(rate: number) {
 export function BackroomComplianceSection() {
   const [range, setRange] = useState<RangeKey>('7d');
   const [staffFilter, setStaffFilter] = useState<string>('all');
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
   const { from, to } = useMemo(() => getDateRange(range), [range]);
@@ -73,7 +76,7 @@ export function BackroomComplianceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-compliance-guide" title="Reweigh Reports" description="Track reweigh accountability, product waste, and overage charges across color/chemical appointments." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-compliance-guide" title="Compliance Reports" description="Track staff compliance, product waste, and accountability across color/chemical appointments." icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
 
       {/* Header + Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -82,8 +85,8 @@ export function BackroomComplianceSection() {
             <ShieldCheck className={tokens.card.icon} />
           </div>
           <div>
-            <h2 className={tokens.card.title}>Reweigh Reports</h2>
-            <p className="font-sans text-sm text-muted-foreground">Reweigh accountability, waste tracking, and overage attachment</p>
+            <h2 className={tokens.card.title}>Compliance Reports</h2>
+            <p className="font-sans text-sm text-muted-foreground">Staff accountability, waste tracking, and overage attachment</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -105,6 +108,10 @@ export function BackroomComplianceSection() {
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>{RANGE_OPTIONS.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={() => setReportDialogOpen(true)} disabled={!data || !data.staffBreakdown.length}>
+            <FileDown className="w-4 h-4 mr-1" />
+            Staff Report
+          </Button>
           <Button variant="outline" size="sm" onClick={() => evaluate.mutate({ date: today })} disabled={evaluate.isPending}>
             {evaluate.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
             Evaluate Today
@@ -117,7 +124,7 @@ export function BackroomComplianceSection() {
       ) : !summary || summary.totalColorAppointments === 0 ? (
         <div className={tokens.empty.container}>
           <Beaker className={tokens.empty.icon} />
-          <h3 className={tokens.empty.heading}>No Reweigh Data</h3>
+          <h3 className={tokens.empty.heading}>No Compliance Data</h3>
           <p className={tokens.empty.description}>No color/chemical appointments found for the selected period. Click "Evaluate Today" to scan.</p>
         </div>
       ) : (
@@ -339,6 +346,18 @@ export function BackroomComplianceSection() {
             </Card>
           </div>
         </>
+      )}
+
+      {data && (
+        <StaffComplianceReportDialog
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+          staffBreakdown={data.staffBreakdown}
+          items={data.items}
+          summary={data.summary}
+          dateFrom={from}
+          dateTo={to}
+        />
       )}
     </div>
   );
