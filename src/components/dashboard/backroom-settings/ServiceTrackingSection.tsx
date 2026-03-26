@@ -59,7 +59,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchRef = useRef<HTMLInputElement>(null);
   const touchStartRef = useRef<{ y: number; id: string } | null>(null);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  
   const activeFilter = (searchParams.get('filter') as FilterTab) || 'all';
   const setActiveFilter = (tab: FilterTab) => {
     setSearchParams(prev => {
