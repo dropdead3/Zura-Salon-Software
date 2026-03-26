@@ -39,6 +39,11 @@ function r2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
+/** Round to 4 decimal places (for per-gram costs) */
+function r4(v: number): number {
+  return Math.round(v * 10000) / 10000;
+}
+
 /** Round up to the nearest $5 increment */
 function roundUpTo5(v: number): number {
   return Math.ceil(v / 5) * 5;
