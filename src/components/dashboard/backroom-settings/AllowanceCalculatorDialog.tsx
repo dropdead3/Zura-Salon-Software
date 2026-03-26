@@ -72,7 +72,7 @@ interface BowlState {
 }
 
 interface PickerState {
-  step: 'brand' | 'category' | 'product';
+  step: 'brand' | 'category' | 'product' | 'closed';
   selectedBrand: string | null;
   selectedCategory: string | null;
   search: string;
