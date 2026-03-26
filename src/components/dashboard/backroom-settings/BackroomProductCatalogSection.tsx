@@ -449,7 +449,88 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
     onError: (error) => toast.error('Failed to remove brand: ' + error.message),
   });
 
-  /* ====== Derived data ====== */
+  /* Archived brands query */
+  const { data: archivedBrands = [] } = useQuery({
+    queryKey: ['archived-brands', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('brand, deactivated_at')
+        .eq('organization_id', orgId!)
+        .eq('is_active', false)
+        .eq('product_type', 'Supplies')
+        .not('brand', 'is', null);
+      if (error) throw error;
+      const map = new Map<string, { count: number; deactivatedAt: string | null }>();
+      (data || []).forEach((p: any) => {
+        const b = p.brand as string;
+        const existing = map.get(b);
+        if (!existing) {
+          map.set(b, { count: 1, deactivatedAt: p.deactivated_at });
+        } else {
+          existing.count++;
+          // Use earliest deactivated_at
+          if (p.deactivated_at && (!existing.deactivatedAt || p.deactivated_at < existing.deactivatedAt)) {
+            existing.deactivatedAt = p.deactivated_at;
+          }
+        }
+      });
+      return [...map.entries()].map(([brand, info]) => ({
+        brand,
+        count: info.count,
+        deactivatedAt: info.deactivatedAt,
+        withinGracePeriod: info.deactivatedAt ? differenceInHours(new Date(), new Date(info.deactivatedAt)) < 24 : false,
+      }));
+    },
+    enabled: !!orgId,
+  });
+
+  /* Restore Brand mutation */
+  const restoreBrandMutation = useMutation({
+    mutationFn: async (brand: string) => {
+      const { data: archivedProducts, error: fetchErr } = await supabase
+        .from('products')
+        .select('id')
+        .eq('organization_id', orgId!)
+        .eq('is_active', false)
+        .eq('product_type', 'Supplies')
+        .ilike('brand', brand);
+      if (fetchErr) throw fetchErr;
+      const ids = (archivedProducts || []).map((p: any) => p.id);
+      if (ids.length === 0) throw new Error('No archived products found for this brand');
+
+      const BATCH = 500;
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const { error } = await supabase
+          .from('products')
+          .update({ is_active: true, deactivated_at: null, deactivated_by: null, updated_at: new Date().toISOString() } as any)
+          .in('id', batch);
+        if (error) throw error;
+      }
+      return { count: ids.length, brand };
+    },
+    onSuccess: ({ count, brand }) => {
+      setRestoreBrandOpen(null);
+      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['archived-brands'] });
+      queryClient.invalidateQueries({ queryKey: ['product-brands'] });
+      logAction.mutate({
+        organizationId: orgId ?? undefined,
+        action: 'brand_restored',
+        entityType: 'brand',
+        entityId: brand,
+        details: { product_count: count },
+      });
+      toast.success(`Restored ${brand} — ${count} products reactivated`, {
+        description: 'Products are back in your catalog. Re-track them at each location.',
+        duration: 6000,
+      });
+    },
+    onError: (error) => toast.error('Failed to restore brand: ' + error.message),
+  });
+
+
   const allProducts = products || [];
   // Helper: is a product tracked at the current location?
   const isTrackedAtLocation = useCallback((productId: string) => {
