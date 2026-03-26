@@ -43,6 +43,39 @@ export default function PriceRecommendationsPage() {
   const [isBulkAccepting, setIsBulkAccepting] = useState(false);
   const [editingDefault, setEditingDefault] = useState(false);
   const [defaultValue, setDefaultValue] = useState('');
+  const [locationId, setLocationId] = useState('all');
+
+  // Historical margin trend
+  const ninetyDaysAgo = useMemo(() => {
+    const d = new Date(); d.setDate(d.getDate() - 90);
+    return d.toISOString().split('T')[0];
+  }, []);
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const { data: snapshots } = useServiceProfitabilitySnapshots(
+    ninetyDaysAgo, today,
+    locationId !== 'all' ? locationId : undefined,
+  );
+
+  const marginTrendData = useMemo(() => {
+    if (!snapshots?.length) return [];
+    const weekMap = new Map<string, { revenues: number; costs: number }>();
+    for (const s of snapshots) {
+      const d = new Date(s.created_at);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      const existing = weekMap.get(key) || { revenues: 0, costs: 0 };
+      existing.revenues += s.service_revenue;
+      existing.costs += s.product_cost;
+      weekMap.set(key, existing);
+    }
+    return Array.from(weekMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, data]) => ({
+        week: new Date(week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        margin: data.revenues > 0 ? Math.round(((data.revenues - data.costs) / data.revenues) * 1000) / 10 : 0,
+      }));
+  }, [snapshots]);
 
   const kpis = useMemo(() => {
     if (!recommendations?.length) return { belowTarget: 0, avgGap: 0, totalImpact: 0, weightedImpact: 0, hasVolume: false };
