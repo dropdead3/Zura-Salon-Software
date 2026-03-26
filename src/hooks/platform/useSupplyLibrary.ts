@@ -26,6 +26,7 @@ export interface SupplyLibraryProduct {
   price_updated_at: string | null;
   product_line: string | null;
   swatch_color: string | null;
+  color_type: string | null;
   created_at: string;
   updated_at: string;
 }

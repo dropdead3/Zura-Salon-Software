@@ -177,7 +177,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, brand, category, cost_per_gram, cost_price, container_size, swatch_color, product_type, markup_pct')
+        .select('id, name, brand, category, cost_per_gram, cost_price, container_size, swatch_color, product_type, markup_pct, color_type')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
