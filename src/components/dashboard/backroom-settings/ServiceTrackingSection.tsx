@@ -703,17 +703,17 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           </div>
                                           {service.is_chemical_service && (
                                             <div className="flex items-center gap-1.5">
-                                              <span className="text-[10px] font-sans text-muted-foreground">Vessels:</span>
+                                              <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
                                               {(['bowl', 'bottle'] as const).map((vt, idx) => {
                                                 const active = (service.container_types || []).includes(vt);
                                                 return (
                                                   <React.Fragment key={vt}>
                                                     {idx === 1 && (
-                                                      <span className="text-[9px] font-sans text-muted-foreground/60 italic">and/or</span>
+                                                      <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
                                                     )}
                                                     <button
                                                       className={cn(
-                                                        'px-2.5 py-0.5 rounded-full text-[10px] font-sans capitalize transition-colors border flex items-center gap-1',
+                                                        'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
                                                         active
                                                           ? 'bg-primary text-primary-foreground border-primary'
                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
@@ -729,7 +729,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                         updateService.mutate({ id: service.id, updates: { container_types: next } });
                                                       }}
                                                     >
-                                                      {active ? <Check className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
+                                                      {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                                                       {vt}
                                                     </button>
                                                   </React.Fragment>
