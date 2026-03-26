@@ -1,42 +1,57 @@
 
 
-## Equalize Product Catalog Across All Locations
+## Build Transfer Inventory Tab in Inventory Management
 
 ### What It Does
-Adds a button to the Product Catalog page that takes the currently selected location's tracked products (from `location_product_settings`) and replicates that exact setup — including par levels and reorder levels — to all other active locations. This ensures every location tracks the same products with the same thresholds in one click.
+Adds a **Transfers** tab to the Inventory Management page (between Counts and Audit Log) where admins can create, view, approve/complete, and cancel inter-location stock transfers. Uses all existing backend hooks (`useStockTransfers`, `useCreateStockTransfer`, `useCompleteStockTransfer`, `useStockTransferLines`).
 
-### Where It Lives
-On the **Backroom Product Catalog** page header area, next to the location selector. A button labeled **"Sync to All Locations"** (with a `Building2` or `Copy` icon) appears only when there are 2+ active locations.
+### Prerequisites
+Requires 2+ locations — tab only renders when multi-location. Single-location orgs won't see it.
 
-### Flow
-1. Admin clicks "Sync to All Locations"
-2. A confirmation dialog shows:
-   - Source location name
-   - Number of tracked products being synced
-   - Number of target locations
-   - Warning that existing tracking settings at other locations will be overwritten
-   - Checkbox: "Include par levels & reorder levels" (default: checked)
-3. On confirm: upserts all tracked products from the source location into every other active location's `location_product_settings`, preserving `is_tracked`, `par_level`, and `reorder_level` values
-4. Success toast: "Synced 191 tracked products to 3 locations"
+### UI Layout
+
+**Transfer List View** (default)
+- Status filter tabs: All | Pending | Completed | Cancelled
+- Table columns: Date, From → To (location names), Product(s), Qty, Status, Actions
+- "New Transfer" button in header
+
+**New Transfer Dialog**
+- From Location dropdown (defaults to current location)
+- To Location dropdown (excludes selected "from")
+- Product search/select (from backroom inventory at the source location)
+- Quantity input
+- Optional notes field
+- Creates with status `pending`
+
+**Complete / Cancel Actions**
+- Pending transfers show "Complete" and "Cancel" buttons
+- Complete calls `useCompleteStockTransfer` which posts ledger entries (transfer_out at source, transfer_in at destination)
+- Cancel updates status to `cancelled`
 
 ### Changes
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/hooks/backroom/useLocationProductSettings.ts` | Add `useSyncCatalogToAllLocations` mutation — reads source location's settings, bulk upserts to all other active locations |
-| `src/components/dashboard/backroom-settings/BackroomProductCatalogSection.tsx` | Add "Sync to All Locations" button (visible when 2+ locations) + confirmation `AlertDialog` with pre-flight summary |
+| `src/components/dashboard/backroom-settings/inventory/TransfersTab.tsx` | **New** — transfer list table + "New Transfer" dialog with product picker, location selectors, quantity input |
+| `src/components/dashboard/backroom-settings/BackroomInventorySection.tsx` | Add Transfers tab trigger + content (with `ArrowLeftRight` icon), conditionally rendered when 2+ locations |
+| `src/hooks/useStockTransfers.ts` | Add `useCancelStockTransfer` mutation (updates status to `cancelled`) |
 
-### Logic Detail
+### Data Flow
+```text
+New Transfer Dialog
+  → useCreateStockTransfer (inserts pending row)
 
-The new mutation:
-1. Fetches all `location_product_settings` rows where `location_id = sourceLocationId` and `is_tracked = true`
-2. For each target location, generates upsert rows copying `product_id`, `is_tracked`, `par_level`, `reorder_level`
-3. Batch upserts with `onConflict: 'location_id,product_id'`
-4. Optionally zeroes out par/reorder levels if the admin unchecks "Include par levels"
-5. Invalidates `location-product-settings`, `backroom-inventory-table`, `backroom-setup-health` queries
+Complete button
+  → useCompleteStockTransfer
+    → updates status to 'completed'
+    → postTransfer() writes transfer_out + transfer_in to stock_movements
+    → DB trigger updates inventory_projections + products.quantity_on_hand
 
-### Safety
-- Confirmation dialog with explicit count of affected locations and products
-- Only syncs tracked products (untracked products at target locations are untouched)
-- Uses upsert (not delete+insert) so existing target settings are updated, not wiped
+Cancel button
+  → useCancelStockTransfer (new)
+    → updates status to 'cancelled'
+```
+
+### Location Name Resolution
+The transfers table stores location IDs. The TransfersTab will join with the locations list from `useActiveLocations` to display readable names in the From/To columns.
 
