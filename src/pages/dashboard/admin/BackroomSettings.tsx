@@ -138,6 +138,9 @@ export default function BackroomSettings() {
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useBackroomSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
+  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
+  const [showWizardFromBanner, setShowWizardFromBanner] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pollingRef = useRef(false);
