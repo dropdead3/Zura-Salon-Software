@@ -572,6 +572,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
     // Step 1: Brand list
     if (picker.step === 'brand') {
+      // Loading skeleton while catalog is fetching
+      if (catalogProducts.length === 0) {
+        return (
+          <div className="pt-2 space-y-1.5">
+            <Skeleton className="h-8 w-full rounded-full" />
+            <div className="rounded-lg border border-border/40 bg-background p-1">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md mb-1 last:mb-0" />
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       const filtered = searchLower
         ? brandList.filter((b) => b.brand.toLowerCase().includes(searchLower))
         : brandList;
@@ -587,14 +601,24 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               className="h-8 text-xs pl-8"
             />
           </div>
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background">
+          <div
+            className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background"
+            role="listbox"
+            onKeyDown={(e) => {
+              const items = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]');
+              const current = Array.from(items).indexOf(document.activeElement as HTMLButtonElement);
+              if (e.key === 'ArrowDown') { e.preventDefault(); items[Math.min(current + 1, items.length - 1)]?.focus(); }
+              if (e.key === 'ArrowUp') { e.preventDefault(); items[Math.max(current - 1, 0)]?.focus(); }
+            }}
+          >
             {filtered.length === 0 && (
               <div className="px-3 py-6 text-xs text-center text-muted-foreground">No brands found</div>
             )}
             {filtered.map(({ brand, count }) => (
               <button
                 key={brand}
-                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left group"
+                role="option"
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none transition-colors text-left group"
                 onClick={() => setPickerState(bowlIdx, { step: 'category', selectedBrand: brand, search: '' })}
               >
                 <span className="text-xs font-sans text-foreground">{brand}</span>
