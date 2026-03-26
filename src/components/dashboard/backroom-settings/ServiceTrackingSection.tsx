@@ -645,6 +645,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                 )}
                                 {service.backroom_config_dismissed ? (
                                   <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
+                                ) : service.is_backroom_tracked && (() => {
+                                  const hasPolicy = allowancePolicies?.some(p => p.service_id === service.id && p.is_active);
+                                  return hasPolicy;
+                                })() ? (
+                                  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">Allowance Set</Badge>
                                 ) : service.is_backroom_tracked ? (
                                   <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Unconfigured</Badge>
                                 ) : null}
