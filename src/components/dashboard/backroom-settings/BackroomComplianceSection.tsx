@@ -22,9 +22,11 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { format, subDays } from 'date-fns';
+import { FileDown } from 'lucide-react';
 import { useBackroomComplianceTracker } from '@/hooks/backroom/useBackroomComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/backroom/useEvaluateComplianceLog';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { StaffComplianceReportDialog } from './compliance/StaffComplianceReportDialog';
 
 type RangeKey = 'today' | '7d' | '14d' | '30d';
 
