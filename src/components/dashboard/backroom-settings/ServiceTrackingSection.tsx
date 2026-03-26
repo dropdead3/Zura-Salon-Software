@@ -747,8 +747,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
                                                 if (policy) {
                                                   const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
-                                                  const healthStatus = (policy as any).allowance_health_status as string | null;
-                                                  const healthPct = (policy as any).allowance_health_pct as number | null;
+                                                   const healthStatus = policy.allowance_health_status;
+                                                   const healthPct = policy.allowance_health_pct;
                                                   return (
                                                     <div className="flex items-center gap-2 text-xs">
                                                       <FileText className="w-3.5 h-3.5 text-primary" />

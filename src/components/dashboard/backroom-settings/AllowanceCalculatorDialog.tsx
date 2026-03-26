@@ -943,6 +943,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           className="h-6 w-32 text-sm font-sans px-1.5"
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateBowlLabel(bowlIdx, e.target.value)}
+                          onFocus={(e) => e.target.select()}
                           onBlur={() => setEditingLabelIdx(null)}
                           onKeyDown={(e) => { if (e.key === 'Enter') setEditingLabelIdx(null); }}
                         />
