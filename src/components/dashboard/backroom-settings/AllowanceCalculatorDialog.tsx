@@ -145,7 +145,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const vesselLabel = (type: 'bowl' | 'bottle', num: number) => type === 'bottle' ? `Bottle ${num}` : `Bowl ${num}`;
   const VesselIcon = (type: 'bowl' | 'bottle') => type === 'bottle' ? TestTube2 : Beaker;
 
-  const { data: catalogProducts = [] } = useQuery({
+  const { data: catalogProducts = [], isLoading: catalogLoading } = useQuery({
     queryKey: ['catalog-products-for-allowance', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -155,7 +155,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
         .order('brand')
-        .order('name');
+        .order('name')
+        .limit(2000);
       if (error) throw error;
       return data as CatalogProduct[];
     },
